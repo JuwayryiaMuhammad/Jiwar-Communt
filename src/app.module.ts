@@ -19,6 +19,7 @@ import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { PlatformModule } from './platform/platform.module';
 import { RedisModule } from './redis/redis.module';
+import { ResidentsModule } from './residents/residents.module';
 import { UnitsModule } from './units/units.module';
 
 @Module({
@@ -85,6 +86,7 @@ import { UnitsModule } from './units/units.module';
     AccountsModule,
     UnitsModule,
     PlatformModule,
+    ResidentsModule,
   ],
   controllers: [AppController],
   providers: [

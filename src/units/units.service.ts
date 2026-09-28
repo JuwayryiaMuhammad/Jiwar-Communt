@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { ResourceAccess } from '../access/resource-access';
 import { RequestContext } from '../common/cls/request-context';
-import { appError, ErrorCode } from '../common/errors';
 import { newId } from '../common/uuid';
 import { PrismaService } from '../database/prisma.service';
 import type { CreateUnitDto } from './dto/create-unit.dto';
@@ -11,21 +11,21 @@ export class UnitsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ctx: RequestContext,
+    private readonly access: ResourceAccess,
   ) {}
 
+  /** Only the units this account may see (ResourceAccess, ADR 0012). */
   async list(): Promise<UnitView[]> {
     const units = await this.prisma.tenant.unit.findMany({
+      where: this.access.unitScope(),
       orderBy: { code: 'asc' },
     });
     return units.map((u) => UnitView.from(u));
   }
 
+  /** Not found for units outside the account's scope, not forbidden. */
   async get(id: string): Promise<UnitView> {
-    const unit = await this.prisma.tenant.unit.findUnique({ where: { id } });
-    if (!unit) {
-      throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
-    }
-    return UnitView.from(unit);
+    return UnitView.from(await this.access.assertUnit(id));
   }
 
   async create(dto: CreateUnitDto): Promise<UnitView> {

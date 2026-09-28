@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { ACCESS_CATALOG, CODE_ACCESS_CATALOG } from './access-catalog';
 import { PermissionsService } from './permissions.service';
 import { RoleProvisioner } from './role-provisioner';
+import { ResourceAccess } from './resource-access';
 import { RolesService } from './roles.service';
 
 @Global()
@@ -11,7 +12,14 @@ import { RolesService } from './roles.service';
     RoleProvisioner,
     PermissionsService,
     RolesService,
+    ResourceAccess,
   ],
-  exports: [ACCESS_CATALOG, RoleProvisioner, PermissionsService, RolesService],
+  exports: [
+    ResourceAccess,
+    ACCESS_CATALOG,
+    RoleProvisioner,
+    PermissionsService,
+    RolesService,
+  ],
 })
 export class AccessModule {}

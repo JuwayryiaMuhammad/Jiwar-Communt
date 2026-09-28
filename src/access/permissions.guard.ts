@@ -45,6 +45,7 @@ export class PermissionsGuard implements CanActivate {
       where: { id: accountId },
       select: {
         status: true,
+        type: true,
         roleId: true,
         role: { select: { permissionsVersion: true } },
         tenant: { select: { status: true } },
@@ -57,6 +58,8 @@ export class PermissionsGuard implements CanActivate {
     ) {
       throw unauthenticated();
     }
+    // Capacity from the database, not from the token claim.
+    this.cls.set('accountType', account.type);
     this.cls.set('roleId', account.roleId);
     this.cls.set('permissionsVersion', account.role.permissionsVersion);
 

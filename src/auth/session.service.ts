@@ -1,9 +1,13 @@
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { AccountType } from '@prisma/client';
-import { isUUID } from 'class-validator';
 import type { AccessTokenClaims } from '../common/guards/access-token';
+import {
+  newSecret,
+  parseRefreshToken,
+  safeEqualHex,
+  sha256,
+} from '../common/refresh-token';
 import { newId } from '../common/uuid';
 import { GlobalDbService } from '../database/global-db.service';
 import { SESSION_POLICY } from './auth-policy';
@@ -121,26 +125,4 @@ export class SessionService {
       accessTokenExpiresIn: accessTtlSeconds,
     };
   }
-}
-
-function parseRefreshToken(
-  token: string,
-): { sessionId: string; secret: string } | null {
-  const [sessionId, secret, ...rest] = token.split('.');
-  if (rest.length || !sessionId || !secret || !isUUID(sessionId)) return null;
-  return { sessionId, secret };
-}
-
-function newSecret(): string {
-  return randomBytes(32).toString('base64url');
-}
-
-function sha256(value: string): string {
-  return createHash('sha256').update(value).digest('hex');
-}
-
-function safeEqualHex(a: string, b: string): boolean {
-  const x = Buffer.from(a, 'hex');
-  const y = Buffer.from(b, 'hex');
-  return x.length === y.length && timingSafeEqual(x, y);
 }

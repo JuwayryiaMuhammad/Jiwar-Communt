@@ -9,6 +9,7 @@ const base = {
   SMTP_FROM: 'Jiwar <no-reply@jiwar.local>',
   JWT_ACCESS_SECRET: 'a'.repeat(32),
   IDENTIFIER_PEPPER: 'b'.repeat(32),
+  PLATFORM_JWT_SECRET: 'c'.repeat(32),
 };
 
 describe('validateEnv', () => {
@@ -64,5 +65,45 @@ describe('validateEnv', () => {
     expect(() =>
       validateEnv({ ...base, DATABASE_URL: 'mysql://x@y/z' }),
     ).toThrow(/DATABASE_URL/);
+  });
+
+  describe('platform', () => {
+    it('requires a platform secret different from the tenant secret', () => {
+      expect(() =>
+        validateEnv({ ...base, PLATFORM_JWT_SECRET: base.JWT_ACCESS_SECRET }),
+      ).toThrow(/PLATFORM_JWT_SECRET/);
+      const { PLATFORM_JWT_SECRET: _omit, ...without } = base;
+      void _omit;
+      expect(() => validateEnv(without)).toThrow(/PLATFORM_JWT_SECRET/);
+    });
+
+    it('accepts no superadmin, or email + password together', () => {
+      expect(validateEnv(base).SUPERADMIN_EMAIL).toBeUndefined();
+      const env = validateEnv({
+        ...base,
+        SUPERADMIN_EMAIL: 'owner@jiwar.local',
+        SUPERADMIN_PASSWORD: 'correct horse battery',
+      });
+      expect(env.SUPERADMIN_EMAIL).toBe('owner@jiwar.local');
+    });
+
+    it('rejects one without the other', () => {
+      expect(() =>
+        validateEnv({ ...base, SUPERADMIN_EMAIL: 'owner@jiwar.local' }),
+      ).toThrow(/set together/);
+      expect(() =>
+        validateEnv({ ...base, SUPERADMIN_PASSWORD: 'correct horse battery' }),
+      ).toThrow(/set together/);
+    });
+
+    it('rejects a superadmin password shorter than 12 characters', () => {
+      expect(() =>
+        validateEnv({
+          ...base,
+          SUPERADMIN_EMAIL: 'owner@jiwar.local',
+          SUPERADMIN_PASSWORD: 'short-pass',
+        }),
+      ).toThrow(/at least 12/);
+    });
   });
 });

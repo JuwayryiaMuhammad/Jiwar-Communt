@@ -34,6 +34,7 @@
     "@nestjs/swagger": "^11.4.7",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
+    "argon2": "^0.44.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "dotenv": "^18.0.4",
@@ -109,7 +110,8 @@
       "@prisma/engines",
       "prisma",
       "@parcel/watcher",
-      "unrs-resolver"
+      "unrs-resolver",
+      "argon2"
     ],
     "ignoredBuiltDependencies": [
       "@scarf/scarf"

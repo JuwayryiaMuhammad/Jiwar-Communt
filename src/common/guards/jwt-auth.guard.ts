@@ -7,6 +7,7 @@ import { isUUID } from 'class-validator';
 import type { AppClsStore } from '../cls/app-cls';
 import { appError, ErrorCode } from '../errors';
 import { ACCOUNT_TYPES, type AccessTokenClaims } from './access-token';
+import { PLATFORM_ROUTE_KEY } from './platform-route.decorator';
 import { IS_PUBLIC_KEY } from './public.decorator';
 
 /**
@@ -23,11 +24,18 @@ export class JwtAuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (isPublic) return true;
+    const targets = [context.getHandler(), context.getClass()];
+    const isPublic = this.reflector.getAllAndOverride<boolean>(
+      IS_PUBLIC_KEY,
+      targets,
+    );
+    // Platform routes are authenticated by PlatformAuthGuard instead; this
+    // guard never accepts platform tokens (different secret and audience).
+    const isPlatform = this.reflector.getAllAndOverride<unknown>(
+      PLATFORM_ROUTE_KEY,
+      targets,
+    );
+    if (isPublic || isPlatform) return true;
 
     const req = context.switchToHttp().getRequest<Request>();
     const [scheme, token] = (req.headers.authorization ?? '').split(' ');

@@ -25,6 +25,12 @@ export function applyTestEnv(): void {
   // is what the rate-limit test exercises.
   process.env.OTP_RATE_LIMIT_PER_IP = '100000';
   process.env.OTP_RATE_LIMIT_PER_IDENTIFIER = '5';
+  process.env.PLATFORM_LOGIN_RATE_LIMIT_PER_IP = '100000';
+  process.env.PLATFORM_LOGIN_RATE_LIMIT_PER_EMAIL = '10';
+  process.env.PLATFORM_LOGIN_MAX_FAILURES = '5';
+  // Platform tests create their own admins; nothing is bootstrapped from .env.
+  delete process.env.SUPERADMIN_EMAIL;
+  delete process.env.SUPERADMIN_PASSWORD;
 }
 
 export function required(name: string): string {

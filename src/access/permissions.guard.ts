@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { ClsService } from 'nestjs-cls';
 import type { AppClsStore } from '../common/cls/app-cls';
 import { appError, ErrorCode } from '../common/errors';
+import { PLATFORM_ROUTE_KEY } from '../common/guards/platform-route.decorator';
 import { IS_PUBLIC_KEY } from '../common/guards/public.decorator';
 import { PrismaService } from '../database/prisma.service';
 import { PermissionsService } from './permissions.service';
@@ -29,7 +30,10 @@ export class PermissionsGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const targets = [context.getHandler(), context.getClass()];
-    if (this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, targets)) {
+    if (
+      this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, targets) ||
+      this.reflector.getAllAndOverride<unknown>(PLATFORM_ROUTE_KEY, targets)
+    ) {
       return true;
     }
 

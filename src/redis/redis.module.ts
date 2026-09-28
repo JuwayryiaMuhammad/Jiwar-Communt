@@ -7,12 +7,15 @@ import {
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import type { Env } from '../config/env.schema';
+import { RateLimitService } from './rate-limit.service';
+import { REDIS } from './redis.token';
 
-export const REDIS = Symbol('REDIS');
+export { REDIS } from './redis.token';
 
 @Global()
 @Module({
   providers: [
+    RateLimitService,
     {
       provide: REDIS,
       inject: [ConfigService],
@@ -22,7 +25,7 @@ export const REDIS = Symbol('REDIS');
         }),
     },
   ],
-  exports: [REDIS],
+  exports: [REDIS, RateLimitService],
 })
 export class RedisModule implements OnApplicationShutdown {
   constructor(@Inject(REDIS) private readonly redis: Redis) {}

@@ -38,6 +38,9 @@ export const ErrorCode = {
   UNKNOWN_PERMISSION: 'UNKNOWN_PERMISSION',
   PERMISSION_NOT_ASSIGNABLE: 'PERMISSION_NOT_ASSIGNABLE',
   ROLE_LOCKOUT: 'ROLE_LOCKOUT',
+  // platform (ADR 0011)
+  INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
+  PASSWORD_CHANGE_REQUIRED: 'PASSWORD_CHANGE_REQUIRED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -55,6 +58,7 @@ export const FieldErrorCode = {
   INVALID_NUMBER: 'INVALID_NUMBER',
   INVALID_VALUE: 'INVALID_VALUE',
   DUPLICATE_VALUE: 'DUPLICATE_VALUE',
+  SAME_AS_CURRENT: 'SAME_AS_CURRENT',
 } as const;
 
 export type FieldErrorCode =

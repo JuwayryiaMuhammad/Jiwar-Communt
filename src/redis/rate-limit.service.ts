@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import Redis from 'ioredis';
 import { appError, ErrorCode } from '../common/errors';
-import { REDIS } from '../redis/redis.module';
+import { REDIS } from './redis.token';
 
 /** Fixed-window counters in Redis. */
 @Injectable()

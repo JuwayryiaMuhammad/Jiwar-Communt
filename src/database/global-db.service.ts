@@ -4,12 +4,17 @@ import { BASE_PRISMA, type BasePrisma } from './base-prisma';
 
 type GlobalTables = Pick<
   PrismaClient,
-  'tenant' | 'loginIdentifier' | 'otpChallenge' | 'session'
+  | 'tenant'
+  | 'loginIdentifier'
+  | 'otpChallenge'
+  | 'session'
+  | 'platformAdmin'
+  | 'platformSession'
 >;
 
 /**
  * The only path to the global (non-RLS) tables: tenants, login_identifiers,
- * otp_challenges, sessions. Tenant tables are deliberately not exposed here.
+ * otp_challenges, sessions, platform_admins, platform_sessions. Tenant tables are deliberately not exposed here.
  */
 @Injectable()
 export class GlobalDbService implements GlobalTables {
@@ -31,6 +36,14 @@ export class GlobalDbService implements GlobalTables {
     return this.base.client.session;
   }
 
+  get platformAdmin() {
+    return this.base.client.platformAdmin;
+  }
+
+  get platformSession() {
+    return this.base.client.platformSession;
+  }
+
   /**
    * The same tables through an open withTenantTx transaction, for writes that
    * must commit atomically with tenant rows (e.g. an account and its login
@@ -42,6 +55,8 @@ export class GlobalDbService implements GlobalTables {
       loginIdentifier: tx.loginIdentifier,
       otpChallenge: tx.otpChallenge,
       session: tx.session,
+      platformAdmin: tx.platformAdmin,
+      platformSession: tx.platformSession,
     };
   }
 

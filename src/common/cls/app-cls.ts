@@ -12,6 +12,9 @@ export interface AppClsStore extends ClsStore {
   /** Set by PermissionsGuard from the database on every request (ADR 0010). */
   roleId?: string;
   permissionsVersion?: number;
+  /** Platform routes only (ADR 0011); never set together with tenantId. */
+  platformAdminId?: string;
+  platformScope?: 'full' | 'password_change';
   /** Set by TenantTx while a tenant transaction callback is running. */
   inTenantTx?: boolean;
 }

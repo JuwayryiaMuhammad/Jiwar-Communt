@@ -10,7 +10,7 @@ import { REDIS } from '../redis/redis.module';
 import type { OtpVerifiedView, TokensView } from './dto/auth.dto';
 import { IdentifierHasher, parseIdentifier } from './identifier';
 import { OtpService, type UnlockedAccount } from './otp.service';
-import { RateLimitService } from './rate-limit.service';
+import { RateLimitService } from '../redis/rate-limit.service';
 import {
   SessionService,
   type IssuedTokens,

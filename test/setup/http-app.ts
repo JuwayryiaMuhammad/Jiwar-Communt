@@ -1,5 +1,5 @@
 import type { Server } from 'node:http';
-import type { INestApplication } from '@nestjs/common';
+import type { INestApplication, Type } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test, type TestingModule } from '@nestjs/testing';
 import type { AccountType } from '@prisma/client';
@@ -41,9 +41,13 @@ export interface HttpHarness {
 }
 
 /** The full AppModule, configured exactly like main.ts, without listening. */
-export async function createHttpHarness(): Promise<HttpHarness> {
+export async function createHttpHarness(
+  opts: { controllers?: Type[]; imports?: Type[] } = {},
+): Promise<HttpHarness> {
   const moduleRef = await Test.createTestingModule({
-    imports: [AppModule],
+    imports: [AppModule, ...(opts.imports ?? [])],
+    // Test-only controllers, e.g. to exercise a guard before its routes exist.
+    controllers: opts.controllers ?? [],
   }).compile();
   const app = moduleRef.createNestApplication({ logger: false });
   configureApp(app);

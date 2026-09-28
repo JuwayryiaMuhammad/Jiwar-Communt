@@ -47,12 +47,43 @@ export const envSchema = z
     OTP_RATE_LIMIT_PER_IDENTIFIER: positiveInt.default(5),
     OTP_RATE_LIMIT_PER_IP: positiveInt.default(20),
 
+    // Platform super admin (ADR 0011)
+    PLATFORM_JWT_SECRET: secret,
+    SUPERADMIN_EMAIL: optional(z.email()),
+    SUPERADMIN_PASSWORD: optional(
+      z.string().min(12, 'must be at least 12 characters'),
+    ),
+    PLATFORM_LOGIN_MAX_FAILURES: positiveInt.default(5),
+    PLATFORM_LOCKOUT_SECONDS: positiveInt.default(900),
+    PLATFORM_LOGIN_RATE_LIMIT_WINDOW_SECONDS: positiveInt.default(900),
+    PLATFORM_LOGIN_RATE_LIMIT_PER_IP: positiveInt.default(20),
+    PLATFORM_LOGIN_RATE_LIMIT_PER_EMAIL: positiveInt.default(10),
+
     /** Development only: every OTP becomes this code. See the refinement below. */
     OTP_FIXED_CODE: optional(
       z.string().regex(/^\d{6}$/, 'must be exactly 6 digits'),
     ),
   })
   .superRefine((env, ctx) => {
+    // Separate secrets keep tenant and platform tokens mutually unforgeable.
+    if (env.PLATFORM_JWT_SECRET === env.JWT_ACCESS_SECRET) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['PLATFORM_JWT_SECRET'],
+        message: 'must differ from JWT_ACCESS_SECRET',
+      });
+    }
+    if (
+      (env.SUPERADMIN_EMAIL === undefined) !==
+      (env.SUPERADMIN_PASSWORD === undefined)
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['SUPERADMIN_PASSWORD'],
+        message:
+          'SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD must be set together',
+      });
+    }
     // A fixed code in production is a universal password. Refuse to boot
     // rather than trust that someone remembers to unset it.
     if (env.NODE_ENV === 'production' && env.OTP_FIXED_CODE !== undefined) {

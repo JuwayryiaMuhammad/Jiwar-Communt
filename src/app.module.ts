@@ -17,6 +17,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { validateEnv, type Env } from './config/env.schema';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
+import { PlatformModule } from './platform/platform.module';
 import { RedisModule } from './redis/redis.module';
 import { UnitsModule } from './units/units.module';
 
@@ -83,6 +84,7 @@ import { UnitsModule } from './units/units.module';
     AuthModule,
     AccountsModule,
     UnitsModule,
+    PlatformModule,
   ],
   controllers: [AppController],
   providers: [

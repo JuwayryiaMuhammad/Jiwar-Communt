@@ -6,7 +6,10 @@ import { JwtModule } from '@nestjs/jwt';
 import type { Request } from 'express';
 import { ClsModule } from 'nestjs-cls';
 import { LoggerModule } from 'nestjs-pino';
+import { AccountsModule } from './accounts/accounts.module';
 import { AppController } from './app.controller';
+import { AuthModule } from './auth/auth.module';
+import { RequestContextModule } from './common/cls/request-context.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
@@ -14,6 +17,7 @@ import { validateEnv, type Env } from './config/env.schema';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { RedisModule } from './redis/redis.module';
+import { UnitsModule } from './units/units.module';
 
 @Module({
   imports: [
@@ -67,9 +71,13 @@ import { RedisModule } from './redis/redis.module';
         signOptions: { algorithm: 'HS256' },
       }),
     }),
+    RequestContextModule,
     DatabaseModule,
     RedisModule,
     HealthModule,
+    AuthModule,
+    AccountsModule,
+    UnitsModule,
   ],
   controllers: [AppController],
   providers: [

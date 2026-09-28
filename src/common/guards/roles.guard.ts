@@ -1,14 +1,9 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { AccountType } from '@prisma/client';
 import { ClsService } from 'nestjs-cls';
 import type { AppClsStore } from '../cls/app-cls';
-import { ErrorCode } from '../errors';
+import { appError, ErrorCode } from '../errors';
 import { ROLES_KEY } from './roles.decorator';
 
 /** Role layer (ADR 0001). Runs after JwtAuthGuard has filled the context. */
@@ -28,9 +23,9 @@ export class RolesGuard implements CanActivate {
 
     const type = this.cls.get('accountType');
     if (type && allowed.includes(type)) return true;
-    throw new ForbiddenException({
-      message: 'Not allowed for this account type',
-      code: ErrorCode.FORBIDDEN,
-    });
+    throw appError.forbidden(
+      ErrorCode.FORBIDDEN,
+      'Not allowed for this account type',
+    );
   }
 }

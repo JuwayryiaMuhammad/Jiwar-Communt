@@ -5,7 +5,7 @@ import {
   uniquePhone,
   type HttpHarness,
 } from '../setup/http-app';
-import { countEmails, waitForOtp } from '../setup/mailpit';
+import { countEmails, waitForMessage, waitForOtp } from '../setup/mailpit';
 
 interface Verified {
   loginTicket: string;
@@ -315,6 +315,43 @@ describe('Login bootstrap', () => {
   });
 
   // --------------------------------------------------------------------------
+  describe('OTP email language (Accept-Language)', () => {
+    async function emailFor(acceptLanguage?: string) {
+      const email = uniqueEmail('lang');
+      const tenant = await h.createTenant('Compound Lang');
+      await h.createAccount(tenant.id, {
+        type: 'resident',
+        email,
+        phone: uniquePhone(),
+      });
+      const since = new Date();
+      const req = h.http().post(`${API}/auth/otp/request`);
+      if (acceptLanguage) void req.set('Accept-Language', acceptLanguage);
+      const res = await req.send({ identifier: email }).expect(202);
+      expect(res.body).toMatchObject({ code: 'OTP_REQUESTED' });
+      return waitForMessage(email, since);
+    }
+
+    it('sends English when the client asks for it', async () => {
+      const msg = await emailFor('en-US,en;q=0.9');
+      expect(msg.Subject).toBe('Your Jiwar login code');
+      expect(msg.HTML).toContain('dir="ltr"');
+      expect(msg.Text).toMatch(/\b\d{6}\b/);
+    });
+
+    it('sends Arabic (RTL) by default', async () => {
+      const msg = await emailFor();
+      expect(msg.Subject).toBe('رمز الدخول إلى جوار');
+      expect(msg.HTML).toContain('dir="rtl"');
+      expect(msg.Text).toMatch(/\b\d{6}\b/);
+    });
+
+    it('sends Arabic for unsupported languages', async () => {
+      const msg = await emailFor('fr-FR,fr;q=0.9');
+      expect(msg.Subject).toBe('رمز الدخول إلى جوار');
+    });
+  });
+
   describe('code lifecycle', () => {
     it('a new request invalidates the previous code', async () => {
       const email = uniqueEmail('newer');

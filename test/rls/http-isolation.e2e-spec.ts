@@ -82,7 +82,7 @@ describe('RLS tenant isolation (HTTP)', () => {
       .get(`${API}/units/${unitA.id}`)
       .set('Authorization', `Bearer ${managerB}`)
       .expect(404);
-    expect(res.body).toMatchObject({ code: 'NOT_FOUND' });
+    expect(res.body).toMatchObject({ code: 'UNIT_NOT_FOUND' });
   });
 
   it("B's account list does not include A's accounts", async () => {
@@ -135,19 +135,55 @@ describe('RLS tenant isolation (HTTP)', () => {
       .set('Authorization', `Bearer ${managerA}`)
       .send({ code: 'A-999', tenantId: b.id })
       .expect(400);
-    expect(res.body).toMatchObject({ code: 'VALIDATION_FAILED' });
-    expect(JSON.stringify(res.body)).toContain('tenantId');
+    expect(res.body).toMatchObject({
+      code: 'VALIDATION_FAILED',
+      fields: [{ field: 'tenantId', code: 'FIELD_NOT_ALLOWED' }],
+    });
   });
 
-  it('a duplicate unit code is a neutral 409', async () => {
+  it('validation errors carry a code per field', async () => {
+    const res = await h
+      .http()
+      .post(`${API}/units`)
+      .set('Authorization', `Bearer ${managerA}`)
+      .send({ building: 'x'.repeat(65) })
+      .expect(400);
+    expect(res.body).toMatchObject({
+      code: 'VALIDATION_FAILED',
+      fields: [
+        { field: 'code', code: 'FIELD_REQUIRED' },
+        {
+          field: 'building',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 64 },
+        },
+      ],
+    });
+    const bad = await h
+      .http()
+      .get(`${API}/units/not-a-uuid`)
+      .set('Authorization', `Bearer ${managerA}`)
+      .expect(400);
+    expect(bad.body).toMatchObject({
+      code: 'VALIDATION_FAILED',
+      fields: [{ field: 'id', code: 'INVALID_UUID' }],
+    });
+  });
+
+  it('a duplicate unit code names the field, and nothing else', async () => {
     const res = await h
       .http()
       .post(`${API}/units`)
       .set('Authorization', `Bearer ${managerA}`)
       .send({ code: 'A-101' })
       .expect(409);
-    expect(res.body).toMatchObject({ code: 'CONFLICT' });
-    expect(JSON.stringify(res.body)).not.toContain(unitA.id);
+    expect(res.body).toMatchObject({
+      code: 'DUPLICATE_RESOURCE',
+      fields: [{ field: 'code', code: 'DUPLICATE_VALUE' }],
+    });
+    const text = JSON.stringify(res.body);
+    expect(text).not.toContain(unitA.id);
+    expect(text).not.toContain('units_tenant_id_code_key');
   });
 
   it('requires authentication', async () => {

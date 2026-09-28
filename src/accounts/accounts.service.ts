@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { Account } from '@prisma/client';
 import {
   IdentifierHasher,
@@ -11,7 +6,7 @@ import {
   normalizePhone,
 } from '../auth/identifier';
 import { RequestContext } from '../common/cls/request-context';
-import { ErrorCode } from '../common/errors';
+import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
 import { newId } from '../common/uuid';
 import { GlobalDbService } from '../database/global-db.service';
 import { PrismaService } from '../database/prisma.service';
@@ -57,10 +52,20 @@ export class AccountsService {
     const email = normalizeEmail(dto.email);
     const phone = normalizePhone(dto.phone);
     if (!email || !phone) {
-      throw new BadRequestException({
-        message: 'Invalid email or phone',
-        code: ErrorCode.VALIDATION_FAILED,
-      });
+      throw appError.badRequest(
+        ErrorCode.VALIDATION_FAILED,
+        'Invalid email or phone',
+        {
+          fields: [
+            ...(email
+              ? []
+              : [{ field: 'email', code: FieldErrorCode.INVALID_EMAIL }]),
+            ...(phone
+              ? []
+              : [{ field: 'phone', code: FieldErrorCode.INVALID_PHONE }]),
+          ],
+        },
+      );
     }
 
     const tenantId = this.ctx.tenantId;
@@ -103,10 +108,10 @@ export class AccountsService {
     dto: UpdateAccountStatusDto,
   ): Promise<AccountView> {
     if (id === this.ctx.accountId) {
-      throw new ConflictException({
-        message: 'You cannot change the status of your own account',
-        code: ErrorCode.CONFLICT,
-      });
+      throw appError.conflict(
+        ErrorCode.CANNOT_CHANGE_OWN_STATUS,
+        'You cannot change the status of your own account',
+      );
     }
 
     const account = await this.tenantTx.withTenantTx(
@@ -137,8 +142,5 @@ export class AccountsService {
 }
 
 function notFound() {
-  return new NotFoundException({
-    message: 'Account not found',
-    code: ErrorCode.NOT_FOUND,
-  });
+  return appError.notFound(ErrorCode.ACCOUNT_NOT_FOUND, 'Account not found');
 }

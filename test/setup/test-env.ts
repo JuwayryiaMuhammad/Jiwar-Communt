@@ -13,6 +13,13 @@ export function applyTestEnv(): void {
   process.env.MIGRATOR_DATABASE_URL = required('TEST_MIGRATOR_DATABASE_URL');
   process.env.REDIS_URL = required('TEST_REDIS_URL');
   delete process.env.OTP_FIXED_CODE;
+  // Codes are read back from Mailpit, whatever SMTP the developer uses for
+  // local runs (a real provider in .env must never receive test emails).
+  process.env.SMTP_HOST = process.env.TEST_SMTP_HOST ?? '127.0.0.1';
+  process.env.SMTP_PORT = process.env.TEST_SMTP_PORT ?? '1025';
+  process.env.SMTP_SECURE = 'false';
+  delete process.env.SMTP_USER;
+  delete process.env.SMTP_PASSWORD;
   // Every test request comes from 127.0.0.1, so the per-IP limit would trip
   // across unrelated tests. The per-identifier limit keeps its real value and
   // is what the rate-limit test exercises.

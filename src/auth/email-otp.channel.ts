@@ -2,7 +2,8 @@ import { Injectable, type OnApplicationShutdown } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createTransport, type Transporter } from 'nodemailer';
 import type { Env } from '../config/env.schema';
-import type { OtpChannel } from './otp-channel';
+import type { OtpChannel, OtpMessage } from './otp-channel';
+import { renderOtpEmail } from './otp-email.templates';
 
 @Injectable()
 export class EmailOtpChannel implements OtpChannel, OnApplicationShutdown {
@@ -21,25 +22,14 @@ export class EmailOtpChannel implements OtpChannel, OnApplicationShutdown {
     this.from = config.get('SMTP_FROM', { infer: true });
   }
 
-  async send({
-    to,
-    code,
-    ttlSeconds,
-  }: {
-    to: string;
-    code: string;
-    ttlSeconds: number;
-  }) {
-    const minutes = Math.max(1, Math.round(ttlSeconds / 60));
-    // No tenant or account details: the email proves possession of the
-    // address and nothing else.
+  async send({ to, code, ttlSeconds, locale }: OtpMessage): Promise<void> {
+    const email = renderOtpEmail(locale, code, ttlSeconds);
     await this.transport.sendMail({
       from: this.from,
       to,
-      subject: 'Your Jiwar login code',
-      text:
-        `Your Jiwar login code is ${code}.\n\n` +
-        `It expires in ${minutes} minutes. If you did not try to log in, ignore this email.`,
+      subject: email.subject,
+      text: email.text,
+      html: email.html,
     });
   }
 

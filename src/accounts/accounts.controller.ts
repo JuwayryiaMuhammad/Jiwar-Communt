@@ -1,13 +1,6 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  ParseUUIDPipe,
-  Patch,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { parseId } from '../common/validation/parse-id.pipe';
 import { Roles } from '../common/guards/roles.decorator';
 import { AccountsService } from './accounts.service';
 import { AccountView } from './dto/account.view';
@@ -34,7 +27,7 @@ export class AccountsController {
 
   @Roles('manager')
   @Get(':id')
-  get(@Param('id', ParseUUIDPipe) id: string): Promise<AccountView> {
+  get(@Param('id', parseId()) id: string): Promise<AccountView> {
     return this.accounts.get(id);
   }
 
@@ -48,7 +41,7 @@ export class AccountsController {
   @Roles('manager')
   @Patch(':id/status')
   updateStatus(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', parseId()) id: string,
     @Body() dto: UpdateAccountStatusDto,
   ): Promise<AccountView> {
     return this.accounts.updateStatus(id, dto);

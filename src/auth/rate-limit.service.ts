@@ -1,6 +1,6 @@
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import Redis from 'ioredis';
-import { ErrorCode } from '../common/errors';
+import { appError, ErrorCode } from '../common/errors';
 import { REDIS } from '../redis/redis.module';
 
 /** Fixed-window counters in Redis. */
@@ -21,12 +21,9 @@ export class RateLimitService {
       .expire(redisKey, windowSeconds, 'NX')
       .exec()) as [[Error | null, number], [Error | null, number]];
     if (count > limit) {
-      throw new HttpException(
-        {
-          message: 'Too many attempts, try again later',
-          code: ErrorCode.RATE_LIMITED,
-        },
-        HttpStatus.TOO_MANY_REQUESTS,
+      throw appError.tooManyRequests(
+        ErrorCode.RATE_LIMITED,
+        'Too many attempts, try again later',
       );
     }
   }

@@ -1,12 +1,7 @@
-import {
-  BadRequestException,
-  INestApplication,
-  ValidationError,
-  ValidationPipe,
-} from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
-import { ErrorCode } from './common/errors';
+import { validationException } from './common/validation/validation-errors';
 
 export const API_PREFIX = 'api/v1';
 
@@ -42,22 +37,7 @@ export function configureApp(app: INestApplication): void {
       // `tenantId` (or anything else the server owns) out of request bodies.
       forbidNonWhitelisted: true,
       transform: true,
-      exceptionFactory: (errors) => {
-        // Walk `children` too: a @ValidateNested failure has no constraints
-        // of its own, so reading only the top level yields an empty message.
-        const flatten = (errs: ValidationError[], path = ''): string[] =>
-          errs.flatMap((err) => {
-            const here = path ? `${path}.${err.property}` : err.property;
-            const own = Object.values(err.constraints ?? {}).map((m) =>
-              path ? `${here}: ${m}` : m,
-            );
-            return [...own, ...flatten(err.children ?? [], here)];
-          });
-        return new BadRequestException({
-          message: flatten(errors).join(', '),
-          code: ErrorCode.VALIDATION_FAILED,
-        });
-      },
+      exceptionFactory: validationException,
     }),
   );
 

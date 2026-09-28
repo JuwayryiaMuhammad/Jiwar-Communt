@@ -1,10 +1,5 @@
-import {
-  Controller,
-  Get,
-  Inject,
-  Logger,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { Controller, Get, Inject, Logger } from '@nestjs/common';
+import { appError, ErrorCode } from '../common/errors';
 import Redis from 'ioredis';
 import { Public } from '../common/guards/public.decorator';
 import { GlobalDbService } from '../database/global-db.service';
@@ -49,8 +44,7 @@ export class HealthController {
           );
         }
       }
-      throw new ServiceUnavailableException({
-        message: 'Not ready',
+      throw appError.serviceUnavailable(ErrorCode.NOT_READY, 'Not ready', {
         details: result,
       });
     }

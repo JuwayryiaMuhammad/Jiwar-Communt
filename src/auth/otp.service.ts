@@ -2,6 +2,7 @@ import { randomInt, timingSafeEqual } from 'node:crypto';
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { AccountType } from '@prisma/client';
+import type { Locale } from '../common/i18n/locale';
 import type { Env } from '../config/env.schema';
 import { newId } from '../common/uuid';
 import { GlobalDbService } from '../database/global-db.service';
@@ -56,7 +57,7 @@ export class OtpService implements OnModuleInit {
    * Does the same bookkeeping whether or not the identifier exists; callers
    * run it off the request path so response time reveals nothing either.
    */
-  async issue(identifierHash: string): Promise<void> {
+  async issue(identifierHash: string, locale: Locale): Promise<void> {
     const destinations = await this.resolveDestinations(identifierHash);
 
     const now = Date.now();
@@ -98,6 +99,7 @@ export class OtpService implements OnModuleInit {
         to: c.email,
         code: c.code,
         ttlSeconds: this.ttlSeconds,
+        locale,
       });
     }
   }

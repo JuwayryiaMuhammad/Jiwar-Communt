@@ -1,12 +1,6 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  ParseUUIDPipe,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { parseId } from '../common/validation/parse-id.pipe';
 import { Roles } from '../common/guards/roles.decorator';
 import { CreateUnitDto } from './dto/create-unit.dto';
 import { UnitView } from './dto/unit.view';
@@ -24,7 +18,7 @@ export class UnitsController {
   }
 
   @Get(':id')
-  get(@Param('id', ParseUUIDPipe) id: string): Promise<UnitView> {
+  get(@Param('id', parseId()) id: string): Promise<UnitView> {
     return this.units.get(id);
   }
 

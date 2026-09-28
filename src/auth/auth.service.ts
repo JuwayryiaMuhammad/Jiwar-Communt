@@ -1,15 +1,10 @@
 import { createHash, randomBytes } from 'node:crypto';
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  Logger,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
+import type { Locale } from '../common/i18n/locale';
 import type { Env } from '../config/env.schema';
-import { ErrorCode } from '../common/errors';
+import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
 import { TenantTx } from '../database/tenant-tx.service';
 import { REDIS } from '../redis/redis.module';
 import type { OtpVerifiedView, TokensView } from './dto/auth.dto';
@@ -47,7 +42,11 @@ export class AuthService {
    * challenge work runs after the response, so neither status nor timing
    * tells whether the identifier exists.
    */
-  async requestOtp(rawIdentifier: string, ip: string): Promise<void> {
+  async requestOtp(
+    rawIdentifier: string,
+    ip: string,
+    locale: Locale,
+  ): Promise<void> {
     const identifierHash = this.hashOrReject(rawIdentifier);
     const window = this.config.get('OTP_RATE_LIMIT_WINDOW_SECONDS', {
       infer: true,
@@ -63,7 +62,7 @@ export class AuthService {
       window,
     );
 
-    void this.otp.issue(identifierHash).catch((error: unknown) => {
+    void this.otp.issue(identifierHash, locale).catch((error: unknown) => {
       this.logger.error(
         `OTP issue failed: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error.stack : undefined,
@@ -87,10 +86,10 @@ export class AuthService {
       ? await this.otp.verify(this.hasher.hashIdentifier(parsed), code)
       : null;
     if (!accounts?.length) {
-      throw new UnauthorizedException({
-        message: 'Invalid or expired code',
-        code: ErrorCode.OTP_INVALID,
-      });
+      throw appError.unauthorized(
+        ErrorCode.OTP_INVALID,
+        'Invalid or expired code',
+      );
     }
 
     const loginTicket = randomBytes(32).toString('base64url');
@@ -129,10 +128,10 @@ export class AuthService {
         )
       : undefined;
     if (!chosen || !(await this.isActive(chosen))) {
-      throw new UnauthorizedException({
-        message: 'Invalid or expired login ticket',
-        code: ErrorCode.LOGIN_TICKET_INVALID,
-      });
+      throw appError.unauthorized(
+        ErrorCode.LOGIN_TICKET_INVALID,
+        'Invalid or expired login ticket',
+      );
     }
     return view(await this.sessions.start(chosen), chosen);
   }
@@ -157,10 +156,10 @@ export class AuthService {
         await this.sessions.revoke(session.id);
       }
     }
-    throw new UnauthorizedException({
-      message: 'Invalid refresh token',
-      code: ErrorCode.REFRESH_TOKEN_INVALID,
-    });
+    throw appError.unauthorized(
+      ErrorCode.REFRESH_TOKEN_INVALID,
+      'Invalid refresh token',
+    );
   }
 
   /** Always succeeds from the caller's point of view. */
@@ -173,10 +172,15 @@ export class AuthService {
     const parsed = parseIdentifier(rawIdentifier);
     if (!parsed) {
       // A malformed identifier says nothing about who is registered.
-      throw new BadRequestException({
-        message: 'identifier must be a valid email or phone number',
-        code: ErrorCode.VALIDATION_FAILED,
-      });
+      throw appError.badRequest(
+        ErrorCode.VALIDATION_FAILED,
+        'identifier must be a valid email or phone number',
+        {
+          fields: [
+            { field: 'identifier', code: FieldErrorCode.INVALID_FORMAT },
+          ],
+        },
+      );
     }
     return this.hasher.hashIdentifier(parsed);
   }

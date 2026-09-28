@@ -11,4 +11,13 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   accounts_tenant_id_type_email_key: ['email'],
   accounts_tenant_id_type_phone_key: ['phone'],
   units_tenant_id_code_key: ['code'],
+  roles_tenant_id_key_key: ['key'],
+  unit_occupancies_one_active_per_unit_account: ['unitId'],
+  platform_admins_email_key: ['email'],
+  // Technical keys that back composite foreign keys; a violation would mean
+  // an id collision, so they stay neutral like primary keys.
+  accounts_tenant_id_id_key: null,
+  units_tenant_id_id_key: null,
+  roles_tenant_id_id_key: null,
+  roles_tenant_id_id_kind_key: null,
 };

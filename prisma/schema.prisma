@@ -47,6 +47,35 @@ enum IdentifierType {
   @@map("identifier_type")
 }
 
+/// ADR 0013
+enum Locale {
+  ar
+  en
+
+  @@map("locale")
+}
+
+enum OccupancyType {
+  owner
+  tenant
+
+  @@map("occupancy_type")
+}
+
+enum OccupancyStatus {
+  active
+  ended
+
+  @@map("occupancy_status")
+}
+
+enum PlatformAdminStatus {
+  active
+  disabled
+
+  @@map("platform_admin_status")
+}
+
 // ============================================================================
 // GLOBAL — no RLS
 // ============================================================================
@@ -58,9 +87,11 @@ model Tenant {
   status    TenantStatus @default(active)
   createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  accounts         Account[]
-  units            Unit[]
-  loginIdentifiers LoginIdentifier[]
+  accounts          Account[]
+  units             Unit[]
+  loginIdentifiers  LoginIdentifier[]
+  roles             Role[]
+  permissionCatalog TenantPermissionCatalog[]
 
   @@map("tenants")
 }
@@ -117,32 +148,130 @@ model Session {
   @@map("sessions")
 }
 
+/// The platform owner (ADR 0011). Not a tenant account.
+model PlatformAdmin {
+  id                 String              @id @db.Uuid
+  /// trimmed + lowercased
+  email              String              @unique
+  /// argon2id
+  passwordHash       String              @map("password_hash")
+  mustChangePassword Boolean             @default(true) @map("must_change_password")
+  status             PlatformAdminStatus @default(active)
+  preferredLocale    Locale              @default(ar) @map("preferred_locale")
+  failedAttempts     Int                 @default(0) @map("failed_attempts")
+  lockedUntil        DateTime?           @map("locked_until") @db.Timestamptz(3)
+  lastLoginAt        DateTime?           @map("last_login_at") @db.Timestamptz(3)
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  sessions PlatformSession[]
+
+  @@map("platform_admins")
+}
+
+/// Same rotation / reuse-detection rules as `sessions`.
+model PlatformSession {
+  id               String    @id @db.Uuid
+  adminId          String    @map("admin_id") @db.Uuid
+  refreshTokenHash String    @map("refresh_token_hash") @db.Char(64)
+  expiresAt        DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt        DateTime? @map("revoked_at") @db.Timestamptz(3)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  lastUsedAt       DateTime? @map("last_used_at") @db.Timestamptz(3)
+
+  admin PlatformAdmin @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
+  @@map("platform_sessions")
+}
+
 // ============================================================================
 // TENANT-SCOPED — RLS + FORCE (policy in the migration)
 // ============================================================================
 
 /// Separate per capacity (ADR 0002): the same phone/email may exist once per
 /// account type within a tenant, and freely across tenants.
+///
+/// Exactly one role (ADR 0010). The composite key (tenant_id, role_id, type)
+/// makes both a role of another tenant and a role of another kind impossible
+/// at the database level — foreign-key checks bypass RLS.
 model Account {
-  id         String        @id @db.Uuid
-  tenantId   String        @map("tenant_id") @db.Uuid
-  type       AccountType
-  fullName   String        @map("full_name")
-  nationalId String        @map("national_id")
+  id              String        @id @db.Uuid
+  tenantId        String        @map("tenant_id") @db.Uuid
+  type            AccountType
+  roleId          String        @map("role_id") @db.Uuid
+  fullName        String        @map("full_name")
+  nationalId      String        @map("national_id")
   /// E.164
-  phone      String
+  phone           String
   /// trimmed + lowercased
-  email      String
-  status     AccountStatus @default(active)
-  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt  DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  email           String
+  status          AccountStatus @default(active)
+  preferredLocale Locale        @default(ar) @map("preferred_locale")
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  tenant           Tenant            @relation(fields: [tenantId], references: [id])
-  loginIdentifiers LoginIdentifier[]
+  tenant             Tenant            @relation(fields: [tenantId], references: [id])
+  role               Role              @relation(fields: [tenantId, roleId, type], references: [tenantId, id, kind], onUpdate: Restrict)
+  loginIdentifiers   LoginIdentifier[]
+  occupancies        UnitOccupancy[]   @relation("OccupancyAccount")
+  createdOccupancies UnitOccupancy[]   @relation("OccupancyCreatedBy")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
+  @@unique([tenantId, id])
+  @@index([tenantId, roleId])
   @@map("accounts")
+}
+
+/// Per-tenant copy of a role (ADR 0010). System roles are identified by `key`
+/// and have no `name` (ADR 0013); `name` is for future custom roles.
+model Role {
+  id                 String      @id @db.Uuid
+  tenantId           String      @map("tenant_id") @db.Uuid
+  key                String
+  name               String?
+  kind               AccountType
+  isSystem           Boolean     @default(false) @map("is_system")
+  /// Bumped in the same transaction as every permission change; part of the
+  /// permission cache key, so a stale cache entry is never read again.
+  permissionsVersion Int         @default(1) @map("permissions_version")
+  createdAt          DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant      Tenant           @relation(fields: [tenantId], references: [id])
+  permissions RolePermission[]
+  accounts    Account[]
+
+  @@unique([tenantId, key])
+  @@unique([tenantId, id])
+  @@unique([tenantId, id, kind])
+  @@map("roles")
+}
+
+model RolePermission {
+  tenantId   String @map("tenant_id") @db.Uuid
+  roleId     String @map("role_id") @db.Uuid
+  permission String
+
+  role Role @relation(fields: [tenantId, roleId], references: [tenantId, id], onUpdate: Restrict)
+
+  @@id([roleId, permission])
+  @@index([tenantId])
+  @@map("role_permissions")
+}
+
+/// Which code permissions this tenant has already been offered (ADR 0010).
+/// A permission listed here is never re-added by `access:sync`.
+model TenantPermissionCatalog {
+  tenantId    String   @map("tenant_id") @db.Uuid
+  permission  String
+  firstSeenAt DateTime @default(now()) @map("first_seen_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@id([tenantId, permission])
+  @@map("tenant_permission_catalog")
 }
 
 model Unit {
@@ -154,8 +283,33 @@ model Unit {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
+  tenant      Tenant          @relation(fields: [tenantId], references: [id])
+  occupancies UnitOccupancy[]
 
   @@unique([tenantId, code])
+  @@unique([tenantId, id])
   @@map("units")
+}
+
+/// Resident ↔ unit (ADR 0012). Never deleted: ending sets status + ended_at.
+/// One active occupancy per (unit, account): partial unique index in SQL.
+model UnitOccupancy {
+  id            String          @id @db.Uuid
+  tenantId      String          @map("tenant_id") @db.Uuid
+  unitId        String          @map("unit_id") @db.Uuid
+  accountId     String          @map("account_id") @db.Uuid
+  occupancyType OccupancyType   @map("occupancy_type")
+  status        OccupancyStatus @default(active)
+  startedAt     DateTime        @default(now()) @map("started_at") @db.Timestamptz(3)
+  endedAt       DateTime?       @map("ended_at") @db.Timestamptz(3)
+  createdById   String          @map("created_by") @db.Uuid
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  unit      Unit    @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
+  account   Account @relation("OccupancyAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
+  createdBy Account @relation("OccupancyCreatedBy", fields: [tenantId, createdById], references: [tenantId, id], onUpdate: Restrict)
+
+  @@index([tenantId, accountId])
+  @@index([tenantId, unitId])
+  @@map("unit_occupancies")
 }

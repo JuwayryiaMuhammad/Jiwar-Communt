@@ -9,6 +9,7 @@ import {
   createAccountRow,
   createTenant,
   createUnit,
+  roleId,
   uniqueSuffix,
 } from '../setup/fixtures';
 
@@ -23,6 +24,7 @@ describe('RLS tenant isolation (database level)', () => {
   let tenantB: string;
   let unitA: { id: string };
   let accountA: { id: string };
+  let residentRoleB: string;
 
   /** A plain pg connection as the runtime role, outside Prisma entirely. */
   async function rawAppClient(): Promise<Client> {
@@ -38,6 +40,7 @@ describe('RLS tenant isolation (database level)', () => {
     unitA = await createUnit(h, tenantA);
     await createUnit(h, tenantB);
     accountA = await createAccountRow(h, tenantA);
+    residentRoleB = await roleId(h, tenantB, 'resident');
     await createAccountRow(h, tenantB);
   });
 
@@ -165,6 +168,7 @@ describe('RLS tenant isolation (database level)', () => {
                 id: newId(),
                 tenantId: tenantB,
                 type: 'resident',
+                roleId: residentRoleB,
                 fullName: 'Intruder',
                 nationalId: '29001010000000',
                 phone: '+201000000000',

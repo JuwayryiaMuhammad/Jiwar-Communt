@@ -32,6 +32,8 @@ export const ErrorCode = {
   UNIT_NOT_FOUND: 'UNIT_NOT_FOUND',
   ACCOUNT_NOT_FOUND: 'ACCOUNT_NOT_FOUND',
   CANNOT_CHANGE_OWN_STATUS: 'CANNOT_CHANGE_OWN_STATUS',
+  // access (ADR 0010)
+  NO_ROLE_FOR_ACCOUNT_TYPE: 'NO_ROLE_FOR_ACCOUNT_TYPE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

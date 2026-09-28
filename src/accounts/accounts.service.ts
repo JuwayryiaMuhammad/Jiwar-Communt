@@ -1,16 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import type { Account } from '@prisma/client';
-import {
-  IdentifierHasher,
-  normalizeEmail,
-  normalizePhone,
-} from '../auth/identifier';
 import { RequestContext } from '../common/cls/request-context';
-import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
-import { newId } from '../common/uuid';
-import { GlobalDbService } from '../database/global-db.service';
+import { appError, ErrorCode } from '../common/errors';
 import { PrismaService } from '../database/prisma.service';
 import { TenantTx } from '../database/tenant-tx.service';
+import { AccountWriter } from './account-writer';
 import { AccountView } from './dto/account.view';
 import type { CreateAccountDto } from './dto/create-account.dto';
 import type { UpdateAccountStatusDto } from './dto/update-account-status.dto';
@@ -20,8 +13,7 @@ export class AccountsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tenantTx: TenantTx,
-    private readonly globalDb: GlobalDbService,
-    private readonly hasher: IdentifierHasher,
+    private readonly writer: AccountWriter,
     private readonly ctx: RequestContext,
   ) {}
 
@@ -44,65 +36,15 @@ export class AccountsService {
     return this.get(this.ctx.accountId);
   }
 
-  /**
-   * The account and its login identifiers commit together: either the person
-   * can log in, or the account does not exist (ADR 0003).
-   */
+  /** A manager creating an account; the role follows the type (ADR 0010). */
   async create(dto: CreateAccountDto): Promise<AccountView> {
-    const email = normalizeEmail(dto.email);
-    const phone = normalizePhone(dto.phone);
-    if (!email || !phone) {
-      throw appError.badRequest(
-        ErrorCode.VALIDATION_FAILED,
-        'Invalid email or phone',
-        {
-          fields: [
-            ...(email
-              ? []
-              : [{ field: 'email', code: FieldErrorCode.INVALID_EMAIL }]),
-            ...(phone
-              ? []
-              : [{ field: 'phone', code: FieldErrorCode.INVALID_PHONE }]),
-          ],
-        },
-      );
-    }
-
     const tenantId = this.ctx.tenantId;
-    const account = await this.tenantTx.withTenantTx(async (tx) => {
-      const created = await tx.account.create({
-        data: {
-          id: newId(),
-          tenantId,
-          type: dto.type,
-          fullName: dto.fullName.trim(),
-          nationalId: dto.nationalId,
-          phone,
-          email,
-        },
-      });
-      await this.globalDb.in(tx).loginIdentifier.createMany({
-        data: [
-          { type: 'email' as const, value: email },
-          { type: 'phone' as const, value: phone },
-        ].map((id) => ({
-          identifierHash: this.hasher.hashIdentifier(id),
-          identifierType: id.type,
-          accountId: created.id,
-          tenantId,
-          accountType: created.type,
-          status: created.status,
-        })),
-      });
-      return created;
-    });
+    const account = await this.tenantTx.withTenantTx((tx) =>
+      this.writer.create(tx, tenantId, dto),
+    );
     return AccountView.from(account);
   }
 
-  /**
-   * Status lives on the account; the login lookup mirrors it, and
-   * deactivation ends every session of the account at once (ADR 0004).
-   */
   async updateStatus(
     id: string,
     dto: UpdateAccountStatusDto,
@@ -113,28 +55,8 @@ export class AccountsService {
         'You cannot change the status of your own account',
       );
     }
-
-    const account = await this.tenantTx.withTenantTx(
-      async (tx): Promise<Account | null> => {
-        const { count } = await tx.account.updateMany({
-          where: { id },
-          data: { status: dto.status },
-        });
-        if (count === 0) return null;
-
-        const global = this.globalDb.in(tx);
-        await global.loginIdentifier.updateMany({
-          where: { accountId: id },
-          data: { status: dto.status },
-        });
-        if (dto.status === 'inactive') {
-          await global.session.updateMany({
-            where: { accountId: id, revokedAt: null },
-            data: { revokedAt: new Date() },
-          });
-        }
-        return tx.account.findUnique({ where: { id } });
-      },
+    const account = await this.tenantTx.withTenantTx((tx) =>
+      this.writer.setStatus(tx, id, dto.status),
     );
     if (!account) throw notFound();
     return AccountView.from(account);

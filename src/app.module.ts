@@ -6,6 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import type { Request } from 'express';
 import { ClsModule } from 'nestjs-cls';
 import { LoggerModule } from 'nestjs-pino';
+import { AccessModule } from './access/access.module';
 import { AccountsModule } from './accounts/accounts.module';
 import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
@@ -68,12 +69,16 @@ import { UnitsModule } from './units/units.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService<Env, true>) => ({
         secret: config.get('JWT_ACCESS_SECRET', { infer: true }),
-        signOptions: { algorithm: 'HS256' },
+        // Tenant tokens only; platform tokens use another secret and
+        // audience (ADR 0011).
+        signOptions: { algorithm: 'HS256', audience: 'tenant' },
+        verifyOptions: { algorithms: ['HS256'], audience: 'tenant' },
       }),
     }),
     RequestContextModule,
     DatabaseModule,
     RedisModule,
+    AccessModule,
     HealthModule,
     AuthModule,
     AccountsModule,

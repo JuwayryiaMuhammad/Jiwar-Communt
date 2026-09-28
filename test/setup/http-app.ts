@@ -13,6 +13,8 @@ import type { AppClsStore } from '../../src/common/cls/app-cls';
 import type { AccessTokenClaims } from '../../src/common/guards/access-token';
 import { newId } from '../../src/common/uuid';
 import { GlobalDbService } from '../../src/database/global-db.service';
+import { TenantTx } from '../../src/database/tenant-tx.service';
+import { RoleProvisioner } from '../../src/access/role-provisioner';
 import { uniqueSuffix } from './fixtures';
 
 export const API = '/api/v1';
@@ -49,6 +51,8 @@ export async function createHttpHarness(): Promise<HttpHarness> {
   const accounts = moduleRef.get(AccountsService);
   const cls = moduleRef.get<ClsService<AppClsStore>>(ClsService);
   const jwt = moduleRef.get(JwtService);
+  const tenantTx = moduleRef.get(TenantTx);
+  const provisioner = moduleRef.get(RoleProvisioner);
 
   return {
     app,
@@ -57,6 +61,12 @@ export async function createHttpHarness(): Promise<HttpHarness> {
     async createTenant(name) {
       const tenant = { id: newId(), name: `${name} ${uniqueSuffix()}` };
       await globalDb.tenant.create({ data: tenant });
+      await cls.run(async () => {
+        cls.set('tenantId', tenant.id);
+        await tenantTx.withTenantTx((tx) =>
+          provisioner.provision(tx, tenant.id),
+        );
+      });
       return tenant;
     },
     // Through the real service, as a manager of that tenant would.
@@ -75,7 +85,8 @@ export async function createHttpHarness(): Promise<HttpHarness> {
           email: input.email,
         });
       }),
-    tokenFor: (claims) => jwt.signAsync(claims, { expiresIn: 900 }),
+    tokenFor: (claims) =>
+      jwt.signAsync(claims, { expiresIn: 900, audience: 'tenant' }),
     close: () => app.close(),
   };
 }

@@ -4,7 +4,9 @@ import { ClsService } from 'nestjs-cls';
 import { AccountsService } from '../src/accounts/accounts.service';
 import { AppModule } from '../src/app.module';
 import type { AppClsStore } from '../src/common/cls/app-cls';
+import { RoleProvisioner } from '../src/access/role-provisioner';
 import { GlobalDbService } from '../src/database/global-db.service';
+import { TenantTx } from '../src/database/tenant-tx.service';
 import { UnitsService } from '../src/units/units.service';
 
 /**
@@ -25,7 +27,6 @@ const TENANTS = [
       fullName: 'Manager A',
     },
     units: ['A-101', 'A-102', 'A-201'],
-    shared: 'resident' as const,
   },
   {
     id: '01920000-0000-7000-8000-00000000000b',
@@ -36,7 +37,6 @@ const TENANTS = [
       fullName: 'Manager B',
     },
     units: ['B-1', 'B-2'],
-    shared: 'staff' as const,
   },
 ];
 
@@ -55,6 +55,8 @@ async function main() {
     const accounts = app.get(AccountsService);
     const units = app.get(UnitsService);
     const cls = app.get<ClsService<AppClsStore>>(ClsService);
+    const tenantTx = app.get(TenantTx);
+    const provisioner = app.get(RoleProvisioner);
 
     if (await globalDb.tenant.findUnique({ where: { id: TENANTS[0].id } })) {
       console.log('Already seeded; nothing to do.');
@@ -68,6 +70,7 @@ async function main() {
       await globalDb.tenant.create({ data: { id: t.id, name: t.name } });
       await cls.run(async () => {
         cls.set('tenantId', t.id);
+        await tenantTx.withTenantTx((tx) => provisioner.provision(tx, t.id));
         cls.set('accountType', 'manager');
         const manager = await accounts.create({
           type: 'manager',
@@ -76,7 +79,7 @@ async function main() {
         });
         cls.set('accountId', manager.id);
         await accounts.create({
-          type: t.shared,
+          type: 'resident',
           nationalId: nationalId(),
           ...SHARED_PERSON,
         });
@@ -87,7 +90,7 @@ async function main() {
       );
     }
     console.log(
-      `Shared person (resident in A, staff in B): ${SHARED_PERSON.email} / ${SHARED_PERSON.phone}`,
+      `Shared person (resident in both): ${SHARED_PERSON.email} / ${SHARED_PERSON.phone}`,
     );
   } finally {
     await app.close();

@@ -37,6 +37,7 @@ export class JwtAuthGuard implements CanActivate {
     try {
       claims = await this.jwt.verifyAsync<AccessTokenClaims>(token, {
         algorithms: ['HS256'],
+        audience: 'tenant',
       });
     } catch {
       throw unauthenticated();

@@ -144,7 +144,7 @@ export class AuthService {
         session.tenantId,
         session.accountId,
       );
-      if (account?.status === 'active') {
+      if (account && usable(account)) {
         const current: SessionAccount = {
           accountId: account.id,
           tenantId: session.tenantId,
@@ -187,7 +187,7 @@ export class AuthService {
 
   private async isActive(account: TicketAccount): Promise<boolean> {
     const row = await this.readAccount(account.tenantId, account.accountId);
-    return row?.status === 'active';
+    return !!row && usable(row);
   }
 
   /** The source of truth is the tenant row, read in exactly that tenant. */
@@ -195,10 +195,23 @@ export class AuthService {
     return this.tenantTx.runInTenantUnsafe(tenantId, (tx) =>
       tx.account.findUnique({
         where: { id: accountId },
-        select: { id: true, type: true, status: true },
+        select: {
+          id: true,
+          type: true,
+          status: true,
+          tenant: { select: { status: true } },
+        },
       }),
     );
   }
+}
+
+/** An active account in an active (not suspended) compound (ADR 0011). */
+function usable(account: {
+  status: string;
+  tenant: { status: string };
+}): boolean {
+  return account.status === 'active' && account.tenant.status === 'active';
 }
 
 function ticketKey(ticket: string): string {

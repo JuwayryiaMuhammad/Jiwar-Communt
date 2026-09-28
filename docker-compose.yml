@@ -1,0 +1,45 @@
+# Local development stack. Ports are shifted (+1) from the usual ones so this
+# project can run next to Jiwar-Hub-backend, which holds 5434/6380.
+services:
+  postgres:
+    image: postgres:17
+    container_name: jiwar-community-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:-postgres_dev}
+      POSTGRES_DB: postgres
+      # Read by docker/postgres/init.sql through \getenv.
+      JIWAR_MIGRATOR_PASSWORD: ${JIWAR_MIGRATOR_PASSWORD:-jiwar_migrator_dev}
+      JIWAR_APP_PASSWORD: ${JIWAR_APP_PASSWORD:-jiwar_app_dev}
+    ports:
+      - '127.0.0.1:5435:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    container_name: jiwar-community-redis
+    ports:
+      - '127.0.0.1:6381:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # SMTP catcher: every OTP email lands here. UI on http://localhost:8025.
+  mailpit:
+    image: axllent/mailpit
+    container_name: jiwar-community-mailpit
+    ports:
+      - '127.0.0.1:1025:1025'
+      - '127.0.0.1:8025:8025'
+
+volumes:
+  postgres-data:

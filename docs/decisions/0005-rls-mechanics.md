@@ -1,0 +1,32 @@
+# 0005 — RLS mechanics
+
+**Status:** Accepted · Phase 0 (proven by `test/rls/`)
+
+## Roles
+- `jiwar_migrator` owns every table and runs migrations (`MIGRATOR_DATABASE_URL`, used only by the Prisma CLI).
+- `jiwar_app` is the runtime role (`DATABASE_URL`): not an owner, not a superuser, `NOBYPASSRLS`, DML grants only.
+
+## Policy
+Every tenant-scoped table:
+```sql
+ALTER TABLE x ENABLE ROW LEVEL SECURITY;
+ALTER TABLE x FORCE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation ON x
+  USING (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
+  WITH CHECK (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid);
+```
+With no tenant set the comparison is against NULL: reads return nothing and writes fail `WITH CHECK` (fail-closed).
+
+## Setting the tenant
+The tenant is set with `set_config('app.tenant_id', <id>, true)` — **transaction-local** — as the first statement **inside the same transaction** as the queries. Never a session-level `SET`: a pooled connection must not carry one request's tenant into the next.
+
+Access paths (all in `src/database/`):
+- **`PrismaService.tenant`** — a Prisma extension that wraps every model operation in a batch transaction `[set_config, query]`. The tenant comes from the request context (CLS); without one it throws and runs nothing. `$transaction`, `$queryRaw*` and `$executeRaw*` are removed from its type and throw at runtime: a nested transaction per query would deadlock a pool of one and escape the outer transaction on a bigger pool. It also throws when called inside `withTenantTx`, where `tx` must be used.
+- **`TenantTx.withTenantTx(fn)`** — an interactive transaction on the base client: `set_config` first, then `fn(tx)`. The only way to run multi-statement units of work or raw SQL.
+- **`TenantTx.runInTenantUnsafe(tenantId, fn)`** — same, with an explicit tenant. Allowed only in `src/auth/` and `prisma/seed.ts` (ESLint `no-restricted-properties`).
+- **`GlobalDbService`** — the only path to the global tables (`tenants`, `login_identifiers`, `otp_challenges`, `sessions`).
+- The base client is private to `src/database/` (ESLint `no-restricted-imports`).
+- `tenantId` never appears in a request DTO; it is taken from the context only.
+
+## Operational note
+`FORCE ROW LEVEL SECURITY` applies to `jiwar_migrator` too. Any future migration that changes **data** in tenant tables must run `set_config('app.tenant_id', …, true)` per tenant inside its transaction. Schema-only migrations are unaffected.

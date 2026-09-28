@@ -30,3 +30,6 @@ Access paths (all in `src/database/`):
 
 ## Operational note
 `FORCE ROW LEVEL SECURITY` applies to `jiwar_migrator` too. Any future migration that changes **data** in tenant tables must run `set_config('app.tenant_id', …, true)` per tenant inside its transaction. Schema-only migrations are unaffected.
+
+## Lazy queries and the request context
+Prisma queries are lazy: they execute when awaited, and the tenant hook reads the context at that moment. Code must therefore `await` a tenant query inside the context that owns it (`cls.run(async () => await …)`). Returning an un-awaited query out of the context fails closed with `TenantContextMissingError` — found and pinned down by the spike. Inside an HTTP request the whole handler runs in one context, so this only matters for code that opens its own context (jobs, scripts, tests).

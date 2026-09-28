@@ -103,6 +103,212 @@ describe('RLS tenant isolation (database level)', () => {
   });
 
   // --------------------------------------------------------------------------
+  describe('1b. Phase 1a tenant tables are isolated too', () => {
+    let occupancyA: { id: string };
+    let managerRoleA: string;
+
+    beforeAll(async () => {
+      managerRoleA = await roleId(h, tenantA, 'manager');
+      occupancyA = await h.asTenant(tenantA, () =>
+        h.prisma.tenant.unitOccupancy.create({
+          data: {
+            id: newId(),
+            tenantId: tenantA,
+            unitId: unitA.id,
+            accountId: accountA.id,
+            occupancyType: 'owner',
+            createdById: accountA.id,
+          },
+        }),
+      );
+    });
+
+    it('B sees only its own roles, role permissions and catalog', async () => {
+      const [roles, perms, catalog] = await h.asTenant(tenantB, () =>
+        Promise.all([
+          h.prisma.tenant.role.findMany(),
+          h.prisma.tenant.rolePermission.findMany(),
+          h.prisma.tenant.tenantPermissionCatalog.findMany(),
+        ]),
+      );
+      for (const rows of [roles, perms, catalog]) {
+        expect(rows.length).toBeGreaterThan(0);
+        expect(rows.every((r) => r.tenantId === tenantB)).toBe(true);
+      }
+    });
+
+    it("B cannot fetch A's role, its permissions or A's occupancy", async () => {
+      const [role, perms, occupancy, occupancies] = await h.asTenant(
+        tenantB,
+        () =>
+          Promise.all([
+            h.prisma.tenant.role.findUnique({ where: { id: managerRoleA } }),
+            h.prisma.tenant.rolePermission.findMany({
+              where: { roleId: managerRoleA },
+            }),
+            h.prisma.tenant.unitOccupancy.findUnique({
+              where: { id: occupancyA.id },
+            }),
+            h.prisma.tenant.unitOccupancy.findMany(),
+          ]),
+      );
+      expect(role).toBeNull();
+      expect(perms).toEqual([]);
+      expect(occupancy).toBeNull();
+      expect(occupancies.every((o) => o.tenantId === tenantB)).toBe(true);
+    });
+
+    it("B cannot edit A's role permissions", async () => {
+      const removed = await h.asTenant(tenantB, () =>
+        h.prisma.tenant.rolePermission.deleteMany({
+          where: { roleId: managerRoleA },
+        }),
+      );
+      expect(removed.count).toBe(0);
+    });
+
+    it("writing another tenant's tenant_id is rejected on every new table", async () => {
+      const attempts: (() => Promise<unknown>)[] = [
+        () =>
+          h.prisma.tenant.role.create({
+            data: {
+              id: newId(),
+              tenantId: tenantB,
+              key: `x-${uniqueSuffix()}`,
+              kind: 'resident',
+            },
+          }),
+        () =>
+          h.prisma.tenant.tenantPermissionCatalog.create({
+            data: { tenantId: tenantB, permission: `x.${uniqueSuffix()}` },
+          }),
+        () =>
+          h.prisma.tenant.rolePermission.create({
+            data: {
+              tenantId: tenantB,
+              roleId: residentRoleB,
+              permission: 'units.read2',
+            },
+          }),
+        () =>
+          h.prisma.tenant.unitOccupancy.create({
+            data: {
+              id: newId(),
+              tenantId: tenantB,
+              unitId: unitA.id,
+              accountId: accountA.id,
+              occupancyType: 'tenant',
+              createdById: accountA.id,
+            },
+          }),
+      ];
+      for (const attempt of attempts) {
+        await expect(h.asTenant(tenantA, attempt)).rejects.toThrow(
+          /row-level security/,
+        );
+      }
+    });
+
+    it("composite keys stop links to another tenant's rows (FK checks bypass RLS)", async () => {
+      // An account in A pointing at B's resident role.
+      await expect(
+        h.asTenant(tenantA, () =>
+          h.prisma.tenant.account.create({
+            data: {
+              id: newId(),
+              tenantId: tenantA,
+              type: 'resident',
+              roleId: residentRoleB,
+              fullName: 'Cross link',
+              nationalId: '29001010000001',
+              phone: '+201000000011',
+              email: `cross-${uniqueSuffix()}@example.test`,
+            },
+          }),
+        ),
+      ).rejects.toMatchObject({ code: 'P2003' });
+
+      // An occupancy in A pointing at a unit of B.
+      const unitOfB = await createUnit(h, tenantB);
+      await expect(
+        h.asTenant(tenantA, () =>
+          h.prisma.tenant.unitOccupancy.create({
+            data: {
+              id: newId(),
+              tenantId: tenantA,
+              unitId: unitOfB.id,
+              accountId: accountA.id,
+              occupancyType: 'owner',
+              createdById: accountA.id,
+            },
+          }),
+        ),
+      ).rejects.toMatchObject({ code: 'P2003' });
+    });
+
+    it('an account cannot hold a role of another kind', async () => {
+      await expect(
+        h.asTenant(tenantA, () =>
+          h.prisma.tenant.account.create({
+            data: {
+              id: newId(),
+              tenantId: tenantA,
+              type: 'resident',
+              roleId: managerRoleA,
+              fullName: 'Wrong kind',
+              nationalId: '29001010000002',
+              phone: '+201000000012',
+              email: `kind-${uniqueSuffix()}@example.test`,
+            },
+          }),
+        ),
+      ).rejects.toMatchObject({ code: 'P2003' });
+    });
+
+    it('only one active occupancy per unit and account; ended ones may repeat', async () => {
+      const again = () =>
+        h.asTenant(tenantA, () =>
+          h.prisma.tenant.unitOccupancy.create({
+            data: {
+              id: newId(),
+              tenantId: tenantA,
+              unitId: unitA.id,
+              accountId: accountA.id,
+              occupancyType: 'tenant',
+              createdById: accountA.id,
+            },
+          }),
+        );
+      await expect(again()).rejects.toMatchObject({ code: 'P2002' });
+      await h.asTenant(tenantA, () =>
+        h.prisma.tenant.unitOccupancy.update({
+          where: { id: occupancyA.id },
+          data: { status: 'ended', endedAt: new Date() },
+        }),
+      );
+      await expect(again()).resolves.toMatchObject({ status: 'active' });
+    });
+
+    it('ended_at must match the status', async () => {
+      await expect(
+        h.asTenant(tenantA, () =>
+          h.prisma.tenant.unitOccupancy.create({
+            data: {
+              id: newId(),
+              tenantId: tenantA,
+              unitId: unitA.id,
+              accountId: accountA.id,
+              occupancyType: 'owner',
+              status: 'ended',
+              createdById: accountA.id,
+            },
+          }),
+        ),
+      ).rejects.toThrow(/ended_at_matches_status|check constraint/i);
+    });
+  });
+
+  // --------------------------------------------------------------------------
   describe('2. no tenant in context', () => {
     it('the tenant client throws outside any request context', async () => {
       await expect(h.prisma.tenant.unit.findMany()).rejects.toBeInstanceOf(

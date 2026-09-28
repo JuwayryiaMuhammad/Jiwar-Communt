@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { parseId } from '../common/validation/parse-id.pipe';
-import { Roles } from '../common/guards/roles.decorator';
+import { RequirePermissions } from '../access/require-permissions.decorator';
 import { AccountsService } from './accounts.service';
 import { AccountView } from './dto/account.view';
 import { CreateAccountDto } from './dto/create-account.dto';
@@ -19,26 +19,26 @@ export class AccountsController {
     return this.accounts.me();
   }
 
-  @Roles('manager')
+  @RequirePermissions('accounts.read')
   @Get()
   list(): Promise<AccountView[]> {
     return this.accounts.list();
   }
 
-  @Roles('manager')
+  @RequirePermissions('accounts.read')
   @Get(':id')
   get(@Param('id', parseId()) id: string): Promise<AccountView> {
     return this.accounts.get(id);
   }
 
-  @Roles('manager')
+  @RequirePermissions('accounts.manage')
   @Post()
   create(@Body() dto: CreateAccountDto): Promise<AccountView> {
     return this.accounts.create(dto);
   }
 
   /** Deactivating also revokes every session of the account. */
-  @Roles('manager')
+  @RequirePermissions('accounts.manage')
   @Patch(':id/status')
   updateStatus(
     @Param('id', parseId()) id: string,

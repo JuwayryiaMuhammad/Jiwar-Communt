@@ -7,13 +7,13 @@ import type { Request } from 'express';
 import { ClsModule } from 'nestjs-cls';
 import { LoggerModule } from 'nestjs-pino';
 import { AccessModule } from './access/access.module';
+import { PermissionsGuard } from './access/permissions.guard';
 import { AccountsModule } from './accounts/accounts.module';
 import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { RequestContextModule } from './common/cls/request-context.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
-import { RolesGuard } from './common/guards/roles.guard';
 import { validateEnv, type Env } from './config/env.schema';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
@@ -87,9 +87,10 @@ import { UnitsModule } from './units/units.module';
   controllers: [AppController],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
-    // Order matters: authentication fills the context the role check reads.
+    // Order matters: authentication fills the context the permission check
+    // reads.
     { provide: APP_GUARD, useClass: JwtAuthGuard },
-    { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: PermissionsGuard },
   ],
 })
 export class AppModule {}

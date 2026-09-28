@@ -33,6 +33,8 @@ export interface HttpHarness {
       fullName?: string;
     },
   ): Promise<{ id: string }>;
+  /** Marks the compound suspended (the platform service arrives later). */
+  suspendTenant(tenantId: string): Promise<void>;
   /** A valid access token minted directly (skips the OTP flow). */
   tokenFor(claims: AccessTokenClaims): Promise<string>;
   close(): Promise<void>;
@@ -85,6 +87,12 @@ export async function createHttpHarness(): Promise<HttpHarness> {
           email: input.email,
         });
       }),
+    async suspendTenant(tenantId) {
+      await globalDb.tenant.update({
+        where: { id: tenantId },
+        data: { status: 'suspended' },
+      });
+    },
     tokenFor: (claims) =>
       jwt.signAsync(claims, { expiresIn: 900, audience: 'tenant' }),
     close: () => app.close(),

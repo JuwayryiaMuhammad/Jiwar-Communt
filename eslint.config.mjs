@@ -42,7 +42,8 @@ export default tseslint.config(
   //
   // runInTenantUnsafe takes a tenant id from the caller instead of the request
   // context, so it is a deliberate hole. It is allowed only where there is no
-  // request tenant yet by design: the login bootstrap (src/auth/) and the seed.
+  // request tenant by design: the login bootstrap (src/auth/), the platform
+  // (src/platform/: creating compounds, cross-compound jobs) and the seed.
   {
     files: ['**/*.ts'],
     rules: {
@@ -63,7 +64,7 @@ export default tseslint.config(
         {
           property: 'runInTenantUnsafe',
           message:
-            'runInTenantUnsafe ignores the request tenant. Allowed only in src/auth/ and prisma/seed.ts; use withTenantTx.',
+            'runInTenantUnsafe ignores the request tenant. Allowed only in src/auth/, src/platform/ and prisma/seed.ts; use withTenantTx.',
         },
       ],
     },
@@ -76,7 +77,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/auth/**/*.ts', 'prisma/seed.ts'],
+    files: ['src/auth/**/*.ts', 'src/platform/**/*.ts', 'prisma/seed.ts'],
     rules: {
       'no-restricted-properties': 'off',
     },

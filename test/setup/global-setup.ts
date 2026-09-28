@@ -23,6 +23,9 @@ export default async function globalSetup(): Promise<void> {
 
   await truncateAll(migratorUrl);
 
+  // Permission sync is a deploy step (ADR 0010); run it like a deploy would.
+  execSync('pnpm access:sync', { env: process.env, stdio: 'pipe' });
+
   const redis = new Redis(required('TEST_REDIS_URL'));
   try {
     await redis.flushdb();

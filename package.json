@@ -22,7 +22,8 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "seed": "ts-node --transpile-only prisma/seed.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "access:sync": "ts-node --transpile-only src/platform/access-sync.cli.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

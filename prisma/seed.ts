@@ -1,96 +1,146 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { ClsService } from 'nestjs-cls';
-import { AccountsService } from '../src/accounts/accounts.service';
 import { AppModule } from '../src/app.module';
 import type { AppClsStore } from '../src/common/cls/app-cls';
-import { RoleProvisioner } from '../src/access/role-provisioner';
 import { GlobalDbService } from '../src/database/global-db.service';
-import { TenantTx } from '../src/database/tenant-tx.service';
+import { TenantsService } from '../src/platform/tenants.service';
+import { ResidentsService } from '../src/residents/residents.service';
 import { UnitsService } from '../src/units/units.service';
 
 /**
- * Local demo data: two compounds, one manager each, a few units, and one
- * person with accounts in both compounds (same phone and email) to try
- * the multi-account login by hand. Idempotent: does nothing if already seeded.
+ * Local demo data (idempotent). Everything goes through the real services,
+ * so the seed obeys RLS, roles and validation exactly like the API:
  *
- * Writes go through the real services inside a request-like context, so the
- * seed obeys RLS exactly like the API does.
+ * - the platform super admin, created by the startup bootstrap from
+ *   SUPERADMIN_EMAIL / SUPERADMIN_PASSWORD (password change forced);
+ * - two compounds via TenantsService.createTenant (roles + first manager);
+ * - units, and residents with occupancies — one resident owns A-101 and
+ *   rents A-102, and one person is a resident in both compounds (same
+ *   phone and email) to try the multi-account login by hand.
  */
-const TENANTS = [
+const COMPOUNDS = [
   {
-    id: '01920000-0000-7000-8000-00000000000a',
     name: 'Nile Gardens (demo)',
     manager: {
+      fullName: 'Manager A',
+      nationalId: '29001010000001',
       email: 'manager.a@jiwar.local',
       phone: '+201000000001',
-      fullName: 'Manager A',
     },
     units: ['A-101', 'A-102', 'A-201'],
   },
   {
-    id: '01920000-0000-7000-8000-00000000000b',
     name: 'Desert Rose (demo)',
     manager: {
+      fullName: 'Manager B',
+      nationalId: '29001010000002',
       email: 'manager.b@jiwar.local',
       phone: '+201000000002',
-      fullName: 'Manager B',
     },
     units: ['B-1', 'B-2'],
   },
 ];
 
 const SHARED_PERSON = {
+  fullName: 'Shared Person',
+  nationalId: '29001010000003',
   email: 'shared@jiwar.local',
   phone: '+201000000003',
-  fullName: 'Shared Person',
+};
+
+const OWNER_AND_RENTER = {
+  fullName: 'Owner And Renter',
+  nationalId: '29001010000004',
+  email: 'resident.a@jiwar.local',
+  phone: '+201000000004',
 };
 
 async function main() {
+  // Bootstrap (the platform admin) runs as the context starts.
   const app = await NestFactory.createApplicationContext(AppModule, {
     logger: ['error', 'warn'],
   });
   try {
     const globalDb = app.get(GlobalDbService);
-    const accounts = app.get(AccountsService);
+    const tenants = app.get(TenantsService);
     const units = app.get(UnitsService);
+    const residents = app.get(ResidentsService);
     const cls = app.get<ClsService<AppClsStore>>(ClsService);
-    const tenantTx = app.get(TenantTx);
-    const provisioner = app.get(RoleProvisioner);
 
-    if (await globalDb.tenant.findUnique({ where: { id: TENANTS[0].id } })) {
+    if (
+      await globalDb.tenant.findFirst({ where: { name: COMPOUNDS[0].name } })
+    ) {
       console.log('Already seeded; nothing to do.');
       return;
     }
 
-    let n = 0;
-    const nationalId = () => `2900101000000${n++}`.slice(-14);
-
-    for (const t of TENANTS) {
-      await globalDb.tenant.create({ data: { id: t.id, name: t.name } });
-      await cls.run(async () => {
-        cls.set('tenantId', t.id);
-        await tenantTx.withTenantTx((tx) => provisioner.provision(tx, t.id));
-        cls.set('accountType', 'manager');
-        const manager = await accounts.create({
-          type: 'manager',
-          nationalId: nationalId(),
-          ...t.manager,
-        });
-        cls.set('accountId', manager.id);
-        await accounts.create({
-          type: 'resident',
-          nationalId: nationalId(),
-          ...SHARED_PERSON,
-        });
-        for (const code of t.units) await units.create({ code });
+    const created: {
+      tenantId: string;
+      managerId: string;
+      units: Record<string, string>;
+    }[] = [];
+    for (const def of COMPOUNDS) {
+      const compound = await tenants.createTenant({
+        name: def.name,
+        manager: def.manager,
       });
+      const managerId = compound.managers[0].id;
+      const unitIds: Record<string, string> = {};
+      await cls.run(async () => {
+        cls.set('tenantId', compound.id);
+        cls.set('accountId', managerId);
+        cls.set('accountType', 'manager');
+        for (const code of def.units)
+          unitIds[code] = (await units.create({ code })).id;
+      });
+      created.push({ tenantId: compound.id, managerId, units: unitIds });
       console.log(
-        `Seeded ${t.name}: manager ${t.manager.email} / ${t.manager.phone}`,
+        `Compound ${def.name}: manager ${def.manager.email} / ${def.manager.phone}`,
       );
     }
+
+    const asManager = (i: number, fn: () => Promise<unknown>) =>
+      cls.run(async () => {
+        cls.set('tenantId', created[i].tenantId);
+        cls.set('accountId', created[i].managerId);
+        cls.set('accountType', 'manager');
+        await fn();
+      });
+
+    await asManager(0, () =>
+      residents.createResident({
+        ...OWNER_AND_RENTER,
+        units: [
+          { unitId: created[0].units['A-101'], occupancyType: 'owner' },
+          { unitId: created[0].units['A-102'], occupancyType: 'tenant' },
+        ],
+      }),
+    );
+    await asManager(0, () =>
+      residents.createResident({
+        ...SHARED_PERSON,
+        units: [{ unitId: created[0].units['A-201'], occupancyType: 'owner' }],
+      }),
+    );
+    await asManager(1, () =>
+      residents.createResident({
+        ...SHARED_PERSON,
+        units: [{ unitId: created[1].units['B-1'], occupancyType: 'tenant' }],
+      }),
+    );
+
     console.log(
-      `Shared person (resident in both): ${SHARED_PERSON.email} / ${SHARED_PERSON.phone}`,
+      `Resident owning A-101 and renting A-102: ${OWNER_AND_RENTER.email} / ${OWNER_AND_RENTER.phone}`,
+    );
+    console.log(
+      `Resident in both compounds: ${SHARED_PERSON.email} / ${SHARED_PERSON.phone}`,
+    );
+    const admins = await globalDb.platformAdmin.count();
+    console.log(
+      admins
+        ? 'Platform admin: see SUPERADMIN_EMAIL in .env (password change required on first login).'
+        : 'No platform admin: set SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD to create one.',
     );
   } finally {
     await app.close();

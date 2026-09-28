@@ -33,3 +33,9 @@ Access paths (all in `src/database/`):
 
 ## Lazy queries and the request context
 Prisma queries are lazy: they execute when awaited, and the tenant hook reads the context at that moment. Code must therefore `await` a tenant query inside the context that owns it (`cls.run(async () => await …)`). Returning an un-awaited query out of the context fails closed with `TenantContextMissingError` — found and pinned down by the spike. Inside an HTTP request the whole handler runs in one context, so this only matters for code that opens its own context (jobs, scripts, tests).
+
+## Update (Phase 1a)
+- New tenant tables: `roles`, `role_permissions`, `tenant_permission_catalog`, `unit_occupancies` — same policy, covered automatically by a test that checks every table with a `tenant_id` column (the global exceptions `login_identifiers` and `sessions` are listed explicitly).
+- New global tables: `platform_admins`, `platform_sessions` (through `GlobalDbService` only).
+- Links between tenant tables use composite foreign keys that include `tenant_id`, because foreign-key checks bypass RLS.
+- `runInTenantUnsafe` is additionally allowed in `src/platform/**` (ADR 0011).

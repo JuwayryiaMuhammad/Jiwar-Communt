@@ -11,3 +11,7 @@
 | [0007](0007-offline.md) | Offline: shared mechanics, domain-owned conflict rules | Accepted (not implemented) |
 | [0008](0008-numbering.md) | Numbering: server sequences + reserved ranges | Accepted (not implemented) |
 | [0009](0009-open-questions.md) | Open questions | Open |
+| [0010](0010-permissions-and-roles.md) | Per-tenant roles, code-defined permissions, sync | Accepted |
+| [0011](0011-platform-super-admin.md) | Platform super admin outside the tenants | Accepted |
+| [0012](0012-residents-and-occupancy.md) | Residents, multi-unit occupancy, resource access | Accepted |
+| [0013](0013-i18n.md) | Codes not text; Arabic and English | Accepted |

@@ -21,3 +21,8 @@ OTP delivery sits behind an `OtpChannel` interface so WhatsApp/SMS can be added 
 - Rate limits (Redis, fixed window) are per identifier hash and per IP, counted for unknown identifiers too, so a 429 reveals nothing.
 - Token lifetimes come from a per-account-type policy (`src/auth/auth-policy.ts`), identical for all types in Phase 0, so shorter sessions for sensitive roles later are a table change.
 - Development only: `OTP_FIXED_CODE` replaces the random code; the app refuses to start with it in production.
+
+## Update (Phase 1a)
+- Account and compound status are now checked on **every request** by `PermissionsGuard`: a deactivated account or a suspended compound is rejected immediately, not when the 15-minute access token expires.
+- `select-account` and `refresh` also reject accounts of a suspended compound, with the same generic responses.
+- The OTP email language comes from `Accept-Language` (ADR 0013).

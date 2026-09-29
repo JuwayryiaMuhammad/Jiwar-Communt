@@ -4,12 +4,12 @@ import {
   AuditQueryService,
   PlatformAuditQueryService,
   SecurityEventsQueryService,
-} from '../../src/audit/audit-query.service';
-import type { AppClsStore } from '../../src/common/cls/app-cls';
-import { newId } from '../../src/common/uuid';
-import { GlobalDbService } from '../../src/database/global-db.service';
-import { PrismaService } from '../../src/database/prisma.service';
-import { TenantTx } from '../../src/database/tenant-tx.service';
+} from '../../src/core/audit/audit-query.service';
+import type { AppClsStore } from '../../src/core/common/cls/app-cls';
+import { newId } from '../../src/core/common/uuid';
+import { GlobalDbService } from '../../src/core/database/global-db.service';
+import { PrismaService } from '../../src/core/database/prisma.service';
+import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 
 /** Query services for future screens: filters, cursors, RLS. */

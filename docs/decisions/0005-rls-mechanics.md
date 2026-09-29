@@ -20,12 +20,12 @@ With no tenant set the comparison is against NULL: reads return nothing and writ
 ## Setting the tenant
 The tenant is set with `set_config('app.tenant_id', <id>, true)` — **transaction-local** — as the first statement **inside the same transaction** as the queries. Never a session-level `SET`: a pooled connection must not carry one request's tenant into the next.
 
-Access paths (all in `src/database/`):
+Access paths (all in `src/core/database/`):
 - **`PrismaService.tenant`** — a Prisma extension that wraps every model operation in a batch transaction `[set_config, query]`. The tenant comes from the request context (CLS); without one it throws and runs nothing. `$transaction`, `$queryRaw*` and `$executeRaw*` are removed from its type and throw at runtime: a nested transaction per query would deadlock a pool of one and escape the outer transaction on a bigger pool. It also throws when called inside `withTenantTx`, where `tx` must be used.
 - **`TenantTx.withTenantTx(fn)`** — an interactive transaction on the base client: `set_config` first, then `fn(tx)`. The only way to run multi-statement units of work or raw SQL.
-- **`TenantTx.runInTenantUnsafe(tenantId, fn)`** — same, with an explicit tenant. Allowed only in `src/auth/` and `prisma/seed.ts` (ESLint `no-restricted-properties`).
+- **`TenantTx.runInTenantUnsafe(tenantId, fn)`** — same, with an explicit tenant. Allowed only in `src/core/auth/` and `prisma/seed.ts` (ESLint `no-restricted-properties`).
 - **`GlobalDbService`** — the only path to the global tables (`tenants`, `login_identifiers`, `otp_challenges`, `sessions`).
-- The base client is private to `src/database/` (ESLint `no-restricted-imports`).
+- The base client is private to `src/core/database/` (ESLint `no-restricted-imports`).
 - `tenantId` never appears in a request DTO; it is taken from the context only.
 
 ## Operational note
@@ -38,7 +38,7 @@ Prisma queries are lazy: they execute when awaited, and the tenant hook reads th
 - New tenant tables: `roles`, `role_permissions`, `tenant_permission_catalog`, `unit_occupancies` — same policy, covered automatically by a test that checks every table with a `tenant_id` column (the global exceptions `login_identifiers` and `sessions` are listed explicitly).
 - New global tables: `platform_admins`, `platform_sessions` (through `GlobalDbService` only).
 - Links between tenant tables use composite foreign keys that include `tenant_id`, because foreign-key checks bypass RLS.
-- `runInTenantUnsafe` is additionally allowed in `src/platform/**` (ADR 0011).
+- `runInTenantUnsafe` is additionally allowed in `src/core/platform/**` (ADR 0011).
 
 ## Update (Phase 1b)
 - `audit_log` is a tenant table (RLS + FORCE). `security_events` is global and carries `tenant_id` as a pointer, so it joins `login_identifiers` and `sessions` on the RLS-coverage allowlist; `platform_audit_log` is global.

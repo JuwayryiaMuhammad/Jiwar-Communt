@@ -1,9 +1,9 @@
 import { ClsService } from 'nestjs-cls';
-import { looksPersonal } from '../../src/audit/personal-data';
-import type { AppClsStore } from '../../src/common/cls/app-cls';
-import { PlatformModule } from '../../src/platform/platform.module';
-import { TenantsService } from '../../src/platform/tenants.service';
-import { ResidentsService } from '../../src/residents/residents.service';
+import { looksPersonal } from '../../src/core/audit/personal-data';
+import type { AppClsStore } from '../../src/core/common/cls/app-cls';
+import { PlatformModule } from '../../src/core/platform/platform.module';
+import { TenantsService } from '../../src/core/platform/tenants.service';
+import { ResidentsService } from '../../src/community/residents/residents.service';
 import { auditReaders } from '../setup/audit';
 import {
   API,

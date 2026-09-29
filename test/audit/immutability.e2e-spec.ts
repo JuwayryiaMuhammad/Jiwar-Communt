@@ -1,5 +1,5 @@
 import { Client } from 'pg';
-import { newId } from '../../src/common/uuid';
+import { newId } from '../../src/core/common/uuid';
 import { required } from '../setup/test-env';
 
 /**

@@ -6,22 +6,21 @@ import { JwtModule } from '@nestjs/jwt';
 import type { Request } from 'express';
 import { ClsModule } from 'nestjs-cls';
 import { LoggerModule } from 'nestjs-pino';
-import { AccessModule } from './access/access.module';
-import { PermissionsGuard } from './access/permissions.guard';
-import { AccountsModule } from './accounts/accounts.module';
+import { ResidentsModule, UnitsModule } from './community';
+import { AccessModule } from './core/access/access.module';
+import { PermissionsGuard } from './core/access/permissions.guard';
+import { AccountsModule } from './core/accounts/accounts.module';
 import { AppController } from './app.controller';
-import { AuditModule } from './audit/audit.module';
-import { AuthModule } from './auth/auth.module';
-import { RequestContextModule } from './common/cls/request-context.module';
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
-import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
-import { validateEnv, type Env } from './config/env.schema';
-import { DatabaseModule } from './database/database.module';
-import { HealthModule } from './health/health.module';
-import { PlatformModule } from './platform/platform.module';
-import { RedisModule } from './redis/redis.module';
-import { ResidentsModule } from './residents/residents.module';
-import { UnitsModule } from './units/units.module';
+import { AuditModule } from './core/audit/audit.module';
+import { AuthModule } from './core/auth/auth.module';
+import { RequestContextModule } from './core/common/cls/request-context.module';
+import { AllExceptionsFilter } from './core/common/filters/all-exceptions.filter';
+import { JwtAuthGuard } from './core/common/guards/jwt-auth.guard';
+import { validateEnv, type Env } from './core/config/env.schema';
+import { DatabaseModule } from './core/database/database.module';
+import { HealthModule } from './core/health/health.module';
+import { PlatformModule } from './core/platform/platform.module';
+import { RedisModule } from './core/redis/redis.module';
 
 @Module({
   imports: [

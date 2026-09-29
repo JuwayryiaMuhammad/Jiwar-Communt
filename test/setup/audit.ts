@@ -1,8 +1,8 @@
 import type { AuditLog, PlatformAuditLog, SecurityEvent } from '@prisma/client';
 import { ClsService } from 'nestjs-cls';
-import type { AppClsStore } from '../../src/common/cls/app-cls';
-import { GlobalDbService } from '../../src/database/global-db.service';
-import { PrismaService } from '../../src/database/prisma.service';
+import type { AppClsStore } from '../../src/core/common/cls/app-cls';
+import { GlobalDbService } from '../../src/core/database/global-db.service';
+import { PrismaService } from '../../src/core/database/prisma.service';
 import type { HttpHarness } from './http-app';
 
 /** Readers for asserting audit rows (tests only; the app has query services). */

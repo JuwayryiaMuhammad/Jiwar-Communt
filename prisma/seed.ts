@@ -2,11 +2,11 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { ClsService } from 'nestjs-cls';
 import { AppModule } from '../src/app.module';
-import type { AppClsStore } from '../src/common/cls/app-cls';
-import { GlobalDbService } from '../src/database/global-db.service';
-import { TenantsService } from '../src/platform/tenants.service';
-import { ResidentsService } from '../src/residents/residents.service';
-import { UnitsService } from '../src/units/units.service';
+import type { AppClsStore } from '../src/core/common/cls/app-cls';
+import { GlobalDbService } from '../src/core/database/global-db.service';
+import { TenantsService } from '../src/core/platform/tenants.service';
+import { ResidentsService } from '../src/community/residents/residents.service';
+import { UnitsService } from '../src/community/units/units.service';
 
 /**
  * Local demo data (idempotent). Everything goes through the real services,

@@ -1,12 +1,12 @@
 import { ClsService } from 'nestjs-cls';
-import type { AppClsStore } from '../../src/common/cls/app-cls';
-import { PrismaService } from '../../src/database/prisma.service';
+import type { AppClsStore } from '../../src/core/common/cls/app-cls';
+import { PrismaService } from '../../src/core/database/prisma.service';
 import {
   TenantsService,
   type NewManager,
-} from '../../src/platform/tenants.service';
-import { PlatformModule } from '../../src/platform/platform.module';
-import { CODE_ACCESS_CATALOG } from '../../src/access/access-catalog';
+} from '../../src/core/platform/tenants.service';
+import { PlatformModule } from '../../src/core/platform/platform.module';
+import { CODE_ACCESS_CATALOG } from '../../src/core/access/access-catalog';
 import {
   API,
   createHttpHarness,

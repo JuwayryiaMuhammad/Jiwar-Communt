@@ -3,8 +3,8 @@ import {
   CODE_ACCESS_CATALOG,
   catalogProblems,
   type AccessCatalog,
-} from '../../src/access/access-catalog';
-import { PermissionSyncService } from '../../src/platform/permission-sync.service';
+} from '../../src/core/access/access-catalog';
+import { PermissionSyncService } from '../../src/core/platform/permission-sync.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createTenant } from '../setup/fixtures';
 

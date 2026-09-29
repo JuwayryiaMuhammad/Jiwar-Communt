@@ -4,7 +4,7 @@
 
 ## Decision
 1. **What is recorded:** state-changing actions and security events. Reads are not recorded yet (read-access logging for sensitive data comes with the screens).
-2. **Each entry records** who (actor type + id), what (action key from a typed catalog, `src/audit/actions.ts`), on what (target type + id), when, from where (IP, user agent, request id), and the before/after of changed fields.
+2. **Each entry records** who (actor type + id), what (action key from a typed catalog, `src/core/audit/actions.ts`), on what (target type + id), when, from where (IP, user agent, request id), and the before/after of changed fields.
 3. **No personal data by value.** The audit log is never deleted, so it must never hold data a person could later ask to erase. Full names, national IDs, phones, emails and any hash/token/secret/password field are recorded only as `{ "changed": true }`; screens show names by joining `actor_id` / `target_id` to `accounts` at read time (an erased account shows as a deleted user; history stays intact). Checks before every insert:
    - a sensitive **key** in `metadata` is a developer error → the write throws and the action rolls back;
    - a **value** that merely looks like personal data (email, Egyptian mobile, 14-digit national ID) is replaced by `"[redacted]"` with a warning — a heuristic must never block real work (a unit coded `01012345678` is valid). In tests it throws instead, so real leaks are caught during development.

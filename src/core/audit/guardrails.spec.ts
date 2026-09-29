@@ -7,7 +7,7 @@ import { join, relative } from 'node:path';
  * seed and the Docker init must never do it (ADR 0014).
  */
 describe('audit guard rails', () => {
-  const repo = join(__dirname, '..', '..');
+  const repo = join(__dirname, '..', '..', '..');
   // Built by concatenation so this file does not match itself.
   const needles = [
     // bypasses the immutability triggers
@@ -34,6 +34,13 @@ describe('audit guard rails', () => {
       }
     })
     .flatMap(files);
+
+  it('scans the whole repository (a moved spec must not scan nothing)', () => {
+    expect(
+      scanned.some((f) => f.startsWith(join(repo, 'src', 'community'))),
+    ).toBe(true);
+    expect(scanned.some((f) => f.startsWith(join(repo, 'prisma')))).toBe(true);
+  });
 
   it.each(needles)('%s appears nowhere outside test/', (needle) => {
     const offenders = scanned

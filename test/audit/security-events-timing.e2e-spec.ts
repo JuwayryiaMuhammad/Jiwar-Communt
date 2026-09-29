@@ -1,5 +1,5 @@
-import { IdentifierHasher } from '../../src/auth/identifier';
-import { GlobalDbService } from '../../src/database/global-db.service';
+import { IdentifierHasher } from '../../src/core/auth/identifier';
+import { GlobalDbService } from '../../src/core/database/global-db.service';
 import {
   API,
   createHttpHarness,

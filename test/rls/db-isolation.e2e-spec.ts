@@ -2,8 +2,8 @@ import { Client } from 'pg';
 import {
   TenantClientMisuseError,
   TenantContextMissingError,
-} from '../../src/common/errors';
-import { newId } from '../../src/common/uuid';
+} from '../../src/core/common/errors';
+import { newId } from '../../src/core/common/uuid';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import {
   createAccountRow,

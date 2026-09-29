@@ -1,10 +1,10 @@
 import { ClsService } from 'nestjs-cls';
-import { AuditService } from '../../src/audit/audit.service';
-import type { AppClsStore } from '../../src/common/cls/app-cls';
-import { newId } from '../../src/common/uuid';
-import { TenantTx } from '../../src/database/tenant-tx.service';
-import { PlatformModule } from '../../src/platform/platform.module';
-import { TenantsService } from '../../src/platform/tenants.service';
+import { AuditService } from '../../src/core/audit/audit.service';
+import type { AppClsStore } from '../../src/core/common/cls/app-cls';
+import { newId } from '../../src/core/common/uuid';
+import { TenantTx } from '../../src/core/database/tenant-tx.service';
+import { PlatformModule } from '../../src/core/platform/platform.module';
+import { TenantsService } from '../../src/core/platform/tenants.service';
 import { auditReaders } from '../setup/audit';
 import {
   API,
@@ -117,7 +117,8 @@ describe('Audit atomicity', () => {
 
   it('record() refuses a transaction that did not come from TenantTx', async () => {
     const globalDb = h.moduleRef.get(
-      (await import('../../src/database/global-db.service')).GlobalDbService,
+      (await import('../../src/core/database/global-db.service'))
+        .GlobalDbService,
     );
     await expect(
       globalDb.transaction((tx) =>

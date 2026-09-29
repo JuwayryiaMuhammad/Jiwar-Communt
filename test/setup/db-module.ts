@@ -1,14 +1,14 @@
 import { ConfigModule } from '@nestjs/config';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ClsModule, ClsService } from 'nestjs-cls';
-import type { AppClsStore } from '../../src/common/cls/app-cls';
-import { AuditModule } from '../../src/audit/audit.module';
-import { AuditService } from '../../src/audit/audit.service';
-import { validateEnv } from '../../src/config/env.schema';
-import { DatabaseModule } from '../../src/database/database.module';
-import { GlobalDbService } from '../../src/database/global-db.service';
-import { PrismaService } from '../../src/database/prisma.service';
-import { TenantTx } from '../../src/database/tenant-tx.service';
+import type { AppClsStore } from '../../src/core/common/cls/app-cls';
+import { AuditModule } from '../../src/core/audit/audit.module';
+import { AuditService } from '../../src/core/audit/audit.service';
+import { validateEnv } from '../../src/core/config/env.schema';
+import { DatabaseModule } from '../../src/core/database/database.module';
+import { GlobalDbService } from '../../src/core/database/global-db.service';
+import { PrismaService } from '../../src/core/database/prisma.service';
+import { TenantTx } from '../../src/core/database/tenant-tx.service';
 
 export interface DbHarness {
   moduleRef: TestingModule;

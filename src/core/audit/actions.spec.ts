@@ -7,7 +7,7 @@ import { AUDIT_ACTIONS, SECURITY_EVENTS } from './actions';
  * catalog action nobody records is a gap in the trail, or dead weight.
  */
 describe('audit catalog', () => {
-  const root = join(__dirname, '..');
+  const root = join(__dirname, '..', '..'); // src/
 
   function sources(dir: string): string[] {
     return readdirSync(dir).flatMap((name) => {

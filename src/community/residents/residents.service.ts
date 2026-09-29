@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
-import { AccountWriter } from '../accounts/account-writer';
-import { AuditService } from '../audit/audit.service';
-import { diffChanges } from '../audit/diff';
-import { RequestContext } from '../common/cls/request-context';
-import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
-import { newId } from '../common/uuid';
-import { PrismaService } from '../database/prisma.service';
-import { TenantTx, type TenantTxClient } from '../database/tenant-tx.service';
+import { AccountWriter } from '../../core/accounts/account-writer';
+import { AuditService } from '../../core/audit/audit.service';
+import { diffChanges } from '../../core/audit/diff';
+import { RequestContext } from '../../core/common/cls/request-context';
+import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
+import { newId } from '../../core/common/uuid';
+import { PrismaService } from '../../core/database/prisma.service';
+import {
+  TenantTx,
+  type TenantTxClient,
+} from '../../core/database/tenant-tx.service';
 import type {
   MyUnit,
   NewResident,

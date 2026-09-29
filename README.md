@@ -61,7 +61,7 @@ pnpm db:migrate:dev --name <change>   # create + apply in development
 pnpm db:migrate                        # apply pending migrations (deploy)
 ```
 
-For a new tenant-scoped table: add `tenant_id`, create the migration with `--create-only`, and append the `ENABLE`/`FORCE`/`CREATE POLICY` block before applying. `FORCE` also applies to the migrator, so a migration that changes **data** in tenant tables must `set_config('app.tenant_id', …, true)` per tenant inside its transaction (ADR 0005). A new unique index must be mapped in `src/common/db-constraints.ts`, which a test enforces, so duplicates return the right field to the client.
+For a new tenant-scoped table: add `tenant_id`, create the migration with `--create-only`, and append the `ENABLE`/`FORCE`/`CREATE POLICY` block before applying. `FORCE` also applies to the migrator, so a migration that changes **data** in tenant tables must `set_config('app.tenant_id', …, true)` per tenant inside its transaction (ADR 0005). A new unique index must be mapped in `src/core/common/db-constraints.ts`, which a test enforces, so duplicates return the right field to the client.
 
 ## Environment variables
 
@@ -87,7 +87,7 @@ See `.env.example` for the full list with comments. The important ones:
 | `OTP_*` | Code TTL, max attempts, rate limits |
 | `OTP_FIXED_CODE` | **Development only.** Every code becomes this value (emails are still sent). The app refuses to start with it when `NODE_ENV=production` |
 
-The app validates the environment with zod at startup (`src/config/env.schema.ts`) and reads `process.env` only; entry points (`main.ts`, the seed, the sync CLI, the tests) load `.env` themselves.
+The app validates the environment with zod at startup (`src/core/config/env.schema.ts`) and reads `process.env` only; entry points (`main.ts`, the seed, the sync CLI, the tests) load `.env` themselves.
 
 ## Tests
 
@@ -130,7 +130,7 @@ The API never returns display text. Every error has a stable `code`; the fronten
 }
 ```
 
-- Top-level codes live in `src/common/errors.ts` (`UNIT_NOT_FOUND`, `ROLE_LOCKOUT`, `DUPLICATE_RESOURCE`, …), and field codes there too (`FIELD_REQUIRED`, `INVALID_PHONE`, `DUPLICATE_VALUE`, …).
+- Top-level codes live in `src/core/common/errors.ts` (`UNIT_NOT_FOUND`, `ROLE_LOCKOUT`, `DUPLICATE_RESOURCE`, …), and field codes there too (`FIELD_REQUIRED`, `INVALID_PHONE`, `DUPLICATE_VALUE`, …).
 - Code in `src/` throws only `AppException` (`appError.notFound(...)` etc.); a unit test fails on any other exception type.
 - Database errors are mapped. A duplicate returns `DUPLICATE_RESOURCE` + the field. Anything unexpected returns `INTERNAL_ERROR` without database text.
 - The OTP email is Arabic (RTL) or English, chosen from `Accept-Language` (default Arabic). Accounts and admins carry `preferred_locale`.
@@ -142,7 +142,7 @@ Four layers, each enforced in exactly one place:
 1. **Tenant:** Postgres RLS (ADR 0005).
 2. **Account and compound status:** checked on **every request** by `PermissionsGuard`. A deactivated account or suspended compound is rejected immediately, not when the 15-minute token expires.
 3. **Permissions (ADR 0010):**
-   - The catalog and default roles are defined in code (`src/access/permissions.ts`, `default-roles.ts`).
+   - The catalog and default roles are defined in code (`src/core/access/permissions.ts`, `default-roles.ts`).
    - Each compound has its own copy of the `manager` and `resident` roles; a manager can edit his compound's role permissions (`RolesService`).
    - Routes declare `@RequirePermissions('units.read')`. Permissions are not in the JWT; they are cached in Redis under `perm:{tenant}:{role}:{version}`, and every edit bumps the version, so changes apply on the next request.
    - The manager role can never lose `roles.manage` / `residents.manage`.
@@ -160,7 +160,7 @@ Three append-only tables:
 | `security_events` | Global | On its own, fail-open (a logging failure never blocks a login), capped by `SECURITY_EVENT_TIMEOUT_MS` |
 
 - **Immutable:** `jiwar_app` has only `SELECT, INSERT`, and triggers reject `UPDATE`/`DELETE`/`TRUNCATE` for every role, the owner included. The owner can still `DISABLE TRIGGER` with DDL; this is a documented limit, and hash chaining is the deferred fix.
-- **Catalog** (`src/audit/actions.ts`): every audited action and security event is declared there with its target type. A unit test fails if one is never emitted, and the coverage suite fails if one has no scenario.
+- **Catalog** (`src/core/audit/actions.ts`): every audited action and security event is declared there with its target type. A unit test fails if one is never emitted, and the coverage suite fails if one has no scenario.
 - **Recording:**
   - `AuditService.record(tx, { action, targetId, changes, metadata })` requires the action's transaction.
   - The compound is taken from that transaction; the actor (account / platform admin / system) and the IP, user agent and request id come from the request context.
@@ -205,18 +205,20 @@ POST /api/v1/auth/logout         { refreshToken }            → 204
 
 ```
 src/
-  config/      zod env schema
-  common/      request context (CLS), guards, error filter + codes, validation mapping, locale, uuid
-  database/    PrismaService.tenant, TenantTx, GlobalDbService — the only DB access paths
-  access/      permission catalog, default roles, PermissionsGuard, RolesService, ResourceAccess
-  auth/        tenant login: identifiers, OTP (+ email templates), sessions
-  accounts/    manager-created accounts; AccountWriter (the one place accounts are written)
-  units/       units, scoped by ResourceAccess
-  residents/   residents and unit occupancies
-  platform/    super admin auth + guard + bootstrap, compounds (TenantsService), access:sync
-  audit/       audit catalog, diff + personal-data guard, audit/platform/security services, query services
-  redis/       Redis client, rate limiter
-  health/      readiness (db, redis, tenant-setting leak canary)
+  core/          shared by every domain; never imports one (ADR 0015)
+    config/      zod env schema
+    common/      request context (CLS), guards, error filter + codes, validation mapping, locale, uuid
+    database/    PrismaService.tenant, TenantTx, GlobalDbService — the only DB access paths
+    access/      permission catalog, default roles, PermissionsGuard, RolesService, ResourceAccess
+    auth/        tenant login: identifiers, OTP (+ email templates), sessions
+    accounts/    manager-created accounts; AccountWriter (the one place accounts are written)
+    platform/    super admin auth + guard + bootstrap, compounds (TenantsService), access:sync
+    audit/       audit catalog, diff + personal-data guard, audit/platform/security services, query services
+    redis/       Redis client, rate limiter
+    health/      readiness (db, redis, tenant-setting leak canary)
+  community/     the community domain; other domains import only its index.ts
+    units/       units, scoped by ResourceAccess
+    residents/   residents and unit occupancies
 prisma/        schema, migrations (RLS SQL inside), seed
 docker/        postgres init (roles)
 test/          rls/, access/, platform/, residents/, audit/, db/ suites + setup/
@@ -224,8 +226,9 @@ docs/decisions ADRs
 ```
 
 Rules the code enforces:
-- **Tenant data** goes through `prisma.tenant.<model>` (single queries) or `withTenantTx` (multi-statement work and raw SQL). The raw Prisma client cannot be imported outside `src/database/` (ESLint).
-- **`runInTenantUnsafe`** takes the tenant from the caller, not the request. It is allowed only in `src/auth/`, `src/platform/` and `prisma/seed.ts` (ESLint).
+- **Import boundaries** (ADR 0015): `src/core/` never imports a domain; a domain imports another one only through its `index.ts` (ESLint, `eslint.boundaries.cjs`, proven by a unit test).
+- **Tenant data** goes through `prisma.tenant.<model>` (single queries) or `withTenantTx` (multi-statement work and raw SQL). The raw Prisma client cannot be imported outside `src/core/database/` (ESLint).
+- **`runInTenantUnsafe`** takes the tenant from the caller, not the request. It is allowed only in `src/core/auth/`, `src/core/platform/` and `prisma/seed.ts` (ESLint).
 - **`tenantId` comes from the token only.** It never appears in a request DTO, and unknown body fields are rejected.
 - **Errors** are thrown only as `AppException`, with a code (unit test).
 - **Audit entries** are written only through `AuditService` / `PlatformAuditService`, with the action's transaction. Bypassing the immutability triggers (`session_replication_role`) is allowed only in `test/` (unit test).

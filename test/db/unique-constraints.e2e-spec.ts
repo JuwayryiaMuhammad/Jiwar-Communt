@@ -1,5 +1,5 @@
 import { Client } from 'pg';
-import { UNIQUE_CONSTRAINT_FIELDS } from '../../src/common/db-constraints';
+import { UNIQUE_CONSTRAINT_FIELDS } from '../../src/core/common/db-constraints';
 
 /**
  * Every business unique index must be mapped to API fields, so a duplicate

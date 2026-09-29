@@ -1,14 +1,14 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { IsString } from 'class-validator';
 import { ClsService } from 'nestjs-cls';
-import type { AppClsStore } from '../../src/common/cls/app-cls';
-import { GlobalDbService } from '../../src/database/global-db.service';
-import { hashPassword, verifyPassword } from '../../src/platform/password';
-import { PlatformAuth } from '../../src/platform/platform-auth.guard';
-import { PlatformAuthService } from '../../src/platform/platform-auth.service';
-import { PlatformBootstrapService } from '../../src/platform/platform-bootstrap.service';
-import { PlatformModule } from '../../src/platform/platform.module';
-import { newId } from '../../src/common/uuid';
+import type { AppClsStore } from '../../src/core/common/cls/app-cls';
+import { GlobalDbService } from '../../src/core/database/global-db.service';
+import { hashPassword, verifyPassword } from '../../src/core/platform/password';
+import { PlatformAuth } from '../../src/core/platform/platform-auth.guard';
+import { PlatformAuthService } from '../../src/core/platform/platform-auth.service';
+import { PlatformBootstrapService } from '../../src/core/platform/platform-bootstrap.service';
+import { PlatformModule } from '../../src/core/platform/platform.module';
+import { newId } from '../../src/core/common/uuid';
 import { uniqueSuffix } from '../setup/fixtures';
 import {
   API,

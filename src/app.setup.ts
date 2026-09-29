@@ -2,8 +2,8 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
-import type { Env } from './config/env.schema';
-import { validationException } from './common/validation/validation-errors';
+import type { Env } from './core/config/env.schema';
+import { validationException } from './core/common/validation/validation-errors';
 
 export const API_PREFIX = 'api/v1';
 

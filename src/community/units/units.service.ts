@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { ResourceAccess } from '../access/resource-access';
-import { AuditService } from '../audit/audit.service';
-import { diffChanges } from '../audit/diff';
-import { RequestContext } from '../common/cls/request-context';
-import { TenantTx } from '../database/tenant-tx.service';
-import { newId } from '../common/uuid';
-import { PrismaService } from '../database/prisma.service';
+import { ResourceAccess } from '../../core/access/resource-access';
+import { AuditService } from '../../core/audit/audit.service';
+import { diffChanges } from '../../core/audit/diff';
+import { RequestContext } from '../../core/common/cls/request-context';
+import { TenantTx } from '../../core/database/tenant-tx.service';
+import { newId } from '../../core/common/uuid';
+import { PrismaService } from '../../core/database/prisma.service';
 import type { CreateUnitDto } from './dto/create-unit.dto';
 import { UnitView } from './dto/unit.view';
 

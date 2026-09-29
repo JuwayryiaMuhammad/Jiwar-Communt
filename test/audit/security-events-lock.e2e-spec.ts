@@ -1,11 +1,11 @@
 import { Logger } from '@nestjs/common';
 import { Client } from 'pg';
-import { IdentifierHasher } from '../../src/auth/identifier';
-import { newId } from '../../src/common/uuid';
-import { GlobalDbService } from '../../src/database/global-db.service';
-import { hashPassword } from '../../src/platform/password';
-import { PlatformAuthService } from '../../src/platform/platform-auth.service';
-import { PlatformModule } from '../../src/platform/platform.module';
+import { IdentifierHasher } from '../../src/core/auth/identifier';
+import { newId } from '../../src/core/common/uuid';
+import { GlobalDbService } from '../../src/core/database/global-db.service';
+import { hashPassword } from '../../src/core/platform/password';
+import { PlatformAuthService } from '../../src/core/platform/platform-auth.service';
+import { PlatformModule } from '../../src/core/platform/platform.module';
 import { auditReaders } from '../setup/audit';
 import { uniqueSuffix } from '../setup/fixtures';
 import {

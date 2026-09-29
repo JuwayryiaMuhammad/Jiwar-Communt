@@ -1,11 +1,11 @@
 import { ClsService } from 'nestjs-cls';
-import { PermissionsService } from '../../src/access/permissions.service';
-import type { AppClsStore } from '../../src/common/cls/app-cls';
-import { PrismaService } from '../../src/database/prisma.service';
-import { PlatformModule } from '../../src/platform/platform.module';
-import { TenantsService } from '../../src/platform/tenants.service';
-import { ResidentsService } from '../../src/residents/residents.service';
-import type { NewResident } from '../../src/residents/residents.types';
+import { PermissionsService } from '../../src/core/access/permissions.service';
+import type { AppClsStore } from '../../src/core/common/cls/app-cls';
+import { PrismaService } from '../../src/core/database/prisma.service';
+import { PlatformModule } from '../../src/core/platform/platform.module';
+import { TenantsService } from '../../src/core/platform/tenants.service';
+import { ResidentsService } from '../../src/community/residents/residents.service';
+import type { NewResident } from '../../src/community/residents/residents.types';
 import {
   API,
   createHttpHarness,

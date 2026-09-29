@@ -10,7 +10,7 @@
 - Creating a resident requires at least one unit; a person without units can still be created as a plain account.
 
 ## Resource access
-`src/access/resource-access.ts` is the one reusable check for unit access:
+`src/core/access/resource-access.ts` is the one reusable check for unit access:
 - a manager may access every unit of his compound;
 - a resident may access a unit only with an active occupancy on it;
 - anyone else, nothing.

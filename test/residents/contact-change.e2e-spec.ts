@@ -1,10 +1,10 @@
 import { ClsService } from 'nestjs-cls';
-import { IdentifierHasher } from '../../src/auth/identifier';
-import type { AppClsStore } from '../../src/common/cls/app-cls';
-import { newId } from '../../src/common/uuid';
-import { GlobalDbService } from '../../src/database/global-db.service';
-import { PrismaService } from '../../src/database/prisma.service';
-import { ResidentsService } from '../../src/residents/residents.service';
+import { IdentifierHasher } from '../../src/core/auth/identifier';
+import type { AppClsStore } from '../../src/core/common/cls/app-cls';
+import { newId } from '../../src/core/common/uuid';
+import { GlobalDbService } from '../../src/core/database/global-db.service';
+import { PrismaService } from '../../src/core/database/prisma.service';
+import { ResidentsService } from '../../src/community/residents/residents.service';
 import {
   API,
   createHttpHarness,

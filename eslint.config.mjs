@@ -3,10 +3,13 @@ import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+import boundaries from './eslint.boundaries.cjs';
+
+const { boundaryConfigs } = boundaries;
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs', 'dist/**', 'coverage/**'],
+    ignores: ['eslint.config.mjs', 'eslint.boundaries.cjs', 'dist/**', 'coverage/**'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -33,51 +36,40 @@ export default tseslint.config(
     },
   },
   // ==========================================================================
-  // Tenant isolation guard rails (ADR 0005)
+  // Tenant isolation guard rails (ADR 0005) and import boundaries (ADR 0015)
   // ==========================================================================
   //
-  // The raw Prisma client ignores the tenant context: only src/database/ may
-  // touch it. Everything else goes through PrismaService.tenant, withTenantTx
-  // or GlobalDbService.
-  //
+  // The raw Prisma client ignores the tenant context: only src/core/database/
+  // may touch it. Everything else goes through PrismaService.tenant,
+  // withTenantTx or GlobalDbService. core must not import a domain, and a
+  // domain reaches another one only through its index.ts. See
+  // eslint.boundaries.cjs (shared with the unit test that proves it fires).
+  ...boundaryConfigs,
   // runInTenantUnsafe takes a tenant id from the caller instead of the request
   // context, so it is a deliberate hole. It is allowed only where there is no
-  // request tenant by design: the login bootstrap (src/auth/), the platform
-  // (src/platform/: creating compounds, cross-compound jobs) and the seed.
+  // request tenant by design: the login bootstrap (src/core/auth/), the
+  // platform (src/core/platform/: creating compounds, cross-compound jobs) and
+  // the seed.
   {
     files: ['**/*.ts'],
     rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              group: ['**/base-prisma', '**/database/base-prisma'],
-              message:
-                'The base Prisma client bypasses the tenant context. Use PrismaService.tenant, TenantTx or GlobalDbService.',
-            },
-          ],
-        },
-      ],
       'no-restricted-properties': [
         'error',
         {
           property: 'runInTenantUnsafe',
           message:
-            'runInTenantUnsafe ignores the request tenant. Allowed only in src/auth/, src/platform/ and prisma/seed.ts; use withTenantTx.',
+            'runInTenantUnsafe ignores the request tenant. Allowed only in src/core/auth/, src/core/platform/ and prisma/seed.ts; use withTenantTx.',
         },
       ],
     },
   },
   {
-    files: ['src/database/**/*.ts'],
-    rules: {
-      'no-restricted-imports': 'off',
-      'no-restricted-properties': 'off',
-    },
-  },
-  {
-    files: ['src/auth/**/*.ts', 'src/platform/**/*.ts', 'prisma/seed.ts'],
+    files: [
+      'src/core/database/**/*.ts',
+      'src/core/auth/**/*.ts',
+      'src/core/platform/**/*.ts',
+      'prisma/seed.ts',
+    ],
     rules: {
       'no-restricted-properties': 'off',
     },

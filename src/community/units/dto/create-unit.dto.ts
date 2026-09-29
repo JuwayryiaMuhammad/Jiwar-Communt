@@ -1,5 +1,5 @@
 import { IsInt, IsOptional, IsString, Length, Max, Min } from 'class-validator';
-import { withParams } from '../../common/validation/validation-errors';
+import { withParams } from '../../../core/common/validation/validation-errors';
 
 export class CreateUnitDto {
   /** Unit code, unique within the compound, e.g. `B2-104`. */

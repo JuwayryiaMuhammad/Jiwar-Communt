@@ -1,8 +1,8 @@
 import { randomInt } from 'node:crypto';
 import type { AccountType } from '@prisma/client';
-import { CODE_ACCESS_CATALOG } from '../../src/access/access-catalog';
-import { RoleProvisioner } from '../../src/access/role-provisioner';
-import { newId } from '../../src/common/uuid';
+import { CODE_ACCESS_CATALOG } from '../../src/core/access/access-catalog';
+import { RoleProvisioner } from '../../src/core/access/role-provisioner';
+import { newId } from '../../src/core/common/uuid';
 import type { DbHarness } from './db-module';
 
 const provisioner = new RoleProvisioner(CODE_ACCESS_CATALOG);

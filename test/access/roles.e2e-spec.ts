@@ -3,11 +3,11 @@ import Redis from 'ioredis';
 import {
   cacheKey,
   PermissionsService,
-} from '../../src/access/permissions.service';
-import { RolesService } from '../../src/access/roles.service';
-import type { AppClsStore } from '../../src/common/cls/app-cls';
-import { PrismaService } from '../../src/database/prisma.service';
-import { REDIS } from '../../src/redis/redis.module';
+} from '../../src/core/access/permissions.service';
+import { RolesService } from '../../src/core/access/roles.service';
+import type { AppClsStore } from '../../src/core/common/cls/app-cls';
+import { PrismaService } from '../../src/core/database/prisma.service';
+import { REDIS } from '../../src/core/redis/redis.module';
 import {
   API,
   createHttpHarness,

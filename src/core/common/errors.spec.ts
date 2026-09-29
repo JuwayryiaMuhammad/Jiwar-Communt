@@ -7,7 +7,7 @@ import { join, relative } from 'node:path';
  * bypasses it with a bare Nest (or any other) exception.
  */
 describe('error contract', () => {
-  const root = join(__dirname, '..');
+  const root = join(__dirname, '..', '..'); // src/
 
   function sourceFiles(dir: string): string[] {
     return readdirSync(dir).flatMap((name) => {

@@ -55,11 +55,11 @@ export class AccountsService {
         'You cannot change the status of your own account',
       );
     }
-    const account = await this.tenantTx.withTenantTx((tx) =>
+    const change = await this.tenantTx.withTenantTx((tx) =>
       this.writer.setStatus(tx, id, dto.status),
     );
-    if (!account) throw notFound();
-    return AccountView.from(account);
+    if (!change) throw notFound();
+    return AccountView.from(change.account);
   }
 }
 

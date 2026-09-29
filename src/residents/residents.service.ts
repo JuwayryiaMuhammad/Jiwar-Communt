@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { AccountWriter } from '../accounts/account-writer';
+import { AuditService } from '../audit/audit.service';
+import { diffChanges } from '../audit/diff';
 import { RequestContext } from '../common/cls/request-context';
 import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
 import { newId } from '../common/uuid';
@@ -38,6 +40,7 @@ export class ResidentsService {
     private readonly tenantTx: TenantTx,
     private readonly writer: AccountWriter,
     private readonly ctx: RequestContext,
+    private readonly audit: AuditService,
   ) {}
 
   /** Account (resident role) + login identifiers + occupancies, atomically. */
@@ -87,16 +90,19 @@ export class ResidentsService {
         ...input,
         type: 'resident',
       });
-      await tx.unitOccupancy.createMany({
-        data: input.units.map((u) => ({
-          id: newId(),
-          tenantId,
-          unitId: u.unitId,
-          accountId: account.id,
-          occupancyType: u.occupancyType,
-          createdById,
-        })),
-      });
+      for (const u of input.units) {
+        const occupancy = await tx.unitOccupancy.create({
+          data: {
+            id: newId(),
+            tenantId,
+            unitId: u.unitId,
+            accountId: account.id,
+            occupancyType: u.occupancyType,
+            createdById,
+          },
+        });
+        await this.recordCreated(tx, occupancy);
+      }
       return account.id;
     });
     return this.get(id);
@@ -154,6 +160,7 @@ export class ResidentsService {
         },
         include: { unit: { select: { code: true } } },
       });
+      await this.recordCreated(tx, created);
       return toOccupancyView(created);
     });
   }
@@ -175,7 +182,63 @@ export class ResidentsService {
         where: { id: occupancyId },
         include: { unit: { select: { code: true } } },
       });
+      await this.audit.record(tx, {
+        action: 'occupancy.ended',
+        targetId: occupancyId,
+        changes: diffChanges(
+          { status: 'active', endedAt: null },
+          { status: ended.status, endedAt: ended.endedAt },
+          'occupancy.ended',
+        ),
+        metadata: { unitId: ended.unitId, accountId: ended.accountId },
+      });
       return toOccupancyView(ended);
+    });
+  }
+
+  /**
+   * Changes a resident's login phone and/or email (AccountWriter.updateContact):
+   * pending codes to the old address stop working; audited without values.
+   */
+  async updateContact(
+    accountId: string,
+    input: { phone?: string; email?: string },
+  ): Promise<ResidentView> {
+    const updated = await this.tenantTx.withTenantTx(async (tx) => {
+      const account = await tx.account.findFirst({
+        where: { id: accountId, type: 'resident' },
+        select: { id: true },
+      });
+      if (!account) return null;
+      return this.writer.updateContact(tx, accountId, input);
+    });
+    if (!updated) throw residentNotFound();
+    return this.get(accountId);
+  }
+
+  private recordCreated(
+    tx: TenantTxClient,
+    o: {
+      id: string;
+      unitId: string;
+      accountId: string;
+      occupancyType: string;
+      status: string;
+    },
+  ) {
+    return this.audit.record(tx, {
+      action: 'occupancy.created',
+      targetId: o.id,
+      changes: diffChanges(
+        null,
+        {
+          unitId: o.unitId,
+          accountId: o.accountId,
+          occupancyType: o.occupancyType,
+          status: o.status,
+        },
+        'occupancy.created',
+      ),
     });
   }
 

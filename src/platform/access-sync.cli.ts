@@ -8,6 +8,7 @@ import {
   CODE_ACCESS_CATALOG,
   catalogProblems,
 } from '../access/access-catalog';
+import { AuditModule } from '../audit/audit.module';
 import { validateEnv } from '../config/env.schema';
 import { DatabaseModule } from '../database/database.module';
 import { PermissionSyncService } from './permission-sync.service';
@@ -26,6 +27,7 @@ import { PermissionSyncService } from './permission-sync.service';
     }),
     ClsModule.forRoot({ global: true }),
     DatabaseModule,
+    AuditModule,
   ],
   providers: [
     { provide: ACCESS_CATALOG, useValue: CODE_ACCESS_CATALOG },

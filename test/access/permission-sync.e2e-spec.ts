@@ -83,9 +83,12 @@ describe('Permission sync', () => {
   })();
 
   const sync = (catalog: AccessCatalog, tenantId: string) =>
-    new PermissionSyncService(catalog, h.globalDb, h.tenantTx).syncTenant(
-      tenantId,
-    );
+    new PermissionSyncService(
+      catalog,
+      h.globalDb,
+      h.tenantTx,
+      h.audit,
+    ).syncTenant(tenantId);
 
   async function role(tenantId: string, key: string) {
     const r = await h.asTenant(tenantId, () =>

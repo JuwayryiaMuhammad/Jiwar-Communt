@@ -1,5 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ACCESS_CATALOG, type AccessCatalog } from '../access/access-catalog';
+import { AuditService } from '../audit/audit.service';
+import { diffChanges } from '../audit/diff';
 import { GlobalDbService } from '../database/global-db.service';
 import { TenantTx, type TenantTxClient } from '../database/tenant-tx.service';
 
@@ -33,7 +35,20 @@ export class PermissionSyncService {
     @Inject(ACCESS_CATALOG) private readonly catalog: AccessCatalog,
     private readonly globalDb: GlobalDbService,
     private readonly tenantTx: TenantTx,
+    private readonly audit: AuditService,
   ) {}
+
+  /** roleId → sorted permissions, inside the sync transaction. */
+  private async snapshot(tx: TenantTxClient): Promise<Map<string, string[]>> {
+    const rows = await tx.rolePermission.findMany({
+      select: { roleId: true, permission: true },
+    });
+    const map = new Map<string, string[]>();
+    for (const r of rows)
+      map.set(r.roleId, [...(map.get(r.roleId) ?? []), r.permission]);
+    for (const list of map.values()) list.sort();
+    return map;
+  }
 
   async syncAll(): Promise<TenantSyncReport[]> {
     const tenants = await this.globalDb.tenant.findMany({
@@ -58,16 +73,35 @@ export class PermissionSyncService {
         rolesChanged: 0,
       };
       const changed = new Set<string>();
+      const before = await this.snapshot(tx);
 
       await this.applyRenames(tx, tenantId, report, changed);
       await this.applyRetirements(tx, report, changed);
       await this.applyAdditions(tx, tenantId, report, changed);
       await this.reportUnknown(tx, report);
 
+      const after = await this.snapshot(tx);
       for (const roleId of changed) {
-        await tx.role.update({
+        const role = await tx.role.update({
           where: { id: roleId },
           data: { permissionsVersion: { increment: 1 } },
+        });
+        // Actor is `system`: the sync runs with no account in context.
+        await this.audit.record(tx, {
+          action: 'role.permissions_synced',
+          targetId: roleId,
+          changes: diffChanges(
+            { permissions: before.get(roleId) ?? [] },
+            { permissions: after.get(roleId) ?? [] },
+            'role.permissions_synced',
+          ),
+          metadata: {
+            roleKey: role.key,
+            permissionsVersion: role.permissionsVersion,
+            added: report.added,
+            renamed: report.renamed,
+            retired: report.retired,
+          },
         });
       }
       report.rolesChanged = changed.size;

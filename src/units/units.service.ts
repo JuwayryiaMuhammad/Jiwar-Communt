@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ResourceAccess } from '../access/resource-access';
+import { AuditService } from '../audit/audit.service';
+import { diffChanges } from '../audit/diff';
 import { RequestContext } from '../common/cls/request-context';
+import { TenantTx } from '../database/tenant-tx.service';
 import { newId } from '../common/uuid';
 import { PrismaService } from '../database/prisma.service';
 import type { CreateUnitDto } from './dto/create-unit.dto';
@@ -12,6 +15,8 @@ export class UnitsService {
     private readonly prisma: PrismaService,
     private readonly ctx: RequestContext,
     private readonly access: ResourceAccess,
+    private readonly tenantTx: TenantTx,
+    private readonly audit: AuditService,
   ) {}
 
   /** Only the units this account may see (ResourceAccess, ADR 0012). */
@@ -28,15 +33,33 @@ export class UnitsService {
     return UnitView.from(await this.access.assertUnit(id));
   }
 
+  /** The unit and its audit entry commit together (ADR 0014). */
   async create(dto: CreateUnitDto): Promise<UnitView> {
-    const unit = await this.prisma.tenant.unit.create({
-      data: {
-        id: newId(),
-        tenantId: this.ctx.tenantId,
-        code: dto.code.trim(),
-        building: dto.building?.trim() ?? null,
-        floor: dto.floor ?? null,
-      },
+    const tenantId = this.ctx.tenantId;
+    const unit = await this.tenantTx.withTenantTx(async (tx) => {
+      const created = await tx.unit.create({
+        data: {
+          id: newId(),
+          tenantId,
+          code: dto.code.trim(),
+          building: dto.building?.trim() ?? null,
+          floor: dto.floor ?? null,
+        },
+      });
+      await this.audit.record(tx, {
+        action: 'unit.created',
+        targetId: created.id,
+        changes: diffChanges(
+          null,
+          {
+            code: created.code,
+            building: created.building,
+            floor: created.floor,
+          },
+          'unit.created',
+        ),
+      });
+      return created;
     });
     return UnitView.from(unit);
   }

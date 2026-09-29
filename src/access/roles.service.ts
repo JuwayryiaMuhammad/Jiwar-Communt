@@ -1,5 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { AccountType } from '@prisma/client';
+import { AuditService } from '../audit/audit.service';
+import { diffChanges } from '../audit/diff';
 import { RequestContext } from '../common/cls/request-context';
 import { appError, ErrorCode } from '../common/errors';
 import { PrismaService } from '../database/prisma.service';
@@ -28,6 +30,7 @@ export class RolesService {
     private readonly tenantTx: TenantTx,
     private readonly ctx: RequestContext,
     @Inject(ACCESS_CATALOG) private readonly catalog: AccessCatalog,
+    private readonly audit: AuditService,
   ) {}
 
   async list(): Promise<RoleWithPermissions[]> {
@@ -117,6 +120,19 @@ export class RolesService {
         where: { id: roleId },
         data: { permissionsVersion: { increment: 1 } },
         include: { permissions: { select: { permission: true } } },
+      });
+      await this.audit.record(tx, {
+        action: 'role.permissions_replaced',
+        targetId: roleId,
+        changes: diffChanges(
+          { permissions: [...current].sort() },
+          { permissions: wanted },
+          'role.permissions_replaced',
+        ),
+        metadata: {
+          roleKey: role.key,
+          permissionsVersion: updated.permissionsVersion,
+        },
       });
       return toView(updated);
     });

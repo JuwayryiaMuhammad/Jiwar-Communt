@@ -159,7 +159,7 @@ export class TenantsService {
     status: AccountStatus,
   ): Promise<ManagerSummary> {
     await this.findTenant(tenantId);
-    const account = await this.tenantTx.runInTenantUnsafe(
+    const change = await this.tenantTx.runInTenantUnsafe(
       tenantId,
       async (tx) => {
         const existing = await tx.account.findUnique({
@@ -170,10 +170,10 @@ export class TenantsService {
         return this.writer.setStatus(tx, accountId, status);
       },
     );
-    if (!account) {
+    if (!change) {
       throw appError.notFound(ErrorCode.ACCOUNT_NOT_FOUND, 'Manager not found');
     }
-    return pickManager(account);
+    return pickManager(change.account);
   }
 
   private async findTenant(tenantId: string) {

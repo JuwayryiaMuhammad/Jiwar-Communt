@@ -25,6 +25,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'residents.manage',
       'roles.read',
       'roles.manage',
+      'audit.read',
     ],
   },
   {

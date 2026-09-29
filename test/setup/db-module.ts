@@ -2,6 +2,8 @@ import { ConfigModule } from '@nestjs/config';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ClsModule, ClsService } from 'nestjs-cls';
 import type { AppClsStore } from '../../src/common/cls/app-cls';
+import { AuditModule } from '../../src/audit/audit.module';
+import { AuditService } from '../../src/audit/audit.service';
 import { validateEnv } from '../../src/config/env.schema';
 import { DatabaseModule } from '../../src/database/database.module';
 import { GlobalDbService } from '../../src/database/global-db.service';
@@ -14,6 +16,7 @@ export interface DbHarness {
   prisma: PrismaService;
   tenantTx: TenantTx;
   globalDb: GlobalDbService;
+  audit: AuditService;
   /** Runs `fn` with `tenantId` in the request context, as JwtAuthGuard would. */
   asTenant<T>(tenantId: string, fn: () => Promise<T>): Promise<T>;
   close(): Promise<void>;
@@ -36,6 +39,7 @@ export async function createDbHarness(
         }),
         ClsModule.forRoot({ global: true }),
         DatabaseModule,
+        AuditModule,
       ],
     }).compile();
     await moduleRef.init();
@@ -47,6 +51,7 @@ export async function createDbHarness(
       prisma: moduleRef.get(PrismaService),
       tenantTx: moduleRef.get(TenantTx),
       globalDb: moduleRef.get(GlobalDbService),
+      audit: moduleRef.get(AuditService),
       // `await` inside run() matters: Prisma queries are lazy and execute on
       // then(), so an un-awaited query would run after the context is gone.
       asTenant: (tenantId, fn) =>

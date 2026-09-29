@@ -17,3 +17,5 @@
 | [0013](0013-i18n.md) | Codes not text; Arabic and English | Accepted |
 | [0014](0014-audit-log.md) | Immutable audit log and security events | Accepted |
 | [0015](0015-domain-structure.md) | Domain folders (`core` + domains) and import boundaries | Accepted |
+| [0016](0016-household-and-delegation.md) | Primary resident, household, invites and delegation | Accepted |
+| [0017](0017-domestic-workers.md) | Domestic workers: engagements, codes, notices, ban | Accepted |

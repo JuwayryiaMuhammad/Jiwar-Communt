@@ -16,3 +16,8 @@
 - anyone else, nothing.
 
 A resident failing the check gets **not found** (`UNIT_NOT_FOUND`), never forbidden, so unit ids are not confirmed.
+
+## Update (Phase 2)
+- Each unit has at most one **primary resident** among its active occupancies. The first occupant becomes primary; the manager can change it; when the primary leaves, the unit is flagged for a household review and nobody is promoted (ADR 0016).
+- `ResourceAccess` also scopes **family** accounts: units where they have an active household membership.
+- `myUnits` says whether the caller is the unit's primary, and gives the primary the household counts.

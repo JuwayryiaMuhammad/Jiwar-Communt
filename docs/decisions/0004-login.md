@@ -29,3 +29,9 @@ OTP delivery sits behind an `OtpChannel` interface so WhatsApp/SMS can be added 
 
 ## Update (Phase 1b)
 Login activity is written to `security_events` (ADR 0014): OTP requested / failed / exhausted / rate-limited, login succeeded, refresh-token reuse, session revocations, and the platform login outcomes. Only the identifier HMAC is stored, never the raw email or phone.
+
+## Update (Phase 2)
+- **OTP challenges carry a purpose** (`login` | `invite_accept`). Login issue, verify and invalidation touch only login challenges; household invite acceptance has its own (ADR 0016). Neither can be used for the other.
+- **Sessions record origin:** user agent, IP and last use, at start and on every refresh. The account holder's session list never shows the IP.
+- **Access tokens carry `sid`.** `PermissionsGuard` checks that session on every request (it must be the token's account and compound, unrevoked and unexpired). Logout, "revoke this session" and "that wasn't me" therefore cut the access token immediately, not when it expires.
+- **Email is sent through one pooled SMTP transport** (`core/mail`).

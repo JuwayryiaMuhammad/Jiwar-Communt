@@ -56,7 +56,7 @@ async function main(): Promise<void> {
     );
     for (const r of changed) {
       console.log(
-        `  ${r.tenantId}: added [${r.added.join(', ')}] renamed [${r.renamed.join(', ')}] retired [${r.retired.join(', ')}]`,
+        `  ${r.tenantId}: roles created [${r.rolesCreated.join(', ')}] added [${r.added.join(', ')}] renamed [${r.renamed.join(', ')}] retired [${r.retired.join(', ')}]`,
       );
     }
   } finally {

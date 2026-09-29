@@ -5,8 +5,14 @@ Backend for Jiwar, a multi-tenant platform for managing residential compounds. *
 - **Phase 0** proved tenant isolation (Postgres row-level security + Prisma + request context) through accounts, units and the login flow.
 - **Phase 1a** adds per-compound roles and permissions, the platform super admin, residents with multi-unit occupancy, and the i18n error contract.
 - **Phase 1b** adds an immutable audit trail and security events.
+- **Phase 2** splits the code into `core` and the `community` domain, and adds:
+  - the primary resident of each unit;
+  - households: family members by invite, and minors without an account;
+  - delegation from the primary to an adult member;
+  - resident self-service (language, sessions);
+  - domestic workers (registration, review, access codes, suspension, ban).
 
-Phases 1a and 1b add **no new HTTP endpoints**: they are designed screen by screen from the Figma design in a later phase, so the new capabilities are services tested at the service level. Architecture decisions live in [`docs/decisions/`](docs/decisions/README.md).
+Phases 1a, 1b and 2 add **no new HTTP endpoints**: they are designed screen by screen from the Figma design in a later phase, so the new capabilities are services tested at the service level. Architecture decisions live in [`docs/decisions/`](docs/decisions/README.md).
 
 Stack: Node ≥ 22, pnpm, NestJS 11, Prisma 7 (`@prisma/adapter-pg`), PostgreSQL 17, Redis 7, argon2, Jest + Supertest.
 
@@ -35,7 +41,7 @@ Same discipline as migrations:
 
 ```bash
 pnpm exec prisma migrate deploy          # 1. schema
-node dist/platform/access-sync.cli.js    # 2. permissions (pnpm access:sync locally)
+node dist/core/platform/access-sync.cli.js  # 2. permissions and missing default roles (pnpm access:sync locally)
 node dist/main                           # 3. only then the server
 ```
 
@@ -112,6 +118,10 @@ The e2e run wipes `jiwar_test`, migrates it as the migrator, runs `access:sync` 
 | `test/residents/*` | Multi-unit occupancy, unit resource access, ending occupancies |
 | `test/audit/*` | Audit immutability (app and owner), atomicity both ways, one scenario per catalog action and security event (and a check that none is missing), no personal data in any stored JSON, contact change, query paging, security events fail-open and bounded under a real table lock |
 | `test/db/unique-constraints` | Every unique index is mapped to API fields |
+| `test/rls/community-isolation` | Every Phase 2 tenant table isolated; every household/worker constraint asserted by name; no DELETE for the app |
+| `test/auth/*` | OTP purposes never interchangeable; session origin; `sid` — revocation cuts the access token at once |
+| `test/settings/*` | Tenant settings: defaults, per compound, validation, audit |
+| `test/community/*` | National ID on every account creation; primary resident (incl. concurrency); households; delegation; self-service; domestic workers; one audit scenario per Phase 2 action plus a secrets scan |
 
 ## Error contract (ADR 0013)
 
@@ -143,11 +153,13 @@ Four layers, each enforced in exactly one place:
 2. **Account and compound status:** checked on **every request** by `PermissionsGuard`. A deactivated account or suspended compound is rejected immediately, not when the 15-minute token expires.
 3. **Permissions (ADR 0010):**
    - The catalog and default roles are defined in code (`src/core/access/permissions.ts`, `default-roles.ts`).
-   - Each compound has its own copy of the `manager` and `resident` roles; a manager can edit his compound's role permissions (`RolesService`).
+   - Each compound has its own copy of the `manager`, `resident` and `family_member` roles (one default role per account type); a manager can edit his compound's role permissions (`RolesService`). `access:sync` also creates default roles a compound does not have yet.
    - Routes declare `@RequirePermissions('units.read')`. Permissions are not in the JWT; they are cached in Redis under `perm:{tenant}:{role}:{version}`, and every edit bumps the version, so changes apply on the next request.
    - The manager role can never lose `roles.manage` / `residents.manage`.
    - To remove or rename a permission, list it in `RETIRED_PERMISSIONS` / `RENAMED_PERMISSIONS`; `access:sync` never infers removal.
-4. **Resource (ADR 0012):** `ResourceAccess` limits a resident to units he actively occupies. A miss is `UNIT_NOT_FOUND`, never `FORBIDDEN`.
+4. **Resource (ADR 0012, 0016):**
+   - `ResourceAccess` limits a resident to units he actively occupies, and a family member to units with an active membership. A miss is `UNIT_NOT_FOUND`, never `FORBIDDEN`.
+   - On top of that, household actions need the unit's primary resident or a live delegate (`HouseholdAuthority`), and worker actions need an occupant or a `workers` delegate (`WorkersAuthority`).
 
 ## Audit trail (ADR 0014)
 
@@ -216,19 +228,24 @@ src/
     audit/       audit catalog, diff + personal-data guard, audit/platform/security services, query services
     redis/       Redis client, rate limiter
     health/      readiness (db, redis, tenant-setting leak canary)
+    mail/        the pooled SMTP transport and the bilingual email layout
+    tenant-settings/  per-compound settings (household approval, size limit)
   community/     the community domain; other domains import only its index.ts
-    units/       units, scoped by ResourceAccess
-    residents/   residents and unit occupancies
+    units/       units, scoped by ResourceAccess; the unit row lock
+    residents/   residents, unit occupancies, the primary resident
+    households/  household members, invites and acceptance, delegation (ADR 0016)
+    workers/     domestic workers, engagements, access codes, notices (ADR 0017)
 prisma/        schema, migrations (RLS SQL inside), seed
 docker/        postgres init (roles)
-test/          rls/, access/, platform/, residents/, audit/, db/ suites + setup/
+test/          rls/, access/, platform/, residents/, audit/, db/, auth/, settings/, community/ suites + setup/
 docs/decisions ADRs
 ```
 
 Rules the code enforces:
 - **Import boundaries** (ADR 0015): `src/core/` never imports a domain; a domain imports another one only through its `index.ts` (ESLint, `eslint.boundaries.cjs`, proven by a unit test).
 - **Tenant data** goes through `prisma.tenant.<model>` (single queries) or `withTenantTx` (multi-statement work and raw SQL). The raw Prisma client cannot be imported outside `src/core/database/` (ESLint).
-- **`runInTenantUnsafe`** takes the tenant from the caller, not the request. It is allowed only in `src/core/auth/`, `src/core/platform/` and `prisma/seed.ts` (ESLint).
+- **`runInTenantUnsafe`** takes the tenant from the caller, not the request. It is allowed only in `src/core/auth/`, `src/core/platform/`, `prisma/seed.ts` and the one household file that accepts invites before anyone is logged in (ESLint).
+- **Core reaches domains only through hooks** (`AccountLifecycle`), never imports.
 - **`tenantId` comes from the token only.** It never appears in a request DTO, and unknown body fields are rejected.
 - **Errors** are thrown only as `AppException`, with a code (unit test).
 - **Audit entries** are written only through `AuditService` / `PlatformAuditService`, with the action's transaction. Bypassing the immutability triggers (`session_replication_role`) is allowed only in `test/` (unit test).

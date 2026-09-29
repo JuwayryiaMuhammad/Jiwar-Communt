@@ -12,3 +12,8 @@
 ## Consequences
 - "Which account am I logging into?" is answered at login by an explicit account choice when an identifier matches more than one account.
 - Linking a family member who is also a staff member is intentionally impossible; the journey documents require the two accounts to stay separate.
+
+## Update (Phase 2)
+- A fourth account type, **`family`**: an adult household member with their own login (ADR 0016). It stays separate from any resident or staff account of the same person, like every other capacity.
+- Minors and domestic workers have **no account** at all.
+- Every account creator now validates the **Egyptian national ID** (`core/common/egyptian-national-id.ts`) and stores it normalized. Residents without one (passport holders) are an open question (ADR 0009).

@@ -43,3 +43,9 @@ Prisma queries are lazy: they execute when awaited, and the tenant hook reads th
 ## Update (Phase 1b)
 - `audit_log` is a tenant table (RLS + FORCE). `security_events` is global and carries `tenant_id` as a pointer, so it joins `login_identifiers` and `sessions` on the RLS-coverage allowlist; `platform_audit_log` is global.
 - `jiwar_app` has only `SELECT, INSERT` on the audit tables; triggers reject `UPDATE`/`DELETE`/`TRUNCATE` for every role. Test cleanup clears them over a superuser connection in `test/` only.
+
+## Update (Phase 2)
+- **`invite_tokens`** joins the allowlist of global tables that carry `tenant_id` as a pointer: it resolves a household invite link before anyone is logged in, and holds only the token HMAC.
+- **`runInTenantUnsafe`** is additionally allowed in exactly one domain file, `src/community/households/invite-acceptance.service.ts`, for the same reason (ESLint names the file).
+- **No DELETE for the app** on the household and worker tables, whose records are never deleted; `invite_tokens` rows are deleted on acceptance or revocation.
+- **Paths moved** with the domain split (ADR 0015); the rules did not change.

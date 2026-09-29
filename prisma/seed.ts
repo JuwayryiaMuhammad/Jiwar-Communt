@@ -24,7 +24,7 @@ const COMPOUNDS = [
     name: 'Nile Gardens (demo)',
     manager: {
       fullName: 'Manager A',
-      nationalId: '29001010000001',
+      nationalId: '29001010100001',
       email: 'manager.a@jiwar.local',
       phone: '+201000000001',
     },
@@ -34,7 +34,7 @@ const COMPOUNDS = [
     name: 'Desert Rose (demo)',
     manager: {
       fullName: 'Manager B',
-      nationalId: '29001010000002',
+      nationalId: '29001010100002',
       email: 'manager.b@jiwar.local',
       phone: '+201000000002',
     },
@@ -44,14 +44,14 @@ const COMPOUNDS = [
 
 const SHARED_PERSON = {
   fullName: 'Shared Person',
-  nationalId: '29001010000003',
+  nationalId: '29001010100003',
   email: 'shared@jiwar.local',
   phone: '+201000000003',
 };
 
 const OWNER_AND_RENTER = {
   fullName: 'Owner And Renter',
-  nationalId: '29001010000004',
+  nationalId: '29001010100004',
   email: 'resident.a@jiwar.local',
   phone: '+201000000004',
 };

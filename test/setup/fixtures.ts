@@ -2,10 +2,44 @@ import { randomInt } from 'node:crypto';
 import type { AccountType } from '@prisma/client';
 import { CODE_ACCESS_CATALOG } from '../../src/core/access/access-catalog';
 import { RoleProvisioner } from '../../src/core/access/role-provisioner';
+import { egyptToday } from '../../src/core/common/egyptian-national-id';
 import { newId } from '../../src/core/common/uuid';
 import type { DbHarness } from './db-module';
 
 const provisioner = new RoleProvisioner(CODE_ACCESS_CATALOG);
+
+/**
+ * A valid Egyptian national ID for someone born on `birthDate` (default
+ * 1990-01-01, an adult): the right century digit, Cairo as governorate, and a
+ * random sequence so values differ between calls.
+ */
+export function nationalIdFor(
+  birthDate: Date = new Date(Date.UTC(1990, 0, 1)),
+): string {
+  const pad = (n: number, width = 2) => String(n).padStart(width, '0');
+  const year = birthDate.getUTCFullYear();
+  return [
+    year >= 2000 ? '3' : '2',
+    pad(year % 100),
+    pad(birthDate.getUTCMonth() + 1),
+    pad(birthDate.getUTCDate()),
+    '01',
+    pad(randomInt(1e4), 4),
+    String(randomInt(10)),
+  ].join('');
+}
+
+/** Egypt's calendar date `years` years (and `days` days) before today. */
+export function bornYearsAgo(years: number, days = 0): Date {
+  const today = egyptToday();
+  return new Date(
+    Date.UTC(
+      today.getUTCFullYear() - years,
+      today.getUTCMonth(),
+      today.getUTCDate() - days,
+    ),
+  );
+}
 
 /** Unique per call, so suites never collide on unique constraints. */
 export function uniqueSuffix(): string {
@@ -63,7 +97,7 @@ export function createAccountRow(
         type,
         roleId: await roleId(h, tenantId, type),
         fullName: `Person ${s}`,
-        nationalId: `2900101${randomInt(1e7).toString().padStart(7, '0')}`,
+        nationalId: nationalIdFor(),
         phone: `+2010${randomInt(1e8).toString().padStart(8, '0')}`,
         email: `p-${s}@example.test`,
       },

@@ -26,7 +26,7 @@ describe('diffChanges', () => {
         {
           type: 'resident',
           fullName: 'Ahmed Mohamed',
-          nationalId: '29001011234567',
+          nationalId: '29001010134567',
           phone: '+201012345678',
           email: 'ahmed@example.com',
           status: 'active',
@@ -115,7 +115,7 @@ describe('personal data guard', () => {
     ['write to ahmed@example.com', 'email'],
     ['+201012345678', 'phone'],
     ['01012345678', 'phone'],
-    ['29001011234567', 'national id'],
+    ['29001010134567', 'national id'],
   ])('%s looks like %s', (value, kind) => {
     expect(looksPersonal(value)).toBe(kind);
   });

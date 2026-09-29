@@ -49,7 +49,7 @@ describe('Residents', () => {
       name: 'Residents Court',
       manager: {
         fullName: 'Manager',
-        nationalId: '29001013334444',
+        nationalId: '29001010134444',
         phone: uniquePhone(),
         email: uniqueEmail('mgr'),
       },
@@ -97,7 +97,7 @@ describe('Residents', () => {
   function newResident(units: NewResident['units']): NewResident {
     return {
       fullName: 'Mona Resident',
-      nationalId: '29001015556666',
+      nationalId: '29001010156666',
       phone: uniquePhone(),
       email: uniqueEmail('res'),
       units,

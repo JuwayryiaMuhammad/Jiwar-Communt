@@ -13,6 +13,7 @@ import {
 } from '../auth/identifier';
 import { AuditService } from '../audit/audit.service';
 import { diffChanges } from '../audit/diff';
+import { parseEgyptianNationalId } from '../common/egyptian-national-id';
 import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
 import { newId } from '../common/uuid';
 import { GlobalDbService } from '../database/global-db.service';
@@ -61,6 +62,8 @@ export class AccountWriter {
   ): Promise<Account> {
     const { email, phone } = normalizeContact(input);
     if (!email || !phone) throw invalidContact(!email, !phone);
+    const nationalId = parseEgyptianNationalId(input.nationalId);
+    if (!nationalId) throw invalidNationalId();
 
     const role = input.roleId
       ? await tx.role.findUnique({ where: { id: input.roleId } })
@@ -82,7 +85,7 @@ export class AccountWriter {
         type: input.type,
         roleId: role.id,
         fullName: input.fullName.trim(),
-        nationalId: input.nationalId,
+        nationalId: nationalId.value,
         phone,
         email,
         preferredLocale: input.preferredLocale ?? 'ar',
@@ -252,5 +255,13 @@ function invalidContact(badEmail: boolean, badPhone: boolean) {
           : []),
       ],
     },
+  );
+}
+
+export function invalidNationalId(field = 'nationalId') {
+  return appError.badRequest(
+    ErrorCode.VALIDATION_FAILED,
+    'Invalid national ID',
+    { fields: [{ field, code: FieldErrorCode.INVALID_NATIONAL_ID }] },
   );
 }

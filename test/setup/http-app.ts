@@ -15,7 +15,7 @@ import { newId } from '../../src/core/common/uuid';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import { RoleProvisioner } from '../../src/core/access/role-provisioner';
-import { uniqueSuffix } from './fixtures';
+import { nationalIdFor, uniqueSuffix } from './fixtures';
 
 export const API = '/api/v1';
 
@@ -84,9 +84,7 @@ export async function createHttpHarness(
         return await accounts.create({
           type: input.type,
           fullName: input.fullName ?? `Person ${uniqueSuffix()}`,
-          nationalId: `29001010${Math.floor(Math.random() * 1e6)
-            .toString()
-            .padStart(6, '0')}`,
+          nationalId: nationalIdFor(),
           phone: input.phone,
           email: input.email,
         });

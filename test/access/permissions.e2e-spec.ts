@@ -85,7 +85,7 @@ describe('Permissions guard', () => {
       .send({
         type: 'staff',
         fullName: 'Guard One',
-        nationalId: '29001011234567',
+        nationalId: '29001010134567',
         phone: uniquePhone(),
         email: uniqueEmail('staff'),
       })
@@ -102,7 +102,7 @@ describe('Permissions guard', () => {
     const body = {
       type: 'resident',
       fullName: 'Dup',
-      nationalId: '29001011234568',
+      nationalId: '29001010134568',
       email,
     };
     const send = () =>

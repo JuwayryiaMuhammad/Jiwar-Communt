@@ -8,3 +8,4 @@
 4. **Shorter sessions for sensitive roles** (accountant, system admin, control room re-verify every session in the journey documents). The per-type policy exists; the values and account types do not yet.
 5. **Existing data on schema changes.** Phase 1a made `accounts.role_id` mandatory; Phase 0 data was never deployed, so the dev database was reset instead of backfilled. Once real data exists, such changes need backfill migrations.
 6. **Audit log follow-ups** (ADR 0014): hash chaining, blocking owner DDL on audit tables, retention and actor anonymization, read-access logging, export.
+7. **Residents without an Egyptian national ID.** From Phase 2 every account must carry a valid Egyptian national ID (`core/common/egyptian-national-id.ts`): the birth date drives the adult/minor rules. Foreign owners and tenants (passport holders) cannot be created until an alternative identity document, and a way to know their age, is designed.

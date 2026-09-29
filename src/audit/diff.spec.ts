@@ -1,5 +1,6 @@
 import { diffChanges } from './diff';
 import {
+  isSensitiveField,
   looksPersonal,
   PersonalValueError,
   REDACTED,
@@ -54,6 +55,38 @@ describe('diffChanges', () => {
       full_name: { changed: true },
       mustChangePassword: { from: true, to: false },
     });
+  });
+
+  it('withholds any password-like field by default; only named exceptions keep values', () => {
+    expect(
+      diffChanges(
+        {
+          newPassword: null,
+          passwordResetCode: null,
+          temporaryPassword: null,
+          mustChangePassword: true,
+        },
+        {
+          newPassword: 'n3w-secret-value',
+          passwordResetCode: '483920',
+          temporaryPassword: 'tmp-value',
+          mustChangePassword: false,
+        },
+        'platform_admin.password_changed',
+      ),
+    ).toEqual({
+      newPassword: { changed: true },
+      passwordResetCode: { changed: true },
+      temporaryPassword: { changed: true },
+      mustChangePassword: { from: true, to: false },
+    });
+  });
+
+  it('the exception list never overrides an explicitly sensitive field', () => {
+    // `email` is always sensitive, even if someone listed it as an exception.
+    expect(isSensitiveField('email')).toBe(true);
+    expect(isSensitiveField('mustChangePassword')).toBe(false);
+    expect(isSensitiveField('must_change_password')).toBe(false);
   });
 
   it('keeps a compound name readable (only person names are sensitive)', () => {

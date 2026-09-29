@@ -14,9 +14,18 @@ const SENSITIVE_FIELDS = [
   'phone',
   'email',
 ];
-// Any hash/token/secret, and a raw `password` field. Not every name that
-// contains "password": `mustChangePassword` is a harmless boolean.
-const SENSITIVE_PATTERN = /hash|token|secret|^password$/i;
+// Broad on purpose: any future `newPassword`, `temporaryPassword`,
+// `passwordResetCode`, `apiToken`… is withheld by default.
+const SENSITIVE_PATTERN = /password|hash|token|secret/i;
+
+/**
+ * Named exceptions to SENSITIVE_PATTERN only — fields that match it but hold
+ * nothing secret. Each addition is a reviewed decision; the list never
+ * overrides SENSITIVE_FIELDS or an action's own `sensitive` list.
+ */
+export const NOT_SENSITIVE: readonly string[] = [
+  'mustChangePassword', // a boolean flag, useful in the trail
+];
 
 const norm = (key: string) => key.replace(/_/g, '').toLowerCase();
 const SENSITIVE_NORMALIZED = new Set(SENSITIVE_FIELDS.map(norm));
@@ -26,11 +35,10 @@ export function isSensitiveField(key: string, action?: AuditAction): boolean {
     (action &&
       (AUDIT_ACTIONS[action] as { sensitive?: readonly string[] }).sensitive) ||
     [];
-  return (
-    SENSITIVE_NORMALIZED.has(norm(key)) ||
-    extra.some((f) => norm(f) === norm(key)) ||
-    SENSITIVE_PATTERN.test(key)
-  );
+  if (SENSITIVE_NORMALIZED.has(norm(key))) return true;
+  if (extra.some((f) => norm(f) === norm(key))) return true;
+  if (NOT_SENSITIVE.some((f) => norm(f) === norm(key))) return false;
+  return SENSITIVE_PATTERN.test(key);
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

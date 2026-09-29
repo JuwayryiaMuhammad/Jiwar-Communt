@@ -31,6 +31,8 @@ export const PERMISSIONS = {
   // resident (or a delegate) on top of the permission.
   'household.manage': { kinds: ['resident', 'family'] },
   'household.approve': { kinds: ['manager'] },
+  // Only the primary resident delegates (checked by the service).
+  'household.delegate': { kinds: ['resident'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

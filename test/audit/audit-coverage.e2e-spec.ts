@@ -289,7 +289,10 @@ describe('Audit coverage', () => {
         targetType: 'role',
       });
       expect(row.changes).toEqual({
-        permissions: { from: ['household.manage', 'units.read'], to: [] },
+        permissions: {
+          from: ['household.delegate', 'household.manage', 'units.read'],
+          to: [],
+        },
       });
       expect(row.metadata).toMatchObject({
         roleKey: 'resident',

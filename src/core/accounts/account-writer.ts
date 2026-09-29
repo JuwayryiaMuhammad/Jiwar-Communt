@@ -17,6 +17,7 @@ import {
   type AccessCatalog,
 } from '../access/access-catalog';
 import { AuditService } from '../audit/audit.service';
+import { AccountLifecycle, type AfterCommit } from './account-lifecycle';
 import { diffChanges } from '../audit/diff';
 import { parseEgyptianNationalId } from '../common/egyptian-national-id';
 import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
@@ -39,6 +40,11 @@ export interface StatusChange {
   account: Account;
   /** Sessions ended by this change (deactivation); callers log them after commit. */
   sessionsRevoked: number;
+  /**
+   * Work the domains asked for (AccountLifecycle), e.g. emails about ended
+   * delegations. Callers run it after commit.
+   */
+  afterCommit: AfterCommit[];
 }
 
 /**
@@ -47,7 +53,8 @@ export interface StatusChange {
  * - an account and its login identifiers commit together (ADR 0003);
  * - it has exactly one role of its own kind (ADR 0010);
  * - status changes are mirrored to the login lookup, and deactivation ends
- *   every session (ADR 0004);
+ *   every session (ADR 0004) and runs the domains' deactivation handlers
+ *   (AccountLifecycle, ADR 0015);
  * - every change is audited in the same transaction (ADR 0014).
  *
  * Works inside the caller's tenant transaction; it never picks a tenant.
@@ -59,6 +66,7 @@ export class AccountWriter {
     private readonly hasher: IdentifierHasher,
     private readonly audit: AuditService,
     @Inject(ACCESS_CATALOG) private readonly catalog: AccessCatalog,
+    private readonly lifecycle: AccountLifecycle,
   ) {}
 
   async create(
@@ -137,7 +145,7 @@ export class AccountWriter {
     const before = await tx.account.findUnique({ where: { id: accountId } });
     if (!before) return null;
     if (before.status === status)
-      return { account: before, sessionsRevoked: 0 };
+      return { account: before, sessionsRevoked: 0, afterCommit: [] };
 
     const account = await tx.account.update({
       where: { id: accountId },
@@ -167,7 +175,14 @@ export class AccountWriter {
       ),
       metadata: { sessionsRevoked },
     });
-    return { account, sessionsRevoked };
+    const afterCommit =
+      status === 'inactive'
+        ? await this.lifecycle.deactivated(tx, {
+            id: accountId,
+            tenantId: account.tenantId,
+          })
+        : [];
+    return { account, sessionsRevoked, afterCommit };
   }
 
   /**

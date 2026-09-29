@@ -1,5 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
+import {
+  runAfterCommit,
+  type AfterCommit,
+} from '../../core/accounts/account-lifecycle';
 import { AccountWriter } from '../../core/accounts/account-writer';
 import { AuditService } from '../../core/audit/audit.service';
 import { diffChanges } from '../../core/audit/diff';
@@ -11,6 +15,7 @@ import {
   TenantTx,
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
+import { DelegationsService } from '../households/delegations.service';
 import { lockUnits } from '../units/unit-lock';
 import type {
   MyUnit,
@@ -39,12 +44,15 @@ type ResidentRow = Prisma.AccountGetPayload<{
  */
 @Injectable()
 export class ResidentsService {
+  private readonly logger = new Logger(ResidentsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly tenantTx: TenantTx,
     private readonly writer: AccountWriter,
     private readonly ctx: RequestContext,
     private readonly audit: AuditService,
+    private readonly delegations: DelegationsService,
   ) {}
 
   /** Account (resident role) + login identifiers + occupancies, atomically. */
@@ -178,7 +186,8 @@ export class ResidentsService {
    * and no one is promoted automatically.
    */
   async endOccupancy(occupancyId: string): Promise<OccupancyView> {
-    return this.tenantTx.withTenantTx(async (tx) => {
+    const after: AfterCommit[] = [];
+    const view = await this.tenantTx.withTenantTx(async (tx) => {
       const current = await tx.unitOccupancy.findFirst({
         where: { id: occupancyId, status: 'active' },
         select: { unitId: true },
@@ -212,9 +221,18 @@ export class ResidentsService {
         await this.flagHouseholdReview(tx, ended.unitId, 'primary_left', {
           occupancyId,
         });
+        after.push(
+          ...(await this.delegations.endWhere(
+            tx,
+            { unitId: ended.unitId, delegatorAccountId: ended.accountId },
+            'primary_changed',
+          )),
+        );
       }
       return toOccupancyView(ended);
     });
+    await runAfterCommit(after, this.logger);
+    return view;
   }
 
   /**
@@ -223,7 +241,8 @@ export class ResidentsService {
    * the household-review flag.
    */
   async setPrimary(unitId: string, accountId: string): Promise<OccupancyView> {
-    return this.tenantTx.withTenantTx(async (tx) => {
+    const after: AfterCommit[] = [];
+    const view = await this.tenantTx.withTenantTx(async (tx) => {
       await lockUnits(tx, [unitId]);
       const target = await tx.unitOccupancy.findFirst({
         where: { unitId, accountId, status: 'active' },
@@ -240,6 +259,14 @@ export class ResidentsService {
             where: { id: previous.id },
             data: { isPrimary: false },
           });
+          // Delegations come from the primary; a new primary starts clean.
+          after.push(
+            ...(await this.delegations.endWhere(
+              tx,
+              { unitId, delegatorAccountId: previous.accountId },
+              'primary_changed',
+            )),
+          );
         }
         await tx.unitOccupancy.update({
           where: { id: target.id },
@@ -267,6 +294,8 @@ export class ResidentsService {
       });
       return toOccupancyView({ ...target, isPrimary: true });
     });
+    await runAfterCommit(after, this.logger);
+    return view;
   }
 
   /**

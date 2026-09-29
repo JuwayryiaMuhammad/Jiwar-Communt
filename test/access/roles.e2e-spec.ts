@@ -88,7 +88,7 @@ describe('Roles', () => {
       kind: 'resident',
       isSystem: true,
       name: null,
-      permissions: ['household.manage', 'units.read'],
+      permissions: ['household.delegate', 'household.manage', 'units.read'],
     });
   });
 
@@ -211,6 +211,7 @@ describe('Roles', () => {
       roles.replacePermissions(c.residentRole.id, [
         'units.read',
         'household.manage',
+        'household.delegate',
       ]),
     );
     expect(await version()).toBe(before);

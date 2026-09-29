@@ -5,6 +5,10 @@ import {
   type HouseholdMember,
   type HouseholdRelation,
 } from '@prisma/client';
+import {
+  runAfterCommit,
+  type AfterCommit,
+} from '../../core/accounts/account-lifecycle';
 import { AccountWriter } from '../../core/accounts/account-writer';
 import { AuditService } from '../../core/audit/audit.service';
 import { diffChanges } from '../../core/audit/diff';
@@ -36,6 +40,7 @@ import {
 import { Mailer } from '../../core/mail/mailer';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { lockUnits } from '../units/unit-lock';
+import { DelegationsService } from './delegations.service';
 import { HouseholdAuthority, type Authority } from './household-authority';
 import { renderMembershipEndedEmail } from './household-emails';
 import type {
@@ -47,15 +52,14 @@ import type {
 
 export const INVITE_TTL_DAYS = 7;
 
-/** Work to do once the transaction has committed (emails, security events). */
-type AfterCommit = () => Promise<void>;
-
 /**
  * A unit's household (ADR 0016):
  * - adults join by invite only (email required) and get a `family` account
  *   when they accept (InviteAcceptanceService);
  * - minors are added directly, with no account;
- * - only the unit's primary resident manages it (HouseholdAuthority);
+ * - only the unit's primary resident, or a `household` delegate, manages
+ *   it (HouseholdAuthority); a delegate never removes themselves or the
+ *   primary;
  * - the household never exceeds the compound's `max_household_members`,
  *   counting active and pending members and pending invites;
  * - removal needs a reason, may deactivate the account, and is never
@@ -77,6 +81,7 @@ export class HouseholdsService {
     private readonly audit: AuditService,
     private readonly securityEvents: SecurityEventsService,
     private readonly mailer: Mailer,
+    private readonly delegations: DelegationsService,
   ) {}
 
   // --------------------------------------------------------------------------
@@ -248,6 +253,16 @@ export class HouseholdsService {
       if (!member) throw memberNotFound();
       await lockUnits(tx, [member.unitId]);
       const by = await this.authority.require(tx, member.unitId, 'household');
+      if (
+        by.onBehalfOf &&
+        (member.accountId === by.accountId ||
+          member.accountId === by.onBehalfOf)
+      ) {
+        throw appError.forbidden(
+          ErrorCode.DELEGATION_NOT_ALLOWED,
+          'A delegate cannot remove themselves or the primary resident',
+        );
+      }
       after.push(
         ...(await this.endMembership(tx, member, {
           action: 'household.member_removed',
@@ -390,7 +405,14 @@ export class HouseholdsService {
 
     let accountDeactivated = false;
     let sessionsRevoked = 0;
+    let lifecycleTasks: AfterCommit[] = [];
     if (member.accountId) {
+      // Their delegation for this unit ends with the membership.
+      lifecycleTasks = await this.delegations.endWhere(
+        tx,
+        { unitId: member.unitId, delegateAccountId: member.accountId },
+        'member_removed',
+      );
       const others = await tx.householdMember.count({
         where: {
           accountId: member.accountId,
@@ -406,6 +428,7 @@ export class HouseholdsService {
         );
         accountDeactivated = change !== null;
         sessionsRevoked = change?.sessionsRevoked ?? 0;
+        lifecycleTasks.push(...(change?.afterCommit ?? []));
       }
     }
 
@@ -427,7 +450,7 @@ export class HouseholdsService {
       },
     });
 
-    if (!member.accountId) return []; // minors get no email
+    if (!member.accountId) return lifecycleTasks; // minors get no email
     const account = await tx.account.findUniqueOrThrow({
       where: { id: member.accountId },
       select: { email: true, preferredLocale: true, tenantId: true },
@@ -442,6 +465,7 @@ export class HouseholdsService {
     });
     const accountId = member.accountId;
     return [
+      ...lifecycleTasks,
       () =>
         this.mailer.send(
           account.email,
@@ -505,22 +529,6 @@ export async function expireIfDue(
       .inviteToken.deleteMany({ where: { tokenHash: invite.tokenHash } });
   }
   return true;
-}
-
-/** After commit: each task runs; a failure is logged and never undoes the action. */
-export async function runAfterCommit(
-  tasks: AfterCommit[],
-  logger: Logger,
-): Promise<void> {
-  for (const task of tasks) {
-    try {
-      await task();
-    } catch (error) {
-      logger.error(
-        `after-commit task failed: ${error instanceof Error ? error.name : 'Error'}`,
-      );
-    }
-  }
 }
 
 function onBehalfOf(by: Authority): Record<string, unknown> {

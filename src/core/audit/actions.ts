@@ -40,6 +40,18 @@ export const AUDIT_ACTIONS = {
   'household.member_approved': { log: 'tenant', target: 'household_member' },
   'household.member_rejected': { log: 'tenant', target: 'household_member' },
   'household.member_removed': { log: 'tenant', target: 'household_member' },
+  'household.delegation_created': {
+    log: 'tenant',
+    target: 'household_delegation',
+  },
+  'household.delegation_revoked': {
+    log: 'tenant',
+    target: 'household_delegation',
+  },
+  'household.delegation_ended': {
+    log: 'tenant',
+    target: 'household_delegation',
+  },
   'tenant.created': { log: 'platform', target: 'tenant' },
   'tenant.status_changed': { log: 'platform', target: 'tenant' },
   'tenant.manager_added': { log: 'platform', target: 'account' },

@@ -34,7 +34,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
   {
     key: 'resident',
     kind: 'resident',
-    permissions: ['units.read', 'household.manage'],
+    permissions: ['units.read', 'household.manage', 'household.delegate'],
   },
   {
     // Household members with a login (ADR 0016).

@@ -174,7 +174,12 @@ describe('Permission sync', () => {
   it('a default role added after a compound was created is created with ALL its permissions', async () => {
     // The catalog as it was before Phase 2: no family role, no household or
     // settings permissions.
-    const later = ['household.manage', 'household.approve', 'settings.manage'];
+    const later = [
+      'household.manage',
+      'household.approve',
+      'household.delegate',
+      'settings.manage',
+    ];
     const before: AccessCatalog = {
       ...base,
       permissions: Object.fromEntries(

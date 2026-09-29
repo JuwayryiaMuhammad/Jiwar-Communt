@@ -1,6 +1,7 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { PlatformModule } from '../../src/core/platform/platform.module';
 import { TenantSettingsService } from '../../src/core/tenant-settings/tenant-settings.service';
+import { DelegationsService } from '../../src/community/households/delegations.service';
 import { HouseholdsService } from '../../src/community/households/households.service';
 import type { NewInvite } from '../../src/community/households/households.types';
 import { InviteAcceptanceService } from '../../src/community/households/invite-acceptance.service';
@@ -30,6 +31,7 @@ describe('Audit coverage — community', () => {
 
   const households = () => h.moduleRef.get(HouseholdsService);
   const acceptance = () => h.moduleRef.get(InviteAcceptanceService);
+  const delegations = () => h.moduleRef.get(DelegationsService);
 
   beforeAll(async () => {
     h = await createHttpHarness({ imports: [PlatformModule] });
@@ -293,6 +295,65 @@ describe('Audit coverage — community', () => {
         expect(JSON.stringify(e)).not.toContain('no-such-token');
       }
       covered.add('invite.token_invalid');
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  describe('delegation', () => {
+    it('household.delegation_created, delegation_revoked (by the primary) and delegation_ended (automatic)', async () => {
+      const c = await x.compound();
+      const u = await x.unit(c);
+      const primary = await x.resident(c, [u.id]);
+      const member = await x.joinFamily(c, u.id, primary);
+      const asPrimary = <T>(fn: () => Promise<T>) =>
+        x.as(c, { id: primary.id, type: 'resident' }, fn);
+      const expiresAt = new Date(Date.now() + 30 * 86_400_000);
+
+      const first = await asPrimary(() =>
+        delegations().create(
+          u.id,
+          member.id,
+          ['workers', 'household'],
+          expiresAt,
+        ),
+      );
+      expect(
+        await single(c, 'household.delegation_created', first.id),
+      ).toMatchObject({
+        actorType: 'account',
+        actorId: primary.id,
+        targetType: 'household_delegation',
+        changes: {
+          unitId: { from: null, to: u.id },
+          delegateAccountId: { from: null, to: member.id },
+          scopes: { from: null, to: ['household', 'workers'] },
+          expiresAt: { from: null, to: expiresAt.toISOString() },
+        },
+      });
+
+      await asPrimary(() => delegations().revoke(first.id));
+      expect(
+        await single(c, 'household.delegation_revoked', first.id),
+      ).toMatchObject({
+        actorType: 'account',
+        actorId: primary.id,
+        changes: { endReason: { from: null, to: 'revoked' } },
+      });
+
+      const second = await asPrimary(() =>
+        delegations().create(u.id, member.id, ['household'], expiresAt),
+      );
+      await asPrimary(() =>
+        households().removeMember(member.memberId, 'moved'),
+      );
+      expect(
+        await single(c, 'household.delegation_ended', second.id),
+      ).toMatchObject({
+        actorType: 'account',
+        actorId: primary.id,
+        changes: { endReason: { from: null, to: 'member_removed' } },
+        metadata: { unitId: u.id, reason: 'member_removed' },
+      });
     });
   });
 

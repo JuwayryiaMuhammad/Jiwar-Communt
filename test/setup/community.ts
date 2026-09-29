@@ -5,7 +5,11 @@ import { newId } from '../../src/core/common/uuid';
 import { PrismaService } from '../../src/core/database/prisma.service';
 import { TenantsService } from '../../src/core/platform/tenants.service';
 import { ResidentsService } from '../../src/community/residents/residents.service';
-import { nationalIdFor, uniqueSuffix } from './fixtures';
+import { HouseholdsService } from '../../src/community/households/households.service';
+import type { NewInvite } from '../../src/community/households/households.types';
+import { InviteAcceptanceService } from '../../src/community/households/invite-acceptance.service';
+import { bornYearsAgo, nationalIdFor, uniqueSuffix } from './fixtures';
+import { waitForOtp } from './mailpit';
 import { uniqueEmail, uniquePhone, type HttpHarness } from './http-app';
 
 export interface Compound {
@@ -101,6 +105,37 @@ export function communityHelpers(h: HttpHarness) {
     );
   }
 
+  /**
+   * An adult joins the unit's household through the real invite flow: the
+   * primary invites, the code goes to the invited email, the invitee accepts.
+   */
+  async function joinFamily(
+    c: Compound,
+    unitId: string,
+    primary: { id: string },
+    input: Partial<NewInvite> = {},
+  ) {
+    const invite: NewInvite = {
+      fullName: `Family ${uniqueSuffix()}`,
+      phone: uniquePhone(),
+      email: uniqueEmail('family'),
+      nationalId: nationalIdFor(bornYearsAgo(30)),
+      relation: 'spouse',
+      ...input,
+    };
+    const created = await as(c, { id: primary.id, type: 'resident' }, () =>
+      h.moduleRef.get(HouseholdsService).createInvite(unitId, invite),
+    );
+    const since = new Date();
+    const acceptance = h.moduleRef.get(InviteAcceptanceService);
+    await acceptance.startAcceptance(created.token, '10.9.9.9', 'en');
+    const accepted = await acceptance.completeAcceptance(
+      created.token,
+      await waitForOtp(invite.email, since),
+    );
+    return { ...accepted, ...invite, id: accepted.accountId };
+  }
+
   function unitRow(c: Compound, unitId: string) {
     return asManager(c, () =>
       prisma.tenant.unit.findUniqueOrThrow({ where: { id: unitId } }),
@@ -120,5 +155,6 @@ export function communityHelpers(h: HttpHarness) {
     resident,
     occupancies,
     unitRow,
+    joinFamily,
   };
 }

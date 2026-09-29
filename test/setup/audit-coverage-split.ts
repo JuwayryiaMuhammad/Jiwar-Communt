@@ -19,4 +19,7 @@ export const COMMUNITY_COVERAGE: readonly string[] = [
   'household.member_rejected',
   'household.member_removed',
   'invite.token_invalid',
+  'household.delegation_created',
+  'household.delegation_revoked',
+  'household.delegation_ended',
 ];

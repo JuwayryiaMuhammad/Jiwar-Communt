@@ -13,12 +13,16 @@ export interface Authority {
 }
 
 /**
- * Resource-level check for household actions (ADR 0016), on top of the
- * `household.manage` permission: only the unit's primary resident may
- * invite, add a minor, remove a member or revoke an invite.
+ * Resource-level check for household and worker actions (ADR 0016), on top
+ * of the permission: the unit's primary resident, or a delegate whose
+ * delegation is live, unexpired and includes the scope.
  *
- * The unit must first be visible to the caller (ResourceAccess), otherwise
- * it is "not found" like any unit they cannot see.
+ * - The unit must first be visible to the caller (ResourceAccess),
+ *   otherwise it is "not found" like any unit they cannot see.
+ * - Expiry is checked here, at use time: there is no job that ends
+ *   delegations on their date.
+ * - A delegate acts `onBehalfOf` the primary; callers put that in the audit
+ *   metadata.
  */
 @Injectable()
 export class HouseholdAuthority {
@@ -32,13 +36,31 @@ export class HouseholdAuthority {
     unitId: string,
     scope: DelegationScope,
   ): Promise<Authority> {
-    void scope; // delegates (ADR 0016, Part E) are checked per scope
     const accountId = this.ctx.accountId;
     await this.assertVisible(tx, unitId);
     if (await isPrimary(tx, unitId, accountId)) {
       return { accountId, onBehalfOf: null };
     }
-    throw notPrimary();
+    const delegation = await tx.householdDelegation.findFirst({
+      where: {
+        unitId,
+        delegateAccountId: accountId,
+        revokedAt: null,
+        scopes: { has: scope },
+      },
+    });
+    if (!delegation) throw notPrimary();
+    if (delegation.expiresAt <= new Date()) {
+      throw appError.forbidden(
+        ErrorCode.DELEGATION_EXPIRED,
+        'Your delegation for this unit has expired',
+      );
+    }
+    // Automatic ends keep this true; checked anyway, it is cheap.
+    if (!(await isPrimary(tx, unitId, delegation.delegatorAccountId))) {
+      throw notPrimary();
+    }
+    return { accountId, onBehalfOf: delegation.delegatorAccountId };
   }
 
   /** The unit as the caller may see it, inside the transaction. */

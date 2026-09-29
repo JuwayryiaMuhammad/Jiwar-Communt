@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import type { AccountStatus, Locale, TenantStatus } from '@prisma/client';
 import { RoleProvisioner } from '../access/role-provisioner';
+import { runAfterCommit } from '../accounts/account-lifecycle';
 import { AccountWriter } from '../accounts/account-writer';
 import { diffChanges } from '../audit/diff';
 import { PlatformAuditService } from '../audit/platform-audit.service';
@@ -55,6 +56,8 @@ const MANAGER_FIELDS = {
  */
 @Injectable()
 export class TenantsService {
+  private readonly logger = new Logger(TenantsService.name);
+
   constructor(
     private readonly globalDb: GlobalDbService,
     private readonly tenantTx: TenantTx,
@@ -228,6 +231,7 @@ export class TenantsService {
     if (!change) {
       throw appError.notFound(ErrorCode.ACCOUNT_NOT_FOUND, 'Manager not found');
     }
+    await runAfterCommit(change.afterCommit, this.logger);
     if (change.sessionsRevoked) {
       await this.securityEvents.record('session.revoked', {
         tenantId,

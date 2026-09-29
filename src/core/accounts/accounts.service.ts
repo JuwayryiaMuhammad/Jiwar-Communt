@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { SecurityEventsService } from '../audit/security-events.service';
 import { RequestContext } from '../common/cls/request-context';
 import { appError, ErrorCode } from '../common/errors';
 import { PrismaService } from '../database/prisma.service';
 import { TenantTx } from '../database/tenant-tx.service';
+import { runAfterCommit } from './account-lifecycle';
 import { AccountWriter } from './account-writer';
 import { AccountView } from './dto/account.view';
 import type { CreateAccountDto } from './dto/create-account.dto';
@@ -11,6 +12,8 @@ import type { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 
 @Injectable()
 export class AccountsService {
+  private readonly logger = new Logger(AccountsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly tenantTx: TenantTx,
@@ -61,6 +64,7 @@ export class AccountsService {
       this.writer.setStatus(tx, id, dto.status),
     );
     if (!change) throw notFound();
+    await runAfterCommit(change.afterCommit, this.logger);
     if (change.sessionsRevoked) {
       // After commit: a rolled-back deactivation must leave no event.
       await this.securityEvents.record('session.revoked', {

@@ -6,6 +6,8 @@ import {
 } from '../../src/access/access-catalog';
 import { RoleProvisioner } from '../../src/access/role-provisioner';
 import { RolesService } from '../../src/access/roles.service';
+import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/audit/actions';
+import { IdentifierHasher } from '../../src/auth/identifier';
 import type { AppClsStore } from '../../src/common/cls/app-cls';
 import { newId } from '../../src/common/uuid';
 import { GlobalDbService } from '../../src/database/global-db.service';
@@ -19,6 +21,8 @@ import { PlatformModule } from '../../src/platform/platform.module';
 import { TenantsService } from '../../src/platform/tenants.service';
 import { ResidentsService } from '../../src/residents/residents.service';
 import { auditReaders } from '../setup/audit';
+import { loginViaOtp } from '../setup/login';
+import { waitForOtp } from '../setup/mailpit';
 import {
   API,
   createHttpHarness,
@@ -555,6 +559,239 @@ describe('Audit coverage', () => {
         for (const r of rows)
           expect(r).toMatchObject({ actorType: 'system', actorId: null });
       }
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  describe('security events', () => {
+    const hasher = () => h.moduleRef.get(IdentifierHasher);
+    const hashOf = (email: string) =>
+      hasher().hashIdentifier({ type: 'email', value: email });
+
+    async function event(
+      name: string,
+      where: Record<string, unknown>,
+      timeoutMs = 5000,
+    ) {
+      const deadline = Date.now() + timeoutMs;
+      for (;;) {
+        const rows = await read.security({ event: name, ...where });
+        if (rows.length || Date.now() > deadline) {
+          expect(rows.length).toBeGreaterThan(0);
+          covered.add(name);
+          return rows;
+        }
+        await new Promise((r) => setTimeout(r, 100));
+      }
+    }
+
+    async function residentOf(c: { tenantId: string }) {
+      const email = uniqueEmail('sec');
+      const account = await h.createAccount(c.tenantId, {
+        type: 'resident',
+        email,
+        phone: uniquePhone(),
+      });
+      return { email, id: account.id };
+    }
+
+    it('otp.requested — known and unknown identifiers alike', async () => {
+      const c = await compound();
+      const r = await residentOf(c);
+      await h
+        .http()
+        .post(`${API}/auth/otp/request`)
+        .set('Accept-Language', 'en')
+        .send({ identifier: r.email });
+      const known = await event('otp.requested', {
+        identifierHash: hashOf(r.email),
+      });
+      expect(known[0].metadata).toEqual({ locale: 'en', destinations: 1 });
+      expect(known[0].accountId).toBeNull();
+
+      const nobody = uniqueEmail('nobody');
+      await h
+        .http()
+        .post(`${API}/auth/otp/request`)
+        .send({ identifier: nobody });
+      const unknown = await event('otp.requested', {
+        identifierHash: hashOf(nobody),
+      });
+      expect(unknown[0].metadata).toEqual({ locale: 'ar', destinations: 0 });
+    });
+
+    it('otp.verify_failed and otp.challenge_exhausted', async () => {
+      const c = await compound();
+      const r = await residentOf(c);
+      const since = new Date();
+      await h
+        .http()
+        .post(`${API}/auth/otp/request`)
+        .send({ identifier: r.email });
+      const code = await waitForOtp(r.email, since);
+      const wrong = code === '000000' ? '000001' : '000000';
+      for (let i = 0; i < 5; i++) {
+        await h
+          .http()
+          .post(`${API}/auth/otp/verify`)
+          .send({ identifier: r.email, code: wrong })
+          .expect(401);
+      }
+      const failed = await event('otp.verify_failed', {
+        identifierHash: hashOf(r.email),
+      });
+      expect(failed).toHaveLength(5);
+      const exhausted = await event('otp.challenge_exhausted', {
+        identifierHash: hashOf(r.email),
+      });
+      expect(exhausted).toHaveLength(1);
+      expect(exhausted[0].metadata).toMatchObject({ attempts: 5 });
+    });
+
+    it('otp.rate_limited', async () => {
+      const email = uniqueEmail('limited');
+      for (let i = 0; i < 6; i++) {
+        await h
+          .http()
+          .post(`${API}/auth/otp/request`)
+          .send({ identifier: email });
+      }
+      const rows = await event('otp.rate_limited', {
+        identifierHash: hashOf(email),
+      });
+      expect(rows[0].metadata).toEqual({
+        flow: 'request',
+        scope: 'identifier',
+      });
+    });
+
+    it('login.succeeded, session.revoked (logout)', async () => {
+      const c = await compound();
+      const r = await residentOf(c);
+      const tokens = await loginViaOtp(h, r.email, r.id);
+      const ok = await event('login.succeeded', { accountId: r.id });
+      expect(ok[0]).toMatchObject({ tenantId: c.tenantId });
+      expect(ok[0].metadata).toEqual({ accountType: 'resident' });
+
+      await h
+        .http()
+        .post(`${API}/auth/logout`)
+        .send({ refreshToken: tokens.refreshToken })
+        .expect(204);
+      const revoked = await event('session.revoked', { accountId: r.id });
+      expect(revoked[0].metadata).toMatchObject({ reason: 'logout' });
+    });
+
+    it('session.refresh_reuse_detected (+ session.revoked)', async () => {
+      const c = await compound();
+      const r = await residentOf(c);
+      const tokens = await loginViaOtp(h, r.email, r.id);
+      await h
+        .http()
+        .post(`${API}/auth/refresh`)
+        .send({ refreshToken: tokens.refreshToken })
+        .expect(200);
+      await h
+        .http()
+        .post(`${API}/auth/refresh`)
+        .send({ refreshToken: tokens.refreshToken })
+        .expect(401);
+      const reuse = await event('session.refresh_reuse_detected', {
+        accountId: r.id,
+      });
+      expect(reuse[0]).toMatchObject({ tenantId: c.tenantId });
+      expect(reuse[0].metadata).toMatchObject({ how: 'old_secret' });
+      const revoked = await read.security({
+        event: 'session.revoked',
+        accountId: r.id,
+      });
+      expect(
+        revoked.map((e) => (e.metadata as { reason: string }).reason),
+      ).toContain('refresh_reuse');
+    });
+
+    it('platform.login_failed, platform.login_locked, platform.login_succeeded', async () => {
+      const globalDb = h.moduleRef.get(GlobalDbService);
+      const email = uniqueEmail('padmin');
+      const admin = await globalDb.platformAdmin.create({
+        data: {
+          id: newId(),
+          email,
+          passwordHash: await hashPassword('right-password-1'),
+          mustChangePassword: false,
+        },
+      });
+      const auth = h.moduleRef.get(PlatformAuthService);
+
+      await auth.login(email, 'right-password-1', '10.9.0.1');
+      const ok = await event('platform.login_succeeded', {
+        platformAdminId: admin.id,
+      });
+      expect(ok[0].identifierHash).toBe(hashOf(email));
+
+      const nobody = uniqueEmail('nobody');
+      await expect(
+        auth.login(nobody, 'whatever-password', '10.9.0.1'),
+      ).rejects.toBeDefined();
+      const unknown = await event('platform.login_failed', {
+        identifierHash: hashOf(nobody),
+      });
+      expect(unknown[0]).toMatchObject({ platformAdminId: null });
+      expect(unknown[0].metadata).toEqual({ reason: 'unknown_email' });
+
+      for (let i = 0; i < 5; i++) {
+        await expect(
+          auth.login(email, 'wrong-password-0', '10.9.0.1'),
+        ).rejects.toBeDefined();
+      }
+      const failed = await event('platform.login_failed', {
+        platformAdminId: admin.id,
+      });
+      expect(
+        failed.map((e) => (e.metadata as { reason: string }).reason),
+      ).toContain('wrong_password');
+      const locked = await event('platform.login_locked', {
+        platformAdminId: admin.id,
+      });
+      expect(locked).toHaveLength(1);
+    });
+
+    it('no security event holds a raw email or phone', async () => {
+      const rows = await read.security();
+      const text = JSON.stringify(rows);
+      expect(text).not.toMatch(/@example\.test|@jiwar\.test/);
+      expect(text).not.toMatch(/\+20\d{10}/);
+    });
+
+    it('fail-open: when events cannot be written, logins still work', async () => {
+      const c = await compound();
+      const r = await residentOf(c);
+      const globalDb = h.moduleRef.get(GlobalDbService);
+      const spy = jest
+        .spyOn(globalDb.securityEvent, 'create')
+        .mockRejectedValue(new Error('security_events unavailable'));
+      try {
+        const tokens = await loginViaOtp(h, r.email, r.id);
+        await h
+          .http()
+          .get(`${API}/accounts/me`)
+          .set('Authorization', `Bearer ${tokens.accessToken}`)
+          .expect(200);
+        expect(spy).toHaveBeenCalled();
+      } finally {
+        spy.mockRestore();
+      }
+      expect(
+        await read.security({ accountId: r.id, event: 'login.succeeded' }),
+      ).toEqual([]);
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  describe('catalog completeness', () => {
+    it('every audit action and security event has a scenario above', () => {
+      const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS].sort();
+      expect([...covered].sort()).toEqual(all);
     });
   });
 });

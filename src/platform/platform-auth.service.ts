@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { PlatformAdmin } from '@prisma/client';
-import { normalizeEmail } from '../auth/identifier';
+import { IdentifierHasher, normalizeEmail } from '../auth/identifier';
+import { SecurityEventsService } from '../audit/security-events.service';
 import { diffChanges } from '../audit/diff';
 import { PlatformAuditService } from '../audit/platform-audit.service';
 import { ClsService } from 'nestjs-cls';
@@ -40,6 +41,8 @@ export class PlatformAuthService {
     private readonly rateLimit: RateLimitService,
     private readonly cls: ClsService<AppClsStore>,
     private readonly platformAudit: PlatformAuditService,
+    private readonly securityEvents: SecurityEventsService,
+    private readonly hasher: IdentifierHasher,
   ) {
     this.maxFailures = config.get('PLATFORM_LOGIN_MAX_FAILURES', {
       infer: true,
@@ -76,17 +79,37 @@ export class PlatformAuthService {
       admin?.passwordHash ?? (await dummyHash()),
       password,
     );
-    if (!admin) throw invalidCredentials();
+    // The identifier HMAC, like tenant logins — never the raw email.
+    const identifierHash = this.hasher.hashIdentifier({
+      type: 'email',
+      value: email,
+    });
+    const failed = async (reason: string, platformAdminId: string | null) => {
+      await this.securityEvents.record('platform.login_failed', {
+        identifierHash,
+        platformAdminId,
+        metadata: { reason },
+      });
+      return invalidCredentials();
+    };
+    if (!admin) throw await failed('unknown_email', null);
 
     const locked = admin.lockedUntil !== null && admin.lockedUntil > new Date();
-    if (!passwordOk) await this.recordFailure(admin);
-    if (!passwordOk || locked || admin.status !== 'active') {
-      throw invalidCredentials();
+    if (!passwordOk) {
+      await this.recordFailure(admin, identifierHash);
+      throw await failed('wrong_password', admin.id);
     }
+    if (locked) throw await failed('locked', admin.id);
+    if (admin.status !== 'active') throw await failed('disabled', admin.id);
 
     await this.globalDb.platformAdmin.update({
       where: { id: admin.id },
       data: { failedAttempts: 0, lockedUntil: null, lastLoginAt: new Date() },
+    });
+    await this.securityEvents.record('platform.login_succeeded', {
+      identifierHash,
+      platformAdminId: admin.id,
+      metadata: { mustChangePassword: admin.mustChangePassword },
     });
     return admin.mustChangePassword
       ? this.sessions.passwordChangeToken(admin.id)
@@ -190,21 +213,36 @@ export class PlatformAuthService {
 
   async logout(refreshToken: string): Promise<void> {
     const session = await this.sessions.findLive(refreshToken);
-    if (session) await this.sessions.revoke(session.id);
+    if (session) {
+      await this.sessions.revoke(session.id);
+      await this.securityEvents.record('session.revoked', {
+        platformAdminId: session.adminId,
+        metadata: { reason: 'logout', sessionId: session.id },
+      });
+    }
   }
 
   /** Counts a failure; reaching the limit locks the account for a while. */
-  private async recordFailure(admin: PlatformAdmin): Promise<void> {
+  private async recordFailure(
+    admin: PlatformAdmin,
+    identifierHash: string | null = null,
+  ): Promise<void> {
     const updated = await this.globalDb.platformAdmin.update({
       where: { id: admin.id },
       data: { failedAttempts: { increment: 1 } },
     });
     if (updated.failedAttempts >= this.maxFailures) {
+      const lockedUntil = new Date(Date.now() + this.lockoutSeconds * 1000);
       await this.globalDb.platformAdmin.update({
         where: { id: admin.id },
-        data: {
-          failedAttempts: 0,
-          lockedUntil: new Date(Date.now() + this.lockoutSeconds * 1000),
+        data: { failedAttempts: 0, lockedUntil },
+      });
+      await this.securityEvents.record('platform.login_locked', {
+        identifierHash,
+        platformAdminId: admin.id,
+        metadata: {
+          lockedUntil: lockedUntil.toISOString(),
+          failures: this.maxFailures,
         },
       });
     }

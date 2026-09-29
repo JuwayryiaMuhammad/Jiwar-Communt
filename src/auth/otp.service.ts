@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import type { AccountType } from '@prisma/client';
 import type { Locale } from '../common/i18n/locale';
 import type { Env } from '../config/env.schema';
+import { SecurityEventsService } from '../audit/security-events.service';
 import { newId } from '../common/uuid';
 import { GlobalDbService } from '../database/global-db.service';
 import { TenantTx } from '../database/tenant-tx.service';
@@ -38,6 +39,7 @@ export class OtpService implements OnModuleInit {
     private readonly tenantTx: TenantTx,
     private readonly hasher: IdentifierHasher,
     @Inject(OTP_CHANNEL) private readonly channel: OtpChannel,
+    private readonly securityEvents: SecurityEventsService,
   ) {
     this.ttlSeconds = config.get('OTP_TTL_SECONDS', { infer: true });
     this.maxAttempts = config.get('OTP_MAX_ATTEMPTS', { infer: true });
@@ -94,6 +96,12 @@ export class OtpService implements OnModuleInit {
       data: { invalidatedAt: new Date() },
     });
 
+    // Recorded for known and unknown identifiers alike, off the request path,
+    // before sending so a mail failure cannot hide the attempt.
+    await this.securityEvents.record('otp.requested', {
+      identifierHash,
+      metadata: { locale, destinations: batch.length },
+    });
     for (const c of batch) {
       await this.channel.send({
         to: c.email,
@@ -142,6 +150,13 @@ export class OtpService implements OnModuleInit {
           challenge.codeHash,
         )
       ) {
+        if (challenge.attempts + 1 >= this.maxAttempts) {
+          // This wrong guess used the last attempt: the code is burnt.
+          await this.securityEvents.record('otp.challenge_exhausted', {
+            identifierHash,
+            metadata: { challengeId: challenge.id, attempts: this.maxAttempts },
+          });
+        }
         continue;
       }
       const consumed = await this.globalDb.otpChallenge.updateMany({

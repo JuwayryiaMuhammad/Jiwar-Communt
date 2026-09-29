@@ -8,6 +8,7 @@ import {
   safeEqualHex,
   sha256,
 } from '../common/refresh-token';
+import { SecurityEventsService } from '../audit/security-events.service';
 import { newId } from '../common/uuid';
 import { GlobalDbService } from '../database/global-db.service';
 import { SESSION_POLICY } from './auth-policy';
@@ -34,6 +35,7 @@ export class SessionService {
   constructor(
     private readonly jwt: JwtService,
     private readonly globalDb: GlobalDbService,
+    private readonly securityEvents: SecurityEventsService,
   ) {}
 
   async start(account: SessionAccount): Promise<IssuedTokens> {
@@ -74,6 +76,7 @@ export class SessionService {
       return null;
     if (!safeEqualHex(sha256(parsed.secret), session.refreshTokenHash)) {
       await this.revoke(session.id);
+      await this.reuseDetected(session, 'old_secret');
       return null;
     }
     return session;
@@ -81,7 +84,13 @@ export class SessionService {
 
   /** Swaps the refresh secret. Null if another refresh won the race. */
   async rotate(
-    session: { id: string; refreshTokenHash: string; expiresAt: Date },
+    session: {
+      id: string;
+      accountId: string;
+      tenantId: string;
+      refreshTokenHash: string;
+      expiresAt: Date;
+    },
     account: SessionAccount,
   ): Promise<IssuedTokens | null> {
     const secret = newSecret();
@@ -95,6 +104,7 @@ export class SessionService {
     });
     if (count === 0) {
       await this.revoke(session.id);
+      await this.reuseDetected(session, 'concurrent_rotation');
       return null;
     }
     return {
@@ -102,6 +112,22 @@ export class SessionService {
       refreshToken: `${session.id}.${secret}`,
       refreshTokenExpiresAt: session.expiresAt,
     };
+  }
+
+  /** A rotated refresh token came back: the session is presumed stolen. */
+  private async reuseDetected(
+    session: { id: string; accountId: string; tenantId: string },
+    how: 'old_secret' | 'concurrent_rotation',
+  ): Promise<void> {
+    const who = { accountId: session.accountId, tenantId: session.tenantId };
+    await this.securityEvents.record('session.refresh_reuse_detected', {
+      ...who,
+      metadata: { sessionId: session.id, how },
+    });
+    await this.securityEvents.record('session.revoked', {
+      ...who,
+      metadata: { reason: 'refresh_reuse', sessionId: session.id },
+    });
   }
 
   async revoke(sessionId: string): Promise<void> {

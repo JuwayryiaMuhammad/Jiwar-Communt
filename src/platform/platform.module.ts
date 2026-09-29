@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AccountsModule } from '../accounts/accounts.module';
+import { AuthModule } from '../auth/auth.module';
 import { PermissionSyncService } from './permission-sync.service';
 import { PlatformAuthGuard } from './platform-auth.guard';
 import { PlatformAuthService } from './platform-auth.service';
@@ -13,7 +14,7 @@ import { TenantsService } from './tenants.service';
  * endpoints come with the design; services are exercised by tests.
  */
 @Module({
-  imports: [AccountsModule],
+  imports: [AccountsModule, AuthModule],
   providers: [
     platformJwtProvider,
     PlatformSessionService,

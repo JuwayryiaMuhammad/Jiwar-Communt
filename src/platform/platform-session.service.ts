@@ -7,6 +7,7 @@ import {
   safeEqualHex,
   sha256,
 } from '../common/refresh-token';
+import { SecurityEventsService } from '../audit/security-events.service';
 import { newId } from '../common/uuid';
 import { GlobalDbService } from '../database/global-db.service';
 import { PLATFORM_JWT } from './platform-jwt';
@@ -37,6 +38,7 @@ export class PlatformSessionService {
   constructor(
     @Inject(PLATFORM_JWT) private readonly jwt: JwtService,
     private readonly globalDb: GlobalDbService,
+    private readonly securityEvents: SecurityEventsService,
   ) {}
 
   async start(adminId: string): Promise<PlatformTokens> {
@@ -89,6 +91,7 @@ export class PlatformSessionService {
       return null;
     if (!safeEqualHex(sha256(parsed.secret), session.refreshTokenHash)) {
       await this.revoke(session.id);
+      await this.reuseDetected(session, 'old_secret');
       return null;
     }
     return session;
@@ -106,6 +109,7 @@ export class PlatformSessionService {
     });
     if (count === 0) {
       await this.revoke(session.id);
+      await this.reuseDetected(session, 'concurrent_rotation');
       return null;
     }
     return {
@@ -128,6 +132,20 @@ export class PlatformSessionService {
       select: { revokedAt: true, expiresAt: true },
     });
     return !!session && !session.revokedAt && session.expiresAt > new Date();
+  }
+
+  private async reuseDetected(
+    session: PlatformSession,
+    how: 'old_secret' | 'concurrent_rotation',
+  ): Promise<void> {
+    await this.securityEvents.record('session.refresh_reuse_detected', {
+      platformAdminId: session.adminId,
+      metadata: { sessionId: session.id, how },
+    });
+    await this.securityEvents.record('session.revoked', {
+      platformAdminId: session.adminId,
+      metadata: { reason: 'refresh_reuse', sessionId: session.id },
+    });
   }
 
   async revoke(sessionId: string): Promise<void> {

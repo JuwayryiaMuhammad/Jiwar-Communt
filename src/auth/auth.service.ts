@@ -4,7 +4,13 @@ import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import type { Locale } from '../common/i18n/locale';
 import type { Env } from '../config/env.schema';
-import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
+import { SecurityEventsService } from '../audit/security-events.service';
+import {
+  appError,
+  AppException,
+  ErrorCode,
+  FieldErrorCode,
+} from '../common/errors';
 import { TenantTx } from '../database/tenant-tx.service';
 import { REDIS } from '../redis/redis.module';
 import type { OtpVerifiedView, TokensView } from './dto/auth.dto';
@@ -35,6 +41,7 @@ export class AuthService {
     private readonly rateLimit: RateLimitService,
     private readonly tenantTx: TenantTx,
     @Inject(REDIS) private readonly redis: Redis,
+    private readonly securityEvents: SecurityEventsService,
   ) {}
 
   /**
@@ -51,15 +58,19 @@ export class AuthService {
     const window = this.config.get('OTP_RATE_LIMIT_WINDOW_SECONDS', {
       infer: true,
     });
-    await this.rateLimit.consume(
-      `otp-request:ip:${ip}`,
-      this.config.get('OTP_RATE_LIMIT_PER_IP', { infer: true }),
-      window,
+    await this.limited('request', 'ip', identifierHash, () =>
+      this.rateLimit.consume(
+        `otp-request:ip:${ip}`,
+        this.config.get('OTP_RATE_LIMIT_PER_IP', { infer: true }),
+        window,
+      ),
     );
-    await this.rateLimit.consume(
-      `otp-request:id:${identifierHash}`,
-      this.config.get('OTP_RATE_LIMIT_PER_IDENTIFIER', { infer: true }),
-      window,
+    await this.limited('request', 'identifier', identifierHash, () =>
+      this.rateLimit.consume(
+        `otp-request:id:${identifierHash}`,
+        this.config.get('OTP_RATE_LIMIT_PER_IDENTIFIER', { infer: true }),
+        window,
+      ),
     );
 
     void this.otp.issue(identifierHash, locale).catch((error: unknown) => {
@@ -77,15 +88,20 @@ export class AuthService {
     ip: string,
   ): Promise<OtpVerifiedView> {
     const parsed = parseIdentifier(rawIdentifier);
-    await this.rateLimit.consume(
-      `otp-verify:ip:${ip}`,
-      this.config.get('OTP_RATE_LIMIT_PER_IP', { infer: true }),
-      this.config.get('OTP_RATE_LIMIT_WINDOW_SECONDS', { infer: true }),
+    const identifierHash = parsed ? this.hasher.hashIdentifier(parsed) : null;
+    await this.limited('verify', 'ip', identifierHash, () =>
+      this.rateLimit.consume(
+        `otp-verify:ip:${ip}`,
+        this.config.get('OTP_RATE_LIMIT_PER_IP', { infer: true }),
+        this.config.get('OTP_RATE_LIMIT_WINDOW_SECONDS', { infer: true }),
+      ),
     );
-    const accounts = parsed
-      ? await this.otp.verify(this.hasher.hashIdentifier(parsed), code)
+    const accounts = identifierHash
+      ? await this.otp.verify(identifierHash, code)
       : null;
     if (!accounts?.length) {
+      // Same event (and cost) for unknown identifiers and wrong codes.
+      await this.securityEvents.record('otp.verify_failed', { identifierHash });
       throw appError.unauthorized(
         ErrorCode.OTP_INVALID,
         'Invalid or expired code',
@@ -133,7 +149,13 @@ export class AuthService {
         'Invalid or expired login ticket',
       );
     }
-    return view(await this.sessions.start(chosen), chosen);
+    const tokens = await this.sessions.start(chosen);
+    await this.securityEvents.record('login.succeeded', {
+      accountId: chosen.accountId,
+      tenantId: chosen.tenantId,
+      metadata: { accountType: chosen.accountType },
+    });
+    return view(tokens, chosen);
   }
 
   /** Rotates the refresh token. The account must still be active. */
@@ -165,7 +187,37 @@ export class AuthService {
   /** Always succeeds from the caller's point of view. */
   async logout(refreshToken: string): Promise<void> {
     const session = await this.sessions.findLive(refreshToken);
-    if (session) await this.sessions.revoke(session.id);
+    if (session) {
+      await this.sessions.revoke(session.id);
+      await this.securityEvents.record('session.revoked', {
+        accountId: session.accountId,
+        tenantId: session.tenantId,
+        metadata: { reason: 'logout', sessionId: session.id },
+      });
+    }
+  }
+
+  /** Records `otp.rate_limited` when a limiter refuses, then rethrows. */
+  private async limited(
+    flow: 'request' | 'verify',
+    scope: 'ip' | 'identifier',
+    identifierHash: string | null,
+    consume: () => Promise<void>,
+  ): Promise<void> {
+    try {
+      await consume();
+    } catch (error) {
+      if (
+        error instanceof AppException &&
+        error.code === ErrorCode.RATE_LIMITED
+      ) {
+        await this.securityEvents.record('otp.rate_limited', {
+          identifierHash,
+          metadata: { flow, scope },
+        });
+      }
+      throw error;
+    }
   }
 
   private hashOrReject(rawIdentifier: string): string {

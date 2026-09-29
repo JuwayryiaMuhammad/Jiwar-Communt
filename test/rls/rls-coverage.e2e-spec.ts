@@ -15,6 +15,8 @@ const GLOBAL_WITH_TENANT_ID = [
   'login_identifiers',
   'sessions',
   'security_events',
+  // Resolves an invite link before the tenant is known (ADR 0016); no PII.
+  'invite_tokens',
 ];
 
 const EXPECTED =

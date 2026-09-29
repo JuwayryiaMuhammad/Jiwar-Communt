@@ -29,6 +29,8 @@ enum AccountType {
   resident
   staff
   manager
+  /// A household member with a login (ADR 0016). Minors have no account.
+  family
 
   @@map("account_type")
 }
@@ -76,6 +78,88 @@ enum PlatformAdminStatus {
   @@map("platform_admin_status")
 }
 
+/// Separates login codes from invite codes (ADR 0004, 0016): a code issued
+/// for one purpose can never be consumed for the other.
+enum OtpPurpose {
+  login
+  invite_accept
+
+  @@map("otp_purpose")
+}
+
+enum HouseholdRelation {
+  spouse
+  child
+  parent
+  sibling
+  other
+
+  @@map("household_relation")
+}
+
+enum HouseholdMemberStatus {
+  pending_approval
+  active
+  removed
+
+  @@map("household_member_status")
+}
+
+enum HouseholdInviteStatus {
+  pending
+  accepted
+  revoked
+  expired
+
+  @@map("household_invite_status")
+}
+
+/// What a primary resident may delegate (ADR 0016). Never money, contracts,
+/// governance or ownership: a unit test pins this list.
+enum DelegationScope {
+  household
+  workers
+
+  @@map("delegation_scope")
+}
+
+enum DelegationEndReason {
+  revoked
+  expired
+  member_removed
+  primary_changed
+  account_deactivated
+
+  @@map("delegation_end_reason")
+}
+
+enum WorkerCapacity {
+  live_in
+  hourly
+  driver
+  nanny
+  temporary
+
+  @@map("worker_capacity")
+}
+
+enum WorkerEngagementStatus {
+  pending_review
+  active
+  suspended
+  ended
+  rejected
+
+  @@map("worker_engagement_status")
+}
+
+enum WorkerNoticeStatus {
+  pending
+  sent
+
+  @@map("worker_notice_status")
+}
+
 // ============================================================================
 // GLOBAL — no RLS
 // ============================================================================
@@ -92,6 +176,8 @@ model Tenant {
   loginIdentifiers  LoginIdentifier[]
   roles             Role[]
   permissionCatalog TenantPermissionCatalog[]
+  inviteTokens      InviteToken[]
+  settings          TenantSettings?
 
   @@map("tenants")
 }
@@ -120,15 +206,17 @@ model LoginIdentifier {
 /// One row per (request, destination email). A code unlocks only the
 /// accounts in `account_ids` — the ones behind the email it was sent to.
 model OtpChallenge {
-  id             String    @id @db.Uuid
-  identifierHash String    @map("identifier_hash") @db.Char(64)
-  accountIds     String[]  @map("account_ids") @db.Uuid
-  codeHash       String    @map("code_hash") @db.Char(64)
-  expiresAt      DateTime  @map("expires_at") @db.Timestamptz(3)
-  attempts       Int       @default(0)
-  consumedAt     DateTime? @map("consumed_at") @db.Timestamptz(3)
-  invalidatedAt  DateTime? @map("invalidated_at") @db.Timestamptz(3)
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  id             String     @id @db.Uuid
+  purpose        OtpPurpose @default(login)
+  /// Login: the identifier HMAC. Invite acceptance: the invite token HMAC.
+  identifierHash String     @map("identifier_hash") @db.Char(64)
+  accountIds     String[]   @map("account_ids") @db.Uuid
+  codeHash       String     @map("code_hash") @db.Char(64)
+  expiresAt      DateTime   @map("expires_at") @db.Timestamptz(3)
+  attempts       Int        @default(0)
+  consumedAt     DateTime?  @map("consumed_at") @db.Timestamptz(3)
+  invalidatedAt  DateTime?  @map("invalidated_at") @db.Timestamptz(3)
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@index([identifierHash])
   @@map("otp_challenges")
@@ -143,6 +231,10 @@ model Session {
   revokedAt        DateTime? @map("revoked_at") @db.Timestamptz(3)
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   lastUsedAt       DateTime? @map("last_used_at") @db.Timestamptz(3)
+  /// Origin at creation and at each refresh (ADR 0004). Never shown back
+  /// to the account holder (the session list omits the IP).
+  userAgent        String?   @map("user_agent")
+  ip               String?   @db.Inet
 
   @@index([accountId])
   @@map("sessions")
@@ -185,6 +277,21 @@ model PlatformSession {
   @@map("platform_sessions")
 }
 
+/// Global pointer from an invite link to its compound (ADR 0016), read
+/// before any tenant is known — like `login_identifiers`. No PII: only the
+/// token HMAC. Deleted when the invite is accepted or revoked.
+model InviteToken {
+  tokenHash String   @id @map("token_hash") @db.Char(64)
+  tenantId  String   @map("tenant_id") @db.Uuid
+  inviteId  String   @map("invite_id") @db.Uuid
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("invite_tokens")
+}
+
 // ============================================================================
 // TENANT-SCOPED — RLS + FORCE (policy in the migration)
 // ============================================================================
@@ -216,6 +323,18 @@ model Account {
   loginIdentifiers   LoginIdentifier[]
   occupancies        UnitOccupancy[]   @relation("OccupancyAccount")
   createdOccupancies UnitOccupancy[]   @relation("OccupancyCreatedBy")
+
+  memberships        HouseholdMember[]     @relation("MemberAccount")
+  addedMembers       HouseholdMember[]     @relation("MemberAddedBy")
+  removedMembers     HouseholdMember[]     @relation("MemberRemovedBy")
+  sentInvites        HouseholdInvite[]     @relation("InviteInvitedBy")
+  acceptedInvites    HouseholdInvite[]     @relation("InviteAcceptedAccount")
+  delegationsGiven   HouseholdDelegation[] @relation("DelegationDelegator")
+  delegationsHeld    HouseholdDelegation[] @relation("DelegationDelegate")
+  delegationsRevoked HouseholdDelegation[] @relation("DelegationRevokedBy")
+  bannedWorkers      DomesticWorker[]      @relation("WorkerBannedBy")
+  requestedWorkers   WorkerEngagement[]    @relation("EngagementRequestedBy")
+  reviewedWorkers    WorkerEngagement[]    @relation("EngagementReviewedBy")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -275,16 +394,24 @@ model TenantPermissionCatalog {
 }
 
 model Unit {
-  id        String   @id @db.Uuid
-  tenantId  String   @map("tenant_id") @db.Uuid
-  code      String
-  building  String?
-  floor     Int?
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id                    String   @id @db.Uuid
+  tenantId              String   @map("tenant_id") @db.Uuid
+  code                  String
+  building              String?
+  floor                 Int?
+  /// Set when the primary resident's occupancy ends (ADR 0016); cleared when
+  /// a new primary is set. Household memberships are never touched for it.
+  needsHouseholdReview  Boolean  @default(false) @map("needs_household_review")
+  householdReviewReason String?  @map("household_review_reason")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  tenant      Tenant          @relation(fields: [tenantId], references: [id])
-  occupancies UnitOccupancy[]
+  tenant            Tenant                @relation(fields: [tenantId], references: [id])
+  occupancies       UnitOccupancy[]
+  householdMembers  HouseholdMember[]
+  householdInvites  HouseholdInvite[]
+  delegations       HouseholdDelegation[]
+  workerEngagements WorkerEngagement[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -300,6 +427,8 @@ model UnitOccupancy {
   accountId     String          @map("account_id") @db.Uuid
   occupancyType OccupancyType   @map("occupancy_type")
   status        OccupancyStatus @default(active)
+  /// One per unit among active occupancies (partial unique index in SQL).
+  isPrimary     Boolean         @default(false) @map("is_primary")
   startedAt     DateTime        @default(now()) @map("started_at") @db.Timestamptz(3)
   endedAt       DateTime?       @map("ended_at") @db.Timestamptz(3)
   createdById   String          @map("created_by") @db.Uuid
@@ -312,6 +441,184 @@ model UnitOccupancy {
   @@index([tenantId, accountId])
   @@index([tenantId, unitId])
   @@map("unit_occupancies")
+}
+
+/// One row per compound (ADR 0016), created with the compound.
+model TenantSettings {
+  tenantId                   String   @id @map("tenant_id") @db.Uuid
+  familyJoinRequiresApproval Boolean  @default(false) @map("family_join_requires_approval")
+  maxHouseholdMembers        Int      @default(10) @map("max_household_members")
+  createdAt                  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("tenant_settings")
+}
+
+/// A unit's household (ADR 0016). Adults have a `family` account and their
+/// personal data lives there; minors have no account, so their name and
+/// national ID live here (CHECK in SQL). Never deleted: removal is a status.
+model HouseholdMember {
+  id            String                @id @db.Uuid
+  tenantId      String                @map("tenant_id") @db.Uuid
+  unitId        String                @map("unit_id") @db.Uuid
+  accountId     String?               @map("account_id") @db.Uuid
+  relation      HouseholdRelation
+  isMinor       Boolean               @map("is_minor")
+  fullName      String?               @map("full_name")
+  nationalId    String?               @map("national_id")
+  birthDate     DateTime              @map("birth_date") @db.Date
+  status        HouseholdMemberStatus
+  addedById     String                @map("added_by") @db.Uuid
+  removedById   String?               @map("removed_by") @db.Uuid
+  removedReason String?               @map("removed_reason")
+  createdAt     DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  removedAt     DateTime?             @map("removed_at") @db.Timestamptz(3)
+
+  unit      Unit     @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
+  account   Account? @relation("MemberAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
+  addedBy   Account  @relation("MemberAddedBy", fields: [tenantId, addedById], references: [tenantId, id], onUpdate: Restrict)
+  removedBy Account? @relation("MemberRemovedBy", fields: [tenantId, removedById], references: [tenantId, id], onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, unitId])
+  @@index([tenantId, accountId])
+  @@map("household_members")
+}
+
+/// An invitation for an adult to join a unit's household (ADR 0016). The raw
+/// token is shown once to the inviter; only its HMAC is stored.
+model HouseholdInvite {
+  id                String                @id @db.Uuid
+  tenantId          String                @map("tenant_id") @db.Uuid
+  unitId            String                @map("unit_id") @db.Uuid
+  invitedById       String                @map("invited_by") @db.Uuid
+  fullName          String                @map("full_name")
+  /// E.164
+  phone             String
+  /// trimmed + lowercased; the acceptance code goes here and nowhere else
+  email             String
+  nationalId        String                @map("national_id")
+  relation          HouseholdRelation
+  tokenHash         String                @unique @map("token_hash") @db.Char(64)
+  expiresAt         DateTime              @map("expires_at") @db.Timestamptz(3)
+  status            HouseholdInviteStatus @default(pending)
+  acceptedAccountId String?               @map("accepted_account_id") @db.Uuid
+  createdAt         DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  unit            Unit     @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
+  invitedBy       Account  @relation("InviteInvitedBy", fields: [tenantId, invitedById], references: [tenantId, id], onUpdate: Restrict)
+  acceptedAccount Account? @relation("InviteAcceptedAccount", fields: [tenantId, acceptedAccountId], references: [tenantId, id], onUpdate: Restrict)
+
+  @@index([tenantId, unitId])
+  @@map("household_invites")
+}
+
+/// Primary resident → adult household member, for a limited time and scope
+/// (ADR 0016). Ended by revocation or automatically; never deleted.
+model HouseholdDelegation {
+  id                 String               @id @db.Uuid
+  tenantId           String               @map("tenant_id") @db.Uuid
+  unitId             String               @map("unit_id") @db.Uuid
+  delegatorAccountId String               @map("delegator_account_id") @db.Uuid
+  delegateAccountId  String               @map("delegate_account_id") @db.Uuid
+  scopes             DelegationScope[]
+  expiresAt          DateTime             @map("expires_at") @db.Timestamptz(3)
+  revokedAt          DateTime?            @map("revoked_at") @db.Timestamptz(3)
+  revokedById        String?              @map("revoked_by") @db.Uuid
+  endReason          DelegationEndReason? @map("end_reason")
+  createdAt          DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  unit      Unit     @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
+  delegator Account  @relation("DelegationDelegator", fields: [tenantId, delegatorAccountId], references: [tenantId, id], onUpdate: Restrict)
+  delegate  Account  @relation("DelegationDelegate", fields: [tenantId, delegateAccountId], references: [tenantId, id], onUpdate: Restrict)
+  revokedBy Account? @relation("DelegationRevokedBy", fields: [tenantId, revokedById], references: [tenantId, id], onUpdate: Restrict)
+
+  @@index([tenantId, unitId])
+  @@index([tenantId, delegateAccountId])
+  @@map("household_delegations")
+}
+
+/// A domestic worker known to the compound (ADR 0017). No account, no login.
+/// One record per person per compound, found by the national-ID HMAC.
+model DomesticWorker {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  /// HMAC(IDENTIFIER_PEPPER, "worker-national-id:<id>")
+  nationalIdHash    String    @map("national_id_hash") @db.Char(64)
+  nationalId        String    @map("national_id")
+  fullName          String    @map("full_name")
+  /// E.164
+  phone             String
+  birthDate         DateTime  @map("birth_date") @db.Date
+  preferredLanguage String    @default("ar") @map("preferred_language")
+  bannedAt          DateTime? @map("banned_at") @db.Timestamptz(3)
+  bannedById        String?   @map("banned_by") @db.Uuid
+  banReason         String?   @map("ban_reason")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  bannedBy    Account?           @relation("WorkerBannedBy", fields: [tenantId, bannedById], references: [tenantId, id], onUpdate: Restrict)
+  engagements WorkerEngagement[]
+  notices     WorkerNotice[]
+
+  @@unique([tenantId, nationalIdHash])
+  @@unique([tenantId, id])
+  @@map("domestic_workers")
+}
+
+/// A worker serving one unit (ADR 0017). The access code is stored only as
+/// an HMAC; it works only while the engagement is `active`.
+model WorkerEngagement {
+  id                    String                 @id @db.Uuid
+  tenantId              String                 @map("tenant_id") @db.Uuid
+  workerId              String                 @map("worker_id") @db.Uuid
+  unitId                String                 @map("unit_id") @db.Uuid
+  requestedById         String                 @map("requested_by") @db.Uuid
+  capacity              WorkerCapacity
+  /// { days: (0–6)[], windows: [{ from: "HH:MM", to: "HH:MM" }] }; empty for live-in
+  schedule              Json
+  validUntil            DateTime?              @map("valid_until") @db.Timestamptz(3)
+  status                WorkerEngagementStatus @default(pending_review)
+  statusReason          String?                @map("status_reason")
+  suspendedByManagement Boolean                @default(false) @map("suspended_by_management")
+  /// HMAC(IDENTIFIER_PEPPER, "worker-code:<tenantId>:<code>")
+  accessCodeHash        String?                @map("access_code_hash") @db.Char(64)
+  codeIssuedAt          DateTime?              @map("code_issued_at") @db.Timestamptz(3)
+  reviewedById          String?                @map("reviewed_by") @db.Uuid
+  createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  worker      DomesticWorker @relation(fields: [tenantId, workerId], references: [tenantId, id], onUpdate: Restrict)
+  unit        Unit           @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
+  requestedBy Account        @relation("EngagementRequestedBy", fields: [tenantId, requestedById], references: [tenantId, id], onUpdate: Restrict)
+  reviewedBy  Account?       @relation("EngagementReviewedBy", fields: [tenantId, reviewedById], references: [tenantId, id], onUpdate: Restrict)
+  notices     WorkerNotice[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, unitId])
+  @@index([tenantId, workerId])
+  @@map("worker_engagements")
+}
+
+/// What a worker must be told (ADR 0017). Written in the transaction of the
+/// change that causes it; a future SMS/WhatsApp channel sends them.
+model WorkerNotice {
+  id           String             @id @db.Uuid
+  tenantId     String             @map("tenant_id") @db.Uuid
+  workerId     String             @map("worker_id") @db.Uuid
+  engagementId String             @map("engagement_id") @db.Uuid
+  noticeKey    String             @map("notice_key")
+  params       Json
+  status       WorkerNoticeStatus @default(pending)
+  createdAt    DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  worker     DomesticWorker   @relation(fields: [tenantId, workerId], references: [tenantId, id], onUpdate: Restrict)
+  engagement WorkerEngagement @relation(fields: [tenantId, engagementId], references: [tenantId, id], onUpdate: Restrict)
+
+  @@index([tenantId, engagementId])
+  @@map("worker_notices")
 }
 
 // ============================================================================

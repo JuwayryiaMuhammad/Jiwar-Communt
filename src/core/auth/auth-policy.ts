@@ -23,4 +23,5 @@ export const SESSION_POLICY: Record<AccountType, SessionPolicy> = {
     accessTtlSeconds: FIFTEEN_MINUTES,
     refreshTtlSeconds: THIRTY_DAYS,
   },
+  family: { accessTtlSeconds: FIFTEEN_MINUTES, refreshTtlSeconds: THIRTY_DAYS },
 };

@@ -28,6 +28,8 @@ export function applyTestEnv(): void {
   process.env.PLATFORM_LOGIN_RATE_LIMIT_PER_IP = '100000';
   process.env.PLATFORM_LOGIN_RATE_LIMIT_PER_EMAIL = '10';
   process.env.PLATFORM_LOGIN_MAX_FAILURES = '5';
+  // The locked-table test measures against the default cap.
+  process.env.SECURITY_EVENT_TIMEOUT_MS = '500';
   // Platform tests create their own admins; nothing is bootstrapped from .env.
   delete process.env.SUPERADMIN_EMAIL;
   delete process.env.SUPERADMIN_PASSWORD;

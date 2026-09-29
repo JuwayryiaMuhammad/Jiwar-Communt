@@ -768,7 +768,7 @@ describe('Audit coverage', () => {
       const r = await residentOf(c);
       const globalDb = h.moduleRef.get(GlobalDbService);
       const spy = jest
-        .spyOn(globalDb.securityEvent, 'create')
+        .spyOn(globalDb, 'insertSecurityEvent')
         .mockRejectedValue(new Error('security_events unavailable'));
       try {
         const tokens = await loginViaOtp(h, r.email, r.id);

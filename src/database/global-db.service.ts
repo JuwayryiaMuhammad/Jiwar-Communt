@@ -64,6 +64,27 @@ export class GlobalDbService implements GlobalTables {
   }
 
   /**
+   * One security event insert, bounded BY THE DATABASE (ADR 0014):
+   * `statement_timeout` is set for this transaction only, so a locked or
+   * stalled table cancels the query server-side and the connection goes back
+   * to the pool. A client-side race would return early but leave the query
+   * running and its connection held; enough of those exhaust the pool.
+   * `maxWait` bounds the wait for a free connection the same way.
+   */
+  insertSecurityEvent(
+    data: Prisma.SecurityEventUncheckedCreateInput,
+    timeoutMs: number,
+  ): Promise<void> {
+    return this.base.client.$transaction(
+      async (tx) => {
+        await tx.$queryRaw`SELECT set_config('statement_timeout', ${String(timeoutMs)}, true)`;
+        await tx.securityEvent.create({ data, select: { id: true } });
+      },
+      { maxWait: timeoutMs, timeout: timeoutMs * 4 },
+    );
+  }
+
+  /**
    * The same tables through an open withTenantTx transaction, for writes that
    * must commit atomically with tenant rows (e.g. an account and its login
    * identifiers).

@@ -74,6 +74,7 @@ See `.env.example` for the full list with comments. The important ones:
 | `TEST_DATABASE_URL`, `TEST_MIGRATOR_DATABASE_URL`, `TEST_REDIS_URL` | e2e tests (separate database, Redis db 1) |
 | `TEST_SMTP_HOST`, `TEST_SMTP_PORT`, `MAILPIT_API_URL` | e2e tests always send through Mailpit and read codes from its API, whatever `SMTP_*` points at |
 | `DB_POOL_MAX` | pg pool size |
+| `SECURITY_EVENT_TIMEOUT_MS` | Database-side cap on each security event insert (default 500). A locked `security_events` table delays a login by at most this much; the event is dropped with an error log |
 | `REDIS_URL` | Rate limits, login tickets, permission cache |
 | `SMTP_*` | OTP email delivery |
 | `JWT_ACCESS_SECRET` | Tenant access tokens (≥ 32 chars, `aud: tenant`) |
@@ -109,7 +110,7 @@ The e2e run wipes `jiwar_test`, migrates it as the migrator, runs `access:sync` 
 | `test/access/*` | Permission guard, role edits (applied on the next request, per compound, lockout), `access:sync` (additions, renames, retirements, rollback safety) |
 | `test/platform/*` | Super admin bootstrap, login, lockout, forced password change, token separation; compounds, managers, suspension |
 | `test/residents/*` | Multi-unit occupancy, unit resource access, ending occupancies |
-| `test/audit/*` | Audit immutability (app and owner), atomicity both ways, one scenario per catalog action and security event (and a check that none is missing), no personal data in any stored JSON, contact change, query paging |
+| `test/audit/*` | Audit immutability (app and owner), atomicity both ways, one scenario per catalog action and security event (and a check that none is missing), no personal data in any stored JSON, contact change, query paging, security events fail-open and bounded under a real table lock |
 | `test/db/unique-constraints` | Every unique index is mapped to API fields |
 
 ## Error contract (ADR 0013)
@@ -156,7 +157,7 @@ Three append-only tables:
 |---|---|---|
 | `audit_log` | Compound (RLS) | In the transaction of the action (fail-closed) |
 | `platform_audit_log` | Global | In the transaction of the platform action |
-| `security_events` | Global | On its own, fail-open (a logging failure never blocks a login) |
+| `security_events` | Global | On its own, fail-open (a logging failure never blocks a login), capped by `SECURITY_EVENT_TIMEOUT_MS` |
 
 - **Immutable:** `jiwar_app` has only `SELECT, INSERT`, and triggers reject `UPDATE`/`DELETE`/`TRUNCATE` for every role, the owner included. The owner can still `DISABLE TRIGGER` with DDL; this is a documented limit, and hash chaining is the deferred fix.
 - **Catalog** (`src/audit/actions.ts`): every audited action and security event is declared there with its target type. A unit test fails if one is never emitted, and the coverage suite fails if one has no scenario.

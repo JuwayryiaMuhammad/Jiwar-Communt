@@ -42,6 +42,12 @@ export const envSchema = z
 
     DATABASE_URL: postgresUrl,
     DB_POOL_MAX: positiveInt.default(10),
+    /**
+     * Database-side cap (statement_timeout) on each security event insert. A
+     * locked or stalled security_events table costs a login at most this much,
+     * and the connection goes back to the pool (ADR 0014).
+     */
+    SECURITY_EVENT_TIMEOUT_MS: positiveInt.default(500),
 
     REDIS_URL: z.string().regex(/^rediss?:\/\//, 'must be a redis:// URL'),
 

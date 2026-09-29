@@ -36,8 +36,8 @@ describe('otp.requested never blocks', () => {
 
     const globalDb = h.moduleRef.get(GlobalDbService);
     const hung = jest
-      .spyOn(globalDb.securityEvent, 'create')
-      .mockImplementation(() => new Promise(() => undefined) as never);
+      .spyOn(globalDb, 'insertSecurityEvent')
+      .mockImplementation(() => new Promise(() => undefined));
 
     const request = async (identifier: string) => {
       const started = Date.now();
@@ -65,18 +65,7 @@ describe('otp.requested never blocks', () => {
     // with no account attached in either case.
     const hasher = h.moduleRef.get(IdentifierHasher);
     const writes = hung.mock.calls
-      .map(
-        ([arg]) =>
-          (
-            arg as {
-              data: {
-                event: string;
-                identifierHash: string;
-                accountId: string | null;
-              };
-            }
-          ).data,
-      )
+      .map(([data]) => data)
       .filter((d) => d.event === 'otp.requested');
     expect(writes.map((d) => d.identifierHash).sort()).toEqual(
       [registered, unregistered]

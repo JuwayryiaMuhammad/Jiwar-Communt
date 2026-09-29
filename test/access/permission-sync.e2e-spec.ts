@@ -179,6 +179,9 @@ describe('Permission sync', () => {
       'household.approve',
       'household.delegate',
       'settings.manage',
+      'workers.manage',
+      'workers.review',
+      'workers.ban',
     ];
     const before: AccessCatalog = {
       ...base,
@@ -210,6 +213,7 @@ describe('Permission sync', () => {
     expect((await role(t, 'family_member')).permissions).toEqual([
       'household.manage',
       'units.read',
+      'workers.manage',
     ]);
     expect((await role(t, 'resident')).permissions).toContain(
       'household.manage',
@@ -227,7 +231,10 @@ describe('Permission sync', () => {
     expect(entry).toMatchObject({
       actorType: 'system',
       changes: {
-        permissions: { from: [], to: ['household.manage', 'units.read'] },
+        permissions: {
+          from: [],
+          to: ['household.manage', 'units.read', 'workers.manage'],
+        },
       },
       metadata: { roleKey: 'family_member', roleCreated: true },
     });

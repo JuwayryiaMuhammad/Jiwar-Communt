@@ -53,6 +53,24 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'household_delegation',
   },
+  // domestic workers (ADR 0017)
+  'worker.registered': { log: 'tenant', target: 'worker_engagement' },
+  'worker.engagement_reviewed': {
+    log: 'tenant',
+    target: 'worker_engagement',
+  },
+  'worker.code_reissued': { log: 'tenant', target: 'worker_engagement' },
+  'worker.engagement_suspended': {
+    log: 'tenant',
+    target: 'worker_engagement',
+  },
+  'worker.engagement_resumed': {
+    log: 'tenant',
+    target: 'worker_engagement',
+  },
+  'worker.engagement_ended': { log: 'tenant', target: 'worker_engagement' },
+  'worker.banned': { log: 'tenant', target: 'domestic_worker' },
+  'worker.unbanned': { log: 'tenant', target: 'domestic_worker' },
   'tenant.created': { log: 'platform', target: 'tenant' },
   'tenant.status_changed': { log: 'platform', target: 'tenant' },
   'tenant.manager_added': { log: 'platform', target: 'account' },

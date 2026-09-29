@@ -3,6 +3,7 @@ import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { PlatformModule } from '../../src/core/platform/platform.module';
 import { TenantSettingsService } from '../../src/core/tenant-settings/tenant-settings.service';
 import { DelegationsService } from '../../src/community/households/delegations.service';
+import { WorkersService } from '../../src/community/workers/workers.service';
 import { HouseholdsService } from '../../src/community/households/households.service';
 import type { NewInvite } from '../../src/community/households/households.types';
 import { InviteAcceptanceService } from '../../src/community/households/invite-acceptance.service';
@@ -33,10 +34,23 @@ describe('Audit coverage — community', () => {
   const households = () => h.moduleRef.get(HouseholdsService);
   const acceptance = () => h.moduleRef.get(InviteAcceptanceService);
   const delegations = () => h.moduleRef.get(DelegationsService);
+  const workers = () => h.moduleRef.get(WorkersService);
+
+  /** Every compound this suite creates, and every secret it handles. */
+  const compounds = new Set<Compound>();
+  const secrets = new Set<string>();
+  const remember = (...values: string[]) =>
+    values.forEach((v) => secrets.add(v));
 
   beforeAll(async () => {
     h = await createHttpHarness({ imports: [PlatformModule] });
     x = communityHelpers(h);
+    const compound = x.compound;
+    x.compound = async (...args) => {
+      const c = await compound(...args);
+      compounds.add(c);
+      return c;
+    };
     read = auditReaders(h);
   });
 
@@ -238,6 +252,7 @@ describe('Audit coverage — community', () => {
     it('household.member_added (minor, values withheld) and member_removed', async () => {
       const { c, unitId, primary, asPrimary } = await home();
       const nationalId = nationalIdFor(bornYearsAgo(8));
+      remember(nationalId, 'Little Audit');
       const kid = await asPrimary(() =>
         households().addMinor(unitId, {
           fullName: 'Little Audit',
@@ -372,6 +387,120 @@ describe('Audit coverage — community', () => {
         targetType: 'account',
         changes: { preferredLocale: { from: 'ar', to: 'en' } },
       });
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  describe('domestic workers', () => {
+    it('worker.registered, engagement_reviewed, code_reissued, suspended, resumed, ended, banned, unbanned', async () => {
+      const c = await x.compound();
+      const u = await x.unit(c);
+      const r = await x.resident(c, [u.id]);
+      const asResident = <T>(fn: () => Promise<T>) =>
+        x.as(c, { id: r.id, type: 'resident' }, fn);
+      const nationalId = nationalIdFor(bornYearsAgo(30));
+      const workerName = 'Audited Worker Name';
+      remember(nationalId, workerName);
+
+      const reg = await asResident(() =>
+        workers().register(u.id, {
+          fullName: workerName,
+          nationalId,
+          phone: uniquePhone(),
+          capacity: 'live_in',
+        }),
+      );
+      expect(
+        await single(c, 'worker.registered', reg.engagementId),
+      ).toMatchObject({
+        actorType: 'account',
+        actorId: r.id,
+        targetType: 'worker_engagement',
+        changes: {
+          unitId: { from: null, to: u.id },
+          capacity: { from: null, to: 'live_in' },
+          status: { from: null, to: 'pending_review' },
+        },
+      });
+
+      const approved = await x.asManager(c, () =>
+        workers().review(reg.engagementId, 'approve'),
+      );
+      remember(approved!.accessCode);
+      expect(
+        await single(c, 'worker.engagement_reviewed', reg.engagementId),
+      ).toMatchObject({
+        actorType: 'account',
+        actorId: c.managerId,
+        changes: { status: { from: 'pending_review', to: 'active' } },
+        metadata: { decision: 'approve' },
+      });
+
+      const reissued = await asResident(() =>
+        workers().reissueCode(reg.engagementId),
+      );
+      remember(reissued.accessCode);
+      expect(
+        await single(c, 'worker.code_reissued', reg.engagementId),
+      ).toMatchObject({ actorType: 'account', actorId: r.id });
+
+      await asResident(() => workers().suspend(reg.engagementId, 'Vacation'));
+      expect(
+        await single(c, 'worker.engagement_suspended', reg.engagementId),
+      ).toMatchObject({
+        actorId: r.id,
+        changes: { status: { from: 'active', to: 'suspended' } },
+      });
+      await asResident(() => workers().resume(reg.engagementId));
+      expect(
+        await single(c, 'worker.engagement_resumed', reg.engagementId),
+      ).toMatchObject({
+        actorId: r.id,
+        changes: { status: { from: 'suspended', to: 'active' } },
+        metadata: { codeReplaced: false },
+      });
+
+      const workerId = (
+        await x.asManager(c, () =>
+          x.prisma.tenant.workerEngagement.findUniqueOrThrow({
+            where: { id: reg.engagementId },
+          }),
+        )
+      ).workerId;
+      await x.asManager(c, () => workers().ban(workerId, 'Banned for audit'));
+      expect(await single(c, 'worker.banned', workerId)).toMatchObject({
+        actorId: c.managerId,
+        targetType: 'domestic_worker',
+        changes: { banned: { from: false, to: true } },
+        metadata: { engagementsSuspended: [reg.engagementId] },
+      });
+      await x.asManager(c, () => workers().unban(workerId));
+      expect(await single(c, 'worker.unbanned', workerId)).toMatchObject({
+        actorId: c.managerId,
+        changes: { banned: { from: true, to: false } },
+      });
+
+      await x.asManager(c, () => workers().end(reg.engagementId, 'Left'));
+      expect(
+        await single(c, 'worker.engagement_ended', reg.engagementId),
+      ).toMatchObject({
+        actorId: c.managerId,
+        changes: { status: { from: 'suspended', to: 'ended' } },
+      });
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  describe('no secrets or personal values in the trail', () => {
+    it('no access code, invite token, national ID or name appears in any entry this suite wrote', async () => {
+      const text = JSON.stringify([
+        ...(await Promise.all(
+          [...compounds].map((c) => read.tenant(c.tenantId)),
+        )),
+        await read.security(),
+      ]);
+      expect(secrets.size).toBeGreaterThan(5);
+      for (const secret of secrets) expect(text).not.toContain(secret);
     });
   });
 

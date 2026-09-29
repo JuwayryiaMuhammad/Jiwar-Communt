@@ -4,3 +4,5 @@ export { HouseholdsModule } from './households/households.module';
 export { ResidentsModule } from './residents/residents.module';
 export { ResidentsService } from './residents/residents.service';
 export { UnitsModule } from './units/units.module';
+export { WorkersModule } from './workers/workers.module';
+export { WorkersService } from './workers/workers.service';

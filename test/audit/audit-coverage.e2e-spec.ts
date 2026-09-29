@@ -290,7 +290,12 @@ describe('Audit coverage', () => {
       });
       expect(row.changes).toEqual({
         permissions: {
-          from: ['household.delegate', 'household.manage', 'units.read'],
+          from: [
+            'household.delegate',
+            'household.manage',
+            'units.read',
+            'workers.manage',
+          ],
           to: [],
         },
       });

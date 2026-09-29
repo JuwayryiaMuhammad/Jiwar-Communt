@@ -33,6 +33,11 @@ export const PERMISSIONS = {
   'household.approve': { kinds: ['manager'] },
   // Only the primary resident delegates (checked by the service).
   'household.delegate': { kinds: ['resident'] },
+  // Domestic workers (ADR 0017). The service still requires an occupant of
+  // the unit (or a `workers` delegate) on top of `workers.manage`.
+  'workers.manage': { kinds: ['resident', 'family'] },
+  'workers.review': { kinds: ['manager'] },
+  'workers.ban': { kinds: ['manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

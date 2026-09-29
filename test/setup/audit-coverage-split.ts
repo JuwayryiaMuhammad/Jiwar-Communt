@@ -23,4 +23,12 @@ export const COMMUNITY_COVERAGE: readonly string[] = [
   'household.delegation_revoked',
   'household.delegation_ended',
   'account.locale_changed',
+  'worker.registered',
+  'worker.engagement_reviewed',
+  'worker.code_reissued',
+  'worker.engagement_suspended',
+  'worker.engagement_resumed',
+  'worker.engagement_ended',
+  'worker.banned',
+  'worker.unbanned',
 ];

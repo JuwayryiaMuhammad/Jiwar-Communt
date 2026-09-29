@@ -6,7 +6,12 @@ import { JwtModule } from '@nestjs/jwt';
 import type { Request } from 'express';
 import { ClsModule } from 'nestjs-cls';
 import { LoggerModule } from 'nestjs-pino';
-import { HouseholdsModule, ResidentsModule, UnitsModule } from './community';
+import {
+  HouseholdsModule,
+  ResidentsModule,
+  UnitsModule,
+  WorkersModule,
+} from './community';
 import { AccessModule } from './core/access/access.module';
 import { PermissionsGuard } from './core/access/permissions.guard';
 import { AccountsModule } from './core/accounts/accounts.module';
@@ -103,6 +108,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     PlatformModule,
     ResidentsModule,
     HouseholdsModule,
+    WorkersModule,
   ],
   controllers: [AppController],
   providers: [

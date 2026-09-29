@@ -19,6 +19,7 @@ export interface AuditActionDefinition {
 export const AUDIT_ACTIONS = {
   'account.created': { log: 'tenant', target: 'account' },
   'account.status_changed': { log: 'tenant', target: 'account' },
+  'account.locale_changed': { log: 'tenant', target: 'account' },
   'account.contact_changed': {
     log: 'tenant',
     target: 'account',

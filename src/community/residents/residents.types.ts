@@ -49,6 +49,10 @@ export interface ResidentView {
 
 export interface MyUnit {
   occupancyId: string;
+  /** The caller is this unit's primary resident (ADR 0016). */
+  isPrimary: boolean;
+  /** For the primary only: the household at a glance. */
+  household?: { memberCount: number; pendingInvites: number };
   unitId: string;
   code: string;
   building: string | null;

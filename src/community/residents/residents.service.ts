@@ -16,6 +16,7 @@ import {
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
 import { DelegationsService } from '../households/delegations.service';
+import { HouseholdsService } from '../households/households.service';
 import { lockUnits } from '../units/unit-lock';
 import type {
   MyUnit,
@@ -53,6 +54,7 @@ export class ResidentsService {
     private readonly ctx: RequestContext,
     private readonly audit: AuditService,
     private readonly delegations: DelegationsService,
+    private readonly households: HouseholdsService,
   ) {}
 
   /** Account (resident role) + login identifiers + occupancies, atomically. */
@@ -349,22 +351,36 @@ export class ResidentsService {
     return this.get(this.ctx.accountId);
   }
 
-  /** The current resident's active units, each with its occupancy type. */
+  /**
+   * The current resident's active units, each with its occupancy type and
+   * whether they are its primary resident; the primary also gets the
+   * household counts. Unit fields stay as they are until the design.
+   */
   async myUnits(): Promise<MyUnit[]> {
-    const rows = await this.prisma.tenant.unitOccupancy.findMany({
-      where: { accountId: this.ctx.accountId, status: 'active' },
-      include: { unit: true },
-      orderBy: { startedAt: 'asc' },
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const rows = await tx.unitOccupancy.findMany({
+        where: { accountId: this.ctx.accountId, status: 'active' },
+        include: { unit: true },
+        orderBy: { startedAt: 'asc' },
+      });
+      const units: MyUnit[] = [];
+      for (const o of rows) {
+        units.push({
+          occupancyId: o.id,
+          isPrimary: o.isPrimary,
+          ...(o.isPrimary
+            ? { household: await this.households.summary(tx, o.unitId) }
+            : {}),
+          unitId: o.unitId,
+          code: o.unit.code,
+          building: o.unit.building,
+          floor: o.unit.floor,
+          occupancyType: o.occupancyType,
+          startedAt: o.startedAt,
+        });
+      }
+      return units;
     });
-    return rows.map((o) => ({
-      occupancyId: o.id,
-      unitId: o.unitId,
-      code: o.unit.code,
-      building: o.unit.building,
-      floor: o.unit.floor,
-      occupancyType: o.occupancyType,
-      startedAt: o.startedAt,
-    }));
   }
 
   /** No active occupant: the next one becomes primary. Call under lockUnits. */

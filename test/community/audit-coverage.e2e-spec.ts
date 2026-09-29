@@ -1,3 +1,4 @@
+import { AccountSelfService } from '../../src/core/accounts/account-self.service';
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { PlatformModule } from '../../src/core/platform/platform.module';
 import { TenantSettingsService } from '../../src/core/tenant-settings/tenant-settings.service';
@@ -353,6 +354,23 @@ describe('Audit coverage — community', () => {
         actorId: primary.id,
         changes: { endReason: { from: null, to: 'member_removed' } },
         metadata: { unitId: u.id, reason: 'member_removed' },
+      });
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  describe('self-service', () => {
+    it('account.locale_changed — by the account itself', async () => {
+      const c = await x.compound();
+      const r = await x.resident(c, [(await x.unit(c)).id]);
+      await x.as(c, { id: r.id, type: 'resident' }, () =>
+        h.moduleRef.get(AccountSelfService).updatePreferredLocale('en'),
+      );
+      expect(await single(c, 'account.locale_changed', r.id)).toMatchObject({
+        actorType: 'account',
+        actorId: r.id,
+        targetType: 'account',
+        changes: { preferredLocale: { from: 'ar', to: 'en' } },
       });
     });
   });

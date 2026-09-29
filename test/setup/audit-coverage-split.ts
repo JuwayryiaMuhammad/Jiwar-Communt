@@ -22,4 +22,5 @@ export const COMMUNITY_COVERAGE: readonly string[] = [
   'household.delegation_created',
   'household.delegation_revoked',
   'household.delegation_ended',
+  'account.locale_changed',
 ];

@@ -40,13 +40,14 @@ export function communityHelpers(h: HttpHarness) {
   /** Runs `fn` as the account (awaited inside: Prisma queries are lazy). */
   function as<T>(
     c: { tenantId: string },
-    account: { id: string; type: AccountType },
+    account: { id: string; type: AccountType; sessionId?: string },
     fn: () => Promise<T>,
   ): Promise<T> {
     return cls.run(async () => {
       cls.set('tenantId', c.tenantId);
       cls.set('accountId', account.id);
       cls.set('accountType', account.type);
+      if (account.sessionId) cls.set('sessionId', account.sessionId);
       return await fn();
     });
   }

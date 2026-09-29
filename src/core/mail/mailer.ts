@@ -17,7 +17,13 @@ export class Mailer implements OnApplicationShutdown {
   constructor(config: ConfigService<Env, true>) {
     const user = config.get('SMTP_USER', { infer: true });
     const pass = config.get('SMTP_PASSWORD', { infer: true });
+    // Pooled: connections are reused instead of one SMTP (and TLS)
+    // handshake per email. Opening a connection per message also stalls
+    // under bursts — against the local Mailpit, every send after ~10 quick
+    // connections took ~5 s.
     this.transport = createTransport({
+      pool: true,
+      maxConnections: 3,
       host: config.get('SMTP_HOST', { infer: true }),
       port: config.get('SMTP_PORT', { infer: true }),
       secure: config.get('SMTP_SECURE', { infer: true }),

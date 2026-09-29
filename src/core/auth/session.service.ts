@@ -8,6 +8,7 @@ import {
   safeEqualHex,
   sha256,
 } from '../common/refresh-token';
+import { AuditContext } from '../audit/audit-context';
 import { SecurityEventsService } from '../audit/security-events.service';
 import { newId } from '../common/uuid';
 import { GlobalDbService } from '../database/global-db.service';
@@ -36,6 +37,7 @@ export class SessionService {
     private readonly jwt: JwtService,
     private readonly globalDb: GlobalDbService,
     private readonly securityEvents: SecurityEventsService,
+    private readonly context: AuditContext,
   ) {}
 
   async start(account: SessionAccount): Promise<IssuedTokens> {
@@ -52,10 +54,11 @@ export class SessionService {
         tenantId: account.tenantId,
         refreshTokenHash: sha256(secret),
         expiresAt: refreshTokenExpiresAt,
+        ...this.origin(),
       },
     });
     return {
-      ...(await this.accessToken(account)),
+      ...(await this.accessToken(account, sessionId)),
       refreshToken: `${sessionId}.${secret}`,
       refreshTokenExpiresAt,
     };
@@ -100,7 +103,7 @@ export class SessionService {
         refreshTokenHash: session.refreshTokenHash,
         revokedAt: null,
       },
-      data: { refreshTokenHash: sha256(secret), lastUsedAt: new Date() },
+      data: { refreshTokenHash: sha256(secret), ...this.origin() },
     });
     if (count === 0) {
       await this.revoke(session.id);
@@ -108,7 +111,7 @@ export class SessionService {
       return null;
     }
     return {
-      ...(await this.accessToken(account)),
+      ...(await this.accessToken(account, session.id)),
       refreshToken: `${session.id}.${secret}`,
       refreshTokenExpiresAt: session.expiresAt,
     };
@@ -137,12 +140,19 @@ export class SessionService {
     });
   }
 
-  private async accessToken(account: SessionAccount) {
+  /** Where the session is used from, and when (start and every refresh). */
+  private origin() {
+    const { ip, userAgent } = this.context.origin();
+    return { ip, userAgent, lastUsedAt: new Date() };
+  }
+
+  private async accessToken(account: SessionAccount, sessionId: string) {
     const { accessTtlSeconds } = SESSION_POLICY[account.accountType];
     const claims: AccessTokenClaims = {
       sub: account.accountId,
       tid: account.tenantId,
       typ: account.accountType,
+      sid: sessionId,
     };
     return {
       accessToken: await this.jwt.signAsync(claims, {

@@ -1,39 +1,16 @@
-import { Injectable, type OnApplicationShutdown } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { createTransport, type Transporter } from 'nodemailer';
-import type { Env } from '../config/env.schema';
+import { Injectable } from '@nestjs/common';
+import { Mailer } from '../mail/mailer';
 import type { OtpChannel, OtpMessage } from './otp-channel';
 import { renderOtpEmail } from './otp-email.templates';
 
 @Injectable()
-export class EmailOtpChannel implements OtpChannel, OnApplicationShutdown {
-  private readonly transport: Transporter;
-  private readonly from: string;
+export class EmailOtpChannel implements OtpChannel {
+  constructor(private readonly mailer: Mailer) {}
 
-  constructor(config: ConfigService<Env, true>) {
-    const user = config.get('SMTP_USER', { infer: true });
-    const pass = config.get('SMTP_PASSWORD', { infer: true });
-    this.transport = createTransport({
-      host: config.get('SMTP_HOST', { infer: true }),
-      port: config.get('SMTP_PORT', { infer: true }),
-      secure: config.get('SMTP_SECURE', { infer: true }),
-      auth: user ? { user, pass } : undefined,
-    });
-    this.from = config.get('SMTP_FROM', { infer: true });
-  }
-
-  async send({ to, code, ttlSeconds, locale }: OtpMessage): Promise<void> {
-    const email = renderOtpEmail(locale, code, ttlSeconds);
-    await this.transport.sendMail({
-      from: this.from,
+  async send({ to, code, ttlSeconds, locale, purpose }: OtpMessage) {
+    await this.mailer.send(
       to,
-      subject: email.subject,
-      text: email.text,
-      html: email.html,
-    });
-  }
-
-  onApplicationShutdown(): void {
-    this.transport.close();
+      renderOtpEmail(locale, code, ttlSeconds, purpose),
+    );
   }
 }

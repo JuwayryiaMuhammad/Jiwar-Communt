@@ -1,3 +1,4 @@
+import type { OtpPurpose } from '@prisma/client';
 import type { Locale } from '../common/i18n/locale';
 
 export interface OtpMessage {
@@ -5,6 +6,8 @@ export interface OtpMessage {
   code: string;
   ttlSeconds: number;
   locale: Locale;
+  /** Changes the wording only; the code works for this purpose alone. */
+  purpose: OtpPurpose;
 }
 
 /**

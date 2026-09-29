@@ -1,7 +1,7 @@
 import { randomInt, timingSafeEqual } from 'node:crypto';
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { AccountType } from '@prisma/client';
+import type { AccountType, OtpPurpose } from '@prisma/client';
 import type { Locale } from '../common/i18n/locale';
 import type { Env } from '../config/env.schema';
 import { SecurityEventsService } from '../audit/security-events.service';
@@ -79,6 +79,7 @@ export class OtpService implements OnModuleInit {
       await this.globalDb.otpChallenge.createMany({
         data: batch.map((c) => ({
           id: c.id,
+          purpose: 'login' as const,
           identifierHash,
           accountIds: c.accountIds,
           codeHash: this.hasher.hashOtp(c.id, c.code),
@@ -88,6 +89,7 @@ export class OtpService implements OnModuleInit {
     }
     await this.globalDb.otpChallenge.updateMany({
       where: {
+        purpose: 'login',
         identifierHash,
         id: { lt: threshold },
         consumedAt: null,
@@ -110,12 +112,13 @@ export class OtpService implements OnModuleInit {
         code: c.code,
         ttlSeconds: this.ttlSeconds,
         locale,
+        purpose: 'login',
       });
     }
   }
 
   /**
-   * Checks a code against the identifier's live challenges. Every live
+   * Checks a code against the identifier's live login challenges. Every live
    * challenge spends an attempt; a match consumes it and returns the active
    * accounts it unlocks. Null on any failure.
    */
@@ -123,9 +126,69 @@ export class OtpService implements OnModuleInit {
     identifierHash: string,
     code: string,
   ): Promise<UnlockedAccount[] | null> {
+    const challenge = await this.consume('login', identifierHash, code);
+    return challenge
+      ? this.unlockedAccounts(identifierHash, challenge.accountIds)
+      : null;
+  }
+
+  /**
+   * An invite-acceptance code (ADR 0016), keyed by the invite token HMAC and
+   * sent to exactly one email. Challenges carry their purpose, so this code
+   * can never log anyone in, and a login code can never accept an invite.
+   * Older live invite codes for the same key are invalidated.
+   */
+  async issueForInvite(
+    key: string,
+    email: string,
+    locale: Locale,
+  ): Promise<void> {
+    const id = newId();
+    const code =
+      this.fixedCode ?? randomInt(0, 1_000_000).toString().padStart(6, '0');
+    await this.globalDb.otpChallenge.create({
+      data: {
+        id,
+        purpose: 'invite_accept',
+        identifierHash: key,
+        accountIds: [],
+        codeHash: this.hasher.hashOtp(id, code),
+        expiresAt: new Date(Date.now() + this.ttlSeconds * 1000),
+      },
+    });
+    await this.globalDb.otpChallenge.updateMany({
+      where: {
+        purpose: 'invite_accept',
+        identifierHash: key,
+        id: { lt: id },
+        consumedAt: null,
+        invalidatedAt: null,
+      },
+      data: { invalidatedAt: new Date() },
+    });
+    await this.channel.send({
+      to: email,
+      code,
+      ttlSeconds: this.ttlSeconds,
+      locale,
+      purpose: 'invite_accept',
+    });
+  }
+
+  /** True when the code matches a live invite challenge, which it consumes. */
+  async verifyInvite(key: string, code: string): Promise<boolean> {
+    return (await this.consume('invite_accept', key, code)) !== null;
+  }
+
+  /**
+   * Spends one attempt on every live challenge of (purpose, key); consumes
+   * and returns the one the code matches.
+   */
+  private async consume(purpose: OtpPurpose, key: string, code: string) {
     const live = await this.globalDb.otpChallenge.findMany({
       where: {
-        identifierHash,
+        purpose,
+        identifierHash: key,
         consumedAt: null,
         invalidatedAt: null,
         expiresAt: { gt: new Date() },
@@ -152,10 +215,10 @@ export class OtpService implements OnModuleInit {
           challenge.codeHash,
         )
       ) {
-        if (challenge.attempts + 1 >= this.maxAttempts) {
+        if (purpose === 'login' && challenge.attempts + 1 >= this.maxAttempts) {
           // This wrong guess used the last attempt: the code is burnt.
           await this.securityEvents.record('otp.challenge_exhausted', {
-            identifierHash,
+            identifierHash: key,
             metadata: { challengeId: challenge.id, attempts: this.maxAttempts },
           });
         }
@@ -165,8 +228,7 @@ export class OtpService implements OnModuleInit {
         where: { id: challenge.id, consumedAt: null },
         data: { consumedAt: new Date() },
       });
-      if (consumed.count === 0) return null;
-      return this.unlockedAccounts(identifierHash, challenge.accountIds);
+      return consumed.count === 0 ? null : challenge;
     }
     return null;
   }

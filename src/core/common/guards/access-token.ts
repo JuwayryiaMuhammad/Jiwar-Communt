@@ -8,6 +8,8 @@ export interface AccessTokenClaims {
   tid: string;
   /** account type */
   typ: AccountType;
+  /** session id: the guard rejects the token once its session is revoked */
+  sid: string;
 }
 
 export const ACCOUNT_TYPES: readonly AccountType[] = [

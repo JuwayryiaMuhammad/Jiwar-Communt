@@ -1,50 +1,83 @@
+import type { OtpPurpose } from '@prisma/client';
 import type { Locale } from '../common/i18n/locale';
+import { emailPage, rtlText, type RenderedEmail } from '../mail/layout';
 
-export interface RenderedEmail {
-  subject: string;
-  text: string;
-  html: string;
-}
+export type { RenderedEmail };
 
 /**
- * OTP email in Arabic (RTL) or English (ADR 0013). The code is always ASCII
- * digits so it can be copied and typed on any keyboard. No tenant or account
- * details: the email proves possession of the address and nothing else.
+ * One-time code email in Arabic (RTL) or English (ADR 0013). The code is
+ * always ASCII digits so it can be copied and typed on any keyboard. No
+ * tenant or account details: the email proves possession of the address and
+ * nothing else. The purpose changes the wording only.
  */
 export function renderOtpEmail(
   locale: Locale,
   code: string,
   ttlSeconds: number,
+  purpose: OtpPurpose = 'login',
 ): RenderedEmail {
   const minutes = Math.max(1, Math.round(ttlSeconds / 60));
-  return locale === 'ar' ? arabic(code, minutes) : english(code, minutes);
+  return locale === 'ar'
+    ? arabic(code, minutes, purpose)
+    : english(code, minutes, purpose);
 }
 
-function english(code: string, minutes: number): RenderedEmail {
-  const expires = `It expires in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}.`;
-  const ignore = 'If you did not try to log in, ignore this email.';
-  return {
+const EN = {
+  login: {
     subject: 'Your Jiwar login code',
-    text: `Your Jiwar login code is ${code}.\n\n${expires} ${ignore}`,
-    html: page(
+    intro: 'Your Jiwar login code is',
+    ignore: 'If you did not try to log in, ignore this email.',
+  },
+  invite_accept: {
+    subject: 'Your Jiwar invitation code',
+    intro: 'Your code to accept the household invitation on Jiwar is',
+    ignore: 'If you were not expecting an invitation, ignore this email.',
+  },
+} satisfies Record<OtpPurpose, Record<string, string>>;
+
+const AR = {
+  login: {
+    subject: 'رمز الدخول إلى جوار',
+    intro: 'رمز الدخول إلى جوار هو',
+    ignore: 'إذا لم تحاول تسجيل الدخول، تجاهل هذه الرسالة.',
+  },
+  invite_accept: {
+    subject: 'رمز قبول الدعوة إلى جوار',
+    intro: 'رمز قبول دعوة الانضمام إلى الأسرة على جوار هو',
+    ignore: 'إذا لم تكن تنتظر دعوة، تجاهل هذه الرسالة.',
+  },
+} satisfies Record<OtpPurpose, Record<string, string>>;
+
+function english(
+  code: string,
+  minutes: number,
+  purpose: OtpPurpose,
+): RenderedEmail {
+  const t = EN[purpose];
+  const expires = `It expires in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}.`;
+  return {
+    subject: t.subject,
+    text: `${t.intro} ${code}.\n\n${expires} ${t.ignore}`,
+    html: emailPage(
       'en',
-      'ltr',
-      `<p>Your Jiwar login code is:</p>${codeBlock(code)}<p>${expires}</p><p style="color:#666">${ignore}</p>`,
+      `<p>${t.intro}:</p>${codeBlock(code)}<p>${expires}</p><p style="color:#666">${t.ignore}</p>`,
     ),
   };
 }
 
-function arabic(code: string, minutes: number): RenderedEmail {
+function arabic(
+  code: string,
+  minutes: number,
+  purpose: OtpPurpose,
+): RenderedEmail {
+  const t = AR[purpose];
   const expires = `تنتهي صلاحيته خلال ${arabicMinutes(minutes)}.`;
-  const ignore = 'إذا لم تحاول تسجيل الدخول، تجاهل هذه الرسالة.';
   return {
-    subject: 'رمز الدخول إلى جوار',
-    // U+200F RIGHT-TO-LEFT MARK keeps plain-text clients from flipping the line.
-    text: `‏رمز الدخول إلى جوار هو ${code}\n\n‏${expires} ${ignore}`,
-    html: page(
+    subject: t.subject,
+    text: rtlText([`${t.intro} ${code}`, '', `${expires} ${t.ignore}`]),
+    html: emailPage(
       'ar',
-      'rtl',
-      `<p>رمز الدخول إلى جوار هو:</p>${codeBlock(code)}<p>${expires}</p><p style="color:#666">${ignore}</p>`,
+      `<p>${t.intro}:</p>${codeBlock(code)}<p>${expires}</p><p style="color:#666">${t.ignore}</p>`,
     ),
   };
 }
@@ -60,9 +93,4 @@ export function arabicMinutes(n: number): string {
 function codeBlock(code: string): string {
   // The code itself is always left-to-right, even inside an RTL email.
   return `<p dir="ltr" style="font-size:28px;font-weight:bold;letter-spacing:6px;margin:16px 0">${code}</p>`;
-}
-
-function page(lang: Locale, dir: 'rtl' | 'ltr', body: string): string {
-  const align = dir === 'rtl' ? 'right' : 'left';
-  return `<!doctype html><html lang="${lang}" dir="${dir}"><head><meta charset="utf-8"></head><body dir="${dir}" style="direction:${dir};text-align:${align};font-family:Tahoma,Arial,sans-serif;font-size:16px">${body}</body></html>`;
 }

@@ -9,6 +9,7 @@ import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
 import { newId } from '../common/uuid';
 import { GlobalDbService } from '../database/global-db.service';
 import { TenantTx } from '../database/tenant-tx.service';
+import { TenantSettingsService } from '../tenant-settings/tenant-settings.service';
 
 export interface NewManager {
   fullName: string;
@@ -61,11 +62,13 @@ export class TenantsService {
     private readonly writer: AccountWriter,
     private readonly platformAudit: PlatformAuditService,
     private readonly securityEvents: SecurityEventsService,
+    private readonly settings: TenantSettingsService,
   ) {}
 
   /**
    * One transaction: the compound, its default roles and permissions
-   * (ADR 0010) and its first manager with login identifiers.
+   * (ADR 0010), its settings (ADR 0016) and its first manager with login
+   * identifiers.
    */
   async createTenant(input: {
     name: string;
@@ -93,6 +96,7 @@ export class TenantsService {
         .in(tx)
         .tenant.create({ data: { id, name } });
       await this.provisioner.provision(tx, id);
+      await this.settings.create(tx, id);
       await this.platformAudit.record(tx, {
         action: 'tenant.created',
         targetId: id,

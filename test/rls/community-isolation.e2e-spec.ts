@@ -49,7 +49,6 @@ describe('RLS isolation — household and worker tables', () => {
 
     await h.asTenant(tenantA, async () => {
       const db = h.prisma.tenant;
-      await db.tenantSettings.create({ data: { tenantId: tenantA } });
       rows.memberId = (
         await db.householdMember.create({
           data: {
@@ -145,7 +144,10 @@ describe('RLS isolation — household and worker tables', () => {
     it('lists nothing of A on any new table', async () => {
       await h.asTenant(tenantB, async () => {
         const db = h.prisma.tenant;
-        expect(await db.tenantSettings.findMany()).toEqual([]);
+        // B has its own settings row, and only that one.
+        expect(
+          (await db.tenantSettings.findMany()).map((r) => r.tenantId),
+        ).toEqual([tenantB]);
         expect(await db.householdMember.findMany()).toEqual([]);
         expect(await db.householdInvite.findMany()).toEqual([]);
         expect(await db.householdDelegation.findMany()).toEqual([]);

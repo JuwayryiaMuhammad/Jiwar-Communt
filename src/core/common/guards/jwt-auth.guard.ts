@@ -53,6 +53,7 @@ export class JwtAuthGuard implements CanActivate {
     if (
       !isUUID(claims.sub) ||
       !isUUID(claims.tid) ||
+      !isUUID(claims.sid) ||
       !ACCOUNT_TYPES.includes(claims.typ)
     ) {
       throw unauthenticated();
@@ -61,6 +62,7 @@ export class JwtAuthGuard implements CanActivate {
     this.cls.set('tenantId', claims.tid);
     this.cls.set('accountId', claims.sub);
     this.cls.set('accountType', claims.typ);
+    this.cls.set('sessionId', claims.sid);
     return true;
   }
 }

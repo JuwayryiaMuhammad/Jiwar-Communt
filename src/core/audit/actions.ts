@@ -31,6 +31,7 @@ export const AUDIT_ACTIONS = {
   'occupancy.primary_changed': { log: 'tenant', target: 'occupancy' },
   'unit.created': { log: 'tenant', target: 'unit' },
   'unit.household_review_flagged': { log: 'tenant', target: 'unit' },
+  'tenant.settings_changed': { log: 'tenant', target: 'tenant' },
   'tenant.created': { log: 'platform', target: 'tenant' },
   'tenant.status_changed': { log: 'platform', target: 'tenant' },
   'tenant.manager_added': { log: 'platform', target: 'account' },

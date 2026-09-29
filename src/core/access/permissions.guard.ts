@@ -5,6 +5,7 @@ import type { AppClsStore } from '../common/cls/app-cls';
 import { appError, ErrorCode } from '../common/errors';
 import { PLATFORM_ROUTE_KEY } from '../common/guards/platform-route.decorator';
 import { IS_PUBLIC_KEY } from '../common/guards/public.decorator';
+import { GlobalDbService } from '../database/global-db.service';
 import { PrismaService } from '../database/prisma.service';
 import { PermissionsService } from './permissions.service';
 import type { Permission } from './permissions';
@@ -14,8 +15,9 @@ import { REQUIRED_PERMISSIONS_KEY } from './require-permissions.decorator';
  * Global guard after JwtAuthGuard, on every tenant-authenticated route:
  *
  * 1. loads the account with its role version and its compound's status, in
- *    one RLS-scoped query — an inactive account or a suspended compound is
- *    rejected now, not when the access token expires (ADR 0004);
+ *    one RLS-scoped query, and the token's session — an inactive account, a
+ *    suspended compound or a revoked session is rejected now, not when the
+ *    access token expires (ADR 0004);
  * 2. puts the role and its permissions version in the request context;
  * 3. checks `@RequirePermissions(...)` (ADR 0010).
  */
@@ -25,6 +27,7 @@ export class PermissionsGuard implements CanActivate {
     private readonly reflector: Reflector,
     private readonly cls: ClsService<AppClsStore>,
     private readonly prisma: PrismaService,
+    private readonly globalDb: GlobalDbService,
     private readonly permissions: PermissionsService,
   ) {}
 
@@ -39,7 +42,27 @@ export class PermissionsGuard implements CanActivate {
 
     const tenantId = this.cls.get('tenantId');
     const accountId = this.cls.get('accountId');
-    if (!tenantId || !accountId) throw unauthenticated();
+    const sessionId = this.cls.get('sessionId');
+    if (!tenantId || !accountId || !sessionId) throw unauthenticated();
+
+    const session = await this.globalDb.session.findUnique({
+      where: { id: sessionId },
+      select: {
+        accountId: true,
+        tenantId: true,
+        revokedAt: true,
+        expiresAt: true,
+      },
+    });
+    if (
+      !session ||
+      session.accountId !== accountId ||
+      session.tenantId !== tenantId ||
+      session.revokedAt !== null ||
+      session.expiresAt <= new Date()
+    ) {
+      throw unauthenticated();
+    }
 
     const account = await this.prisma.tenant.account.findUnique({
       where: { id: accountId },

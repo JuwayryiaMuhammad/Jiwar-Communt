@@ -1,5 +1,6 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { PlatformModule } from '../../src/core/platform/platform.module';
+import { TenantSettingsService } from '../../src/core/tenant-settings/tenant-settings.service';
 import { auditReaders } from '../setup/audit';
 import { COMMUNITY_COVERAGE } from '../setup/audit-coverage-split';
 import { communityHelpers, type Compound } from '../setup/community';
@@ -60,6 +61,25 @@ describe('Audit coverage — community', () => {
         targetType: 'unit',
         changes: { needsHouseholdReview: { from: false, to: true } },
         metadata: { reason: 'primary_left', occupancyId: view.id },
+      });
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  describe('settings', () => {
+    it('tenant.settings_changed — by the manager, values recorded', async () => {
+      const c = await x.compound();
+      await x.asManager(c, () =>
+        h.moduleRef
+          .get(TenantSettingsService)
+          .update({ familyJoinRequiresApproval: true }),
+      );
+      const entry = await single(c, 'tenant.settings_changed', c.tenantId);
+      expect(entry).toMatchObject({
+        actorType: 'account',
+        actorId: c.managerId,
+        targetType: 'tenant',
+        changes: { familyJoinRequiresApproval: { from: false, to: true } },
       });
     });
   });

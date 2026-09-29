@@ -35,8 +35,8 @@ export interface HttpHarness {
   ): Promise<{ id: string }>;
   /** Marks the compound suspended (the platform service arrives later). */
   suspendTenant(tenantId: string): Promise<void>;
-  /** A valid access token minted directly (skips the OTP flow). */
-  tokenFor(claims: AccessTokenClaims): Promise<string>;
+  /** A valid access token minted directly (skips the OTP flow), with its session. */
+  tokenFor(claims: Omit<AccessTokenClaims, 'sid'>): Promise<string>;
   close(): Promise<void>;
 }
 
@@ -69,9 +69,10 @@ export async function createHttpHarness(
       await globalDb.tenant.create({ data: tenant });
       await cls.run(async () => {
         cls.set('tenantId', tenant.id);
-        await tenantTx.withTenantTx((tx) =>
-          provisioner.provision(tx, tenant.id),
-        );
+        await tenantTx.withTenantTx(async (tx) => {
+          await provisioner.provision(tx, tenant.id);
+          await tx.tenantSettings.create({ data: { tenantId: tenant.id } });
+        });
       });
       return tenant;
     },
@@ -95,8 +96,23 @@ export async function createHttpHarness(
         data: { status: 'suspended' },
       });
     },
-    tokenFor: (claims) =>
-      jwt.signAsync(claims, { expiresIn: 900, audience: 'tenant' }),
+    // A real session row backs every token: the guard checks it per request.
+    async tokenFor(claims) {
+      const sid = newId();
+      await globalDb.session.create({
+        data: {
+          id: sid,
+          accountId: claims.sub,
+          tenantId: claims.tid,
+          refreshTokenHash: '0'.repeat(64),
+          expiresAt: new Date(Date.now() + 86_400_000),
+        },
+      });
+      return jwt.signAsync({ ...claims, sid } satisfies AccessTokenClaims, {
+        expiresIn: 900,
+        audience: 'tenant',
+      });
+    },
     close: () => app.close(),
   };
 }

@@ -26,6 +26,7 @@ export const PERMISSIONS = {
   'roles.read': { kinds: ['manager'] },
   'roles.manage': { kinds: ['manager'] },
   'audit.read': { kinds: ['manager'] },
+  'settings.manage': { kinds: ['manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

@@ -21,6 +21,7 @@ import { SecurityEventsService } from './security-events.service';
     SecurityEventsQueryService,
   ],
   exports: [
+    AuditContext,
     AuditService,
     PlatformAuditService,
     SecurityEventsService,

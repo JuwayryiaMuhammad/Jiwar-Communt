@@ -21,6 +21,17 @@ describe('OTP email templates', () => {
     expect(email.text).toContain('5 minutes');
   });
 
+  it('invite codes have their own wording in both languages', () => {
+    const en = renderOtpEmail('en', '042917', 300, 'invite_accept');
+    expect(en.subject).toBe('Your Jiwar invitation code');
+    expect(en.text).toContain('accept the household invitation');
+    expect(en.text).not.toContain('log in');
+    const ar = renderOtpEmail('ar', '042917', 300, 'invite_accept');
+    expect(ar.subject).toBe('رمز قبول الدعوة إلى جوار');
+    expect(ar.html).toContain('dir="rtl"');
+    expect(ar.text).toContain('042917');
+  });
+
   it.each([
     [1, 'دقيقة واحدة'],
     [2, 'دقيقتين'],

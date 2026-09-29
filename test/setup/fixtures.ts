@@ -56,7 +56,10 @@ export async function createTenant(
   });
   // Every compound has its default roles (ADR 0010).
   await h.asTenant(id, () =>
-    h.tenantTx.withTenantTx((tx) => provisioner.provision(tx, id)),
+    h.tenantTx.withTenantTx(async (tx) => {
+      await provisioner.provision(tx, id);
+      await tx.tenantSettings.create({ data: { tenantId: id } });
+    }),
   );
   return id;
 }

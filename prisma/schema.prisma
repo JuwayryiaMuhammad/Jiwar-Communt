@@ -313,3 +313,81 @@ model UnitOccupancy {
   @@index([tenantId, unitId])
   @@map("unit_occupancies")
 }
+
+// ============================================================================
+// AUDIT (ADR 0014) — immutable: SELECT/INSERT only for jiwar_app, triggers
+// reject UPDATE/DELETE/TRUNCATE for every role. No foreign keys on purpose:
+// entries must survive anything that happens to what they reference.
+// ============================================================================
+
+enum AuditActorType {
+  account
+  platform_admin
+  system
+
+  @@map("audit_actor_type")
+}
+
+/// Tenant table (RLS + FORCE). Written in the transaction of the action.
+model AuditLog {
+  id         String         @id @db.Uuid
+  tenantId   String         @map("tenant_id") @db.Uuid
+  occurredAt DateTime       @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  actorType  AuditActorType @map("actor_type")
+  actorId    String?        @map("actor_id") @db.Uuid
+  action     String
+  targetType String         @map("target_type")
+  targetId   String?        @map("target_id") @db.Uuid
+  changes    Json?
+  requestId  String?        @map("request_id")
+  ip         String?        @db.Inet
+  userAgent  String?        @map("user_agent")
+  metadata   Json?
+
+  @@index([tenantId, occurredAt(sort: Desc), id(sort: Desc)])
+  @@index([tenantId, targetType, targetId])
+  @@index([tenantId, actorId])
+  @@map("audit_log")
+}
+
+/// Global: the platform owner's actions. `target_tenant_id` is a pointer.
+model PlatformAuditLog {
+  id             String         @id @db.Uuid
+  occurredAt     DateTime       @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  actorType      AuditActorType @map("actor_type")
+  actorId        String?        @map("actor_id") @db.Uuid
+  action         String
+  targetType     String         @map("target_type")
+  targetId       String?        @map("target_id") @db.Uuid
+  targetTenantId String?        @map("target_tenant_id") @db.Uuid
+  changes        Json?
+  requestId      String?        @map("request_id")
+  ip             String?        @db.Inet
+  userAgent      String?        @map("user_agent")
+  metadata       Json?
+
+  @@index([occurredAt(sort: Desc), id(sort: Desc)])
+  @@index([targetTenantId])
+  @@index([targetType, targetId])
+  @@map("platform_audit_log")
+}
+
+/// Global, fail-open. Never a raw email or phone: only the identifier HMAC.
+model SecurityEvent {
+  id              String   @id @db.Uuid
+  occurredAt      DateTime @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  event           String
+  identifierHash  String?  @map("identifier_hash") @db.Char(64)
+  accountId       String?  @map("account_id") @db.Uuid
+  tenantId        String?  @map("tenant_id") @db.Uuid
+  platformAdminId String?  @map("platform_admin_id") @db.Uuid
+  ip              String?  @db.Inet
+  userAgent       String?  @map("user_agent")
+  requestId       String?  @map("request_id")
+  metadata        Json?
+
+  @@index([occurredAt(sort: Desc), id(sort: Desc)])
+  @@index([event])
+  @@index([identifierHash])
+  @@map("security_events")
+}

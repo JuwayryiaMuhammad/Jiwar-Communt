@@ -11,7 +11,11 @@ import { Client } from 'pg';
  * are read before a tenant is known (login) and reached only through
  * GlobalDbService. Adding a table here is a design decision.
  */
-const GLOBAL_WITH_TENANT_ID = ['login_identifiers', 'sessions'];
+const GLOBAL_WITH_TENANT_ID = [
+  'login_identifiers',
+  'sessions',
+  'security_events',
+];
 
 const EXPECTED =
   "(tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)";
@@ -43,7 +47,8 @@ describe('RLS coverage', () => {
     const tenantTables = (await tablesWithTenantId()).filter(
       (t) => !GLOBAL_WITH_TENANT_ID.includes(t),
     );
-    expect(tenantTables.length).toBeGreaterThanOrEqual(6);
+    expect(tenantTables.length).toBeGreaterThanOrEqual(7);
+    expect(tenantTables).toContain('audit_log');
 
     const { rows } = await c.query<{
       relname: string;

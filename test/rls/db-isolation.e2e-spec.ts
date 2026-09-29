@@ -289,6 +289,45 @@ describe('RLS tenant isolation (database level)', () => {
       await expect(again()).resolves.toMatchObject({ status: 'active' });
     });
 
+    it("B cannot read A's audit entries, even by target id; nor write into A", async () => {
+      const entryId = newId();
+      await h.asTenant(tenantA, () =>
+        h.prisma.tenant.auditLog.create({
+          data: {
+            id: entryId,
+            tenantId: tenantA,
+            actorType: 'system',
+            action: 'unit.created',
+            targetType: 'unit',
+            targetId: unitA.id,
+          },
+        }),
+      );
+      const [byId, byTarget, all] = await h.asTenant(tenantB, () =>
+        Promise.all([
+          h.prisma.tenant.auditLog.findUnique({ where: { id: entryId } }),
+          h.prisma.tenant.auditLog.findMany({ where: { targetId: unitA.id } }),
+          h.prisma.tenant.auditLog.findMany(),
+        ]),
+      );
+      expect(byId).toBeNull();
+      expect(byTarget).toEqual([]);
+      expect(all.every((e) => e.tenantId === tenantB)).toBe(true);
+      await expect(
+        h.asTenant(tenantB, () =>
+          h.prisma.tenant.auditLog.create({
+            data: {
+              id: newId(),
+              tenantId: tenantA,
+              actorType: 'system',
+              action: 'unit.created',
+              targetType: 'unit',
+            },
+          }),
+        ),
+      ).rejects.toThrow(/row-level security/);
+    });
+
     it('ended_at must match the status', async () => {
       await expect(
         h.asTenant(tenantA, () =>

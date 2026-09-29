@@ -22,6 +22,23 @@ export const envSchema = z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace'])
       .default('info'),
     CORS_ORIGINS: z.string().default(''),
+    /**
+     * Number of reverse-proxy hops to trust for the client IP (e.g. 1 behind
+     * one nginx), or false. Never "trust everything": clients could forge
+     * X-Forwarded-For to spoof audit IPs and dodge per-IP rate limits.
+     */
+    TRUST_PROXY: z
+      .string()
+      .default('false')
+      .transform((v, ctx) => {
+        if (v === 'false' || v === '' || v === '0') return false;
+        if (/^[1-9]\d?$/.test(v)) return Number(v);
+        ctx.addIssue({
+          code: 'custom',
+          message: 'must be false or a number of proxy hops (e.g. 1)',
+        });
+        return z.NEVER;
+      }),
 
     DATABASE_URL: postgresUrl,
     DB_POOL_MAX: positiveInt.default(10),

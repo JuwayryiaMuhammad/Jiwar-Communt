@@ -106,4 +106,27 @@ describe('validateEnv', () => {
       ).toThrow(/at least 12/);
     });
   });
+
+  describe('TRUST_PROXY', () => {
+    it('defaults to off', () => {
+      expect(validateEnv(base).TRUST_PROXY).toBe(false);
+    });
+
+    it.each([
+      ['false', false],
+      ['0', false],
+      ['1', 1],
+      ['2', 2],
+    ])('%s → %p', (raw, parsed) => {
+      expect(validateEnv({ ...base, TRUST_PROXY: raw }).TRUST_PROXY).toBe(
+        parsed,
+      );
+    });
+
+    it.each(['true', 'yes', '-1', '127.0.0.1'])('rejects %s', (raw) => {
+      expect(() => validateEnv({ ...base, TRUST_PROXY: raw })).toThrow(
+        /TRUST_PROXY/,
+      );
+    });
+  });
 });

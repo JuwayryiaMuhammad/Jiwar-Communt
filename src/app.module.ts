@@ -10,6 +10,7 @@ import { AccessModule } from './access/access.module';
 import { PermissionsGuard } from './access/permissions.guard';
 import { AccountsModule } from './accounts/accounts.module';
 import { AppController } from './app.controller';
+import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
 import { RequestContextModule } from './common/cls/request-context.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -64,6 +65,16 @@ import { UnitsModule } from './units/units.module';
         mount: true,
         generateId: true,
         idGenerator: (req: Request & { id?: string }) => req.id ?? randomUUID(),
+        // Request origin for audit entries and security events. req.ip
+        // honours TRUST_PROXY (configureApp).
+        setup: (cls, req: Request) => {
+          cls.set('ip', req.ip);
+          const ua = req.headers['user-agent'];
+          cls.set(
+            'userAgent',
+            typeof ua === 'string' ? ua.slice(0, 512) : undefined,
+          );
+        },
       },
     }),
     JwtModule.registerAsync({
@@ -81,6 +92,7 @@ import { UnitsModule } from './units/units.module';
     DatabaseModule,
     RedisModule,
     AccessModule,
+    AuditModule,
     HealthModule,
     AuthModule,
     AccountsModule,

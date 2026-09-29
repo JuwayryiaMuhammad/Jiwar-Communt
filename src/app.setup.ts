@@ -1,6 +1,8 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
+import type { Env } from './config/env.schema';
 import { validationException } from './common/validation/validation-errors';
 
 export const API_PREFIX = 'api/v1';
@@ -27,6 +29,18 @@ export function configureApp(app: INestApplication): void {
     origin: corsOrigins.length ? corsOrigins : false,
     credentials: true,
   });
+
+  // Client IP behind a reverse proxy: trust exactly TRUST_PROXY hops of
+  // X-Forwarded-For, never the whole chain (ADR 0014).
+  const trustProxy = app
+    .get(ConfigService<Env, true>)
+    .get('TRUST_PROXY', { infer: true });
+  if (trustProxy) {
+    const express = app.getHttpAdapter().getInstance() as {
+      set(key: string, value: unknown): void;
+    };
+    express.set('trust proxy', trustProxy);
+  }
 
   app.setGlobalPrefix(API_PREFIX);
 

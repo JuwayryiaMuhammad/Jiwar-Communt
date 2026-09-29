@@ -10,6 +10,8 @@ type GlobalTables = Pick<
   | 'session'
   | 'platformAdmin'
   | 'platformSession'
+  | 'platformAuditLog'
+  | 'securityEvent'
 >;
 
 /**
@@ -44,6 +46,23 @@ export class GlobalDbService implements GlobalTables {
     return this.base.client.platformSession;
   }
 
+  get platformAuditLog() {
+    return this.base.client.platformAuditLog;
+  }
+
+  get securityEvent() {
+    return this.base.client.securityEvent;
+  }
+
+  /**
+   * An interactive transaction with NO tenant set (tenant tables are
+   * invisible and unwritable in it), for global work that must commit
+   * atomically with its platform audit entry (ADR 0014).
+   */
+  transaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+    return this.base.client.$transaction(fn);
+  }
+
   /**
    * The same tables through an open withTenantTx transaction, for writes that
    * must commit atomically with tenant rows (e.g. an account and its login
@@ -57,6 +76,8 @@ export class GlobalDbService implements GlobalTables {
       session: tx.session,
       platformAdmin: tx.platformAdmin,
       platformSession: tx.platformSession,
+      platformAuditLog: tx.platformAuditLog,
+      securityEvent: tx.securityEvent,
     };
   }
 

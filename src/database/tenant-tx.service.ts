@@ -61,6 +61,7 @@ export class TenantTx {
     // execute while the inTenantTx flag is in the context.
     return this.cls.run({ ifNested: 'inherit' }, async () => {
       this.cls.set('inTenantTx', true);
+      this.cls.set('txTenantId', tenantId);
       return await this.base.client.$transaction(async (tx) => {
         await tx.$executeRaw`SELECT set_config('app.tenant_id', ${tenantId}, true)`;
         return await fn(tx);

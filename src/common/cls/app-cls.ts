@@ -17,4 +17,20 @@ export interface AppClsStore extends ClsStore {
   platformScope?: 'full' | 'password_change';
   /** Set by TenantTx while a tenant transaction callback is running. */
   inTenantTx?: boolean;
+  /**
+   * The tenant set with set_config on the running TenantTx transaction —
+   * where an audit entry of that transaction belongs (ADR 0014).
+   */
+  txTenantId?: string;
+  /** Request origin, for audit entries and security events. */
+  ip?: string;
+  userAgent?: string;
+  /**
+   * Explicit audit actor, set ONLY by trusted entry points (seed, CLIs) —
+   * never from request data.
+   */
+  auditActor?: {
+    type: 'account' | 'platform_admin' | 'system';
+    id: string | null;
+  };
 }

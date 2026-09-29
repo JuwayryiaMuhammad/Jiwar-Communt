@@ -40,6 +40,22 @@ export class SecurityEventsService {
     this.strict = config.get('NODE_ENV', { infer: true }) === 'test';
   }
 
+  /**
+   * Fire-and-forget: the caller never waits, not even for a slow or hung
+   * insert. For events whose write must not delay anything that follows —
+   * e.g. `otp.requested` before the code is emailed.
+   */
+  recordInBackground(
+    event: SecurityEventName,
+    data: SecurityEventData = {},
+  ): void {
+    this.record(event, data).catch((error: unknown) => {
+      this.logger.error(
+        `security event ${event} failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    });
+  }
+
   async record(
     event: SecurityEventName,
     data: SecurityEventData = {},

@@ -96,9 +96,11 @@ export class OtpService implements OnModuleInit {
       data: { invalidatedAt: new Date() },
     });
 
-    // Recorded for known and unknown identifiers alike, off the request path,
-    // before sending so a mail failure cannot hide the attempt.
-    await this.securityEvents.record('otp.requested', {
+    // Recorded for registered and unregistered identifiers alike (account_id
+    // stays null in both), and never awaited: a slow or hung insert must
+    // neither delay the response (this whole method runs off the request
+    // path) nor hold back the email below.
+    this.securityEvents.recordInBackground('otp.requested', {
       identifierHash,
       metadata: { locale, destinations: batch.length },
     });

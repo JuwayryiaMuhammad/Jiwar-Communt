@@ -44,6 +44,11 @@ describe('audit catalog', () => {
         'unit',
         'tenant',
         'platform_admin',
+        'household_invite',
+        'household_member',
+        'household_delegation',
+        'domestic_worker',
+        'worker_engagement',
       ]).toContain(def.target);
     }
   });

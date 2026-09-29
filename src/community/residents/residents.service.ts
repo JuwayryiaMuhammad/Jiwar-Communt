@@ -11,6 +11,7 @@ import {
   TenantTx,
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
+import { lockUnits } from '../units/unit-lock';
 import type {
   MyUnit,
   NewResident,
@@ -85,7 +86,7 @@ export class ResidentsService {
     const tenantId = this.ctx.tenantId;
     const createdById = this.ctx.accountId;
     const id = await this.tenantTx.withTenantTx(async (tx) => {
-      await this.lockUnits(
+      await lockUnits(
         tx,
         input.units.map((u) => u.unitId),
       );
@@ -142,7 +143,7 @@ export class ResidentsService {
         select: { id: true },
       });
       if (!account) throw residentNotFound();
-      await this.lockUnits(tx, [input.unitId]);
+      await lockUnits(tx, [input.unitId]);
       const active = await tx.unitOccupancy.findFirst({
         where: { accountId, unitId: input.unitId, status: 'active' },
         select: { id: true },
@@ -183,7 +184,7 @@ export class ResidentsService {
         select: { unitId: true },
       });
       if (!current) throw occupancyNotFound();
-      await this.lockUnits(tx, [current.unitId]);
+      await lockUnits(tx, [current.unitId]);
       const { count } = await tx.unitOccupancy.updateMany({
         where: { id: occupancyId, status: 'active' },
         data: { status: 'ended', endedAt: new Date() },
@@ -223,7 +224,7 @@ export class ResidentsService {
    */
   async setPrimary(unitId: string, accountId: string): Promise<OccupancyView> {
     return this.tenantTx.withTenantTx(async (tx) => {
-      await this.lockUnits(tx, [unitId]);
+      await lockUnits(tx, [unitId]);
       const target = await tx.unitOccupancy.findFirst({
         where: { unitId, accountId, status: 'active' },
         include: { unit: { select: { code: true } } },
@@ -335,25 +336,6 @@ export class ResidentsService {
       occupancyType: o.occupancyType,
       startedAt: o.startedAt,
     }));
-  }
-
-  /**
-   * Row-locks the units (SELECT … FOR UPDATE), in a stable order so two
-   * transactions never wait on each other. Serializes every change to a
-   * unit's occupancies, which the "first occupant is primary" rule needs.
-   * Units of another compound are invisible under RLS, so also "not found".
-   */
-  private async lockUnits(tx: TenantTxClient, unitIds: string[]) {
-    const ids = [...new Set(unitIds)].sort();
-    const locked = await tx.$queryRaw<{ id: string }[]>`
-      SELECT id FROM units WHERE id = ANY(${ids}::uuid[])
-       ORDER BY id FOR UPDATE`;
-    const missing = ids.filter((id) => !locked.some((u) => u.id === id));
-    if (missing.length) {
-      throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found', {
-        params: { unitIds: missing },
-      });
-    }
   }
 
   /** No active occupant: the next one becomes primary. Call under lockUnits. */

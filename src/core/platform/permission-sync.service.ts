@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ACCESS_CATALOG, type AccessCatalog } from '../access/access-catalog';
 import { AuditService } from '../audit/audit.service';
 import { diffChanges } from '../audit/diff';
+import { newId } from '../common/uuid';
 import { GlobalDbService } from '../database/global-db.service';
 import { TenantTx, type TenantTxClient } from '../database/tenant-tx.service';
 
@@ -10,6 +11,8 @@ export interface TenantSyncReport {
   renamed: string[];
   retired: string[];
   added: string[];
+  /** Default roles the compound did not have yet (created with all their permissions). */
+  rolesCreated: string[];
   /** In the database but in none of the code lists; left untouched. */
   unknown: string[];
   rolesChanged: number;
@@ -69,14 +72,17 @@ export class PermissionSyncService {
         renamed: [],
         retired: [],
         added: [],
+        rolesCreated: [],
         unknown: [],
         rolesChanged: 0,
       };
       const changed = new Set<string>();
+      const created = new Set<string>();
       const before = await this.snapshot(tx);
 
       await this.applyRenames(tx, tenantId, report, changed);
       await this.applyRetirements(tx, report, changed);
+      await this.createMissingRoles(tx, tenantId, report, changed, created);
       await this.applyAdditions(tx, tenantId, report, changed);
       await this.reportUnknown(tx, report);
 
@@ -97,6 +103,7 @@ export class PermissionSyncService {
           ),
           metadata: {
             roleKey: role.key,
+            roleCreated: created.has(roleId),
             permissionsVersion: role.permissionsVersion,
             added: report.added,
             renamed: report.renamed,
@@ -168,6 +175,49 @@ export class PermissionSyncService {
     report.retired = [
       ...new Set([...assigned, ...offered].map((r) => r.permission)),
     ].sort();
+  }
+
+  /**
+   * A default role added to the catalog after the compound was created (e.g.
+   * `family_member`) is created with ALL its default permissions — not only
+   * the never-offered ones, since e.g. `units.read` was offered long ago.
+   */
+  private async createMissingRoles(
+    tx: TenantTxClient,
+    tenantId: string,
+    report: TenantSyncReport,
+    changed: Set<string>,
+    created: Set<string>,
+  ) {
+    const existing = new Set(
+      (await tx.role.findMany({ select: { key: true } })).map((r) => r.key),
+    );
+    for (const def of this.catalog.defaultRoles) {
+      if (existing.has(def.key)) continue;
+      const roleId = newId();
+      await tx.role.create({
+        data: {
+          id: roleId,
+          tenantId,
+          key: def.key,
+          name: null,
+          kind: def.kind,
+          isSystem: true,
+        },
+      });
+      if (def.permissions.length) {
+        await tx.rolePermission.createMany({
+          data: def.permissions.map((permission) => ({
+            tenantId,
+            roleId,
+            permission,
+          })),
+        });
+      }
+      changed.add(roleId);
+      created.add(roleId);
+      report.rolesCreated.push(def.key);
+    }
   }
 
   /** Never-offered permissions go to the default roles that include them. */

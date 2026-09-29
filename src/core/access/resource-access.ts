@@ -11,6 +11,8 @@ import { PrismaService } from '../database/prisma.service';
  * - manager: every unit of the compound;
  * - resident: only units with an ACTIVE occupancy — ending one removes
  *   access on the next request;
+ * - family: only units with an ACTIVE household membership (ADR 0016) —
+ *   pending and removed members see nothing;
  * - anyone else: none.
  *
  * Failing the check is "not found", never "forbidden", so unit ids are not
@@ -31,6 +33,12 @@ export class ResourceAccess {
       case 'resident':
         return {
           occupancies: {
+            some: { accountId: this.ctx.accountId, status: 'active' },
+          },
+        };
+      case 'family':
+        return {
+          householdMembers: {
             some: { accountId: this.ctx.accountId, status: 'active' },
           },
         };

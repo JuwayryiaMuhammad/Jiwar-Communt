@@ -17,7 +17,7 @@ export interface PermissionDefinition {
 }
 
 export const PERMISSIONS = {
-  'units.read': { kinds: ['manager', 'resident'] },
+  'units.read': { kinds: ['manager', 'resident', 'family'] },
   'units.create': { kinds: ['manager'] },
   'accounts.read': { kinds: ['manager'] },
   'accounts.manage': { kinds: ['manager'] },
@@ -27,6 +27,10 @@ export const PERMISSIONS = {
   'roles.manage': { kinds: ['manager'] },
   'audit.read': { kinds: ['manager'] },
   'settings.manage': { kinds: ['manager'] },
+  // Household (ADR 0016). The service still requires the unit's primary
+  // resident (or a delegate) on top of the permission.
+  'household.manage': { kinds: ['resident', 'family'] },
+  'household.approve': { kinds: ['manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

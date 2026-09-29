@@ -32,6 +32,14 @@ export const AUDIT_ACTIONS = {
   'unit.created': { log: 'tenant', target: 'unit' },
   'unit.household_review_flagged': { log: 'tenant', target: 'unit' },
   'tenant.settings_changed': { log: 'tenant', target: 'tenant' },
+  // household (ADR 0016)
+  'household.invite_created': { log: 'tenant', target: 'household_invite' },
+  'household.invite_revoked': { log: 'tenant', target: 'household_invite' },
+  'household.invite_accepted': { log: 'tenant', target: 'household_invite' },
+  'household.member_added': { log: 'tenant', target: 'household_member' },
+  'household.member_approved': { log: 'tenant', target: 'household_member' },
+  'household.member_rejected': { log: 'tenant', target: 'household_member' },
+  'household.member_removed': { log: 'tenant', target: 'household_member' },
   'tenant.created': { log: 'platform', target: 'tenant' },
   'tenant.status_changed': { log: 'platform', target: 'tenant' },
   'tenant.manager_added': { log: 'platform', target: 'account' },
@@ -64,6 +72,7 @@ export const SECURITY_EVENTS = [
   'platform.login_failed',
   'platform.login_locked',
   'platform.login_succeeded',
+  'invite.token_invalid',
 ] as const;
 
 export type SecurityEventName = (typeof SECURITY_EVENTS)[number];

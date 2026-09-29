@@ -11,4 +11,12 @@ export const COMMUNITY_COVERAGE: readonly string[] = [
   'occupancy.primary_changed',
   'unit.household_review_flagged',
   'tenant.settings_changed',
+  'household.invite_created',
+  'household.invite_revoked',
+  'household.invite_accepted',
+  'household.member_added',
+  'household.member_approved',
+  'household.member_rejected',
+  'household.member_removed',
+  'invite.token_invalid',
 ];

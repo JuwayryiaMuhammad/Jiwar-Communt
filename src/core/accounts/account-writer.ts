@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import type {
   Account,
   AccountStatus,
@@ -11,6 +11,11 @@ import {
   normalizeEmail,
   normalizePhone,
 } from '../auth/identifier';
+import {
+  ACCESS_CATALOG,
+  defaultRoleKey,
+  type AccessCatalog,
+} from '../access/access-catalog';
 import { AuditService } from '../audit/audit.service';
 import { diffChanges } from '../audit/diff';
 import { parseEgyptianNationalId } from '../common/egyptian-national-id';
@@ -26,7 +31,7 @@ export interface NewAccount {
   phone: string;
   email: string;
   preferredLocale?: Locale;
-  /** Defaults to the tenant's system role for the account type. */
+  /** Defaults to the compound's default role for the account type. */
   roleId?: string;
 }
 
@@ -53,6 +58,7 @@ export class AccountWriter {
     private readonly globalDb: GlobalDbService,
     private readonly hasher: IdentifierHasher,
     private readonly audit: AuditService,
+    @Inject(ACCESS_CATALOG) private readonly catalog: AccessCatalog,
   ) {}
 
   async create(
@@ -68,7 +74,12 @@ export class AccountWriter {
     const role = input.roleId
       ? await tx.role.findUnique({ where: { id: input.roleId } })
       : await tx.role.findUnique({
-          where: { tenantId_key: { tenantId, key: input.type } },
+          where: {
+            tenantId_key: {
+              tenantId,
+              key: defaultRoleKey(this.catalog, input.type),
+            },
+          },
         });
     if (!role || role.kind !== input.type) {
       throw appError.conflict(

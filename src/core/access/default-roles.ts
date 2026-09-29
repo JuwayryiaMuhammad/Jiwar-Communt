@@ -9,7 +9,8 @@ export interface DefaultRole {
 }
 
 /**
- * Copied into every new compound (ADR 0010). `staff` has no role yet, so
+ * Copied into every new compound (ADR 0010), at most one per kind: a new
+ * account gets the default role of its kind. `staff` has no role yet, so
  * staff accounts cannot be created until one is defined here.
  */
 export const DEFAULT_ROLES: readonly DefaultRole[] = [
@@ -27,12 +28,19 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'roles.manage',
       'audit.read',
       'settings.manage',
+      'household.approve',
     ],
   },
   {
     key: 'resident',
     kind: 'resident',
-    permissions: ['units.read'],
+    permissions: ['units.read', 'household.manage'],
+  },
+  {
+    // Household members with a login (ADR 0016).
+    key: 'family_member',
+    kind: 'family',
+    permissions: ['units.read', 'household.manage'],
   },
 ];
 

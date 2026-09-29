@@ -13,6 +13,8 @@ const SENSITIVE_FIELDS = [
   'nationalId',
   'phone',
   'email',
+  'birthDate', // derived from the national ID
+  'accessCode', // a domestic worker's gate code (ADR 0017)
 ];
 // Broad on purpose: any future `newPassword`, `temporaryPassword`,
 // `passwordResetCode`, `apiToken`… is withheld by default.

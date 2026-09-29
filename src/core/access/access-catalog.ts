@@ -50,9 +50,14 @@ export function catalogProblems(catalog: AccessCatalog): string[] {
       problems.push(`rename target ${to} is retired`);
   }
   const keys = new Set<string>();
+  const kinds = new Set<AccountType>();
   for (const role of catalog.defaultRoles) {
     if (keys.has(role.key)) problems.push(`duplicate default role ${role.key}`);
     keys.add(role.key);
+    // AccountWriter gives a new account the default role of its kind.
+    if (kinds.has(role.kind))
+      problems.push(`more than one default role of kind ${role.kind}`);
+    kinds.add(role.kind);
     for (const p of role.permissions) {
       const def = catalog.permissions[p];
       if (!def) problems.push(`${role.key}: unknown permission ${p}`);
@@ -76,4 +81,12 @@ export function catalogProblems(catalog: AccessCatalog): string[] {
     }
   }
   return problems;
+}
+
+/**
+ * The key of the default role new accounts of `type` get, or the type itself
+ * when the catalog has none (a compound may define that role on its own).
+ */
+export function defaultRoleKey(catalog: AccessCatalog, type: AccountType) {
+  return catalog.defaultRoles.find((r) => r.kind === type)?.key ?? type;
 }

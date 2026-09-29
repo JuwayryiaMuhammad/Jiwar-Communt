@@ -56,6 +56,21 @@ export class IdentifierHasher {
     return this.hmac(`otp:${challengeId}:${code}`);
   }
 
+  /** An invite link token (ADR 0016). The raw token is never stored. */
+  hashInviteToken(token: string): string {
+    return this.hmac(`invite:${token}`);
+  }
+
+  /** A worker's national ID, to find the same person again (ADR 0017). */
+  hashWorkerNationalId(nationalId: string): string {
+    return this.hmac(`worker-national-id:${nationalId}`);
+  }
+
+  /** A worker access code, unique among the compound's active ones (ADR 0017). */
+  hashWorkerCode(tenantId: string, code: string): string {
+    return this.hmac(`worker-code:${tenantId}:${code}`);
+  }
+
   private hmac(data: string): string {
     return createHmac('sha256', this.pepper).update(data).digest('hex');
   }

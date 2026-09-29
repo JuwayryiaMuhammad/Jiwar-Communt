@@ -88,7 +88,7 @@ describe('Roles', () => {
       kind: 'resident',
       isSystem: true,
       name: null,
-      permissions: ['units.read'],
+      permissions: ['household.manage', 'units.read'],
     });
   });
 
@@ -207,7 +207,11 @@ describe('Roles', () => {
       );
     const before = await version();
     await as(c.tenant.id, c.manager.id, () =>
-      roles.replacePermissions(c.residentRole.id, ['units.read']),
+      // The same set in another order: nothing changes.
+      roles.replacePermissions(c.residentRole.id, [
+        'units.read',
+        'household.manage',
+      ]),
     );
     expect(await version()).toBe(before);
     await as(c.tenant.id, c.manager.id, () =>

@@ -16,6 +16,6 @@ import { SessionService } from './session.service';
     IdentifierHasher,
     { provide: OTP_CHANNEL, useClass: EmailOtpChannel },
   ],
-  exports: [IdentifierHasher],
+  exports: [IdentifierHasher, OtpService],
 })
 export class AuthModule {}

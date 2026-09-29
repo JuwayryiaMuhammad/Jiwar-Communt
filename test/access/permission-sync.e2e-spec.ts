@@ -4,6 +4,8 @@ import {
   catalogProblems,
   type AccessCatalog,
 } from '../../src/core/access/access-catalog';
+import { RoleProvisioner } from '../../src/core/access/role-provisioner';
+import { newId } from '../../src/core/common/uuid';
 import { PermissionSyncService } from '../../src/core/platform/permission-sync.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createTenant } from '../setup/fixtures';
@@ -167,6 +169,69 @@ describe('Permission sync', () => {
     const manager = await role(t, 'manager');
     expect(manager.permissions).not.toContain('units.export');
     expect(manager.permissions).not.toContain('units.create');
+  });
+
+  it('a default role added after a compound was created is created with ALL its permissions', async () => {
+    // The catalog as it was before Phase 2: no family role, no household or
+    // settings permissions.
+    const later = ['household.manage', 'household.approve', 'settings.manage'];
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !later.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles
+        .filter((r) => r.key !== 'family_member')
+        .map((r) => ({
+          ...r,
+          permissions: r.permissions.filter((p) => !later.includes(p)),
+        })),
+    };
+    expect(catalogProblems(before)).toEqual([]);
+    const t = newId();
+    await h.globalDb.tenant.create({
+      data: { id: t, name: `Sync old compound ${t}` },
+    });
+    await h.asTenant(t, () =>
+      h.tenantTx.withTenantTx(async (tx) => {
+        await new RoleProvisioner(before).provision(tx, t);
+        await tx.tenantSettings.create({ data: { tenantId: t } });
+      }),
+    );
+
+    const report = await sync(base, t);
+    expect(report.rolesCreated).toEqual(['family_member']);
+    // units.read was offered long ago, yet the new role has it.
+    expect((await role(t, 'family_member')).permissions).toEqual([
+      'household.manage',
+      'units.read',
+    ]);
+    expect((await role(t, 'resident')).permissions).toContain(
+      'household.manage',
+    );
+    expect((await role(t, 'manager')).permissions).toEqual(
+      expect.arrayContaining(['household.approve', 'settings.manage']),
+    );
+
+    const familyRole = await role(t, 'family_member');
+    const [entry] = await h.asTenant(t, () =>
+      h.prisma.tenant.auditLog.findMany({
+        where: { action: 'role.permissions_synced', targetId: familyRole.id },
+      }),
+    );
+    expect(entry).toMatchObject({
+      actorType: 'system',
+      changes: {
+        permissions: { from: [], to: ['household.manage', 'units.read'] },
+      },
+      metadata: { roleKey: 'family_member', roleCreated: true },
+    });
+
+    // A rerun creates nothing.
+    expect(await sync(base, t)).toMatchObject({
+      rolesCreated: [],
+      rolesChanged: 0,
+    });
   });
 
   it('a second run is a no-op', async () => {

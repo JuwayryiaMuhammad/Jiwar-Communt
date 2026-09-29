@@ -85,7 +85,7 @@ export class ResidentsService {
     const tenantId = this.ctx.tenantId;
     const createdById = this.ctx.accountId;
     const id = await this.tenantTx.withTenantTx(async (tx) => {
-      await this.assertUnitsExist(
+      await this.lockUnits(
         tx,
         input.units.map((u) => u.unitId),
       );
@@ -101,6 +101,7 @@ export class ResidentsService {
             unitId: u.unitId,
             accountId: account.id,
             occupancyType: u.occupancyType,
+            isPrimary: await this.isVacant(tx, u.unitId),
             createdById,
           },
         });
@@ -141,7 +142,7 @@ export class ResidentsService {
         select: { id: true },
       });
       if (!account) throw residentNotFound();
-      await this.assertUnitsExist(tx, [input.unitId]);
+      await this.lockUnits(tx, [input.unitId]);
       const active = await tx.unitOccupancy.findFirst({
         where: { accountId, unitId: input.unitId, status: 'active' },
         select: { id: true },
@@ -159,6 +160,7 @@ export class ResidentsService {
           unitId: input.unitId,
           accountId,
           occupancyType: input.occupancyType,
+          isPrimary: await this.isVacant(tx, input.unitId),
           createdById,
         },
         include: { unit: { select: { code: true } } },
@@ -168,19 +170,25 @@ export class ResidentsService {
     });
   }
 
-  /** Never deletes: the record stays, access stops on the next request. */
+  /**
+   * Never deletes: the record stays, access stops on the next request. When
+   * the unit's primary resident leaves, the unit is flagged for a household
+   * review (ADR 0016); household memberships are left exactly as they are,
+   * and no one is promoted automatically.
+   */
   async endOccupancy(occupancyId: string): Promise<OccupancyView> {
     return this.tenantTx.withTenantTx(async (tx) => {
+      const current = await tx.unitOccupancy.findFirst({
+        where: { id: occupancyId, status: 'active' },
+        select: { unitId: true },
+      });
+      if (!current) throw occupancyNotFound();
+      await this.lockUnits(tx, [current.unitId]);
       const { count } = await tx.unitOccupancy.updateMany({
         where: { id: occupancyId, status: 'active' },
         data: { status: 'ended', endedAt: new Date() },
       });
-      if (count === 0) {
-        throw appError.notFound(
-          ErrorCode.OCCUPANCY_NOT_FOUND,
-          'Active occupancy not found',
-        );
-      }
+      if (count === 0) throw occupancyNotFound();
       const ended = await tx.unitOccupancy.findUniqueOrThrow({
         where: { id: occupancyId },
         include: { unit: { select: { code: true } } },
@@ -193,9 +201,70 @@ export class ResidentsService {
           { status: ended.status, endedAt: ended.endedAt },
           'occupancy.ended',
         ),
-        metadata: { unitId: ended.unitId, accountId: ended.accountId },
+        metadata: {
+          unitId: ended.unitId,
+          accountId: ended.accountId,
+          wasPrimary: ended.isPrimary,
+        },
       });
+      if (ended.isPrimary) {
+        await this.flagHouseholdReview(tx, ended.unitId, 'primary_left', {
+          occupancyId,
+        });
+      }
       return toOccupancyView(ended);
+    });
+  }
+
+  /**
+   * Makes `accountId` the unit's primary resident (ADR 0016). The target must
+   * occupy the unit; the previous primary, if any, stays an occupant. Clears
+   * the household-review flag.
+   */
+  async setPrimary(unitId: string, accountId: string): Promise<OccupancyView> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.lockUnits(tx, [unitId]);
+      const target = await tx.unitOccupancy.findFirst({
+        where: { unitId, accountId, status: 'active' },
+        include: { unit: { select: { code: true } } },
+      });
+      if (!target) throw occupancyNotFound();
+      const previous = await tx.unitOccupancy.findFirst({
+        where: { unitId, status: 'active', isPrimary: true },
+        select: { id: true, accountId: true },
+      });
+      if (previous?.id !== target.id) {
+        if (previous) {
+          await tx.unitOccupancy.update({
+            where: { id: previous.id },
+            data: { isPrimary: false },
+          });
+        }
+        await tx.unitOccupancy.update({
+          where: { id: target.id },
+          data: { isPrimary: true },
+        });
+        await this.audit.record(tx, {
+          action: 'occupancy.primary_changed',
+          targetId: target.id,
+          changes: diffChanges(
+            { isPrimary: false },
+            { isPrimary: true },
+            'occupancy.primary_changed',
+          ),
+          metadata: {
+            unitId,
+            accountId,
+            previousOccupancyId: previous?.id ?? null,
+            previousAccountId: previous?.accountId ?? null,
+          },
+        });
+      }
+      await tx.unit.updateMany({
+        where: { id: unitId, needsHouseholdReview: true },
+        data: { needsHouseholdReview: false, householdReviewReason: null },
+      });
+      return toOccupancyView({ ...target, isPrimary: true });
     });
   }
 
@@ -268,18 +337,54 @@ export class ResidentsService {
     }));
   }
 
-  /** Units of another compound are invisible under RLS, so also "not found". */
-  private async assertUnitsExist(tx: TenantTxClient, unitIds: string[]) {
-    const found = await tx.unit.findMany({
-      where: { id: { in: unitIds } },
-      select: { id: true },
-    });
-    const missing = unitIds.filter((id) => !found.some((u) => u.id === id));
+  /**
+   * Row-locks the units (SELECT … FOR UPDATE), in a stable order so two
+   * transactions never wait on each other. Serializes every change to a
+   * unit's occupancies, which the "first occupant is primary" rule needs.
+   * Units of another compound are invisible under RLS, so also "not found".
+   */
+  private async lockUnits(tx: TenantTxClient, unitIds: string[]) {
+    const ids = [...new Set(unitIds)].sort();
+    const locked = await tx.$queryRaw<{ id: string }[]>`
+      SELECT id FROM units WHERE id = ANY(${ids}::uuid[])
+       ORDER BY id FOR UPDATE`;
+    const missing = ids.filter((id) => !locked.some((u) => u.id === id));
     if (missing.length) {
       throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found', {
         params: { unitIds: missing },
       });
     }
+  }
+
+  /** No active occupant: the next one becomes primary. Call under lockUnits. */
+  private async isVacant(tx: TenantTxClient, unitId: string) {
+    return (
+      (await tx.unitOccupancy.count({
+        where: { unitId, status: 'active' },
+      })) === 0
+    );
+  }
+
+  private async flagHouseholdReview(
+    tx: TenantTxClient,
+    unitId: string,
+    reason: 'primary_left',
+    metadata: Record<string, unknown>,
+  ) {
+    await tx.unit.update({
+      where: { id: unitId },
+      data: { needsHouseholdReview: true, householdReviewReason: reason },
+    });
+    await this.audit.record(tx, {
+      action: 'unit.household_review_flagged',
+      targetId: unitId,
+      changes: diffChanges(
+        { needsHouseholdReview: false },
+        { needsHouseholdReview: true },
+        'unit.household_review_flagged',
+      ),
+      metadata: { reason, ...metadata },
+    });
   }
 }
 
@@ -289,6 +394,7 @@ function toOccupancyView(o: ResidentRow['occupancies'][number]): OccupancyView {
     unitId: o.unitId,
     unitCode: o.unit.code,
     occupancyType: o.occupancyType,
+    isPrimary: o.isPrimary,
     status: o.status,
     startedAt: o.startedAt,
     endedAt: o.endedAt,
@@ -306,6 +412,13 @@ function toResidentView(r: ResidentRow): ResidentView {
     preferredLocale: r.preferredLocale,
     occupancies: r.occupancies.map(toOccupancyView),
   };
+}
+
+function occupancyNotFound() {
+  return appError.notFound(
+    ErrorCode.OCCUPANCY_NOT_FOUND,
+    'Active occupancy not found',
+  );
 }
 
 function residentNotFound() {

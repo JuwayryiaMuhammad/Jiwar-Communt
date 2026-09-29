@@ -21,6 +21,7 @@ import { PlatformModule } from '../../src/core/platform/platform.module';
 import { TenantsService } from '../../src/core/platform/tenants.service';
 import { ResidentsService } from '../../src/community/residents/residents.service';
 import { auditReaders } from '../setup/audit';
+import { COMMUNITY_COVERAGE } from '../setup/audit-coverage-split';
 import { loginViaOtp } from '../setup/login';
 import { waitForOtp } from '../setup/mailpit';
 import {
@@ -790,8 +791,11 @@ describe('Audit coverage', () => {
   // --------------------------------------------------------------------------
   describe('catalog completeness', () => {
     it('every audit action and security event has a scenario above', () => {
-      const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS].sort();
-      expect([...covered].sort()).toEqual(all);
+      const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];
+      // Phase 2 community entries have their own suite (audit-coverage-split).
+      for (const key of COMMUNITY_COVERAGE) expect(all).toContain(key);
+      const mine = all.filter((k) => !COMMUNITY_COVERAGE.includes(k)).sort();
+      expect([...covered].sort()).toEqual(mine);
     });
   });
 });

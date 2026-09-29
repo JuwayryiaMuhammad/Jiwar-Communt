@@ -28,6 +28,8 @@ export interface OccupancyView {
   unitId: string;
   unitCode: string;
   occupancyType: OccupancyType;
+  /** The unit's primary resident (ADR 0016). */
+  isPrimary: boolean;
   status: OccupancyStatus;
   startedAt: Date;
   endedAt: Date | null;

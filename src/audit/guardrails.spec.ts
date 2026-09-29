@@ -9,7 +9,12 @@ import { join, relative } from 'node:path';
 describe('audit guard rails', () => {
   const repo = join(__dirname, '..', '..');
   // Built by concatenation so this file does not match itself.
-  const needle = ['session', 'replication', 'role'].join('_');
+  const needles = [
+    // bypasses the immutability triggers
+    ['session', 'replication', 'role'].join('_'),
+    // the superuser connection used for test cleanup
+    ['TEST', 'SUPERUSER', 'DATABASE', 'URL'].join('_'),
+  ];
 
   function files(dir: string): string[] {
     return readdirSync(dir).flatMap((name) => {
@@ -19,18 +24,22 @@ describe('audit guard rails', () => {
     });
   }
 
-  it(`${needle} appears nowhere outside test/`, () => {
-    const offenders = ['src', 'prisma', 'docker', 'scripts']
-      .map((d) => join(repo, d))
-      .filter((d) => {
-        try {
-          return statSync(d).isDirectory();
-        } catch {
-          return false;
-        }
-      })
-      .flatMap(files)
-      .filter((f) => readFileSync(f, 'utf8').toLowerCase().includes(needle))
+  const scanned = ['src', 'prisma', 'docker', 'scripts']
+    .map((d) => join(repo, d))
+    .filter((d) => {
+      try {
+        return statSync(d).isDirectory();
+      } catch {
+        return false;
+      }
+    })
+    .flatMap(files);
+
+  it.each(needles)('%s appears nowhere outside test/', (needle) => {
+    const offenders = scanned
+      .filter((f) =>
+        readFileSync(f, 'utf8').toLowerCase().includes(needle.toLowerCase()),
+      )
       .map((f) => relative(repo, f));
     expect(offenders).toEqual([]);
   });

@@ -39,3 +39,7 @@ Prisma queries are lazy: they execute when awaited, and the tenant hook reads th
 - New global tables: `platform_admins`, `platform_sessions` (through `GlobalDbService` only).
 - Links between tenant tables use composite foreign keys that include `tenant_id`, because foreign-key checks bypass RLS.
 - `runInTenantUnsafe` is additionally allowed in `src/platform/**` (ADR 0011).
+
+## Update (Phase 1b)
+- `audit_log` is a tenant table (RLS + FORCE). `security_events` is global and carries `tenant_id` as a pointer, so it joins `login_identifiers` and `sessions` on the RLS-coverage allowlist; `platform_audit_log` is global.
+- `jiwar_app` has only `SELECT, INSERT` on the audit tables; triggers reject `UPDATE`/`DELETE`/`TRUNCATE` for every role. Test cleanup clears them over a superuser connection in `test/` only.

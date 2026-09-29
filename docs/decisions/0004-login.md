@@ -26,3 +26,6 @@ OTP delivery sits behind an `OtpChannel` interface so WhatsApp/SMS can be added 
 - Account and compound status are now checked on **every request** by `PermissionsGuard`: a deactivated account or a suspended compound is rejected immediately, not when the 15-minute access token expires.
 - `select-account` and `refresh` also reject accounts of a suspended compound, with the same generic responses.
 - The OTP email language comes from `Accept-Language` (ADR 0013).
+
+## Update (Phase 1b)
+Login activity is written to `security_events` (ADR 0014): OTP requested / failed / exhausted / rate-limited, login succeeded, refresh-token reuse, session revocations, and the platform login outcomes. Only the identifier HMAC is stored, never the raw email or phone.

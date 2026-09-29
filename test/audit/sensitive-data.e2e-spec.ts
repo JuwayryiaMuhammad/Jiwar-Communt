@@ -94,7 +94,11 @@ describe('Audit entries hold no personal data', () => {
       ...(await read.platform({ targetTenantId: c.tenantId })),
     ];
     expect(rows.map((r) => r.action)).toEqual(
-      expect.arrayContaining(['account.created', 'account.contact_changed']),
+      expect.arrayContaining([
+        'account.created',
+        'account.contact_changed',
+        'tenant.created',
+      ]),
     );
 
     const stored = JSON.stringify(

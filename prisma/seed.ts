@@ -75,67 +75,80 @@ async function main() {
       return;
     }
 
-    const created: {
-      tenantId: string;
-      managerId: string;
-      units: Record<string, string>;
-    }[] = [];
-    for (const def of COMPOUNDS) {
-      const compound = await tenants.createTenant({
-        name: def.name,
-        manager: def.manager,
-      });
-      const managerId = compound.managers[0].id;
-      const unitIds: Record<string, string> = {};
-      await cls.run(async () => {
-        cls.set('tenantId', compound.id);
-        cls.set('accountId', managerId);
-        cls.set('accountType', 'manager');
-        for (const code of def.units)
-          unitIds[code] = (await units.create({ code })).id;
-      });
-      created.push({ tenantId: compound.id, managerId, units: unitIds });
+    // Everything the seed writes is audited as `system` (ADR 0014), even
+    // where it acts through a manager's context to create units and
+    // residents. Only trusted entry points may set auditActor.
+    await cls.run(async () => {
+      cls.set('auditActor', { type: 'system', id: null });
+      await seed();
+    });
+
+    async function seed() {
+      const created: {
+        tenantId: string;
+        managerId: string;
+        units: Record<string, string>;
+      }[] = [];
+      for (const def of COMPOUNDS) {
+        const compound = await tenants.createTenant({
+          name: def.name,
+          manager: def.manager,
+        });
+        const managerId = compound.managers[0].id;
+        const unitIds: Record<string, string> = {};
+        await cls.run(async () => {
+          cls.set('tenantId', compound.id);
+          cls.set('accountId', managerId);
+          cls.set('accountType', 'manager');
+          for (const code of def.units)
+            unitIds[code] = (await units.create({ code })).id;
+        });
+        created.push({ tenantId: compound.id, managerId, units: unitIds });
+        console.log(
+          `Compound ${def.name}: manager ${def.manager.email} / ${def.manager.phone}`,
+        );
+      }
+
+      const asManager = (i: number, fn: () => Promise<unknown>) =>
+        cls.run(async () => {
+          cls.set('tenantId', created[i].tenantId);
+          cls.set('accountId', created[i].managerId);
+          cls.set('accountType', 'manager');
+          await fn();
+        });
+
+      await asManager(0, () =>
+        residents.createResident({
+          ...OWNER_AND_RENTER,
+          units: [
+            { unitId: created[0].units['A-101'], occupancyType: 'owner' },
+            { unitId: created[0].units['A-102'], occupancyType: 'tenant' },
+          ],
+        }),
+      );
+      await asManager(0, () =>
+        residents.createResident({
+          ...SHARED_PERSON,
+          units: [
+            { unitId: created[0].units['A-201'], occupancyType: 'owner' },
+          ],
+        }),
+      );
+      await asManager(1, () =>
+        residents.createResident({
+          ...SHARED_PERSON,
+          units: [{ unitId: created[1].units['B-1'], occupancyType: 'tenant' }],
+        }),
+      );
+
       console.log(
-        `Compound ${def.name}: manager ${def.manager.email} / ${def.manager.phone}`,
+        `Resident owning A-101 and renting A-102: ${OWNER_AND_RENTER.email} / ${OWNER_AND_RENTER.phone}`,
+      );
+      console.log(
+        `Resident in both compounds: ${SHARED_PERSON.email} / ${SHARED_PERSON.phone}`,
       );
     }
 
-    const asManager = (i: number, fn: () => Promise<unknown>) =>
-      cls.run(async () => {
-        cls.set('tenantId', created[i].tenantId);
-        cls.set('accountId', created[i].managerId);
-        cls.set('accountType', 'manager');
-        await fn();
-      });
-
-    await asManager(0, () =>
-      residents.createResident({
-        ...OWNER_AND_RENTER,
-        units: [
-          { unitId: created[0].units['A-101'], occupancyType: 'owner' },
-          { unitId: created[0].units['A-102'], occupancyType: 'tenant' },
-        ],
-      }),
-    );
-    await asManager(0, () =>
-      residents.createResident({
-        ...SHARED_PERSON,
-        units: [{ unitId: created[0].units['A-201'], occupancyType: 'owner' }],
-      }),
-    );
-    await asManager(1, () =>
-      residents.createResident({
-        ...SHARED_PERSON,
-        units: [{ unitId: created[1].units['B-1'], occupancyType: 'tenant' }],
-      }),
-    );
-
-    console.log(
-      `Resident owning A-101 and renting A-102: ${OWNER_AND_RENTER.email} / ${OWNER_AND_RENTER.phone}`,
-    );
-    console.log(
-      `Resident in both compounds: ${SHARED_PERSON.email} / ${SHARED_PERSON.phone}`,
-    );
     const admins = await globalDb.platformAdmin.count();
     console.log(
       admins

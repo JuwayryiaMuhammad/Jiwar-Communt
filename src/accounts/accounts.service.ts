@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { SecurityEventsService } from '../audit/security-events.service';
 import { RequestContext } from '../common/cls/request-context';
 import { appError, ErrorCode } from '../common/errors';
 import { PrismaService } from '../database/prisma.service';
@@ -15,6 +16,7 @@ export class AccountsService {
     private readonly tenantTx: TenantTx,
     private readonly writer: AccountWriter,
     private readonly ctx: RequestContext,
+    private readonly securityEvents: SecurityEventsService,
   ) {}
 
   async list(): Promise<AccountView[]> {
@@ -59,6 +61,17 @@ export class AccountsService {
       this.writer.setStatus(tx, id, dto.status),
     );
     if (!change) throw notFound();
+    if (change.sessionsRevoked) {
+      // After commit: a rolled-back deactivation must leave no event.
+      await this.securityEvents.record('session.revoked', {
+        tenantId: change.account.tenantId,
+        accountId: id,
+        metadata: {
+          reason: 'account_deactivated',
+          count: change.sessionsRevoked,
+        },
+      });
+    }
     return AccountView.from(change.account);
   }
 }

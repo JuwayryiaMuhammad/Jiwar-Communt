@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { PlatformAdmin } from '@prisma/client';
 import { normalizeEmail } from '../auth/identifier';
+import { diffChanges } from '../audit/diff';
+import { PlatformAuditService } from '../audit/platform-audit.service';
 import { ClsService } from 'nestjs-cls';
 import type { AppClsStore } from '../common/cls/app-cls';
 import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
@@ -37,6 +39,7 @@ export class PlatformAuthService {
     private readonly sessions: PlatformSessionService,
     private readonly rateLimit: RateLimitService,
     private readonly cls: ClsService<AppClsStore>,
+    private readonly platformAudit: PlatformAuditService,
   ) {
     this.maxFailures = config.get('PLATFORM_LOGIN_MAX_FAILURES', {
       infer: true,
@@ -138,14 +141,29 @@ export class PlatformAuthService {
       );
     }
 
-    await this.globalDb.platformAdmin.update({
-      where: { id: admin.id },
-      data: {
-        passwordHash: await hashPassword(newPassword),
-        mustChangePassword: false,
-        failedAttempts: 0,
-        lockedUntil: null,
-      },
+    const passwordHash = await hashPassword(newPassword);
+    await this.globalDb.transaction(async (tx) => {
+      await tx.platformAdmin.update({
+        where: { id: admin.id },
+        data: {
+          passwordHash,
+          mustChangePassword: false,
+          failedAttempts: 0,
+          lockedUntil: null,
+        },
+      });
+      await this.platformAudit.record(tx, {
+        action: 'platform_admin.password_changed',
+        targetId: admin.id,
+        changes: diffChanges(
+          {
+            passwordHash: admin.passwordHash,
+            mustChangePassword: admin.mustChangePassword,
+          },
+          { passwordHash, mustChangePassword: false },
+          'platform_admin.password_changed',
+        ),
+      });
     });
     await this.sessions.revokeAll(admin.id);
     return this.sessions.start(admin.id);

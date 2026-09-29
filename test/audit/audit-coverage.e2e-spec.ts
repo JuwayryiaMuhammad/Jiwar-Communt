@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process';
 import { ClsService } from 'nestjs-cls';
 import {
   CODE_ACCESS_CATALOG,
@@ -10,7 +11,10 @@ import { newId } from '../../src/common/uuid';
 import { GlobalDbService } from '../../src/database/global-db.service';
 import { PrismaService } from '../../src/database/prisma.service';
 import { TenantTx } from '../../src/database/tenant-tx.service';
+import { hashPassword } from '../../src/platform/password';
 import { PermissionSyncService } from '../../src/platform/permission-sync.service';
+import { PlatformAuthService } from '../../src/platform/platform-auth.service';
+import { PlatformBootstrapService } from '../../src/platform/platform-bootstrap.service';
 import { PlatformModule } from '../../src/platform/platform.module';
 import { TenantsService } from '../../src/platform/tenants.service';
 import { ResidentsService } from '../../src/residents/residents.service';
@@ -359,6 +363,198 @@ describe('Audit coverage', () => {
       expect(
         await read.tenant(tenantId, { action: 'role.permissions_synced' }),
       ).toHaveLength(1);
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  describe('platform actions', () => {
+    const adminId = newId();
+    /** As a platform request would run: the guard puts the admin in context. */
+    const asAdmin = <T>(fn: () => Promise<T>) =>
+      cls.run(async () => {
+        cls.set('platformAdminId', adminId);
+        cls.set('ip', '203.0.113.7');
+        return await fn();
+      });
+
+    async function platformSingle(action: string, targetId: string) {
+      const rows = await read.platform({ action, targetId });
+      expect(rows).toHaveLength(1);
+      covered.add(action);
+      return rows[0];
+    }
+
+    it('tenant.created — by the platform admin; the first manager in the compound log', async () => {
+      const m = manager();
+      const created = await asAdmin(() =>
+        tenants.createTenant({ name: 'Admin Court', manager: m }),
+      );
+      const row = await platformSingle('tenant.created', created.id);
+      expect(row).toMatchObject({
+        actorType: 'platform_admin',
+        actorId: adminId,
+        targetType: 'tenant',
+        targetTenantId: created.id,
+        ip: '203.0.113.7',
+      });
+      expect(row.changes).toEqual({
+        name: { from: null, to: 'Admin Court' },
+        status: { from: null, to: 'active' },
+      });
+      const account = (
+        await read.tenant(created.id, { action: 'account.created' })
+      )[0];
+      expect(account).toMatchObject({
+        actorType: 'platform_admin',
+        actorId: adminId,
+        targetId: created.managers[0].id,
+      });
+    });
+
+    it('tenant.created — as system when no admin is in context', async () => {
+      const created = await tenants.createTenant({
+        name: 'System Court',
+        manager: manager(),
+      });
+      const row = (
+        await read.platform({ action: 'tenant.created', targetId: created.id })
+      )[0];
+      expect(row).toMatchObject({ actorType: 'system', actorId: null });
+    });
+
+    it('tenant.status_changed — with the sessions it ended', async () => {
+      const created = await tenants.createTenant({
+        name: 'Status Court',
+        manager: manager(),
+      });
+      await asAdmin(() => tenants.setStatus(created.id, 'suspended'));
+      const row = await platformSingle('tenant.status_changed', created.id);
+      expect(row).toMatchObject({
+        actorType: 'platform_admin',
+        actorId: adminId,
+        targetTenantId: created.id,
+      });
+      expect(row.changes).toEqual({
+        status: { from: 'active', to: 'suspended' },
+      });
+      expect(row.metadata).toEqual({ sessionsRevoked: 0 });
+      // A no-op change is not audited.
+      await asAdmin(() => tenants.setStatus(created.id, 'suspended'));
+      expect(
+        await read.platform({
+          action: 'tenant.status_changed',
+          targetId: created.id,
+        }),
+      ).toHaveLength(1);
+    });
+
+    it('tenant.manager_added — plus account.created in the compound log', async () => {
+      const created = await tenants.createTenant({
+        name: 'Managers Court',
+        manager: manager(),
+      });
+      const added = await asAdmin(() =>
+        tenants.addManager(created.id, manager()),
+      );
+      const row = await platformSingle('tenant.manager_added', added.id);
+      expect(row).toMatchObject({
+        actorType: 'platform_admin',
+        actorId: adminId,
+        targetType: 'account',
+        targetTenantId: created.id,
+      });
+      const inCompound = await read.tenant(created.id, {
+        action: 'account.created',
+        targetId: added.id,
+      });
+      expect(inCompound).toHaveLength(1);
+      expect(inCompound[0]).toMatchObject({
+        actorType: 'platform_admin',
+        actorId: adminId,
+      });
+    });
+
+    it('platform_admin.created — by the bootstrap, as system', async () => {
+      const globalDb = h.moduleRef.get(GlobalDbService);
+      await globalDb.platformSession.deleteMany();
+      await globalDb.platformAdmin.deleteMany();
+      await h.moduleRef
+        .get(PlatformBootstrapService)
+        .run({ email: 'Boot@Jiwar.Test', password: 'bootstrap-password-1' });
+      const admin = await globalDb.platformAdmin.findUniqueOrThrow({
+        where: { email: 'boot@jiwar.test' },
+      });
+      const row = await platformSingle('platform_admin.created', admin.id);
+      expect(row).toMatchObject({
+        actorType: 'system',
+        actorId: null,
+        targetType: 'platform_admin',
+      });
+      expect(row.changes).toEqual({
+        email: { changed: true },
+        status: { from: null, to: 'active' },
+        mustChangePassword: { from: null, to: true },
+      });
+      expect(row.metadata).toEqual({ source: 'bootstrap' });
+    });
+
+    it('platform_admin.password_changed — by the admin, no hash recorded', async () => {
+      const globalDb = h.moduleRef.get(GlobalDbService);
+      const admin = await globalDb.platformAdmin.create({
+        data: {
+          id: newId(),
+          email: uniqueEmail('admin'),
+          passwordHash: await hashPassword('old-password-1234'),
+          mustChangePassword: true,
+        },
+      });
+      await cls.run(async () => {
+        cls.set('platformAdminId', admin.id);
+        await h.moduleRef
+          .get(PlatformAuthService)
+          .changePassword('old-password-1234', 'new-password-5678');
+      });
+      const row = await platformSingle(
+        'platform_admin.password_changed',
+        admin.id,
+      );
+      expect(row).toMatchObject({
+        actorType: 'platform_admin',
+        actorId: admin.id,
+      });
+      expect(row.changes).toEqual({
+        passwordHash: { changed: true },
+        mustChangePassword: { from: true, to: false },
+      });
+      expect(JSON.stringify(row)).not.toContain('$argon2');
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  describe('system actor', () => {
+    it('everything the seed writes is audited as system', async () => {
+      execSync('pnpm seed', { env: process.env, stdio: 'pipe' });
+      const globalDb = h.moduleRef.get(GlobalDbService);
+      const seeded = await globalDb.tenant.findMany({
+        where: { name: { in: ['Nile Gardens (demo)', 'Desert Rose (demo)'] } },
+      });
+      expect(seeded).toHaveLength(2);
+      for (const t of seeded) {
+        const rows = [
+          ...(await read.tenant(t.id)),
+          ...(await read.platform({ targetTenantId: t.id })),
+        ];
+        expect(rows.map((r) => r.action)).toEqual(
+          expect.arrayContaining([
+            'tenant.created',
+            'account.created',
+            'unit.created',
+            'occupancy.created',
+          ]),
+        );
+        for (const r of rows)
+          expect(r).toMatchObject({ actorType: 'system', actorId: null });
+      }
     });
   });
 });

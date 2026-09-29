@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import type { AccountStatus, Locale, TenantStatus } from '@prisma/client';
 import { RoleProvisioner } from '../access/role-provisioner';
 import { AccountWriter } from '../accounts/account-writer';
+import { diffChanges } from '../audit/diff';
+import { PlatformAuditService } from '../audit/platform-audit.service';
+import { SecurityEventsService } from '../audit/security-events.service';
 import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
 import { newId } from '../common/uuid';
 import { GlobalDbService } from '../database/global-db.service';
@@ -56,6 +59,8 @@ export class TenantsService {
     private readonly tenantTx: TenantTx,
     private readonly provisioner: RoleProvisioner,
     private readonly writer: AccountWriter,
+    private readonly platformAudit: PlatformAuditService,
+    private readonly securityEvents: SecurityEventsService,
   ) {}
 
   /**
@@ -88,6 +93,17 @@ export class TenantsService {
         .in(tx)
         .tenant.create({ data: { id, name } });
       await this.provisioner.provision(tx, id);
+      await this.platformAudit.record(tx, {
+        action: 'tenant.created',
+        targetId: id,
+        targetTenantId: id,
+        changes: diffChanges(
+          null,
+          { name: tenant.name, status: tenant.status },
+          'tenant.created',
+        ),
+      });
+      // Audited as account.created in the compound's own log.
       const manager = await this.writer.create(tx, id, {
         ...input.manager,
         type: 'manager',
@@ -120,8 +136,8 @@ export class TenantsService {
     tenantId: string,
     status: TenantStatus,
   ): Promise<TenantSummary> {
-    await this.findTenant(tenantId);
-    const tenant = await this.tenantTx.runInTenantUnsafe(
+    const before = await this.findTenant(tenantId);
+    const { tenant, sessionsRevoked } = await this.tenantTx.runInTenantUnsafe(
       tenantId,
       async (tx) => {
         const global = this.globalDb.in(tx);
@@ -129,15 +145,38 @@ export class TenantsService {
           where: { id: tenantId },
           data: { status },
         });
-        if (status === 'suspended') {
-          await global.session.updateMany({
-            where: { tenantId, revokedAt: null },
-            data: { revokedAt: new Date() },
+        const revoked =
+          status === 'suspended'
+            ? (
+                await global.session.updateMany({
+                  where: { tenantId, revokedAt: null },
+                  data: { revokedAt: new Date() },
+                })
+              ).count
+            : 0;
+        if (before.status !== status) {
+          await this.platformAudit.record(tx, {
+            action: 'tenant.status_changed',
+            targetId: tenantId,
+            targetTenantId: tenantId,
+            changes: diffChanges(
+              { status: before.status },
+              { status },
+              'tenant.status_changed',
+            ),
+            metadata: { sessionsRevoked: revoked },
           });
         }
-        return updated;
+        return { tenant: updated, sessionsRevoked: revoked };
       },
     );
+    if (sessionsRevoked) {
+      // After commit: a rolled-back suspension must leave no event.
+      await this.securityEvents.record('session.revoked', {
+        tenantId,
+        metadata: { reason: 'tenant_suspended', count: sessionsRevoked },
+      });
+    }
     return summary(tenant);
   }
 
@@ -146,8 +185,20 @@ export class TenantsService {
     manager: NewManager,
   ): Promise<ManagerSummary> {
     await this.findTenant(tenantId);
-    const account = await this.tenantTx.runInTenantUnsafe(tenantId, (tx) =>
-      this.writer.create(tx, tenantId, { ...manager, type: 'manager' }),
+    const account = await this.tenantTx.runInTenantUnsafe(
+      tenantId,
+      async (tx) => {
+        const created = await this.writer.create(tx, tenantId, {
+          ...manager,
+          type: 'manager',
+        });
+        await this.platformAudit.record(tx, {
+          action: 'tenant.manager_added',
+          targetId: created.id,
+          targetTenantId: tenantId,
+        });
+        return created;
+      },
     );
     return pickManager(account);
   }
@@ -172,6 +223,16 @@ export class TenantsService {
     );
     if (!change) {
       throw appError.notFound(ErrorCode.ACCOUNT_NOT_FOUND, 'Manager not found');
+    }
+    if (change.sessionsRevoked) {
+      await this.securityEvents.record('session.revoked', {
+        tenantId,
+        accountId,
+        metadata: {
+          reason: 'account_deactivated',
+          count: change.sessionsRevoked,
+        },
+      });
     }
     return pickManager(change.account);
   }

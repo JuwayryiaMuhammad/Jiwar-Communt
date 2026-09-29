@@ -6,6 +6,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { normalizeEmail } from '../auth/identifier';
+import { diffChanges } from '../audit/diff';
+import { PlatformAuditService } from '../audit/platform-audit.service';
 import { newId } from '../common/uuid';
 import type { Env } from '../config/env.schema';
 import { GlobalDbService } from '../database/global-db.service';
@@ -27,6 +29,7 @@ export class PlatformBootstrapService implements OnApplicationBootstrap {
   constructor(
     private readonly config: ConfigService<Env, true>,
     private readonly globalDb: GlobalDbService,
+    private readonly platformAudit: PlatformAuditService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -49,13 +52,26 @@ export class PlatformBootstrapService implements OnApplicationBootstrap {
       return 'not-configured';
     }
     try {
-      await this.globalDb.platformAdmin.create({
-        data: {
-          id: newId(),
-          email,
-          passwordHash: await hashPassword(env.password),
-          mustChangePassword: true,
-        },
+      const passwordHash = await hashPassword(env.password);
+      // The admin and its audit entry commit together; actor is `system`.
+      await this.globalDb.transaction(async (tx) => {
+        const admin = await tx.platformAdmin.create({
+          data: { id: newId(), email, passwordHash, mustChangePassword: true },
+        });
+        await this.platformAudit.record(tx, {
+          action: 'platform_admin.created',
+          targetId: admin.id,
+          changes: diffChanges(
+            null,
+            {
+              email: admin.email,
+              status: admin.status,
+              mustChangePassword: admin.mustChangePassword,
+            },
+            'platform_admin.created',
+          ),
+          metadata: { source: 'bootstrap' },
+        });
       });
     } catch (error) {
       // Another instance won the race; that admin is the one.

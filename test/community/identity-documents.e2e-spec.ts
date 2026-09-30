@@ -9,6 +9,7 @@ import {
 import { auditReaders } from '../setup/audit';
 import { communityHelpers, type Compound } from '../setup/community';
 import { bornYearsAgo } from '../setup/fixtures';
+import { requestAndVerify } from '../setup/login';
 import {
   API,
   createHttpHarness,
@@ -83,6 +84,47 @@ describe('Identity documents', () => {
         birthDate: doc.birthDate,
         phone: '+447911123456',
       });
+    });
+
+    it('a resident created with a +44 phone logs in with that phone, end to end', async () => {
+      const c = await x.compound();
+      const email = uniqueEmail('uk-login');
+      // 7400 xxxxxx: a UK mobile range where every number is valid.
+      const digits = Math.floor(Math.random() * 1e6)
+        .toString()
+        .padStart(6, '0');
+      const created = await h
+        .http()
+        .post(`${API}/accounts`)
+        .set('Authorization', `Bearer ${await managerToken(c)}`)
+        .send({
+          type: 'resident',
+          fullName: 'British Resident',
+          ...passport(35, 'GB'),
+          phone: `+44 7400 ${digits}`,
+          email,
+        })
+        .expect(201);
+      const { id } = created.body as { id: string };
+      expect(created.body).toMatchObject({ phone: `+447400${digits}` });
+
+      // Typed as a person would, with spaces: the same rule as creation.
+      const verified = await requestAndVerify(h, `+44 7400 ${digits}`, email);
+      expect(verified.accounts.map((a) => a.accountId)).toEqual([id]);
+      const tokens = await h
+        .http()
+        .post(`${API}/auth/select-account`)
+        .send({ loginTicket: verified.loginTicket, accountId: id })
+        .expect(200);
+      const me = await h
+        .http()
+        .get(`${API}/accounts/me`)
+        .set(
+          'Authorization',
+          `Bearer ${(tokens.body as { accessToken: string }).accessToken}`,
+        )
+        .expect(200);
+      expect(me.body).toMatchObject({ id, phone: `+447400${digits}` });
     });
 
     it('invalid passports are refused with a code per field', async () => {

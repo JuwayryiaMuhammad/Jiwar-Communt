@@ -42,6 +42,7 @@ Phase 2 made an Egyptian national ID mandatory, because age drives the household
   - **Dedup:** a national ID keeps its formula, `HMAC("worker-national-id:<id>")`. A passport uses `HMAC("passport:<nationality>:<number>")`, because the same number may exist in two countries.
 - **Audit:** `idDocumentNumber`, `nationality` and `birthDate` are sensitive, and appear only as `{ changed: true }`.
 - **Phones:** foreign numbers work with `+`. The accounts DTO now validates phones with the services' own `normalizePhone`. class-validator's `@IsPhoneNumber('EG')` also required the number to be Egyptian, and so refused every foreign phone.
+  Login (`/auth/otp/request`, `/auth/otp/verify`) takes an email or a phone as `identifier` and parses it with the same `normalizePhone` (`parseIdentifier`). The services' own inputs (invites, workers, contact changes) use it too, so there is one phone rule in the codebase. A resident created with a `+44` number logs in with it (e2e).
 
 ## Limits
 - The check digit of a national ID is not validated; its algorithm isn't published.

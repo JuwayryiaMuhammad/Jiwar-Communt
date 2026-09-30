@@ -94,6 +94,29 @@ enum AccountFreezeReason {
   @@map("account_freeze_reason")
 }
 
+/// The activation card's unit type (ADR 0024).
+enum UnitType {
+  apartment
+  villa
+  townhouse
+  duplex
+  penthouse
+  studio
+  commercial
+  other
+
+  @@map("unit_type")
+}
+
+enum RegistrationStatus {
+  pending
+  approved
+  rejected
+  expired
+
+  @@map("registration_status")
+}
+
 enum PlatformAdminStatus {
   active
   disabled
@@ -130,6 +153,7 @@ enum OutboxStatus {
 enum OtpPurpose {
   login
   invite_accept
+  registration
 
   @@map("otp_purpose")
 }
@@ -308,6 +332,7 @@ model Tenant {
   permissionCatalog TenantPermissionCatalog[]
   inviteTokens      InviteToken[]
   settings          TenantSettings?
+  registrationLinks RegistrationLink[]
 
   @@map("tenants")
 }
@@ -422,6 +447,20 @@ model InviteToken {
   @@map("invite_tokens")
 }
 
+/// Global pointer from a registration link to its compound (ADR 0024), read
+/// before anyone is logged in — like `invite_tokens`. No PII.
+model RegistrationLink {
+  tokenHash String    @id @map("token_hash") @db.Char(64)
+  tenantId  String    @map("tenant_id") @db.Uuid
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@map("registration_links")
+}
+
 /// Transactional outbox (ADR 0019): written in the transaction of the action
 /// that causes the message, delivered at least once by OutboxProcessor.
 /// Global, like security_events: tenant_id is a pointer. Sent rows are
@@ -493,31 +532,33 @@ model Account {
   occupancies        UnitOccupancy[]   @relation("OccupancyAccount")
   createdOccupancies UnitOccupancy[]   @relation("OccupancyCreatedBy")
 
-  memberships        HouseholdMember[]         @relation("MemberAccount")
-  addedMembers       HouseholdMember[]         @relation("MemberAddedBy")
-  removedMembers     HouseholdMember[]         @relation("MemberRemovedBy")
-  sentInvites        HouseholdInvite[]         @relation("InviteInvitedBy")
-  acceptedInvites    HouseholdInvite[]         @relation("InviteAcceptedAccount")
-  delegationsGiven   HouseholdDelegation[]     @relation("DelegationDelegator")
-  delegationsHeld    HouseholdDelegation[]     @relation("DelegationDelegate")
-  delegationsRevoked HouseholdDelegation[]     @relation("DelegationRevokedBy")
-  bannedWorkers      DomesticWorker[]          @relation("WorkerBannedBy")
-  verifiedWorkers    DomesticWorker[]          @relation("WorkerBirthDateVerifiedBy")
-  requestedWorkers   WorkerEngagement[]        @relation("EngagementRequestedBy")
-  reviewedWorkers    WorkerEngagement[]        @relation("EngagementReviewedBy")
-  flagsRaised        UnitReviewFlag[]          @relation("ReviewFlaggedBy")
-  flagsCleared       UnitReviewFlag[]          @relation("ReviewClearedBy")
-  wagesSettled       WorkerWageObligation[]    @relation("WageSettledBy")
-  grantsGiven        HouseholdMemberGrant[]    @relation("GrantGrantedBy")
-  grantsRevoked      HouseholdMemberGrant[]    @relation("GrantRevokedBy")
-  deferredDecided    HouseholdDeferredAction[] @relation("DeferredDecidedBy")
-  casesOpened        WorkerComplianceCase[]    @relation("CaseOpenedBy")
-  casesClosed        WorkerComplianceCase[]    @relation("CaseClosedBy")
-  incidentsReported  WorkerCardIncident[]      @relation("IncidentReportedBy")
-  incidentsClosed    WorkerCardIncident[]      @relation("IncidentClosedBy")
-  freezes            AccountFreeze[]           @relation("FreezeAccount")
-  freezesMade        AccountFreeze[]           @relation("FreezeFrozenBy")
-  freezesLifted      AccountFreeze[]           @relation("FreezeReactivatedBy")
+  memberships           HouseholdMember[]         @relation("MemberAccount")
+  addedMembers          HouseholdMember[]         @relation("MemberAddedBy")
+  removedMembers        HouseholdMember[]         @relation("MemberRemovedBy")
+  sentInvites           HouseholdInvite[]         @relation("InviteInvitedBy")
+  acceptedInvites       HouseholdInvite[]         @relation("InviteAcceptedAccount")
+  delegationsGiven      HouseholdDelegation[]     @relation("DelegationDelegator")
+  delegationsHeld       HouseholdDelegation[]     @relation("DelegationDelegate")
+  delegationsRevoked    HouseholdDelegation[]     @relation("DelegationRevokedBy")
+  bannedWorkers         DomesticWorker[]          @relation("WorkerBannedBy")
+  verifiedWorkers       DomesticWorker[]          @relation("WorkerBirthDateVerifiedBy")
+  requestedWorkers      WorkerEngagement[]        @relation("EngagementRequestedBy")
+  reviewedWorkers       WorkerEngagement[]        @relation("EngagementReviewedBy")
+  flagsRaised           UnitReviewFlag[]          @relation("ReviewFlaggedBy")
+  flagsCleared          UnitReviewFlag[]          @relation("ReviewClearedBy")
+  wagesSettled          WorkerWageObligation[]    @relation("WageSettledBy")
+  grantsGiven           HouseholdMemberGrant[]    @relation("GrantGrantedBy")
+  grantsRevoked         HouseholdMemberGrant[]    @relation("GrantRevokedBy")
+  deferredDecided       HouseholdDeferredAction[] @relation("DeferredDecidedBy")
+  casesOpened           WorkerComplianceCase[]    @relation("CaseOpenedBy")
+  casesClosed           WorkerComplianceCase[]    @relation("CaseClosedBy")
+  incidentsReported     WorkerCardIncident[]      @relation("IncidentReportedBy")
+  incidentsClosed       WorkerCardIncident[]      @relation("IncidentClosedBy")
+  freezes               AccountFreeze[]           @relation("FreezeAccount")
+  freezesMade           AccountFreeze[]           @relation("FreezeFrozenBy")
+  freezesLifted         AccountFreeze[]           @relation("FreezeReactivatedBy")
+  registrationsDecided  ResidentRegistration[]    @relation("RegistrationDecidedBy")
+  registrationsApproved ResidentRegistration[]    @relation("RegistrationAccount")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -584,6 +625,9 @@ model Unit {
   floor       Int?
   /// Closed-unit mode (ADR 0020), set by the owner-resident primary.
   closedSince DateTime? @map("closed_since") @db.Timestamptz(3)
+  /// Filled progressively (activation card); the manager's value wins.
+  unitType    UnitType? @map("unit_type")
+  areaSqm     Decimal?  @map("area_sqm") @db.Decimal(8, 2)
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -629,11 +673,12 @@ model UnitOccupancy {
   /// After leaving: emergency stays visible until the unit is handed over.
   handedOverAt    DateTime?           @map("handed_over_at") @db.Timestamptz(3)
 
-  unit          Unit            @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
-  account       Account         @relation("OccupancyAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
-  createdBy     Account         @relation("OccupancyCreatedBy", fields: [tenantId, createdById], references: [tenantId, id], onUpdate: Restrict)
-  convertedFrom UnitOccupancy?  @relation("OccupancyConversion", fields: [tenantId, convertedFromId], references: [tenantId, id], onUpdate: Restrict)
-  convertedTo   UnitOccupancy[] @relation("OccupancyConversion")
+  unit          Unit                   @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
+  account       Account                @relation("OccupancyAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
+  createdBy     Account                @relation("OccupancyCreatedBy", fields: [tenantId, createdById], references: [tenantId, id], onUpdate: Restrict)
+  convertedFrom UnitOccupancy?         @relation("OccupancyConversion", fields: [tenantId, convertedFromId], references: [tenantId, id], onUpdate: Restrict)
+  convertedTo   UnitOccupancy[]        @relation("OccupancyConversion")
+  registration  ResidentRegistration[]
 
   @@unique([tenantId, id])
   @@index([tenantId, accountId])
@@ -1016,6 +1061,42 @@ model AccountFreeze {
 
   @@index([tenantId, accountId])
   @@map("account_freezes")
+}
+
+/// A self-registration request (ADR 0024). Personal data only while
+/// pending (CHECK); an account exists only after a manager approves.
+model ResidentRegistration {
+  id                  String             @id @db.Uuid
+  tenantId            String             @map("tenant_id") @db.Uuid
+  status              RegistrationStatus @default(pending)
+  fullName            String?            @map("full_name")
+  phone               String?
+  email               String?
+  idDocumentType      IdDocumentType?    @map("id_document_type")
+  idDocumentNumber    String?            @map("id_document_number")
+  nationality         String?            @db.Char(2)
+  birthDate           DateTime?          @map("birth_date") @db.Date
+  preferredLocale     Locale             @default(ar) @map("preferred_locale")
+  unitCode            String             @map("unit_code")
+  occupancyType       OccupancyType      @map("occupancy_type")
+  resides             Boolean            @default(true)
+  unitType            UnitType?          @map("unit_type")
+  areaSqm             Decimal?           @map("area_sqm") @db.Decimal(8, 2)
+  building            String?
+  createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  decidedAt           DateTime?          @map("decided_at") @db.Timestamptz(3)
+  decidedById         String?            @map("decided_by") @db.Uuid
+  decisionReasonCode  String?            @map("decision_reason_code")
+  approvedAccountId   String?            @map("approved_account_id") @db.Uuid
+  approvedOccupancyId String?            @map("approved_occupancy_id") @db.Uuid
+
+  decidedBy         Account?       @relation("RegistrationDecidedBy", fields: [tenantId, decidedById], references: [tenantId, id], onUpdate: Restrict)
+  approvedAccount   Account?       @relation("RegistrationAccount", fields: [tenantId, approvedAccountId], references: [tenantId, id], onUpdate: Restrict)
+  approvedOccupancy UnitOccupancy? @relation(fields: [tenantId, approvedOccupancyId], references: [tenantId, id], onUpdate: Restrict)
+
+  @@index([tenantId, status, createdAt])
+  @@map("resident_registrations")
 }
 
 // ============================================================================

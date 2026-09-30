@@ -41,5 +41,7 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   household_member_grants_one_live: ['permission'],
   worker_compliance_cases_one_open_per_kind: null,
   account_freezes_one_live: null,
+  // Upserted by the registration flow (ON CONFLICT); never a response.
+  resident_registrations_one_pending_per_email: null,
   household_members_tenant_id_id_is_minor_key: null,
 };

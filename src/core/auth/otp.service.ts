@@ -175,6 +175,58 @@ export class OtpService implements OnModuleInit {
     });
   }
 
+  /**
+   * A registration code (ADR 0024), keyed by the request HMAC and sent to
+   * the email the registrant typed — whatever the link, unit or phone, so
+   * the work is the same for every input. Older live codes for the same
+   * key are invalidated.
+   */
+  async issueForRegistration(
+    key: string,
+    email: string,
+    locale: Locale,
+  ): Promise<void> {
+    const id = newId();
+    const code =
+      this.fixedCode ?? randomInt(0, 1_000_000).toString().padStart(6, '0');
+    await this.globalDb.otpChallenge.create({
+      data: {
+        id,
+        purpose: 'registration',
+        identifierHash: key,
+        accountIds: [],
+        codeHash: this.hasher.hashOtp(id, code),
+        expiresAt: new Date(Date.now() + this.ttlSeconds * 1000),
+      },
+    });
+    await this.globalDb.otpChallenge.updateMany({
+      where: {
+        purpose: 'registration',
+        identifierHash: key,
+        id: { lt: id },
+        consumedAt: null,
+        invalidatedAt: null,
+      },
+      data: { invalidatedAt: new Date() },
+    });
+    this.securityEvents.recordInBackground('otp.requested', {
+      identifierHash: key,
+      metadata: { locale, purpose: 'registration' },
+    });
+    await this.channel.send({
+      to: email,
+      code,
+      ttlSeconds: this.ttlSeconds,
+      locale,
+      purpose: 'registration',
+    });
+  }
+
+  /** True when the code matches a live registration challenge, which it consumes. */
+  async verifyRegistration(key: string, code: string): Promise<boolean> {
+    return (await this.consume('registration', key, code)) !== null;
+  }
+
   /** True when the code matches a live invite challenge, which it consumes. */
   async verifyInvite(key: string, code: string): Promise<boolean> {
     return (await this.consume('invite_accept', key, code)) !== null;

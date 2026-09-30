@@ -19,6 +19,8 @@ const GLOBAL_WITH_TENANT_ID = [
   'invite_tokens',
   // Email outbox (ADR 0019): tenant_id only says which compound caused it.
   'outbox_messages',
+  // Resolves a registration link before the tenant is known (ADR 0024); no PII.
+  'registration_links',
 ];
 
 const EXPECTED =

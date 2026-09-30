@@ -15,6 +15,11 @@ import { InviteAcceptanceService } from '../../src/community/households/invite-a
 import { MAJORITY_SWEEP } from '../../src/community/households/majority-notices';
 import { SweepRunner } from '../../src/core/sweep/sweep-runner';
 import { AccountsService } from '../../src/core/accounts/accounts.service';
+import {
+  REGISTRATION_EXPIRY_SWEEP,
+  RegistrationService,
+  type RegistrationRequest,
+} from '../../src/community/residents/registration.service';
 import { waitForOtp } from '../setup/mailpit';
 import {
   createHttpHarness,
@@ -456,6 +461,116 @@ describe('Audit coverage — Phase 2.2', () => {
         actorId: c.managerId,
         changes: { status: { from: 'frozen', to: 'active' } },
       });
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  describe('self-registration (ADR 0024)', () => {
+    const request = (
+      linkToken: string,
+      unitCode: string,
+    ): RegistrationRequest => ({
+      linkToken,
+      fullName: 'Audited Registrant',
+      unitCode,
+      phone: uniquePhone(),
+      email: uniqueEmail('areg'),
+      idDocumentType: 'national_id',
+      idDocumentNumber: nationalIdFor(),
+      occupancyType: 'owner',
+    });
+
+    async function registered(
+      reg: RegistrationService,
+      r: RegistrationRequest,
+    ) {
+      const since = new Date();
+      await reg.start(r, '10.7.7.7', 'en');
+      await reg.complete(r, await waitForOtp(r.email, since), '10.7.7.7');
+    }
+
+    it('links, requests and every decision — with the registrant as system', async () => {
+      const c = await x.compound();
+      const reg = h.moduleRef.get(RegistrationService);
+      const { token } = await x.asManager(c, () => reg.createLink());
+      expect(
+        await single(c, 'registration_link.created', c.tenantId),
+      ).toMatchObject({
+        actorId: c.managerId,
+        targetType: 'tenant',
+      });
+      const u = await x.unit(c);
+      await registered(reg, request(token, u.code));
+      const [first] = await x.asManager(c, () => reg.pending());
+      expect(
+        await single(c, 'resident.self_registered', first.id),
+      ).toMatchObject({
+        actorType: 'system',
+        actorId: null,
+        targetType: 'resident_registration',
+        metadata: { replaced: false, occupancyType: 'owner' },
+      });
+      const approved = await x.asManager(c, () => reg.approve(first.id));
+      expect(
+        await single(c, 'resident.registration_approved', first.id),
+      ).toMatchObject({
+        actorId: c.managerId,
+        changes: { status: { from: 'pending', to: 'approved' } },
+        metadata: {
+          unitId: u.id,
+          accountId: approved.accountId,
+          linkedExisting: false,
+        },
+      });
+      await x.as(c, { id: approved.accountId, type: 'resident' }, () =>
+        x.residents.submitUnitDetail(u.id, 'areaSqm', '120'),
+      );
+      expect(await single(c, 'unit.details_submitted', u.id)).toMatchObject({
+        actorId: approved.accountId,
+        changes: { areaSqm: { from: null, to: '120' } },
+      });
+
+      await registered(reg, request(token, 'R-2'));
+      const [second] = await x.asManager(c, () => reg.pending());
+      await x.asManager(c, () =>
+        reg.reject(second.id, { code: 'other', text: 'No' }),
+      );
+      expect(
+        await single(c, 'resident.registration_rejected', second.id),
+      ).toMatchObject({
+        actorId: c.managerId,
+        metadata: { reasonCode: 'other' },
+      });
+
+      await registered(reg, request(token, 'R-3'));
+      const [third] = await x.asManager(c, () => reg.pending());
+      await h.moduleRef
+        .get(SweepRunner)
+        .run(REGISTRATION_EXPIRY_SWEEP, new Date(Date.now() + 40 * 86_400_000));
+      expect(
+        await single(c, 'resident.registration_expired', third.id),
+      ).toMatchObject({
+        actorType: 'system',
+        changes: { status: { from: 'pending', to: 'expired' } },
+      });
+
+      await x.asManager(c, () => reg.revokeLinks());
+      expect(
+        await single(c, 'registration_link.revoked', c.tenantId),
+      ).toMatchObject({
+        actorId: c.managerId,
+        metadata: { count: 1 },
+      });
+
+      // A completion through a dead link: a security event, nothing else.
+      await registered(reg, request(token, 'R-4'));
+      const events = async () =>
+        (await read.security({ event: 'registration.link_invalid' })).length;
+      for (let i = 0; i < 20 && (await events()) === 0; i++) {
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      expect(await events()).toBeGreaterThan(0);
+      covered.add('registration.link_invalid');
     });
   });
 

@@ -61,6 +61,24 @@ export class IdentifierHasher {
     return this.hmac(`invite:${token}`);
   }
 
+  /** A compound registration link token (ADR 0024). Never stored raw. */
+  hashRegistrationLink(token: string): string {
+    return this.hmac(`registration-link:${token}`);
+  }
+
+  /**
+   * The key of a registration code (ADR 0024): bound to the link, the email
+   * the code goes to and the exact request, so the code confirms only what
+   * was sent — the payload cannot be swapped at completion.
+   */
+  hashRegistrationRequest(
+    linkHash: string,
+    email: string,
+    digest: string,
+  ): string {
+    return this.hmac(`register:${linkHash}:${email}:${digest}`);
+  }
+
   /** A worker's national ID, to find the same person again (ADR 0017). */
   hashWorkerNationalId(nationalId: string): string {
     return this.hmac(`worker-national-id:${nationalId}`);

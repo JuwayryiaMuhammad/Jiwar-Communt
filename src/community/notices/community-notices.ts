@@ -30,6 +30,9 @@ export const COMMUNITY_NOTICES = {
   cardConfiscated: 'community.card_confiscated',
   complianceCaseOpened: 'community.compliance_case_opened',
   memberFrozen: 'community.member_frozen',
+  registrationApproved: 'community.registration_approved',
+  registrationRejected: 'community.registration_rejected',
+  registrationExpired: 'community.registration_expired',
 } as const;
 
 export type CommunityNoticeKey =
@@ -260,6 +263,39 @@ const CATALOG: Catalog = {
     en: (p) => ({
       subject: "A household member's Jiwar account was frozen",
       lead: `The management froze the account of a member of unit ${p.unitCode}'s household in ${p.compoundName}: their phone number now belongs to someone else. The management will contact them to register a new number.`,
+    }),
+  },
+  'community.registration_approved': {
+    ar: (p) => ({
+      subject: 'اعتُمد تسجيلك على جوار',
+      lead: `اعتمدت إدارة ${p.compoundName} تسجيلك في الوحدة ${p.unitCode}. يمكنك الدخول الآن ببريدك أو رقم هاتفك.`,
+    }),
+    en: (p) => ({
+      subject: 'Your Jiwar registration was approved',
+      lead: `The management of ${p.compoundName} approved your registration for unit ${p.unitCode}. You can log in now with your email or phone number.`,
+    }),
+  },
+  // Says the manager's reason only — never what the review showed.
+  'community.registration_rejected': {
+    ar: (p) => ({
+      subject: 'لم يُعتمد طلب تسجيلك على جوار',
+      lead: `لم تعتمد إدارة ${p.compoundName} طلب تسجيلك في الوحدة ${p.unitCode}.`,
+      help: 'للاستفسار تواصل مع إدارة المجمع.',
+    }),
+    en: (p) => ({
+      subject: 'Your Jiwar registration was not approved',
+      lead: `The management of ${p.compoundName} did not approve your registration request for unit ${p.unitCode}.`,
+      help: 'For questions, contact the compound management.',
+    }),
+  },
+  'community.registration_expired': {
+    ar: (p) => ({
+      subject: 'انتهت مهلة طلب تسجيلك على جوار',
+      lead: `انتهت مهلة طلب تسجيلك في الوحدة ${p.unitCode} في ${p.compoundName} دون قرار، وحُذفت بياناتك منه. يمكنك التسجيل من جديد أو التواصل مع الإدارة.`,
+    }),
+    en: (p) => ({
+      subject: 'Your Jiwar registration request expired',
+      lead: `Your registration request for unit ${p.unitCode} in ${p.compoundName} expired without a decision, and your details were removed from it. You can register again or contact the management.`,
     }),
   },
 };

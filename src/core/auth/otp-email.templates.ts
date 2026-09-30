@@ -33,6 +33,11 @@ const EN = {
     intro: 'Your code to accept the household invitation on Jiwar is',
     ignore: 'If you were not expecting an invitation, ignore this email.',
   },
+  registration: {
+    subject: 'Your Jiwar registration code',
+    intro: 'Your code to confirm your registration request on Jiwar is',
+    ignore: 'If you did not ask to register, ignore this email.',
+  },
 } satisfies Record<OtpPurpose, Record<string, string>>;
 
 const AR = {
@@ -45,6 +50,11 @@ const AR = {
     subject: 'رمز قبول الدعوة إلى جوار',
     intro: 'رمز قبول دعوة الانضمام إلى الأسرة على جوار هو',
     ignore: 'إذا لم تكن تنتظر دعوة، تجاهل هذه الرسالة.',
+  },
+  registration: {
+    subject: 'رمز تأكيد التسجيل في جوار',
+    intro: 'رمز تأكيد طلب تسجيلك في جوار هو',
+    ignore: 'إذا لم تطلب التسجيل، تجاهل هذه الرسالة.',
   },
 } satisfies Record<OtpPurpose, Record<string, string>>;
 

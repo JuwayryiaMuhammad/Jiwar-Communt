@@ -77,6 +77,8 @@ export const envSchema = z
       .default('true')
       .transform((v) => v === 'true'),
     SWEEP_INTERVAL_MS: positiveInt.default(3_600_000),
+    // A self-registration nobody decided expires after this (ADR 0024).
+    REGISTRATION_PENDING_DAYS: positiveInt.default(30),
 
     JWT_ACCESS_SECRET: secret,
     IDENTIFIER_PEPPER: secret,

@@ -37,6 +37,26 @@ export const AUDIT_ACTIONS = {
   'occupancy.residence_changed': { log: 'tenant', target: 'occupancy' },
   'occupancy.handed_over': { log: 'tenant', target: 'occupancy' },
   'unit.closed_mode_changed': { log: 'tenant', target: 'unit' },
+  // self-registration (ADR 0024)
+  'unit.details_submitted': { log: 'tenant', target: 'unit' },
+  'registration_link.created': { log: 'tenant', target: 'tenant' },
+  'registration_link.revoked': { log: 'tenant', target: 'tenant' },
+  'resident.self_registered': {
+    log: 'tenant',
+    target: 'resident_registration',
+  },
+  'resident.registration_approved': {
+    log: 'tenant',
+    target: 'resident_registration',
+  },
+  'resident.registration_rejected': {
+    log: 'tenant',
+    target: 'resident_registration',
+  },
+  'resident.registration_expired': {
+    log: 'tenant',
+    target: 'resident_registration',
+  },
   'unit.created': { log: 'tenant', target: 'unit' },
   'unit.household_review_flagged': { log: 'tenant', target: 'unit' },
   'unit.household_review_cleared': { log: 'tenant', target: 'unit' },
@@ -145,6 +165,8 @@ export const SECURITY_EVENTS = [
   'invite.token_invalid',
   // "Not me" (ADR 0023): the phone left the account.
   'account.phone_reassigned',
+  // A registration completed with an unknown or revoked link (ADR 0024).
+  'registration.link_invalid',
 ] as const;
 
 export type SecurityEventName = (typeof SECURITY_EVENTS)[number];

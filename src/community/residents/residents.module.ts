@@ -4,12 +4,20 @@ import { HouseholdsModule } from '../households/households.module';
 import { NoticesModule } from '../notices/notices.module';
 import { WorkersModule } from '../workers/workers.module';
 import { FreezeHooks } from './freeze-hooks';
+import { RegistrationService } from './registration.service';
+import { AuthModule } from '../../core/auth/auth.module';
 import { ResidentsService } from './residents.service';
 
 /** No controllers yet: endpoints come with the design (Phase 1a). */
 @Module({
-  imports: [AccountsModule, HouseholdsModule, NoticesModule, WorkersModule],
-  providers: [ResidentsService, FreezeHooks],
-  exports: [ResidentsService],
+  imports: [
+    AccountsModule,
+    AuthModule,
+    HouseholdsModule,
+    NoticesModule,
+    WorkersModule,
+  ],
+  providers: [ResidentsService, FreezeHooks, RegistrationService],
+  exports: [ResidentsService, RegistrationService],
 })
 export class ResidentsModule {}

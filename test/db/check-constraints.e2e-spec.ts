@@ -38,6 +38,10 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   outbox_messages_stripped_only_when_dead: {},
   platform_audit_log_actor_id_matches_type: {},
   tenant_settings_max_household_members_range: {},
+  resident_registrations_pii_only_pending: {},
+  resident_registrations_decided_matches_status: {},
+  resident_registrations_approved_has_account: {},
+  resident_registrations_tenant_resides: {},
   unit_occupancies_ended_at_matches_status: {},
   unit_occupancies_end_reason_matches_status: {},
   unit_occupancies_handover_after_end: {},
@@ -55,6 +59,14 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   worker_engagements_management_suspension: {},
   worker_engagements_temporary_has_end: {},
   // Compares nullable columns.
+  units_area_positive: {
+    guarded:
+      'area_sqm IS NULL is tested first; the comparison runs only on a value',
+  },
+  resident_registrations_area_positive: {
+    guarded:
+      'area_sqm IS NULL is tested first; the comparison runs only on a value',
+  },
   household_member_grants_cap_positive: {
     guarded:
       'cap_per_operation IS NULL is tested first, so the comparison runs ' +
@@ -136,6 +148,8 @@ describe('CHECK constraints and NULL', () => {
       { table: 'domestic_workers', nullable: 'NO' },
       { table: 'household_invites', nullable: 'YES' },
       { table: 'household_members', nullable: 'NO' },
+      // Present exactly while pending (resident_registrations_pii_only_pending).
+      { table: 'resident_registrations', nullable: 'YES' },
     ]);
   });
 });

@@ -14,6 +14,7 @@ type GlobalTables = Pick<
   | 'securityEvent'
   | 'inviteToken'
   | 'outboxMessage'
+  | 'registrationLink'
 >;
 
 /**
@@ -63,6 +64,10 @@ export class GlobalDbService implements GlobalTables {
 
   get outboxMessage() {
     return this.base.client.outboxMessage;
+  }
+
+  get registrationLink() {
+    return this.base.client.registrationLink;
   }
 
   /**
@@ -187,6 +192,7 @@ export class GlobalDbService implements GlobalTables {
       securityEvent: tx.securityEvent,
       inviteToken: tx.inviteToken,
       outboxMessage: tx.outboxMessage,
+      registrationLink: tx.registrationLink,
     };
   }
 

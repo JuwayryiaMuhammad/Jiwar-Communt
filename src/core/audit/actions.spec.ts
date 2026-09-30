@@ -50,6 +50,7 @@ describe('audit catalog', () => {
         'domestic_worker',
         'worker_engagement',
         'household_deferred_action',
+        'resident_registration',
       ]).toContain(def.target);
     }
   });

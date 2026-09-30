@@ -1,5 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
+import {
+  $Enums,
+  type OccupancyType,
+  type Prisma,
+  type UnitType,
+} from '@prisma/client';
 import {
   runAfterCommit,
   type AfterCommit,
@@ -404,6 +409,95 @@ export class ResidentsService {
     });
     if (!updated) throw residentNotFound();
     return this.get(accountId);
+  }
+
+  /**
+   * An occupancy for an existing resident account, in the caller's
+   * transaction and under its unit lock (registration approval).
+   */
+  async occupyIn(
+    tx: TenantTxClient,
+    o: {
+      accountId: string;
+      unitId: string;
+      occupancyType: OccupancyType;
+      resides: boolean;
+    },
+  ): Promise<{ id: string }> {
+    const active = await tx.unitOccupancy.count({
+      where: { accountId: o.accountId, unitId: o.unitId, status: 'active' },
+    });
+    if (active) {
+      throw appError.conflict(
+        ErrorCode.OCCUPANCY_ALREADY_ACTIVE,
+        'The resident already occupies this unit',
+      );
+    }
+    const created = await tx.unitOccupancy.create({
+      data: {
+        id: newId(),
+        tenantId: this.ctx.tenantId,
+        unitId: o.unitId,
+        accountId: o.accountId,
+        occupancyType: o.occupancyType,
+        ...(await this.primaryFields(tx, o)),
+        createdById: this.ctx.accountId,
+      },
+    });
+    await this.recordCreated(tx, created);
+    return { id: created.id };
+  }
+
+  // --------------------------------------------------------------------------
+  // Activation card (02 §3, ADR 0024)
+  // --------------------------------------------------------------------------
+
+  /** The unit details still missing, one step at a time; never blocking. */
+  async missingActivationSteps(unitId: string): Promise<ActivationStep[]> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.primaryOccupancy(tx, unitId);
+      const unit = await tx.unit.findUniqueOrThrow({ where: { id: unitId } });
+      return [
+        ...(unit.unitType ? [] : (['unitType'] as const)),
+        ...(unit.areaSqm ? [] : (['areaSqm'] as const)),
+        ...(unit.building ? [] : (['building'] as const)),
+      ];
+    });
+  }
+
+  /**
+   * The primary fills ONE missing detail. Only an empty field is written:
+   * what the unit already knows (the manager's value) always wins.
+   */
+  async submitUnitDetail(
+    unitId: string,
+    step: ActivationStep,
+    value: string,
+  ): Promise<void> {
+    const data = activationValue(step, value);
+    await this.tenantTx.withTenantTx(async (tx) => {
+      await lockUnits(tx, [unitId]);
+      await this.primaryOccupancy(tx, unitId);
+      const unit = await tx.unit.findUniqueOrThrow({ where: { id: unitId } });
+      const current = unit[step];
+      if (current !== null) {
+        throw appError.conflict(
+          ErrorCode.UNIT_DETAIL_ALREADY_SET,
+          'The unit already has this detail',
+          { params: { field: step } },
+        );
+      }
+      await tx.unit.update({ where: { id: unitId }, data });
+      await this.audit.record(tx, {
+        action: 'unit.details_submitted',
+        targetId: unitId,
+        changes: diffChanges(
+          { [step]: null },
+          { [step]: value.trim() },
+          'unit.details_submitted',
+        ),
+      });
+    });
   }
 
   // --------------------------------------------------------------------------
@@ -1164,6 +1258,35 @@ function occupancyNotFound() {
     ErrorCode.OCCUPANCY_NOT_FOUND,
     'Active occupancy not found',
   );
+}
+
+export type ActivationStep = 'unitType' | 'areaSqm' | 'building';
+
+function activationValue(
+  step: ActivationStep,
+  raw: string,
+): Prisma.UnitUpdateInput {
+  const value = (raw ?? '').trim();
+  const invalid = () =>
+    appError.badRequest(ErrorCode.VALIDATION_FAILED, 'Invalid value', {
+      fields: [{ field: step, code: FieldErrorCode.INVALID_VALUE }],
+    });
+  switch (step) {
+    case 'unitType': {
+      const allowed = Object.values($Enums.UnitType) as string[];
+      if (!allowed.includes(value)) throw invalid();
+      return { unitType: value as UnitType };
+    }
+    case 'areaSqm':
+      if (!/^\d{1,6}(\.\d{1,2})?$/.test(value) || Number(value) <= 0)
+        throw invalid();
+      return { areaSqm: value };
+    case 'building':
+      if (!value || value.length > 50) throw invalid();
+      return { building: value };
+    default:
+      throw invalid();
+  }
 }
 
 function reviewFlagNotFound() {

@@ -3,7 +3,9 @@ import { Injectable } from '@nestjs/common';
 import {
   $Enums,
   Prisma,
+  type AccountStatus,
   type DomesticWorker,
+  type IdDocumentType,
   type WorkerCapacity,
   type WorkerEngagement,
   type WorkerEngagementStatus,
@@ -16,6 +18,7 @@ import { diffChanges } from '../../core/audit/diff';
 import { IdentifierHasher, normalizePhone } from '../../core/auth/identifier';
 import type { AppClsStore } from '../../core/common/cls/app-cls';
 import { RequestContext } from '../../core/common/cls/request-context';
+import { clampLimit, keysetCursor, type Page } from '../../core/common/cursor';
 import { ADULT_AGE, isAdult } from '../../core/common/egyptian-national-id';
 import {
   checkBirthDate,
@@ -116,6 +119,46 @@ export interface EngagementView {
   suspendedByManagement: boolean;
 }
 
+/** An engagement in the manager's review list; never a birth date or a document number. */
+export interface ReviewEngagement {
+  id: string;
+  unitId: string;
+  unitCode: string;
+  workerId: string;
+  workerName: string;
+  capacity: WorkerCapacity;
+  status: WorkerEngagementStatus;
+  idDocumentType: IdDocumentType;
+  /** Passport workers: the birth date was attested (ADR 0018). */
+  birthDateVerified: boolean;
+  createdAt: Date;
+}
+
+/** One engagement for the manager's review; views mask the document. */
+export interface EngagementDetail {
+  id: string;
+  unitId: string;
+  unitCode: string;
+  capacity: WorkerCapacity;
+  schedule: WorkerSchedule;
+  validUntil: Date | null;
+  status: WorkerEngagementStatus;
+  requestedBy: { id: string; fullName: string | null; status: AccountStatus };
+  createdAt: Date;
+  worker: {
+    id: string;
+    fullName: string;
+    phone: string;
+    idDocumentType: IdDocumentType;
+    idDocumentNumber: string;
+    nationality: string;
+    /** `YYYY-MM-DD` */
+    birthDate: string;
+    birthDateVerifiedAt: Date | null;
+    banned: boolean;
+  };
+}
+
 type NoticeKey =
   | 'code_reissued'
   | 'engagement_suspended'
@@ -129,6 +172,10 @@ const OPEN: WorkerEngagementStatus[] = [
   'suspended',
 ];
 const CODE_ATTEMPTS = 10;
+
+const ENGAGEMENT_PAGE = keysetCursor('createdAt');
+const INCIDENT_PAGE = keysetCursor('reportedAt');
+const CASE_PAGE = keysetCursor('openedAt');
 
 /**
  * Domestic workers (ADR 0017). Workers have no account and no login; the
@@ -263,24 +310,137 @@ export class WorkersService {
   }
 
   /** The unit's engagements, as a resident (or family member) of it sees them. */
-  async listForUnit(unitId: string): Promise<EngagementView[]> {
+  /** A unit's engagements (not rejected), newest first, a page at a time. */
+  async listForUnit(
+    unitId: string,
+    q: { cursor?: string; limit?: number } = {},
+  ): Promise<Page<EngagementView>> {
+    const limit = clampLimit(q.limit);
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.authority.assertVisible(tx, unitId);
       const rows = await tx.workerEngagement.findMany({
-        where: { unitId, status: { not: 'rejected' } },
+        where: {
+          AND: [
+            { unitId, status: { not: 'rejected' } },
+            ...(ENGAGEMENT_PAGE.after(
+              q.cursor,
+            ) as Prisma.WorkerEngagementWhereInput[]),
+          ],
+        },
         include: { worker: { select: { fullName: true } } },
-        orderBy: { createdAt: 'desc' },
+        orderBy: ENGAGEMENT_PAGE.orderBy,
+        take: limit + 1,
       });
-      return rows.map((e) => ({
+      const page = ENGAGEMENT_PAGE.toPage(rows, limit);
+      return {
+        items: page.items.map((e) => ({
+          id: e.id,
+          unitId: e.unitId,
+          workerName: e.worker.fullName,
+          capacity: e.capacity,
+          schedule: e.schedule as unknown as WorkerSchedule,
+          status: effectiveStatus(e),
+          validUntil: e.validUntil,
+          suspendedByManagement: e.suspendedByManagement,
+        })),
+        nextCursor: page.nextCursor,
+      };
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // Management review (`workers.review`)
+  // --------------------------------------------------------------------------
+
+  /**
+   * Engagements across the compound, newest first, optionally by status
+   * (as stored). What a review list needs; the birth date and the document
+   * number stay in the detail.
+   */
+  async engagementsForReview(
+    q: {
+      status?: WorkerEngagementStatus;
+      cursor?: string;
+      limit?: number;
+    } = {},
+  ): Promise<Page<ReviewEngagement>> {
+    const limit = clampLimit(q.limit);
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const rows = await tx.workerEngagement.findMany({
+        where: {
+          AND: [
+            ...(q.status ? [{ status: q.status }] : []),
+            ...(ENGAGEMENT_PAGE.after(
+              q.cursor,
+            ) as Prisma.WorkerEngagementWhereInput[]),
+          ],
+        },
+        include: {
+          unit: { select: { code: true } },
+          worker: {
+            select: {
+              fullName: true,
+              idDocumentType: true,
+              birthDateVerifiedAt: true,
+            },
+          },
+        },
+        orderBy: ENGAGEMENT_PAGE.orderBy,
+        take: limit + 1,
+      });
+      const page = ENGAGEMENT_PAGE.toPage(rows, limit);
+      return {
+        items: page.items.map((e) => ({
+          id: e.id,
+          unitId: e.unitId,
+          unitCode: e.unit.code,
+          workerId: e.workerId,
+          workerName: e.worker.fullName,
+          capacity: e.capacity,
+          status: effectiveStatus(e),
+          idDocumentType: e.worker.idDocumentType,
+          birthDateVerified: e.worker.birthDateVerifiedAt !== null,
+          createdAt: e.createdAt,
+        })),
+        nextCursor: page.nextCursor,
+      };
+    });
+  }
+
+  /** One engagement and its worker, for the manager's review. */
+  async engagementDetail(engagementId: string): Promise<EngagementDetail> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const e = await tx.workerEngagement.findUnique({
+        where: { id: engagementId },
+        include: {
+          unit: { select: { code: true } },
+          requestedBy: { select: { id: true, fullName: true, status: true } },
+          worker: true,
+        },
+      });
+      if (!e) throw engagementNotFound();
+      return {
         id: e.id,
         unitId: e.unitId,
-        workerName: e.worker.fullName,
+        unitCode: e.unit.code,
         capacity: e.capacity,
         schedule: e.schedule as unknown as WorkerSchedule,
-        status: effectiveStatus(e),
         validUntil: e.validUntil,
-        suspendedByManagement: e.suspendedByManagement,
-      }));
+        status: effectiveStatus(e),
+        requestedBy: e.requestedBy,
+        createdAt: e.createdAt,
+        worker: {
+          id: e.worker.id,
+          fullName: e.worker.fullName,
+          phone: e.worker.phone,
+          idDocumentType: e.worker.idDocumentType,
+          idDocumentNumber: e.worker.idDocumentNumber,
+          nationality: e.worker.nationality,
+          birthDate: e.worker.birthDate.toISOString().slice(0, 10),
+          birthDateVerifiedAt: e.worker.birthDateVerifiedAt,
+          banned: e.worker.bannedAt !== null,
+        },
+      };
     });
   }
 
@@ -490,25 +650,38 @@ export class WorkersService {
   }
 
   /** `workers.incidents`: newest first. Residents have no read of these. */
+  /** `workers.incidents`: newest first, a page at a time. */
   async cardIncidents(
-    q: { status?: 'open' | 'closed' } = {},
-  ): Promise<CardIncidentView[]> {
+    q: { status?: 'open' | 'closed'; cursor?: string; limit?: number } = {},
+  ): Promise<Page<CardIncidentView>> {
+    const limit = clampLimit(q.limit);
     return this.tenantTx.withTenantTx(async (tx) => {
       const rows = await tx.workerCardIncident.findMany({
-        where: q.status ? { status: q.status } : {},
-        orderBy: [{ reportedAt: 'desc' }, { id: 'desc' }],
-        take: 100,
+        where: {
+          AND: [
+            ...(q.status ? [{ status: q.status }] : []),
+            ...(INCIDENT_PAGE.after(
+              q.cursor,
+            ) as Prisma.WorkerCardIncidentWhereInput[]),
+          ],
+        },
+        orderBy: INCIDENT_PAGE.orderBy,
+        take: limit + 1,
       });
-      return rows.map((r) => ({
-        id: r.id,
-        engagementId: r.engagementId,
-        workerId: r.workerId,
-        type: r.type,
-        reportedVia: r.reportedVia,
-        reportedAt: r.reportedAt,
-        note: r.note,
-        status: r.status,
-      }));
+      const page = INCIDENT_PAGE.toPage(rows, limit);
+      return {
+        items: page.items.map((r) => ({
+          id: r.id,
+          engagementId: r.engagementId,
+          workerId: r.workerId,
+          type: r.type,
+          reportedVia: r.reportedVia,
+          reportedAt: r.reportedAt,
+          note: r.note,
+          status: r.status,
+        })),
+        nextCursor: page.nextCursor,
+      };
     });
   }
 
@@ -986,25 +1159,37 @@ export class WorkersService {
     });
   }
 
-  /** `workers.compliance`: the compliance record, newest first. */
+  /** `workers.compliance`: the compliance record, newest first, a page at a time. */
   async complianceCases(
-    q: { status?: 'open' | 'closed' } = {},
-  ): Promise<ComplianceCaseView[]> {
+    q: { status?: 'open' | 'closed'; cursor?: string; limit?: number } = {},
+  ): Promise<Page<ComplianceCaseView>> {
+    const limit = clampLimit(q.limit);
     return this.tenantTx.withTenantTx(async (tx) => {
       const rows = await tx.workerComplianceCase.findMany({
-        where: q.status ? { status: q.status } : {},
-        orderBy: [{ openedAt: 'desc' }, { id: 'desc' }],
-        take: 100,
+        where: {
+          AND: [
+            ...(q.status ? [{ status: q.status }] : []),
+            ...(CASE_PAGE.after(
+              q.cursor,
+            ) as Prisma.WorkerComplianceCaseWhereInput[]),
+          ],
+        },
+        orderBy: CASE_PAGE.orderBy,
+        take: limit + 1,
       });
-      return rows.map((r) => ({
-        id: r.id,
-        workerId: r.workerId,
-        kind: r.kind,
-        status: r.status,
-        source: r.source,
-        openedAt: r.openedAt,
-        closedAt: r.closedAt,
-      }));
+      const page = CASE_PAGE.toPage(rows, limit);
+      return {
+        items: page.items.map((r) => ({
+          id: r.id,
+          workerId: r.workerId,
+          kind: r.kind,
+          status: r.status,
+          source: r.source,
+          openedAt: r.openedAt,
+          closedAt: r.closedAt,
+        })),
+        nextCursor: page.nextCursor,
+      };
     });
   }
 

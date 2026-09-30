@@ -261,6 +261,95 @@ describe('Domestic workers', () => {
   });
 
   // --------------------------------------------------------------------------
+  describe("the manager's review", () => {
+    it('a paged list by status, and one engagement with its worker', async () => {
+      const hm = await home();
+      const input = nanny();
+      const first = await asResident(hm, () =>
+        workers.register(hm.unitId, input),
+      );
+      const second = await asResident(hm, () =>
+        workers.register(
+          hm.unitId,
+          nanny({ capacity: 'live_in', schedule: undefined }),
+        ),
+      );
+      const page = await x.asManager(hm.c, () =>
+        workers.engagementsForReview({ status: 'pending_review', limit: 1 }),
+      );
+      expect(page.items).toEqual([
+        {
+          id: second.engagementId,
+          unitId: hm.unitId,
+          unitCode: expect.any(String) as string,
+          workerId: expect.any(String) as string,
+          workerName: 'Nanny Worker',
+          capacity: 'live_in',
+          status: 'pending_review',
+          idDocumentType: 'national_id',
+          birthDateVerified: false,
+          createdAt: expect.any(Date) as Date,
+        },
+      ]);
+      const rest = await x.asManager(hm.c, () =>
+        workers.engagementsForReview({
+          status: 'pending_review',
+          limit: 1,
+          cursor: page.nextCursor!,
+        }),
+      );
+      expect(rest.items.map((e) => e.id)).toEqual([first.engagementId]);
+      expect(
+        (
+          await x.asManager(hm.c, () =>
+            workers.engagementsForReview({ status: 'active' }),
+          )
+        ).items,
+      ).toEqual([]);
+
+      const detail = await x.asManager(hm.c, () =>
+        workers.engagementDetail(first.engagementId),
+      );
+      expect(detail).toMatchObject({
+        id: first.engagementId,
+        requestedBy: { id: hm.resident.id },
+        worker: {
+          fullName: input.fullName,
+          phone: input.phone,
+          idDocumentNumber: input.idDocumentNumber,
+          banned: false,
+        },
+      });
+      const other = await x.compound();
+      expect(
+        await code(
+          x.asManager(other, () =>
+            workers.engagementDetail(first.engagementId),
+          ),
+        ),
+      ).toBe('ENGAGEMENT_NOT_FOUND');
+    });
+
+    it("a unit's list pages newest first", async () => {
+      const hm = await home();
+      const a = await asResident(hm, () =>
+        workers.register(hm.unitId, nanny()),
+      );
+      const b = await asResident(hm, () =>
+        workers.register(hm.unitId, nanny()),
+      );
+      const page = await asResident(hm, () =>
+        workers.listForUnit(hm.unitId, { limit: 1 }),
+      );
+      expect(page.items.map((e) => e.id)).toEqual([b.engagementId]);
+      const rest = await asResident(hm, () =>
+        workers.listForUnit(hm.unitId, { limit: 1, cursor: page.nextCursor! }),
+      );
+      expect(rest.items.map((e) => e.id)).toEqual([a.engagementId]);
+    });
+  });
+
+  // --------------------------------------------------------------------------
   describe('codes', () => {
     it('approval returns the code once and stores only its hash; it has no expiry of its own', async () => {
       const hm = await home();
@@ -425,7 +514,9 @@ describe('Domestic workers', () => {
         ).toEqual(['engagement_suspended_by_management']);
       }
 
-      const seen = await asResident(a, () => workers.listForUnit(a.unitId));
+      const seen = await asResident(a, () =>
+        workers.listForUnit(a.unitId).then((p) => p.items),
+      );
       expect(seen).toEqual([
         {
           id: wa.engagementId,
@@ -470,7 +561,11 @@ describe('Domestic workers', () => {
       );
       expect(await valid(hm, w.code)).toBe(false);
       expect(
-        (await asResident(hm, () => workers.listForUnit(hm.unitId)))[0].status,
+        (
+          await asResident(hm, () =>
+            workers.listForUnit(hm.unitId).then((p) => p.items),
+          )
+        )[0].status,
       ).toBe('ended');
       expect((await row(hm, w.engagementId)).status).toBe('active'); // computed
 
@@ -517,12 +612,18 @@ describe('Domestic workers', () => {
           schedule: { days: [6], windows: [{ from: '09:00', to: '10:00' }] },
         }),
       );
-      const mine = await asResident(a, () => workers.listForUnit(a.unitId));
+      const mine = await asResident(a, () =>
+        workers.listForUnit(a.unitId).then((p) => p.items),
+      );
       expect(mine).toHaveLength(1);
       expect(JSON.stringify(mine)).not.toContain(nationalId);
       expect(JSON.stringify(mine)).not.toContain(b.unitId);
       expect(
-        await code(asResident(a, () => workers.listForUnit(b.unitId))),
+        await code(
+          asResident(a, () =>
+            workers.listForUnit(b.unitId).then((p) => p.items),
+          ),
+        ),
       ).toBe('UNIT_NOT_FOUND');
     });
   });

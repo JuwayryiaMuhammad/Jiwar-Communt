@@ -97,7 +97,9 @@ describe('Capacities', () => {
     ).toBe('FORBIDDEN');
     expect(
       await codeOf(
-        asResident(c, landlordId, () => workers.listForUnit(unitId)),
+        asResident(c, landlordId, () =>
+          workers.listForUnit(unitId).then((p) => p.items),
+        ),
       ),
     ).toBe('FORBIDDEN');
     expect(

@@ -13,6 +13,7 @@ import { REGISTRATION_ROUTES } from './registration';
 import { RESIDENTS_ROUTES } from './residents';
 import { UNIT_STATES_ROUTES } from './unit-states';
 import { UNITS_ROUTES } from './units';
+import { WORKERS_ROUTES } from './workers';
 
 /** Every endpoint of the API, one row each (ADR 0025). */
 export const ROUTES: Row[] = [
@@ -27,6 +28,7 @@ export const ROUTES: Row[] = [
   ...HOUSEHOLD_ROUTES,
   ...MEMBER_PERMISSIONS_ROUTES,
   ...DELEGATIONS_ROUTES,
+  ...WORKERS_ROUTES,
   ...PLATFORM_ROUTES,
   ...PUBLIC_ROUTES,
   ...ME_ROUTES,

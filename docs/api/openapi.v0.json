@@ -1,6 +1,24 @@
 {
   "components": {
     "schemas": {
+      "AccessCodeView": {
+        "properties": {
+          "accessCode": {
+            "description": "8 digits, shown once.",
+            "nullable": true,
+            "type": "string"
+          },
+          "engagementId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "engagementId",
+          "accessCode"
+        ],
+        "type": "object"
+      },
       "AccountDetailView": {
         "properties": {
           "birthDate": {
@@ -318,6 +336,18 @@
         ],
         "type": "object"
       },
+      "BirthDateDto": {
+        "properties": {
+          "birthDate": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "birthDate"
+        ],
+        "type": "object"
+      },
       "CapabilitiesView": {
         "properties": {
           "activityVisibleToPrimary": {
@@ -432,6 +462,130 @@
           "archiveView",
           "warrantyClaims",
           "documentsUpload"
+        ],
+        "type": "object"
+      },
+      "CardIncidentCreatedView": {
+        "properties": {
+          "accessCode": {
+            "description": "8 digits, shown once.",
+            "type": "string"
+          },
+          "engagementId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "incidentId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "incidentId",
+          "engagementId",
+          "accessCode"
+        ],
+        "type": "object"
+      },
+      "CardIncidentDto": {
+        "properties": {
+          "note": {
+            "description": "Never returned by the API (v0).",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "lost",
+              "confiscated"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      },
+      "CardIncidentResponse": {
+        "properties": {
+          "engagementId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reportedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reportedVia": {
+            "enum": [
+              "manager",
+              "resident"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "lost",
+              "confiscated"
+            ],
+            "type": "string"
+          },
+          "workerId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "engagementId",
+          "workerId",
+          "type",
+          "reportedVia",
+          "reportedAt",
+          "status"
+        ],
+        "type": "object"
+      },
+      "CardIncidentResponseList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CardIncidentResponse"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "CaseCreatedView": {
+        "properties": {
+          "caseId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "caseId"
         ],
         "type": "object"
       },
@@ -589,6 +743,77 @@
           "idDocumentNumber",
           "occupancyType",
           "code"
+        ],
+        "type": "object"
+      },
+      "ComplianceCaseResponse": {
+        "properties": {
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "underage"
+            ],
+            "type": "string"
+          },
+          "openedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "review",
+              "birth_date_correction",
+              "report"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "type": "string"
+          },
+          "workerId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workerId",
+          "kind",
+          "status",
+          "source",
+          "openedAt",
+          "closedAt"
+        ],
+        "type": "object"
+      },
+      "ComplianceCaseResponseList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ComplianceCaseResponse"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -996,6 +1221,131 @@
           "status",
           "requestedAt",
           "effectiveAt"
+        ],
+        "type": "object"
+      },
+      "EngagementDetailView": {
+        "properties": {
+          "capacity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkerCapacity"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "requestedBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/WorkerScheduleDto"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkerEngagementStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "validUntil": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "worker": {
+            "$ref": "#/components/schemas/ReviewWorkerView"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "unitCode",
+          "capacity",
+          "schedule",
+          "validUntil",
+          "status",
+          "requestedBy",
+          "createdAt",
+          "worker"
+        ],
+        "type": "object"
+      },
+      "EngagementResponse": {
+        "properties": {
+          "capacity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkerCapacity"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/WorkerScheduleDto"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkerEngagementStatus"
+              }
+            ]
+          },
+          "suspendedByManagement": {
+            "type": "boolean"
+          },
+          "validUntil": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "workerName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workerName",
+          "capacity",
+          "schedule",
+          "status",
+          "validUntil",
+          "suspendedByManagement"
+        ],
+        "type": "object"
+      },
+      "EngagementResponseList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/EngagementResponse"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -2050,6 +2400,68 @@
         ],
         "type": "object"
       },
+      "NewWorkerDto": {
+        "properties": {
+          "birthDate": {
+            "description": "Required for a passport, ignored for a national ID.",
+            "format": "date",
+            "type": "string"
+          },
+          "capacity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkerCapacity"
+              }
+            ]
+          },
+          "fullName": {
+            "maxLength": 200,
+            "minLength": 2,
+            "type": "string"
+          },
+          "idDocumentNumber": {
+            "description": "14-digit national ID, or a passport number.",
+            "maxLength": 40,
+            "minLength": 1,
+            "type": "string"
+          },
+          "idDocumentType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdDocumentType"
+              }
+            ]
+          },
+          "nationality": {
+            "description": "ISO 3166-1 alpha-2; required for a passport.",
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "schedule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkerScheduleDto"
+              }
+            ],
+            "description": "Checked by the service (INVALID_SCHEDULE); empty for live-in."
+          },
+          "validUntil": {
+            "description": "Required for `temporary`.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idDocumentType",
+          "idDocumentNumber",
+          "fullName",
+          "phone",
+          "capacity"
+        ],
+        "type": "object"
+      },
       "OccupancyEndReason": {
         "enum": [
           "moved_out",
@@ -2679,6 +3091,33 @@
         ],
         "type": "object"
       },
+      "RegisteredView": {
+        "properties": {
+          "engagementId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkerEngagementStatus"
+              }
+            ]
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/WarningView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "engagementId",
+          "status",
+          "warnings"
+        ],
+        "type": "object"
+      },
       "RegistrationCodeSentView": {
         "properties": {
           "code": {
@@ -2840,6 +3279,18 @@
           "idDocumentType",
           "idDocumentNumber",
           "occupancyType"
+        ],
+        "type": "object"
+      },
+      "ReissueCodeDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `cardReissue`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -3040,6 +3491,174 @@
           "unitCode",
           "occupancyType",
           "isPrimary"
+        ],
+        "type": "object"
+      },
+      "ReviewDto": {
+        "properties": {
+          "birthDate": {
+            "description": "Corrects it at the same time.",
+            "format": "date",
+            "type": "string"
+          },
+          "birthDateConfirmed": {
+            "type": "boolean"
+          },
+          "decision": {
+            "enum": [
+              "approve",
+              "reject"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "description": "What the person is told (at most 1000 characters). Never stored in the audit trail.",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode",
+          "reason",
+          "decision"
+        ],
+        "type": "object"
+      },
+      "ReviewEngagementView": {
+        "properties": {
+          "birthDateVerified": {
+            "description": "Passport workers: the birth date was attested.",
+            "type": "boolean"
+          },
+          "capacity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkerCapacity"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "idDocumentType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdDocumentType"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkerEngagementStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "workerId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "workerName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "unitCode",
+          "workerId",
+          "workerName",
+          "capacity",
+          "status",
+          "idDocumentType",
+          "birthDateVerified",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ReviewEngagementViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewEngagementView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ReviewWorkerView": {
+        "properties": {
+          "banned": {
+            "type": "boolean"
+          },
+          "birthDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "birthDateVerifiedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "idDocumentNumberMasked": {
+            "example": "••••1234",
+            "type": "string"
+          },
+          "idDocumentType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdDocumentType"
+              }
+            ]
+          },
+          "nationality": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "phone",
+          "idDocumentType",
+          "idDocumentNumberMasked",
+          "nationality",
+          "birthDate",
+          "birthDateVerifiedAt",
+          "banned"
         ],
         "type": "object"
       },
@@ -3911,6 +4530,80 @@
           "code"
         ],
         "type": "object"
+      },
+      "WarningView": {
+        "properties": {
+          "code": {
+            "enum": [
+              "WORKER_SCHEDULE_CONFLICT"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
+      "WorkerCapacity": {
+        "enum": [
+          "live_in",
+          "hourly",
+          "driver",
+          "nanny",
+          "temporary"
+        ],
+        "type": "string"
+      },
+      "WorkerEngagementStatus": {
+        "enum": [
+          "pending_review",
+          "active",
+          "suspended",
+          "ended",
+          "rejected"
+        ],
+        "type": "string"
+      },
+      "WorkerScheduleDto": {
+        "properties": {
+          "days": {
+            "description": "0 (Sunday) … 6.",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/WorkerWindowDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "days",
+          "windows"
+        ],
+        "type": "object"
+      },
+      "WorkerWindowDto": {
+        "properties": {
+          "from": {
+            "example": "08:00",
+            "type": "string"
+          },
+          "to": {
+            "description": "Before `from`: an overnight window.",
+            "example": "14:00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object"
       }
     },
     "securitySchemes": {
@@ -4582,6 +5275,194 @@
           "auth"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/card-incidents": {
+      "get": {
+        "operationId": "WorkersController_incidents",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "open",
+                "closed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardIncidentResponseList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/card-incidents/{id}/close": {
+      "post": {
+        "operationId": "WorkersController_closeIncident",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/compliance-cases": {
+      "get": {
+        "operationId": "WorkersController_cases",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "open",
+                "closed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplianceCaseResponseList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/compliance-cases/{id}/close": {
+      "post": {
+        "operationId": "WorkersController_closeCase",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
         "x-stability": "draft"
       }
     },
@@ -8146,6 +9027,607 @@
         ],
         "tags": [
           "household"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/workers": {
+      "get": {
+        "operationId": "WorkersController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngagementResponseList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "WorkersController_register",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewWorkerDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisteredView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/worker-engagements": {
+      "get": {
+        "operationId": "WorkersController_forReview",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/WorkerEngagementStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewEngagementViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/worker-engagements/{id}": {
+      "get": {
+        "operationId": "WorkersController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngagementDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/worker-engagements/{id}/card-incident": {
+      "post": {
+        "operationId": "WorkersController_cardIncident",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardIncidentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardIncidentCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/worker-engagements/{id}/end": {
+      "post": {
+        "operationId": "WorkersController_end",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/worker-engagements/{id}/reissue-code": {
+      "post": {
+        "operationId": "WorkersController_reissue",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReissueCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessCodeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/worker-engagements/{id}/resume": {
+      "post": {
+        "operationId": "WorkersController_resume",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessCodeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/worker-engagements/{id}/review": {
+      "post": {
+        "operationId": "WorkersController_review",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessCodeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/worker-engagements/{id}/suspend": {
+      "post": {
+        "operationId": "WorkersController_suspend",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/workers/{id}/ban": {
+      "post": {
+        "operationId": "WorkersController_ban",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/workers/{id}/birth-date": {
+      "post": {
+        "operationId": "WorkersController_birthDate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BirthDateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/workers/{id}/report-underage": {
+      "post": {
+        "operationId": "WorkersController_reportUnderage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/workers/{id}/unban": {
+      "post": {
+        "operationId": "WorkersController_unban",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
         ],
         "x-stability": "draft"
       }

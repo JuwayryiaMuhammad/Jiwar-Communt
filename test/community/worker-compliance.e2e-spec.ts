@@ -102,7 +102,7 @@ describe('Worker compliance', () => {
 
     for (const e of engagements) expect(await valid(c, e.code)).toBe(false);
     const cases = await x.asManager(c, () =>
-      workers.complianceCases({ status: 'open' }),
+      workers.complianceCases({ status: 'open' }).then((p) => p.items),
     );
     expect(cases).toEqual([
       expect.objectContaining({
@@ -139,9 +139,11 @@ describe('Worker compliance', () => {
     ).toBe('WORKER_COMPLIANCE_HOLD');
     // A second report keeps the one case.
     await x.asManager(c, () => workers.reportUnderage(workerId, REPORT));
-    expect(await x.asManager(c, () => workers.complianceCases())).toHaveLength(
-      1,
-    );
+    expect(
+      await x.asManager(c, () =>
+        workers.complianceCases().then((p) => p.items),
+      ),
+    ).toHaveLength(1);
 
     const [opened] = await auditReaders(h).tenant(c.tenantId, {
       action: 'worker.compliance_case_opened',
@@ -204,7 +206,11 @@ describe('Worker compliance', () => {
     await x.asManager(c, () =>
       workers.correctBirthDate(workerId, bornYearsAgo(16)),
     );
-    expect(await x.asManager(c, () => workers.complianceCases())).toEqual([
+    expect(
+      await x.asManager(c, () =>
+        workers.complianceCases().then((p) => p.items),
+      ),
+    ).toEqual([
       expect.objectContaining({
         workerId,
         source: 'birth_date_correction',
@@ -259,6 +265,10 @@ describe('Worker compliance', () => {
         ),
       ),
     ).toBe('COMPLIANCE_CASE_NOT_FOUND');
-    expect(await x.asManager(b, () => workers.complianceCases())).toEqual([]);
+    expect(
+      await x.asManager(b, () =>
+        workers.complianceCases().then((p) => p.items),
+      ),
+    ).toEqual([]);
   });
 });

@@ -115,7 +115,7 @@ describe('Card incidents', () => {
     const residentMail = JSON.stringify(toResident);
     expect(residentMail).not.toMatch(/confiscat|employer/i);
     const [incident] = await x.asManager(s.c, () =>
-      workers.cardIncidents({ status: 'open' }),
+      workers.cardIncidents({ status: 'open' }).then((p) => p.items),
     );
     expect(incident).toMatchObject({
       id: out.incidentId,
@@ -151,9 +151,17 @@ describe('Card incidents', () => {
     await asResident(s, () =>
       workers.reissueCode(s.engagementId, 'compromised'),
     );
-    expect(await x.asManager(s.c, () => workers.cardIncidents())).toEqual([]);
+    expect(
+      await x.asManager(s.c, () =>
+        workers.cardIncidents().then((p) => p.items),
+      ),
+    ).toEqual([]);
     await asResident(s, () => workers.reissueCode(s.engagementId, 'lost'));
-    expect(await x.asManager(s.c, () => workers.cardIncidents())).toEqual([
+    expect(
+      await x.asManager(s.c, () =>
+        workers.cardIncidents().then((p) => p.items),
+      ),
+    ).toEqual([
       expect.objectContaining({ type: 'lost', reportedVia: 'resident' }),
     ]);
     // The resident acted: they are not emailed about their own reissue.
@@ -199,6 +207,8 @@ describe('Card incidents', () => {
     await x.asManager(a.c, () =>
       workers.reportCardIncident(a.engagementId, 'lost'),
     );
-    expect(await x.asManager(b, () => workers.cardIncidents())).toEqual([]);
+    expect(
+      await x.asManager(b, () => workers.cardIncidents().then((p) => p.items)),
+    ).toEqual([]);
   });
 });

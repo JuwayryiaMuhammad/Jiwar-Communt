@@ -8,6 +8,7 @@ import { HouseholdsService } from '../../src/community/households/households.ser
 import { MemberPermissionsService } from '../../src/community/households/member-permissions.service';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import { RegistrationService } from '../../src/community/residents/registration.service';
+import { WorkersService } from '../../src/community/workers/workers.service';
 import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
 import { communityHelpers, type Compound } from '../setup/community';
@@ -66,6 +67,12 @@ export interface World {
   bDeferredActionId: string;
   /** B's owner delegates the workers to B's family member. */
   bDelegationId: string;
+  /** An active engagement in B (its worker), a compliance case on another
+   * worker, and a card incident on the engagement. */
+  bEngagementId: string;
+  bWorkerId: string;
+  bCaseId: string;
+  bIncidentId: string;
   /** A fresh token (and session) for any account. */
   tokenFor(
     side: Compound,
@@ -246,7 +253,47 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
           new Date(Date.now() + 30 * 86_400_000),
         ),
   );
+  const workers = h.moduleRef.get(WorkersService);
+  const asBOwner = <T>(fn: () => Promise<T>) =>
+    helpers.as(b, { id: b.ids.owner, type: 'resident' }, fn);
+  const worker = () => ({
+    fullName: 'World Worker',
+    idDocumentType: 'national_id' as const,
+    idDocumentNumber: nationalIdFor(),
+    phone: uniquePhone(),
+    capacity: 'live_in' as const,
+  });
+  const bEngagement = await asBOwner(() =>
+    workers.register(b.homeUnitId, worker()),
+  );
+  await helpers.asManager(b, () =>
+    workers.review(bEngagement.engagementId, 'approve'),
+  );
+  const bIncident = await helpers.asManager(b, () =>
+    workers.reportCardIncident(bEngagement.engagementId, 'lost'),
+  );
+  const other = await asBOwner(() => workers.register(b.homeUnitId, worker()));
+  const otherRow = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.workerEngagement.findUniqueOrThrow({
+      where: { id: other.engagementId },
+    }),
+  );
+  const bCaseId = await helpers.asManager(b, () =>
+    workers.reportUnderage(otherRow.workerId, {
+      code: 'report_received',
+      text: 'World',
+    }),
+  );
+  const bRow = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.workerEngagement.findUniqueOrThrow({
+      where: { id: bEngagement.engagementId },
+    }),
+  );
   return {
+    bEngagementId: bEngagement.engagementId,
+    bWorkerId: bRow.workerId,
+    bCaseId,
+    bIncidentId: bIncident.incidentId,
     bDelegationId: bDelegation.id,
     bDeferredActionId,
     bInviteId: bInvite.inviteId,

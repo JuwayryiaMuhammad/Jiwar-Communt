@@ -1,3 +1,4 @@
+import { AuditController } from './audit.controller';
 import { Global, Module } from '@nestjs/common';
 import {
   AuditQueryService,
@@ -11,6 +12,7 @@ import { SecurityEventsService } from './security-events.service';
 
 @Global()
 @Module({
+  controllers: [AuditController],
   providers: [
     AuditContext,
     AuditService,

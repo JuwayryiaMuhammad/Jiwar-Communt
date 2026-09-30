@@ -237,6 +237,87 @@
         ],
         "type": "string"
       },
+      "AuditEntryView": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "actorId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "actorType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuditActorType"
+              }
+            ]
+          },
+          "changes": {
+            "description": "Changed fields; personal values are `{ changed: true }`.",
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "metadata": {
+            "description": "Codes and counts only; never personal data.",
+            "nullable": true,
+            "type": "object"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "requestId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "targetId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "targetType": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "occurredAt",
+          "actorType",
+          "actorId",
+          "action",
+          "targetType",
+          "targetId",
+          "changes",
+          "metadata",
+          "requestId"
+        ],
+        "type": "object"
+      },
+      "AuditEntryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AuditEntryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "CapabilitiesView": {
         "properties": {
           "activityVisibleToPrimary": {
@@ -1806,6 +1887,43 @@
         ],
         "type": "object"
       },
+      "PermissionView": {
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "kinds": {
+            "items": {
+              "$ref": "#/components/schemas/AccountType"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "kinds"
+        ],
+        "type": "object"
+      },
+      "PermissionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PermissionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "PlatformAuditEntryView": {
         "properties": {
           "action": {
@@ -2160,6 +2278,21 @@
         ],
         "type": "object"
       },
+      "ReplacePermissionsDto": {
+        "properties": {
+          "permissions": {
+            "description": "The whole set; keys from GET /permissions. The manager role keeps roles.manage and residents.manage.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "permissions"
+        ],
+        "type": "object"
+      },
       "RequestOtpDto": {
         "properties": {
           "identifier": {
@@ -2367,6 +2500,66 @@
         ],
         "type": "object"
       },
+      "RoleView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "isSystem": {
+            "type": "boolean"
+          },
+          "key": {
+            "description": "System roles are translated by key.",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountType"
+              }
+            ]
+          },
+          "name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "name",
+          "kind",
+          "isSystem",
+          "permissions"
+        ],
+        "type": "object"
+      },
+      "RoleViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/RoleView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "SecurityEventView": {
         "properties": {
           "accountId": {
@@ -2531,6 +2724,26 @@
         },
         "required": [
           "accountId"
+        ],
+        "type": "object"
+      },
+      "SettingsView": {
+        "properties": {
+          "familyJoinRequiresApproval": {
+            "type": "boolean"
+          },
+          "maxHouseholdMembers": {
+            "type": "number"
+          },
+          "timezone": {
+            "description": "IANA; worker schedules are read in it.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "familyJoinRequiresApproval",
+          "maxHouseholdMembers",
+          "timezone"
         ],
         "type": "object"
       },
@@ -2987,6 +3200,24 @@
         ],
         "type": "object"
       },
+      "UpdateSettingsDto": {
+        "properties": {
+          "familyJoinRequiresApproval": {
+            "type": "boolean"
+          },
+          "maxHouseholdMembers": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "number"
+          },
+          "timezone": {
+            "description": "IANA time zone.",
+            "example": "Africa/Cairo",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "VerifyOtpDto": {
         "properties": {
           "code": {
@@ -3406,6 +3637,109 @@
         ],
         "tags": [
           "accounts"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/audit": {
+      "get": {
+        "operationId": "AuditController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "Inclusive.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Exclusive.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "An action from the audit catalog, e.g. `unit.created`.",
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "actorId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "targetType",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "targetId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditEntryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
         ],
         "x-stability": "draft"
       }
@@ -4350,6 +4684,33 @@
         ],
         "tags": [
           "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/permissions": {
+      "get": {
+        "operationId": "RolesController_catalog",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
         ],
         "x-stability": "draft"
       }
@@ -5527,6 +5888,177 @@
         ],
         "tags": [
           "unit-states"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/roles": {
+      "get": {
+        "operationId": "RolesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/roles/{id}": {
+      "get": {
+        "operationId": "RolesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/roles/{id}/permissions": {
+      "put": {
+        "operationId": "RolesController_replace",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplacePermissionsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/settings": {
+      "get": {
+        "operationId": "SettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "SettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
         ],
         "x-stability": "draft"
       }

@@ -1,3 +1,4 @@
+import { RolesController } from './roles.controller';
 import { Global, Module } from '@nestjs/common';
 import { ACCESS_CATALOG, CODE_ACCESS_CATALOG } from './access-catalog';
 import { PermissionsService } from './permissions.service';
@@ -8,6 +9,7 @@ import { StaffRecipients } from './staff-recipients';
 
 @Global()
 @Module({
+  controllers: [RolesController],
   providers: [
     { provide: ACCESS_CATALOG, useValue: CODE_ACCESS_CATALOG },
     RoleProvisioner,

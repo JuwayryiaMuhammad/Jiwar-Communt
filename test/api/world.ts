@@ -4,6 +4,7 @@ import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { hashPassword } from '../../src/core/platform/password';
 import { PlatformSessionService } from '../../src/core/platform/platform-session.service';
 import { RegistrationService } from '../../src/community/residents/registration.service';
+import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
 import { communityHelpers, type Compound } from '../setup/community';
 import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
@@ -51,6 +52,8 @@ export interface World {
   /** A pending deletion request in B, and a legal hold on its account. */
   bDeletionRequestId: string;
   bLegalHoldId: string;
+  /** B's resident role. */
+  bRoleId: string;
   /** A fresh token (and session) for any account. */
   tokenFor(
     side: Compound,
@@ -188,7 +191,11 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
   const holdId = await helpers.asManager(b, () =>
     deletion.placeLegalHold(leaving.id, { code: 'litigation', text: 'World' }),
   );
+  const bRoles = await helpers.asManager(b, () =>
+    h.moduleRef.get(RolesService).list(),
+  );
   return {
+    bRoleId: bRoles.find((r) => r.key === 'resident')!.id,
     bFlagId,
     bDeletionRequestId: request.id,
     bLegalHoldId: holdId,

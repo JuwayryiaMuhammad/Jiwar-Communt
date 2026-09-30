@@ -770,6 +770,28 @@
         ],
         "type": "object"
       },
+      "CreatedInviteView": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "inviteId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "token": {
+            "description": "Shown once; only its hash is stored.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "inviteId",
+          "token",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
       "CreatedLinkView": {
         "properties": {
           "createdAt": {
@@ -936,6 +958,135 @@
         ],
         "type": "object"
       },
+      "GrantSummaryView": {
+        "properties": {
+          "capPerOperation": {
+            "description": "Finance only.",
+            "nullable": true,
+            "type": "string"
+          },
+          "permission": {
+            "enum": [
+              "visitors_invite",
+              "bookings",
+              "tickets",
+              "finance",
+              "unit_security"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "permission",
+          "capPerOperation"
+        ],
+        "type": "object"
+      },
+      "HouseholdMemberItemView": {
+        "properties": {
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "isMinor": {
+            "type": "boolean"
+          },
+          "permissions": {
+            "description": "The primary or a household delegate only.",
+            "items": {
+              "$ref": "#/components/schemas/GrantSummaryView"
+            },
+            "type": "array"
+          },
+          "relation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HouseholdRelation"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HouseholdMemberStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "relation",
+          "isMinor",
+          "status"
+        ],
+        "type": "object"
+      },
+      "HouseholdMemberResponse": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "isMinor": {
+            "type": "boolean"
+          },
+          "relation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HouseholdRelation"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HouseholdMemberStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "relation",
+          "isMinor",
+          "status",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "HouseholdMemberResponseList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/HouseholdMemberResponse"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "HouseholdMemberStatus": {
         "description": "`pending_approval` when the compound approves new members first.",
         "enum": [
@@ -954,6 +1105,27 @@
           "other"
         ],
         "type": "string"
+      },
+      "HouseholdResponse": {
+        "properties": {
+          "invites": {
+            "description": "The primary or a household delegate only.",
+            "items": {
+              "$ref": "#/components/schemas/PendingInviteResponse"
+            },
+            "type": "array"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/HouseholdMemberItemView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "members"
+        ],
+        "type": "object"
       },
       "HouseholdSummaryView": {
         "properties": {
@@ -1138,6 +1310,22 @@
           "accountId",
           "tenantName",
           "accountType"
+        ],
+        "type": "object"
+      },
+      "MajorityInviteDto": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "phone"
         ],
         "type": "object"
       },
@@ -1520,6 +1708,60 @@
         ],
         "type": "object"
       },
+      "NewInviteDto": {
+        "properties": {
+          "birthDate": {
+            "description": "Required for a passport, ignored for a national ID.",
+            "format": "date",
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "type": "string"
+          },
+          "fullName": {
+            "maxLength": 200,
+            "minLength": 2,
+            "type": "string"
+          },
+          "idDocumentNumber": {
+            "description": "14-digit national ID, or a passport number.",
+            "maxLength": 40,
+            "minLength": 1,
+            "type": "string"
+          },
+          "idDocumentType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdDocumentType"
+              }
+            ]
+          },
+          "nationality": {
+            "description": "ISO 3166-1 alpha-2; required for a passport.",
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "relation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HouseholdRelation"
+              }
+            ]
+          }
+        },
+        "required": [
+          "idDocumentType",
+          "idDocumentNumber",
+          "fullName",
+          "phone",
+          "email",
+          "relation"
+        ],
+        "type": "object"
+      },
       "NewManagerDto": {
         "properties": {
           "birthDate": {
@@ -1570,6 +1812,51 @@
           "fullName",
           "phone",
           "email"
+        ],
+        "type": "object"
+      },
+      "NewMinorDto": {
+        "properties": {
+          "birthDate": {
+            "description": "Required for a passport, ignored for a national ID.",
+            "format": "date",
+            "type": "string"
+          },
+          "fullName": {
+            "maxLength": 200,
+            "minLength": 2,
+            "type": "string"
+          },
+          "idDocumentNumber": {
+            "description": "14-digit national ID, or a passport number.",
+            "maxLength": 40,
+            "minLength": 1,
+            "type": "string"
+          },
+          "idDocumentType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdDocumentType"
+              }
+            ]
+          },
+          "nationality": {
+            "description": "ISO 3166-1 alpha-2; required for a passport.",
+            "type": "string"
+          },
+          "relation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HouseholdRelation"
+              }
+            ]
+          }
+        },
+        "required": [
+          "idDocumentType",
+          "idDocumentNumber",
+          "fullName",
+          "relation"
         ],
         "type": "object"
       },
@@ -1785,6 +2072,94 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/PendingErasureView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "PendingInviteResponse": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "relation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HouseholdRelation"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "relation",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "PendingMemberView": {
+        "properties": {
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "memberId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "relation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HouseholdRelation"
+              }
+            ]
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "memberId",
+          "unitId",
+          "unitCode",
+          "fullName",
+          "relation",
+          "requestedAt"
+        ],
+        "type": "object"
+      },
+      "PendingMemberViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PendingMemberView"
             },
             "type": "array"
           },
@@ -4043,6 +4418,283 @@
         },
         "tags": [
           "health"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/household/invites/{id}/revoke": {
+      "post": {
+        "operationId": "HouseholdController_revokeInvite",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "household"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/household/members/{id}/approve": {
+      "post": {
+        "operationId": "HouseholdController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdMemberResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "household"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/household/members/{id}/majority-invite": {
+      "post": {
+        "operationId": "HouseholdController_majorityInvite",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MajorityInviteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedInviteView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "household"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/household/members/{id}/reject": {
+      "post": {
+        "operationId": "HouseholdController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "household"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/household/members/{id}/remove": {
+      "post": {
+        "operationId": "HouseholdController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "household"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/household/members/{id}/remove-by-management": {
+      "post": {
+        "operationId": "HouseholdController_removeByManagement",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "household"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/household/pending": {
+      "get": {
+        "operationId": "HouseholdController_pending",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingMemberViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "household"
         ],
         "x-stability": "draft"
       }
@@ -6645,6 +7297,171 @@
         ],
         "tags": [
           "unit-states"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/household": {
+      "get": {
+        "operationId": "HouseholdController_household",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "household"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/household/invites": {
+      "post": {
+        "operationId": "HouseholdController_invite",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewInviteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedInviteView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "household"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/household/minors": {
+      "post": {
+        "operationId": "HouseholdController_addMinor",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewMinorDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdMemberResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "household"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/household/minors-ready": {
+      "get": {
+        "operationId": "HouseholdController_minorsReady",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdMemberResponseList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "household"
         ],
         "x-stability": "draft"
       }

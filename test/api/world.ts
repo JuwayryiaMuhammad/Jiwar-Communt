@@ -3,6 +3,7 @@ import { newId } from '../../src/core/common/uuid';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { hashPassword } from '../../src/core/platform/password';
 import { PlatformSessionService } from '../../src/core/platform/platform-session.service';
+import { HouseholdsService } from '../../src/community/households/households.service';
 import { RegistrationService } from '../../src/community/residents/registration.service';
 import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
@@ -32,6 +33,8 @@ export interface Side extends Compound {
   tokens: Record<Persona, string>;
   /** The session behind each token. */
   sessions: Record<Persona, string>;
+  /** The family account's membership of home. */
+  familyMemberId: string;
   /** Active occupancies: the owner's of home, the landlord's and tenant's of rented. */
   occupancies: Record<'owner' | 'landlord' | 'tenant', string>;
 }
@@ -54,6 +57,8 @@ export interface World {
   bLegalHoldId: string;
   /** B's resident role. */
   bRoleId: string;
+  /** A pending household invite in B. */
+  bInviteId: string;
   /** A fresh token (and session) for any account. */
   tokenFor(
     side: Compound,
@@ -115,6 +120,7 @@ async function side(
     tokens,
     sessions,
     occupancies,
+    familyMemberId: family.memberId,
   };
 }
 
@@ -194,7 +200,21 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
   const bRoles = await helpers.asManager(b, () =>
     h.moduleRef.get(RolesService).list(),
   );
+  const bInvite = await helpers.as(
+    b,
+    { id: b.ids.owner, type: 'resident' },
+    () =>
+      h.moduleRef.get(HouseholdsService).createInvite(b.homeUnitId, {
+        fullName: 'World Invitee',
+        phone: uniquePhone(),
+        email: uniqueEmail('world-invite'),
+        idDocumentType: 'national_id',
+        idDocumentNumber: nationalIdFor(),
+        relation: 'sibling',
+      }),
+  );
   return {
+    bInviteId: bInvite.inviteId,
     bRoleId: bRoles.find((r) => r.key === 'resident')!.id,
     bFlagId,
     bDeletionRequestId: request.id,

@@ -5,6 +5,7 @@ import { DelegationsService } from './delegations.service';
 import { HouseholdAuthority } from './household-authority';
 import { HouseholdEmailTemplates } from './household-email-templates';
 import { HouseholdsService } from './households.service';
+import { HouseholdController } from './household.controller';
 import { InviteAcceptanceController } from './invite-acceptance.controller';
 import { InviteAcceptanceService } from './invite-acceptance.service';
 import { ReviewFlags } from '../units/review-flags';
@@ -14,7 +15,7 @@ import { MajorityNotices } from './majority-notices';
 
 /** Households, delegation and member permissions (ADR 0016, 0021). */
 @Module({
-  controllers: [InviteAcceptanceController],
+  controllers: [InviteAcceptanceController, HouseholdController],
   imports: [AccountsModule, AuthModule, NoticesModule],
   providers: [
     HouseholdAuthority,

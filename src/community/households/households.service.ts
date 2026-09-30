@@ -4,6 +4,7 @@ import {
   $Enums,
   type HouseholdMember,
   type HouseholdRelation,
+  type Prisma,
 } from '@prisma/client';
 import {
   runAfterCommit,
@@ -19,6 +20,7 @@ import {
   normalizePhone,
 } from '../../core/auth/identifier';
 import { RequestContext } from '../../core/common/cls/request-context';
+import { clampLimit, keysetCursor, type Page } from '../../core/common/cursor';
 import {
   adultCutoff,
   isAdult,
@@ -52,16 +54,25 @@ import { TenantSettingsService } from '../../core/tenant-settings/tenant-setting
 import { ReviewFlags } from '../units/review-flags';
 import { lockUnits } from '../units/unit-lock';
 import { DelegationsService } from './delegations.service';
-import { HouseholdAuthority, type Authority } from './household-authority';
+import {
+  HouseholdAuthority,
+  isPrimary,
+  type Authority,
+} from './household-authority';
 import { HOUSEHOLD_EMAILS } from './household-email-templates';
 import type {
   CreatedInvite,
   HouseholdMemberView,
+  HouseholdView,
   NewInvite,
   NewMinor,
+  PendingMember,
 } from './households.types';
 
 export const INVITE_TTL_DAYS = 7;
+
+/** The approval queue: oldest first. */
+const APPROVAL_PAGE = keysetCursor('createdAt', 'asc');
 
 /**
  * A unit's household (ADR 0016):
@@ -622,6 +633,113 @@ export class HouseholdsService {
       );
     }
     return after;
+  }
+
+  /**
+   * The household as the caller may see it (API v0): members for everyone
+   * who sees it (an owner-landlord does not); their grants and the pending
+   * invites only for the primary or a live `household` delegate. Never a
+   * phone, an email or a document.
+   */
+  async household(unitId: string): Promise<HouseholdView> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.authority.assertHouseholdVisible(tx, unitId);
+      const manages = await this.managesHousehold(tx, unitId);
+      const rows = await tx.householdMember.findMany({
+        where: { unitId, status: { in: ['active', 'pending_approval'] } },
+        include: {
+          account: { select: { fullName: true } },
+          grants: {
+            where: { revokedAt: null },
+            select: { permission: true, capPerOperation: true },
+            orderBy: { grantedAt: 'asc' },
+          },
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+      const members = rows.map((m) => ({
+        ...memberView(m),
+        ...(manages
+          ? {
+              grants: m.grants.map((g) => ({
+                permission: g.permission,
+                capPerOperation: g.capPerOperation?.toFixed(2) ?? null,
+              })),
+            }
+          : {}),
+      }));
+      if (!manages) return { members, invites: null };
+      const invites = await tx.householdInvite.findMany({
+        // A majority invite is for a member already listed.
+        where: {
+          unitId,
+          status: 'pending',
+          expiresAt: { gt: new Date() },
+          memberId: null,
+        },
+        select: { id: true, fullName: true, relation: true, expiresAt: true },
+        orderBy: { createdAt: 'asc' },
+      });
+      return { members, invites };
+    });
+  }
+
+  /** The unit's primary, or a live, unexpired `household` delegate of theirs. */
+  private async managesHousehold(
+    tx: TenantTxClient,
+    unitId: string,
+  ): Promise<boolean> {
+    const accountId = this.ctx.accountId;
+    if (await isPrimary(tx, unitId, accountId)) return true;
+    const delegation = await tx.householdDelegation.findFirst({
+      where: {
+        unitId,
+        delegateAccountId: accountId,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+        scopes: { has: 'household' },
+      },
+      select: { delegatorAccountId: true },
+    });
+    return (
+      delegation !== null &&
+      (await isPrimary(tx, unitId, delegation.delegatorAccountId))
+    );
+  }
+
+  /** Memberships waiting for approval (`household.approve`), oldest first. */
+  async pendingApprovals(
+    q: { cursor?: string; limit?: number } = {},
+  ): Promise<Page<PendingMember>> {
+    const limit = clampLimit(q.limit);
+    const rows = await this.prisma.tenant.householdMember.findMany({
+      where: {
+        AND: [
+          { status: 'pending_approval' },
+          ...(APPROVAL_PAGE.after(
+            q.cursor,
+          ) as Prisma.HouseholdMemberWhereInput[]),
+        ],
+      },
+      include: {
+        unit: { select: { code: true } },
+        account: { select: { fullName: true } },
+      },
+      orderBy: APPROVAL_PAGE.orderBy,
+      take: limit + 1,
+    });
+    const page = APPROVAL_PAGE.toPage(rows, limit);
+    return {
+      items: page.items.map((m) => ({
+        memberId: m.id,
+        unitId: m.unitId,
+        unitCode: m.unit.code,
+        fullName: m.fullName ?? m.account?.fullName ?? null,
+        relation: m.relation,
+        requestedAt: m.createdAt,
+      })),
+      nextCursor: page.nextCursor,
+    };
   }
 
   /** Everyone who can see the unit sees its household (minors by name). */

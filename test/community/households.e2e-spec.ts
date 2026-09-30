@@ -5,6 +5,7 @@ import { IdentifierHasher } from '../../src/core/auth/identifier';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { PlatformModule } from '../../src/core/platform/platform.module';
 import { TenantSettingsService } from '../../src/core/tenant-settings/tenant-settings.service';
+import { DelegationsService } from '../../src/community/households/delegations.service';
 import { HouseholdsService } from '../../src/community/households/households.service';
 import { InviteAcceptanceService } from '../../src/community/households/invite-acceptance.service';
 import type { NewInvite } from '../../src/community/households/households.types';
@@ -442,6 +443,113 @@ describe('Households', () => {
       } finally {
         consume.mockRestore();
       }
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  describe('the household as each viewer sees it', () => {
+    it('grants and pending invites for the primary and a household delegate only', async () => {
+      const hm = await home();
+      const joined = await join(hm);
+      const kid = await asPrimary(hm, () =>
+        households.addMinor(hm.unitId, minor()),
+      );
+      const pending = adult('pending');
+      const invite = await asPrimary(hm, () =>
+        households.createInvite(hm.unitId, pending),
+      );
+
+      const primaryView = await asPrimary(hm, () =>
+        households.household(hm.unitId),
+      );
+      expect(primaryView.members.map((m) => m.id).sort()).toEqual(
+        [joined.memberId, kid.id].sort(),
+      );
+      const adultMember = primaryView.members.find(
+        (m) => m.id === joined.memberId,
+      )!;
+      expect(adultMember.grants?.map((g) => g.permission).sort()).toEqual([
+        'bookings',
+        'tickets',
+        'visitors_invite',
+      ]);
+      expect(primaryView.invites).toEqual([
+        {
+          id: invite.inviteId,
+          fullName: pending.fullName,
+          relation: pending.relation,
+          expiresAt: invite.expiresAt,
+        },
+      ]);
+      const text = JSON.stringify(primaryView);
+      for (const secret of [pending.email, pending.phone, joined.input.email]) {
+        expect(text).not.toContain(secret);
+      }
+
+      const memberView = await asFamily(hm, joined.accountId, () =>
+        households.household(hm.unitId),
+      );
+      expect(memberView.invites).toBeNull();
+      for (const m of memberView.members)
+        expect(m).not.toHaveProperty('grants');
+
+      await asPrimary(hm, () =>
+        h.moduleRef
+          .get(DelegationsService)
+          .create(
+            hm.unitId,
+            joined.accountId,
+            ['household'],
+            new Date(Date.now() + 30 * 86_400_000),
+          ),
+      );
+      const delegateView = await asFamily(hm, joined.accountId, () =>
+        households.household(hm.unitId),
+      );
+      expect(delegateView.invites).toHaveLength(1);
+    });
+
+    it('an owner-landlord does not see the household', async () => {
+      const hm = await home();
+      const landlord = await x.asManager(hm.c, () =>
+        x.residents.createResident({
+          ...x.person('landlord'),
+          units: [
+            { unitId: hm.unitId, occupancyType: 'owner', resides: false },
+          ],
+        }),
+      );
+      expect(
+        await code(
+          asResident(hm, landlord, () => households.household(hm.unitId)),
+        ),
+      ).toBe('FORBIDDEN');
+    });
+
+    it('pending approvals: oldest first, across units, for managers', async () => {
+      const hm = await home();
+      await x.asManager(hm.c, () =>
+        settings.update({ familyJoinRequiresApproval: true }),
+      );
+      const first = await join(hm);
+      const second = await join(hm);
+      const page = await x.asManager(hm.c, () =>
+        households.pendingApprovals({ limit: 1 }),
+      );
+      expect(page.items).toEqual([
+        {
+          memberId: first.memberId,
+          unitId: hm.unitId,
+          unitCode: expect.any(String) as string,
+          fullName: first.input.fullName,
+          relation: first.input.relation,
+          requestedAt: expect.any(Date) as Date,
+        },
+      ]);
+      const rest = await x.asManager(hm.c, () =>
+        households.pendingApprovals({ limit: 1, cursor: page.nextCursor! }),
+      );
+      expect(rest.items.map((p) => p.memberId)).toEqual([second.memberId]);
     });
   });
 

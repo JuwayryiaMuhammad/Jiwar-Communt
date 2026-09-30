@@ -1,5 +1,9 @@
 import type { IdentityDocumentInput } from '../../core/common/identity-document';
-import type { HouseholdMemberStatus, HouseholdRelation } from '@prisma/client';
+import type {
+  HouseholdMemberStatus,
+  HouseholdRelation,
+  MemberPermission,
+} from '@prisma/client';
 
 // Service-level shapes (no endpoints yet; HTTP shapes come with the design).
 
@@ -40,4 +44,39 @@ export interface AcceptedInvite {
   accountId: string;
   memberId: string;
   membershipStatus: HouseholdMemberStatus;
+}
+
+/** A member's live grant, as the household view shows it to its managers. */
+export interface MemberGrantSummary {
+  permission: MemberPermission;
+  /** Finance only; decimal string. */
+  capPerOperation: string | null;
+}
+
+/** A pending (non-majority) invite, for the primary or a delegate. */
+export interface PendingInviteView {
+  id: string;
+  fullName: string | null;
+  relation: HouseholdRelation;
+  expiresAt: Date;
+}
+
+/**
+ * A unit's household as the caller may see it: members for everyone who
+ * sees the household; their grants and the pending invites only for the
+ * primary or a `household` delegate (`invites` is null otherwise).
+ */
+export interface HouseholdView {
+  members: (HouseholdMemberView & { grants?: MemberGrantSummary[] })[];
+  invites: PendingInviteView[] | null;
+}
+
+/** A membership waiting for the manager's approval. */
+export interface PendingMember {
+  memberId: string;
+  unitId: string;
+  unitCode: string;
+  fullName: string | null;
+  relation: HouseholdRelation;
+  requestedAt: Date;
 }

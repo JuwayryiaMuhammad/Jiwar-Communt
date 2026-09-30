@@ -49,7 +49,8 @@ describe('Domestic workers', () => {
 
   const nanny = (over: Partial<NewWorker> = {}): NewWorker => ({
     fullName: 'Nanny Worker',
-    nationalId: nationalIdFor(bornYearsAgo(35)),
+    idDocumentType: 'national_id' as const,
+    idDocumentNumber: nationalIdFor(bornYearsAgo(35)),
     phone: uniquePhone(),
     capacity: 'hourly',
     schedule: { days: [0, 1, 2], windows: [{ from: '08:00', to: '14:00' }] },
@@ -97,7 +98,7 @@ describe('Domestic workers', () => {
           asResident(hm, () =>
             workers.register(
               hm.unitId,
-              nanny({ nationalId: nationalIdFor(bornYearsAgo(17, -1)) }),
+              nanny({ idDocumentNumber: nationalIdFor(bornYearsAgo(17, -1)) }),
             ),
           ),
         ),
@@ -113,13 +114,14 @@ describe('Domestic workers', () => {
       const b = await home(c);
       const nationalId = nationalIdFor(bornYearsAgo(40));
       const first = await asResident(a, () =>
-        workers.register(a.unitId, nanny({ nationalId })),
+        workers.register(a.unitId, nanny({ idDocumentNumber: nationalId })),
       );
       const second = await asResident(b, () =>
         workers.register(
           b.unitId,
           nanny({
-            nationalId,
+            idDocumentType: 'national_id' as const,
+            idDocumentNumber: nationalId,
             fullName: 'Typed Differently',
             phone: uniquePhone(),
           }),
@@ -149,7 +151,7 @@ describe('Domestic workers', () => {
           asResident(other, () =>
             workers.register(
               other.unitId,
-              nanny({ nationalId: w.input.nationalId }),
+              nanny({ idDocumentNumber: w.input.idDocumentNumber }),
             ),
           ),
         ),
@@ -161,12 +163,13 @@ describe('Domestic workers', () => {
       const a = await home(c);
       const b = await home(c);
       const nationalId = nationalIdFor(bornYearsAgo(30));
-      await active(a, nanny({ nationalId }));
+      await active(a, nanny({ idDocumentNumber: nationalId }));
       const clash = await asResident(b, () =>
         workers.register(
           b.unitId,
           nanny({
-            nationalId,
+            idDocumentType: 'national_id' as const,
+            idDocumentNumber: nationalId,
             schedule: { days: [1], windows: [{ from: '12:00', to: '16:00' }] },
           }),
         ),
@@ -182,7 +185,8 @@ describe('Domestic workers', () => {
         workers.register(
           c2.unitId,
           nanny({
-            nationalId,
+            idDocumentType: 'national_id' as const,
+            idDocumentNumber: nationalId,
             schedule: { days: [5], windows: [{ from: '12:00', to: '16:00' }] },
           }),
         ),
@@ -260,7 +264,9 @@ describe('Domestic workers', () => {
       ).toBe('REASON_REQUIRED');
       expect(
         await x.asManager(hm.c, () =>
-          workers.review(reg.engagementId, 'reject', 'Missing documents'),
+          workers.review(reg.engagementId, 'reject', {
+            reason: 'Missing documents',
+          }),
         ),
       ).toBeNull();
       expect(await row(hm, reg.engagementId)).toMatchObject({
@@ -318,7 +324,7 @@ describe('Domestic workers', () => {
       const first = await active(hm);
       const second = await active(
         hm,
-        nanny({ nationalId: nationalIdFor(bornYearsAgo(28)) }),
+        nanny({ idDocumentNumber: nationalIdFor(bornYearsAgo(28)) }),
       );
       await asResident(hm, () => workers.suspend(first.engagementId, 'Break'));
       // While `first` is suspended, `second` ends up with the same code (a
@@ -352,11 +358,12 @@ describe('Domestic workers', () => {
       const a = await home(c);
       const b = await home(c);
       const nationalId = nationalIdFor(bornYearsAgo(33));
-      const wa = await active(a, nanny({ nationalId }));
+      const wa = await active(a, nanny({ idDocumentNumber: nationalId }));
       const wb = await active(
         b,
         nanny({
-          nationalId,
+          idDocumentType: 'national_id' as const,
+          idDocumentNumber: nationalId,
           schedule: { days: [4], windows: [{ from: '15:00', to: '18:00' }] },
         }),
       );
@@ -456,11 +463,12 @@ describe('Domestic workers', () => {
       const a = await home(c);
       const b = await home(c);
       const nationalId = nationalIdFor(bornYearsAgo(29));
-      await active(a, nanny({ nationalId }));
+      await active(a, nanny({ idDocumentNumber: nationalId }));
       await active(
         b,
         nanny({
-          nationalId,
+          idDocumentType: 'national_id' as const,
+          idDocumentNumber: nationalId,
           schedule: { days: [6], windows: [{ from: '09:00', to: '10:00' }] },
         }),
       );

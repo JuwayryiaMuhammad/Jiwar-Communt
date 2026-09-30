@@ -8,7 +8,6 @@ import { SecurityEventsService } from '../../core/audit/security-events.service'
 import { IdentifierHasher } from '../../core/auth/identifier';
 import { OtpService } from '../../core/auth/otp.service';
 import type { AppClsStore } from '../../core/common/cls/app-cls';
-import { parseEgyptianNationalId } from '../../core/common/egyptian-national-id';
 import { appError, ErrorCode } from '../../core/common/errors';
 import type { Locale } from '../../core/common/i18n/locale';
 import { newId } from '../../core/common/uuid';
@@ -177,8 +176,12 @@ export class InviteAcceptanceService {
       where: { type: 'family', email: invite.email },
     });
     let accountId: string;
+    let birthDate: Date | null;
     if (existing) {
       accountId = existing.id;
+      // The account's own stored date wins; a legacy account without one
+      // takes the invite's.
+      birthDate = existing.birthDate ?? invite.birthDate;
       if (existing.status !== 'active') {
         await this.writer.setStatus(tx, existing.id, 'active');
       }
@@ -186,16 +189,18 @@ export class InviteAcceptanceService {
       const created = await this.writer.create(tx, tenantId, {
         type: 'family',
         fullName: invite.fullName,
-        nationalId: invite.idDocumentNumber,
+        idDocumentType: invite.idDocumentType,
+        idDocumentNumber: invite.idDocumentNumber,
+        nationality: invite.nationality,
+        birthDate: invite.birthDate ?? undefined,
         phone: invite.phone,
         email: invite.email,
       });
       accountId = created.id;
+      birthDate = created.birthDate;
     }
+    if (!birthDate) return null; // unreachable: invites store a birth date
 
-    const nationalId =
-      parseEgyptianNationalId(existing?.idDocumentNumber ?? '') ??
-      parseEgyptianNationalId(invite.idDocumentNumber);
     const { familyJoinRequiresApproval } = await this.settings.inTx(
       tx,
       tenantId,
@@ -210,7 +215,7 @@ export class InviteAcceptanceService {
         accountId,
         relation: invite.relation,
         isMinor: false,
-        birthDate: nationalId!.birthDate,
+        birthDate,
         status,
         addedById: invite.invitedById,
       },

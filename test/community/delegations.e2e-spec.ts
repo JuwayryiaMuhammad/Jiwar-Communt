@@ -73,7 +73,8 @@ describe('Delegation', () => {
     fullName: 'Invited By Delegate',
     phone: uniquePhone(),
     email: uniqueEmail('by-delegate'),
-    nationalId: nationalIdFor(bornYearsAgo(40)),
+    idDocumentType: 'national_id' as const,
+    idDocumentNumber: nationalIdFor(bornYearsAgo(40)),
     relation: 'parent',
   });
 
@@ -121,7 +122,8 @@ describe('Delegation', () => {
         h.moduleRef.get(AccountsService).create({
           type: 'family',
           fullName: 'Too Young',
-          nationalId: nationalIdFor(bornYearsAgo(16)),
+          idDocumentType: 'national_id' as const,
+          idDocumentNumber: nationalIdFor(bornYearsAgo(16)),
           phone: uniquePhone(),
           email: uniqueEmail('young'),
         }),
@@ -230,7 +232,8 @@ describe('Delegation', () => {
       const kid = await asFamily(hm, hm.member.id, () =>
         households.addMinor(hm.unitId, {
           fullName: 'Kid',
-          nationalId: nationalIdFor(bornYearsAgo(6)),
+          idDocumentType: 'national_id' as const,
+          idDocumentNumber: nationalIdFor(bornYearsAgo(6)),
           relation: 'child',
         }),
       );

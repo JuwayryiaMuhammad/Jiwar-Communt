@@ -241,7 +241,7 @@ describe('RLS isolation — household and worker tables', () => {
               isMinor: true,
               fullName: 'Child',
               idDocumentNumber: '31501010100011',
-              idDocumentType: 'national_id',
+              idDocumentType: 'national_id' as const,
               nationality: 'EG',
               birthDate: new Date('2015-01-01'),
               status: 'active',
@@ -442,7 +442,7 @@ describe('RLS isolation — household and worker tables', () => {
           accountId: (await createAccountRow(h, tenantA)).id,
           fullName: 'Kid',
           idDocumentNumber: '31501010100011',
-          idDocumentType: 'national_id',
+          idDocumentType: 'national_id' as const,
           nationality: 'EG',
         }),
       ).toMatchObject(violation('household_members_minor_or_account'));
@@ -450,7 +450,7 @@ describe('RLS isolation — household and worker tables', () => {
       expect(
         await member({
           idDocumentNumber: '31501010100011',
-          idDocumentType: 'national_id',
+          idDocumentType: 'national_id' as const,
           nationality: 'EG',
         }),
       ).toMatchObject(violation('household_members_minor_or_account'));
@@ -459,7 +459,7 @@ describe('RLS isolation — household and worker tables', () => {
         await member({
           fullName: 'Kid',
           idDocumentNumber: '31501010100011',
-          idDocumentType: 'national_id',
+          idDocumentType: 'national_id' as const,
           nationality: 'EG',
         }),
       ).toBeNull();
@@ -468,7 +468,7 @@ describe('RLS isolation — household and worker tables', () => {
         await member({
           fullName: 'Kid',
           idDocumentNumber: '31501010100011',
-          idDocumentType: 'national_id',
+          idDocumentType: 'national_id' as const,
           nationality: 'EG',
           status: 'removed',
           removedAt: new Date(),

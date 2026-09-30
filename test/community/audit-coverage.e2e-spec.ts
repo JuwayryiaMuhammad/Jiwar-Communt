@@ -120,7 +120,8 @@ describe('Audit coverage — community', () => {
       fullName: `Adult ${label}`,
       phone: uniquePhone(),
       email: uniqueEmail(label),
-      nationalId: nationalIdFor(bornYearsAgo(30)),
+      idDocumentType: 'national_id' as const,
+      idDocumentNumber: nationalIdFor(bornYearsAgo(30)),
       relation: 'spouse',
     });
 
@@ -159,7 +160,7 @@ describe('Audit coverage — community', () => {
         invite.token,
         input.email,
         input.phone,
-        input.nationalId,
+        input.idDocumentNumber,
         input.fullName,
       ]) {
         expect(text).not.toContain(secret);
@@ -256,7 +257,8 @@ describe('Audit coverage — community', () => {
       const kid = await asPrimary(() =>
         households().addMinor(unitId, {
           fullName: 'Little Audit',
-          nationalId,
+          idDocumentType: 'national_id' as const,
+          idDocumentNumber: nationalId,
           relation: 'child',
         }),
       );
@@ -269,7 +271,7 @@ describe('Audit coverage — community', () => {
           relation: { from: null, to: 'child' },
           isMinor: { from: null, to: true },
           fullName: { changed: true },
-          nationalId: { changed: true },
+          idDocumentNumber: { changed: true },
           birthDate: { changed: true },
         },
       });
@@ -405,7 +407,8 @@ describe('Audit coverage — community', () => {
       const reg = await asResident(() =>
         workers().register(u.id, {
           fullName: workerName,
-          nationalId,
+          idDocumentType: 'national_id' as const,
+          idDocumentNumber: nationalId,
           phone: uniquePhone(),
           capacity: 'live_in',
         }),
@@ -486,6 +489,64 @@ describe('Audit coverage — community', () => {
       ).toMatchObject({
         actorId: c.managerId,
         changes: { status: { from: 'suspended', to: 'ended' } },
+      });
+    });
+
+    it('worker.birth_date_attested and birth_date_corrected — passport workers, dates withheld', async () => {
+      const c = await x.compound();
+      const u = await x.unit(c);
+      const r = await x.resident(c, [u.id]);
+      const entered = bornYearsAgo(31).toISOString().slice(0, 10);
+      const attested = bornYearsAgo(32).toISOString().slice(0, 10);
+      const later = bornYearsAgo(33).toISOString().slice(0, 10);
+      const number = `PX${Date.now().toString(36).toUpperCase()}`;
+      remember(number, entered, attested, later);
+      const reg = await x.as(c, { id: r.id, type: 'resident' }, () =>
+        workers().register(u.id, {
+          fullName: 'Passport Audit',
+          phone: '+639171234567',
+          capacity: 'live_in',
+          idDocumentType: 'passport',
+          idDocumentNumber: number,
+          nationality: 'PH',
+          birthDate: entered,
+        }),
+      );
+      await x.asManager(c, () =>
+        workers().review(reg.engagementId, 'approve', {
+          birthDateConfirmed: true,
+          birthDate: attested,
+        }),
+      );
+      const workerId = (
+        await x.asManager(c, () =>
+          x.prisma.tenant.workerEngagement.findUniqueOrThrow({
+            where: { id: reg.engagementId },
+          }),
+        )
+      ).workerId;
+      expect(
+        await single(c, 'worker.birth_date_attested', workerId),
+      ).toMatchObject({
+        actorType: 'account',
+        actorId: c.managerId,
+        targetType: 'domestic_worker',
+        changes: {
+          birthDate: { changed: true },
+          birthDateVerified: { from: false, to: true },
+        },
+        metadata: { engagementId: reg.engagementId, corrected: true },
+      });
+
+      await x.asManager(c, () => workers().correctBirthDate(workerId, later));
+      expect(
+        await single(c, 'worker.birth_date_corrected', workerId),
+      ).toMatchObject({
+        actorId: c.managerId,
+        changes: {
+          birthDate: { changed: true },
+          birthDateVerified: { from: true, to: false },
+        },
       });
     });
   });

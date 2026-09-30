@@ -14,6 +14,7 @@ import {
 } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { AppException } from '../errors';
+import { IsPhone } from './is-phone';
 import {
   toFieldErrors,
   validationException,
@@ -138,5 +139,29 @@ describe('validation → field codes', () => {
       fields: [{ field: 'email', code: 'INVALID_EMAIL' }],
     });
     expect(body.message).toContain('email');
+  });
+});
+
+describe('IsPhone', () => {
+  class Body {
+    @IsPhone()
+    phone: string;
+  }
+
+  it.each([
+    ['01012345678', true],
+    ['+201012345678', true],
+    ['+44 7911 123456', true],
+    ['+249912345678', true],
+    ['+999 12345678', false], // no such country code
+    ['12345', false],
+  ])('%s → %s', async (phone, ok) => {
+    const errors = await validate(Object.assign(new Body(), { phone }));
+    expect(errors.length === 0).toBe(ok);
+    if (!ok) {
+      expect(toFieldErrors(errors)).toEqual([
+        { field: 'phone', code: 'INVALID_PHONE' },
+      ]);
+    }
   });
 });

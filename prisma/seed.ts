@@ -7,6 +7,8 @@ import { GlobalDbService } from '../src/core/database/global-db.service';
 import { TenantsService } from '../src/core/platform/tenants.service';
 import { ResidentsService } from '../src/community/residents/residents.service';
 import { UnitsService } from '../src/community/units/units.service';
+import { WorkersService } from '../src/community/workers/workers.service';
+import { PrismaService } from '../src/core/database/prisma.service';
 
 /**
  * Local demo data (idempotent). Everything goes through the real services,
@@ -17,14 +19,21 @@ import { UnitsService } from '../src/community/units/units.service';
  * - two compounds via TenantsService.createTenant (roles + first manager);
  * - units, and residents with occupancies — one resident owns A-101 and
  *   rents A-102, and one person is a resident in both compounds (same
- *   phone and email) to try the multi-account login by hand.
+ *   phone and email) to try the multi-account login by hand;
+ * - a foreign resident (UK passport) in A-301, and the domestic worker they
+ *   registered (Philippine passport), approved with the manager's
+ *   birth-date attestation (ADR 0018).
+ *
+ * Each part is checked on its own, so later additions also reach an
+ * existing dev database.
  */
 const COMPOUNDS = [
   {
     name: 'Nile Gardens (demo)',
     manager: {
       fullName: 'Manager A',
-      nationalId: '29001010100001',
+      idDocumentType: 'national_id' as const,
+      idDocumentNumber: '29001010100001',
       email: 'manager.a@jiwar.local',
       phone: '+201000000001',
     },
@@ -34,7 +43,8 @@ const COMPOUNDS = [
     name: 'Desert Rose (demo)',
     manager: {
       fullName: 'Manager B',
-      nationalId: '29001010100002',
+      idDocumentType: 'national_id' as const,
+      idDocumentNumber: '29001010100002',
       email: 'manager.b@jiwar.local',
       phone: '+201000000002',
     },
@@ -44,14 +54,40 @@ const COMPOUNDS = [
 
 const SHARED_PERSON = {
   fullName: 'Shared Person',
-  nationalId: '29001010100003',
+  idDocumentType: 'national_id' as const,
+  idDocumentNumber: '29001010100003',
   email: 'shared@jiwar.local',
   phone: '+201000000003',
 };
 
+const FOREIGN_RESIDENT = {
+  fullName: 'Foreign Resident',
+  idDocumentType: 'passport' as const,
+  idDocumentNumber: '125349876',
+  nationality: 'GB',
+  birthDate: '1978-04-12',
+  email: 'foreign.resident@jiwar.local',
+  phone: '+447911123456',
+};
+
+const FOREIGN_WORKER = {
+  fullName: 'Maria Santos',
+  idDocumentType: 'passport' as const,
+  idDocumentNumber: 'P4421873A',
+  nationality: 'PH',
+  birthDate: '1992-11-03',
+  phone: '+639171234567',
+  capacity: 'hourly' as const,
+  schedule: {
+    days: [0, 2, 4],
+    windows: [{ from: '08:00', to: '16:00' }],
+  },
+};
+
 const OWNER_AND_RENTER = {
   fullName: 'Owner And Renter',
-  nationalId: '29001010100004',
+  idDocumentType: 'national_id' as const,
+  idDocumentNumber: '29001010100004',
   email: 'resident.a@jiwar.local',
   phone: '+201000000004',
 };
@@ -68,20 +104,97 @@ async function main() {
     const residents = app.get(ResidentsService);
     const cls = app.get<ClsService<AppClsStore>>(ClsService);
 
-    if (
-      await globalDb.tenant.findFirst({ where: { name: COMPOUNDS[0].name } })
-    ) {
-      console.log('Already seeded; nothing to do.');
-      return;
-    }
+    const workers = app.get(WorkersService);
+    const prisma = app.get(PrismaService);
 
     // Everything the seed writes is audited as `system` (ADR 0014), even
-    // where it acts through a manager's context to create units and
-    // residents. Only trusted entry points may set auditActor.
+    // where it acts through a manager's or resident's context. Only trusted
+    // entry points may set auditActor.
     await cls.run(async () => {
       cls.set('auditActor', { type: 'system', id: null });
-      await seed();
+      if (
+        await globalDb.tenant.findFirst({ where: { name: COMPOUNDS[0].name } })
+      ) {
+        console.log('Base demo data already there.');
+      } else {
+        await seed();
+      }
+      await seedForeigners();
     });
+
+    /** Runs `fn` as an account of the first demo compound. */
+    async function asAccount<T>(
+      tenantId: string,
+      accountId: string,
+      accountType: 'manager' | 'resident',
+      fn: () => Promise<T>,
+    ): Promise<T> {
+      return cls.run({ ifNested: 'inherit' }, async () => {
+        cls.set('tenantId', tenantId);
+        cls.set('accountId', accountId);
+        cls.set('accountType', accountType);
+        return await fn();
+      });
+    }
+
+    async function seedForeigners() {
+      const tenant = await globalDb.tenant.findFirstOrThrow({
+        where: { name: COMPOUNDS[0].name },
+      });
+      const find = (email: string, type: 'manager' | 'resident') =>
+        asAccount(tenant.id, tenant.id, 'manager', () =>
+          prisma.tenant.account.findFirst({ where: { email, type } }),
+        );
+      const manager = await find(COMPOUNDS[0].manager.email, 'manager');
+      if (!manager) throw new Error('The demo manager is missing');
+      const asManager = <T>(fn: () => Promise<T>) =>
+        asAccount(tenant.id, manager.id, 'manager', fn);
+
+      let resident = await find(FOREIGN_RESIDENT.email, 'resident');
+      if (!resident) {
+        const unit =
+          (await asManager(() =>
+            prisma.tenant.unit.findFirst({ where: { code: 'A-301' } }),
+          )) ?? (await asManager(() => units.create({ code: 'A-301' })));
+        await asManager(() =>
+          residents.createResident({
+            ...FOREIGN_RESIDENT,
+            units: [{ unitId: unit.id, occupancyType: 'tenant' }],
+          }),
+        );
+        resident = await find(FOREIGN_RESIDENT.email, 'resident');
+        console.log(
+          `Foreign resident (UK passport) in A-301: ${FOREIGN_RESIDENT.email} / ${FOREIGN_RESIDENT.phone}`,
+        );
+      }
+
+      const hasWorker = await asManager(() =>
+        prisma.tenant.domesticWorker.findFirst({
+          where: { idDocumentNumber: FOREIGN_WORKER.idDocumentNumber },
+        }),
+      );
+      if (!hasWorker) {
+        const unit = await asManager(() =>
+          prisma.tenant.unit.findFirstOrThrow({ where: { code: 'A-301' } }),
+        );
+        const registered = await asAccount(
+          tenant.id,
+          resident!.id,
+          'resident',
+          () => workers.register(unit.id, FOREIGN_WORKER),
+        );
+        // The access code is returned once and never printed or stored:
+        // reissue it (WorkersService.reissueCode) to get one to try.
+        await asManager(() =>
+          workers.review(registered.engagementId, 'approve', {
+            birthDateConfirmed: true,
+          }),
+        );
+        console.log(
+          'Domestic worker (Philippine passport) for A-301, approved with the birth date attested',
+        );
+      }
+    }
 
     async function seed() {
       const created: {

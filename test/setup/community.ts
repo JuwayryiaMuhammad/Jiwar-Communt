@@ -22,7 +22,8 @@ export interface Person {
   email: string;
   phone: string;
   fullName: string;
-  nationalId: string;
+  idDocumentType: 'national_id' | 'passport';
+  idDocumentNumber: string;
 }
 
 /**
@@ -58,7 +59,8 @@ export function communityHelpers(h: HttpHarness) {
   function person(label = 'person'): Omit<Person, 'id'> {
     return {
       fullName: `Person ${uniqueSuffix()}`,
-      nationalId: nationalIdFor(),
+      idDocumentType: 'national_id' as const,
+      idDocumentNumber: nationalIdFor(),
       phone: uniquePhone(),
       email: uniqueEmail(label),
     };
@@ -120,7 +122,8 @@ export function communityHelpers(h: HttpHarness) {
       fullName: `Family ${uniqueSuffix()}`,
       phone: uniquePhone(),
       email: uniqueEmail('family'),
-      nationalId: nationalIdFor(bornYearsAgo(30)),
+      idDocumentType: 'national_id' as const,
+      idDocumentNumber: nationalIdFor(bornYearsAgo(30)),
       relation: 'spouse',
       ...input,
     };

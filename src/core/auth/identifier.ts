@@ -66,6 +66,11 @@ export class IdentifierHasher {
     return this.hmac(`worker-national-id:${nationalId}`);
   }
 
+  /** A worker's passport: the same number may exist in two countries (ADR 0018). */
+  hashWorkerPassport(nationality: string, number: string): string {
+    return this.hmac(`passport:${nationality}:${number}`);
+  }
+
   /** A worker access code, unique among the compound's active ones (ADR 0017). */
   hashWorkerCode(tenantId: string, code: string): string {
     return this.hmac(`worker-code:${tenantId}:${code}`);

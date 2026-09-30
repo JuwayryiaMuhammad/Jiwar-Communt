@@ -49,7 +49,8 @@ describe('Residents', () => {
       name: 'Residents Court',
       manager: {
         fullName: 'Manager',
-        nationalId: '29001010134444',
+        idDocumentType: 'national_id' as const,
+        idDocumentNumber: '29001010134444',
         phone: uniquePhone(),
         email: uniqueEmail('mgr'),
       },
@@ -97,7 +98,8 @@ describe('Residents', () => {
   function newResident(units: NewResident['units']): NewResident {
     return {
       fullName: 'Mona Resident',
-      nationalId: '29001010156666',
+      idDocumentType: 'national_id' as const,
+      idDocumentNumber: '29001010156666',
       phone: uniquePhone(),
       email: uniqueEmail('res'),
       units,

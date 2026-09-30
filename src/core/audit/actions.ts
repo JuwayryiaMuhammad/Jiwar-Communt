@@ -71,6 +71,8 @@ export const AUDIT_ACTIONS = {
   'worker.engagement_ended': { log: 'tenant', target: 'worker_engagement' },
   'worker.banned': { log: 'tenant', target: 'domestic_worker' },
   'worker.unbanned': { log: 'tenant', target: 'domestic_worker' },
+  'worker.birth_date_attested': { log: 'tenant', target: 'domestic_worker' },
+  'worker.birth_date_corrected': { log: 'tenant', target: 'domestic_worker' },
   'tenant.created': { log: 'platform', target: 'tenant' },
   'tenant.status_changed': { log: 'platform', target: 'tenant' },
   'tenant.manager_added': { log: 'platform', target: 'account' },

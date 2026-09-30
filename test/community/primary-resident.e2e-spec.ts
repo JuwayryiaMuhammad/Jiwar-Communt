@@ -78,7 +78,7 @@ describe('Primary resident', () => {
           isMinor: true,
           fullName: 'Kid',
           idDocumentNumber: '31501010100011',
-          idDocumentType: 'national_id',
+          idDocumentType: 'national_id' as const,
           nationality: 'EG',
           birthDate: new Date('2015-01-01'),
           status: 'active',

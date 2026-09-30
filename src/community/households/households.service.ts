@@ -19,11 +19,12 @@ import {
   normalizePhone,
 } from '../../core/auth/identifier';
 import { RequestContext } from '../../core/common/cls/request-context';
+import { isAdult } from '../../core/common/egyptian-national-id';
 import {
-  isAdult,
-  parseEgyptianNationalId,
-  type EgyptianNationalId,
-} from '../../core/common/egyptian-national-id';
+  checkIdentityDocument,
+  type IdentityDocument,
+  type IdentityDocumentInput,
+} from '../../core/common/identity-document';
 import {
   appError,
   ErrorCode,
@@ -90,7 +91,7 @@ export class HouseholdsService {
 
   async createInvite(unitId: string, input: NewInvite): Promise<CreatedInvite> {
     const person = validatePerson(input);
-    if (!isAdult(person.nationalId.birthDate)) {
+    if (!isAdult(person.document.birthDate)) {
       throw appError.badRequest(
         ErrorCode.INVITE_MINOR_NOT_ALLOWED,
         'Minors are added directly, not invited',
@@ -115,8 +116,7 @@ export class HouseholdsService {
           fullName: person.fullName,
           phone: person.phone,
           email: person.email,
-          idDocumentNumber: person.nationalId.value,
-          birthDate: person.nationalId.birthDate,
+          ...person.document,
           relation: input.relation,
           tokenHash,
           expiresAt,
@@ -186,10 +186,10 @@ export class HouseholdsService {
   ): Promise<HouseholdMemberView> {
     const fields: FieldError[] = [];
     const fullName = checkName(input.fullName, fields);
-    const nationalId = checkNationalId(input.nationalId, fields);
+    const document = checkDocument(input, fields);
     checkRelation(input.relation, fields);
-    if (fields.length || !nationalId) throw invalid(fields);
-    if (isAdult(nationalId.birthDate)) {
+    if (fields.length || !document) throw invalid(fields);
+    if (isAdult(document.birthDate)) {
       throw appError.badRequest(
         ErrorCode.MEMBER_NOT_MINOR,
         'Adults join by invitation',
@@ -208,10 +208,7 @@ export class HouseholdsService {
           relation: input.relation,
           isMinor: true,
           fullName,
-          idDocumentNumber: nationalId.value,
-          idDocumentType: 'national_id',
-          nationality: 'EG',
-          birthDate: nationalId.birthDate,
+          ...document,
           status: 'active',
           addedById: by.accountId,
         },
@@ -227,8 +224,10 @@ export class HouseholdsService {
             isMinor: true,
             status: member.status,
             fullName,
-            nationalId: nationalId.value,
-            birthDate: nationalId.birthDate,
+            idDocumentType: document.idDocumentType,
+            idDocumentNumber: document.idDocumentNumber,
+            nationality: document.nationality,
+            birthDate: document.birthDate,
           },
           'household.member_added',
         ),
@@ -544,13 +543,13 @@ interface ValidPerson {
   fullName: string;
   phone: string;
   email: string;
-  nationalId: EgyptianNationalId;
+  document: IdentityDocument;
 }
 
 function validatePerson(input: NewInvite): ValidPerson {
   const fields: FieldError[] = [];
   const fullName = checkName(input.fullName, fields);
-  const nationalId = checkNationalId(input.nationalId, fields);
+  const document = checkDocument(input, fields);
   checkRelation(input.relation, fields);
   let email: string | null = null;
   if (!input.email?.trim()) {
@@ -563,8 +562,8 @@ function validatePerson(input: NewInvite): ValidPerson {
   const phone = input.phone ? normalizePhone(input.phone) : null;
   if (!phone)
     fields.push({ field: 'phone', code: FieldErrorCode.INVALID_PHONE });
-  if (fields.length || !nationalId || !email || !phone) throw invalid(fields);
-  return { fullName, phone, email, nationalId };
+  if (fields.length || !document || !email || !phone) throw invalid(fields);
+  return { fullName, phone, email, document };
 }
 
 function checkName(raw: string, fields: FieldError[]): string {
@@ -579,17 +578,17 @@ function checkName(raw: string, fields: FieldError[]): string {
   return name;
 }
 
-function checkNationalId(
-  raw: string,
+/** National ID or passport (ADR 0018); collects its field errors. */
+function checkDocument(
+  input: IdentityDocumentInput,
   fields: FieldError[],
-): EgyptianNationalId | null {
-  const parsed = parseEgyptianNationalId(raw ?? '');
-  if (!parsed)
-    fields.push({
-      field: 'nationalId',
-      code: FieldErrorCode.INVALID_NATIONAL_ID,
-    });
-  return parsed;
+): IdentityDocument | null {
+  const result = checkIdentityDocument(input);
+  if ('fields' in result) {
+    fields.push(...result.fields);
+    return null;
+  }
+  return result.document;
 }
 
 function checkRelation(relation: HouseholdRelation, fields: FieldError[]) {

@@ -85,7 +85,8 @@ export async function createHttpHarness(
         return await accounts.create({
           type: input.type,
           fullName: input.fullName ?? `Person ${uniqueSuffix()}`,
-          nationalId: nationalIdFor(),
+          idDocumentType: 'national_id' as const,
+          idDocumentNumber: nationalIdFor(),
           phone: input.phone,
           email: input.email,
         });

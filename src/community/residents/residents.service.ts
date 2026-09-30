@@ -5,6 +5,7 @@ import {
   type AfterCommit,
 } from '../../core/accounts/account-lifecycle';
 import { AccountWriter } from '../../core/accounts/account-writer';
+import { isoDate } from '../../core/accounts/dto/account.view';
 import { AuditService } from '../../core/audit/audit.service';
 import { diffChanges } from '../../core/audit/diff';
 import { RequestContext } from '../../core/common/cls/request-context';
@@ -440,7 +441,10 @@ function toResidentView(r: ResidentRow): ResidentView {
   return {
     id: r.id,
     fullName: r.fullName,
-    nationalId: r.idDocumentNumber,
+    idDocumentType: r.idDocumentType,
+    idDocumentNumber: r.idDocumentNumber,
+    nationality: r.nationality,
+    birthDate: isoDate(r.birthDate),
     phone: r.phone,
     email: r.email,
     status: r.status,

@@ -33,7 +33,8 @@ describe('Audit atomicity', () => {
       name: 'Atomic Court',
       manager: {
         fullName: 'Manager',
-        nationalId: '29001010190001',
+        idDocumentType: 'national_id' as const,
+        idDocumentNumber: '29001010190001',
         phone: uniquePhone(),
         email: uniqueEmail('mgr'),
       },

@@ -1,5 +1,7 @@
+import type { IdentityDocumentInput } from '../../core/common/identity-document';
 import type {
   AccountStatus,
+  IdDocumentType,
   Locale,
   OccupancyStatus,
   OccupancyType,
@@ -13,9 +15,8 @@ export interface OccupancyInput {
   occupancyType: OccupancyType;
 }
 
-export interface NewResident {
+export interface NewResident extends IdentityDocumentInput {
   fullName: string;
-  nationalId: string;
   phone: string;
   email: string;
   preferredLocale?: Locale;
@@ -38,7 +39,11 @@ export interface OccupancyView {
 export interface ResidentView {
   id: string;
   fullName: string;
-  nationalId: string;
+  idDocumentType: IdDocumentType;
+  idDocumentNumber: string;
+  nationality: string;
+  /** `YYYY-MM-DD`; null only on legacy accounts. */
+  birthDate: string | null;
   phone: string;
   email: string;
   status: AccountStatus;

@@ -35,7 +35,8 @@ describe('TenantsService', () => {
 
   const newManager = (): NewManager => ({
     fullName: 'Compound Manager',
-    nationalId: '29001010112222',
+    idDocumentType: 'national_id' as const,
+    idDocumentNumber: '29001010112222',
     phone: uniquePhone(),
     email: uniqueEmail('mgr'),
   });

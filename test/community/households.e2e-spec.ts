@@ -71,14 +71,16 @@ describe('Households', () => {
       fullName: `Adult ${label}`,
       phone: uniquePhone(),
       email: uniqueEmail(label),
-      nationalId: nationalIdFor(bornYearsAgo(30)),
+      idDocumentType: 'national_id' as const,
+      idDocumentNumber: nationalIdFor(bornYearsAgo(30)),
       relation: 'spouse',
     };
   }
 
   const minor = (years = 10) => ({
     fullName: 'Young One',
-    nationalId: nationalIdFor(bornYearsAgo(years)),
+    idDocumentType: 'national_id' as const,
+    idDocumentNumber: nationalIdFor(bornYearsAgo(years)),
     relation: 'child' as const,
   });
 
@@ -153,7 +155,8 @@ describe('Households', () => {
           asPrimary(hm, () =>
             households.createInvite(hm.unitId, {
               ...adult(),
-              nationalId: nationalIdFor(bornYearsAgo(17, -1)), // 18 tomorrow
+              idDocumentType: 'national_id' as const,
+              idDocumentNumber: nationalIdFor(bornYearsAgo(17, -1)), // 18 tomorrow
             }),
           ),
         ),
@@ -163,7 +166,8 @@ describe('Households', () => {
           asPrimary(hm, () =>
             households.addMinor(hm.unitId, {
               ...minor(),
-              nationalId: nationalIdFor(bornYearsAgo(18)), // 18 today
+              idDocumentType: 'national_id' as const,
+              idDocumentNumber: nationalIdFor(bornYearsAgo(18)), // 18 today
             }),
           ),
         ),
@@ -176,14 +180,15 @@ describe('Households', () => {
         households.createInvite(hm.unitId, {
           ...adult(),
           email: '',
-          nationalId: '123',
+          idDocumentType: 'national_id' as const,
+          idDocumentNumber: '123',
         }),
       ).catch((e: { response: unknown }) => e.response);
       expect(res).toMatchObject({
         code: 'VALIDATION_FAILED',
         fields: expect.arrayContaining([
           { field: 'email', code: 'FIELD_REQUIRED' },
-          { field: 'nationalId', code: 'INVALID_NATIONAL_ID' },
+          { field: 'idDocumentNumber', code: 'INVALID_NATIONAL_ID' },
         ]) as unknown,
       });
     });

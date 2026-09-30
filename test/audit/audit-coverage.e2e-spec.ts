@@ -60,7 +60,8 @@ describe('Audit coverage', () => {
 
   const manager = () => ({
     fullName: 'Audit Manager',
-    nationalId: '29001010178888',
+    idDocumentType: 'national_id' as const,
+    idDocumentNumber: '29001010178888',
     phone: uniquePhone(),
     email: uniqueEmail('mgr'),
   });
@@ -113,7 +114,8 @@ describe('Audit coverage', () => {
         .send({
           type: 'resident',
           fullName: 'Created Person',
-          nationalId: '29001010112223',
+          idDocumentType: 'national_id' as const,
+          idDocumentNumber: '29001010112223',
           phone: uniquePhone(),
           email: uniqueEmail('created'),
         })
@@ -171,7 +173,8 @@ describe('Audit coverage', () => {
       const resident = await asManager(c, () =>
         residents.createResident({
           fullName: 'Contact Person',
-          nationalId: '29001010123334',
+          idDocumentType: 'national_id' as const,
+          idDocumentNumber: '29001010123334',
           phone: uniquePhone(),
           email: uniqueEmail('old'),
           units: [
@@ -237,7 +240,8 @@ describe('Audit coverage', () => {
       const resident = await asManager(c, () =>
         residents.createResident({
           fullName: 'Occupant',
-          nationalId: '29001010134445',
+          idDocumentType: 'national_id' as const,
+          idDocumentNumber: '29001010134445',
           phone: uniquePhone(),
           email: uniqueEmail('occ'),
           units: [{ unitId, occupancyType: 'tenant' }],

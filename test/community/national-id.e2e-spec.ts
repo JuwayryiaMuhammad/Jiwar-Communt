@@ -38,7 +38,7 @@ describe('National ID on account creation', () => {
 
   const invalidNationalId = {
     code: 'VALIDATION_FAILED',
-    fields: [{ field: 'nationalId', code: 'INVALID_NATIONAL_ID' }],
+    fields: [{ field: 'idDocumentNumber', code: 'INVALID_NATIONAL_ID' }],
   };
 
   async function compound() {
@@ -46,7 +46,8 @@ describe('National ID on account creation', () => {
       name: `National ID Court ${uniqueSuffix()}`,
       manager: {
         fullName: 'Manager',
-        nationalId: nationalIdFor(),
+        idDocumentType: 'national_id' as const,
+        idDocumentNumber: nationalIdFor(),
         phone: uniquePhone(),
         email: uniqueEmail('mgr'),
       },
@@ -81,7 +82,8 @@ describe('National ID on account creation', () => {
       .send({
         type: 'resident',
         fullName: 'Someone',
-        nationalId: INVALID,
+        idDocumentType: 'national_id' as const,
+        idDocumentNumber: INVALID,
         phone: uniquePhone(),
         email: uniqueEmail('bad-id'),
       })
@@ -102,7 +104,8 @@ describe('National ID on account creation', () => {
     const error = await asManager(c, () =>
       residents.createResident({
         fullName: 'Someone',
-        nationalId: INVALID,
+        idDocumentType: 'national_id' as const,
+        idDocumentNumber: INVALID,
         phone: uniquePhone(),
         email,
         units: [{ unitId, occupancyType: 'owner' }],
@@ -126,7 +129,8 @@ describe('National ID on account creation', () => {
         name,
         manager: {
           fullName: 'Manager',
-          nationalId: '29002300100011', // 30 February
+          idDocumentType: 'national_id' as const,
+          idDocumentNumber: '29002300100011', // 30 February
           phone: uniquePhone(),
           email: uniqueEmail('mgr'),
         },
@@ -157,12 +161,13 @@ describe('National ID on account creation', () => {
     const created = await asManager(c, () =>
       residents.createResident({
         fullName: 'Arabic Digits',
-        nationalId: arabic,
+        idDocumentType: 'national_id' as const,
+        idDocumentNumber: arabic,
         phone: uniquePhone(),
         email: uniqueEmail('arabic-digits'),
         units: [{ unitId, occupancyType: 'owner' }],
       }),
     );
-    expect(created.nationalId).toBe(ascii);
+    expect(created.idDocumentNumber).toBe(ascii);
   });
 });

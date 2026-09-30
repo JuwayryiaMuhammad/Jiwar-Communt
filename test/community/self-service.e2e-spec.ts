@@ -160,7 +160,8 @@ describe('Self-service', () => {
     await asPrimary(() =>
       h.moduleRef.get(HouseholdsService).addMinor(u1.id, {
         fullName: 'Kid',
-        nationalId: nationalIdFor(bornYearsAgo(4)),
+        idDocumentType: 'national_id' as const,
+        idDocumentNumber: nationalIdFor(bornYearsAgo(4)),
         relation: 'child',
       }),
     );
@@ -170,7 +171,8 @@ describe('Self-service', () => {
         fullName: 'Pending Invite',
         phone: '+201011112222',
         email: 'pending-invite@example.test',
-        nationalId: nationalIdFor(bornYearsAgo(50)),
+        idDocumentType: 'national_id' as const,
+        idDocumentNumber: nationalIdFor(bornYearsAgo(50)),
         relation: 'parent',
       }),
     );

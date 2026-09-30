@@ -48,7 +48,8 @@ describe('Audit entries hold no personal data', () => {
       name: 'Private Court',
       manager: {
         fullName: 'Mariam Manager',
-        nationalId: '29001010145556',
+        idDocumentType: 'national_id' as const,
+        idDocumentNumber: '29001010145556',
         ...managerContact,
       },
     });
@@ -66,7 +67,8 @@ describe('Audit entries hold no personal data', () => {
 
     const person = {
       fullName: 'Ahmed Mohamed Hassan',
-      nationalId: '29001010156667',
+      idDocumentType: 'national_id' as const,
+      idDocumentNumber: '29001010156667',
       phone: uniquePhone(),
       email: uniqueEmail('ahmed'),
     };
@@ -106,7 +108,7 @@ describe('Audit entries hold no personal data', () => {
     );
     const forbidden = [
       person.fullName,
-      person.nationalId,
+      person.idDocumentNumber,
       person.phone,
       `0${person.phone.slice(3)}`, // local form
       person.email,
@@ -132,7 +134,8 @@ describe('Audit entries hold no personal data', () => {
       name: 'Contact Court',
       manager: {
         fullName: 'Manager',
-        nationalId: '29001010167778',
+        idDocumentType: 'national_id' as const,
+        idDocumentNumber: '29001010167778',
         phone: uniquePhone(),
         email: uniqueEmail('mgr'),
       },
@@ -160,7 +163,8 @@ describe('Audit entries hold no personal data', () => {
     const resident = await asManager(() =>
       residents.createResident({
         fullName: 'Moving Person',
-        nationalId: '29001010178889',
+        idDocumentType: 'national_id' as const,
+        idDocumentNumber: '29001010178889',
         phone: uniquePhone(),
         email: oldEmail,
         units: [
@@ -213,7 +217,8 @@ describe('Audit entries hold no personal data', () => {
       name: 'Dup Court',
       manager: {
         fullName: 'Manager',
-        nationalId: '29001010189990',
+        idDocumentType: 'national_id' as const,
+        idDocumentNumber: '29001010189990',
         phone: uniquePhone(),
         email: uniqueEmail('mgr'),
       },
@@ -241,7 +246,8 @@ describe('Audit entries hold no personal data', () => {
     await asManager(() =>
       residents.createResident({
         fullName: 'First',
-        nationalId: '29001010110101',
+        idDocumentType: 'national_id' as const,
+        idDocumentNumber: '29001010110101',
         phone: uniquePhone(),
         email: taken,
         units: [{ unitId, occupancyType: 'owner' }],
@@ -250,7 +256,8 @@ describe('Audit entries hold no personal data', () => {
     const second = await asManager(() =>
       residents.createResident({
         fullName: 'Second',
-        nationalId: '29001010120202',
+        idDocumentType: 'national_id' as const,
+        idDocumentNumber: '29001010120202',
         phone: uniquePhone(),
         email: uniqueEmail('second'),
         units: [{ unitId, occupancyType: 'tenant' }],

@@ -7,14 +7,14 @@ import { diffChanges } from '../audit/diff';
 import { PlatformAuditService } from '../audit/platform-audit.service';
 import { SecurityEventsService } from '../audit/security-events.service';
 import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
+import type { IdentityDocumentInput } from '../common/identity-document';
 import { newId } from '../common/uuid';
 import { GlobalDbService } from '../database/global-db.service';
 import { TenantTx } from '../database/tenant-tx.service';
 import { TenantSettingsService } from '../tenant-settings/tenant-settings.service';
 
-export interface NewManager {
+export interface NewManager extends IdentityDocumentInput {
   fullName: string;
-  nationalId: string;
   phone: string;
   email: string;
   preferredLocale?: Locale;

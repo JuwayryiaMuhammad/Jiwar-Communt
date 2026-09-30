@@ -19,16 +19,19 @@ import {
 import { AuditService } from '../audit/audit.service';
 import { AccountLifecycle, type AfterCommit } from './account-lifecycle';
 import { diffChanges } from '../audit/diff';
-import { parseEgyptianNationalId } from '../common/egyptian-national-id';
+import {
+  parseIdentityDocument,
+  type IdentityDocumentInput,
+} from '../common/identity-document';
 import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
 import { newId } from '../common/uuid';
 import { GlobalDbService } from '../database/global-db.service';
 import type { TenantTxClient } from '../database/tenant-tx.service';
 
-export interface NewAccount {
+/** The identity document fields are validated by parseIdentityDocument (ADR 0018). */
+export interface NewAccount extends IdentityDocumentInput {
   type: AccountType;
   fullName: string;
-  nationalId: string;
   phone: string;
   email: string;
   preferredLocale?: Locale;
@@ -76,8 +79,7 @@ export class AccountWriter {
   ): Promise<Account> {
     const { email, phone } = normalizeContact(input);
     if (!email || !phone) throw invalidContact(!email, !phone);
-    const nationalId = parseEgyptianNationalId(input.nationalId);
-    if (!nationalId) throw invalidNationalId();
+    const document = parseIdentityDocument(input);
 
     const role = input.roleId
       ? await tx.role.findUnique({ where: { id: input.roleId } })
@@ -104,8 +106,10 @@ export class AccountWriter {
         type: input.type,
         roleId: role.id,
         fullName: input.fullName.trim(),
-        idDocumentNumber: nationalId.value,
-        birthDate: nationalId.birthDate,
+        idDocumentType: document.idDocumentType,
+        idDocumentNumber: document.idDocumentNumber,
+        nationality: document.nationality,
+        birthDate: document.birthDate,
         phone,
         email,
         preferredLocale: input.preferredLocale ?? 'ar',
@@ -127,7 +131,9 @@ export class AccountWriter {
           status: account.status,
           preferredLocale: account.preferredLocale,
           fullName: account.fullName,
+          idDocumentType: account.idDocumentType,
           idDocumentNumber: account.idDocumentNumber,
+          nationality: account.nationality,
           birthDate: account.birthDate,
           phone: account.phone,
           email: account.email,
@@ -283,13 +289,5 @@ function invalidContact(badEmail: boolean, badPhone: boolean) {
           : []),
       ],
     },
-  );
-}
-
-export function invalidNationalId(field = 'nationalId') {
-  return appError.badRequest(
-    ErrorCode.VALIDATION_FAILED,
-    'Invalid national ID',
-    { fields: [{ field, code: FieldErrorCode.INVALID_NATIONAL_ID }] },
   );
 }

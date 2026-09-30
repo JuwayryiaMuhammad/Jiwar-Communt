@@ -31,4 +31,6 @@ export const COMMUNITY_COVERAGE: readonly string[] = [
   'worker.engagement_ended',
   'worker.banned',
   'worker.unbanned',
+  'worker.birth_date_attested',
+  'worker.birth_date_corrected',
 ];

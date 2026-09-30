@@ -18,7 +18,6 @@ const CONSTRAINT_CODES: Record<string, FieldErrorCode> = {
   isObject: FieldErrorCode.INVALID_TYPE,
   isPhoneNumber: FieldErrorCode.INVALID_PHONE,
   isEmail: FieldErrorCode.INVALID_EMAIL,
-  isEgyptianNationalId: FieldErrorCode.INVALID_NATIONAL_ID,
   isUuid: FieldErrorCode.INVALID_UUID,
   isLength: FieldErrorCode.INVALID_LENGTH,
   arrayMinSize: FieldErrorCode.INVALID_LENGTH,

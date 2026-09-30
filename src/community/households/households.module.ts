@@ -10,12 +10,17 @@ import { InviteAcceptanceController } from './invite-acceptance.controller';
 import { InviteAcceptanceService } from './invite-acceptance.service';
 import { ReviewFlags } from '../units/review-flags';
 import { NoticesModule } from '../notices/notices.module';
+import { MemberPermissionsController } from './member-permissions.controller';
 import { MemberPermissionsService } from './member-permissions.service';
 import { MajorityNotices } from './majority-notices';
 
 /** Households, delegation and member permissions (ADR 0016, 0021). */
 @Module({
-  controllers: [InviteAcceptanceController, HouseholdController],
+  controllers: [
+    InviteAcceptanceController,
+    HouseholdController,
+    MemberPermissionsController,
+  ],
   imports: [AccountsModule, AuthModule, NoticesModule],
   providers: [
     HouseholdAuthority,

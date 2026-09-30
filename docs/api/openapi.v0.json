@@ -814,6 +814,80 @@
         ],
         "type": "object"
       },
+      "DecideDto": {
+        "properties": {
+          "decision": {
+            "enum": [
+              "approve",
+              "decline"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "description": "What the person is told (at most 1000 characters). Never stored in the audit trail.",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode",
+          "reason",
+          "decision"
+        ],
+        "type": "object"
+      },
+      "DeferredActionResponse": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "memberId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "permission": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MemberPermission"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "memberId",
+          "permission",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "DeferredActionResponseList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/DeferredActionResponse"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "DelegationScope": {
         "enum": [
           "household",
@@ -955,6 +1029,33 @@
         },
         "required": [
           "flagId"
+        ],
+        "type": "object"
+      },
+      "GrantDto": {
+        "properties": {
+          "capPerOperation": {
+            "description": "Finance only, required there: the cap per operation (checked by the service).",
+            "example": "500.00",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "permission": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MemberPermission"
+              }
+            ]
+          }
+        },
+        "required": [
+          "permission"
         ],
         "type": "object"
       },
@@ -1464,6 +1565,35 @@
           "permission",
           "capPerOperation",
           "grantedAt"
+        ],
+        "type": "object"
+      },
+      "MemberPermission": {
+        "enum": [
+          "visitors_invite",
+          "bookings",
+          "tickets",
+          "finance",
+          "unit_security"
+        ],
+        "type": "string"
+      },
+      "MemberPermissionsResponse": {
+        "properties": {
+          "grants": {
+            "items": {
+              "$ref": "#/components/schemas/MemberGrantResponse"
+            },
+            "type": "array"
+          },
+          "memberId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "memberId",
+          "grants"
         ],
         "type": "object"
       },
@@ -2861,6 +2991,60 @@
         },
         "required": [
           "reviewed"
+        ],
+        "type": "object"
+      },
+      "RevokeByManagementDto": {
+        "properties": {
+          "permission": {
+            "enum": [
+              "visitors_invite",
+              "bookings",
+              "tickets",
+              "finance",
+              "unit_security",
+              "all"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "description": "What the person is told (at most 1000 characters). Never stored in the audit trail.",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode",
+          "reason",
+          "permission"
+        ],
+        "type": "object"
+      },
+      "RevokeDto": {
+        "properties": {
+          "permission": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MemberPermission"
+              }
+            ]
+          },
+          "reason": {
+            "description": "What the person is told (at most 1000 characters). Never stored in the audit trail.",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode",
+          "reason",
+          "permission"
         ],
         "type": "object"
       },
@@ -4284,6 +4468,45 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/deferred-actions/{id}/decide": {
+      "post": {
+        "operationId": "MemberPermissionsController_decide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "member-permissions"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/erasures": {
       "get": {
         "operationId": "ErasureController_pending",
@@ -4531,6 +4754,205 @@
           "household"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/household/members/{id}/permissions": {
+      "get": {
+        "operationId": "MemberPermissionsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberPermissionsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "member-permissions"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/household/members/{id}/permissions/grant": {
+      "post": {
+        "operationId": "MemberPermissionsController_grant",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberGrantResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "member-permissions"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/household/members/{id}/permissions/revoke": {
+      "post": {
+        "operationId": "MemberPermissionsController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "member-permissions"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/household/members/{id}/permissions/revoke-all": {
+      "post": {
+        "operationId": "MemberPermissionsController_revokeAll",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "member-permissions"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/household/members/{id}/permissions/revoke-by-management": {
+      "post": {
+        "operationId": "MemberPermissionsController_revokeByManagement",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeByManagementDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "member-permissions"
+        ],
         "x-stability": "draft"
       }
     },
@@ -7297,6 +7719,42 @@
         ],
         "tags": [
           "unit-states"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/deferred-actions": {
+      "get": {
+        "operationId": "MemberPermissionsController_deferred",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeferredActionResponseList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "member-permissions"
         ],
         "x-stability": "draft"
       }

@@ -4,6 +4,8 @@ import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { hashPassword } from '../../src/core/platform/password';
 import { PlatformSessionService } from '../../src/core/platform/platform-session.service';
 import { HouseholdsService } from '../../src/community/households/households.service';
+import { MemberPermissionsService } from '../../src/community/households/member-permissions.service';
+import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import { RegistrationService } from '../../src/community/residents/registration.service';
 import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
@@ -59,6 +61,8 @@ export interface World {
   bRoleId: string;
   /** A pending household invite in B. */
   bInviteId: string;
+  /** A deferred action by B's family member, waiting for B's primary. */
+  bDeferredActionId: string;
   /** A fresh token (and session) for any account. */
   tokenFor(
     side: Compound,
@@ -213,7 +217,21 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
         relation: 'sibling',
       }),
   );
+  const bDeferredActionId = await helpers.as(
+    b,
+    { id: b.ids.family, type: 'family' },
+    () =>
+      h.moduleRef.get(TenantTx).withTenantTx((tx) =>
+        h.moduleRef.get(MemberPermissionsService).submitDeferredAction(tx, {
+          accountId: b.ids.family,
+          unitId: b.homeUnitId,
+          permission: 'bookings',
+          payload: { what: 'world' },
+        }),
+      ),
+  );
   return {
+    bDeferredActionId,
     bInviteId: bInvite.inviteId,
     bRoleId: bRoles.find((r) => r.key === 'resident')!.id,
     bFlagId,

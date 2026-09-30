@@ -93,6 +93,32 @@ describe('Member permissions', () => {
     });
   });
 
+  it("a member's grants, for the primary; the member themselves is refused", async () => {
+    const hm = await home();
+    const view = await asPrimary(hm, () =>
+      perms.memberPermissions(hm.family.memberId),
+    );
+    expect(view.memberId).toBe(hm.family.memberId);
+    expect(view.grants.map((g) => g.permission).sort()).toEqual([
+      'bookings',
+      'tickets',
+      'visitors_invite',
+    ]);
+    expect(
+      await codeOf(
+        asFamily(hm, hm.family.accountId, () =>
+          perms.memberPermissions(hm.family.memberId),
+        ),
+      ),
+    ).toBe('NOT_PRIMARY_RESIDENT');
+    const other = await x.compound();
+    expect(
+      await codeOf(
+        x.asManager(other, () => perms.memberPermissions(hm.family.memberId)),
+      ),
+    ).toBe('HOUSEHOLD_MEMBER_NOT_FOUND');
+  });
+
   it('finance: primary only, with a positive cap; enforced per operation', async () => {
     const hm = await home();
     expect(

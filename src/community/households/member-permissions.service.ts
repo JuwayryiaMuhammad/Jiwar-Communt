@@ -41,6 +41,12 @@ export interface MemberGrantView {
   grantedAt: Date;
 }
 
+/** One member's live grants, as the primary sees them. */
+export interface MemberPermissionsView {
+  memberId: string;
+  grants: MemberGrantView[];
+}
+
 /** What a member sees on "my permissions" (05 §4). */
 export interface MyPermissions {
   memberId: string;
@@ -204,6 +210,29 @@ export class MemberPermissionsService {
       reason,
       true,
     );
+  }
+
+  /**
+   * One member's live grants, for the primary or a `household` delegate
+   * (the people who grant and revoke them).
+   */
+  async memberPermissions(memberId: string): Promise<MemberPermissionsView> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const member = await tx.householdMember.findFirst({
+        where: { id: memberId, status: 'active' },
+        include: {
+          grants: { where: { revokedAt: null }, orderBy: { grantedAt: 'asc' } },
+        },
+      });
+      if (!member) {
+        throw appError.notFound(
+          ErrorCode.HOUSEHOLD_MEMBER_NOT_FOUND,
+          'Household member not found',
+        );
+      }
+      await this.authority.require(tx, member.unitId, 'household');
+      return { memberId: member.id, grants: member.grants.map(grantView) };
+    });
   }
 
   /** The caller's own permissions on the unit (a family member). */

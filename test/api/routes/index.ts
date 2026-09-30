@@ -5,6 +5,7 @@ import { ERASURE_ROUTES } from './erasure';
 import { EXISTING_ROUTES } from './existing';
 import { HOUSEHOLD_ROUTES } from './household';
 import { ME_ROUTES } from './me';
+import { MEMBER_PERMISSIONS_ROUTES } from './member-permissions';
 import { PLATFORM_ROUTES } from './platform';
 import { PUBLIC_ROUTES } from './public';
 import { REGISTRATION_ROUTES } from './registration';
@@ -23,6 +24,7 @@ export const ROUTES: Row[] = [
   ...ERASURE_ROUTES,
   ...ADMIN_ROUTES,
   ...HOUSEHOLD_ROUTES,
+  ...MEMBER_PERMISSIONS_ROUTES,
   ...PLATFORM_ROUTES,
   ...PUBLIC_ROUTES,
   ...ME_ROUTES,

@@ -97,17 +97,33 @@ export class GlobalDbService implements GlobalTables {
 
   /**
    * Claims up to `limit` outbox messages for delivery (ADR 0019), in one
-   * statement: pending ones that are due, and processing ones whose lease
-   * expired (a sender that died). FOR UPDATE SKIP LOCKED lets several app
-   * instances claim at once without ever taking the same row; the claim
-   * sets a lease and commits before anything is sent.
+   * statement. `due`: pending messages whose time has come. `expired`:
+   * processing messages whose lease ran out — their sender died mid-send —
+   * those with the fewest attempts first. FOR UPDATE SKIP LOCKED lets
+   * several app instances claim at once without ever taking the same row;
+   * the claim sets a lease and commits before anything is sent.
+   *
+   * The attempt is counted HERE, in the statement that takes the lease, so
+   * a send that crashes the process still counts. A message that already
+   * used `maxAttempts` is not claimed for sending: the same statement makes
+   * it dead (returned with status `dead`), so a message that crashes the
+   * app on every try stops being retried.
    */
   async claimOutbox(
+    kind: 'due' | 'expired',
     limit: number,
     leaseMs: number,
+    maxAttempts: number,
     now: Date,
   ): Promise<ClaimedOutboxMessage[]> {
     const leaseUntil = new Date(now.getTime() + leaseMs);
+    const pick =
+      kind === 'due'
+        ? Prisma.sql`status = 'pending' AND next_attempt_at <= ${now}
+            ORDER BY next_attempt_at, id`
+        : Prisma.sql`status = 'processing' AND locked_until < ${now}
+            ORDER BY attempts, next_attempt_at, id`;
+    // Every right-hand side reads the row as it was before the claim.
     const rows = await this.base.client.$queryRaw<
       {
         id: string;
@@ -116,21 +132,31 @@ export class GlobalDbService implements GlobalTables {
         locale: 'ar' | 'en';
         recipient: string;
         params: Record<string, unknown>;
+        status: 'processing' | 'dead';
         attempts: number;
-        locked_until: Date;
+        locked_until: Date | null;
       }[]
     >`
-      UPDATE outbox_messages
-         SET status = 'processing', locked_until = ${leaseUntil}
-       WHERE id IN (
-         SELECT id FROM outbox_messages
-          WHERE (status = 'pending' AND next_attempt_at <= ${now})
-             OR (status = 'processing' AND locked_until < ${now})
-          ORDER BY next_attempt_at, id
-          LIMIT ${limit}
-          FOR UPDATE SKIP LOCKED)
-      RETURNING id, tenant_id, template_key, locale, recipient, params,
-                attempts, locked_until`;
+      WITH claimed AS (
+        UPDATE outbox_messages
+           SET status = (CASE WHEN attempts >= ${maxAttempts} THEN 'dead'
+                              ELSE 'processing' END)::outbox_status,
+               attempts = CASE WHEN attempts >= ${maxAttempts} THEN attempts
+                               ELSE attempts + 1 END,
+               locked_until = CASE WHEN attempts >= ${maxAttempts} THEN NULL
+                                   ELSE ${leaseUntil}::timestamptz END,
+               last_error_code = CASE WHEN status = 'processing'
+                                      THEN 'LEASE_EXPIRED'
+                                      ELSE last_error_code END
+         WHERE id IN (
+           SELECT id FROM outbox_messages
+            WHERE ${pick}
+            LIMIT ${limit}
+            FOR UPDATE SKIP LOCKED)
+        RETURNING id, tenant_id, template_key, locale, recipient, params,
+                  status, attempts, locked_until, next_attempt_at)
+      -- RETURNING has no order of its own: deliver in queue order.
+      SELECT * FROM claimed ORDER BY next_attempt_at, id`;
     return rows.map((r) => ({
       id: r.id,
       tenantId: r.tenant_id,
@@ -138,6 +164,7 @@ export class GlobalDbService implements GlobalTables {
       locale: r.locale,
       recipient: r.recipient,
       params: r.params,
+      status: r.status,
       attempts: r.attempts,
       lockedUntil: r.locked_until,
     }));
@@ -189,7 +216,13 @@ export interface ClaimedOutboxMessage {
   locale: 'ar' | 'en';
   recipient: string;
   params: Record<string, unknown>;
+  /** `dead`: the claim found no attempt left and retired it; not sent. */
+  status: 'processing' | 'dead';
+  /** Including the attempt this claim started. */
   attempts: number;
-  /** The lease this claim holds; later updates only apply while it does. */
-  lockedUntil: Date;
+  /**
+   * The lease this claim holds; later updates only apply while it does.
+   * Null on a dead claim.
+   */
+  lockedUntil: Date | null;
 }

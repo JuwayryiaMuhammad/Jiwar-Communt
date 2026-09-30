@@ -8,6 +8,7 @@ import { Mailer } from '../../src/core/mail/mailer';
 import { Outbox } from '../../src/core/mail/outbox';
 import {
   BACKOFF_MS,
+  LEASE_MS,
   OutboxProcessor,
 } from '../../src/core/mail/outbox-processor';
 import { PlatformModule } from '../../src/core/platform/platform.module';
@@ -259,11 +260,138 @@ describe('Email outbox', () => {
     });
     const since = new Date();
     await processor.processDue();
-    expect((await row(id)).status).toBe('sent');
+    // The unfinished attempt counts: it is recorded as one.
+    expect(await row(id)).toMatchObject({
+      status: 'sent',
+      attempts: 1,
+      lastErrorCode: 'LEASE_EXPIRED',
+    });
     expect((await row(live.id)).status).toBe('processing');
     expect((await waitForMessage(recipient, since)).Subject).toBe(
       'تمت إزالتك من أسرة وحدة على جوار',
     );
+  });
+
+  it('a message that crashes its sender every time dies at its claim, and the queue moves on', async () => {
+    const maxAttempts = h.moduleRef
+      .get<ConfigService<Env, true>>(ConfigService)
+      .get('OUTBOX_MAX_ATTEMPTS', { infer: true });
+    const poison = await queued('poison');
+    await globalDb.outboxMessage.update({
+      where: { id: poison.id },
+      data: { nextAttemptAt: new Date('2000-01-01T00:00:00Z') }, // first in line
+    });
+    const next = await queued('after-poison');
+
+    // Sending the poison message "kills the process": the send never
+    // returns, and the run is abandoned with its lease still held.
+    let crashed: () => void = () => undefined;
+    let poisonSends = 0;
+    const send = mailer.send.bind(mailer);
+    jest.spyOn(mailer, 'send').mockImplementation((to, email, opts) => {
+      if (to !== poison.recipient) return send(to, email, opts);
+      poisonSends += 1;
+      crashed();
+      return new Promise<never>(() => undefined);
+    });
+
+    const since = new Date();
+    const t0 = Date.now();
+    const step = LEASE_MS + 1000; // each restart finds the lease expired
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const died = new Promise<void>((resolve) => (crashed = resolve));
+      void processor.processDue(new Date(t0 + (attempt - 1) * step));
+      await died;
+      // Counted by the claim, although the attempt never finished.
+      expect(await row(poison.id)).toMatchObject({
+        status: 'processing',
+        attempts: attempt,
+      });
+    }
+    // The first crash took the next message down with it (same claim);
+    // it was reclaimed alone and sent while the poison kept crashing.
+    expect(await row(next.id)).toMatchObject({ status: 'sent', attempts: 2 });
+    expect((await waitForMessage(next.recipient, since)).Subject).toBe(
+      'You were removed from a household on Jiwar',
+    );
+
+    const errors = jest.spyOn(Logger.prototype, 'error');
+    const run = await processor.processDue(new Date(t0 + maxAttempts * step));
+    expect(run.dead).toBeGreaterThanOrEqual(1);
+    expect(await row(poison.id)).toMatchObject({
+      status: 'dead',
+      attempts: maxAttempts,
+      lastErrorCode: 'LEASE_EXPIRED',
+      lockedUntil: null,
+    });
+    expect(poisonSends).toBe(maxAttempts); // the dead claim sent nothing
+    const logged = errors.mock.calls.map(([m]) => String(m));
+    expect(logged).toContain(
+      `outbox message ${poison.id} is dead (LEASE_EXPIRED)`,
+    );
+    for (const m of logged) expect(m).not.toContain(poison.recipient);
+
+    // Never claimed again.
+    await processor.processDue(new Date(t0 + (maxAttempts + 10) * step));
+    expect(poisonSends).toBe(maxAttempts);
+    expect((await row(poison.id)).status).toBe('dead');
+  });
+
+  it('one failing message never stops the run: a send error or anything else', async () => {
+    const broken = await queued('broken');
+    const refused = await queued('refused');
+    const fine = await queued('fine');
+
+    const send = mailer.send.bind(mailer);
+    jest
+      .spyOn(mailer, 'send')
+      .mockImplementation((to, email, opts) =>
+        to === refused.recipient
+          ? Promise.reject(
+              Object.assign(new Error('rejected'), { responseCode: 550 }),
+            )
+          : send(to, email, opts),
+      );
+    // A failure outside the send (e.g. the database while marking it).
+    type Deliver = (message: { id: string }, now: Date) => Promise<string>;
+    const target = processor as unknown as { deliver: Deliver };
+    const deliver = target.deliver.bind(processor);
+    jest
+      .spyOn(target, 'deliver')
+      .mockImplementation((message, now) =>
+        message.id === broken.id
+          ? Promise.reject(new TypeError('boom'))
+          : deliver(message, now),
+      );
+    const errors = jest.spyOn(Logger.prototype, 'error');
+
+    const since = new Date();
+    const run = await processor.processDue();
+    expect(run).toEqual({ sent: 1, retried: 2, dead: 0 });
+    // Left under its lease; claimed again (as an attempt) once it expires.
+    expect(await row(broken.id)).toMatchObject({
+      status: 'processing',
+      attempts: 1,
+    });
+    expect(await row(refused.id)).toMatchObject({
+      status: 'pending',
+      attempts: 1,
+      lastErrorCode: 'SMTP_550',
+    });
+    expect(await row(fine.id)).toMatchObject({ status: 'sent', attempts: 1 });
+    await waitForMessage(fine.recipient, since);
+    const logged = errors.mock.calls.map(([m]) => String(m));
+    expect(logged).toContain(`outbox message ${broken.id} failed (TypeError)`);
+    for (const m of logged) expect(m).not.toContain(broken.recipient);
+
+    const later = new Date(Date.now() + LEASE_MS + 1000);
+    jest.restoreAllMocks();
+    await processor.processDue(later);
+    expect(await row(broken.id)).toMatchObject({
+      status: 'sent',
+      attempts: 2,
+      lastErrorCode: 'LEASE_EXPIRED',
+    });
   });
 
   it('retention deletes old sent rows and strips old dead ones, keeping the evidence', async () => {

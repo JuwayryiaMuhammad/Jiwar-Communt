@@ -37,8 +37,12 @@ export interface OutboxRun {
 /**
  * Delivers the outbox (ADR 0019), in the app, with no extra
  * infrastructure. Each run:
- * 1. claims due messages in one short statement (SKIP LOCKED, with a lease)
- *    — several instances never send the same message at the same time;
+ * 1. claims messages in short statements (SKIP LOCKED, with a lease) —
+ *    several instances never send the same message at the same time. The
+ *    claim counts the attempt, so a send that crashes the process counts
+ *    too, and a message out of attempts dies at its claim instead of
+ *    crashing the app again. Expired leases are reclaimed one at a time;
+ *    each message is handled on its own, so one failure never stops a run;
  * 2. renders and sends each OUTSIDE any transaction, with the message id
  *    as a stable Message-ID (delivery is at least once);
  * 3. marks it sent, or schedules a retry (1m → 5m → 30m → 2h → 6h), or
@@ -118,11 +122,53 @@ export class OutboxProcessor
   /** One delivery run. `now` is a parameter so tests can move time. */
   async processDue(now: Date = new Date()): Promise<OutboxRun> {
     const run: OutboxRun = { sent: 0, retried: 0, dead: 0 };
-    const claimed = await this.globalDb.claimOutbox(BATCH_SIZE, LEASE_MS, now);
-    for (const message of claimed) {
-      run[await this.deliver(message, now)] += 1;
+    // Expired leases first, ONE per claim: each is suspected of crashing
+    // its sender, and a claim counts an attempt for every row it takes. One
+    // at a time, only the message actually being sent pays for a crash, not
+    // the ones queued behind it in the same claim.
+    for (let i = 0; i < BATCH_SIZE; i++) {
+      const [message] = await this.claim('expired', 1, now);
+      if (!message) break;
+      run[await this.handle(message, now)] += 1;
+    }
+    for (const message of await this.claim('due', BATCH_SIZE, now)) {
+      run[await this.handle(message, now)] += 1;
     }
     return run;
+  }
+
+  private claim(kind: 'due' | 'expired', limit: number, now: Date) {
+    return this.globalDb.claimOutbox(
+      kind,
+      limit,
+      LEASE_MS,
+      this.maxAttempts,
+      now,
+    );
+  }
+
+  /**
+   * One message, isolated: whatever goes wrong with it is logged (id and
+   * code only) and the run moves on to the next. A message left in
+   * processing is claimed again once its lease expires, as an attempt.
+   */
+  private async handle(
+    message: ClaimedOutboxMessage,
+    now: Date,
+  ): Promise<keyof OutboxRun> {
+    if (message.status === 'dead') {
+      // Retired by the claim: its last attempt never finished.
+      this.logDead(message.id, 'LEASE_EXPIRED');
+      return 'dead';
+    }
+    try {
+      return await this.deliver(message, now);
+    } catch (error) {
+      this.logger.error(
+        `outbox message ${message.id} failed (${errorCode(error)})`,
+      );
+      return 'retried';
+    }
   }
 
   private async deliver(
@@ -147,32 +193,26 @@ export class OutboxProcessor
         { messageId: this.mailer.messageIdFor(`outbox-${message.id}`) },
       );
     } catch (error) {
-      const attempts = message.attempts + 1;
+      // The claim already counted this attempt.
       const code = errorCode(error);
-      if (attempts >= this.maxAttempts) {
-        await this.markDead({ ...message, attempts }, code);
+      if (message.attempts >= this.maxAttempts) {
+        await this.markDead(message, code);
         return 'dead';
       }
       await this.globalDb.outboxMessage.updateMany({
         where: lease,
         data: {
           status: 'pending',
-          attempts,
           lastErrorCode: code,
           lockedUntil: null,
-          nextAttemptAt: new Date(now.getTime() + backoffMs(attempts)),
+          nextAttemptAt: new Date(now.getTime() + backoffMs(message.attempts)),
         },
       });
       return 'retried';
     }
     await this.globalDb.outboxMessage.updateMany({
       where: lease,
-      data: {
-        status: 'sent',
-        sentAt: new Date(),
-        lockedUntil: null,
-        attempts: message.attempts + 1,
-      },
+      data: { status: 'sent', sentAt: new Date(), lockedUntil: null },
     });
     return 'sent';
   }
@@ -184,15 +224,14 @@ export class OutboxProcessor
         status: 'processing',
         lockedUntil: message.lockedUntil,
       },
-      data: {
-        status: 'dead',
-        attempts: message.attempts,
-        lastErrorCode: code,
-        lockedUntil: null,
-      },
+      data: { status: 'dead', lastErrorCode: code, lockedUntil: null },
     });
-    // The id and the code only: never the recipient or the body.
-    this.logger.error(`outbox message ${message.id} is dead (${code})`);
+    this.logDead(message.id, code);
+  }
+
+  /** The id and the code only: never the recipient or the body. */
+  private logDead(id: string, code: string) {
+    this.logger.error(`outbox message ${id} is dead (${code})`);
   }
 
   /**

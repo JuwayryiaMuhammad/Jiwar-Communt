@@ -132,8 +132,8 @@ export class WorkersService {
           {
             id: newId(),
             tenantId,
-            nationalIdHash,
-            nationalId: valid.nationalId,
+            idDocumentHash: nationalIdHash,
+            idDocumentNumber: valid.nationalId,
             fullName: valid.fullName,
             phone: valid.phone,
             birthDate: valid.birthDate,
@@ -142,7 +142,9 @@ export class WorkersService {
         skipDuplicates: true,
       });
       const worker = await tx.domesticWorker.findUniqueOrThrow({
-        where: { tenantId_nationalIdHash: { tenantId, nationalIdHash } },
+        where: {
+          tenantId_idDocumentHash: { tenantId, idDocumentHash: nationalIdHash },
+        },
         select: { id: true, bannedAt: true },
       });
       if (worker.bannedAt) throw blocked();

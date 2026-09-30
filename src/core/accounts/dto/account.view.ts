@@ -15,7 +15,7 @@ export class AccountView {
       id: account.id,
       type: account.type,
       fullName: account.fullName,
-      nationalId: account.nationalId,
+      nationalId: account.idDocumentNumber,
       phone: account.phone,
       email: account.email,
       status: account.status,

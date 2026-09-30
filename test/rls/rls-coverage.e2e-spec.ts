@@ -17,6 +17,8 @@ const GLOBAL_WITH_TENANT_ID = [
   'security_events',
   // Resolves an invite link before the tenant is known (ADR 0016); no PII.
   'invite_tokens',
+  // Email outbox (ADR 0019): tenant_id only says which compound caused it.
+  'outbox_messages',
 ];
 
 const EXPECTED =

@@ -14,10 +14,7 @@ import {
 import { AuditService } from '../../core/audit/audit.service';
 import { diffChanges } from '../../core/audit/diff';
 import { RequestContext } from '../../core/common/cls/request-context';
-import {
-  isAdult,
-  parseEgyptianNationalId,
-} from '../../core/common/egyptian-national-id';
+import { isAdult } from '../../core/common/egyptian-national-id';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import { newId } from '../../core/common/uuid';
 import { GlobalDbService } from '../../core/database/global-db.service';
@@ -271,16 +268,16 @@ export class DelegationsService implements OnModuleInit {
         status: 'active',
         isMinor: false,
       },
-      include: { account: { select: { status: true, nationalId: true } } },
+      include: { account: { select: { status: true, birthDate: true } } },
     });
-    const birth = member?.account
-      ? parseEgyptianNationalId(member.account.nationalId)
-      : null;
+    // The stored birth date (ADR 0018); a legacy account without one is
+    // not eligible.
+    const birthDate = member?.account?.birthDate ?? null;
     if (
       !member?.account ||
       member.account.status !== 'active' ||
-      !birth ||
-      !isAdult(birth.birthDate)
+      !birthDate ||
+      !isAdult(birthDate)
     ) {
       throw appError.badRequest(
         ErrorCode.DELEGATE_NOT_ELIGIBLE,

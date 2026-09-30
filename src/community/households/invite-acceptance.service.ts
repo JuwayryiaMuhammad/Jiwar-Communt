@@ -186,7 +186,7 @@ export class InviteAcceptanceService {
       const created = await this.writer.create(tx, tenantId, {
         type: 'family',
         fullName: invite.fullName,
-        nationalId: invite.nationalId,
+        nationalId: invite.idDocumentNumber,
         phone: invite.phone,
         email: invite.email,
       });
@@ -194,8 +194,8 @@ export class InviteAcceptanceService {
     }
 
     const nationalId =
-      parseEgyptianNationalId(existing?.nationalId ?? '') ??
-      parseEgyptianNationalId(invite.nationalId);
+      parseEgyptianNationalId(existing?.idDocumentNumber ?? '') ??
+      parseEgyptianNationalId(invite.idDocumentNumber);
     const { familyJoinRequiresApproval } = await this.settings.inTx(
       tx,
       tenantId,

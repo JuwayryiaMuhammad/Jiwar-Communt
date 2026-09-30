@@ -11,6 +11,8 @@ const SENSITIVE_FIELDS = [
   'firstName',
   'lastName',
   'nationalId',
+  'idDocumentNumber', // national ID or passport number (ADR 0018)
+  'nationality',
   'phone',
   'email',
   'birthDate', // derived from the national ID

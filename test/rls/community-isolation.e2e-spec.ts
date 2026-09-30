@@ -74,7 +74,7 @@ describe('RLS isolation — household and worker tables', () => {
             fullName: 'Invited Person',
             phone: '+201000000099',
             email: `invited-${uniqueSuffix()}@example.test`,
-            nationalId: '29001010100099',
+            idDocumentNumber: '29001010100099',
             relation: 'sibling',
             tokenHash:
               'a'.repeat(48) + uniqueSuffix().padEnd(16, '0').slice(0, 16),
@@ -100,9 +100,9 @@ describe('RLS isolation — household and worker tables', () => {
           data: {
             id: newId(),
             tenantId: tenantA,
-            nationalIdHash:
+            idDocumentHash:
               'b'.repeat(48) + uniqueSuffix().padEnd(16, '0').slice(0, 16),
-            nationalId: '29001010100098',
+            idDocumentNumber: '29001010100098',
             fullName: 'Worker A',
             phone: '+201000000098',
             birthDate: new Date('1990-01-01'),
@@ -240,7 +240,9 @@ describe('RLS isolation — household and worker tables', () => {
               relation: 'child',
               isMinor: true,
               fullName: 'Child',
-              nationalId: '31501010100011',
+              idDocumentNumber: '31501010100011',
+              idDocumentType: 'national_id',
+              nationality: 'EG',
               birthDate: new Date('2015-01-01'),
               status: 'active',
               addedById: ownerA.id,
@@ -251,8 +253,8 @@ describe('RLS isolation — household and worker tables', () => {
             data: {
               id: newId(),
               tenantId: tenantA,
-              nationalIdHash: 'c'.repeat(64),
-              nationalId: '29001010100097',
+              idDocumentHash: 'c'.repeat(64),
+              idDocumentNumber: '29001010100097',
               fullName: 'Worker',
               phone: '+201000000097',
               birthDate: new Date('1990-01-01'),
@@ -439,22 +441,35 @@ describe('RLS isolation — household and worker tables', () => {
         await member({
           accountId: (await createAccountRow(h, tenantA)).id,
           fullName: 'Kid',
-          nationalId: '31501010100011',
+          idDocumentNumber: '31501010100011',
+          idDocumentType: 'national_id',
+          nationality: 'EG',
         }),
       ).toMatchObject(violation('household_members_minor_or_account'));
       // A minor with no name.
-      expect(await member({ nationalId: '31501010100011' })).toMatchObject(
-        violation('household_members_minor_or_account'),
-      );
+      expect(
+        await member({
+          idDocumentNumber: '31501010100011',
+          idDocumentType: 'national_id',
+          nationality: 'EG',
+        }),
+      ).toMatchObject(violation('household_members_minor_or_account'));
       // A valid minor.
       expect(
-        await member({ fullName: 'Kid', nationalId: '31501010100011' }),
+        await member({
+          fullName: 'Kid',
+          idDocumentNumber: '31501010100011',
+          idDocumentType: 'national_id',
+          nationality: 'EG',
+        }),
       ).toBeNull();
       // Removed without a reason.
       expect(
         await member({
           fullName: 'Kid',
-          nationalId: '31501010100011',
+          idDocumentNumber: '31501010100011',
+          idDocumentType: 'national_id',
+          nationality: 'EG',
           status: 'removed',
           removedAt: new Date(),
         }),
@@ -510,9 +525,9 @@ describe('RLS isolation — household and worker tables', () => {
           data: {
             id: newId(),
             tenantId: tenantA,
-            nationalIdHash:
+            idDocumentHash:
               'd'.repeat(48) + uniqueSuffix().padEnd(16, '0').slice(0, 16),
-            nationalId: '29001010100096',
+            idDocumentNumber: '29001010100096',
             fullName: 'Worker B',
             phone: '+201000000096',
             birthDate: new Date('1990-01-01'),

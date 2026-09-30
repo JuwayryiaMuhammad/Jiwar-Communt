@@ -78,6 +78,30 @@ enum PlatformAdminStatus {
   @@map("platform_admin_status")
 }
 
+/// ADR 0018: every identity document has a type. A national ID carries the
+/// birth date; a passport needs it entered (and, for a worker, attested).
+enum IdDocumentType {
+  national_id
+  passport
+
+  @@map("id_document_type")
+}
+
+enum OutboxChannel {
+  email
+
+  @@map("outbox_channel")
+}
+
+enum OutboxStatus {
+  pending
+  processing
+  sent
+  dead
+
+  @@map("outbox_status")
+}
+
 /// Separates login codes from invite codes (ADR 0004, 0016): a code issued
 /// for one purpose can never be consumed for the other.
 enum OtpPurpose {
@@ -292,6 +316,35 @@ model InviteToken {
   @@map("invite_tokens")
 }
 
+/// Transactional outbox (ADR 0019): written in the transaction of the action
+/// that causes the message, delivered at least once by OutboxProcessor.
+/// Global, like security_events: tenant_id is a pointer. Sent rows are
+/// deleted after retention; dead rows are kept with their personal data
+/// stripped, as evidence that a notice never arrived.
+model OutboxMessage {
+  id            String        @id @db.Uuid
+  tenantId      String?       @map("tenant_id") @db.Uuid
+  channel       OutboxChannel
+  templateKey   String        @map("template_key")
+  locale        Locale
+  /// Null once stripped (dead rows past retention).
+  recipient     String?
+  params        Json?
+  status        OutboxStatus  @default(pending)
+  attempts      Int           @default(0)
+  nextAttemptAt DateTime      @default(now()) @map("next_attempt_at") @db.Timestamptz(3)
+  lockedUntil   DateTime?     @map("locked_until") @db.Timestamptz(3)
+  lastErrorCode String?       @map("last_error_code")
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  sentAt        DateTime?     @map("sent_at") @db.Timestamptz(3)
+  /// When recipient and params were removed (dead rows past retention).
+  strippedAt    DateTime?     @map("stripped_at") @db.Timestamptz(3)
+
+  @@index([status, nextAttemptAt])
+  @@index([status, sentAt])
+  @@map("outbox_messages")
+}
+
 // ============================================================================
 // TENANT-SCOPED — RLS + FORCE (policy in the migration)
 // ============================================================================
@@ -303,20 +356,26 @@ model InviteToken {
 /// makes both a role of another tenant and a role of another kind impossible
 /// at the database level — foreign-key checks bypass RLS.
 model Account {
-  id              String        @id @db.Uuid
-  tenantId        String        @map("tenant_id") @db.Uuid
-  type            AccountType
-  roleId          String        @map("role_id") @db.Uuid
-  fullName        String        @map("full_name")
-  nationalId      String        @map("national_id")
+  id               String         @id @db.Uuid
+  tenantId         String         @map("tenant_id") @db.Uuid
+  type             AccountType
+  roleId           String         @map("role_id") @db.Uuid
+  fullName         String         @map("full_name")
+  /// A national ID (14 digits) or a passport number (ADR 0018).
+  idDocumentNumber String         @map("id_document_number")
+  idDocumentType   IdDocumentType @default(national_id) @map("id_document_type")
+  /// ISO 3166-1 alpha-2; EG for a national ID.
+  nationality      String         @default("EG") @db.Char(2)
+  /// Stored, never derived at read time. Null only on legacy rows whose ID did not parse.
+  birthDate        DateTime?      @map("birth_date") @db.Date
   /// E.164
-  phone           String
+  phone            String
   /// trimmed + lowercased
-  email           String
-  status          AccountStatus @default(active)
-  preferredLocale Locale        @default(ar) @map("preferred_locale")
-  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  email            String
+  status           AccountStatus  @default(active)
+  preferredLocale  Locale         @default(ar) @map("preferred_locale")
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   tenant             Tenant            @relation(fields: [tenantId], references: [id])
   role               Role              @relation(fields: [tenantId, roleId, type], references: [tenantId, id, kind], onUpdate: Restrict)
@@ -333,6 +392,7 @@ model Account {
   delegationsHeld    HouseholdDelegation[] @relation("DelegationDelegate")
   delegationsRevoked HouseholdDelegation[] @relation("DelegationRevokedBy")
   bannedWorkers      DomesticWorker[]      @relation("WorkerBannedBy")
+  verifiedWorkers    DomesticWorker[]      @relation("WorkerBirthDateVerifiedBy")
   requestedWorkers   WorkerEngagement[]    @relation("EngagementRequestedBy")
   reviewedWorkers    WorkerEngagement[]    @relation("EngagementReviewedBy")
 
@@ -394,17 +454,18 @@ model TenantPermissionCatalog {
 }
 
 model Unit {
-  id                    String   @id @db.Uuid
-  tenantId              String   @map("tenant_id") @db.Uuid
-  code                  String
-  building              String?
-  floor                 Int?
+  id                       String    @id @db.Uuid
+  tenantId                 String    @map("tenant_id") @db.Uuid
+  code                     String
+  building                 String?
+  floor                    Int?
   /// Set when the primary resident's occupancy ends (ADR 0016); cleared when
   /// a new primary is set. Household memberships are never touched for it.
-  needsHouseholdReview  Boolean  @default(false) @map("needs_household_review")
-  householdReviewReason String?  @map("household_review_reason")
-  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  needsHouseholdReview     Boolean   @default(false) @map("needs_household_review")
+  householdReviewReason    String?   @map("household_review_reason")
+  householdReviewFlaggedAt DateTime? @map("household_review_flagged_at") @db.Timestamptz(3)
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   tenant            Tenant                @relation(fields: [tenantId], references: [id])
   occupancies       UnitOccupancy[]
@@ -448,6 +509,8 @@ model TenantSettings {
   tenantId                   String   @id @map("tenant_id") @db.Uuid
   familyJoinRequiresApproval Boolean  @default(false) @map("family_join_requires_approval")
   maxHouseholdMembers        Int      @default(10) @map("max_household_members")
+  /// IANA time zone for schedules (ADR 0017).
+  timezone                   String   @default("Africa/Cairo")
   createdAt                  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt                  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -460,21 +523,23 @@ model TenantSettings {
 /// personal data lives there; minors have no account, so their name and
 /// national ID live here (CHECK in SQL). Never deleted: removal is a status.
 model HouseholdMember {
-  id            String                @id @db.Uuid
-  tenantId      String                @map("tenant_id") @db.Uuid
-  unitId        String                @map("unit_id") @db.Uuid
-  accountId     String?               @map("account_id") @db.Uuid
-  relation      HouseholdRelation
-  isMinor       Boolean               @map("is_minor")
-  fullName      String?               @map("full_name")
-  nationalId    String?               @map("national_id")
-  birthDate     DateTime              @map("birth_date") @db.Date
-  status        HouseholdMemberStatus
-  addedById     String                @map("added_by") @db.Uuid
-  removedById   String?               @map("removed_by") @db.Uuid
-  removedReason String?               @map("removed_reason")
-  createdAt     DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
-  removedAt     DateTime?             @map("removed_at") @db.Timestamptz(3)
+  id               String                @id @db.Uuid
+  tenantId         String                @map("tenant_id") @db.Uuid
+  unitId           String                @map("unit_id") @db.Uuid
+  accountId        String?               @map("account_id") @db.Uuid
+  relation         HouseholdRelation
+  isMinor          Boolean               @map("is_minor")
+  fullName         String?               @map("full_name")
+  idDocumentNumber String?               @map("id_document_number")
+  idDocumentType   IdDocumentType?       @map("id_document_type")
+  nationality      String?               @db.Char(2)
+  birthDate        DateTime              @map("birth_date") @db.Date
+  status           HouseholdMemberStatus
+  addedById        String                @map("added_by") @db.Uuid
+  removedById      String?               @map("removed_by") @db.Uuid
+  removedReason    String?               @map("removed_reason")
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  removedAt        DateTime?             @map("removed_at") @db.Timestamptz(3)
 
   unit      Unit     @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
   account   Account? @relation("MemberAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
@@ -499,7 +564,10 @@ model HouseholdInvite {
   phone             String
   /// trimmed + lowercased; the acceptance code goes here and nowhere else
   email             String
-  nationalId        String                @map("national_id")
+  idDocumentNumber  String                @map("id_document_number")
+  idDocumentType    IdDocumentType        @default(national_id) @map("id_document_type")
+  nationality       String                @default("EG") @db.Char(2)
+  birthDate         DateTime?             @map("birth_date") @db.Date
   relation          HouseholdRelation
   tokenHash         String                @unique @map("token_hash") @db.Char(64)
   expiresAt         DateTime              @map("expires_at") @db.Timestamptz(3)
@@ -543,27 +611,35 @@ model HouseholdDelegation {
 /// A domestic worker known to the compound (ADR 0017). No account, no login.
 /// One record per person per compound, found by the national-ID HMAC.
 model DomesticWorker {
-  id                String    @id @db.Uuid
-  tenantId          String    @map("tenant_id") @db.Uuid
-  /// HMAC(IDENTIFIER_PEPPER, "worker-national-id:<id>")
-  nationalIdHash    String    @map("national_id_hash") @db.Char(64)
-  nationalId        String    @map("national_id")
-  fullName          String    @map("full_name")
+  id                    String         @id @db.Uuid
+  tenantId              String         @map("tenant_id") @db.Uuid
+  /// National ID: HMAC(pepper, "worker-national-id:<id>");
+  /// passport: HMAC(pepper, "passport:<nationality>:<number>") (ADR 0018).
+  idDocumentHash        String         @map("id_document_hash") @db.Char(64)
+  idDocumentNumber      String         @map("id_document_number")
+  idDocumentType        IdDocumentType @default(national_id) @map("id_document_type")
+  nationality           String         @default("EG") @db.Char(2)
+  fullName              String         @map("full_name")
   /// E.164
-  phone             String
-  birthDate         DateTime  @map("birth_date") @db.Date
-  preferredLanguage String    @default("ar") @map("preferred_language")
-  bannedAt          DateTime? @map("banned_at") @db.Timestamptz(3)
-  bannedById        String?   @map("banned_by") @db.Uuid
-  banReason         String?   @map("ban_reason")
-  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  phone                 String
+  birthDate             DateTime       @map("birth_date") @db.Date
+  /// Passport workers: a manager attests the entered birth date once
+  /// (ADR 0018). Cleared when the date is corrected.
+  birthDateVerifiedById String?        @map("birth_date_verified_by") @db.Uuid
+  birthDateVerifiedAt   DateTime?      @map("birth_date_verified_at") @db.Timestamptz(3)
+  preferredLanguage     String         @default("ar") @map("preferred_language")
+  bannedAt              DateTime?      @map("banned_at") @db.Timestamptz(3)
+  bannedById            String?        @map("banned_by") @db.Uuid
+  banReason             String?        @map("ban_reason")
+  createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  bannedBy    Account?           @relation("WorkerBannedBy", fields: [tenantId, bannedById], references: [tenantId, id], onUpdate: Restrict)
-  engagements WorkerEngagement[]
-  notices     WorkerNotice[]
+  bannedBy            Account?           @relation("WorkerBannedBy", fields: [tenantId, bannedById], references: [tenantId, id], onUpdate: Restrict)
+  birthDateVerifiedBy Account?           @relation("WorkerBirthDateVerifiedBy", fields: [tenantId, birthDateVerifiedById], references: [tenantId, id], onUpdate: Restrict)
+  engagements         WorkerEngagement[]
+  notices             WorkerNotice[]
 
-  @@unique([tenantId, nationalIdHash])
+  @@unique([tenantId, idDocumentHash])
   @@unique([tenantId, id])
   @@map("domestic_workers")
 }

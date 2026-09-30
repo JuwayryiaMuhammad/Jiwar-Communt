@@ -292,7 +292,11 @@ export class ResidentsService {
       }
       await tx.unit.updateMany({
         where: { id: unitId, needsHouseholdReview: true },
-        data: { needsHouseholdReview: false, householdReviewReason: null },
+        data: {
+          needsHouseholdReview: false,
+          householdReviewReason: null,
+          householdReviewFlaggedAt: null,
+        },
       });
       return toOccupancyView({ ...target, isPrimary: true });
     });
@@ -400,7 +404,11 @@ export class ResidentsService {
   ) {
     await tx.unit.update({
       where: { id: unitId },
-      data: { needsHouseholdReview: true, householdReviewReason: reason },
+      data: {
+        needsHouseholdReview: true,
+        householdReviewReason: reason,
+        householdReviewFlaggedAt: new Date(),
+      },
     });
     await this.audit.record(tx, {
       action: 'unit.household_review_flagged',
@@ -432,7 +440,7 @@ function toResidentView(r: ResidentRow): ResidentView {
   return {
     id: r.id,
     fullName: r.fullName,
-    nationalId: r.nationalId,
+    nationalId: r.idDocumentNumber,
     phone: r.phone,
     email: r.email,
     status: r.status,

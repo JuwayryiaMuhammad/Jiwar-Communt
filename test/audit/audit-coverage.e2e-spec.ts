@@ -133,7 +133,8 @@ describe('Audit coverage', () => {
         type: { from: null, to: 'resident' },
         status: { from: null, to: 'active' },
         fullName: { changed: true },
-        nationalId: { changed: true },
+        idDocumentNumber: { changed: true },
+        birthDate: { changed: true },
         phone: { changed: true },
         email: { changed: true },
       });

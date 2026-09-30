@@ -21,7 +21,7 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // lock, worker reuse by national-ID hash, code retry); a violation is a
   // race and names nothing — least of all a national ID or an access code.
   unit_occupancies_one_primary_per_unit: null,
-  domestic_workers_tenant_id_national_id_hash_key: null,
+  domestic_workers_tenant_id_id_document_hash_key: null,
   worker_engagements_active_code: null,
   household_invites_token_hash_key: null,
   // Technical keys that back composite foreign keys; a violation would mean

@@ -13,12 +13,13 @@ type GlobalTables = Pick<
   | 'platformAuditLog'
   | 'securityEvent'
   | 'inviteToken'
+  | 'outboxMessage'
 >;
 
 /**
  * The only path to the global (non-RLS) tables: tenants, login_identifiers,
  * otp_challenges, sessions, platform_admins, platform_sessions, the audit
- * tables and invite_tokens. Tenant tables are deliberately not exposed here.
+ * tables, invite_tokens and outbox_messages. Tenant tables are deliberately not exposed here.
  */
 @Injectable()
 export class GlobalDbService implements GlobalTables {
@@ -58,6 +59,10 @@ export class GlobalDbService implements GlobalTables {
 
   get inviteToken() {
     return this.base.client.inviteToken;
+  }
+
+  get outboxMessage() {
+    return this.base.client.outboxMessage;
   }
 
   /**
@@ -106,6 +111,7 @@ export class GlobalDbService implements GlobalTables {
       platformAuditLog: tx.platformAuditLog,
       securityEvent: tx.securityEvent,
       inviteToken: tx.inviteToken,
+      outboxMessage: tx.outboxMessage,
     };
   }
 

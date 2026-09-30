@@ -339,9 +339,13 @@ model OutboxMessage {
   sentAt        DateTime?     @map("sent_at") @db.Timestamptz(3)
   /// When recipient and params were removed (dead rows past retention).
   strippedAt    DateTime?     @map("stripped_at") @db.Timestamptz(3)
+  /// The account a message is for (a pointer, no FK): erasure strips that
+  /// account's pending messages without touching others sharing the address.
+  recipientAccountId String?  @map("recipient_account_id") @db.Uuid
 
   @@index([status, nextAttemptAt])
   @@index([status, sentAt])
+  @@index([recipientAccountId])
   @@map("outbox_messages")
 }
 

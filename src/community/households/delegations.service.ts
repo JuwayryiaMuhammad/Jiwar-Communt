@@ -319,6 +319,7 @@ export class DelegationsService implements OnModuleInit {
         locale: to.preferredLocale,
         recipient: to.email,
         params: { ...params },
+        recipientAccountId: to.id,
       });
     }
   }

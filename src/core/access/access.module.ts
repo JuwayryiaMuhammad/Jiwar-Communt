@@ -4,6 +4,7 @@ import { PermissionsService } from './permissions.service';
 import { RoleProvisioner } from './role-provisioner';
 import { ResourceAccess } from './resource-access';
 import { RolesService } from './roles.service';
+import { StaffRecipients } from './staff-recipients';
 
 @Global()
 @Module({
@@ -13,9 +14,11 @@ import { RolesService } from './roles.service';
     PermissionsService,
     RolesService,
     ResourceAccess,
+    StaffRecipients,
   ],
   exports: [
     ResourceAccess,
+    StaffRecipients,
     ACCESS_CATALOG,
     RoleProvisioner,
     PermissionsService,

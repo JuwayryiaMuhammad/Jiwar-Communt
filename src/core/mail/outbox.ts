@@ -13,7 +13,16 @@ export interface OutboxEmail {
   locale: Locale;
   recipient: string;
   params: Record<string, unknown>;
+  /**
+   * The account the message is for, when it is for an account. Erasure
+   * strips that account's pending messages by this pointer: an address may
+   * be shared by several accounts.
+   */
+  recipientAccountId?: string | null;
 }
+
+/** `last_error_code` of a notice that had nobody to go to. */
+export const NO_RECIPIENT = 'NO_RECIPIENT';
 
 /**
  * The transactional outbox (ADR 0019). `enqueue` writes the message in the
@@ -32,11 +41,7 @@ export class Outbox {
   ) {}
 
   async enqueue(tx: TenantTxClient, email: OutboxEmail): Promise<string> {
-    if (!this.templates.has(email.templateKey)) {
-      // A developer mistake: fail the action now rather than write a message
-      // that can never be rendered.
-      throw new Error(`Unknown email template ${email.templateKey}`);
-    }
+    this.assertTemplate(email.templateKey);
     const id = newId();
     await this.globalDb.in(tx).outboxMessage.create({
       data: {
@@ -47,8 +52,52 @@ export class Outbox {
         locale: email.locale,
         recipient: email.recipient,
         params: email.params as Prisma.InputJsonValue,
+        recipientAccountId: email.recipientAccountId ?? null,
       },
     });
     return id;
+  }
+
+  /**
+   * "Never silent" when there is nobody to tell (a minor has no account, a
+   * permission has no holder): the notice is recorded as already dead, with
+   * nothing personal in it, so the failure is on file instead of skipped.
+   */
+  async recordUndeliverable(
+    tx: TenantTxClient,
+    notice: {
+      tenantId: string;
+      templateKey: string;
+      locale?: Locale;
+      recipientAccountId?: string | null;
+    },
+  ): Promise<string> {
+    this.assertTemplate(notice.templateKey);
+    const id = newId();
+    const now = new Date();
+    await this.globalDb.in(tx).outboxMessage.create({
+      data: {
+        id,
+        tenantId: notice.tenantId,
+        channel: 'email',
+        templateKey: notice.templateKey,
+        locale: notice.locale ?? 'ar',
+        recipient: null,
+        params: undefined,
+        status: 'dead',
+        lastErrorCode: NO_RECIPIENT,
+        strippedAt: now,
+        recipientAccountId: notice.recipientAccountId ?? null,
+      },
+    });
+    return id;
+  }
+
+  private assertTemplate(key: string): void {
+    if (!this.templates.has(key)) {
+      // A developer mistake: fail the action now rather than write a message
+      // that can never be rendered.
+      throw new Error(`Unknown email template ${key}`);
+    }
   }
 }

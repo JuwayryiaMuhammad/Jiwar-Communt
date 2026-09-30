@@ -448,11 +448,23 @@ export class HouseholdsService {
         unitId: member.unitId,
         accountId: member.accountId,
         accountDeactivated,
+        ...(member.accountId ? {} : { noticeUndeliverable: true }),
         ...how.metadata,
       },
     });
 
-    if (!member.accountId) return lifecycleTasks; // minors get no email
+    if (!member.accountId) {
+      // A minor has no account and no email: never silent, so the notice is
+      // on file as undeliverable instead of skipped.
+      await this.outbox.recordUndeliverable(tx, {
+        tenantId: member.tenantId,
+        templateKey:
+          how.kind === 'removed'
+            ? HOUSEHOLD_EMAILS.memberRemoved
+            : HOUSEHOLD_EMAILS.joinRejected,
+      });
+      return lifecycleTasks;
+    }
     const account = await tx.account.findUniqueOrThrow({
       where: { id: member.accountId },
       select: { email: true, preferredLocale: true, tenantId: true },
@@ -479,6 +491,7 @@ export class HouseholdsService {
         unitCode: unit.code,
         reason: how.reason,
       },
+      recipientAccountId: member.accountId,
     });
     const accountId = member.accountId;
     return [

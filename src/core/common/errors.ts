@@ -84,6 +84,8 @@ export const FieldErrorCode = {
   INVALID_BIRTH_DATE: 'INVALID_BIRTH_DATE',
   /** A schedule window that starts and ends at the same minute. */
   INVALID_SCHEDULE: 'INVALID_SCHEDULE',
+  /** A reason code outside the action's closed list (Phase 2.2). */
+  INVALID_REASON_CODE: 'INVALID_REASON_CODE',
   INVALID_UUID: 'INVALID_UUID',
   INVALID_LENGTH: 'INVALID_LENGTH',
   INVALID_FORMAT: 'INVALID_FORMAT',

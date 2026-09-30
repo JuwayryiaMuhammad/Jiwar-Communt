@@ -256,8 +256,12 @@ export class HouseholdsService {
    * commit. An account left with no active membership is deactivated, which
    * also ends its sessions.
    */
-  async removeMember(memberId: string, reason: string): Promise<void> {
-    const why = requireReason(reason);
+  async removeMember(
+    memberId: string,
+    reasonInput: ReasonInput,
+  ): Promise<void> {
+    const reason = requireReasonCode(reasonInput, REASON_CODES.memberRemoval);
+    const why = reason.text;
     const after: AfterCommit[] = [];
     await this.tenantTx.withTenantTx(async (tx) => {
       const member = await tx.householdMember.findFirst({
@@ -289,7 +293,7 @@ export class HouseholdsService {
           kind: 'removed',
           reason: why,
           byAccountId: by.accountId,
-          metadata: onBehalfOf(by),
+          metadata: { ...onBehalfOf(by), reasonCode: reason.code },
         })),
       );
     });
@@ -330,8 +334,12 @@ export class HouseholdsService {
   }
 
   /** Management declines a pending member: same path as a removal. */
-  async rejectMember(memberId: string, reason: string): Promise<void> {
-    const why = requireReason(reason);
+  async rejectMember(
+    memberId: string,
+    reasonInput: ReasonInput,
+  ): Promise<void> {
+    const reason = requireReasonCode(reasonInput, REASON_CODES.memberRejection);
+    const why = reason.text;
     const after: AfterCommit[] = [];
     await this.tenantTx.withTenantTx(async (tx) => {
       const member = await tx.householdMember.findFirst({
@@ -346,7 +354,7 @@ export class HouseholdsService {
           kind: 'rejected',
           reason: why,
           byAccountId: this.ctx.accountId,
-          metadata: {},
+          metadata: { reasonCode: reason.code },
         })),
       );
     });
@@ -931,20 +939,6 @@ function invalid(fields: FieldError[]) {
   return appError.badRequest(ErrorCode.VALIDATION_FAILED, 'Invalid input', {
     fields,
   });
-}
-
-export function requireReason(reason: string | undefined): string {
-  const why = (reason ?? '').trim();
-  if (!why) {
-    throw appError.badRequest(
-      ErrorCode.REASON_REQUIRED,
-      'A reason is required',
-      {
-        fields: [{ field: 'reason', code: FieldErrorCode.FIELD_REQUIRED }],
-      },
-    );
-  }
-  return why;
 }
 
 function inviteNotFound() {

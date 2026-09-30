@@ -41,7 +41,9 @@ describe('Notices', () => {
         relation: 'child',
       }),
     );
-    await asPrimary(() => households.removeMember(kid.id, 'moved away'));
+    await asPrimary(() =>
+      households.removeMember(kid.id, { code: 'other', text: 'moved away' }),
+    );
 
     const rows = await globalDb.outboxMessage.findMany({
       where: { tenantId: c.tenantId },
@@ -69,7 +71,9 @@ describe('Notices', () => {
     const primary = await x.resident(c, [u.id]);
     const joined = await x.joinFamily(c, u.id, primary);
     await x.as(c, { id: primary.id, type: 'resident' }, () =>
-      h.moduleRef.get(HouseholdsService).removeMember(joined.memberId, 'left'),
+      h.moduleRef
+        .get(HouseholdsService)
+        .removeMember(joined.memberId, { code: 'other', text: 'left' }),
     );
     const [message] = await globalDb.outboxMessage.findMany({
       where: { tenantId: c.tenantId, templateKey: 'household.member_removed' },
@@ -96,5 +100,34 @@ describe('Notices', () => {
     const u = await x.unit(a);
     await x.resident(a, [u.id]);
     expect(await holders(a)).toHaveLength(1);
+  });
+
+  it('the retrofitted actions record the reason code, never the text', async () => {
+    const c = await x.compound();
+    const u = await x.unit(c);
+    const primary = await x.resident(c, [u.id]);
+    const joined = await x.joinFamily(c, u.id, primary);
+    await x.as(c, { id: primary.id, type: 'resident' }, () =>
+      h.moduleRef.get(HouseholdsService).removeMember(joined.memberId, {
+        code: 'relation_ended',
+        text: 'Divorced from Hassan',
+      }),
+    );
+    const [entry] = await auditReaders(h).tenant(c.tenantId, {
+      action: 'household.member_removed',
+      targetId: joined.memberId,
+    });
+    expect(entry.metadata).toMatchObject({ reasonCode: 'relation_ended' });
+    expect(JSON.stringify(entry)).not.toContain('Hassan');
+    expect(
+      await x
+        .as(c, { id: primary.id, type: 'resident' }, () =>
+          h.moduleRef.get(HouseholdsService).removeMember(joined.memberId, {
+            code: 'because',
+            text: 'x',
+          }),
+        )
+        .catch((e: { response: { code: string } }) => e.response.code),
+    ).toBe('VALIDATION_FAILED');
   });
 });

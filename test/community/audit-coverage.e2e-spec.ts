@@ -234,7 +234,10 @@ describe('Audit coverage — community', () => {
 
       const second = await join('rejected');
       await x.asManager(c, () =>
-        households().rejectMember(second.accepted.memberId, 'Unknown person'),
+        households().rejectMember(second.accepted.memberId, {
+          code: 'other',
+          text: 'Unknown person',
+        }),
       );
       const rejected = await single(
         c,
@@ -278,7 +281,9 @@ describe('Audit coverage — community', () => {
       expect(JSON.stringify(added)).not.toContain(nationalId);
       expect(JSON.stringify(added)).not.toContain('Little Audit');
 
-      await asPrimary(() => households().removeMember(kid.id, 'moved'));
+      await asPrimary(() =>
+        households().removeMember(kid.id, { code: 'other', text: 'moved' }),
+      );
       expect(await single(c, 'household.member_removed', kid.id)).toMatchObject(
         {
           actorType: 'account',
@@ -362,7 +367,10 @@ describe('Audit coverage — community', () => {
         delegations().create(u.id, member.id, ['household'], expiresAt),
       );
       await asPrimary(() =>
-        households().removeMember(member.memberId, 'moved'),
+        households().removeMember(member.memberId, {
+          code: 'other',
+          text: 'moved',
+        }),
       );
       expect(
         await single(c, 'household.delegation_ended', second.id),
@@ -447,7 +455,12 @@ describe('Audit coverage — community', () => {
         await single(c, 'worker.code_reissued', reg.engagementId),
       ).toMatchObject({ actorType: 'account', actorId: r.id });
 
-      await asResident(() => workers().suspend(reg.engagementId, 'Vacation'));
+      await asResident(() =>
+        workers().suspend(reg.engagementId, {
+          code: 'other',
+          text: 'Vacation',
+        }),
+      );
       expect(
         await single(c, 'worker.engagement_suspended', reg.engagementId),
       ).toMatchObject({
@@ -470,7 +483,9 @@ describe('Audit coverage — community', () => {
           }),
         )
       ).workerId;
-      await x.asManager(c, () => workers().ban(workerId, 'Banned for audit'));
+      await x.asManager(c, () =>
+        workers().ban(workerId, { code: 'other', text: 'Banned for audit' }),
+      );
       expect(await single(c, 'worker.banned', workerId)).toMatchObject({
         actorId: c.managerId,
         targetType: 'domestic_worker',
@@ -483,7 +498,9 @@ describe('Audit coverage — community', () => {
         changes: { banned: { from: true, to: false } },
       });
 
-      await x.asManager(c, () => workers().end(reg.engagementId, 'Left'));
+      await x.asManager(c, () =>
+        workers().end(reg.engagementId, { code: 'other', text: 'Left' }),
+      );
       expect(
         await single(c, 'worker.engagement_ended', reg.engagementId),
       ).toMatchObject({

@@ -117,7 +117,12 @@ describe('Unit states', () => {
         () => asPrimary(hm, () => households.addMinor(hm.unitId, minor())),
         () => asPrimary(hm, () => households.revokeInvite(invite.inviteId)),
         () =>
-          asPrimary(hm, () => households.removeMember(hm.family.memberId, 'x')),
+          asPrimary(hm, () =>
+            households.removeMember(hm.family.memberId, {
+              code: 'other',
+              text: 'x',
+            }),
+          ),
         () => asPrimary(hm, () => delegations.revoke(delegation.id)),
         () =>
           asPrimary(hm, () =>
@@ -224,13 +229,19 @@ describe('Unit states', () => {
       expect(
         await codeOf(
           asPrimary(hm, () =>
-            households.removeMember(hm.family.memberId, 'out'),
+            households.removeMember(hm.family.memberId, {
+              code: 'other',
+              text: 'out',
+            }),
           ),
         ),
       ).toBe('SEPARATION_MANAGER_DECISION');
       // A child without an account is not "an adult's access".
       await asPrimary(hm, () =>
-        households.removeMember(kid.id, 'moved to school'),
+        households.removeMember(kid.id, {
+          code: 'other',
+          text: 'moved to school',
+        }),
       );
 
       const family = await x.as(

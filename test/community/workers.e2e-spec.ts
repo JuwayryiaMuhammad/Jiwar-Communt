@@ -144,7 +144,9 @@ describe('Domestic workers', () => {
       const hm = await home();
       const w = await active(hm);
       const workerId = (await row(hm, w.engagementId)).workerId;
-      await x.asManager(hm.c, () => workers.ban(workerId, 'Theft report'));
+      await x.asManager(hm.c, () =>
+        workers.ban(workerId, { code: 'other', text: 'Theft report' }),
+      );
       const other = await home(hm.c);
       expect(
         await code(
@@ -251,7 +253,9 @@ describe('Domestic workers', () => {
       await x.asManager(hm.c, () =>
         workers.review(reg.engagementId, 'approve'),
       );
-      await asMember(() => workers.suspend(reg.engagementId, 'On leave'));
+      await asMember(() =>
+        workers.suspend(reg.engagementId, { code: 'other', text: 'On leave' }),
+      );
       expect((await row(hm, reg.engagementId)).status).toBe('suspended');
     });
   });
@@ -290,7 +294,7 @@ describe('Domestic workers', () => {
       expect(
         await x.asManager(hm.c, () =>
           workers.review(reg.engagementId, 'reject', {
-            reason: 'Missing documents',
+            reason: { code: 'other', text: 'Missing documents' },
           }),
         ),
       ).toBeNull();
@@ -317,9 +321,15 @@ describe('Domestic workers', () => {
       const hashBefore = (await row(hm, w.engagementId)).accessCodeHash;
 
       expect(
-        await code(asResident(hm, () => workers.suspend(w.engagementId, ''))),
+        await code(
+          asResident(hm, () =>
+            workers.suspend(w.engagementId, { code: 'other', text: '' }),
+          ),
+        ),
       ).toBe('REASON_REQUIRED');
-      await asResident(hm, () => workers.suspend(w.engagementId, 'Travelling'));
+      await asResident(hm, () =>
+        workers.suspend(w.engagementId, { code: 'other', text: 'Travelling' }),
+      );
       expect(await valid(hm, w.code)).toBe(false);
       expect((await row(hm, w.engagementId)).accessCodeHash).toBe(hashBefore);
 
@@ -328,7 +338,9 @@ describe('Domestic workers', () => {
       ).toBeNull();
       expect(await valid(hm, w.code)).toBe(true);
 
-      await asResident(hm, () => workers.end(w.engagementId, 'Contract over'));
+      await asResident(hm, () =>
+        workers.end(w.engagementId, { code: 'other', text: 'Contract over' }),
+      );
       expect(await valid(hm, w.code)).toBe(false);
       expect((await row(hm, w.engagementId)).accessCodeHash).toBeNull();
 
@@ -351,7 +363,9 @@ describe('Domestic workers', () => {
         hm,
         nanny({ idDocumentNumber: nationalIdFor(bornYearsAgo(28)) }),
       );
-      await asResident(hm, () => workers.suspend(first.engagementId, 'Break'));
+      await asResident(hm, () =>
+        workers.suspend(first.engagementId, { code: 'other', text: 'Break' }),
+      );
       // While `first` is suspended, `second` ends up with the same code (a
       // collision the unique index allows, since it covers active ones only).
       const firstHash = (await row(hm, first.engagementId)).accessCodeHash;
@@ -394,7 +408,9 @@ describe('Domestic workers', () => {
       );
       const workerId = (await row(a, wa.engagementId)).workerId;
 
-      await x.asManager(c, () => workers.ban(workerId, 'Secret reason XYZ'));
+      await x.asManager(c, () =>
+        workers.ban(workerId, { code: 'other', text: 'Secret reason XYZ' }),
+      );
       for (const [hm, w] of [
         [a, wa],
         [b, wb],
@@ -459,7 +475,11 @@ describe('Domestic workers', () => {
       expect((await row(hm, w.engagementId)).status).toBe('active'); // computed
 
       expect(
-        await code(asResident(hm, () => workers.suspend(w.engagementId, 'x'))),
+        await code(
+          asResident(hm, () =>
+            workers.suspend(w.engagementId, { code: 'other', text: 'x' }),
+          ),
+        ),
       ).toBe('ENGAGEMENT_NOT_FOUND');
       expect(await row(hm, w.engagementId)).toMatchObject({
         status: 'ended',

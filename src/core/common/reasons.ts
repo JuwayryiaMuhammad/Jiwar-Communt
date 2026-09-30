@@ -80,6 +80,12 @@ export function requireReasonCode<C extends string>(
  */
 export const REASON_CODES = {
   occupancyEnd: ['moved_out', 'contract_ended', 'data_correction', 'other'],
+  memberRemoval: ['moved_out', 'relation_ended', 'misconduct', 'other'],
+  memberRejection: ['not_verified', 'not_a_member', 'other'],
+  workerSuspend: ['leave', 'absence', 'misconduct', 'other'],
+  workerEnd: ['work_finished', 'moved', 'misconduct', 'other'],
+  workerReject: ['documents_invalid', 'not_verified', 'other'],
+  workerBan: ['security', 'misconduct', 'fraud', 'other'],
   reviewFlag: ['deceased', 'separation', 'other'],
   reviewClear: ['resolved', 'data_correction', 'other'],
   householdEnd: ['unit_changed_hands', 'household_left', 'other'],

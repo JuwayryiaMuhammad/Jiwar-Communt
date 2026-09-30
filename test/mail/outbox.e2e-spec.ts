@@ -114,7 +114,9 @@ describe('Email outbox', () => {
       .mockRejectedValueOnce(new Error('outbox unavailable'));
     await expect(
       x.as(c, { id: primary.id, type: 'resident' }, () =>
-        h.moduleRef.get(HouseholdsService).removeMember(member.memberId, 'x'),
+        h.moduleRef
+          .get(HouseholdsService)
+          .removeMember(member.memberId, { code: 'other', text: 'x' }),
       ),
     ).rejects.toThrow('outbox unavailable');
     const still = await x.asManager(c, () =>
@@ -472,7 +474,9 @@ describe('Email outbox', () => {
     const member = await x.joinFamily(c, u.id, primary);
     const since = new Date();
     await x.as(c, { id: primary.id, type: 'resident' }, () =>
-      h.moduleRef.get(HouseholdsService).removeMember(member.memberId, 'left'),
+      h.moduleRef
+        .get(HouseholdsService)
+        .removeMember(member.memberId, { code: 'other', text: 'left' }),
     );
     const pending = await globalDb.outboxMessage.findMany({
       where: { recipient: member.email },

@@ -140,7 +140,12 @@ describe('Households', () => {
         expect([
           who,
           await code(
-            run(() => households.removeMember(member.memberId, 'because')),
+            run(() =>
+              households.removeMember(member.memberId, {
+                code: 'other',
+                text: 'because',
+              }),
+            ),
           ),
         ]).toEqual([who, expected]);
       }
@@ -407,7 +412,12 @@ describe('Households', () => {
       const joined = await join(hm);
       expect(
         await code(
-          asPrimary(hm, () => households.removeMember(joined.memberId, '  ')),
+          asPrimary(hm, () =>
+            households.removeMember(joined.memberId, {
+              code: 'other',
+              text: '  ',
+            }),
+          ),
         ),
       ).toBe('REASON_REQUIRED');
     });
@@ -425,7 +435,10 @@ describe('Households', () => {
 
       const since = new Date();
       await asPrimary(hm, () =>
-        households.removeMember(joined.memberId, 'Moved <out> & away'),
+        households.removeMember(joined.memberId, {
+          code: 'other',
+          text: 'Moved <out> & away',
+        }),
       );
       const account = await x.asManager(hm.c, () =>
         x.prisma.tenant.account.findUniqueOrThrow({
@@ -474,7 +487,10 @@ describe('Households', () => {
       );
 
       await asPrimary(hm, () =>
-        households.removeMember(first.memberId, 'moved'),
+        households.removeMember(first.memberId, {
+          code: 'other',
+          text: 'moved',
+        }),
       );
       const account = await x.asManager(hm.c, () =>
         x.prisma.tenant.account.findUniqueOrThrow({
@@ -491,7 +507,9 @@ describe('Households', () => {
       const kid = await asPrimary(hm, () =>
         households.addMinor(hm.unitId, minor()),
       );
-      await asPrimary(hm, () => households.removeMember(kid.id, 'moved away'));
+      await asPrimary(hm, () =>
+        households.removeMember(kid.id, { code: 'other', text: 'moved away' }),
+      );
     });
 
     it('management rejects a pending member with a reason; the person is told', async () => {
@@ -502,12 +520,20 @@ describe('Households', () => {
       const joined = await join(hm);
       expect(
         await code(
-          x.asManager(hm.c, () => households.rejectMember(joined.memberId, '')),
+          x.asManager(hm.c, () =>
+            households.rejectMember(joined.memberId, {
+              code: 'other',
+              text: '',
+            }),
+          ),
         ),
       ).toBe('REASON_REQUIRED');
       const since = new Date();
       await x.asManager(hm.c, () =>
-        households.rejectMember(joined.memberId, 'Not a resident'),
+        households.rejectMember(joined.memberId, {
+          code: 'other',
+          text: 'Not a resident',
+        }),
       );
       // Its own template in the member's language (Arabic by default),
       // not the removal email.
@@ -525,7 +551,9 @@ describe('Households', () => {
   it('a removed or pending family account cannot log in to see anything', async () => {
     const hm = await home();
     const joined = await join(hm);
-    await asPrimary(hm, () => households.removeMember(joined.memberId, 'left'));
+    await asPrimary(hm, () =>
+      households.removeMember(joined.memberId, { code: 'other', text: 'left' }),
+    );
     // Deactivated: the login offers no account.
     const verified = await requestAndVerify(
       h,

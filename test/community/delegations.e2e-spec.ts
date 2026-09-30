@@ -239,7 +239,10 @@ describe('Delegation', () => {
         }),
       );
       await asFamily(hm, hm.member.id, () =>
-        households.removeMember(kid.id, 'moved to grandparents'),
+        households.removeMember(kid.id, {
+          code: 'other',
+          text: 'moved to grandparents',
+        }),
       );
       const [removed] = await auditReaders(h).tenant(hm.c.tenantId, {
         action: 'household.member_removed',
@@ -250,7 +253,10 @@ describe('Delegation', () => {
       expect(
         await code(
           asFamily(hm, hm.member.id, () =>
-            households.removeMember(hm.member.memberId, 'leaving'),
+            households.removeMember(hm.member.memberId, {
+              code: 'other',
+              text: 'leaving',
+            }),
           ),
         ),
       ).toBe('DELEGATION_NOT_ALLOWED');
@@ -348,7 +354,10 @@ describe('Delegation', () => {
       await drainOutbox(h); // the "created" emails, out of the way
       const since = new Date();
       await asPrimary(hm, () =>
-        households.removeMember(hm.member.memberId, 'moved out'),
+        households.removeMember(hm.member.memberId, {
+          code: 'other',
+          text: 'moved out',
+        }),
       );
       expect(await endReason(hm, d.id)).toBe('member_removed');
       await drainOutbox(h);

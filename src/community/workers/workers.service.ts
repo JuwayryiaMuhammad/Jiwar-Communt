@@ -39,7 +39,6 @@ import {
   TenantTx,
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
-import { requireReason } from '../households/households.service';
 import { COMMUNITY_NOTICES } from '../notices/community-notices';
 import { CommunityNotifier } from '../notices/community-notifier';
 import { lockUnits } from '../units/unit-lock';
@@ -68,8 +67,8 @@ export interface Registered {
 }
 
 export interface ReviewOptions {
-  /** Required to reject. */
-  reason?: string;
+  /** Required to reject: a code from the closed list and the text. */
+  reason?: ReasonInput;
   /**
    * Passport workers only: the manager attests the birth date, once per
    * worker (ADR 0018). `birthDate` corrects it at the same time.
@@ -285,8 +284,9 @@ export class WorkersService {
     });
   }
 
-  async suspend(engagementId: string, reason: string): Promise<void> {
-    const why = requireReason(reason);
+  async suspend(engagementId: string, reasonInput: ReasonInput): Promise<void> {
+    const reason = requireReasonCode(reasonInput, REASON_CODES.workerSuspend);
+    const why = reason.text;
     await this.change(engagementId, async (tx, e, actingFor) => {
       if (e.status !== 'active') throw engagementNotFound();
       await tx.workerEngagement.update({
@@ -300,6 +300,7 @@ export class WorkersService {
         'worker.engagement_suspended',
         'suspended',
         actingFor,
+        { reasonCode: reason.code },
       );
       return undefined;
     });
@@ -360,12 +361,14 @@ export class WorkersService {
     });
   }
 
-  async end(engagementId: string, reason: string): Promise<void> {
-    const why = requireReason(reason);
+  async end(engagementId: string, reasonInput: ReasonInput): Promise<void> {
+    const reason = requireReasonCode(reasonInput, REASON_CODES.workerEnd);
     await this.change(engagementId, async (tx, e, actingFor) => {
       if (!OPEN.includes(e.status)) throw engagementNotFound();
-      await this.close(tx, e, why);
-      await this.record(tx, e, 'worker.engagement_ended', 'ended', actingFor);
+      await this.close(tx, e, reason.text);
+      await this.record(tx, e, 'worker.engagement_ended', 'ended', actingFor, {
+        reasonCode: reason.code,
+      });
       return undefined;
     });
   }
@@ -629,7 +632,11 @@ export class WorkersService {
     decision: 'approve' | 'reject',
     options: ReviewOptions = {},
   ): Promise<IssuedCode | null> {
-    const why = decision === 'reject' ? requireReason(options.reason) : null;
+    const rejection =
+      decision === 'reject'
+        ? requireReasonCode(options.reason, REASON_CODES.workerReject)
+        : null;
+    const why = rejection?.text ?? null;
     const corrected =
       options.birthDate === undefined
         ? null
@@ -650,6 +657,7 @@ export class WorkersService {
           null,
           {
             decision,
+            reasonCode: rejection!.code,
           },
         );
         return null;
@@ -769,8 +777,9 @@ export class WorkersService {
    * management (codes kept, not working), with a notice each. Residents see
    * `suspendedByManagement`, never the reason.
    */
-  async ban(workerId: string, reason: string): Promise<void> {
-    const why = requireReason(reason);
+  async ban(workerId: string, reasonInput: ReasonInput): Promise<void> {
+    const reason = requireReasonCode(reasonInput, REASON_CODES.workerBan);
+    const why = reason.text;
     await this.tenantTx.withTenantTx(async (tx) => {
       const worker = await tx.domesticWorker.findFirst({
         where: { id: workerId, bannedAt: null },
@@ -806,7 +815,10 @@ export class WorkersService {
           'worker.banned',
         ),
         // The reason stays on the worker record: free text may name people.
-        metadata: { engagementsSuspended: active.map((e) => e.id) },
+        metadata: {
+          engagementsSuspended: active.map((e) => e.id),
+          reasonCode: reason.code,
+        },
       });
     });
   }

@@ -279,7 +279,8 @@ export class MemberPermissionsService {
         where: { unitId, reason: 'primary_deceased', clearedAt: null },
       });
       if (frozen) {
-        throw appError.conflict(
+        // 403: financeView/financePay are false under a death review.
+        throw appError.forbidden(
           ErrorCode.HOUSEHOLD_UNDER_REVIEW,
           'Financial actions are paused while the unit is under review',
         );

@@ -53,18 +53,6 @@ describe('API v0 — capabilities drive access', () => {
     },
   ];
 
-  /**
-   * The one known exception, left for a product decision: under a death
-   * review the household guard answers 409 HOUSEHOLD_UNDER_REVIEW (a state
-   * conflict), not 403, while the capability says householdManage: false.
-   */
-  const EXCEPTIONS: Record<string, { status: number; code: string }> = {
-    'deceasedPrimary:householdManage': {
-      status: 409,
-      code: 'HOUSEHOLD_UNDER_REVIEW',
-    },
-  };
-
   async function check(
     persona: string,
     token: string,
@@ -81,7 +69,6 @@ describe('API v0 — capabilities drive access', () => {
     });
     for (const probe of PROBES) {
       const res = await probe.run(token, unitId);
-      const exception = EXCEPTIONS[`${persona}:${probe.flag}`];
       const outcome = { persona, flag: probe.flag, status: res.status };
       if (flags[probe.flag] === true) {
         expect(outcome).toEqual({
@@ -90,12 +77,6 @@ describe('API v0 — capabilities drive access', () => {
         });
         expect(res.status).toBeGreaterThanOrEqual(200);
         expect(res.status).toBeLessThan(300);
-      } else if (exception) {
-        expect({ ...outcome, code: err(res).code }).toEqual({
-          ...outcome,
-          status: exception.status,
-          code: exception.code,
-        });
       } else {
         expect([403, 404]).toContain(res.status);
       }
@@ -134,7 +115,7 @@ describe('API v0 — capabilities drive access', () => {
     });
   });
 
-  it('a unit under a death review: finance stops, the household freezes', async () => {
+  it('a unit under a death review: finance stops, the household freezes (403)', async () => {
     const unit = await w.helpers.unit(w.a);
     const owner = await w.helpers.resident(w.a, [unit.id]);
     const family = await w.helpers.joinFamily(w.a, unit.id, owner);
@@ -143,18 +124,22 @@ describe('API v0 — capabilities drive access', () => {
       body: { reasonCode: 'deceased', reason: 'Condolences' },
     }).expect(201);
 
-    await check(
-      'deceasedPrimary',
-      await w.tokenFor(w.a, owner.id, 'resident'),
-      unit.id,
-      {
-        unitView: true,
-        householdView: true,
-        householdManage: false,
-        financeView: false,
-        financePay: false,
-      },
-    );
+    const primaryToken = await w.tokenFor(w.a, owner.id, 'resident');
+    const frozen = await call(w, 'POST', `/units/${unit.id}/household/minors`, {
+      token: primaryToken,
+      body: minorBody(),
+    });
+    expect({ status: frozen.status, code: err(frozen).code }).toEqual({
+      status: 403,
+      code: 'HOUSEHOLD_UNDER_REVIEW',
+    });
+    await check('deceasedPrimary', primaryToken, unit.id, {
+      unitView: true,
+      householdView: true,
+      householdManage: false,
+      financeView: false,
+      financePay: false,
+    });
     await check(
       'familyUnderReview',
       await w.tokenFor(w.a, family.id, 'family'),

@@ -138,7 +138,9 @@ export class ReviewFlags {
       where: { unitId, reason: 'primary_deceased', clearedAt: null },
     });
     if (frozen) {
-      throw appError.conflict(
+      // 403, like every action a capability disallows (householdManage is
+      // false under a death review; ADR 0025).
+      throw appError.forbidden(
         ErrorCode.HOUSEHOLD_UNDER_REVIEW,
         "The unit's household is under review with the management",
       );

@@ -18,7 +18,7 @@ Journey 05 describes what happens when the household's structure breaks: the pri
 - **`transferOwnership`** ends every active occupancy of the unit (`ownership_transferred`, each occupant told), always runs `endHousehold`, and starts the new owner's occupancy (primary if they live there). The old family never keeps entry or visitor rights to a unit that is no longer theirs. *This amends ADR 0016*: memberships stay when the primary leaves and the family stays (death, separation, a departure), but end when the unit changes hands.
 - **Death** (`markPrimaryDeceased`, `residents.manage`, reason code + note):
   - nothing is closed or revoked;
-  - every household grant and revocation is refused for everyone, managers included (`HOUSEHOLD_UNDER_REVIEW`), until `setPrimary` or `clearReviewFlag`;
+  - every household grant and revocation is refused for everyone, managers included (403 `HOUSEHOLD_UNDER_REVIEW`; a 409 before ADR 0025), until `setPrimary` or `clearReviewFlag`;
   - capabilities stop everything financial, while tickets, visitors and emergency continue;
   - the adults are told the unit is under review, never why (the note is manager-only and never audited).
 - **Separation** (`tagSeparation`):

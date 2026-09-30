@@ -129,8 +129,11 @@ export class WorkersController {
     );
   }
 
-  /** A lost or confiscated card: recorded, and a new code issued at once. */
-  @RequireAnyPermission('workers.incidents', 'workers.manage')
+  /**
+   * Management files a lost or confiscated card (ADR 0022); a new code is
+   * issued at once. Residents never file one: they use reissue-code.
+   */
+  @RequirePermissions('workers.incidents')
   @Post('worker-engagements/:id/card-incident')
   @NoStore()
   @ApiCreatedResponse({ type: CardIncidentCreatedView })

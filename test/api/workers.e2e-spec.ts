@@ -160,7 +160,7 @@ describe('API v0 — workers', () => {
       'POST',
       `/worker-engagements/${engagementId}/card-incident`,
       {
-        token: owner(),
+        token: manager(),
         body: { type: 'lost', note: 'Lost at the club' },
       },
     ).expect(201);

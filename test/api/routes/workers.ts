@@ -103,22 +103,28 @@ export const WORKERS_ROUTES: Row[] = [
     true,
   ),
   {
-    ...engagementAction(
-      'card-incident',
-      () => ({ type: 'lost' }),
-      {
-        body: { type: 'stolen' },
-        fields: [
-          {
-            field: 'type',
-            code: 'INVALID_VALUE',
-            params: { allowed: ['lost', 'confiscated'] },
-          },
-        ],
-      },
-      true,
-    ),
+    method: 'POST',
     path: '/worker-engagements/{id}/card-incident',
+    auth: 'tenant',
+    as: 'manager',
+    // Management only (ADR 0022): residents use reissue-code.
+    denied: 'owner',
+    foreign: {
+      params: engagement,
+      body: () => ({ type: 'lost' }),
+      code: 'ENGAGEMENT_NOT_FOUND',
+    },
+    invalid: {
+      body: { type: 'stolen' },
+      fields: [
+        {
+          field: 'type',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['lost', 'confiscated'] },
+        },
+      ],
+    },
+    noStore: true,
   },
   {
     method: 'GET',

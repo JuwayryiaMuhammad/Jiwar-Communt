@@ -87,6 +87,9 @@ See `.env.example` for the full list with comments. The important ones:
 | `TEST_SMTP_HOST`, `TEST_SMTP_PORT`, `MAILPIT_API_URL` | e2e tests always send through Mailpit and read codes from its API, whatever `SMTP_*` points at |
 | `DB_POOL_MAX` | pg pool size |
 | `OUTBOX_ENABLED`, `OUTBOX_POLL_MS`, `OUTBOX_MAX_ATTEMPTS`, `OUTBOX_RETENTION_DAYS` | Email outbox (ADR 0019): the in-app poller (default on, every 5 s), attempts before a message is dead (8), and days before sent rows are deleted and dead rows stripped of recipient and params (30). Tests turn the poller off and drain explicitly |
+| `SWEEP_ENABLED`, `SWEEP_INTERVAL_MS` | The in-app sweep (ADR 0021): majority notices, registration expiry, overdue erasures. Default on, hourly. Every task is idempotent and safe on several instances; tests turn it off and call `SweepRunner.run(name, now)` |
+| `REGISTRATION_PENDING_DAYS` | A self-registration nobody decided expires and loses its personal data (default 30, ADR 0024) |
+| `DELETION_GRACE_DAYS`, `ERASURE_OVERDUE_DAYS` | Account deletion (ADR 0023): the holder can undo for 30 days; the erasure holders are told once when a request waits 7 days past that |
 | `SECURITY_EVENT_TIMEOUT_MS` | Database-side cap on each security event insert (default 500). A locked `security_events` table delays a login by at most this much; the event is dropped with an error log |
 | `REDIS_URL` | Rate limits, login tickets, permission cache |
 | `SMTP_*` | OTP email delivery |
@@ -131,6 +134,8 @@ The e2e run wipes `jiwar_test`, migrates it as the migrator, runs `access:sync` 
 | `test/db/identity-and-outbox-schema` | The SQL birth-date backfill against the code parser (the migration's own block), and every Phase 2.1 constraint by name |
 | `test/mail/outbox` | Enqueue rolls back with the action (both ways), backoff with SMTP down, dead after the last attempt, two processors never sending the same message, expired leases, retention, flows queueing instead of sending, OTP still direct, the poller starting and stopping |
 | `test/community/*` | National ID and passports (accounts, household, workers with attestation); primary resident (incl. concurrency); households; delegation; self-service; domestic workers; one audit scenario per Phase 2 action plus a secrets scan |
+| `test/community/*` (Phase 2.2) | Capacities and capabilities; death, separation, change of primary, end of household, transfer; member permissions and the finance cap (incl. the DB refusing finance to a minor); deferred actions; minors reaching 18 across time zones; compliance cases and wage obligations; card incidents; self-registration incl. the **enumeration test** (same body and the same models touched for five inputs); undeliverable notices; one audit scenario per Phase 2.2 action |
+| `test/accounts/*` | Frozen accounts (the phone off the account and login, recovery, never reopened for the number's new holder); deletion, legal hold, erasure (tombstone, stripped mail and invites, audit untouched, hold vs erase race), overdue erasures |
 
 ## Error contract (ADR 0013)
 
@@ -232,18 +237,21 @@ src/
     database/    PrismaService.tenant, TenantTx, GlobalDbService — the only DB access paths
     access/      permission catalog, default roles, PermissionsGuard, RolesService, ResourceAccess
     auth/        tenant login: identifiers, OTP (+ email templates), sessions
-    accounts/    manager-created accounts; AccountWriter (the one place accounts are written)
+    accounts/    manager-created accounts; AccountWriter (the one place accounts are written); freeze and erasure (ADR 0023)
     platform/    super admin auth + guard + bootstrap, compounds (TenantsService), access:sync
     audit/       audit catalog, diff + personal-data guard, audit/platform/security services, query services
     redis/       Redis client, rate limiter
     health/      readiness (db, redis, tenant-setting leak canary)
     mail/        the pooled SMTP transport, the bilingual layout, the template registry and the outbox (ADR 0019)
+    sweep/       the in-app sweep; domains register idempotent tasks (ADR 0021)
     tenant-settings/  per-compound settings (household approval, size limit)
   community/     the community domain; other domains import only its index.ts
     units/       units, scoped by ResourceAccess; the unit row lock
-    residents/   residents, unit occupancies, the primary resident
-    households/  household members, invites and acceptance, delegation (ADR 0016)
-    workers/     domestic workers, engagements, access codes, notices (ADR 0017)
+    residents/   residents, occupancies and capacities, the primary resident, unit states, self-registration (ADR 0020, 0021, 0024)
+    households/  household members, invites and acceptance, delegation, member permissions, majority (ADR 0016, 0021)
+    workers/     domestic workers, engagements, access codes, notices, compliance, card incidents (ADR 0017, 0022)
+    capabilities/  capabilitiesFor: what someone may do on a unit, read by later domains (ADR 0020)
+    notices/     the Phase 2.2 community notice templates (ar/en) and their sender
 prisma/        schema, migrations (RLS SQL inside), seed
 docker/        postgres init (roles)
 test/          rls/, access/, platform/, residents/, audit/, db/, auth/, settings/, community/, mail/ suites + setup/
@@ -253,8 +261,10 @@ docs/decisions ADRs
 Rules the code enforces:
 - **Import boundaries** (ADR 0015): `src/core/` never imports a domain; a domain imports another one only through its `index.ts` (ESLint, `eslint.boundaries.cjs`, proven by a unit test).
 - **Tenant data** goes through `prisma.tenant.<model>` (single queries) or `withTenantTx` (multi-statement work and raw SQL). The raw Prisma client cannot be imported outside `src/core/database/` (ESLint).
-- **`runInTenantUnsafe`** takes the tenant from the caller, not the request. It is allowed only in `src/core/auth/`, `src/core/platform/`, `prisma/seed.ts` and the one household file that accepts invites before anyone is logged in (ESLint).
-- **Core reaches domains only through hooks** (`AccountLifecycle`), never imports.
+- **`runInTenantUnsafe`** takes the tenant from the caller, not the request. It is allowed only in `src/core/auth/`, `src/core/platform/`, `prisma/seed.ts` and the files named in `eslint.config.mjs`: invite acceptance and registration (before anyone is logged in), and the sweep tasks that walk every compound (ESLint).
+- **Core reaches domains only through hooks** (`AccountLifecycle`: deactivation, freeze, reactivation, erasure; `SweepRunner`; `EmailTemplates`), never imports.
+- **Reasons** for every rejection, revocation, freeze and suspension are `{ code, text }`: the code from a closed list goes into the audit trail, the text only to the record and the notice (`core/common/reasons.ts`).
+- **Never silent:** a notice with nobody to receive it is recorded as undeliverable (`Outbox.recordUndeliverable`), never skipped.
 - **`tenantId` comes from the token only.** It never appears in a request DTO, and unknown body fields are rejected.
 - **Errors** are thrown only as `AppException`, with a code (unit test).
 - **Audit entries** are written only through `AuditService` / `PlatformAuditService`, with the action's transaction. Bypassing the immutability triggers (`session_replication_role`) is allowed only in `test/` (unit test).

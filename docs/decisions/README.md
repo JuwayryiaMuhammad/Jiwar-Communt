@@ -21,3 +21,8 @@
 | [0017](0017-domestic-workers.md) | Domestic workers: engagements, codes, notices, ban | Accepted |
 | [0018](0018-identity-documents.md) | Identity documents: national ID or passport, stored birth date | Accepted |
 | [0019](0019-email-outbox.md) | Transactional email outbox, at least once | Accepted |
+| [0020](0020-occupancy-capacities.md) | Occupancy capacities and `capabilitiesFor` | Accepted |
+| [0021](0021-unit-states-and-member-permissions.md) | Unit review flags, member permissions, minors coming of age, the sweep | Accepted |
+| [0022](0022-worker-compliance-and-card-incidents.md) | Worker compliance cases, wage obligations, card incidents | Accepted |
+| [0023](0023-frozen-accounts-and-erasure.md) | Frozen accounts ("not me") and account erasure | Accepted |
+| [0024](0024-self-registration.md) | Resident self-registration: a request first | Accepted |

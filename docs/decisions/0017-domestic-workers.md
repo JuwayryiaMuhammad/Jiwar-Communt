@@ -50,3 +50,10 @@ Housekeepers, drivers, nannies and live-in helpers come and go every day. The jo
   - overlap is computed on a weekly timeline in minutes, wrapping from Saturday night into Sunday;
   - touching edges don't clash.
 - **`isWithinSchedule(schedule, instant, timeZone)`** is ready for the gate. It reads local time in `tenant_settings.timezone` (IANA, default `Africa/Cairo`).
+
+## Update (Phase 2.2)
+- **Compliance** (ADR 0022): an underage worker opens a compliance case for the `workers.compliance` holders, records `pay_in_full`, and holds every resume while the case is open. `reportUnderage` covers reports that contradict the document.
+- **Wage obligations:** `settle_before_close` whenever an engagement that had a code closes. Payroll settles them later.
+- **Card incidents** (ADR 0022): `reportCardIncident(lost | confiscated)` reissues free and at once. A confiscation goes to management and security, never to the resident. A resident's `reissueCode` takes `lost | compromised | other`.
+- **Reasons:** suspend, end, ban and review-reject take `{ code, text }`; the code goes into the audit metadata.
+- A landlord (ADR 0020) neither sees nor registers the unit's workers.

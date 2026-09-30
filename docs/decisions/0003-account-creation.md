@@ -18,3 +18,6 @@ These become additional authorized actors without reversing this decision.
 
 ## Superseded
 The journey documents describe resident self-registration (name + unit + phone → OTP → "pending review" until the manager approves). This decision replaces it for now; see ADR 0009 for the confirmation still needed from the product owner.
+
+## Update (Phase 2.2)
+Resident self-registration exists now as a **request** that a manager approves; approval creates the account (ADR 0024). The rule stands: accounts are created by an authorized actor inside the tenant, now the approving manager. ADR 0009 #1 is closed.

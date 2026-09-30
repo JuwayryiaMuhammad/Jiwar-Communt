@@ -21,3 +21,7 @@ A resident failing the check gets **not found** (`UNIT_NOT_FOUND`), never forbid
 - Each unit has at most one **primary resident** among its active occupancies. The first occupant becomes primary; the manager can change it; when the primary leaves, the unit is flagged for a household review and nobody is promoted (ADR 0016).
 - `ResourceAccess` also scopes **family** accounts: units where they have an active household membership.
 - `myUnits` says whether the caller is the unit's primary, and gives the primary the household counts.
+
+## Update (Phase 2.2)
+- **Capacities** (ADR 0020): `resides` on the occupancy (an owner who does not live there is a landlord; a tenant always resides). A landlord is never primary and never sees the household.
+- Ending an occupancy needs a reason code and text and tells the occupant (`end_reason`, `end_note`). Tenant → owner conversion keeps history as two linked rows. `handed_over_at` ends the archive's emergency button.

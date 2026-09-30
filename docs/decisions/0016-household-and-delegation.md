@@ -66,3 +66,11 @@ A unit is lived in by more people than its occupants: spouses, children, parents
 - **A rejected join request has its own email** ("your request was not approved", with the reason). The person was never a member, so it is no longer the removal email.
 - **Units needing review:** `units.household_review_flagged_at` is set with the flag. `ResidentsService.unitsNeedingReview` lists flagged units for managers (`residents.read`): reason, flag time, active occupant count, keyset-paged on (flagged_at, id). Setting a primary removes a unit from the list.
 - **Passports:** household members and invitees may hold a passport (ADR 0018). Adulthood and delegate eligibility use the stored birth date.
+
+## Update (Phase 2.2)
+- **When the unit changes hands, the household ends** (ADR 0021): a `primary_left` flag is resolved either by `setPrimary` (the family stays) or by `endHousehold`, which ends every membership, invite, delegation and worker engagement with a notice to each person. `transferOwnership` always runs it. Keeping memberships when the primary leaves is still right for death, separation or a departure.
+- **The review flag** moved to `unit_review_flags`, which is several reasons, with history (ADR 0021).
+- **Minors are never skipped silently:** removing one records an undeliverable notice.
+- **Reasons:** removal and rejection take `{ code, text }`; the code goes into the audit metadata.
+- **Per-member permissions** are a separate concept from delegation (ADR 0021). A `household` delegate may grant daily permissions but never finance.
+- Delegation ends also when the household ends (`end_reason = household_ended`).

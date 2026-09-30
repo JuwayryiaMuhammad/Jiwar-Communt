@@ -17,3 +17,7 @@
 - A fourth account type, **`family`**: an adult household member with their own login (ADR 0016). It stays separate from any resident or staff account of the same person, like every other capacity.
 - Minors and domestic workers have **no account** at all.
 - Every account creator now validates the **Egyptian national ID** (`core/common/egyptian-national-id.ts`) and stores it normalized. Residents without one (passport holders) are an open question (ADR 0009).
+
+## Update (Phase 2.2)
+- Two new account statuses: **`frozen`** (the phone went to someone else; no login and no phone until reactivated) and **`erased`** (a tombstone: the row stays and every personal field is NULL). See ADR 0023.
+- Personal fields on `accounts` may therefore be NULL, but only in those shapes (CHECK `accounts_erased_shape`).

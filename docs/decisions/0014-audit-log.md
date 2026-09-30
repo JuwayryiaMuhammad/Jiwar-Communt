@@ -24,6 +24,10 @@ The table owner (`jiwar_migrator`) can still `ALTER TABLE … DISABLE TRIGGER` a
 ## Open items
 - Hash chaining for tamper evidence.
 - Blocking owner DDL on the audit tables (superuser event trigger).
-- Retention, and anonymization of actor references.
+- Retention. *Anonymization of actor references is settled (Phase 2.2, ADR 0023): erasure turns the account into a tombstone (status `erased`, personal fields NULL), so `actor_id` / `target_id` keep pointing at the row and screens show a deleted user; the audit tables are never touched, and hold no personal values to begin with. What remains open is retention itself, including `security_events`, which keep `account_id`, IP and user agent.*
 - Read-access logging for sensitive data.
 - Export.
+
+## Update (Phase 2.2)
+- **Reasons** enter the trail as a `reasonCode` from a closed list per action (`core/common/reasons.ts`). The text the person is told stays on the record and in the notice, both erasable.
+- **Erasure** never touches `audit_log`; a test compares the rows before and after.

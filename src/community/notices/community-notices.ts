@@ -26,6 +26,9 @@ export const COMMUNITY_NOTICES = {
   deferredActionDeclined: 'community.deferred_action_declined',
   majorityReached: 'community.majority_reached',
   cameOfAge: 'community.came_of_age',
+  workerCodeReissued: 'community.worker_code_reissued',
+  cardConfiscated: 'community.card_confiscated',
+  complianceCaseOpened: 'community.compliance_case_opened',
 } as const;
 
 export type CommunityNoticeKey =
@@ -213,6 +216,39 @@ const CATALOG: Catalog = {
     en: (p) => ({
       subject: 'You now have your own Jiwar account',
       lead: `Your minor status was lifted and you now have an account in unit ${p.unitCode} in ${p.compoundName}: inviting visitors, bookings and tickets are available to you, and your history stays yours.`,
+    }),
+  },
+  // Never the reason: a confiscation must not reach the resident (11 §7).
+  'community.worker_code_reissued': {
+    ar: (p) => ({
+      subject: 'صدر كود جديد لعامل على جوار',
+      lead: `صدر كود دخول جديد لـ${p.workerName} في الوحدة ${p.unitCode} في ${p.compoundName}، وأُلغي الكود السابق. ستُسلَّم البطاقة الجديدة للعامل بلا رسوم.`,
+    }),
+    en: (p) => ({
+      subject: 'A new worker code was issued on Jiwar',
+      lead: `A new entry code was issued to ${p.workerName} for unit ${p.unitCode} in ${p.compoundName}, and the previous one no longer works. The worker receives the new card free of charge.`,
+    }),
+  },
+  'community.card_confiscated': {
+    ar: (p) => ({
+      subject: 'بلاغ مصادرة بطاقة عامل على جوار',
+      lead: `سُجّل بلاغ مصادرة بطاقة عامل للوحدة ${p.unitCode} في ${p.compoundName} (ملف ${p.incidentId}). أُصدر كود بديل وفُتح ملف مراجعة.`,
+      help: 'لا يُبلَّغ ساكن الوحدة بسبب إعادة الإصدار.',
+    }),
+    en: (p) => ({
+      subject: "A worker's card was reported confiscated on Jiwar",
+      lead: `A worker's card for unit ${p.unitCode} in ${p.compoundName} was reported confiscated (file ${p.incidentId}). A replacement code was issued and a review file opened.`,
+      help: "The unit's resident is not told why the code was reissued.",
+    }),
+  },
+  'community.compliance_case_opened': {
+    ar: (p) => ({
+      subject: 'ملف امتثال جديد على جوار',
+      lead: `فُتح ملف امتثال في ${p.compoundName} (ملف ${p.caseId}): عامل تبيّن أنه دون السن القانونية. أُوقفت أكواده، ويُصرف أجره كاملاً عن أيام عمله.`,
+    }),
+    en: (p) => ({
+      subject: 'A new compliance case on Jiwar',
+      lead: `A compliance case was opened in ${p.compoundName} (case ${p.caseId}): a worker was found to be under 18. Their codes are stopped, and their wage is owed in full for the days worked.`,
     }),
   },
 };

@@ -335,6 +335,89 @@ describe('Audit coverage — Phase 2.2', () => {
   });
 
   // --------------------------------------------------------------------------
+  describe('workers (ADR 0022)', () => {
+    async function activeWorker() {
+      const c = await x.compound();
+      const u = await x.unit(c);
+      const r = await x.resident(c, [u.id]);
+      const workers = h.moduleRef.get(WorkersService);
+      const reg = await x.as(c, { id: r.id, type: 'resident' }, () =>
+        workers.register(u.id, {
+          fullName: 'Audit Worker',
+          idDocumentType: 'national_id',
+          idDocumentNumber: nationalIdFor(bornYearsAgo(30)),
+          phone: uniquePhone(),
+          capacity: 'live_in',
+        }),
+      );
+      await x.asManager(c, () => workers.review(reg.engagementId, 'approve'));
+      const { workerId } = await x.asManager(c, () =>
+        x.prisma.tenant.workerEngagement.findUniqueOrThrow({
+          where: { id: reg.engagementId },
+        }),
+      );
+      return { c, workers, engagementId: reg.engagementId, workerId };
+    }
+
+    it('compliance_case_opened, compliance_case_closed — by the compliance holder', async () => {
+      const { c, workers, workerId } = await activeWorker();
+      const caseId = await x.asManager(c, () =>
+        workers.reportUnderage(workerId, {
+          code: 'document_review',
+          text: 'x',
+        }),
+      );
+      expect(
+        await single(c, 'worker.compliance_case_opened', workerId),
+      ).toMatchObject({
+        actorId: c.managerId,
+        targetType: 'domestic_worker',
+        metadata: {
+          caseId,
+          kind: 'underage',
+          source: 'report',
+          reasonCode: 'document_review',
+        },
+      });
+      await x.asManager(c, () =>
+        workers.closeComplianceCase(caseId, { code: 'resolved', text: 'y' }),
+      );
+      expect(
+        await single(c, 'worker.compliance_case_closed', workerId),
+      ).toMatchObject({
+        actorId: c.managerId,
+        changes: { status: { from: 'open', to: 'closed' } },
+        metadata: { caseId, reasonCode: 'resolved' },
+      });
+    });
+
+    it('card_incident_reported, card_incident_closed — by the manager', async () => {
+      const { c, workers, engagementId } = await activeWorker();
+      const out = await x.asManager(c, () =>
+        workers.reportCardIncident(engagementId, 'confiscated', 'z'),
+      );
+      expect(
+        await single(c, 'worker.card_incident_reported', engagementId),
+      ).toMatchObject({
+        actorId: c.managerId,
+        targetType: 'worker_engagement',
+        metadata: {
+          incidentId: out.incidentId,
+          type: 'confiscated',
+          reportedVia: 'manager',
+        },
+      });
+      await x.asManager(c, () => workers.closeCardIncident(out.incidentId));
+      expect(
+        await single(c, 'worker.card_incident_closed', engagementId),
+      ).toMatchObject({
+        actorId: c.managerId,
+        changes: { status: { from: 'open', to: 'closed' } },
+      });
+    });
+  });
+
+  // --------------------------------------------------------------------------
   describe('catalog completeness', () => {
     it('every Phase 2.2 entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

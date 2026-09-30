@@ -304,7 +304,7 @@ describe('Domestic workers', () => {
       const hm = await home();
       const w = await active(hm);
       const fresh = await asResident(hm, () =>
-        workers.reissueCode(w.engagementId),
+        workers.reissueCode(w.engagementId, 'lost'),
       );
       expect(fresh.accessCode).not.toBe(w.code);
       expect(await valid(hm, w.code)).toBe(false);

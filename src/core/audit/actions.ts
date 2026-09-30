@@ -101,6 +101,13 @@ export const AUDIT_ACTIONS = {
   'worker.unbanned': { log: 'tenant', target: 'domestic_worker' },
   'worker.birth_date_attested': { log: 'tenant', target: 'domestic_worker' },
   'worker.birth_date_corrected': { log: 'tenant', target: 'domestic_worker' },
+  'worker.compliance_case_opened': { log: 'tenant', target: 'domestic_worker' },
+  'worker.compliance_case_closed': { log: 'tenant', target: 'domestic_worker' },
+  'worker.card_incident_reported': {
+    log: 'tenant',
+    target: 'worker_engagement',
+  },
+  'worker.card_incident_closed': { log: 'tenant', target: 'worker_engagement' },
   'tenant.created': { log: 'platform', target: 'tenant' },
   'tenant.status_changed': { log: 'platform', target: 'tenant' },
   'tenant.manager_added': { log: 'platform', target: 'account' },

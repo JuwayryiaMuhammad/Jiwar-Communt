@@ -440,7 +440,7 @@ describe('Audit coverage — community', () => {
       });
 
       const reissued = await asResident(() =>
-        workers().reissueCode(reg.engagementId),
+        workers().reissueCode(reg.engagementId, 'lost'),
       );
       remember(reissued.accessCode);
       expect(

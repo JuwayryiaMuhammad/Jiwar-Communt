@@ -40,6 +40,10 @@ export const PERMISSIONS = {
   'workers.manage': { kinds: ['resident', 'family'] },
   'workers.review': { kinds: ['manager'] },
   'workers.ban': { kinds: ['manager'] },
+  // The compliance officer (ADR 0022): underage reports and their cases.
+  'workers.compliance': { kinds: ['manager'] },
+  // Lost and confiscated cards: management now, security with the gate.
+  'workers.incidents': { kinds: ['manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

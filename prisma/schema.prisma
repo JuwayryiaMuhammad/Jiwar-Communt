@@ -233,6 +233,48 @@ enum DeferredActionStatus {
   @@map("deferred_action_status")
 }
 
+enum ComplianceCaseKind {
+  underage
+
+  @@map("compliance_case_kind")
+}
+
+enum ComplianceCaseStatus {
+  open
+  closed
+
+  @@map("compliance_case_status")
+}
+
+enum ComplianceCaseSource {
+  review
+  birth_date_correction
+  report
+
+  @@map("compliance_case_source")
+}
+
+enum CardIncidentType {
+  lost
+  confiscated
+
+  @@map("card_incident_type")
+}
+
+enum CardIncidentStatus {
+  open
+  closed
+
+  @@map("card_incident_status")
+}
+
+enum CardIncidentReporter {
+  manager
+  resident
+
+  @@map("card_incident_reporter")
+}
+
 enum WorkerNoticeStatus {
   pending
   sent
@@ -461,6 +503,10 @@ model Account {
   grantsGiven        HouseholdMemberGrant[]    @relation("GrantGrantedBy")
   grantsRevoked      HouseholdMemberGrant[]    @relation("GrantRevokedBy")
   deferredDecided    HouseholdDeferredAction[] @relation("DeferredDecidedBy")
+  casesOpened        WorkerComplianceCase[]    @relation("CaseOpenedBy")
+  casesClosed        WorkerComplianceCase[]    @relation("CaseClosedBy")
+  incidentsReported  WorkerCardIncident[]      @relation("IncidentReportedBy")
+  incidentsClosed    WorkerCardIncident[]      @relation("IncidentClosedBy")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -732,6 +778,8 @@ model DomesticWorker {
   engagements         WorkerEngagement[]
   notices             WorkerNotice[]
   obligations         WorkerWageObligation[]
+  complianceCases     WorkerComplianceCase[]
+  cardIncidents       WorkerCardIncident[]
 
   @@unique([tenantId, idDocumentHash])
   @@unique([tenantId, id])
@@ -760,12 +808,13 @@ model WorkerEngagement {
   createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt             DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  worker      DomesticWorker         @relation(fields: [tenantId, workerId], references: [tenantId, id], onUpdate: Restrict)
-  unit        Unit                   @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
-  requestedBy Account                @relation("EngagementRequestedBy", fields: [tenantId, requestedById], references: [tenantId, id], onUpdate: Restrict)
-  reviewedBy  Account?               @relation("EngagementReviewedBy", fields: [tenantId, reviewedById], references: [tenantId, id], onUpdate: Restrict)
-  notices     WorkerNotice[]
-  obligations WorkerWageObligation[]
+  worker        DomesticWorker         @relation(fields: [tenantId, workerId], references: [tenantId, id], onUpdate: Restrict)
+  unit          Unit                   @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
+  requestedBy   Account                @relation("EngagementRequestedBy", fields: [tenantId, requestedById], references: [tenantId, id], onUpdate: Restrict)
+  reviewedBy    Account?               @relation("EngagementReviewedBy", fields: [tenantId, reviewedById], references: [tenantId, id], onUpdate: Restrict)
+  notices       WorkerNotice[]
+  obligations   WorkerWageObligation[]
+  cardIncidents WorkerCardIncident[]
 
   @@unique([tenantId, id])
   @@index([tenantId, unitId])
@@ -883,6 +932,57 @@ model HouseholdDeferredAction {
 
   @@index([tenantId, unitId])
   @@map("household_deferred_actions")
+}
+
+/// A compliance file on a worker (ADR 0022): kept in the compliance record,
+/// one open per (worker, kind), closed with a reason, never deleted.
+model WorkerComplianceCase {
+  id              String               @id @db.Uuid
+  tenantId        String               @map("tenant_id") @db.Uuid
+  workerId        String               @map("worker_id") @db.Uuid
+  kind            ComplianceCaseKind
+  status          ComplianceCaseStatus @default(open)
+  source          ComplianceCaseSource
+  reasonCode      String?              @map("reason_code")
+  note            String?
+  openedAt        DateTime             @default(now()) @map("opened_at") @db.Timestamptz(3)
+  openedById      String?              @map("opened_by") @db.Uuid
+  closedAt        DateTime?            @map("closed_at") @db.Timestamptz(3)
+  closedById      String?              @map("closed_by") @db.Uuid
+  closeReasonCode String?              @map("close_reason_code")
+  closeNote       String?              @map("close_note")
+
+  worker   DomesticWorker @relation(fields: [tenantId, workerId], references: [tenantId, id], onUpdate: Restrict)
+  openedBy Account?       @relation("CaseOpenedBy", fields: [tenantId, openedById], references: [tenantId, id], onUpdate: Restrict)
+  closedBy Account?       @relation("CaseClosedBy", fields: [tenantId, closedById], references: [tenantId, id], onUpdate: Restrict)
+
+  @@index([tenantId, openedAt(sort: Desc)])
+  @@map("worker_compliance_cases")
+}
+
+/// A lost or confiscated card (ADR 0022). Management and security see it;
+/// the resident only ever sees that the code was reissued.
+model WorkerCardIncident {
+  id           String               @id @db.Uuid
+  tenantId     String               @map("tenant_id") @db.Uuid
+  engagementId String               @map("engagement_id") @db.Uuid
+  workerId     String               @map("worker_id") @db.Uuid
+  type         CardIncidentType
+  reportedVia  CardIncidentReporter @map("reported_via")
+  reportedById String               @map("reported_by") @db.Uuid
+  reportedAt   DateTime             @default(now()) @map("reported_at") @db.Timestamptz(3)
+  note         String?
+  status       CardIncidentStatus   @default(open)
+  closedAt     DateTime?            @map("closed_at") @db.Timestamptz(3)
+  closedById   String?              @map("closed_by") @db.Uuid
+
+  engagement WorkerEngagement @relation(fields: [tenantId, engagementId], references: [tenantId, id], onUpdate: Restrict)
+  worker     DomesticWorker   @relation(fields: [tenantId, workerId], references: [tenantId, id], onUpdate: Restrict)
+  reportedBy Account          @relation("IncidentReportedBy", fields: [tenantId, reportedById], references: [tenantId, id], onUpdate: Restrict)
+  closedBy   Account?         @relation("IncidentClosedBy", fields: [tenantId, closedById], references: [tenantId, id], onUpdate: Restrict)
+
+  @@index([tenantId, reportedAt(sort: Desc)])
+  @@map("worker_card_incidents")
 }
 
 // ============================================================================

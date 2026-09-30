@@ -82,6 +82,10 @@ export const ErrorCode = {
   ENGAGEMENT_NOT_FOUND: 'ENGAGEMENT_NOT_FOUND',
   /** A passport worker's birth date needs a manager's attestation (ADR 0018). */
   BIRTH_DATE_CONFIRMATION_REQUIRED: 'BIRTH_DATE_CONFIRMATION_REQUIRED',
+  // compliance and card incidents (ADR 0022)
+  WORKER_COMPLIANCE_HOLD: 'WORKER_COMPLIANCE_HOLD',
+  COMPLIANCE_CASE_NOT_FOUND: 'COMPLIANCE_CASE_NOT_FOUND',
+  CARD_INCIDENT_NOT_FOUND: 'CARD_INCIDENT_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

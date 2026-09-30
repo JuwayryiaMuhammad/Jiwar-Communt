@@ -9,6 +9,7 @@ import { InviteAcceptanceService } from './invite-acceptance.service';
 import { ReviewFlags } from '../units/review-flags';
 import { NoticesModule } from '../notices/notices.module';
 import { MemberPermissionsService } from './member-permissions.service';
+import { MajorityNotices } from './majority-notices';
 
 /** Households (ADR 0016). No controllers yet: endpoints come with the design. */
 @Module({
@@ -21,6 +22,7 @@ import { MemberPermissionsService } from './member-permissions.service';
     HouseholdEmailTemplates,
     ReviewFlags,
     MemberPermissionsService,
+    MajorityNotices,
   ],
   exports: [
     ReviewFlags,

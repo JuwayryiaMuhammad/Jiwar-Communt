@@ -24,6 +24,8 @@ export const COMMUNITY_NOTICES = {
   permissionRevoked: 'community.permission_revoked',
   deferredActionSubmitted: 'community.deferred_action_submitted',
   deferredActionDeclined: 'community.deferred_action_declined',
+  majorityReached: 'community.majority_reached',
+  cameOfAge: 'community.came_of_age',
 } as const;
 
 export type CommunityNoticeKey =
@@ -191,6 +193,26 @@ const CATALOG: Catalog = {
     en: (p) => ({
       subject: 'Your request on Jiwar was not approved',
       lead: `The primary resident did not approve your request for ${permissions('en', p.permission)} in unit ${p.unitCode} in ${p.compoundName}.`,
+    }),
+  },
+  'community.majority_reached': {
+    ar: (p) => ({
+      subject: 'أحد أفراد أسرتك بلغ سن الرشد على جوار',
+      lead: `بلغ ${p.memberName} سن الرشد في الوحدة ${p.unitCode} في ${p.compoundName}. لا يُرفع الوضع المقيّد تلقائياً: ادعه لحساب خاص به لتأكيد ذلك.`,
+    }),
+    en: (p) => ({
+      subject: 'A member of your household came of age on Jiwar',
+      lead: `${p.memberName} is now 18 in unit ${p.unitCode} in ${p.compoundName}. Minor status is never lifted automatically: invite them to their own account to confirm.`,
+    }),
+  },
+  'community.came_of_age': {
+    ar: (p) => ({
+      subject: 'أصبح لك حساب على جوار',
+      lead: `رُفع الوضع المقيّد وأصبح لك حساب في الوحدة ${p.unitCode} في ${p.compoundName}: دعوة الزوار والحجوزات والبلاغات متاحة لك الآن، ويبقى سجلك كاملاً.`,
+    }),
+    en: (p) => ({
+      subject: 'You now have your own Jiwar account',
+      lead: `Your minor status was lifted and you now have an account in unit ${p.unitCode} in ${p.compoundName}: inviting visitors, bookings and tickets are available to you, and your history stays yours.`,
     }),
   },
 };

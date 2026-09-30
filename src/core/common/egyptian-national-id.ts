@@ -96,8 +96,16 @@ export function isAdult(birthDate: Date, on: Date = egyptToday()): boolean {
 
 /** Today's calendar date in Egypt, as UTC midnight (comparable with birth dates). */
 export function egyptToday(now: Date = new Date()): Date {
+  return localToday('Africa/Cairo', now);
+}
+
+/**
+ * Today's calendar date in an IANA time zone (a compound's
+ * `tenant_settings.timezone`), as UTC midnight like stored birth dates.
+ */
+export function localToday(timeZone: string, now: Date = new Date()): Date {
   const [y, m, d] = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Africa/Cairo',
+    timeZone,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -106,4 +114,18 @@ export function egyptToday(now: Date = new Date()): Date {
     .split('-')
     .map(Number);
   return new Date(Date.UTC(y, m - 1, d));
+}
+
+/**
+ * The latest birth date of someone adult on `today`: born on or before it
+ * means 18 or older (29 February counts from 1 March, like ageOn).
+ */
+export function adultCutoff(today: Date): Date {
+  const year = today.getUTCFullYear() - ADULT_AGE;
+  const month = today.getUTCMonth();
+  const cutoff = new Date(Date.UTC(year, month, today.getUTCDate()));
+  // Today is 29 February and that year had none: the 28th is the latest.
+  return cutoff.getUTCMonth() === month
+    ? cutoff
+    : new Date(Date.UTC(year, month + 1, 0));
 }

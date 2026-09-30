@@ -1,6 +1,8 @@
 import {
+  adultCutoff,
   ageOn,
   egyptToday,
+  localToday,
   isAdult,
   normalizeNationalId,
   parseEgyptianNationalId,
@@ -78,5 +80,26 @@ describe('Egyptian national ID', () => {
     expect(egyptToday(new Date('2026-09-28T22:30:00Z'))).toEqual(
       d(2026, 9, 29),
     );
+  });
+});
+
+describe('localToday and adultCutoff (a compound time zone)', () => {
+  it('reads the calendar date in the given zone', () => {
+    const now = new Date('2026-10-01T10:00:00Z');
+    expect(localToday('Pacific/Kiritimati', now)).toEqual(d(2026, 10, 2));
+    expect(localToday('Pacific/Pago_Pago', now)).toEqual(d(2026, 9, 30));
+    expect(localToday('Africa/Cairo', now)).toEqual(d(2026, 10, 1));
+  });
+
+  it('the cutoff agrees with isAdult, 29 February included', () => {
+    for (const today of [d(2026, 2, 28), d(2026, 3, 1), d(2028, 2, 29)]) {
+      const cutoff = adultCutoff(today);
+      expect(isAdult(cutoff, today)).toBe(true);
+      const dayAfter = new Date(cutoff.getTime() + 86_400_000);
+      expect(isAdult(dayAfter, today)).toBe(false);
+    }
+    // Born 29 Feb 2008: still 17 on 28 Feb 2026, 18 on 1 March.
+    expect(d(2008, 2, 29) <= adultCutoff(d(2026, 2, 28))).toBe(false);
+    expect(d(2008, 2, 29) <= adultCutoff(d(2026, 3, 1))).toBe(true);
   });
 });

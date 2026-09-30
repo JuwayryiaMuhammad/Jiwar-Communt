@@ -49,9 +49,9 @@ export default tseslint.config(
   // context, so it is a deliberate hole. It is allowed only where there is no
   // request tenant by design: the login bootstrap (src/core/auth/), the
   // platform (src/core/platform/: creating compounds, cross-compound jobs) and
-  // the seed. One domain file is added by name: household invite acceptance
+  // the seed. Domain files are added by name: household invite acceptance
   // resolves the compound from the invite link before anyone is logged in
-  // (ADR 0005, 0016).
+  // (ADR 0005, 0016); the sweep tasks walk every compound in turn (ADR 0021).
   {
     files: ['**/*.ts'],
     rules: {
@@ -60,7 +60,7 @@ export default tseslint.config(
         {
           property: 'runInTenantUnsafe',
           message:
-            'runInTenantUnsafe ignores the request tenant. Allowed only in src/core/auth/, src/core/platform/, the household invite acceptance and prisma/seed.ts; use withTenantTx.',
+            'runInTenantUnsafe ignores the request tenant. Allowed only in src/core/auth/, src/core/platform/, the files named in eslint.config.mjs and prisma/seed.ts; use withTenantTx.',
         },
       ],
     },
@@ -71,6 +71,7 @@ export default tseslint.config(
       'src/core/auth/**/*.ts',
       'src/core/platform/**/*.ts',
       'src/community/households/invite-acceptance.service.ts',
+      'src/community/households/majority-notices.ts',
       'prisma/seed.ts',
     ],
     rules: {

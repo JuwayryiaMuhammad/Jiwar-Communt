@@ -19,7 +19,11 @@ import {
   normalizePhone,
 } from '../../core/auth/identifier';
 import { RequestContext } from '../../core/common/cls/request-context';
-import { isAdult } from '../../core/common/egyptian-national-id';
+import {
+  adultCutoff,
+  isAdult,
+  localToday,
+} from '../../core/common/egyptian-national-id';
 import {
   checkIdentityDocument,
   type IdentityDocument,
@@ -440,6 +444,151 @@ export class HouseholdsService {
     return { members: members.length, invites: invites.length, after };
   }
 
+  // --------------------------------------------------------------------------
+  // Minors reaching 18 (ADR 0021)
+  // --------------------------------------------------------------------------
+
+  /**
+   * For the primary: minors who are 18 today in the compound's time zone
+   * and have no majority invite pending ("ready to confirm").
+   */
+  async minorsReadyToConfirm(unitId: string): Promise<HouseholdMemberView[]> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.requirePrimaryOnly(tx, unitId);
+      const today = await this.compoundToday(tx);
+      const rows = await tx.householdMember.findMany({
+        where: {
+          unitId,
+          status: 'active',
+          isMinor: true,
+          birthDate: { lte: adultCutoff(today) },
+          majorityInvites: {
+            none: { status: 'pending', expiresAt: { gt: new Date() } },
+          },
+        },
+        orderBy: { birthDate: 'asc' },
+      });
+      return rows.filter((m) => isAdult(m.birthDate, today)).map(memberView);
+    });
+  }
+
+  /**
+   * The primary confirms a minor has come of age (never automatic): an
+   * invite to an account of their own, linked to the SAME member row, so
+   * their history stays theirs and continuous. Only the primary — a
+   * delegate cannot lift a minor's restrictions.
+   */
+  async inviteMemberToAdulthood(
+    memberId: string,
+    contact: { email: string; phone: string },
+  ): Promise<CreatedInvite> {
+    const tenantId = this.ctx.tenantId;
+    const token = randomBytes(32).toString('base64url');
+    const tokenHash = this.hasher.hashInviteToken(token);
+    const expiresAt = new Date(Date.now() + INVITE_TTL_DAYS * 86_400_000);
+    const inviteId = await this.tenantTx.withTenantTx(async (tx) => {
+      const found = await tx.householdMember.findFirst({
+        where: { id: memberId, status: 'active', isMinor: true },
+        select: { unitId: true },
+      });
+      if (!found) throw memberNotFound();
+      await lockUnits(tx, [found.unitId]);
+      await this.requirePrimaryOnly(tx, found.unitId);
+      await this.flags.assertMutable(tx, found.unitId);
+      const member = await tx.householdMember.findUniqueOrThrow({
+        where: { id: memberId },
+        include: {
+          majorityInvites: {
+            where: { status: 'pending', expiresAt: { gt: new Date() } },
+          },
+        },
+      });
+      if (!isAdult(member.birthDate, await this.compoundToday(tx))) {
+        throw appError.conflict(
+          ErrorCode.MEMBER_NOT_YET_ADULT,
+          'This member is not 18 yet in the compound time zone',
+        );
+      }
+      if (member.majorityInvites.length) {
+        throw appError.conflict(
+          ErrorCode.MAJORITY_INVITE_PENDING,
+          'An invitation for this member is already pending',
+        );
+      }
+      const person = validatePerson({
+        fullName: member.fullName!,
+        email: contact.email,
+        phone: contact.phone,
+        relation: member.relation,
+        idDocumentType: member.idDocumentType!,
+        idDocumentNumber: member.idDocumentNumber!,
+        nationality: member.nationality ?? undefined,
+        birthDate: member.birthDate,
+      });
+      const id = newId();
+      await tx.householdInvite.create({
+        data: {
+          id,
+          tenantId,
+          unitId: member.unitId,
+          invitedById: this.ctx.accountId,
+          fullName: person.fullName,
+          phone: person.phone,
+          email: person.email,
+          ...person.document,
+          relation: member.relation,
+          tokenHash,
+          expiresAt,
+          memberId,
+        },
+      });
+      await this.globalDb.in(tx).inviteToken.create({
+        data: { tokenHash, tenantId, inviteId: id, expiresAt },
+      });
+      await this.audit.record(tx, {
+        action: 'household.invite_created',
+        targetId: id,
+        changes: diffChanges(
+          null,
+          {
+            unitId: member.unitId,
+            relation: member.relation,
+            status: 'pending',
+            expiresAt,
+          },
+          'household.invite_created',
+        ),
+        metadata: { memberId, majority: true },
+      });
+      return id;
+    });
+    return { inviteId, token, expiresAt };
+  }
+
+  /** Today in the compound's time zone (tenant_settings.timezone). */
+  private async compoundToday(tx: TenantTxClient): Promise<Date> {
+    const { timezone } = await this.settings.inTx(tx, this.ctx.tenantId);
+    return localToday(timezone);
+  }
+
+  private async requirePrimaryOnly(tx: TenantTxClient, unitId: string) {
+    await this.authority.assertVisible(tx, unitId);
+    const primary = await tx.unitOccupancy.count({
+      where: {
+        unitId,
+        accountId: this.ctx.accountId,
+        status: 'active',
+        isPrimary: true,
+      },
+    });
+    if (!primary) {
+      throw appError.forbidden(
+        ErrorCode.NOT_PRIMARY_RESIDENT,
+        "Only the unit's primary resident can do this",
+      );
+    }
+  }
+
   /** Everyone who can see the unit sees its household (minors by name). */
   async listMembers(unitId: string): Promise<HouseholdMemberView[]> {
     return this.tenantTx.withTenantTx(async (tx) => {
@@ -463,7 +612,13 @@ export class HouseholdsService {
         where: { unitId, status: { in: ['active', 'pending_approval'] } },
       }),
       tx.householdInvite.count({
-        where: { unitId, status: 'pending', expiresAt: { gt: new Date() } },
+        // A majority invite is for a member already counted.
+        where: {
+          unitId,
+          status: 'pending',
+          expiresAt: { gt: new Date() },
+          memberId: null,
+        },
       }),
     ]);
     return { memberCount, pendingInvites };

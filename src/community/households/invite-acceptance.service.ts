@@ -1,3 +1,4 @@
+import type { HouseholdMemberStatus } from '@prisma/client';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ClsService } from 'nestjs-cls';
@@ -22,6 +23,8 @@ import { TenantSettingsService } from '../../core/tenant-settings/tenant-setting
 import { lockUnits } from '../units/unit-lock';
 import { expireIfDue } from './households.service';
 import { MemberPermissionsService } from './member-permissions.service';
+import { COMMUNITY_NOTICES } from '../notices/community-notices';
+import { CommunityNotifier } from '../notices/community-notifier';
 import type { AcceptedInvite } from './households.types';
 
 /** The one answer to "send me the code", whatever the token is. */
@@ -58,6 +61,7 @@ export class InviteAcceptanceService {
     private readonly audit: AuditService,
     private readonly cls: ClsService<AppClsStore>,
     private readonly permissions: MemberPermissionsService,
+    private readonly notifier: CommunityNotifier,
   ) {}
 
   /**
@@ -203,25 +207,73 @@ export class InviteAcceptanceService {
     }
     if (!birthDate) return null; // unreachable: invites store a birth date
 
-    const { familyJoinRequiresApproval } = await this.settings.inTx(
-      tx,
-      tenantId,
-    );
-    const status = familyJoinRequiresApproval ? 'pending_approval' : 'active';
-    const memberId = newId();
-    await tx.householdMember.create({
-      data: {
-        id: memberId,
+    let memberId: string;
+    let status: HouseholdMemberStatus;
+    if (invite.memberId) {
+      // A majority invite (ADR 0021): the SAME member row becomes an adult
+      // with an account — its document moves to the account (the invite
+      // carried it), so earlier history keeps pointing at this member.
+      const { count } = await tx.householdMember.updateMany({
+        where: {
+          id: invite.memberId,
+          status: 'active',
+          isMinor: true,
+          accountId: null,
+        },
+        data: {
+          accountId,
+          isMinor: false,
+          fullName: null,
+          idDocumentNumber: null,
+          idDocumentType: null,
+          nationality: null,
+        },
+      });
+      if (count === 0) return null; // no longer an active minor
+      memberId = invite.memberId;
+      status = 'active';
+      await this.audit.record(tx, {
+        action: 'household.member_came_of_age',
+        targetId: memberId,
+        changes: diffChanges(
+          { isMinor: true, hasAccount: false },
+          { isMinor: false, hasAccount: true },
+          'household.member_came_of_age',
+        ),
+        metadata: {
+          unitId: invite.unitId,
+          accountId,
+          confirmedBy: invite.invitedById,
+        },
+      });
+      await this.notifier.toAccounts(
+        tx,
         tenantId,
-        unitId: invite.unitId,
-        accountId,
-        relation: invite.relation,
-        isMinor: false,
-        birthDate,
-        status,
-        addedById: invite.invitedById,
-      },
-    });
+        [accountId],
+        COMMUNITY_NOTICES.cameOfAge,
+        await this.notifier.place(tx, tenantId, invite.unitId),
+      );
+    } else {
+      const { familyJoinRequiresApproval } = await this.settings.inTx(
+        tx,
+        tenantId,
+      );
+      status = familyJoinRequiresApproval ? 'pending_approval' : 'active';
+      memberId = newId();
+      await tx.householdMember.create({
+        data: {
+          id: memberId,
+          tenantId,
+          unitId: invite.unitId,
+          accountId,
+          relation: invite.relation,
+          isMinor: false,
+          birthDate,
+          status,
+          addedById: invite.invitedById,
+        },
+      });
+    }
     const defaultPermissions = await this.permissions.grantDefaults(tx, {
       id: memberId,
       tenantId,

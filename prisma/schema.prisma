@@ -623,6 +623,8 @@ model HouseholdMember {
   /// The primary confirmed this member's permissions (ADR 0021); earlier
   /// than the primary's `primary_since` means "to review".
   permissionsReviewedAt DateTime?             @map("permissions_reviewed_at") @db.Timestamptz(3)
+  /// The sweep told the primary this minor reached 18 (once).
+  majorityNotifiedAt    DateTime?             @map("majority_notified_at") @db.Timestamptz(3)
 
   unit      Unit     @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
   account   Account? @relation("MemberAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
@@ -630,6 +632,7 @@ model HouseholdMember {
   removedBy Account? @relation("MemberRemovedBy", fields: [tenantId, removedById], references: [tenantId, id], onUpdate: Restrict)
 
   grants          HouseholdMemberGrant[]
+  majorityInvites HouseholdInvite[]
   deferredActions HouseholdDeferredAction[]
 
   @@unique([tenantId, id])
@@ -660,11 +663,14 @@ model HouseholdInvite {
   expiresAt         DateTime              @map("expires_at") @db.Timestamptz(3)
   status            HouseholdInviteStatus @default(pending)
   acceptedAccountId String?               @map("accepted_account_id") @db.Uuid
+  /// A majority invite: the minor member this invite turns into an adult.
+  memberId          String?               @map("member_id") @db.Uuid
   createdAt         DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  unit            Unit     @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
-  invitedBy       Account  @relation("InviteInvitedBy", fields: [tenantId, invitedById], references: [tenantId, id], onUpdate: Restrict)
-  acceptedAccount Account? @relation("InviteAcceptedAccount", fields: [tenantId, acceptedAccountId], references: [tenantId, id], onUpdate: Restrict)
+  unit            Unit             @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
+  invitedBy       Account          @relation("InviteInvitedBy", fields: [tenantId, invitedById], references: [tenantId, id], onUpdate: Restrict)
+  acceptedAccount Account?         @relation("InviteAcceptedAccount", fields: [tenantId, acceptedAccountId], references: [tenantId, id], onUpdate: Restrict)
+  member          HouseholdMember? @relation(fields: [tenantId, memberId], references: [tenantId, id], onUpdate: Restrict)
 
   @@index([tenantId, unitId])
   @@map("household_invites")

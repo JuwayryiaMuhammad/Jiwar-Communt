@@ -70,6 +70,14 @@ export const envSchema = z
     OUTBOX_MAX_ATTEMPTS: positiveInt.default(8),
     OUTBOX_RETENTION_DAYS: positiveInt.default(30),
 
+    // The in-app sweep (Phase 2.2): majority notices, registration expiry,
+    // overdue erasures.
+    SWEEP_ENABLED: z
+      .enum(['true', 'false'])
+      .default('true')
+      .transform((v) => v === 'true'),
+    SWEEP_INTERVAL_MS: positiveInt.default(3_600_000),
+
     JWT_ACCESS_SECRET: secret,
     IDENTIFIER_PEPPER: secret,
     OTP_TTL_SECONDS: positiveInt.default(300),

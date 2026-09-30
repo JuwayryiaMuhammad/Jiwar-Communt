@@ -10,8 +10,14 @@ import { bornYearsAgo, MOVED_OUT, nationalIdFor } from '../setup/fixtures';
 import { WorkersService } from '../../src/community/workers/workers.service';
 import { MemberPermissionsService } from '../../src/community/households/member-permissions.service';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
+import { HouseholdsService } from '../../src/community/households/households.service';
+import { InviteAcceptanceService } from '../../src/community/households/invite-acceptance.service';
+import { MAJORITY_SWEEP } from '../../src/community/households/majority-notices';
+import { SweepRunner } from '../../src/core/sweep/sweep-runner';
+import { waitForOtp } from '../setup/mailpit';
 import {
   createHttpHarness,
+  uniqueEmail,
   uniquePhone,
   type HttpHarness,
 } from '../setup/http-app';
@@ -264,6 +270,66 @@ describe('Audit coverage — Phase 2.2', () => {
       ).toMatchObject({
         actorId: primary.id,
         changes: { status: { from: 'pending', to: 'approved' } },
+      });
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  describe('majority (ADR 0021)', () => {
+    it('member_majority_reached (system), member_came_of_age (system)', async () => {
+      const c = await x.compound();
+      const u = await x.unit(c);
+      const primary = await x.resident(c, [u.id]);
+      const households = h.moduleRef.get(HouseholdsService);
+      const asPrimary = <T>(fn: () => Promise<T>) =>
+        x.as(c, { id: primary.id, type: 'resident' }, fn);
+      const kid = await asPrimary(() =>
+        households.addMinor(u.id, {
+          fullName: 'Audited Kid',
+          idDocumentType: 'national_id',
+          idDocumentNumber: nationalIdFor(bornYearsAgo(18, -1)),
+          relation: 'child',
+        }),
+      );
+      await x.asManager(c, () =>
+        x.prisma.tenant.householdMember.update({
+          where: { id: kid.id },
+          data: { birthDate: bornYearsAgo(18) },
+        }),
+      );
+      await h.moduleRef.get(SweepRunner).run(MAJORITY_SWEEP);
+      expect(
+        await single(c, 'household.member_majority_reached', kid.id),
+      ).toMatchObject({
+        actorType: 'system',
+        actorId: null,
+        targetType: 'household_member',
+        metadata: { unitId: u.id, primaryTold: true },
+      });
+
+      const email = uniqueEmail('coming');
+      const invite = await asPrimary(() =>
+        households.inviteMemberToAdulthood(kid.id, {
+          email,
+          phone: uniquePhone(),
+        }),
+      );
+      const acceptance = h.moduleRef.get(InviteAcceptanceService);
+      const since = new Date();
+      await acceptance.startAcceptance(invite.token, '10.1.1.1', 'ar');
+      const accepted = await acceptance.completeAcceptance(
+        invite.token,
+        await waitForOtp(email, since),
+      );
+      expect(
+        await single(c, 'household.member_came_of_age', kid.id),
+      ).toMatchObject({
+        actorType: 'system',
+        changes: {
+          isMinor: { from: true, to: false },
+          hasAccount: { from: false, to: true },
+        },
+        metadata: { accountId: accepted.accountId, confirmedBy: primary.id },
       });
     });
   });

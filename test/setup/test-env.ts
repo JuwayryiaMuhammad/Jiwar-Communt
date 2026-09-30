@@ -31,6 +31,8 @@ export function applyTestEnv(): void {
   // Tests drain the outbox explicitly (processDue), so a poller of one suite
   // never takes another suite's messages (ADR 0019).
   process.env.OUTBOX_ENABLED = 'false';
+  // Same for the sweep: suites call SweepRunner.run(name, now) themselves.
+  process.env.SWEEP_ENABLED = 'false';
   // The locked-table test measures against the default cap.
   process.env.SECURITY_EVENT_TIMEOUT_MS = '500';
   // Platform tests create their own admins; nothing is bootstrapped from .env.

@@ -26,6 +26,7 @@ import { validateEnv, type Env } from './core/config/env.schema';
 import { DatabaseModule } from './core/database/database.module';
 import { HealthModule } from './core/health/health.module';
 import { MailModule } from './core/mail/mail.module';
+import { SweepModule } from './core/sweep/sweep.module';
 import { PlatformModule } from './core/platform/platform.module';
 import { RedisModule } from './core/redis/redis.module';
 import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.module';
@@ -101,6 +102,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     AccessModule,
     AuditModule,
     MailModule,
+    SweepModule,
     TenantSettingsModule,
     HealthModule,
     AuthModule,

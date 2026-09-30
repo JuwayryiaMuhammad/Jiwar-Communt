@@ -5,14 +5,16 @@ import { DelegationsService } from './delegations.service';
 import { HouseholdAuthority } from './household-authority';
 import { HouseholdEmailTemplates } from './household-email-templates';
 import { HouseholdsService } from './households.service';
+import { InviteAcceptanceController } from './invite-acceptance.controller';
 import { InviteAcceptanceService } from './invite-acceptance.service';
 import { ReviewFlags } from '../units/review-flags';
 import { NoticesModule } from '../notices/notices.module';
 import { MemberPermissionsService } from './member-permissions.service';
 import { MajorityNotices } from './majority-notices';
 
-/** Households (ADR 0016). No controllers yet: endpoints come with the design. */
+/** Households, delegation and member permissions (ADR 0016, 0021). */
 @Module({
+  controllers: [InviteAcceptanceController],
   imports: [AccountsModule, AuthModule, NoticesModule],
   providers: [
     HouseholdAuthority,

@@ -1,4 +1,6 @@
 import { OtpService } from '../../src/core/auth/otp.service';
+import { appError, ErrorCode } from '../../src/core/common/errors';
+import { RateLimitService } from '../../src/core/redis/rate-limit.service';
 import { IdentifierHasher } from '../../src/core/auth/identifier';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { PlatformModule } from '../../src/core/platform/platform.module';
@@ -402,6 +404,44 @@ describe('Households', () => {
           .map((u) => u.id)
           .sort(),
       ).toEqual([hm.unitId, second.id].sort());
+    });
+    it('is rate-limited per IP over HTTP, before any lookup', async () => {
+      const hm = await home();
+      const invite = await asPrimary(hm, () =>
+        households.createInvite(hm.unitId, adult('limited')),
+      );
+      const limiter = h.moduleRef.get(RateLimitService);
+      const consume = jest.spyOn(limiter, 'consume');
+      try {
+        await code(
+          acceptance.completeAcceptance('no-such-token', '000000', '10.7.7.7'),
+        );
+        expect(consume).toHaveBeenCalledWith(
+          'invite-complete:ip:10.7.7.7',
+          expect.any(Number),
+          expect.any(Number),
+        );
+        // Once limited, a live token and an unknown one answer the same.
+        consume.mockRejectedValue(
+          appError.tooManyRequests(ErrorCode.RATE_LIMITED, 'limited'),
+        );
+        expect(
+          await code(
+            acceptance.completeAcceptance(invite.token, '000000', '10.7.7.7'),
+          ),
+        ).toBe('RATE_LIMITED');
+        expect(
+          await code(
+            acceptance.completeAcceptance(
+              'no-such-token',
+              '000000',
+              '10.7.7.7',
+            ),
+          ),
+        ).toBe('RATE_LIMITED');
+      } finally {
+        consume.mockRestore();
+      }
     });
   });
 

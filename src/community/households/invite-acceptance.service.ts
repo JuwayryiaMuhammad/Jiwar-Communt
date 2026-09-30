@@ -95,10 +95,23 @@ export class InviteAcceptanceService {
     });
   }
 
+  /**
+   * `ip` is the caller's over HTTP, rate-limited like `otp-verify` before
+   * anything is looked up, so a limited valid token and a limited invalid
+   * one answer the same. In-process callers (tests, flows) pass none.
+   */
   async completeAcceptance(
     token: string,
     code: string,
+    ip?: string,
   ): Promise<AcceptedInvite> {
+    if (ip !== undefined) {
+      await this.rateLimit.consume(
+        `invite-complete:ip:${ip}`,
+        this.config.get('OTP_RATE_LIMIT_PER_IP', { infer: true }),
+        this.config.get('OTP_RATE_LIMIT_WINDOW_SECONDS', { infer: true }),
+      );
+    }
     const tokenHash = this.hasher.hashInviteToken(token);
     const pointer = await this.livePointer(tokenHash);
     if (!pointer) {

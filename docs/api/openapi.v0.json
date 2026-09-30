@@ -45,6 +45,122 @@
         ],
         "type": "object"
       },
+      "CompleteInviteDto": {
+        "properties": {
+          "code": {
+            "pattern": "^\\\\d{6}$",
+            "type": "string"
+          },
+          "token": {
+            "description": "The token from the invitation link.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "code"
+        ],
+        "type": "object"
+      },
+      "CompleteRegistrationDto": {
+        "properties": {
+          "areaSqm": {
+            "description": "Square metres, up to 2 decimals (checked by the service).",
+            "example": "120.5",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "birthDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "building": {
+            "type": "string"
+          },
+          "code": {
+            "pattern": "^\\\\d{6}$",
+            "type": "string"
+          },
+          "email": {
+            "description": "The code goes here.",
+            "format": "email",
+            "type": "string"
+          },
+          "fullName": {
+            "maxLength": 200,
+            "minLength": 2,
+            "type": "string"
+          },
+          "idDocumentNumber": {
+            "type": "string"
+          },
+          "idDocumentType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdDocumentType"
+              }
+            ]
+          },
+          "linkToken": {
+            "description": "The compound's registration link token.",
+            "type": "string"
+          },
+          "nationality": {
+            "type": "string"
+          },
+          "occupancyType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OccupancyType"
+              }
+            ]
+          },
+          "phone": {
+            "type": "string"
+          },
+          "preferredLocale": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Locale"
+              }
+            ]
+          },
+          "resides": {
+            "description": "Owners only: false = they let the unit.",
+            "type": "boolean"
+          },
+          "unitCode": {
+            "description": "As the registrant knows it.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "unitType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnitType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "linkToken",
+          "fullName",
+          "unitCode",
+          "phone",
+          "email",
+          "idDocumentType",
+          "idDocumentNumber",
+          "occupancyType",
+          "code"
+        ],
+        "type": "object"
+      },
       "CreateAccountDto": {
         "properties": {
           "birthDate": {
@@ -141,12 +257,70 @@
         ],
         "type": "object"
       },
+      "HouseholdMemberStatus": {
+        "description": "`pending_approval` when the compound approves new members first.",
+        "enum": [
+          "pending_approval",
+          "active",
+          "removed"
+        ],
+        "type": "string"
+      },
       "IdDocumentType": {
         "enum": [
           "national_id",
           "passport"
         ],
         "type": "string"
+      },
+      "InviteAcceptedView": {
+        "properties": {
+          "code": {
+            "enum": [
+              "INVITE_ACCEPTED"
+            ],
+            "type": "string"
+          },
+          "membershipStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HouseholdMemberStatus"
+              }
+            ],
+            "description": "`pending_approval` when the compound approves new members first."
+          }
+        },
+        "required": [
+          "code",
+          "membershipStatus"
+        ],
+        "type": "object"
+      },
+      "InviteCodeRequestedView": {
+        "properties": {
+          "code": {
+            "enum": [
+              "INVITE_CODE_REQUESTED"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
+      "InviteTokenDto": {
+        "properties": {
+          "token": {
+            "description": "The token from the invitation link.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
       },
       "Locale": {
         "enum": [
@@ -269,6 +443,13 @@
           "email"
         ],
         "type": "object"
+      },
+      "OccupancyType": {
+        "enum": [
+          "owner",
+          "tenant"
+        ],
+        "type": "string"
       },
       "OtpRequestedView": {
         "properties": {
@@ -479,6 +660,128 @@
         },
         "required": [
           "refreshToken"
+        ],
+        "type": "object"
+      },
+      "RegistrationCodeSentView": {
+        "properties": {
+          "code": {
+            "enum": [
+              "REGISTRATION_CODE_SENT"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
+      "RegistrationReceivedView": {
+        "properties": {
+          "code": {
+            "enum": [
+              "REGISTRATION_RECEIVED"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
+      "RegistrationRequestDto": {
+        "properties": {
+          "areaSqm": {
+            "description": "Square metres, up to 2 decimals (checked by the service).",
+            "example": "120.5",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "birthDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "building": {
+            "type": "string"
+          },
+          "email": {
+            "description": "The code goes here.",
+            "format": "email",
+            "type": "string"
+          },
+          "fullName": {
+            "maxLength": 200,
+            "minLength": 2,
+            "type": "string"
+          },
+          "idDocumentNumber": {
+            "type": "string"
+          },
+          "idDocumentType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdDocumentType"
+              }
+            ]
+          },
+          "linkToken": {
+            "description": "The compound's registration link token.",
+            "type": "string"
+          },
+          "nationality": {
+            "type": "string"
+          },
+          "occupancyType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OccupancyType"
+              }
+            ]
+          },
+          "phone": {
+            "type": "string"
+          },
+          "preferredLocale": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Locale"
+              }
+            ]
+          },
+          "resides": {
+            "description": "Owners only: false = they let the unit.",
+            "type": "boolean"
+          },
+          "unitCode": {
+            "description": "As the registrant knows it.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "unitType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnitType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "linkToken",
+          "fullName",
+          "unitCode",
+          "phone",
+          "email",
+          "idDocumentType",
+          "idDocumentNumber",
+          "occupancyType"
         ],
         "type": "object"
       },
@@ -741,6 +1044,19 @@
           "accountType"
         ],
         "type": "object"
+      },
+      "UnitType": {
+        "enum": [
+          "apartment",
+          "villa",
+          "townhouse",
+          "duplex",
+          "penthouse",
+          "studio",
+          "commercial",
+          "other"
+        ],
+        "type": "string"
       },
       "UpdateAccountStatusDto": {
         "properties": {
@@ -1119,6 +1435,79 @@
         },
         "tags": [
           "health"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/invites/accept/complete": {
+      "post": {
+        "operationId": "InviteAcceptanceController_complete",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteInviteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteAcceptedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "public"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/invites/accept/start": {
+      "post": {
+        "operationId": "InviteAcceptanceController_start",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "accept-language",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteCodeRequestedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "public"
         ],
         "x-stability": "draft"
       }
@@ -1737,6 +2126,79 @@
         ],
         "tags": [
           "platform"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/registrations/complete": {
+      "post": {
+        "operationId": "RegistrationPublicController_complete",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteRegistrationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationReceivedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "public"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/registrations/start": {
+      "post": {
+        "operationId": "RegistrationPublicController_start",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "accept-language",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationCodeSentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "public"
         ],
         "x-stability": "draft"
       }

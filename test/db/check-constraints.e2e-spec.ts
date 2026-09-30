@@ -14,6 +14,8 @@ import { required } from '../setup/test-env';
 const REVIEWED: Record<string, { guarded?: string }> = {
   // Nullable columns only under IS [NOT] NULL, or none at all.
   accounts_identity_document: {},
+  accounts_phone_present: {},
+  account_freezes_reactivated_by_needs_time: {},
   audit_log_actor_id_matches_type: {},
   domestic_workers_ban_is_complete: {},
   domestic_workers_birth_date_verification: {},

@@ -21,6 +21,13 @@ export class RequestContext {
     return id;
   }
 
+  /** The acting account, or null outside a signed-in request (system work). */
+  accountIdOrNull(): string | null {
+    return (
+      (this.cls.isActive() ? this.cls.get('accountId') : undefined) ?? null
+    );
+  }
+
   get accountType(): AccountType {
     const type = this.cls.isActive() ? this.cls.get('accountType') : undefined;
     if (!type) throw new TenantContextMissingError();

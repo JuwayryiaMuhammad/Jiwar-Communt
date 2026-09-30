@@ -14,6 +14,7 @@ import { HouseholdsService } from '../../src/community/households/households.ser
 import { InviteAcceptanceService } from '../../src/community/households/invite-acceptance.service';
 import { MAJORITY_SWEEP } from '../../src/community/households/majority-notices';
 import { SweepRunner } from '../../src/core/sweep/sweep-runner';
+import { AccountsService } from '../../src/core/accounts/accounts.service';
 import { waitForOtp } from '../setup/mailpit';
 import {
   createHttpHarness,
@@ -413,6 +414,47 @@ describe('Audit coverage — Phase 2.2', () => {
       ).toMatchObject({
         actorId: c.managerId,
         changes: { status: { from: 'open', to: 'closed' } },
+      });
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  describe('frozen accounts (ADR 0023)', () => {
+    it('account.frozen, account.phone_reassigned (security), account.reactivated — by the manager', async () => {
+      const c = await x.compound();
+      const u = await x.unit(c);
+      const r = await x.resident(c, [u.id]);
+      const accounts = h.moduleRef.get(AccountsService);
+      await x.asManager(c, () =>
+        accounts.freeze(r.id, { code: 'phone_reassigned', text: 'Called in' }),
+      );
+      expect(await single(c, 'account.frozen', r.id)).toMatchObject({
+        actorId: c.managerId,
+        targetType: 'account',
+        changes: {
+          phone: { changed: true },
+          status: { from: 'active', to: 'frozen' },
+        },
+        metadata: { reasonCode: 'phone_reassigned' },
+      });
+      const events = await read.security({
+        accountId: r.id,
+        event: 'account.phone_reassigned',
+      });
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({
+        tenantId: c.tenantId,
+        identifierHash: null,
+      });
+      covered.add('account.phone_reassigned');
+
+      await x.asManager(c, () =>
+        accounts.updateContact(r.id, { phone: uniquePhone() }),
+      );
+      await x.asManager(c, () => accounts.reactivate(r.id));
+      expect(await single(c, 'account.reactivated', r.id)).toMatchObject({
+        actorId: c.managerId,
+        changes: { status: { from: 'frozen', to: 'active' } },
       });
     });
   });

@@ -53,7 +53,8 @@ export interface ResidentView {
   nationality: string;
   /** `YYYY-MM-DD`; null only on legacy accounts. */
   birthDate: string | null;
-  phone: string;
+  /** Null only while frozen (ADR 0023). */
+  phone: string | null;
   email: string;
   status: AccountStatus;
   preferredLocale: Locale;

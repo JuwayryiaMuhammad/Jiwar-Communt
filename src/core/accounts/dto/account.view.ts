@@ -14,7 +14,8 @@ export class AccountView {
   nationality: string;
   /** `YYYY-MM-DD`; null only on legacy accounts. */
   birthDate: string | null;
-  phone: string;
+  /** Null only while frozen: the number went to someone else (ADR 0023). */
+  phone: string | null;
   email: string;
   status: AccountStatus;
   createdAt: Date;

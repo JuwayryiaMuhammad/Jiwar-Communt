@@ -29,6 +29,7 @@ export const COMMUNITY_NOTICES = {
   workerCodeReissued: 'community.worker_code_reissued',
   cardConfiscated: 'community.card_confiscated',
   complianceCaseOpened: 'community.compliance_case_opened',
+  memberFrozen: 'community.member_frozen',
 } as const;
 
 export type CommunityNoticeKey =
@@ -249,6 +250,16 @@ const CATALOG: Catalog = {
     en: (p) => ({
       subject: 'A new compliance case on Jiwar',
       lead: `A compliance case was opened in ${p.compoundName} (case ${p.caseId}): a worker was found to be under 18. Their codes are stopped, and their wage is owed in full for the days worked.`,
+    }),
+  },
+  'community.member_frozen': {
+    ar: (p) => ({
+      subject: 'أُوقف حساب أحد أفراد أسرتك على جوار',
+      lead: `أوقفت الإدارة حساب أحد أفراد أسرة الوحدة ${p.unitCode} في ${p.compoundName} لأن رقم هاتفه انتقل لشخص آخر. ستتواصل الإدارة معه لتسجيل رقم جديد.`,
+    }),
+    en: (p) => ({
+      subject: "A household member's Jiwar account was frozen",
+      lead: `The management froze the account of a member of unit ${p.unitCode}'s household in ${p.compoundName}: their phone number now belongs to someone else. The management will contact them to register a new number.`,
     }),
   },
 };

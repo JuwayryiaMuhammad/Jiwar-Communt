@@ -38,6 +38,8 @@ enum AccountType {
 enum AccountStatus {
   active
   inactive
+  /// "Not me" (ADR 0023): no login, no phone; only reactivate() reopens it.
+  frozen
 
   @@map("account_status")
 }
@@ -84,6 +86,12 @@ enum OccupancyEndReason {
   account_erased
 
   @@map("occupancy_end_reason")
+}
+
+enum AccountFreezeReason {
+  phone_reassigned
+
+  @@map("account_freeze_reason")
 }
 
 enum PlatformAdminStatus {
@@ -470,8 +478,8 @@ model Account {
   nationality      String         @default("EG") @db.Char(2)
   /// Stored, never derived at read time. Null only on legacy rows whose ID did not parse.
   birthDate        DateTime?      @map("birth_date") @db.Date
-  /// E.164
-  phone            String
+  /// E.164. Null only while frozen (the number went to someone else).
+  phone            String?
   /// trimmed + lowercased
   email            String
   status           AccountStatus  @default(active)
@@ -507,6 +515,9 @@ model Account {
   casesClosed        WorkerComplianceCase[]    @relation("CaseClosedBy")
   incidentsReported  WorkerCardIncident[]      @relation("IncidentReportedBy")
   incidentsClosed    WorkerCardIncident[]      @relation("IncidentClosedBy")
+  freezes            AccountFreeze[]           @relation("FreezeAccount")
+  freezesMade        AccountFreeze[]           @relation("FreezeFrozenBy")
+  freezesLifted      AccountFreeze[]           @relation("FreezeReactivatedBy")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -983,6 +994,28 @@ model WorkerCardIncident {
 
   @@index([tenantId, reportedAt(sort: Desc)])
   @@map("worker_card_incidents")
+}
+
+/// A frozen account (ADR 0023). The released phone's HMAC stays here so the
+/// number is never put back on this account. Never deleted.
+model AccountFreeze {
+  id                String              @id @db.Uuid
+  tenantId          String              @map("tenant_id") @db.Uuid
+  accountId         String              @map("account_id") @db.Uuid
+  reason            AccountFreezeReason
+  releasedPhoneHash String              @map("released_phone_hash") @db.Char(64)
+  note              String?
+  frozenAt          DateTime            @default(now()) @map("frozen_at") @db.Timestamptz(3)
+  frozenById        String?             @map("frozen_by") @db.Uuid
+  reactivatedAt     DateTime?           @map("reactivated_at") @db.Timestamptz(3)
+  reactivatedById   String?             @map("reactivated_by") @db.Uuid
+
+  account       Account  @relation("FreezeAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
+  frozenBy      Account? @relation("FreezeFrozenBy", fields: [tenantId, frozenById], references: [tenantId, id], onUpdate: Restrict)
+  reactivatedBy Account? @relation("FreezeReactivatedBy", fields: [tenantId, reactivatedById], references: [tenantId, id], onUpdate: Restrict)
+
+  @@index([tenantId, accountId])
+  @@map("account_freezes")
 }
 
 // ============================================================================

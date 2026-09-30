@@ -157,7 +157,7 @@ describe('Contact change with two accounts on one phone', () => {
           .get(PrismaService)
           .tenant.account.findUniqueOrThrow({ where: { id: manager.id } }),
       )
-    ).phone;
+    ).phone!;
     await expect(
       asManager(() => residents.updateContact(a.id, { phone: managerPhone })),
     ).resolves.toMatchObject({
@@ -172,7 +172,7 @@ describe('Contact change with two accounts on one phone', () => {
           .get(PrismaService)
           .tenant.account.findUniqueOrThrow({ where: { id: b.id } }),
       )
-    ).phone;
+    ).phone!;
     await expect(
       asManager(() => residents.updateContact(a.id, { phone: bPhone })),
     ).rejects.toMatchObject({

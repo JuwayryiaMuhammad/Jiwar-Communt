@@ -2,6 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { SecurityEventsService } from '../audit/security-events.service';
 import { RequestContext } from '../common/cls/request-context';
 import { appError, ErrorCode } from '../common/errors';
+import {
+  REASON_CODES,
+  requireReasonCode,
+  type ReasonInput,
+} from '../common/reasons';
 import { PrismaService } from '../database/prisma.service';
 import { TenantTx } from '../database/tenant-tx.service';
 import { runAfterCommit } from './account-lifecycle';
@@ -77,6 +82,57 @@ export class AccountsService {
       });
     }
     return AccountView.from(change.account);
+  }
+
+  /**
+   * "Not me", reported to management (`accounts.manage`, ADR 0023): the
+   * account's phone went to someone else. Self-service comes with the SMS
+   * channel — with OTP by email, the number's new holder never reaches the
+   * account to press it.
+   */
+  async freeze(id: string, reasonInput: ReasonInput): Promise<AccountView> {
+    const reason = requireReasonCode(reasonInput, REASON_CODES.accountFreeze);
+    if (id === this.ctx.accountId) {
+      throw appError.conflict(
+        ErrorCode.CANNOT_CHANGE_OWN_STATUS,
+        'You cannot freeze your own account',
+      );
+    }
+    const frozen = await this.tenantTx.withTenantTx((tx) =>
+      this.writer.freeze(tx, id, reason),
+    );
+    if (!frozen) throw notFound();
+    // After commit: a rolled-back freeze must leave no event.
+    await this.securityEvents.record('account.phone_reassigned', {
+      tenantId: frozen.account.tenantId,
+      accountId: id,
+      metadata: {
+        reasonCode: reason.code,
+        sessionsRevoked: frozen.sessionsRevoked,
+      },
+    });
+    return AccountView.from(frozen.account);
+  }
+
+  /** Recovery step 1 (`accounts.manage`): a new phone (never the released one). */
+  async updateContact(
+    id: string,
+    input: { phone?: string; email?: string },
+  ): Promise<AccountView> {
+    const updated = await this.tenantTx.withTenantTx((tx) =>
+      this.writer.updateContact(tx, id, input),
+    );
+    if (!updated) throw notFound();
+    return AccountView.from(updated);
+  }
+
+  /** Recovery step 2 (`accounts.manage`): back to active. */
+  async reactivate(id: string): Promise<AccountView> {
+    const account = await this.tenantTx.withTenantTx((tx) =>
+      this.writer.reactivate(tx, id),
+    );
+    if (!account) throw notFound();
+    return AccountView.from(account);
   }
 }
 

@@ -3,12 +3,13 @@ import { AccountsModule } from '../../core/accounts/accounts.module';
 import { HouseholdsModule } from '../households/households.module';
 import { NoticesModule } from '../notices/notices.module';
 import { WorkersModule } from '../workers/workers.module';
+import { FreezeHooks } from './freeze-hooks';
 import { ResidentsService } from './residents.service';
 
 /** No controllers yet: endpoints come with the design (Phase 1a). */
 @Module({
   imports: [AccountsModule, HouseholdsModule, NoticesModule, WorkersModule],
-  providers: [ResidentsService],
+  providers: [ResidentsService, FreezeHooks],
   exports: [ResidentsService],
 })
 export class ResidentsModule {}

@@ -25,6 +25,8 @@ export const AUDIT_ACTIONS = {
     target: 'account',
     sensitive: ['phone', 'email'],
   },
+  'account.frozen': { log: 'tenant', target: 'account', sensitive: ['phone'] },
+  'account.reactivated': { log: 'tenant', target: 'account' },
   'role.permissions_replaced': { log: 'tenant', target: 'role' },
   'role.permissions_synced': { log: 'tenant', target: 'role' },
   'occupancy.created': { log: 'tenant', target: 'occupancy' },
@@ -141,6 +143,8 @@ export const SECURITY_EVENTS = [
   'platform.login_locked',
   'platform.login_succeeded',
   'invite.token_invalid',
+  // "Not me" (ADR 0023): the phone left the account.
+  'account.phone_reassigned',
 ] as const;
 
 export type SecurityEventName = (typeof SECURITY_EVENTS)[number];

@@ -32,7 +32,8 @@ export interface ManagerSummary {
   id: string;
   fullName: string;
   email: string;
-  phone: string;
+  /** Null only while the account is frozen (ADR 0023). */
+  phone: string | null;
   status: AccountStatus;
 }
 

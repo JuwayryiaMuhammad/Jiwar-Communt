@@ -43,7 +43,10 @@ import { TenantSettingsService } from '../../core/tenant-settings/tenant-setting
 import { lockUnits } from '../units/unit-lock';
 import { DelegationsService } from './delegations.service';
 import { HouseholdAuthority, type Authority } from './household-authority';
-import { renderMembershipEndedEmail } from './household-emails';
+import {
+  renderJoinRejectedEmail,
+  renderMemberRemovedEmail,
+} from './household-emails';
 import type {
   CreatedInvite,
   HouseholdMemberView,
@@ -471,8 +474,9 @@ export class HouseholdsService {
       () =>
         this.mailer.send(
           account.email,
-          renderMembershipEndedEmail(account.preferredLocale, {
-            kind: how.kind,
+          (how.kind === 'removed'
+            ? renderMemberRemovedEmail
+            : renderJoinRejectedEmail)(account.preferredLocale, {
             compoundName: tenant.name,
             unitCode: unit.code,
             reason: how.reason,

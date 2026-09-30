@@ -507,9 +507,15 @@ describe('Households', () => {
       await x.asManager(hm.c, () =>
         households.rejectMember(joined.memberId, 'Not a resident'),
       );
+      // Its own template in the member's language (Arabic by default),
+      // not the removal email.
       const email = await waitForMessage(joined.input.email, since);
-      expect(email.Subject).toBe('تم رفض طلب انضمامك إلى أسرة على جوار');
+      expect(email.Subject).toBe(
+        'لم تتم الموافقة على طلب انضمامك إلى أسرة على جوار',
+      );
       expect(email.HTML).toContain('dir="rtl"');
+      expect(email.Text).toContain('Not a resident');
+      expect(email.Text).not.toContain('لم تعد فردًا');
     });
   });
 

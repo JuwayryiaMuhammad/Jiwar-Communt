@@ -6,64 +6,81 @@ import {
   type RenderedEmail,
 } from '../../core/mail/layout';
 
-export interface MembershipEndedEmail {
-  /** removed by the household, or a join request declined by management */
-  kind: 'removed' | 'rejected';
+/** Where a membership was, and the reason given (shown to the person). */
+export interface MembershipEmail {
   compoundName: string;
   unitCode: string;
   reason: string;
 }
 
 /**
- * "Never silent" (ADR 0016): the person always learns that they left a
- * household, and why, in their own language.
+ * "Never silent" (ADR 0016): a member removed by the household learns it,
+ * and why, in their own language.
  */
-export function renderMembershipEndedEmail(
+export function renderMemberRemovedEmail(
   locale: Locale,
-  e: MembershipEndedEmail,
+  e: MembershipEmail,
 ): RenderedEmail {
-  const t = locale === 'ar' ? arabic(e) : english(e);
+  return render(
+    locale,
+    e,
+    locale === 'ar'
+      ? {
+          subject: 'تمت إزالتك من أسرة وحدة على جوار',
+          lead: `لم تعد فردًا في أسرة الوحدة ${e.unitCode} في ${e.compoundName}.`,
+          reasonLabel: 'السبب',
+          help: 'إذا كنت تعتقد أن هذا خطأ، تواصل مع الساكن الرئيسي للوحدة أو مع إدارة المجمع.',
+        }
+      : {
+          subject: 'You were removed from a household on Jiwar',
+          lead: `You are no longer a member of the household of unit ${e.unitCode} in ${e.compoundName}.`,
+          reasonLabel: 'Reason',
+          help: "If you think this is a mistake, contact the unit's primary resident or the compound management.",
+        },
+  );
+}
+
+/**
+ * A join request that management did not approve (ADR 0016). Its own
+ * message: the person was never a member, so "removed" would be wrong.
+ */
+export function renderJoinRejectedEmail(
+  locale: Locale,
+  e: MembershipEmail,
+): RenderedEmail {
+  return render(
+    locale,
+    e,
+    locale === 'ar'
+      ? {
+          subject: 'لم تتم الموافقة على طلب انضمامك إلى أسرة على جوار',
+          lead: `لم توافق إدارة المجمع على طلب انضمامك إلى أسرة الوحدة ${e.unitCode} في ${e.compoundName}.`,
+          reasonLabel: 'السبب',
+          help: 'إذا كنت تعتقد أن هذا خطأ، تواصل مع إدارة المجمع أو مع من دعاك.',
+        }
+      : {
+          subject: 'Your request to join a household on Jiwar was not approved',
+          lead: `The compound management did not approve your request to join the household of unit ${e.unitCode} in ${e.compoundName}.`,
+          reasonLabel: 'Reason',
+          help: 'If you think this is a mistake, contact the compound management or the person who invited you.',
+        },
+  );
+}
+
+function render(
+  locale: Locale,
+  e: MembershipEmail,
+  t: { subject: string; lead: string; reasonLabel: string; help: string },
+): RenderedEmail {
   const lines = [t.lead, '', `${t.reasonLabel}: ${e.reason}`, '', t.help];
   return {
     subject: t.subject,
     text: locale === 'ar' ? rtlText(lines) : lines.join('\n'),
     html: emailPage(
       locale,
-      `<p>${escapeHtml(t.lead)}</p><p><strong>${t.reasonLabel}:</strong> ${escapeHtml(e.reason)}</p><p style="color:#666">${t.help}</p>`,
+      `<p>${escapeHtml(t.lead)}</p><p><strong>${t.reasonLabel}:</strong> ${escapeHtml(e.reason)}</p><p style="color:#666">${escapeHtml(t.help)}</p>`,
     ),
   };
-}
-
-function english(e: MembershipEndedEmail) {
-  return e.kind === 'removed'
-    ? {
-        subject: 'You were removed from a household on Jiwar',
-        lead: `You are no longer a member of the household of unit ${e.unitCode} in ${e.compoundName}.`,
-        reasonLabel: 'Reason',
-        help: "If you think this is a mistake, contact the unit's primary resident or the compound management.",
-      }
-    : {
-        subject: 'Your household request on Jiwar was declined',
-        lead: `The compound management declined your request to join the household of unit ${e.unitCode} in ${e.compoundName}.`,
-        reasonLabel: 'Reason',
-        help: 'If you think this is a mistake, contact the compound management.',
-      };
-}
-
-function arabic(e: MembershipEndedEmail) {
-  return e.kind === 'removed'
-    ? {
-        subject: 'تمت إزالتك من أسرة وحدة على جوار',
-        lead: `لم تعد فردًا في أسرة الوحدة ${e.unitCode} في ${e.compoundName}.`,
-        reasonLabel: 'السبب',
-        help: 'إذا كنت تعتقد أن هذا خطأ، تواصل مع الساكن الرئيسي للوحدة أو مع إدارة المجمع.',
-      }
-    : {
-        subject: 'تم رفض طلب انضمامك إلى أسرة على جوار',
-        lead: `رفضت إدارة المجمع طلب انضمامك إلى أسرة الوحدة ${e.unitCode} في ${e.compoundName}.`,
-        reasonLabel: 'السبب',
-        help: 'إذا كنت تعتقد أن هذا خطأ، تواصل مع إدارة المجمع.',
-      };
 }
 
 // ---------------------------------------------------------------------------

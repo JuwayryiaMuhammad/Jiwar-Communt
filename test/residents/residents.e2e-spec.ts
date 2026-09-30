@@ -131,10 +131,11 @@ describe('Residents', () => {
     // Through the real login flow and the real endpoints.
     const tokens = await loginViaOtp(h, input.email, resident.id);
     const units = await get(tokens, '/units').expect(200);
-    expect((units.body as { code: string }[]).map((u) => u.code)).toEqual([
-      'A-101',
-      'A-102',
-    ]);
+    expect(
+      (units.body as { data: { code: string }[] }).data
+        .map((u) => u.code)
+        .sort(),
+    ).toEqual(['A-101', 'A-102']);
 
     const mine = await asResident(c, resident.id, () => residents.myUnits());
     expect(mine.map((u) => [u.code, u.occupancyType])).toEqual([
@@ -187,9 +188,9 @@ describe('Residents', () => {
 
     await get(tokens, `/units/${c.units['A-102']}`).expect(404);
     const units = await get(tokens, '/units').expect(200);
-    expect((units.body as { code: string }[]).map((u) => u.code)).toEqual([
-      'A-101',
-    ]);
+    expect(
+      (units.body as { data: { code: string }[] }).data.map((u) => u.code),
+    ).toEqual(['A-101']);
 
     const history = await asManager(c, () => residents.get(resident.id));
     expect(history.occupancies.map((o) => [o.unitCode, o.status])).toEqual([
@@ -223,7 +224,7 @@ describe('Residents', () => {
     );
     const tokens = await loginViaOtp(h, input.email, resident.id);
     const units = await get(tokens, '/units').expect(200);
-    expect(units.body).toEqual([]);
+    expect(units.body).toEqual({ data: [], nextCursor: null });
   });
 
   it('rejects a second active occupancy of the same unit', async () => {

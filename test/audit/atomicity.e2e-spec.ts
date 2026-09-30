@@ -67,7 +67,7 @@ describe('Audit atomicity', () => {
       .get(`${API}/units`)
       .set('Authorization', `Bearer ${c.token}`)
       .expect(200);
-    return (res.body as { code: string }[]).map((u) => u.code);
+    return (res.body as { data: { code: string }[] }).data.map((u) => u.code);
   };
 
   it('an action that fails after record() leaves no entry', async () => {

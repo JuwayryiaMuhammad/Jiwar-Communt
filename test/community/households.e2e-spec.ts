@@ -262,9 +262,9 @@ describe('Households', () => {
         .get(`${API}/units`)
         .set('Authorization', `Bearer ${tokens.accessToken}`)
         .expect(200);
-      expect((res.body as { id: string }[]).map((u) => u.id)).toEqual([
-        hm.unitId,
-      ]);
+      expect(
+        (res.body as { data: { id: string }[] }).data.map((u) => u.id),
+      ).toEqual([hm.unitId]);
     });
 
     it('the token works once; revoked or expired tokens get the generic answer and an event', async () => {
@@ -365,16 +365,16 @@ describe('Households', () => {
       );
       const joined = await join(hm);
       expect(joined.membershipStatus).toBe('pending_approval');
-      expect(await asFamily(hm, joined.accountId, () => units.list())).toEqual(
-        [],
-      );
+      expect(
+        (await asFamily(hm, joined.accountId, () => units.list())).items,
+      ).toEqual([]);
 
       const approved = await x.asManager(hm.c, () =>
         households.approveMember(joined.memberId),
       );
       expect(approved.status).toBe('active');
       expect(
-        (await asFamily(hm, joined.accountId, () => units.list())).map(
+        (await asFamily(hm, joined.accountId, () => units.list())).items.map(
           (u) => u.id,
         ),
       ).toEqual([hm.unitId]);
@@ -400,7 +400,7 @@ describe('Households', () => {
       const again = await acceptance.completeAcceptance(invite.token, otp);
       expect(again.accountId).toBe(first.accountId);
       expect(
-        (await asFamily(hm, first.accountId, () => units.list()))
+        (await asFamily(hm, first.accountId, () => units.list())).items
           .map((u) => u.id)
           .sort(),
       ).toEqual([hm.unitId, second.id].sort());
@@ -539,7 +539,7 @@ describe('Households', () => {
       );
       expect(account.status).toBe('active');
       expect(
-        (await asFamily(hm, first.accountId, () => units.list())).map(
+        (await asFamily(hm, first.accountId, () => units.list())).items.map(
           (u) => u.id,
         ),
       ).toEqual([second.id]);

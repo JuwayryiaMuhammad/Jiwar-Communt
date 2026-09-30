@@ -7,6 +7,8 @@ import { ErasureHooks } from './erasure-hooks';
 import { FreezeHooks } from './freeze-hooks';
 import { CapabilitiesModule } from '../capabilities/capabilities.module';
 import { MeUnitsController } from './me-units.controller';
+import { OccupanciesController } from './occupancies.controller';
+import { UnitActionsController } from './unit-actions.controller';
 import { RegistrationPublicController } from './registration-public.controller';
 import { RegistrationService } from './registration.service';
 import { AuthModule } from '../../core/auth/auth.module';
@@ -14,7 +16,12 @@ import { ResidentsService } from './residents.service';
 
 /** Residents, occupancies, unit states and self-registration (API v0). */
 @Module({
-  controllers: [RegistrationPublicController, MeUnitsController],
+  controllers: [
+    RegistrationPublicController,
+    MeUnitsController,
+    UnitActionsController,
+    OccupanciesController,
+  ],
   imports: [
     AccountsModule,
     AuthModule,

@@ -256,12 +256,12 @@ describe('Login bootstrap', () => {
         .get(`${API}/units`)
         .set('Authorization', `Bearer ${tokensB.accessToken}`)
         .expect(200);
-      expect((unitsA.body as { code: string }[]).map((u) => u.code)).toEqual([
-        'ONLY-A',
-      ]);
-      expect((unitsB.body as { code: string }[]).map((u) => u.code)).toEqual([
-        'ONLY-B',
-      ]);
+      expect(
+        (unitsA.body as { data: { code: string }[] }).data.map((u) => u.code),
+      ).toEqual(['ONLY-A']);
+      expect(
+        (unitsB.body as { data: { code: string }[] }).data.map((u) => u.code),
+      ).toEqual(['ONLY-B']);
 
       const meA = await h
         .http()

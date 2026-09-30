@@ -8,6 +8,7 @@ import type {
   OccupancyStatus,
   OccupancyType,
   UnitReviewReason,
+  UnitType,
 } from '@prisma/client';
 
 // Service-level shapes (Phase 1a has no resident endpoints; HTTP shapes come
@@ -95,6 +96,33 @@ export interface UnitNeedingReview {
   flaggedAt: Date;
   /** Occupants still there (one of them may become the primary). */
   activeOccupants: number;
+}
+
+/** An active occupant of a unit, for managers. */
+export interface UnitOccupant {
+  occupancyId: string;
+  account: { id: string; fullName: string | null; status: AccountStatus };
+  occupancyType: OccupancyType;
+  resides: boolean;
+  isPrimary: boolean;
+  startedAt: Date;
+}
+
+/** A unit as its viewer may see it; `management` only for managers. */
+export interface UnitDetail {
+  id: string;
+  code: string;
+  building: string | null;
+  floor: number | null;
+  unitType: UnitType | null;
+  /** Decimal string. */
+  areaSqm: string | null;
+  closed: boolean;
+  createdAt: Date;
+  management?: {
+    reviewReasons: UnitReviewReason[];
+    occupants: UnitOccupant[];
+  };
 }
 
 /** A member whose permissions predate the current primary (ADR 0021). */

@@ -267,6 +267,45 @@ describe('Capacities', () => {
     });
   });
 
+  it("the primary's unit actions on a unit the caller cannot see are UNIT_NOT_FOUND", async () => {
+    const c = await x.compound();
+    const own = await x.unit(c);
+    const other = await x.unit(c);
+    const owner = await x.resident(c, [own.id]);
+    await x.resident(c, [other.id]);
+    const as = <T>(fn: () => Promise<T>) => asResident(c, owner.id, fn);
+    for (const call of [
+      () => x.residents.missingActivationSteps(other.id),
+      () => x.residents.submitUnitDetail(other.id, 'building', 'B1'),
+      () => x.residents.setUnitClosed(other.id, true),
+      () => x.residents.membersToReview(other.id),
+      () => x.residents.markMembersReviewed(other.id, 'all'),
+      () => x.residents.unitDetail(other.id),
+    ]) {
+      expect(await codeOf(as(call))).toBe('UNIT_NOT_FOUND');
+    }
+  });
+
+  it('a unit in detail: occupants and review reasons for managers only', async () => {
+    const c = await x.compound();
+    const u = await x.unit(c);
+    const owner = await x.resident(c, [u.id]);
+    const tenant = await x.resident(c, [u.id], 'tenant');
+    const forManager = await x.asManager(c, () => x.residents.unitDetail(u.id));
+    expect(forManager.management?.reviewReasons).toEqual([]);
+    expect(
+      forManager.management?.occupants.map((o) => [o.account.id, o.isPrimary]),
+    ).toEqual([
+      [owner.id, true],
+      [tenant.id, false],
+    ]);
+    const forResident = await asResident(c, tenant.id, () =>
+      x.residents.unitDetail(u.id),
+    );
+    expect(forResident).not.toHaveProperty('management');
+    expect(forResident).toMatchObject({ id: u.id, closed: false });
+  });
+
   it('the owner of several units has independent capabilities on each', async () => {
     const c = await x.compound();
     const a = await x.unit(c);

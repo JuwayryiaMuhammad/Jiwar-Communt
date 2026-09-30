@@ -72,7 +72,9 @@ describe('RLS tenant isolation (HTTP)', () => {
       .get(`${API}/units`)
       .set('Authorization', `Bearer ${managerB}`)
       .expect(200);
-    const codes = (res.body as { code: string }[]).map((u) => u.code);
+    const codes = (res.body as { data: { code: string }[] }).data.map(
+      (u) => u.code,
+    );
     expect(codes).toEqual(['B-201']);
   });
 

@@ -42,6 +42,25 @@
         ],
         "type": "string"
       },
+      "ActivationView": {
+        "properties": {
+          "missing": {
+            "items": {
+              "enum": [
+                "unitType",
+                "areaSqm",
+                "building"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "missing"
+        ],
+        "type": "object"
+      },
       "AuditActorType": {
         "enum": [
           "account",
@@ -185,6 +204,17 @@
         ],
         "type": "object"
       },
+      "ClosedModeDto": {
+        "properties": {
+          "closed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "closed"
+        ],
+        "type": "object"
+      },
       "CompleteInviteDto": {
         "properties": {
           "code": {
@@ -299,6 +329,15 @@
           "occupancyType",
           "code"
         ],
+        "type": "object"
+      },
+      "ConvertToOwnerDto": {
+        "properties": {
+          "resides": {
+            "description": "False: they let the unit (a landlord).",
+            "type": "boolean"
+          }
+        },
         "type": "object"
       },
       "CreateAccountDto": {
@@ -940,6 +979,98 @@
         ],
         "type": "object"
       },
+      "OccupancyEndReason": {
+        "enum": [
+          "moved_out",
+          "contract_ended",
+          "data_correction",
+          "other",
+          "converted_to_owner",
+          "ownership_transferred",
+          "household_ended",
+          "account_erased"
+        ],
+        "type": "string"
+      },
+      "OccupancyResponse": {
+        "properties": {
+          "endReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OccupancyEndReason"
+              }
+            ],
+            "nullable": true
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "handedOverAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "isPrimary": {
+            "type": "boolean"
+          },
+          "occupancyType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OccupancyType"
+              }
+            ]
+          },
+          "resides": {
+            "description": "False for an owner-landlord.",
+            "type": "boolean"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OccupancyStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "unitCode",
+          "occupancyType",
+          "resides",
+          "isPrimary",
+          "status",
+          "startedAt",
+          "endedAt",
+          "endReason",
+          "handedOverAt"
+        ],
+        "type": "object"
+      },
+      "OccupancyStatus": {
+        "enum": [
+          "active",
+          "ended"
+        ],
+        "type": "string"
+      },
       "OccupancyType": {
         "enum": [
           "owner",
@@ -1146,6 +1277,23 @@
         ],
         "type": "object"
       },
+      "ReasonDto": {
+        "properties": {
+          "reason": {
+            "description": "What the person is told (at most 1000 characters). Never stored in the audit trail.",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode",
+          "reason"
+        ],
+        "type": "object"
+      },
       "RefreshTokenDto": {
         "properties": {
           "refreshToken": {
@@ -1292,6 +1440,17 @@
         },
         "required": [
           "identifier"
+        ],
+        "type": "object"
+      },
+      "ResidenceDto": {
+        "properties": {
+          "resides": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "resides"
         ],
         "type": "object"
       },
@@ -1460,6 +1619,19 @@
         ],
         "type": "object"
       },
+      "SetPrimaryDto": {
+        "properties": {
+          "accountId": {
+            "description": "An active, residing occupant of the unit.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountId"
+        ],
+        "type": "object"
+      },
       "TenantDetailView": {
         "properties": {
           "createdAt": {
@@ -1604,6 +1776,195 @@
         ],
         "type": "object"
       },
+      "UnitDetailDto": {
+        "properties": {
+          "step": {
+            "enum": [
+              "unitType",
+              "areaSqm",
+              "building"
+            ],
+            "type": "string"
+          },
+          "value": {
+            "description": "Checked per step by the service.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step",
+          "value"
+        ],
+        "type": "object"
+      },
+      "UnitDetailView": {
+        "properties": {
+          "areaSqm": {
+            "example": "120.50",
+            "nullable": true,
+            "type": "string"
+          },
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "closed": {
+            "description": "Closed-unit mode (the owner is away).",
+            "type": "boolean"
+          },
+          "code": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "floor": {
+            "nullable": true,
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "occupants": {
+            "description": "Managers only.",
+            "items": {
+              "$ref": "#/components/schemas/UnitOccupantView"
+            },
+            "type": "array"
+          },
+          "reviewReasons": {
+            "description": "Managers only.",
+            "items": {
+              "$ref": "#/components/schemas/UnitReviewReason"
+            },
+            "type": "array"
+          },
+          "unitType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnitType"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "building",
+          "floor",
+          "unitType",
+          "areaSqm",
+          "closed",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "UnitNeedingReviewView": {
+        "properties": {
+          "activeOccupants": {
+            "type": "number"
+          },
+          "code": {
+            "type": "string"
+          },
+          "flagId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "flaggedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnitReviewReason"
+              }
+            ]
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "flagId",
+          "unitId",
+          "code",
+          "reason",
+          "flaggedAt",
+          "activeOccupants"
+        ],
+        "type": "object"
+      },
+      "UnitNeedingReviewViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/UnitNeedingReviewView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "UnitOccupantView": {
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "isPrimary": {
+            "type": "boolean"
+          },
+          "occupancyId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "occupancyType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OccupancyType"
+              }
+            ]
+          },
+          "resides": {
+            "type": "boolean"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "occupancyId",
+          "account",
+          "occupancyType",
+          "resides",
+          "isPrimary",
+          "startedAt"
+        ],
+        "type": "object"
+      },
+      "UnitReviewReason": {
+        "enum": [
+          "primary_left",
+          "primary_frozen",
+          "primary_deceased",
+          "separation"
+        ],
+        "type": "string"
+      },
       "UnitType": {
         "enum": [
           "apartment",
@@ -1616,6 +1977,56 @@
           "other"
         ],
         "type": "string"
+      },
+      "UnitView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "floor": {
+            "nullable": true,
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "building",
+          "floor",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "UnitViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/UnitView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
       },
       "UpdateAccountStatusDto": {
         "properties": {
@@ -2421,6 +2832,180 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/occupancies/{id}/convert-to-owner": {
+      "post": {
+        "operationId": "OccupanciesController_convertToOwner",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertToOwnerDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccupancyResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/occupancies/{id}/end": {
+      "post": {
+        "operationId": "OccupanciesController_end",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccupancyResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/occupancies/{id}/handover": {
+      "post": {
+        "operationId": "OccupanciesController_handover",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccupancyResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/occupancies/{id}/residence": {
+      "post": {
+        "operationId": "OccupanciesController_residence",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidenceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccupancyResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/platform/audit": {
       "get": {
         "operationId": "PlatformAuditController_auditLog",
@@ -3115,9 +3700,37 @@
     "/api/v1/units": {
       "get": {
         "operationId": "UnitsController_list",
-        "parameters": [],
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitViewList"
+                }
+              }
+            },
             "description": ""
           }
         },
@@ -3146,6 +3759,61 @@
         },
         "responses": {
           "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/needing-review": {
+      "get": {
+        "operationId": "UnitActionsController_needingReview",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitNeedingReviewViewList"
+                }
+              }
+            },
             "description": ""
           }
         },
@@ -3162,7 +3830,7 @@
     },
     "/api/v1/units/{id}": {
       "get": {
-        "operationId": "UnitsController_get",
+        "operationId": "UnitActionsController_get",
         "parameters": [
           {
             "in": "path",
@@ -3175,6 +3843,173 @@
         ],
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{id}/activation": {
+      "get": {
+        "operationId": "UnitActionsController_activation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{id}/closed-mode": {
+      "post": {
+        "operationId": "UnitActionsController_closedMode",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClosedModeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{id}/details": {
+      "post": {
+        "operationId": "UnitActionsController_details",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnitDetailDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{id}/primary": {
+      "post": {
+        "operationId": "UnitActionsController_setPrimary",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPrimaryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccupancyResponse"
+                }
+              }
+            },
             "description": ""
           }
         },

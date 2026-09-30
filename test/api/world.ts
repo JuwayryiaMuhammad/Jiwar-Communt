@@ -28,6 +28,8 @@ export interface Side extends Compound {
   tokens: Record<Persona, string>;
   /** The session behind each token. */
   sessions: Record<Persona, string>;
+  /** Active occupancies: the owner's of home, the landlord's and tenant's of rented. */
+  occupancies: Record<'owner' | 'landlord' | 'tenant', string>;
 }
 
 export interface World {
@@ -78,6 +80,15 @@ async function side(
       typ: TYPES[persona],
     });
   }
+  const occupancyOf = async (unitId: string, accountId: string) =>
+    (await c.occupancies(compound, unitId)).find(
+      (o) => o.accountId === accountId && o.status === 'active',
+    )!.id;
+  const occupancies = {
+    owner: await occupancyOf(home.id, owner.id),
+    landlord: await occupancyOf(rented.id, landlord.id),
+    tenant: await occupancyOf(rented.id, tenant.id),
+  };
   const sessions = {} as Record<Persona, string>;
   for (const persona of Object.keys(tokens) as Persona[]) {
     sessions[persona] = sessionOf(tokens[persona]);
@@ -89,6 +100,7 @@ async function side(
     ids,
     tokens,
     sessions,
+    occupancies,
   };
 }
 

@@ -28,6 +28,7 @@ import {
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
 import { DelegationsService } from '../households/delegations.service';
+import { HouseholdAuthority } from '../households/household-authority';
 import { HouseholdsService } from '../households/households.service';
 import { COMMUNITY_NOTICES } from '../notices/community-notices';
 import { CommunityNotifier } from '../notices/community-notifier';
@@ -41,7 +42,9 @@ import type {
   OccupancyView,
   ResidentView,
   MemberToReview,
+  UnitDetail,
   UnitNeedingReview,
+  UnitOccupant,
 } from './residents.types';
 
 /** Keyset on (household_review_flagged_at, id), newest flag first. */
@@ -80,6 +83,7 @@ export class ResidentsService {
     private readonly notifier: CommunityNotifier,
     private readonly flags: ReviewFlags,
     private readonly workers: WorkersService,
+    private readonly authority: HouseholdAuthority,
   ) {}
 
   /** Account (resident role) + login identifiers + occupancies, atomically. */
@@ -773,7 +777,12 @@ export class ResidentsService {
   }
 
   /** The caller's primary occupancy on the unit, or NOT_PRIMARY_RESIDENT. */
+  /**
+   * The caller's primary occupancy of the unit. A unit they cannot see is
+   * UNIT_NOT_FOUND (never "not the primary", which would confirm it exists).
+   */
   private async primaryOccupancy(tx: TenantTxClient, unitId: string) {
+    await this.authority.assertVisible(tx, unitId);
     const o = await tx.unitOccupancy.findFirst({
       where: {
         unitId,
@@ -1044,6 +1053,7 @@ export class ResidentsService {
   async setUnitClosed(unitId: string, closed: boolean): Promise<void> {
     await this.tenantTx.withTenantTx(async (tx) => {
       await lockUnits(tx, [unitId]);
+      await this.authority.assertVisible(tx, unitId);
       const mine = await tx.unitOccupancy.findFirst({
         where: {
           unitId,
@@ -1185,6 +1195,63 @@ export class ResidentsService {
       }
       return units;
     });
+  }
+
+  /**
+   * One unit as the caller may see it (ResourceAccess: "not found"
+   * otherwise). Managers also get its open review reasons and its active
+   * occupants; nobody else sees who lives in a unit here.
+   */
+  async unitDetail(unitId: string): Promise<UnitDetail> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.authority.assertVisible(tx, unitId);
+      const unit = await tx.unit.findUniqueOrThrow({ where: { id: unitId } });
+      const detail: UnitDetail = {
+        id: unit.id,
+        code: unit.code,
+        building: unit.building,
+        floor: unit.floor,
+        unitType: unit.unitType,
+        areaSqm: unit.areaSqm?.toFixed(2) ?? null,
+        closed: unit.closedSince !== null,
+        createdAt: unit.createdAt,
+      };
+      if (this.ctx.accountType !== 'manager') return detail;
+      const [flags, occupants] = await Promise.all([
+        tx.unitReviewFlag.findMany({
+          where: { unitId, clearedAt: null },
+          select: { reason: true },
+          orderBy: { flaggedAt: 'asc' },
+        }),
+        this.unitOccupants(tx, unitId),
+      ]);
+      return {
+        ...detail,
+        management: { reviewReasons: flags.map((f) => f.reason), occupants },
+      };
+    });
+  }
+
+  /** The unit's active occupants, the primary first. */
+  private async unitOccupants(
+    tx: TenantTxClient,
+    unitId: string,
+  ): Promise<UnitOccupant[]> {
+    const rows = await tx.unitOccupancy.findMany({
+      where: { unitId, status: 'active' },
+      include: {
+        account: { select: { id: true, fullName: true, status: true } },
+      },
+      orderBy: [{ isPrimary: 'desc' }, { startedAt: 'asc' }, { id: 'asc' }],
+    });
+    return rows.map((o) => ({
+      occupancyId: o.id,
+      account: o.account,
+      occupancyType: o.occupancyType,
+      resides: o.resides,
+      isPrimary: o.isPrimary,
+      startedAt: o.startedAt,
+    }));
   }
 
   /**

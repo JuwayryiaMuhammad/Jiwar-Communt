@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiArea } from '../common/http/decorators';
 import { parseId } from '../common/validation/parse-id.pipe';
 import { RequirePermissions } from '../access/require-permissions.decorator';
 import { AccountsService } from './accounts.service';
@@ -7,8 +7,7 @@ import { AccountView } from './dto/account.view';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 
-@ApiTags('accounts')
-@ApiBearerAuth()
+@ApiArea('accounts')
 @Controller('accounts')
 export class AccountsController {
   constructor(private readonly accounts: AccountsService) {}

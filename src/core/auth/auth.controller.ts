@@ -7,7 +7,12 @@ import {
   Ip,
   Post,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import {
+  ApiAcceptedResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
+} from '@nestjs/swagger';
+import { ApiArea, NoStore } from '../common/http/decorators';
 import { Public } from '../common/guards/public.decorator';
 import { resolveLocale } from '../common/i18n/locale';
 import { OTP_REQUESTED_MESSAGE, AuthService } from './auth.service';
@@ -24,7 +29,7 @@ import {
 /**
  * Login: identifier → OTP by email → pick an account → tokens (ADR 0004).
  */
-@ApiTags('auth')
+@ApiArea('auth', 'public')
 @Public()
 @Controller('auth')
 export class AuthController {
@@ -33,6 +38,7 @@ export class AuthController {
   /** Always answers the same way, whether or not the identifier exists. */
   @Post('otp/request')
   @HttpCode(HttpStatus.ACCEPTED)
+  @ApiAcceptedResponse({ type: OtpRequestedView })
   async requestOtp(
     @Body() dto: RequestOtpDto,
     @Ip() ip: string,
@@ -50,6 +56,8 @@ export class AuthController {
 
   @Post('otp/verify')
   @HttpCode(HttpStatus.OK)
+  @NoStore()
+  @ApiOkResponse({ type: OtpVerifiedView })
   verifyOtp(
     @Body() dto: VerifyOtpDto,
     @Ip() ip: string,
@@ -59,18 +67,23 @@ export class AuthController {
 
   @Post('select-account')
   @HttpCode(HttpStatus.OK)
+  @NoStore()
+  @ApiOkResponse({ type: TokensView })
   selectAccount(@Body() dto: SelectAccountDto): Promise<TokensView> {
     return this.auth.selectAccount(dto.loginTicket, dto.accountId);
   }
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @NoStore()
+  @ApiOkResponse({ type: TokensView })
   refresh(@Body() dto: RefreshTokenDto): Promise<TokensView> {
     return this.auth.refresh(dto.refreshToken);
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
   async logout(@Body() dto: RefreshTokenDto): Promise<void> {
     await this.auth.logout(dto.refreshToken);
   }

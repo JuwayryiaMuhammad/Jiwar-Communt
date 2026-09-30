@@ -16,12 +16,18 @@ export function clampLimit(limit: number | undefined): number {
 }
 
 /**
- * Newest-first keyset pagination on (timestamp, id): unique, so pages have
- * no gaps and no duplicates even when many rows share a timestamp. The
- * cursor is opaque base64url of [iso, id]; a malformed one is
- * VALIDATION_FAILED on `cursor` (INVALID_FORMAT).
+ * Keyset pagination on (timestamp, id): unique, so pages have no gaps and
+ * no duplicates even when many rows share a timestamp. Newest first by
+ * default; review queues use `asc` (oldest first). The cursor is opaque
+ * base64url of [iso, id] in both directions, so every list in the API has
+ * the same cursor format; a malformed one is VALIDATION_FAILED on `cursor`
+ * (INVALID_FORMAT).
  */
-export function keysetCursor<F extends string>(field: F) {
+export function keysetCursor<F extends string>(
+  field: F,
+  direction: 'asc' | 'desc' = 'desc',
+) {
+  const past = direction === 'desc' ? 'lt' : 'gt';
   const encode = (row: { [K in F]: Date } & { id: string }): string =>
     Buffer.from(JSON.stringify([row[field].toISOString(), row.id])).toString(
       'base64url',
@@ -47,18 +53,21 @@ export function keysetCursor<F extends string>(field: F) {
   return {
     encode,
     decode,
-    /** "Strictly older than the cursor", as a `where` condition (or none). */
+    /** "Strictly past the cursor" in page order, as a `where` condition (or none). */
     after(cursor: string | undefined): object[] {
       if (!cursor) return [];
       const c = decode(cursor);
       return [
         {
-          OR: [{ [field]: { lt: c.at } }, { [field]: c.at, id: { lt: c.id } }],
+          OR: [
+            { [field]: { [past]: c.at } },
+            { [field]: c.at, id: { [past]: c.id } },
+          ],
         },
       ];
     },
-    orderBy: [{ [field]: 'desc' as const }, { id: 'desc' as const }] as {
-      [key: string]: 'desc';
+    orderBy: [{ [field]: direction }, { id: direction }] as {
+      [key: string]: 'asc' | 'desc';
     }[],
     /** Rows fetched with limit + 1, to know whether another page exists. */
     toPage<T extends { [K in F]: Date } & { id: string }>(

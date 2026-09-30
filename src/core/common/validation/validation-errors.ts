@@ -29,6 +29,12 @@ const CONSTRAINT_CODES: Record<string, FieldErrorCode> = {
   max: FieldErrorCode.INVALID_NUMBER,
   isEnum: FieldErrorCode.INVALID_VALUE,
   isIn: FieldErrorCode.INVALID_VALUE,
+  isBoolean: FieldErrorCode.INVALID_TYPE,
+  isIso8601: FieldErrorCode.INVALID_FORMAT,
+  isDate: FieldErrorCode.INVALID_FORMAT,
+  isNumberString: FieldErrorCode.INVALID_NUMBER,
+  arrayNotEmpty: FieldErrorCode.INVALID_LENGTH,
+  arrayUnique: FieldErrorCode.INVALID_VALUE,
 };
 
 /** When a field fails several constraints, report the most fundamental one. */

@@ -1,5 +1,9 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import {
+  DocumentBuilder,
+  SwaggerModule,
+  type OpenAPIObject,
+} from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import type { Env } from './core/config/env.schema';
@@ -56,12 +60,25 @@ export function configureApp(app: INestApplication): void {
   );
 
   if (!isProd) {
-    const config = new DocumentBuilder()
-      .setTitle('Jiwar API')
-      .setDescription('Jiwar compound-management platform — Phase 0')
-      .setVersion('0.1')
-      .addBearerAuth()
-      .build();
-    SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, config));
+    SwaggerModule.setup('docs', app, buildOpenApiDocument(app));
   }
+}
+
+/**
+ * The API contract. Served at /docs outside production and written to
+ * docs/api/openapi.v0.json by `pnpm openapi:export`; a test fails when the
+ * committed file differs from what the code produces.
+ */
+export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
+  const config = new DocumentBuilder()
+    .setTitle('Jiwar API')
+    .setDescription(
+      'Jiwar compound-management platform. API v0 is a draft: endpoints are ' +
+        'reshaped screen by screen with the design, and every operation ' +
+        'carries `x-stability: draft` (ADR 0025).',
+    )
+    .setVersion('0')
+    .addBearerAuth()
+    .build();
+  return SwaggerModule.createDocument(app, config);
 }

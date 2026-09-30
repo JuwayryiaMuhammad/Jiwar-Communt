@@ -18,7 +18,28 @@ Backend for Jiwar, a multi-tenant platform for managing residential compounds. *
   - a transactional email outbox;
   - the managers' list of units needing a household review.
 
-Phases 1a to 2.1 add **no new HTTP endpoints**: they are designed screen by screen from the Figma design in a later phase, so the new capabilities are services tested at the service level. Architecture decisions live in [`docs/decisions/`](docs/decisions/README.md).
+- **Phase 2.2** adds occupancy capacities and capabilities, unit states and member permissions, worker compliance, frozen accounts and erasure, and self-registration.
+- **Phase 3** exposes all of it over HTTP as **API v0, a draft** (below).
+
+Phases 1a to 2.2 were services tested at the service level; Phase 3 puts thin controllers in front of them. Architecture decisions live in [`docs/decisions/`](docs/decisions/README.md).
+
+## API v0 is a draft
+
+Every endpoint exists so the features can be exercised end to end now. When the Figma design is ready, endpoints are reshaped screen by screen; until then:
+
+- every operation carries `x-stability: draft` in Swagger, and **nothing is frozen**: paths, fields and shapes may change without a version bump;
+- the contract is [`docs/api/openapi.v0.json`](docs/api/openapi.v0.json), written by `pnpm openapi:export`; a test fails when it is stale, so every API change shows up in review as a diff of that file;
+- endpoints whose shape clearly depends on a screen are built minimal and listed in [`docs/api/v0-notes.md`](docs/api/v0-notes.md) under "to reshape with design".
+
+Conventions (ADR 0025):
+
+- `/api/v1`, resource-oriented. Actions are `POST /resource/:id/<verb>`; no `DELETE` with a body.
+- Tenant routes use the tenant guards and `@RequirePermissions` (or `@RequireAnyPermission`); platform routes live under `/platform` with `@PlatformAuth`; public routes are `@Public` and rate-limited. Controllers only validate, call one service method and map the result through a view in `<module>/views/`.
+- Lists: `?cursor=&limit=` (1–100, default 20) → `{ data, nextCursor }`. Every cursor is the same opaque `(timestamp, id)` keyset. Bounded collections (a unit's household, my sessions, the roles…) have the same shape with `nextCursor: null`.
+- Reasons: `{ reasonCode, reason }`; the service answers `REASON_REQUIRED` or `INVALID_REASON_CODE` (with `allowed`).
+- Personal data: document numbers never in lists and masked (`••••1234`) in details; birth dates never in lists; residents and family never see other people's contact details or documents; an erased account is `{ id, erased: true }`; free-text reasons and notes are never returned in lists.
+- Secrets shown once (access codes, invite and link tokens, session tokens) come with `Cache-Control: no-store` and are never logged.
+- **`GET /me/units/:unitId/capabilities` is what the apps use to show or hide features**: the `capabilitiesFor` record (ADR 0020) for the caller on that unit. Endpoints enforce the same rules; a test keeps the two consistent.
 
 Stack: Node ≥ 22, pnpm, NestJS 11, Prisma 7 (`@prisma/adapter-pg`), PostgreSQL 17, Redis 7, argon2, Jest + Supertest.
 
@@ -113,6 +134,7 @@ pnpm test:unit    # src/**/*.spec.ts, no infrastructure
 pnpm test:e2e     # test/**/*.e2e-spec.ts against real Postgres, Redis and Mailpit
 pnpm lint
 pnpm build
+pnpm openapi:export  # after any API change; the docs suite checks the file
 ```
 
 The e2e run wipes `jiwar_test`, migrates it as the migrator, runs `access:sync` like a deploy, then connects only as `jiwar_app`. The immutable audit tables are cleared over the superuser connection. `OTP_FIXED_CODE` and `SUPERADMIN_*` are removed for the run.
@@ -136,6 +158,7 @@ The e2e run wipes `jiwar_test`, migrates it as the migrator, runs `access:sync` 
 | `test/community/*` | National ID and passports (accounts, household, workers with attestation); primary resident (incl. concurrency); households; delegation; self-service; domestic workers; one audit scenario per Phase 2 action plus a secrets scan |
 | `test/community/*` (Phase 2.2) | Capacities and capabilities; death, separation, change of primary, end of household, transfer; member permissions and the finance cap (incl. the DB refusing finance to a minor); deferred actions; minors reaching 18 across time zones; compliance cases and wage obligations; card incidents; self-registration incl. the **enumeration test** (same body and the same models touched for five inputs); undeliverable notices; one audit scenario per Phase 2.2 action |
 | `test/accounts/*` | Frozen accounts (the phone off the account and login, recovery, never reopened for the number's new holder); deletion, legal hold, erasure (tombstone, stripped mail and invites, audit untouched, hold vs erase race), overdue erasures |
+| `test/api/*` | API v0 (ADR 0025): a registry row per endpoint drives the matrix (no token, the other token kind, a missing permission, another compound's id, invalid input, a malformed id); one happy path per endpoint with its exact response keys; Swagger lists exactly the registry, every operation a draft, and the committed OpenAPI file is current |
 
 ## Error contract (ADR 0013)
 

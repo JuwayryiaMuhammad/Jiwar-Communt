@@ -1,10 +1,12 @@
 import { Controller, Get, Inject, Logger } from '@nestjs/common';
 import { appError, ErrorCode } from '../common/errors';
 import Redis from 'ioredis';
+import { ApiArea } from '../common/http/decorators';
 import { Public } from '../common/guards/public.decorator';
 import { GlobalDbService } from '../database/global-db.service';
 import { REDIS } from '../redis/redis.module';
 
+@ApiArea('health', 'public')
 @Public()
 @Controller('health')
 export class HealthController {

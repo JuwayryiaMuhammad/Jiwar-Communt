@@ -9,7 +9,10 @@ import { GlobalDbService } from '../database/global-db.service';
 import { PrismaService } from '../database/prisma.service';
 import { PermissionsService } from './permissions.service';
 import type { Permission } from './permissions';
-import { REQUIRED_PERMISSIONS_KEY } from './require-permissions.decorator';
+import {
+  ANY_PERMISSIONS_KEY,
+  REQUIRED_PERMISSIONS_KEY,
+} from './require-permissions.decorator';
 
 /**
  * Global guard after JwtAuthGuard, on every tenant-authenticated route:
@@ -19,7 +22,8 @@ import { REQUIRED_PERMISSIONS_KEY } from './require-permissions.decorator';
  *    suspended compound or a revoked session is rejected now, not when the
  *    access token expires (ADR 0004);
  * 2. puts the role and its permissions version in the request context;
- * 3. checks `@RequirePermissions(...)` (ADR 0010).
+ * 3. checks `@RequirePermissions(...)` (all of them) or
+ *    `@RequireAnyPermission(...)` (at least one) (ADR 0010).
  */
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -90,14 +94,19 @@ export class PermissionsGuard implements CanActivate {
       REQUIRED_PERMISSIONS_KEY,
       targets,
     );
-    if (!required?.length) return true;
+    const anyOf = this.reflector.getAllAndOverride<Permission[] | undefined>(
+      ANY_PERMISSIONS_KEY,
+      targets,
+    );
+    if (!required?.length && !anyOf?.length) return true;
 
     const granted = await this.permissions.forRole(
       tenantId,
       account.roleId,
       account.role.permissionsVersion,
     );
-    if (required.every((p) => granted.has(p))) return true;
+    if (required?.length && required.every((p) => granted.has(p))) return true;
+    if (anyOf?.length && anyOf.some((p) => granted.has(p))) return true;
     throw appError.forbidden(
       ErrorCode.FORBIDDEN,
       'Missing permission for this action',

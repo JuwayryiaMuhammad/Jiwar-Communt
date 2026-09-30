@@ -375,7 +375,7 @@ export class ResidentsService {
           COMMUNITY_NOTICES.primaryChanged,
           {
             ...(await this.notifier.place(tx, target.tenantId, unitId)),
-            primaryName: primary.fullName,
+            primaryName: primary.fullName ?? '',
           },
         );
       }
@@ -446,6 +446,34 @@ export class ResidentsService {
     });
     await this.recordCreated(tx, created);
     return { id: created.id };
+  }
+
+  /**
+   * The account is being erased (ADR 0023): its active occupancies end
+   * (`account_erased`); a primary's unit goes under review, as when any
+   * primary leaves — no hand-over is required first.
+   */
+  async endAllOccupanciesOf(
+    tx: TenantTxClient,
+    accountId: string,
+  ): Promise<AfterCommit[]> {
+    const active = await tx.unitOccupancy.findMany({
+      where: { accountId, status: 'active' },
+    });
+    const after: AfterCommit[] = [];
+    for (const o of active) {
+      await lockUnits(tx, [o.unitId]);
+      const ended = await tx.unitOccupancy.update({
+        where: { id: o.id },
+        data: {
+          status: 'ended',
+          endedAt: new Date(),
+          endReason: 'account_erased',
+        },
+      });
+      after.push(...(await this.afterEnded(tx, ended, 'account_erased')));
+    }
+    return after;
   }
 
   // --------------------------------------------------------------------------

@@ -145,7 +145,8 @@ export class InviteAcceptanceService {
         }),
     );
     if (!invite) return this.tokenInvalid('start', 'invite_not_pending');
-    await this.otp.issueForInvite(tokenHash, invite.email, locale);
+    // A pending invite is never stripped (household_invites_stripped_shape).
+    await this.otp.issueForInvite(tokenHash, invite.email!, locale);
   }
 
   /** The token's compound and invite, if the token exists, is unexpired and the compound is active. */
@@ -179,7 +180,7 @@ export class InviteAcceptanceService {
     // The OTP proved ownership of the email: an existing family account of
     // this compound with it is the same person, and is reused.
     const existing = await tx.account.findFirst({
-      where: { type: 'family', email: invite.email },
+      where: { type: 'family', email: invite.email! },
     });
     let accountId: string;
     let birthDate: Date | null;
@@ -194,13 +195,14 @@ export class InviteAcceptanceService {
     } else {
       const created = await this.writer.create(tx, tenantId, {
         type: 'family',
-        fullName: invite.fullName,
-        idDocumentType: invite.idDocumentType,
-        idDocumentNumber: invite.idDocumentNumber,
-        nationality: invite.nationality,
+        // Pending, so never stripped (household_invites_stripped_shape).
+        fullName: invite.fullName!,
+        idDocumentType: invite.idDocumentType!,
+        idDocumentNumber: invite.idDocumentNumber!,
+        nationality: invite.nationality!,
         birthDate: invite.birthDate ?? undefined,
-        phone: invite.phone,
-        email: invite.email,
+        phone: invite.phone!,
+        email: invite.email!,
       });
       accountId = created.id;
       birthDate = created.birthDate;

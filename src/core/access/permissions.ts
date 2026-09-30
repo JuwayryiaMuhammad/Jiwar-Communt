@@ -21,6 +21,9 @@ export const PERMISSIONS = {
   'units.create': { kinds: ['manager'] },
   'accounts.read': { kinds: ['manager'] },
   'accounts.manage': { kinds: ['manager'] },
+  // Account deletion (ADR 0023): the three-step erasure, and legal holds.
+  'accounts.erase': { kinds: ['manager'] },
+  'accounts.legal_hold': { kinds: ['manager'] },
   'residents.read': { kinds: ['manager'] },
   'residents.manage': { kinds: ['manager'] },
   'roles.read': { kinds: ['manager'] },

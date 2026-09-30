@@ -51,6 +51,7 @@ describe('audit catalog', () => {
         'worker_engagement',
         'household_deferred_action',
         'resident_registration',
+        'account_deletion_request',
       ]).toContain(def.target);
     }
   });

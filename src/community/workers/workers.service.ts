@@ -1158,6 +1158,29 @@ export class WorkersService {
   }
 
   /**
+   * The account that registered these workers is being erased (ADR 0023):
+   * each open engagement it requested ends, with a notice to the worker
+   * and, where a code was issued, a wage obligation for payroll.
+   */
+  async endAllRequestedBy(
+    tx: TenantTxClient,
+    accountId: string,
+  ): Promise<number> {
+    const open = await tx.workerEngagement.findMany({
+      where: { requestedById: accountId, status: { in: OPEN } },
+    });
+    for (const e of open) {
+      await lockUnits(tx, [e.unitId]);
+      if (await this.expireIfDue(tx, e)) continue;
+      await this.close(tx, e, 'requester_erased');
+      await this.record(tx, e, 'worker.engagement_ended', 'ended', null, {
+        reason: 'requester_erased',
+      });
+    }
+    return open.length;
+  }
+
+  /**
    * The unit's household ended (ADR 0021): every open engagement ends, in
    * the caller's transaction, each with its notice and wage obligation.
    */

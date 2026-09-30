@@ -246,6 +246,53 @@ describe('Permission sync', () => {
     });
   });
 
+  it('Phase 2.2 permissions reach an existing compound: the manager role only, once', async () => {
+    const phase22 = [
+      'household.override',
+      'workers.compliance',
+      'workers.incidents',
+      'accounts.erase',
+      'accounts.legal_hold',
+    ];
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !phase22.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !phase22.includes(p)),
+      })),
+    };
+    expect(catalogProblems(before)).toEqual([]);
+    const t = newId();
+    await h.globalDb.tenant.create({
+      data: { id: t, name: `Sync 2.2 compound ${t}` },
+    });
+    await h.asTenant(t, () =>
+      h.tenantTx.withTenantTx(async (tx) => {
+        await new RoleProvisioner(before).provision(tx, t);
+        await tx.tenantSettings.create({ data: { tenantId: t } });
+      }),
+    );
+    const residentBefore = await role(t, 'resident');
+
+    const report = await sync(base, t);
+    expect([...report.added].sort()).toEqual([...phase22].sort());
+    expect((await role(t, 'manager')).permissions).toEqual(
+      expect.arrayContaining(phase22),
+    );
+    expect((await role(t, 'resident')).permissions).toEqual(
+      residentBefore.permissions,
+    );
+    // A manager who drops one keeps it dropped.
+    await removeByHand(t, 'manager', 'workers.compliance');
+    expect((await sync(base, t)).added).toEqual([]);
+    expect((await role(t, 'manager')).permissions).not.toContain(
+      'workers.compliance',
+    );
+  });
+
   it('a second run is a no-op', async () => {
     const t = await createTenant(h, 'Sync idempotent');
     await sync(withExport, t);

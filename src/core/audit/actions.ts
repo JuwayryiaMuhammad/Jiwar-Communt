@@ -27,6 +27,16 @@ export const AUDIT_ACTIONS = {
   },
   'account.frozen': { log: 'tenant', target: 'account', sensitive: ['phone'] },
   'account.reactivated': { log: 'tenant', target: 'account' },
+  // deletion (ADR 0023)
+  'account.deletion_requested': { log: 'tenant', target: 'account' },
+  'account.deletion_cancelled': { log: 'tenant', target: 'account' },
+  'account.legal_hold_placed': { log: 'tenant', target: 'account' },
+  'account.legal_hold_released': { log: 'tenant', target: 'account' },
+  'account.erased': { log: 'tenant', target: 'account' },
+  'account.erasure_overdue': {
+    log: 'tenant',
+    target: 'account_deletion_request',
+  },
   'role.permissions_replaced': { log: 'tenant', target: 'role' },
   'role.permissions_synced': { log: 'tenant', target: 'role' },
   'occupancy.created': { log: 'tenant', target: 'occupancy' },

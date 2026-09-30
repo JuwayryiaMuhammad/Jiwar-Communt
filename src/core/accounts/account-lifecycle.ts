@@ -26,6 +26,22 @@ export class AccountLifecycle {
   private readonly deactivation: DeactivationHandler[] = [];
   private readonly freezing: AccountHandler[] = [];
   private readonly reactivation: AccountHandler[] = [];
+  private readonly erasure: DeactivationHandler[] = [];
+
+  /** Before an erasure: the domains end what hangs off the account. */
+  onErasing(handler: DeactivationHandler): void {
+    this.erasure.push(handler);
+  }
+
+  async erasing(
+    tx: TenantTxClient,
+    account: { id: string; tenantId: string },
+  ): Promise<AfterCommit[]> {
+    const tasks: AfterCommit[] = [];
+    for (const handler of this.erasure)
+      tasks.push(...(await handler(tx, account)));
+    return tasks;
+  }
 
   onDeactivated(handler: DeactivationHandler): void {
     this.deactivation.push(handler);

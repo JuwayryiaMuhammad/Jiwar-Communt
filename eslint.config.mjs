@@ -73,6 +73,7 @@ export default tseslint.config(
       'src/community/households/invite-acceptance.service.ts',
       'src/community/households/majority-notices.ts',
       'src/community/residents/registration.service.ts',
+      'src/core/accounts/account-deletion.service.ts',
       'prisma/seed.ts',
     ],
     rules: {

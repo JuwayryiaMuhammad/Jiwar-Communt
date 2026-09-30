@@ -8,15 +8,16 @@ import type {
 export class AccountView {
   id: string;
   type: AccountType;
-  fullName: string;
-  idDocumentType: IdDocumentType;
-  idDocumentNumber: string;
-  nationality: string;
+  /** Personal fields are null on an erased account (a deleted user, ADR 0023). */
+  fullName: string | null;
+  idDocumentType: IdDocumentType | null;
+  idDocumentNumber: string | null;
+  nationality: string | null;
   /** `YYYY-MM-DD`; null only on legacy accounts. */
   birthDate: string | null;
   /** Null only while frozen: the number went to someone else (ADR 0023). */
   phone: string | null;
-  email: string;
+  email: string | null;
   status: AccountStatus;
   createdAt: Date;
 

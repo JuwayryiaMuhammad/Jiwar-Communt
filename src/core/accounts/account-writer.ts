@@ -456,6 +456,7 @@ export class AccountWriter {
     account: Account,
     templateKey: string,
   ) {
+    if (!account.email) return; // erased: nobody to tell
     const tenant = await this.globalDb.in(tx).tenant.findUniqueOrThrow({
       where: { id: account.tenantId },
       select: { name: true },

@@ -40,6 +40,8 @@ enum AccountStatus {
   inactive
   /// "Not me" (ADR 0023): no login, no phone; only reactivate() reopens it.
   frozen
+  /// A tombstone (ADR 0023): the row stays, every personal field is NULL.
+  erased
 
   @@map("account_status")
 }
@@ -115,6 +117,14 @@ enum RegistrationStatus {
   expired
 
   @@map("registration_status")
+}
+
+enum DeletionRequestStatus {
+  pending
+  cancelled
+  completed
+
+  @@map("deletion_request_status")
 }
 
 enum PlatformAdminStatus {
@@ -505,26 +515,27 @@ model OutboxMessage {
 /// makes both a role of another tenant and a role of another kind impossible
 /// at the database level — foreign-key checks bypass RLS.
 model Account {
-  id               String         @id @db.Uuid
-  tenantId         String         @map("tenant_id") @db.Uuid
+  id               String          @id @db.Uuid
+  tenantId         String          @map("tenant_id") @db.Uuid
   type             AccountType
-  roleId           String         @map("role_id") @db.Uuid
-  fullName         String         @map("full_name")
+  roleId           String          @map("role_id") @db.Uuid
+  /// Personal fields are NULL only on an erased account (CHECK accounts_erased_shape).
+  fullName         String?         @map("full_name")
   /// A national ID (14 digits) or a passport number (ADR 0018).
-  idDocumentNumber String         @map("id_document_number")
-  idDocumentType   IdDocumentType @default(national_id) @map("id_document_type")
+  idDocumentNumber String?         @map("id_document_number")
+  idDocumentType   IdDocumentType? @default(national_id) @map("id_document_type")
   /// ISO 3166-1 alpha-2; EG for a national ID.
-  nationality      String         @default("EG") @db.Char(2)
+  nationality      String?         @default("EG") @db.Char(2)
   /// Stored, never derived at read time. Null only on legacy rows whose ID did not parse.
-  birthDate        DateTime?      @map("birth_date") @db.Date
+  birthDate        DateTime?       @map("birth_date") @db.Date
   /// E.164. Null only while frozen (the number went to someone else).
   phone            String?
   /// trimmed + lowercased
-  email            String
-  status           AccountStatus  @default(active)
-  preferredLocale  Locale         @default(ar) @map("preferred_locale")
-  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  email            String?
+  status           AccountStatus   @default(active)
+  preferredLocale  Locale          @default(ar) @map("preferred_locale")
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   tenant             Tenant            @relation(fields: [tenantId], references: [id])
   role               Role              @relation(fields: [tenantId, roleId, type], references: [tenantId, id, kind], onUpdate: Restrict)
@@ -559,6 +570,11 @@ model Account {
   freezesLifted         AccountFreeze[]           @relation("FreezeReactivatedBy")
   registrationsDecided  ResidentRegistration[]    @relation("RegistrationDecidedBy")
   registrationsApproved ResidentRegistration[]    @relation("RegistrationAccount")
+  deletionRequests      AccountDeletionRequest[]  @relation("DeletionAccount")
+  deletionsCompleted    AccountDeletionRequest[]  @relation("DeletionCompletedBy")
+  legalHolds            LegalHold[]               @relation("HoldAccount")
+  holdsPlaced           LegalHold[]               @relation("HoldPlacedBy")
+  holdsReleased         LegalHold[]               @relation("HoldReleasedBy")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -751,14 +767,15 @@ model HouseholdInvite {
   tenantId          String                @map("tenant_id") @db.Uuid
   unitId            String                @map("unit_id") @db.Uuid
   invitedById       String                @map("invited_by") @db.Uuid
-  fullName          String                @map("full_name")
+  /// Personal fields are NULL only once stripped (the invitee was erased).
+  fullName          String?               @map("full_name")
   /// E.164
-  phone             String
+  phone             String?
   /// trimmed + lowercased; the acceptance code goes here and nowhere else
-  email             String
-  idDocumentNumber  String                @map("id_document_number")
-  idDocumentType    IdDocumentType        @default(national_id) @map("id_document_type")
-  nationality       String                @default("EG") @db.Char(2)
+  email             String?
+  idDocumentNumber  String?               @map("id_document_number")
+  idDocumentType    IdDocumentType?       @default(national_id) @map("id_document_type")
+  nationality       String?               @default("EG") @db.Char(2)
   birthDate         DateTime?             @map("birth_date") @db.Date
   relation          HouseholdRelation
   tokenHash         String                @unique @map("token_hash") @db.Char(64)
@@ -767,6 +784,7 @@ model HouseholdInvite {
   acceptedAccountId String?               @map("accepted_account_id") @db.Uuid
   /// A majority invite: the minor member this invite turns into an adult.
   memberId          String?               @map("member_id") @db.Uuid
+  strippedAt        DateTime?             @map("stripped_at") @db.Timestamptz(3)
   createdAt         DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
 
   unit            Unit             @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
@@ -1097,6 +1115,48 @@ model ResidentRegistration {
 
   @@index([tenantId, status, createdAt])
   @@map("resident_registrations")
+}
+
+/// "Delete my account" (ADR 0023): undo until `effective_at`, erased by
+/// staff after it. One pending per account. Never deleted.
+model AccountDeletionRequest {
+  id                String                @id @db.Uuid
+  tenantId          String                @map("tenant_id") @db.Uuid
+  accountId         String                @map("account_id") @db.Uuid
+  status            DeletionRequestStatus @default(pending)
+  requestedAt       DateTime              @default(now()) @map("requested_at") @db.Timestamptz(3)
+  effectiveAt       DateTime              @map("effective_at") @db.Timestamptz(3)
+  cancelledAt       DateTime?             @map("cancelled_at") @db.Timestamptz(3)
+  completedAt       DateTime?             @map("completed_at") @db.Timestamptz(3)
+  completedById     String?               @map("completed_by") @db.Uuid
+  overdueNotifiedAt DateTime?             @map("overdue_notified_at") @db.Timestamptz(3)
+
+  account     Account  @relation("DeletionAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
+  completedBy Account? @relation("DeletionCompletedBy", fields: [tenantId, completedById], references: [tenantId, id], onUpdate: Restrict)
+
+  @@index([tenantId, status, effectiveAt])
+  @@map("account_deletion_requests")
+}
+
+/// A legal obligation to keep an account's data (ADR 0023): blocks erasure.
+model LegalHold {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  accountId         String    @map("account_id") @db.Uuid
+  reasonCode        String    @map("reason_code")
+  note              String?
+  placedAt          DateTime  @default(now()) @map("placed_at") @db.Timestamptz(3)
+  placedById        String    @map("placed_by") @db.Uuid
+  releasedAt        DateTime? @map("released_at") @db.Timestamptz(3)
+  releasedById      String?   @map("released_by") @db.Uuid
+  releaseReasonCode String?   @map("release_reason_code")
+
+  account    Account  @relation("HoldAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
+  placedBy   Account  @relation("HoldPlacedBy", fields: [tenantId, placedById], references: [tenantId, id], onUpdate: Restrict)
+  releasedBy Account? @relation("HoldReleasedBy", fields: [tenantId, releasedById], references: [tenantId, id], onUpdate: Restrict)
+
+  @@index([tenantId, accountId])
+  @@map("legal_holds")
 }
 
 // ============================================================================

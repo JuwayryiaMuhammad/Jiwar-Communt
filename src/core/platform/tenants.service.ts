@@ -30,8 +30,9 @@ export interface TenantSummary {
 /** Managers are the platform's customers: contact details are visible. */
 export interface ManagerSummary {
   id: string;
-  fullName: string;
-  email: string;
+  /** Null only on an erased account (ADR 0023). */
+  fullName: string | null;
+  email: string | null;
   /** Null only while the account is frozen (ADR 0023). */
   phone: string | null;
   status: AccountStatus;

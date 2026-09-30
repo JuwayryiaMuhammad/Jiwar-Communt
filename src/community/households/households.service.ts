@@ -589,6 +589,33 @@ export class HouseholdsService {
     }
   }
 
+  /**
+   * The account is being erased (ADR 0023): every membership it holds ends,
+   * in core's transaction, with the usual audit and notice paths.
+   */
+  async removeAllForAccount(
+    tx: TenantTxClient,
+    accountId: string,
+  ): Promise<AfterCommit[]> {
+    const members = await tx.householdMember.findMany({
+      where: { accountId, status: { in: ['active', 'pending_approval'] } },
+    });
+    const after: AfterCommit[] = [];
+    for (const member of members) {
+      await lockUnits(tx, [member.unitId]);
+      after.push(
+        ...(await this.endMembership(tx, member, {
+          action: 'household.member_removed',
+          kind: 'removed',
+          reason: 'account_erased',
+          byAccountId: this.ctx.accountId,
+          metadata: { accountErased: true },
+        })),
+      );
+    }
+    return after;
+  }
+
   /** Everyone who can see the unit sees its household (minors by name). */
   async listMembers(unitId: string): Promise<HouseholdMemberView[]> {
     return this.tenantTx.withTenantTx(async (tx) => {
@@ -737,6 +764,18 @@ export class HouseholdsService {
       where: { id: member.accountId },
       select: { email: true, preferredLocale: true, tenantId: true },
     });
+    if (!account.email) {
+      // An erased account has nobody to tell: on file as undeliverable.
+      await this.outbox.recordUndeliverable(tx, {
+        tenantId: member.tenantId,
+        templateKey:
+          how.kind === 'removed'
+            ? HOUSEHOLD_EMAILS.memberRemoved
+            : HOUSEHOLD_EMAILS.joinRejected,
+        recipientAccountId: member.accountId,
+      });
+      return lifecycleTasks;
+    }
     const unit = await tx.unit.findUniqueOrThrow({
       where: { id: member.unitId },
       select: { code: true },
@@ -784,7 +823,7 @@ export class HouseholdsService {
 // ----------------------------------------------------------------------------
 
 export function memberView(
-  m: HouseholdMember & { account?: { fullName: string } | null },
+  m: HouseholdMember & { account?: { fullName: string | null } | null },
 ): HouseholdMemberView {
   return {
     id: m.id,

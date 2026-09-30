@@ -79,6 +79,10 @@ export const envSchema = z
     SWEEP_INTERVAL_MS: positiveInt.default(3_600_000),
     // A self-registration nobody decided expires after this (ADR 0024).
     REGISTRATION_PENDING_DAYS: positiveInt.default(30),
+    // Account deletion (ADR 0023): undo window, then how long an erasure
+    // may wait before the erasure holders are told.
+    DELETION_GRACE_DAYS: positiveInt.default(30),
+    ERASURE_OVERDUE_DAYS: positiveInt.default(7),
 
     JWT_ACCESS_SECRET: secret,
     IDENTIFIER_PEPPER: secret,

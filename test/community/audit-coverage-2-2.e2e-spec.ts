@@ -16,6 +16,11 @@ import { MAJORITY_SWEEP } from '../../src/community/households/majority-notices'
 import { SweepRunner } from '../../src/core/sweep/sweep-runner';
 import { AccountsService } from '../../src/core/accounts/accounts.service';
 import {
+  AccountDeletionService,
+  ERASURE_OVERDUE_SWEEP,
+  scopePhrase,
+} from '../../src/core/accounts/account-deletion.service';
+import {
   REGISTRATION_EXPIRY_SWEEP,
   RegistrationService,
   type RegistrationRequest,
@@ -571,6 +576,80 @@ describe('Audit coverage — Phase 2.2', () => {
       }
       expect(await events()).toBeGreaterThan(0);
       covered.add('registration.link_invalid');
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  describe('account deletion (ADR 0023)', () => {
+    it('requested, cancelled, hold placed and released, erased, overdue', async () => {
+      const c = await x.compound();
+      const u = await x.unit(c);
+      const r = await x.resident(c, [u.id]);
+      const deletion = h.moduleRef.get(AccountDeletionService);
+      const asR = <T>(fn: () => Promise<T>) =>
+        x.as(c, { id: r.id, type: 'resident' }, fn);
+
+      const first = await asR(() => deletion.requestDeletion('DELETE'));
+      expect(await single(c, 'account.deletion_requested', r.id)).toMatchObject(
+        {
+          actorId: r.id,
+          targetType: 'account',
+          metadata: { requestId: first.id },
+        },
+      );
+      await asR(() => deletion.cancelDeletion());
+      expect(await single(c, 'account.deletion_cancelled', r.id)).toMatchObject(
+        {
+          actorId: r.id,
+          changes: { status: { from: 'pending', to: 'cancelled' } },
+        },
+      );
+
+      const holdId = await x.asManager(c, () =>
+        deletion.placeLegalHold(r.id, { code: 'regulator_request', text: 'x' }),
+      );
+      expect(await single(c, 'account.legal_hold_placed', r.id)).toMatchObject({
+        actorId: c.managerId,
+        metadata: { holdId, reasonCode: 'regulator_request' },
+      });
+      await x.asManager(c, () =>
+        deletion.releaseLegalHold(holdId, { code: 'resolved', text: 'y' }),
+      );
+      expect(
+        await single(c, 'account.legal_hold_released', r.id),
+      ).toMatchObject({
+        actorId: c.managerId,
+        metadata: { holdId, reasonCode: 'resolved' },
+      });
+
+      const second = await asR(() => deletion.requestDeletion('DELETE'));
+      await x.asManager(c, () =>
+        x.prisma.tenant.accountDeletionRequest.update({
+          where: { id: second.id },
+          data: {
+            requestedAt: new Date(Date.now() - 50 * 86_400_000),
+            effectiveAt: new Date(Date.now() - 10 * 86_400_000),
+          },
+        }),
+      );
+      await h.moduleRef.get(SweepRunner).run(ERASURE_OVERDUE_SWEEP);
+      expect(
+        await single(c, 'account.erasure_overdue', second.id),
+      ).toMatchObject({
+        actorType: 'system',
+        targetType: 'account_deletion_request',
+        metadata: { requestId: second.id, daysOverdue: 10 },
+      });
+      await x.asManager(c, () => deletion.erase(second.id, scopePhrase(r.id)));
+      expect(await single(c, 'account.erased', r.id)).toMatchObject({
+        actorId: c.managerId,
+        changes: {
+          status: { from: 'active', to: 'erased' },
+          fullName: { changed: true },
+          idDocumentNumber: { changed: true },
+        },
+        metadata: { requestId: second.id },
+      });
     });
   });
 

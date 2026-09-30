@@ -311,12 +311,20 @@ export class DelegationsService implements OnModuleInit {
       event,
       compoundName: tenant.name,
       unitCode: unit.code,
-      delegatorName: delegator.fullName,
-      delegateName: delegate.fullName,
+      delegatorName: delegator.fullName ?? '',
+      delegateName: delegate.fullName ?? '',
       scopes: d.scopes,
       expiresAt: d.expiresAt.toISOString(),
     };
     for (const to of [delegator, delegate]) {
+      if (!to.email) {
+        await this.outbox.recordUndeliverable(tx, {
+          tenantId: d.tenantId,
+          templateKey: HOUSEHOLD_EMAILS.delegation,
+          recipientAccountId: to.id,
+        });
+        continue;
+      }
       await this.outbox.enqueue(tx, {
         tenantId: d.tenantId,
         templateKey: HOUSEHOLD_EMAILS.delegation,

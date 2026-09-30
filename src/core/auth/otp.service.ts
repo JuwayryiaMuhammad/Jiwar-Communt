@@ -306,7 +306,8 @@ export class OtpService implements OnModuleInit {
             select: { email: true, status: true },
           }),
       );
-      if (!account || account.status !== 'active') continue;
+      // An erased account is never active; the email check is for the type.
+      if (!account?.email || account.status !== 'active') continue;
       byEmail.set(account.email, [
         ...(byEmail.get(account.email) ?? []),
         row.accountId,

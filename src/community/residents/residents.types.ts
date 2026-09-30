@@ -47,15 +47,16 @@ export interface OccupancyView {
 
 export interface ResidentView {
   id: string;
-  fullName: string;
-  idDocumentType: IdDocumentType;
-  idDocumentNumber: string;
-  nationality: string;
+  /** Personal fields are null on an erased account (ADR 0023). */
+  fullName: string | null;
+  idDocumentType: IdDocumentType | null;
+  idDocumentNumber: string | null;
+  nationality: string | null;
   /** `YYYY-MM-DD`; null only on legacy accounts. */
   birthDate: string | null;
   /** Null only while frozen (ADR 0023). */
   phone: string | null;
-  email: string;
+  email: string | null;
   status: AccountStatus;
   preferredLocale: Locale;
   /** Active and ended, oldest first. */

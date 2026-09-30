@@ -13,8 +13,12 @@ import { required } from '../setup/test-env';
  */
 const REVIEWED: Record<string, { guarded?: string }> = {
   // Nullable columns only under IS [NOT] NULL, or none at all.
-  accounts_identity_document: {},
-  accounts_phone_present: {},
+  accounts_erased_shape: {},
+  account_deletion_requests_cancelled_matches: {},
+  account_deletion_requests_completed_matches: {},
+  account_deletion_requests_grace_after_request: {},
+  household_invites_stripped_shape: {},
+  legal_holds_release_is_complete: {},
   account_freezes_reactivated_by_needs_time: {},
   audit_log_actor_id_matches_type: {},
   domestic_workers_ban_is_complete: {},
@@ -25,7 +29,6 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   household_delegations_not_to_self: {},
   household_delegations_scopes_not_empty: {},
   household_invites_accepted_has_account: {},
-  household_invites_identity_document: {},
   household_members_removed_has_reason: {},
   household_member_grants_no_minor_finance: {},
   household_member_grants_finance_has_cap: {},
@@ -59,6 +62,17 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   worker_engagements_management_suspension: {},
   worker_engagements_temporary_has_end: {},
   // Compares nullable columns.
+  accounts_identity_document: {
+    guarded:
+      "status = 'erased' comes first; any other status has a non-NULL " +
+      'document type and nationality (accounts_erased_shape), so the ' +
+      'comparisons are never NULL there',
+  },
+  household_invites_identity_document: {
+    guarded:
+      'stripped_at IS NOT NULL comes first; an unstripped invite has a ' +
+      'non-NULL type and nationality (household_invites_stripped_shape)',
+  },
   units_area_positive: {
     guarded:
       'area_sqm IS NULL is tested first; the comparison runs only on a value',

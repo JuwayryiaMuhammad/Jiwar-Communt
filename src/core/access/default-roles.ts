@@ -22,6 +22,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'units.create',
       'accounts.read',
       'accounts.manage',
+      'accounts.erase',
+      'accounts.legal_hold',
       'residents.read',
       'residents.manage',
       'roles.read',

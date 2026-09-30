@@ -5,7 +5,7 @@ import {
   parseEgyptianNationalId,
 } from './egyptian-national-id';
 import { appError, ErrorCode, FieldErrorCode, type FieldError } from './errors';
-import { ISO_COUNTRIES } from './iso-countries';
+import { NATIONALITIES } from './iso-countries';
 
 // ============================================================================
 // Identity documents (ADR 0018): an Egyptian national ID or a passport.
@@ -80,7 +80,7 @@ export function checkIdentityDocument(
       });
     }
     const nationality = normalizeNationality(input.nationality);
-    if (!nationality || !ISO_COUNTRIES.has(nationality)) {
+    if (!nationality || !NATIONALITIES.has(nationality)) {
       fields.push({
         field: 'nationality',
         code: FieldErrorCode.INVALID_NATIONALITY,

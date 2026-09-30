@@ -22,3 +22,16 @@ export const ISO_COUNTRIES: ReadonlySet<string> = new Set([
   'TR','TT','TV','TW','TZ','UA','UG','UM','US','UY','UZ','VA','VC','VE','VG','VI',
   'VN','VU','WF','WS','YE','YT','ZA','ZM','ZW',
 ]);
+
+/**
+ * Nationalities a passport may carry: the ISO list plus XK, Kosovo.
+ * XK is not an official ISO 3166-1 code (it is user-assigned), but it is
+ * the code in common use for Kosovo (the EU, SWIFT and others use it),
+ * and Kosovo issues real passports. Refusing it would block a real person
+ * from being registered. Kept out of ISO_COUNTRIES so that list stays
+ * exactly the official one.
+ */
+export const NATIONALITIES: ReadonlySet<string> = new Set([
+  ...ISO_COUNTRIES,
+  'XK',
+]);

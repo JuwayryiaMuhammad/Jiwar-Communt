@@ -22,7 +22,7 @@ Phase 2 made an Egyptian national ID mandatory, because age drives the household
   - **National ID:** the Egyptian parser (century, a real date, governorate). The birth date comes from the ID, and one sent by the client is ignored. Nationality is `EG`.
   - **Passport:**
     - the number is normalized (trimmed, uppercase, no spaces) and must be 5–20 characters `[A-Z0-9]`;
-    - nationality must be a valid ISO code, checked against a hardcoded list of all 249 codes rather than a phone library's country list;
+    - nationality must be a valid ISO code, checked against a hardcoded list of all 249 codes rather than a phone library's country list, plus `XK` (Kosovo): not an official ISO code, but the one in common use for Kosovo, whose passports are real;
     - the birth date is required: a real date, not in the future, age ≤ 120.
   - **Error codes:** `INVALID_NATIONAL_ID`, `INVALID_PASSPORT_NUMBER`, `INVALID_NATIONALITY`, `BIRTH_DATE_REQUIRED` and `INVALID_BIRTH_DATE`, as field codes.
 - **CHECKs** hold the shapes:
@@ -46,4 +46,4 @@ Phase 2 made an Egyptian national ID mandatory, because age drives the household
 
 ## Limits
 - The check digit of a national ID is not validated; its algorithm isn't published.
-- Codes outside ISO 3166-1, such as `XK` for Kosovo, are not accepted as nationalities.
+- Codes outside ISO 3166-1 are not accepted as nationalities, except `XK` (Kosovo).

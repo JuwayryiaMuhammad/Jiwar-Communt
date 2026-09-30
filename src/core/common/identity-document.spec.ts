@@ -3,6 +3,7 @@ import {
   checkIdentityDocument,
   type IdentityDocumentInput,
 } from './identity-document';
+import { ISO_COUNTRIES } from './iso-countries';
 
 const TODAY = new Date(Date.UTC(2026, 8, 30));
 const check = (input: IdentityDocumentInput) =>
@@ -72,6 +73,14 @@ describe('identity documents', () => {
       ['AB-12345', 'idDocumentNumber:INVALID_PASSPORT_NUMBER'],
     ])('number %s → %s', (idDocumentNumber, expected) => {
       expect(codes(passport({ idDocumentNumber }))).toEqual([expected]);
+    });
+
+    it('accepts XK (Kosovo), which is not an official ISO code', () => {
+      expect(ISO_COUNTRIES.has('XK')).toBe(false);
+      expect(ISO_COUNTRIES.size).toBe(249);
+      expect(check(passport({ nationality: 'xk' }))).toMatchObject({
+        document: { nationality: 'XK' },
+      });
     });
 
     it.each([

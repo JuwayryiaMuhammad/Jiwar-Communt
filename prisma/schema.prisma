@@ -213,6 +213,26 @@ enum WageObligationKind {
   @@map("wage_obligation_kind")
 }
 
+/// What a household member may use (ADR 0021). Never money for a minor.
+enum MemberPermission {
+  visitors_invite
+  bookings
+  tickets
+  finance
+  unit_security
+
+  @@map("member_permission")
+}
+
+enum DeferredActionStatus {
+  pending
+  approved
+  declined
+  withdrawn
+
+  @@map("deferred_action_status")
+}
+
 enum WorkerNoticeStatus {
   pending
   sent
@@ -423,21 +443,24 @@ model Account {
   occupancies        UnitOccupancy[]   @relation("OccupancyAccount")
   createdOccupancies UnitOccupancy[]   @relation("OccupancyCreatedBy")
 
-  memberships        HouseholdMember[]      @relation("MemberAccount")
-  addedMembers       HouseholdMember[]      @relation("MemberAddedBy")
-  removedMembers     HouseholdMember[]      @relation("MemberRemovedBy")
-  sentInvites        HouseholdInvite[]      @relation("InviteInvitedBy")
-  acceptedInvites    HouseholdInvite[]      @relation("InviteAcceptedAccount")
-  delegationsGiven   HouseholdDelegation[]  @relation("DelegationDelegator")
-  delegationsHeld    HouseholdDelegation[]  @relation("DelegationDelegate")
-  delegationsRevoked HouseholdDelegation[]  @relation("DelegationRevokedBy")
-  bannedWorkers      DomesticWorker[]       @relation("WorkerBannedBy")
-  verifiedWorkers    DomesticWorker[]       @relation("WorkerBirthDateVerifiedBy")
-  requestedWorkers   WorkerEngagement[]     @relation("EngagementRequestedBy")
-  reviewedWorkers    WorkerEngagement[]     @relation("EngagementReviewedBy")
-  flagsRaised        UnitReviewFlag[]       @relation("ReviewFlaggedBy")
-  flagsCleared       UnitReviewFlag[]       @relation("ReviewClearedBy")
-  wagesSettled       WorkerWageObligation[] @relation("WageSettledBy")
+  memberships        HouseholdMember[]         @relation("MemberAccount")
+  addedMembers       HouseholdMember[]         @relation("MemberAddedBy")
+  removedMembers     HouseholdMember[]         @relation("MemberRemovedBy")
+  sentInvites        HouseholdInvite[]         @relation("InviteInvitedBy")
+  acceptedInvites    HouseholdInvite[]         @relation("InviteAcceptedAccount")
+  delegationsGiven   HouseholdDelegation[]     @relation("DelegationDelegator")
+  delegationsHeld    HouseholdDelegation[]     @relation("DelegationDelegate")
+  delegationsRevoked HouseholdDelegation[]     @relation("DelegationRevokedBy")
+  bannedWorkers      DomesticWorker[]          @relation("WorkerBannedBy")
+  verifiedWorkers    DomesticWorker[]          @relation("WorkerBirthDateVerifiedBy")
+  requestedWorkers   WorkerEngagement[]        @relation("EngagementRequestedBy")
+  reviewedWorkers    WorkerEngagement[]        @relation("EngagementReviewedBy")
+  flagsRaised        UnitReviewFlag[]          @relation("ReviewFlaggedBy")
+  flagsCleared       UnitReviewFlag[]          @relation("ReviewClearedBy")
+  wagesSettled       WorkerWageObligation[]    @relation("WageSettledBy")
+  grantsGiven        HouseholdMemberGrant[]    @relation("GrantGrantedBy")
+  grantsRevoked      HouseholdMemberGrant[]    @relation("GrantRevokedBy")
+  deferredDecided    HouseholdDeferredAction[] @relation("DeferredDecidedBy")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -507,13 +530,14 @@ model Unit {
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  tenant            Tenant                @relation(fields: [tenantId], references: [id])
+  tenant            Tenant                    @relation(fields: [tenantId], references: [id])
   occupancies       UnitOccupancy[]
   householdMembers  HouseholdMember[]
   householdInvites  HouseholdInvite[]
   delegations       HouseholdDelegation[]
   workerEngagements WorkerEngagement[]
   reviewFlags       UnitReviewFlag[]
+  deferredActions   HouseholdDeferredAction[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -605,7 +629,11 @@ model HouseholdMember {
   addedBy   Account  @relation("MemberAddedBy", fields: [tenantId, addedById], references: [tenantId, id], onUpdate: Restrict)
   removedBy Account? @relation("MemberRemovedBy", fields: [tenantId, removedById], references: [tenantId, id], onUpdate: Restrict)
 
+  grants          HouseholdMemberGrant[]
+  deferredActions HouseholdDeferredAction[]
+
   @@unique([tenantId, id])
+  @@unique([tenantId, id, isMinor])
   @@index([tenantId, unitId])
   @@index([tenantId, accountId])
   @@map("household_members")
@@ -799,6 +827,56 @@ model WorkerWageObligation {
 
   @@index([tenantId, workerId])
   @@map("worker_wage_obligations")
+}
+
+/// A permission a household member holds (ADR 0021). Revoked, never
+/// deleted. `member_is_minor` follows the member (ON UPDATE CASCADE) so a
+/// CHECK refuses finance to a minor at the database level.
+model HouseholdMemberGrant {
+  id               String           @id @db.Uuid
+  tenantId         String           @map("tenant_id") @db.Uuid
+  memberId         String           @map("member_id") @db.Uuid
+  memberIsMinor    Boolean          @map("member_is_minor")
+  permission       MemberPermission
+  capPerOperation  Decimal?         @map("cap_per_operation") @db.Decimal(12, 2)
+  grantedById      String?          @map("granted_by") @db.Uuid
+  grantedAt        DateTime         @default(now()) @map("granted_at") @db.Timestamptz(3)
+  revokedAt        DateTime?        @map("revoked_at") @db.Timestamptz(3)
+  revokedById      String?          @map("revoked_by") @db.Uuid
+  revokeReasonCode String?          @map("revoke_reason_code")
+  /// What the member was told; erasable, never audited.
+  revokeNote       String?          @map("revoke_note")
+
+  member    HouseholdMember @relation(fields: [tenantId, memberId, memberIsMinor], references: [tenantId, id, isMinor], onUpdate: Cascade, map: "household_member_grants_member_fkey")
+  grantedBy Account?        @relation("GrantGrantedBy", fields: [tenantId, grantedById], references: [tenantId, id], onUpdate: Restrict)
+  revokedBy Account?        @relation("GrantRevokedBy", fields: [tenantId, revokedById], references: [tenantId, id], onUpdate: Restrict)
+
+  @@index([tenantId, memberId])
+  @@map("household_member_grants")
+}
+
+/// An action a member had started when the permission it needed was
+/// revoked: saved, and sent to the primary as a request (05 §7).
+model HouseholdDeferredAction {
+  id                 String               @id @db.Uuid
+  tenantId           String               @map("tenant_id") @db.Uuid
+  unitId             String               @map("unit_id") @db.Uuid
+  memberId           String               @map("member_id") @db.Uuid
+  permission         MemberPermission
+  payload            Json?
+  status             DeferredActionStatus @default(pending)
+  createdAt          DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  decidedAt          DateTime?            @map("decided_at") @db.Timestamptz(3)
+  decidedById        String?              @map("decided_by") @db.Uuid
+  decisionReasonCode String?              @map("decision_reason_code")
+  decisionNote       String?              @map("decision_note")
+
+  unit      Unit            @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
+  member    HouseholdMember @relation(fields: [tenantId, memberId], references: [tenantId, id], onUpdate: Restrict)
+  decidedBy Account?        @relation("DeferredDecidedBy", fields: [tenantId, decidedById], references: [tenantId, id], onUpdate: Restrict)
+
+  @@index([tenantId, unitId])
+  @@map("household_deferred_actions")
 }
 
 // ============================================================================

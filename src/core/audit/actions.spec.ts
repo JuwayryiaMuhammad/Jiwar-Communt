@@ -49,6 +49,7 @@ describe('audit catalog', () => {
         'household_delegation',
         'domestic_worker',
         'worker_engagement',
+        'household_deferred_action',
       ]).toContain(def.target);
     }
   });

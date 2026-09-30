@@ -25,6 +25,11 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   household_invites_accepted_has_account: {},
   household_invites_identity_document: {},
   household_members_removed_has_reason: {},
+  household_member_grants_no_minor_finance: {},
+  household_member_grants_finance_has_cap: {},
+  household_member_grants_revoke_is_complete: {},
+  household_deferred_actions_decided_matches_status: {},
+  household_deferred_actions_decline_has_reason: {},
   household_members_removed_matches_status: {},
   outbox_messages_attempts_non_negative: {},
   outbox_messages_sent_at_matches_status: {},
@@ -44,6 +49,11 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   worker_engagements_management_suspension: {},
   worker_engagements_temporary_has_end: {},
   // Compares nullable columns.
+  household_member_grants_cap_positive: {
+    guarded:
+      'cap_per_operation IS NULL is tested first, so the comparison runs ' +
+      'only on a value; finance_has_cap makes finance carry one',
+  },
   household_members_minor_or_account: {
     guarded:
       'id_document_type and nationality are tested IS NOT NULL first, and ' +

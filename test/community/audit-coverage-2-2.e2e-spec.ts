@@ -8,6 +8,8 @@ import {
 import { communityHelpers, type Compound } from '../setup/community';
 import { bornYearsAgo, MOVED_OUT, nationalIdFor } from '../setup/fixtures';
 import { WorkersService } from '../../src/community/workers/workers.service';
+import { MemberPermissionsService } from '../../src/community/households/member-permissions.service';
+import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import {
   createHttpHarness,
   uniquePhone,
@@ -192,6 +194,77 @@ describe('Audit coverage — Phase 2.2', () => {
           },
         },
       );
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  describe('member permissions (ADR 0021)', () => {
+    it('permission_granted, permission_revoked, deferred_action_submitted, deferred_action_decided', async () => {
+      const c = await x.compound();
+      const u = await x.unit(c);
+      const primary = await x.resident(c, [u.id]);
+      const family = await x.joinFamily(c, u.id, primary);
+      const perms = h.moduleRef.get(MemberPermissionsService);
+      const asPrimary = <T>(fn: () => Promise<T>) =>
+        x.as(c, { id: primary.id, type: 'resident' }, fn);
+
+      await asPrimary(() =>
+        perms.grant(family.memberId, 'finance', { capPerOperation: '250' }),
+      );
+      expect(
+        await single(c, 'household.permission_granted', family.memberId),
+      ).toMatchObject({
+        actorId: primary.id,
+        targetType: 'household_member',
+        changes: {
+          permission: { from: null, to: 'finance' },
+          capPerOperation: { from: null, to: '250' },
+        },
+        metadata: { permission: 'finance', unitId: u.id },
+      });
+
+      await asPrimary(() =>
+        perms.revoke(family.memberId, 'finance', {
+          code: 'misuse',
+          text: 'Why',
+        }),
+      );
+      expect(
+        await single(c, 'household.permission_revoked', family.memberId),
+      ).toMatchObject({
+        actorId: primary.id,
+        changes: { permission: { from: 'finance', to: null } },
+        metadata: { reasonCode: 'misuse', bulk: false },
+      });
+
+      const id = await x.as(c, { id: family.accountId, type: 'family' }, () =>
+        h.moduleRef.get(TenantTx).withTenantTx((tx) =>
+          perms.submitDeferredAction(tx, {
+            accountId: family.accountId,
+            unitId: u.id,
+            permission: 'finance',
+            payload: { amount: '99.00' },
+          }),
+        ),
+      );
+      expect(
+        await single(c, 'household.deferred_action_submitted', id),
+      ).toMatchObject({
+        actorId: family.accountId,
+        targetType: 'household_deferred_action',
+        metadata: {
+          unitId: u.id,
+          memberId: family.memberId,
+          permission: 'finance',
+        },
+      });
+      await asPrimary(() => perms.decideDeferredAction(id, 'approve'));
+      expect(
+        await single(c, 'household.deferred_action_decided', id),
+      ).toMatchObject({
+        actorId: primary.id,
+        changes: { status: { from: 'pending', to: 'approved' } },
+      });
     });
   });
 

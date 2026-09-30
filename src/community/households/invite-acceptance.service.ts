@@ -21,6 +21,7 @@ import { RateLimitService } from '../../core/redis/rate-limit.service';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { lockUnits } from '../units/unit-lock';
 import { expireIfDue } from './households.service';
+import { MemberPermissionsService } from './member-permissions.service';
 import type { AcceptedInvite } from './households.types';
 
 /** The one answer to "send me the code", whatever the token is. */
@@ -56,6 +57,7 @@ export class InviteAcceptanceService {
     private readonly settings: TenantSettingsService,
     private readonly audit: AuditService,
     private readonly cls: ClsService<AppClsStore>,
+    private readonly permissions: MemberPermissionsService,
   ) {}
 
   /**
@@ -220,6 +222,10 @@ export class InviteAcceptanceService {
         addedById: invite.invitedById,
       },
     });
+    const defaultPermissions = await this.permissions.grantDefaults(tx, {
+      id: memberId,
+      tenantId,
+    });
     await tx.householdInvite.update({
       where: { id: invite.id },
       data: { status: 'accepted', acceptedAccountId: accountId },
@@ -242,6 +248,7 @@ export class InviteAcceptanceService {
         memberId,
         membershipStatus: status,
         accountCreated: !existing,
+        defaultPermissions: [...defaultPermissions],
       },
     });
     return { accountId, memberId, membershipStatus: status };

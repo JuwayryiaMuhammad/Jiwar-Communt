@@ -9,7 +9,6 @@ import {
   capabilitiesFor,
   NONE,
   type Capabilities,
-  type MemberPermission,
   type Subject,
   type UnitState,
 } from './capabilities';
@@ -78,6 +77,12 @@ export class CapabilitiesService {
     if (occupancy?.status === 'active') return occupancySubject(occupancy);
     const member = await tx.householdMember.findFirst({
       where: { unitId, accountId, status: 'active' },
+      include: {
+        grants: {
+          where: { revokedAt: null },
+          select: { permission: true, capPerOperation: true },
+        },
+      },
     });
     if (member) {
       return {
@@ -85,7 +90,10 @@ export class CapabilitiesService {
         status: member.status,
         isMinor: member.isMinor,
         hasAccount: member.accountId !== null,
-        grants: [] as { permission: MemberPermission; capPerOperation: null }[],
+        grants: member.grants.map((g) => ({
+          permission: g.permission,
+          capPerOperation: g.capPerOperation?.toFixed(2) ?? null,
+        })),
       };
     }
     return occupancy ? occupancySubject(occupancy) : null;

@@ -21,6 +21,9 @@ export const COMMUNITY_NOTICES = {
   primaryChanged: 'community.primary_changed',
   unitUnderReview: 'community.unit_under_review',
   activityPaused: 'community.activity_paused',
+  permissionRevoked: 'community.permission_revoked',
+  deferredActionSubmitted: 'community.deferred_action_submitted',
+  deferredActionDeclined: 'community.deferred_action_declined',
 } as const;
 
 export type CommunityNoticeKey =
@@ -57,6 +60,33 @@ const CAPACITY = {
     tenant: 'tenant',
   },
 } as const;
+
+const PERMISSION = {
+  ar: {
+    visitors_invite: 'دعوة الزوار',
+    bookings: 'الحجوزات',
+    tickets: 'البلاغات',
+    finance: 'العمليات المالية',
+    unit_security: 'أجهزة حماية الوحدة',
+  },
+  en: {
+    visitors_invite: 'inviting visitors',
+    bookings: 'bookings',
+    tickets: 'maintenance tickets',
+    finance: 'payments',
+    unit_security: 'unit security devices',
+  },
+} as const;
+
+/** A comma-separated list of permission keys, in words. */
+function permissions(locale: Locale, value: string | undefined): string {
+  const names = PERMISSION[locale] as Record<string, string>;
+  return (value ?? '')
+    .split(',')
+    .filter(Boolean)
+    .map((k) => names[k] ?? k)
+    .join(locale === 'ar' ? '، ' : ', ');
+}
 
 function capacity(locale: Locale, value: string | undefined): string {
   const names = CAPACITY[locale] as Record<string, string>;
@@ -129,6 +159,38 @@ const CATALOG: Catalog = {
     en: (p) => ({
       subject: 'Activity view paused in your unit on Jiwar',
       lead: `The activity view is paused during a review in unit ${p.unitCode} in ${p.compoundName}. Emergency, entry, tickets and contacting the management stay, and visitor notices still reach you.`,
+    }),
+  },
+  'community.permission_revoked': {
+    ar: (p) => ({
+      subject: 'سُحبت صلاحية على جوار',
+      lead: `سُحبت صلاحية ${permissions('ar', p.permissions)} في الوحدة ${p.unitCode} في ${p.compoundName}. تبقى لك دائماً الطوارئ ودليل التصرف والتواصل مع الساكن الرئيسي.`,
+      help: 'لطلب توضيح، تواصل مع الساكن الرئيسي للوحدة.',
+    }),
+    en: (p) => ({
+      subject: 'A permission was withdrawn on Jiwar',
+      lead: `Your permission for ${permissions('en', p.permissions)} in unit ${p.unitCode} in ${p.compoundName} was withdrawn. Emergency, the conduct guide and contacting the primary resident always stay.`,
+      help: "To ask why, contact the unit's primary resident.",
+    }),
+  },
+  'community.deferred_action_submitted': {
+    ar: (p) => ({
+      subject: 'طلب من أحد أفراد أسرتك على جوار',
+      lead: `أرسل ${p.memberName} إجراءً يحتاج صلاحية ${permissions('ar', p.permission)} في الوحدة ${p.unitCode} في ${p.compoundName}، وهو بانتظار قرارك.`,
+    }),
+    en: (p) => ({
+      subject: 'A request from your household on Jiwar',
+      lead: `${p.memberName} sent an action that needs ${permissions('en', p.permission)} in unit ${p.unitCode} in ${p.compoundName}. It is waiting for your decision.`,
+    }),
+  },
+  'community.deferred_action_declined': {
+    ar: (p) => ({
+      subject: 'لم تتم الموافقة على طلبك على جوار',
+      lead: `لم يوافق الساكن الرئيسي على طلبك الخاص بـ${permissions('ar', p.permission)} في الوحدة ${p.unitCode} في ${p.compoundName}.`,
+    }),
+    en: (p) => ({
+      subject: 'Your request on Jiwar was not approved',
+      lead: `The primary resident did not approve your request for ${permissions('en', p.permission)} in unit ${p.unitCode} in ${p.compoundName}.`,
     }),
   },
 };

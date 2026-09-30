@@ -41,6 +41,16 @@ export const AUDIT_ACTIONS = {
   'unit.household_ended': { log: 'tenant', target: 'unit' },
   'unit.ownership_transferred': { log: 'tenant', target: 'unit' },
   'household.permissions_reviewed': { log: 'tenant', target: 'unit' },
+  'household.permission_granted': { log: 'tenant', target: 'household_member' },
+  'household.permission_revoked': { log: 'tenant', target: 'household_member' },
+  'household.deferred_action_submitted': {
+    log: 'tenant',
+    target: 'household_deferred_action',
+  },
+  'household.deferred_action_decided': {
+    log: 'tenant',
+    target: 'household_deferred_action',
+  },
   'worker.wage_obligation_recorded': {
     log: 'tenant',
     target: 'worker_engagement',

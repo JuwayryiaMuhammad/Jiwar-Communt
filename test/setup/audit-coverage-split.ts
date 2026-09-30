@@ -48,4 +48,8 @@ export const PHASE_2_2_COVERAGE: readonly string[] = [
   'unit.ownership_transferred',
   'household.permissions_reviewed',
   'worker.wage_obligation_recorded',
+  'household.permission_granted',
+  'household.permission_revoked',
+  'household.deferred_action_submitted',
+  'household.deferred_action_decided',
 ];

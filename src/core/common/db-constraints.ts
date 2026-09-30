@@ -38,4 +38,6 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // a race and names nothing.
   unit_review_flags_one_open_per_reason: null,
   worker_wage_obligations_one_open_per_kind: null,
+  household_member_grants_one_live: ['permission'],
+  household_members_tenant_id_id_is_minor_key: null,
 };

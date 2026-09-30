@@ -11,8 +11,14 @@ Backend for Jiwar, a multi-tenant platform for managing residential compounds. *
   - delegation from the primary to an adult member;
   - resident self-service (language, sessions);
   - domestic workers (registration, review, access codes, suspension, ban).
+- **Phase 2.1** adds:
+  - identity documents: a national ID or a passport, with a stored birth date and a manager's attestation for passport workers;
+  - overnight worker schedules, and a time zone per compound;
+  - a separate rejection email;
+  - a transactional email outbox;
+  - the managers' list of units needing a household review.
 
-Phases 1a, 1b and 2 add **no new HTTP endpoints**: they are designed screen by screen from the Figma design in a later phase, so the new capabilities are services tested at the service level. Architecture decisions live in [`docs/decisions/`](docs/decisions/README.md).
+Phases 1a to 2.1 add **no new HTTP endpoints**: they are designed screen by screen from the Figma design in a later phase, so the new capabilities are services tested at the service level. Architecture decisions live in [`docs/decisions/`](docs/decisions/README.md).
 
 Stack: Node ≥ 22, pnpm, NestJS 11, Prisma 7 (`@prisma/adapter-pg`), PostgreSQL 17, Redis 7, argon2, Jest + Supertest.
 
@@ -80,6 +86,7 @@ See `.env.example` for the full list with comments. The important ones:
 | `TEST_DATABASE_URL`, `TEST_MIGRATOR_DATABASE_URL`, `TEST_REDIS_URL` | e2e tests (separate database, Redis db 1) |
 | `TEST_SMTP_HOST`, `TEST_SMTP_PORT`, `MAILPIT_API_URL` | e2e tests always send through Mailpit and read codes from its API, whatever `SMTP_*` points at |
 | `DB_POOL_MAX` | pg pool size |
+| `OUTBOX_ENABLED`, `OUTBOX_POLL_MS`, `OUTBOX_MAX_ATTEMPTS`, `OUTBOX_RETENTION_DAYS` | Email outbox (ADR 0019): the in-app poller (default on, every 5 s), attempts before a message is dead (8), and days before sent rows are deleted and dead rows stripped of recipient and params (30). Tests turn the poller off and drain explicitly |
 | `SECURITY_EVENT_TIMEOUT_MS` | Database-side cap on each security event insert (default 500). A locked `security_events` table delays a login by at most this much; the event is dropped with an error log |
 | `REDIS_URL` | Rate limits, login tickets, permission cache |
 | `SMTP_*` | OTP email delivery |
@@ -121,7 +128,9 @@ The e2e run wipes `jiwar_test`, migrates it as the migrator, runs `access:sync` 
 | `test/rls/community-isolation` | Every Phase 2 tenant table isolated; every household/worker constraint asserted by name; no DELETE for the app |
 | `test/auth/*` | OTP purposes never interchangeable; session origin; `sid` — revocation cuts the access token at once |
 | `test/settings/*` | Tenant settings: defaults, per compound, validation, audit |
-| `test/community/*` | National ID on every account creation; primary resident (incl. concurrency); households; delegation; self-service; domestic workers; one audit scenario per Phase 2 action plus a secrets scan |
+| `test/db/identity-and-outbox-schema` | The SQL birth-date backfill against the code parser (the migration's own block), and every Phase 2.1 constraint by name |
+| `test/mail/outbox` | Enqueue rolls back with the action (both ways), backoff with SMTP down, dead after the last attempt, two processors never sending the same message, expired leases, retention, flows queueing instead of sending, OTP still direct, the poller starting and stopping |
+| `test/community/*` | National ID and passports (accounts, household, workers with attestation); primary resident (incl. concurrency); households; delegation; self-service; domestic workers; one audit scenario per Phase 2 action plus a secrets scan |
 
 ## Error contract (ADR 0013)
 
@@ -228,7 +237,7 @@ src/
     audit/       audit catalog, diff + personal-data guard, audit/platform/security services, query services
     redis/       Redis client, rate limiter
     health/      readiness (db, redis, tenant-setting leak canary)
-    mail/        the pooled SMTP transport and the bilingual email layout
+    mail/        the pooled SMTP transport, the bilingual layout, the template registry and the outbox (ADR 0019)
     tenant-settings/  per-compound settings (household approval, size limit)
   community/     the community domain; other domains import only its index.ts
     units/       units, scoped by ResourceAccess; the unit row lock
@@ -237,7 +246,7 @@ src/
     workers/     domestic workers, engagements, access codes, notices (ADR 0017)
 prisma/        schema, migrations (RLS SQL inside), seed
 docker/        postgres init (roles)
-test/          rls/, access/, platform/, residents/, audit/, db/, auth/, settings/, community/ suites + setup/
+test/          rls/, access/, platform/, residents/, audit/, db/, auth/, settings/, community/, mail/ suites + setup/
 docs/decisions ADRs
 ```
 

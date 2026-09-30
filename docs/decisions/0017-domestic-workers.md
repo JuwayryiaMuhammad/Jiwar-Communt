@@ -42,3 +42,11 @@ Housekeepers, drivers, nannies and live-in helpers come and go every day. The jo
 - **Gate:** verifying codes, attendance, and entry/exit notifications to the resident.
 - Wages, printed cards, photos and object storage, and delivery of notices.
 - Overnight windows (a window that crosses midnight) are rejected for now; the design decides how they are entered.
+
+## Update (Phase 2.1)
+- **Passport workers** (ADR 0018): deduplicated by nationality and number; the birth date is attested by the manager once per worker at approval, and a correction clears the attestation. A worker found to be under 18 has this engagement rejected and every other active one suspended by management, with notices. There is no exception path.
+- **Overnight windows:**
+  - a window whose end is before its start runs past midnight into the next day, and `to == from` is `INVALID_SCHEDULE`;
+  - overlap is computed on a weekly timeline in minutes, wrapping from Saturday night into Sunday;
+  - touching edges don't clash.
+- **`isWithinSchedule(schedule, instant, timeZone)`** is ready for the gate. It reads local time in `tenant_settings.timezone` (IANA, default `Africa/Cairo`).

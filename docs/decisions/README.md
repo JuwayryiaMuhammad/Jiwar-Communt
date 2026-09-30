@@ -19,3 +19,5 @@
 | [0015](0015-domain-structure.md) | Domain folders (`core` + domains) and import boundaries | Accepted |
 | [0016](0016-household-and-delegation.md) | Primary resident, household, invites and delegation | Accepted |
 | [0017](0017-domestic-workers.md) | Domestic workers: engagements, codes, notices, ban | Accepted |
+| [0018](0018-identity-documents.md) | Identity documents: national ID or passport, stored birth date | Accepted |
+| [0019](0019-email-outbox.md) | Transactional email outbox, at least once | Accepted |

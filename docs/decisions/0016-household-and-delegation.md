@@ -60,3 +60,9 @@ A unit is lived in by more people than its occupants: spouses, children, parents
 ## Known limits
 - **Emails are sent after commit, best effort.** A failure is logged, and the action stands. There is no outbox yet; one belongs with the notification channels (ADR 0009).
 - A worker's or member's name typed by one household is the name every household sees; there is no per-household alias.
+
+## Update (Phase 2.1)
+- **Emails go through the outbox** (ADR 0019): queued in the transaction of the removal, rejection or delegation change, and retried until delivered. This closes the "best effort" limit above.
+- **A rejected join request has its own email** ("your request was not approved", with the reason). The person was never a member, so it is no longer the removal email.
+- **Units needing review:** `units.household_review_flagged_at` is set with the flag. `ResidentsService.unitsNeedingReview` lists flagged units for managers (`residents.read`): reason, flag time, active occupant count, keyset-paged on (flagged_at, id). Setting a primary removes a unit from the list.
+- **Passports:** household members and invitees may hold a passport (ADR 0018). Adulthood and delegate eligibility use the stored birth date.

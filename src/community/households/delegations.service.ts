@@ -1,4 +1,4 @@
-import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
+import { Injectable, type OnModuleInit } from '@nestjs/common';
 import {
   $Enums,
   type DelegationEndReason,
@@ -8,7 +8,6 @@ import {
 } from '@prisma/client';
 import {
   AccountLifecycle,
-  runAfterCommit,
   type AfterCommit,
 } from '../../core/accounts/account-lifecycle';
 import { AuditService } from '../../core/audit/audit.service';
@@ -22,7 +21,7 @@ import {
   TenantTx,
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
-import { Mailer } from '../../core/mail/mailer';
+import { Outbox } from '../../core/mail/outbox';
 import { lockUnits } from '../units/unit-lock';
 import {
   HouseholdAuthority,
@@ -30,9 +29,10 @@ import {
   notPrimary,
 } from './household-authority';
 import {
-  renderDelegationEmail,
-  type DelegationEvent,
-} from './household-emails';
+  HOUSEHOLD_EMAILS,
+  type StoredDelegationEmail,
+} from './household-email-templates';
+import type { DelegationEvent } from './household-emails';
 
 /**
  * Everything a primary resident may delegate. Money, contracts, governance
@@ -66,19 +66,18 @@ type AutomaticEnd = Exclude<DelegationEndReason, 'revoked'>;
  *   delegation. Expiry is checked when the delegation is used.
  * - It ends by itself when the delegate's membership is removed, the primary
  *   changes, or either account is deactivated (AccountLifecycle).
- * - Both sides are emailed on create, revoke and every automatic end.
+ * - Both sides are emailed on create, revoke and every automatic end,
+ *   through the outbox, in the same transaction.
  */
 @Injectable()
 export class DelegationsService implements OnModuleInit {
-  private readonly logger = new Logger(DelegationsService.name);
-
   constructor(
     private readonly tenantTx: TenantTx,
     private readonly globalDb: GlobalDbService,
     private readonly ctx: RequestContext,
     private readonly authority: HouseholdAuthority,
     private readonly audit: AuditService,
-    private readonly mailer: Mailer,
+    private readonly outbox: Outbox,
     private readonly lifecycle: AccountLifecycle,
   ) {}
 
@@ -106,7 +105,6 @@ export class DelegationsService implements OnModuleInit {
     const wanted = validateScopes(scopes);
     validateExpiry(expiresAt);
     const tenantId = this.ctx.tenantId;
-    const after: AfterCommit[] = [];
     const created = await this.tenantTx.withTenantTx(async (tx) => {
       await lockUnits(tx, [unitId]);
       await this.authority.assertVisible(tx, unitId);
@@ -130,7 +128,7 @@ export class DelegationsService implements OnModuleInit {
           },
         );
       }
-      if (live) after.push(...(await this.end(tx, live, 'expired')));
+      if (live) await this.end(tx, live, 'expired');
 
       const row = await tx.householdDelegation.create({
         data: {
@@ -157,15 +155,13 @@ export class DelegationsService implements OnModuleInit {
           'household.delegation_created',
         ),
       });
-      after.push(...(await this.emails(tx, row, { kind: 'created' })));
+      await this.notify(tx, row, { kind: 'created' });
       return row;
     });
-    await runAfterCommit(after, this.logger);
     return view(created);
   }
 
   async revoke(delegationId: string): Promise<void> {
-    const after: AfterCommit[] = [];
     await this.tenantTx.withTenantTx(async (tx) => {
       const found = await tx.householdDelegation.findFirst({
         where: { id: delegationId, revokedAt: null },
@@ -193,15 +189,15 @@ export class DelegationsService implements OnModuleInit {
         ),
         metadata: { unitId: found.unitId },
       });
-      after.push(...(await this.emails(tx, found, { kind: 'revoked' })));
+      await this.notify(tx, found, { kind: 'revoked' });
     });
-    await runAfterCommit(after, this.logger);
   }
 
   /**
    * Ends every live delegation matching `where`, inside the caller's
    * transaction (member removed, primary changed, account deactivated).
-   * Returns the emails to send after commit.
+   * The emails are queued in the same transaction; the returned after-commit
+   * list stays empty (the AccountLifecycle contract).
    */
   async endWhere(
     tx: TenantTxClient,
@@ -237,7 +233,8 @@ export class DelegationsService implements OnModuleInit {
       ),
       metadata: { unitId: d.unitId, reason },
     });
-    return this.emails(tx, d, { kind: 'ended', reason });
+    await this.notify(tx, d, { kind: 'ended', reason });
+    return [];
   }
 
   /** The caller must be the primary; a delegate asking is told it cannot delegate. */
@@ -286,11 +283,12 @@ export class DelegationsService implements OnModuleInit {
     }
   }
 
-  private async emails(
+  /** Queues the email to both sides, in the caller's transaction (ADR 0019). */
+  private async notify(
     tx: TenantTxClient,
     d: HouseholdDelegation,
     event: DelegationEvent,
-  ): Promise<AfterCommit[]> {
+  ): Promise<void> {
     const people = await tx.account.findMany({
       where: { id: { in: [d.delegatorAccountId, d.delegateAccountId] } },
       select: { id: true, fullName: true, email: true, preferredLocale: true },
@@ -305,21 +303,24 @@ export class DelegationsService implements OnModuleInit {
       where: { id: d.tenantId },
       select: { name: true },
     });
-    return [delegator, delegate].map(
-      (to) => () =>
-        this.mailer.send(
-          to.email,
-          renderDelegationEmail(to.preferredLocale, {
-            event,
-            compoundName: tenant.name,
-            unitCode: unit.code,
-            delegatorName: delegator.fullName,
-            delegateName: delegate.fullName,
-            scopes: d.scopes,
-            expiresAt: d.expiresAt,
-          }),
-        ),
-    );
+    const params: StoredDelegationEmail = {
+      event,
+      compoundName: tenant.name,
+      unitCode: unit.code,
+      delegatorName: delegator.fullName,
+      delegateName: delegate.fullName,
+      scopes: d.scopes,
+      expiresAt: d.expiresAt.toISOString(),
+    };
+    for (const to of [delegator, delegate]) {
+      await this.outbox.enqueue(tx, {
+        tenantId: d.tenantId,
+        templateKey: HOUSEHOLD_EMAILS.delegation,
+        locale: to.preferredLocale,
+        recipient: to.email,
+        params: { ...params },
+      });
+    }
   }
 }
 

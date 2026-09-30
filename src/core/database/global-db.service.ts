@@ -96,6 +96,54 @@ export class GlobalDbService implements GlobalTables {
   }
 
   /**
+   * Claims up to `limit` outbox messages for delivery (ADR 0019), in one
+   * statement: pending ones that are due, and processing ones whose lease
+   * expired (a sender that died). FOR UPDATE SKIP LOCKED lets several app
+   * instances claim at once without ever taking the same row; the claim
+   * sets a lease and commits before anything is sent.
+   */
+  async claimOutbox(
+    limit: number,
+    leaseMs: number,
+    now: Date,
+  ): Promise<ClaimedOutboxMessage[]> {
+    const leaseUntil = new Date(now.getTime() + leaseMs);
+    const rows = await this.base.client.$queryRaw<
+      {
+        id: string;
+        tenant_id: string | null;
+        template_key: string;
+        locale: 'ar' | 'en';
+        recipient: string;
+        params: Record<string, unknown>;
+        attempts: number;
+        locked_until: Date;
+      }[]
+    >`
+      UPDATE outbox_messages
+         SET status = 'processing', locked_until = ${leaseUntil}
+       WHERE id IN (
+         SELECT id FROM outbox_messages
+          WHERE (status = 'pending' AND next_attempt_at <= ${now})
+             OR (status = 'processing' AND locked_until < ${now})
+          ORDER BY next_attempt_at, id
+          LIMIT ${limit}
+          FOR UPDATE SKIP LOCKED)
+      RETURNING id, tenant_id, template_key, locale, recipient, params,
+                attempts, locked_until`;
+    return rows.map((r) => ({
+      id: r.id,
+      tenantId: r.tenant_id,
+      templateKey: r.template_key,
+      locale: r.locale,
+      recipient: r.recipient,
+      params: r.params,
+      attempts: r.attempts,
+      lockedUntil: r.locked_until,
+    }));
+  }
+
+  /**
    * The same tables through an open withTenantTx transaction, for writes that
    * must commit atomically with tenant rows (e.g. an account and its login
    * identifiers).
@@ -132,4 +180,16 @@ export class GlobalDbService implements GlobalTables {
     >`SELECT NULLIF(current_setting('app.tenant_id', true), '') AS value`;
     return rows[0]?.value ?? null;
   }
+}
+
+export interface ClaimedOutboxMessage {
+  id: string;
+  tenantId: string | null;
+  templateKey: string;
+  locale: 'ar' | 'en';
+  recipient: string;
+  params: Record<string, unknown>;
+  attempts: number;
+  /** The lease this claim holds; later updates only apply while it does. */
+  lockedUntil: Date;
 }

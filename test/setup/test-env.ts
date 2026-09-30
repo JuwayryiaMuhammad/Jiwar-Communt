@@ -28,6 +28,9 @@ export function applyTestEnv(): void {
   process.env.PLATFORM_LOGIN_RATE_LIMIT_PER_IP = '100000';
   process.env.PLATFORM_LOGIN_RATE_LIMIT_PER_EMAIL = '10';
   process.env.PLATFORM_LOGIN_MAX_FAILURES = '5';
+  // Tests drain the outbox explicitly (processDue), so a poller of one suite
+  // never takes another suite's messages (ADR 0019).
+  process.env.OUTBOX_ENABLED = 'false';
   // The locked-table test measures against the default cap.
   process.env.SECURITY_EVENT_TIMEOUT_MS = '500';
   // Platform tests create their own admins; nothing is bootstrapped from .env.

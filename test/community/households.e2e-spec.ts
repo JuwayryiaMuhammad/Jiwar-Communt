@@ -23,6 +23,7 @@ import {
 } from '../setup/http-app';
 import { loginViaOtp, requestAndVerify } from '../setup/login';
 import { countEmails, waitForMessage, waitForOtp } from '../setup/mailpit';
+import { drainOutbox } from '../setup/outbox';
 
 /** Households: invites, minors, acceptance, approval, removal (ADR 0016). */
 describe('Households', () => {
@@ -438,6 +439,7 @@ describe('Households', () => {
         .set('Authorization', `Bearer ${tokens.accessToken}`)
         .expect(401);
 
+      await drainOutbox(h);
       const email = await waitForMessage(joined.input.email, since);
       expect(email.Subject).toBe('You were removed from a household on Jiwar');
       expect(email.Text).toContain('Moved <out> & away');
@@ -509,6 +511,7 @@ describe('Households', () => {
       );
       // Its own template in the member's language (Arabic by default),
       // not the removal email.
+      await drainOutbox(h);
       const email = await waitForMessage(joined.input.email, since);
       expect(email.Subject).toBe(
         'لم تتم الموافقة على طلب انضمامك إلى أسرة على جوار',

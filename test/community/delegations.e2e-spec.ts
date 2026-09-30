@@ -18,6 +18,7 @@ import {
   uniquePhone,
   type HttpHarness,
 } from '../setup/http-app';
+import { drainOutbox } from '../setup/outbox';
 import { waitForMessage } from '../setup/mailpit';
 
 /** Primary resident → adult household member, scoped and time-boxed (ADR 0016). */
@@ -325,6 +326,7 @@ describe('Delegation', () => {
       let since = new Date();
       const d = await delegate(hm, ['household', 'workers']);
       for (const to of [hm.primary.email, hm.member.email]) {
+        await drainOutbox(h);
         const m = await waitForMessage(to, since);
         expect(m.Subject).toMatch(
           /New delegation on Jiwar|تفويض جديد على جوار/,
@@ -334,6 +336,7 @@ describe('Delegation', () => {
       await asPrimary(hm, () => delegations.revoke(d.id));
       expect(await endReason(hm, d.id)).toBe('revoked');
       for (const to of [hm.primary.email, hm.member.email]) {
+        await drainOutbox(h);
         const m = await waitForMessage(to, since);
         expect(m.Subject).toMatch(/revoked|تم إلغاء تفويض/);
       }
@@ -342,11 +345,13 @@ describe('Delegation', () => {
     it('when the delegate leaves the household', async () => {
       const hm = await home();
       const d = await delegate(hm);
+      await drainOutbox(h); // the "created" emails, out of the way
       const since = new Date();
       await asPrimary(hm, () =>
         households.removeMember(hm.member.memberId, 'moved out'),
       );
       expect(await endReason(hm, d.id)).toBe('member_removed');
+      await drainOutbox(h);
       const m = await waitForMessage(hm.primary.email, since);
       expect(m.Subject).toMatch(/ended|انتهى تفويض/);
     });
@@ -370,6 +375,7 @@ describe('Delegation', () => {
     it("when the delegate's account is deactivated (core hook)", async () => {
       const hm = await home();
       const d = await delegate(hm);
+      await drainOutbox(h); // the "created" emails, out of the way
       const since = new Date();
       await x.asManager(hm.c, () =>
         h.moduleRef
@@ -377,6 +383,7 @@ describe('Delegation', () => {
           .updateStatus(hm.member.id, { status: 'inactive' }),
       );
       expect(await endReason(hm, d.id)).toBe('account_deactivated');
+      await drainOutbox(h);
       const m = await waitForMessage(hm.member.email, since);
       expect(m.Subject).toMatch(/ended|انتهى تفويض/);
     });

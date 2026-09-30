@@ -38,15 +38,12 @@ import {
   TenantTx,
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
-import { Mailer } from '../../core/mail/mailer';
+import { Outbox } from '../../core/mail/outbox';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { lockUnits } from '../units/unit-lock';
 import { DelegationsService } from './delegations.service';
 import { HouseholdAuthority, type Authority } from './household-authority';
-import {
-  renderJoinRejectedEmail,
-  renderMemberRemovedEmail,
-} from './household-emails';
+import { HOUSEHOLD_EMAILS } from './household-email-templates';
 import type {
   CreatedInvite,
   HouseholdMemberView,
@@ -67,7 +64,7 @@ export const INVITE_TTL_DAYS = 7;
  * - the household never exceeds the compound's `max_household_members`,
  *   counting active and pending members and pending invites;
  * - removal needs a reason, may deactivate the account, and is never
- *   silent: the member is emailed after commit.
+ *   silent: the email is queued in the outbox in the same transaction.
  */
 @Injectable()
 export class HouseholdsService {
@@ -84,7 +81,7 @@ export class HouseholdsService {
     private readonly hasher: IdentifierHasher,
     private readonly audit: AuditService,
     private readonly securityEvents: SecurityEventsService,
-    private readonly mailer: Mailer,
+    private readonly outbox: Outbox,
     private readonly delegations: DelegationsService,
   ) {}
 
@@ -468,20 +465,24 @@ export class HouseholdsService {
       where: { id: account.tenantId },
       select: { name: true },
     });
+    // Never silent (ADR 0016), and never lost: queued in this transaction.
+    await this.outbox.enqueue(tx, {
+      tenantId: account.tenantId,
+      templateKey:
+        how.kind === 'removed'
+          ? HOUSEHOLD_EMAILS.memberRemoved
+          : HOUSEHOLD_EMAILS.joinRejected,
+      locale: account.preferredLocale,
+      recipient: account.email,
+      params: {
+        compoundName: tenant.name,
+        unitCode: unit.code,
+        reason: how.reason,
+      },
+    });
     const accountId = member.accountId;
     return [
       ...lifecycleTasks,
-      () =>
-        this.mailer.send(
-          account.email,
-          (how.kind === 'removed'
-            ? renderMemberRemovedEmail
-            : renderJoinRejectedEmail)(account.preferredLocale, {
-            compoundName: tenant.name,
-            unitCode: unit.code,
-            reason: how.reason,
-          }),
-        ),
       ...(sessionsRevoked
         ? [
             () =>

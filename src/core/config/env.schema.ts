@@ -61,6 +61,15 @@ export const envSchema = z
     SMTP_PASSWORD: optional(z.string()),
     SMTP_FROM: z.string().min(1),
 
+    // Email outbox (ADR 0019)
+    OUTBOX_ENABLED: z
+      .enum(['true', 'false'])
+      .default('true')
+      .transform((v) => v === 'true'),
+    OUTBOX_POLL_MS: positiveInt.default(5000),
+    OUTBOX_MAX_ATTEMPTS: positiveInt.default(8),
+    OUTBOX_RETENTION_DAYS: positiveInt.default(30),
+
     JWT_ACCESS_SECRET: secret,
     IDENTIFIER_PEPPER: secret,
     OTP_TTL_SECONDS: positiveInt.default(300),

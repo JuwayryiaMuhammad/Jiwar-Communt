@@ -32,14 +32,29 @@ export class Mailer implements OnApplicationShutdown {
     this.from = config.get('SMTP_FROM', { infer: true });
   }
 
-  async send(to: string, email: RenderedEmail): Promise<void> {
+  /**
+   * `messageId` makes a re-sent message recognizable as the same one (the
+   * outbox delivers at least once; ADR 0019).
+   */
+  async send(
+    to: string,
+    email: RenderedEmail,
+    options: { messageId?: string } = {},
+  ): Promise<void> {
     await this.transport.sendMail({
       from: this.from,
       to,
       subject: email.subject,
       text: email.text,
       html: email.html,
+      ...(options.messageId ? { messageId: options.messageId } : {}),
     });
+  }
+
+  /** `<local@domain>` in the domain of SMTP_FROM. */
+  messageIdFor(local: string): string {
+    const domain = /@([^>\s]+)/.exec(this.from)?.[1] ?? 'jiwar.local';
+    return `<${local}@${domain}>`;
   }
 
   onApplicationShutdown(): void {

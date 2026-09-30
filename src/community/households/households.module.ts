@@ -3,6 +3,7 @@ import { AccountsModule } from '../../core/accounts/accounts.module';
 import { AuthModule } from '../../core/auth/auth.module';
 import { DelegationsService } from './delegations.service';
 import { HouseholdAuthority } from './household-authority';
+import { HouseholdEmailTemplates } from './household-email-templates';
 import { HouseholdsService } from './households.service';
 import { InviteAcceptanceService } from './invite-acceptance.service';
 
@@ -14,6 +15,7 @@ import { InviteAcceptanceService } from './invite-acceptance.service';
     HouseholdsService,
     DelegationsService,
     InviteAcceptanceService,
+    HouseholdEmailTemplates,
   ],
   exports: [
     HouseholdAuthority,

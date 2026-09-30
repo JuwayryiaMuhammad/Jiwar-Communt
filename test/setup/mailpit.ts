@@ -56,6 +56,7 @@ export async function countEmails(
 }
 
 export interface MailpitMessage {
+  MessageID: string;
   Subject: string;
   Text: string;
   HTML: string;

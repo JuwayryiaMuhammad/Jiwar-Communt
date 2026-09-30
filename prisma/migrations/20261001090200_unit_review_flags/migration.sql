@@ -29,7 +29,7 @@ CREATE TABLE "unit_review_flags" (
 );
 CREATE UNIQUE INDEX "unit_review_flags_one_open_per_reason"
   ON "unit_review_flags"("unit_id", "reason") WHERE "cleared_at" IS NULL;
-CREATE INDEX "unit_review_flags_tenant_id_flagged_at_idx"
+CREATE INDEX "unit_review_flags_tenant_id_flagged_at_id_idx"
   ON "unit_review_flags"("tenant_id", "flagged_at" DESC, "id" DESC);
 ALTER TABLE "unit_review_flags"
   ADD CONSTRAINT "unit_review_flags_tenant_id_unit_id_fkey"

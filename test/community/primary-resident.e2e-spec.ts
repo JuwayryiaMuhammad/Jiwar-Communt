@@ -188,4 +188,77 @@ describe('Primary resident', () => {
       x.asManager(other, () => x.residents.setPrimary(u.id, outsider.id)),
     ).rejects.toMatchObject({ response: { code: 'UNIT_NOT_FOUND' } });
   });
+
+  describe('units needing review', () => {
+    async function flagged(c: Awaited<ReturnType<typeof x.compound>>) {
+      const u = await x.unit(c);
+      const primary = await x.resident(c, [u.id]);
+      await x.resident(c, [u.id], 'tenant');
+      const occupancy = (await x.occupancies(c, u.id)).find(
+        (o) => o.accountId === primary.id,
+      )!;
+      await x.asManager(c, () => x.residents.endOccupancy(occupancy.id));
+      return u;
+    }
+
+    it('lists a flagged unit with its reason and occupants; setting a primary removes it', async () => {
+      const c = await x.compound();
+      const u = await flagged(c);
+      await x.unit(c); // an unflagged unit stays out
+      const page = await x.asManager(c, () => x.residents.unitsNeedingReview());
+      expect(page.items).toEqual([
+        {
+          unitId: u.id,
+          code: u.code,
+          reason: 'primary_left',
+          flaggedAt: expect.any(Date) as unknown,
+          activeOccupants: 1,
+        },
+      ]);
+      expect(page.nextCursor).toBeNull();
+
+      const remaining = (await x.occupancies(c, u.id)).find(
+        (o) => o.status === 'active',
+      )!;
+      await x.asManager(c, () =>
+        x.residents.setPrimary(u.id, remaining.accountId),
+      );
+      expect(
+        (await x.asManager(c, () => x.residents.unitsNeedingReview())).items,
+      ).toEqual([]);
+    });
+
+    it('pages newest first without gaps or duplicates; a bad cursor is a field error', async () => {
+      const c = await x.compound();
+      const units = [];
+      for (let i = 0; i < 3; i++) units.push(await flagged(c));
+      const first = await x.asManager(c, () =>
+        x.residents.unitsNeedingReview({ limit: 2 }),
+      );
+      expect(first.items).toHaveLength(2);
+      const second = await x.asManager(c, () =>
+        x.residents.unitsNeedingReview({ limit: 2, cursor: first.nextCursor! }),
+      );
+      expect(second.nextCursor).toBeNull();
+      const seen = [...first.items, ...second.items].map((i) => i.unitId);
+      expect(seen).toEqual(units.map((u) => u.id).reverse());
+
+      await expect(
+        x.asManager(c, () =>
+          x.residents.unitsNeedingReview({ cursor: 'not-a-cursor' }),
+        ),
+      ).rejects.toMatchObject({
+        response: { fields: [{ field: 'cursor', code: 'INVALID_FORMAT' }] },
+      });
+    });
+
+    it("tenant B never sees tenant A's units", async () => {
+      const a = await x.compound();
+      const b = await x.compound();
+      await flagged(a);
+      expect(
+        (await x.asManager(b, () => x.residents.unitsNeedingReview())).items,
+      ).toEqual([]);
+    });
+  });
 });

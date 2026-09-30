@@ -65,3 +65,14 @@ export interface MyUnit {
   occupancyType: OccupancyType;
   startedAt: Date;
 }
+
+/** A unit whose household needs the manager's attention (ADR 0016). */
+export interface UnitNeedingReview {
+  unitId: string;
+  code: string;
+  /** Why it was flagged, e.g. `primary_left`. */
+  reason: string;
+  flaggedAt: Date;
+  /** Occupants still there (one of them may become the primary). */
+  activeOccupants: number;
+}

@@ -10,6 +10,7 @@ import { AuditService } from '../../core/audit/audit.service';
 import { diffChanges } from '../../core/audit/diff';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
+import { clampLimit, keysetCursor, type Page } from '../../core/common/cursor';
 import { newId } from '../../core/common/uuid';
 import { PrismaService } from '../../core/database/prisma.service';
 import {
@@ -25,7 +26,12 @@ import type {
   OccupancyInput,
   OccupancyView,
   ResidentView,
+  UnitNeedingReview,
 } from './residents.types';
+
+/** Keyset on (household_review_flagged_at, id), newest flag first. */
+const REVIEW_ORDER = keysetCursor('householdReviewFlaggedAt');
+const REVIEW_PAGE = keysetCursor('flaggedAt');
 
 const WITH_OCCUPANCIES = {
   occupancies: {
@@ -386,6 +392,54 @@ export class ResidentsService {
       }
       return units;
     });
+  }
+
+  /**
+   * Units flagged for a household review (the primary left), newest flag
+   * first, for managers (`residents.read`). Setting a new primary removes a
+   * unit from the list.
+   */
+  async unitsNeedingReview(
+    q: { cursor?: string; limit?: number } = {},
+  ): Promise<Page<UnitNeedingReview>> {
+    const limit = clampLimit(q.limit);
+    const rows = await this.prisma.tenant.unit.findMany({
+      where: {
+        AND: [
+          { needsHouseholdReview: true },
+          ...(REVIEW_ORDER.after(q.cursor) as Prisma.UnitWhereInput[]),
+        ],
+      },
+      orderBy: REVIEW_ORDER.orderBy,
+      take: limit + 1,
+      select: {
+        id: true,
+        code: true,
+        householdReviewReason: true,
+        householdReviewFlaggedAt: true,
+        _count: { select: { occupancies: { where: { status: 'active' } } } },
+      },
+    });
+    const views = rows.map((u) => ({
+      id: u.id,
+      unitId: u.id,
+      code: u.code,
+      reason: u.householdReviewReason!,
+      // Set with the flag (CHECK units_household_review_has_time).
+      flaggedAt: u.householdReviewFlaggedAt!,
+      activeOccupants: u._count.occupancies,
+    }));
+    const page = REVIEW_PAGE.toPage(views, limit);
+    return {
+      nextCursor: page.nextCursor,
+      items: page.items.map((v) => ({
+        unitId: v.unitId,
+        code: v.code,
+        reason: v.reason,
+        flaggedAt: v.flaggedAt,
+        activeOccupants: v.activeOccupants,
+      })),
+    };
   }
 
   /** No active occupant: the next one becomes primary. Call under lockUnits. */

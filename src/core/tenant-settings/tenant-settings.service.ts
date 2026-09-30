@@ -10,6 +10,8 @@ import { TenantTx, type TenantTxClient } from '../database/tenant-tx.service';
 export interface TenantSettingsView {
   familyJoinRequiresApproval: boolean;
   maxHouseholdMembers: number;
+  /** IANA time zone; worker schedules are read in it (ADR 0017). */
+  timezone: string;
 }
 
 export type TenantSettingsUpdate = Partial<TenantSettingsView>;
@@ -69,6 +71,15 @@ export class TenantSettingsService {
         },
       );
     }
+    if (input.timezone !== undefined && !isTimeZone(input.timezone)) {
+      throw appError.badRequest(
+        ErrorCode.VALIDATION_FAILED,
+        'Unknown time zone',
+        {
+          fields: [{ field: 'timezone', code: FieldErrorCode.INVALID_VALUE }],
+        },
+      );
+    }
     const tenantId = this.ctx.tenantId;
     return this.tenantTx.withTenantTx(async (tx) => {
       const before = await this.inTx(tx, tenantId);
@@ -77,6 +88,7 @@ export class TenantSettingsService {
         data: {
           familyJoinRequiresApproval: input.familyJoinRequiresApproval,
           maxHouseholdMembers: input.maxHouseholdMembers,
+          timezone: input.timezone,
         },
       });
       const changes = diffChanges(
@@ -100,5 +112,11 @@ function view(row: TenantSettings): TenantSettingsView {
   return {
     familyJoinRequiresApproval: row.familyJoinRequiresApproval,
     maxHouseholdMembers: row.maxHouseholdMembers,
+    timezone: row.timezone,
   };
+}
+
+/** An IANA zone the runtime knows (plus UTC, which some lists omit). */
+export function isTimeZone(value: string): boolean {
+  return value === 'UTC' || Intl.supportedValuesOf('timeZone').includes(value);
 }

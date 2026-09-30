@@ -194,6 +194,31 @@ describe('Domestic workers', () => {
       expect(fine.warnings).toEqual([]);
     });
 
+    it('an overnight window clashes with the next morning in another unit', async () => {
+      const c = await x.compound('Workers Court');
+      const a = await home(c);
+      const b = await home(c);
+      const idDocumentNumber = nationalIdFor(bornYearsAgo(31));
+      await active(
+        a,
+        nanny({
+          idDocumentNumber,
+          capacity: 'driver',
+          schedule: { days: [4], windows: [{ from: '22:00', to: '06:00' }] },
+        }),
+      );
+      const clash = await asResident(b, () =>
+        workers.register(
+          b.unitId,
+          nanny({
+            idDocumentNumber,
+            schedule: { days: [5], windows: [{ from: '05:00', to: '07:00' }] },
+          }),
+        ),
+      );
+      expect(clash.warnings).toEqual([{ code: 'WORKER_SCHEDULE_CONFLICT' }]);
+    });
+
     it('a plain family member cannot register; a workers delegate can, on behalf of the primary', async () => {
       const hm = await home();
       const member = await x.joinFamily(hm.c, hm.unitId, hm.resident);

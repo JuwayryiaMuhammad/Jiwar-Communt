@@ -23,6 +23,19 @@ describe('Tenant settings', () => {
     expect(await x.asManager(c, () => settings.get())).toEqual({
       familyJoinRequiresApproval: false,
       maxHouseholdMembers: 10,
+      timezone: 'Africa/Cairo',
+    });
+  });
+
+  it('the time zone must be a real IANA zone', async () => {
+    const c = await x.compound();
+    expect(
+      await x.asManager(c, () => settings.update({ timezone: 'Asia/Dubai' })),
+    ).toMatchObject({ timezone: 'Asia/Dubai' });
+    await expect(
+      x.asManager(c, () => settings.update({ timezone: 'Mars/Olympus' })),
+    ).rejects.toMatchObject({
+      response: { fields: [{ field: 'timezone', code: 'INVALID_VALUE' }] },
     });
   });
 
@@ -38,10 +51,12 @@ describe('Tenant settings', () => {
     expect(updated).toEqual({
       familyJoinRequiresApproval: true,
       maxHouseholdMembers: 4,
+      timezone: 'Africa/Cairo',
     });
     expect(await x.asManager(other, () => settings.get())).toEqual({
       familyJoinRequiresApproval: false,
       maxHouseholdMembers: 10,
+      timezone: 'Africa/Cairo',
     });
 
     const [entry] = await auditReaders(h).tenant(c.tenantId, {

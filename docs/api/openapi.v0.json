@@ -668,6 +668,32 @@
         ],
         "type": "object"
       },
+      "CreateDelegationDto": {
+        "properties": {
+          "delegateAccountId": {
+            "description": "An adult member's account.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "expiresAt": {
+            "description": "In the future, at most a year away.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "$ref": "#/components/schemas/DelegationScope"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "delegateAccountId",
+          "scopes",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
       "CreateResidentDto": {
         "properties": {
           "birthDate": {
@@ -767,6 +793,40 @@
         },
         "required": [
           "code"
+        ],
+        "type": "object"
+      },
+      "CreatedDelegationView": {
+        "properties": {
+          "delegateAccountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "$ref": "#/components/schemas/DelegationScope"
+            },
+            "type": "array"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "delegateAccountId",
+          "scopes",
+          "expiresAt"
         ],
         "type": "object"
       },
@@ -3477,6 +3537,63 @@
         ],
         "type": "object"
       },
+      "UnitDelegationView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "delegate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "By name only."
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "$ref": "#/components/schemas/DelegationScope"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "delegate",
+          "scopes",
+          "expiresAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "UnitDelegationViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/UnitDelegationView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "UnitDetailDto": {
         "properties": {
           "step": {
@@ -4503,6 +4620,35 @@
         ],
         "tags": [
           "member-permissions"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/delegations/{id}/revoke": {
+      "post": {
+        "operationId": "DelegationsController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "delegations"
         ],
         "x-stability": "draft"
       }
@@ -7755,6 +7901,86 @@
         ],
         "tags": [
           "member-permissions"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/delegations": {
+      "get": {
+        "operationId": "DelegationsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitDelegationViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "delegations"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "DelegationsController_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDelegationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedDelegationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "delegations"
         ],
         "x-stability": "draft"
       }

@@ -1,6 +1,7 @@
 import type { Row } from '../registry';
 import { ACCOUNTS_ROUTES } from './accounts';
 import { ADMIN_ROUTES } from './admin';
+import { DELEGATIONS_ROUTES } from './delegations';
 import { ERASURE_ROUTES } from './erasure';
 import { EXISTING_ROUTES } from './existing';
 import { HOUSEHOLD_ROUTES } from './household';
@@ -25,6 +26,7 @@ export const ROUTES: Row[] = [
   ...ADMIN_ROUTES,
   ...HOUSEHOLD_ROUTES,
   ...MEMBER_PERMISSIONS_ROUTES,
+  ...DELEGATIONS_ROUTES,
   ...PLATFORM_ROUTES,
   ...PUBLIC_ROUTES,
   ...ME_ROUTES,

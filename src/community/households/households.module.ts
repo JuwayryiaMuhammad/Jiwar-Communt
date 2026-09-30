@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AccountsModule } from '../../core/accounts/accounts.module';
 import { AuthModule } from '../../core/auth/auth.module';
+import { DelegationsController } from './delegations.controller';
 import { DelegationsService } from './delegations.service';
 import { HouseholdAuthority } from './household-authority';
 import { HouseholdEmailTemplates } from './household-email-templates';
@@ -20,6 +21,7 @@ import { MajorityNotices } from './majority-notices';
     InviteAcceptanceController,
     HouseholdController,
     MemberPermissionsController,
+    DelegationsController,
   ],
   imports: [AccountsModule, AuthModule, NoticesModule],
   providers: [

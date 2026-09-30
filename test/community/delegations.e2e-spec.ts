@@ -362,6 +362,44 @@ describe('Delegation', () => {
     });
   });
 
+  describe("a unit's delegations", () => {
+    it('the primary lists the live ones; not the delegate, not another compound', async () => {
+      const hm = await home();
+      const d = await delegate(hm, ['household', 'workers']);
+      const listed = await asPrimary(hm, () =>
+        delegations.listForUnit(hm.unitId),
+      );
+      expect(listed).toEqual([
+        {
+          id: d.id,
+          delegate: {
+            id: hm.member.id,
+            fullName: expect.any(String) as string,
+            status: 'active',
+          },
+          scopes: ['household', 'workers'],
+          expiresAt: d.expiresAt,
+          createdAt: expect.any(Date) as Date,
+        },
+      ]);
+      expect(
+        await code(
+          asFamily(hm, hm.member.id, () => delegations.listForUnit(hm.unitId)),
+        ),
+      ).toBe('DELEGATION_NOT_ALLOWED'); // a delegate never manages delegations
+      const other = await x.compound();
+      expect(
+        await code(
+          x.asManager(other, () => delegations.listForUnit(hm.unitId)),
+        ),
+      ).toBe('UNIT_NOT_FOUND');
+      await asPrimary(hm, () => delegations.revoke(d.id));
+      expect(
+        await asPrimary(hm, () => delegations.listForUnit(hm.unitId)),
+      ).toEqual([]);
+    });
+  });
+
   // --------------------------------------------------------------------------
   describe('ends — never silently', () => {
     async function endReason(hm: Home, id: string) {

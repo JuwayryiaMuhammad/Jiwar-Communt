@@ -67,6 +67,15 @@ export interface MyDelegation {
   expiresAt: Date;
 }
 
+/** A live delegation of a unit, for its primary. */
+export interface UnitDelegation {
+  id: string;
+  delegate: { id: string; fullName: string | null; status: AccountStatus };
+  scopes: DelegationScope[];
+  expiresAt: Date;
+  createdAt: Date;
+}
+
 type AutomaticEnd = Exclude<DelegationEndReason, 'revoked'>;
 
 /**
@@ -214,6 +223,28 @@ export class DelegationsService implements OnModuleInit {
         scopes: d.scopes,
         expiresAt: d.expiresAt,
       };
+    });
+  }
+
+  /** The unit's live, unexpired delegations, for its primary only. */
+  async listForUnit(unitId: string): Promise<UnitDelegation[]> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.authority.assertVisible(tx, unitId);
+      await this.requirePrimary(tx, unitId);
+      const rows = await tx.householdDelegation.findMany({
+        where: { unitId, revokedAt: null, expiresAt: { gt: new Date() } },
+        include: {
+          delegate: { select: { id: true, fullName: true, status: true } },
+        },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      });
+      return rows.map((d) => ({
+        id: d.id,
+        delegate: d.delegate,
+        scopes: d.scopes,
+        expiresAt: d.expiresAt,
+        createdAt: d.createdAt,
+      }));
     });
   }
 

@@ -3,6 +3,7 @@ import { newId } from '../../src/core/common/uuid';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { hashPassword } from '../../src/core/platform/password';
 import { PlatformSessionService } from '../../src/core/platform/platform-session.service';
+import { DelegationsService } from '../../src/community/households/delegations.service';
 import { HouseholdsService } from '../../src/community/households/households.service';
 import { MemberPermissionsService } from '../../src/community/households/member-permissions.service';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
@@ -63,6 +64,8 @@ export interface World {
   bInviteId: string;
   /** A deferred action by B's family member, waiting for B's primary. */
   bDeferredActionId: string;
+  /** B's owner delegates the workers to B's family member. */
+  bDelegationId: string;
   /** A fresh token (and session) for any account. */
   tokenFor(
     side: Compound,
@@ -230,7 +233,21 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
         }),
       ),
   );
+  const bDelegation = await helpers.as(
+    b,
+    { id: b.ids.owner, type: 'resident' },
+    () =>
+      h.moduleRef
+        .get(DelegationsService)
+        .create(
+          b.homeUnitId,
+          b.ids.family,
+          ['workers'],
+          new Date(Date.now() + 30 * 86_400_000),
+        ),
+  );
   return {
+    bDelegationId: bDelegation.id,
     bDeferredActionId,
     bInviteId: bInvite.inviteId,
     bRoleId: bRoles.find((r) => r.key === 'resident')!.id,

@@ -9,6 +9,7 @@ import { CapabilitiesModule } from '../capabilities/capabilities.module';
 import { MeUnitsController } from './me-units.controller';
 import { OccupanciesController } from './occupancies.controller';
 import { UnitActionsController } from './unit-actions.controller';
+import { UnitStatesController } from './unit-states.controller';
 import { RegistrationPublicController } from './registration-public.controller';
 import { RegistrationService } from './registration.service';
 import { AuthModule } from '../../core/auth/auth.module';
@@ -21,6 +22,7 @@ import { ResidentsService } from './residents.service';
     MeUnitsController,
     UnitActionsController,
     OccupanciesController,
+    UnitStatesController,
   ],
   imports: [
     AccountsModule,

@@ -204,6 +204,18 @@
         ],
         "type": "object"
       },
+      "ClearReviewFlagDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `reviewClear`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "ClosedModeDto": {
         "properties": {
           "closed": {
@@ -487,12 +499,35 @@
         ],
         "type": "object"
       },
+      "FlagCreatedView": {
+        "properties": {
+          "flagId": {
+            "description": "The open flag (an existing one when already open).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "flagId"
+        ],
+        "type": "object"
+      },
       "HouseholdMemberStatus": {
         "description": "`pending_approval` when the compound approves new members first.",
         "enum": [
           "pending_approval",
           "active",
           "removed"
+        ],
+        "type": "string"
+      },
+      "HouseholdRelation": {
+        "enum": [
+          "spouse",
+          "child",
+          "parent",
+          "sibling",
+          "other"
         ],
         "type": "string"
       },
@@ -749,6 +784,72 @@
           "capPerOperation",
           "grantedAt"
         ],
+        "type": "object"
+      },
+      "MemberToReviewView": {
+        "properties": {
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "isMinor": {
+            "type": "boolean"
+          },
+          "memberId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "relation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HouseholdRelation"
+              }
+            ]
+          }
+        },
+        "required": [
+          "memberId",
+          "fullName",
+          "relation",
+          "isMinor"
+        ],
+        "type": "object"
+      },
+      "MemberToReviewViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MemberToReviewView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "MembersReviewedDto": {
+        "properties": {
+          "all": {
+            "enum": [
+              true
+            ],
+            "type": "boolean"
+          },
+          "memberIds": {
+            "description": "Member ids; or send `all: true` instead.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
         "type": "object"
       },
       "MyDelegationView": {
@@ -1454,6 +1555,17 @@
         ],
         "type": "object"
       },
+      "ReviewedView": {
+        "properties": {
+          "reviewed": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "reviewed"
+        ],
+        "type": "object"
+      },
       "RevokedView": {
         "properties": {
           "revoked": {
@@ -1773,6 +1885,33 @@
           "refreshTokenExpiresAt",
           "accountId",
           "accountType"
+        ],
+        "type": "object"
+      },
+      "TransferOwnershipDto": {
+        "properties": {
+          "reason": {
+            "description": "What the person is told (at most 1000 characters). Never stored in the audit trail.",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE.",
+            "type": "string"
+          },
+          "resides": {
+            "description": "Default true: the new owner lives there.",
+            "type": "boolean"
+          },
+          "toAccountId": {
+            "description": "An active resident account: the new owner.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode",
+          "reason",
+          "toAccountId"
         ],
         "type": "object"
       },
@@ -3697,6 +3836,45 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/review-flags/{id}/clear": {
+      "post": {
+        "operationId": "UnitStatesController_clear",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClearReviewFlagDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "unit-states"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/units": {
       "get": {
         "operationId": "UnitsController_list",
@@ -3939,6 +4117,52 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/units/{id}/deceased": {
+      "post": {
+        "operationId": "UnitStatesController_deceased",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlagCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "unit-states"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/units/{id}/details": {
       "post": {
         "operationId": "UnitActionsController_details",
@@ -3974,6 +4198,127 @@
         ],
         "tags": [
           "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{id}/end-household": {
+      "post": {
+        "operationId": "UnitStatesController_endHousehold",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "unit-states"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{id}/household/reviewed": {
+      "post": {
+        "operationId": "UnitStatesController_reviewed",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MembersReviewedDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "unit-states"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{id}/household/to-review": {
+      "get": {
+        "operationId": "UnitStatesController_toReview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberToReviewViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "unit-states"
         ],
         "x-stability": "draft"
       }
@@ -4020,6 +4365,98 @@
         ],
         "tags": [
           "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{id}/separation": {
+      "post": {
+        "operationId": "UnitStatesController_separation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlagCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "unit-states"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{id}/transfer-ownership": {
+      "post": {
+        "operationId": "UnitStatesController_transferOwnership",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferOwnershipDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccupancyResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "unit-states"
         ],
         "x-stability": "draft"
       }

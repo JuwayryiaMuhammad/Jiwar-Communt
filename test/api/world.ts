@@ -40,6 +40,8 @@ export interface World {
   /** Another compound: its ids must be "not found" from A. */
   b: Side;
   platform: { adminId: string; token: string; restrictedToken: string };
+  /** An open separation flag on B's rented unit (a foreign flag id). */
+  bFlagId: string;
   /** A fresh token (and session) for any account. */
   tokenFor(
     side: Compound,
@@ -140,7 +142,14 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
   const helpers = communityHelpers(h);
   const a = await side(h, helpers, 'A');
   const b = await side(h, helpers, 'B');
+  const { flagId: bFlagId } = await helpers.asManager(b, () =>
+    helpers.residents.tagSeparation(b.rentedUnitId, {
+      code: 'separation',
+      text: 'World fixture',
+    }),
+  );
   return {
+    bFlagId,
     h,
     helpers,
     a,

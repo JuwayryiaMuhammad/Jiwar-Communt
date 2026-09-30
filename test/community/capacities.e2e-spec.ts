@@ -274,14 +274,15 @@ describe('Capacities', () => {
     const owner = await x.resident(c, [own.id]);
     await x.resident(c, [other.id]);
     const as = <T>(fn: () => Promise<T>) => asResident(c, owner.id, fn);
-    for (const call of [
+    const calls: (() => Promise<unknown>)[] = [
       () => x.residents.missingActivationSteps(other.id),
       () => x.residents.submitUnitDetail(other.id, 'building', 'B1'),
       () => x.residents.setUnitClosed(other.id, true),
       () => x.residents.membersToReview(other.id),
       () => x.residents.markMembersReviewed(other.id, 'all'),
       () => x.residents.unitDetail(other.id),
-    ]) {
+    ];
+    for (const call of calls) {
       expect(await codeOf(as(call))).toBe('UNIT_NOT_FOUND');
     }
   });

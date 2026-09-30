@@ -1,6 +1,143 @@
 {
   "components": {
     "schemas": {
+      "AccountDetailView": {
+        "properties": {
+          "birthDate": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "erased": {
+            "description": "Only on an erased account, which has no other field.",
+            "enum": [
+              true
+            ],
+            "type": "boolean"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "idDocumentNumberMasked": {
+            "example": "••••1234",
+            "nullable": true,
+            "type": "string"
+          },
+          "idDocumentType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdDocumentType"
+              }
+            ],
+            "nullable": true
+          },
+          "nationality": {
+            "nullable": true,
+            "type": "string"
+          },
+          "phone": {
+            "description": "Null while frozen.",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountStatus"
+              }
+            ]
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "AccountListItemView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "erased": {
+            "description": "Only on an erased account, which has no other field.",
+            "enum": [
+              true
+            ],
+            "type": "boolean"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "phone": {
+            "description": "Null while frozen.",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountStatus"
+              }
+            ]
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "AccountListItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AccountListItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "AccountRefView": {
         "properties": {
           "erased": {
@@ -343,6 +480,18 @@
         ],
         "type": "object"
       },
+      "ContactDto": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ConvertToOwnerDto": {
         "properties": {
           "resides": {
@@ -404,6 +553,67 @@
           "idDocumentNumber",
           "phone",
           "email"
+        ],
+        "type": "object"
+      },
+      "CreateResidentDto": {
+        "properties": {
+          "birthDate": {
+            "description": "Required for a passport, ignored for a national ID.",
+            "format": "date",
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "type": "string"
+          },
+          "fullName": {
+            "maxLength": 200,
+            "minLength": 2,
+            "type": "string"
+          },
+          "idDocumentNumber": {
+            "description": "14-digit national ID, or a passport number.",
+            "maxLength": 40,
+            "minLength": 1,
+            "type": "string"
+          },
+          "idDocumentType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdDocumentType"
+              }
+            ]
+          },
+          "nationality": {
+            "description": "ISO 3166-1 alpha-2; required for a passport.",
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "preferredLocale": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Locale"
+              }
+            ]
+          },
+          "units": {
+            "description": "At least one (checked by the service).",
+            "items": {
+              "$ref": "#/components/schemas/OccupancyInputDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "idDocumentType",
+          "idDocumentNumber",
+          "fullName",
+          "phone",
+          "email",
+          "units"
         ],
         "type": "object"
       },
@@ -1093,6 +1303,30 @@
         ],
         "type": "string"
       },
+      "OccupancyInputDto": {
+        "properties": {
+          "occupancyType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OccupancyType"
+              }
+            ]
+          },
+          "resides": {
+            "description": "Owners only: false = a landlord.",
+            "type": "boolean"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "occupancyType"
+        ],
+        "type": "object"
+      },
       "OccupancyResponse": {
         "properties": {
           "endReason": {
@@ -1552,6 +1786,166 @@
         },
         "required": [
           "resides"
+        ],
+        "type": "object"
+      },
+      "ResidentDetailView": {
+        "properties": {
+          "birthDate": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "erased": {
+            "enum": [
+              true
+            ],
+            "type": "boolean"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "idDocumentNumberMasked": {
+            "example": "••••1234",
+            "nullable": true,
+            "type": "string"
+          },
+          "idDocumentType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdDocumentType"
+              }
+            ],
+            "nullable": true
+          },
+          "nationality": {
+            "nullable": true,
+            "type": "string"
+          },
+          "occupancies": {
+            "description": "Active and ended, oldest first.",
+            "items": {
+              "$ref": "#/components/schemas/OccupancyResponse"
+            },
+            "type": "array"
+          },
+          "phone": {
+            "nullable": true,
+            "type": "string"
+          },
+          "preferredLocale": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Locale"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "ResidentListItemView": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "erased": {
+            "enum": [
+              true
+            ],
+            "type": "boolean"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "phone": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountStatus"
+              }
+            ]
+          },
+          "units": {
+            "description": "Active occupancies.",
+            "items": {
+              "$ref": "#/components/schemas/ResidentUnitView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "ResidentListItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ResidentListItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ResidentUnitView": {
+        "properties": {
+          "isPrimary": {
+            "type": "boolean"
+          },
+          "occupancyType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OccupancyType"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "unitCode",
+          "occupancyType",
+          "isPrimary"
         ],
         "type": "object"
       },
@@ -2250,9 +2644,37 @@
     "/api/v1/accounts": {
       "get": {
         "operationId": "AccountsController_list",
-        "parameters": [],
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountListItemViewList"
+                }
+              }
+            },
             "description": ""
           }
         },
@@ -2281,6 +2703,13 @@
         },
         "responses": {
           "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDetailView"
+                }
+              }
+            },
             "description": ""
           }
         },
@@ -2310,6 +2739,141 @@
         ],
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "accounts"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/accounts/{id}/contact": {
+      "patch": {
+        "operationId": "AccountsController_updateContact",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "accounts"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/accounts/{id}/freeze": {
+      "post": {
+        "operationId": "AccountsController_freeze",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "accounts"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/accounts/{id}/reactivate": {
+      "post": {
+        "operationId": "AccountsController_reactivate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDetailView"
+                }
+              }
+            },
             "description": ""
           }
         },
@@ -2349,6 +2913,13 @@
         },
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDetailView"
+                }
+              }
+            },
             "description": ""
           }
         },
@@ -3832,6 +4403,217 @@
         },
         "tags": [
           "public"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/residents": {
+      "get": {
+        "operationId": "ResidentsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentListItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "residents"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ResidentsController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateResidentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "residents"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/residents/{id}": {
+      "get": {
+        "operationId": "ResidentsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "residents"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/residents/{id}/contact": {
+      "patch": {
+        "operationId": "ResidentsController_updateContact",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "residents"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/residents/{id}/occupancies": {
+      "post": {
+        "operationId": "ResidentsController_addOccupancy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OccupancyInputDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccupancyResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "residents"
         ],
         "x-stability": "draft"
       }

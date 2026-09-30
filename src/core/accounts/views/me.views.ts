@@ -8,7 +8,7 @@ import {
 import { maskDocument } from '../../common/http/personal';
 import type { MySession } from '../account-self.service';
 import type { DeletionRequestView } from '../account-deletion.service';
-import type { AccountView } from '../dto/account.view';
+import type { AccountRecord } from '../account-record';
 
 /**
  * The holder's own account. The document is masked and the birth date left
@@ -40,7 +40,7 @@ export class MeView {
   @ApiProperty({ type: String, nullable: true })
   nationality: string | null;
 
-  static from(a: AccountView): MeView {
+  static from(a: AccountRecord): MeView {
     return {
       id: a.id,
       type: a.type,

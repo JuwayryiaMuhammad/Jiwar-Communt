@@ -93,7 +93,7 @@ describe('RLS tenant isolation (HTTP)', () => {
       .get(`${API}/accounts`)
       .set('Authorization', `Bearer ${managerB}`)
       .expect(200);
-    const ids = (res.body as { id: string }[]).map((x) => x.id);
+    const ids = (res.body as { data: { id: string }[] }).data.map((x) => x.id);
     expect(ids).not.toContain(accountA.id);
     expect(ids).toHaveLength(1);
   });

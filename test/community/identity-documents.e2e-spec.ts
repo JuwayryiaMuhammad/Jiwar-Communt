@@ -77,13 +77,20 @@ describe('Identity documents', () => {
           email: uniqueEmail('uk'),
         })
         .expect(201);
+      // The response masks the number (API v0); the stored one is normalised.
       expect(res.body).toMatchObject({
         idDocumentType: 'passport',
-        idDocumentNumber: doc.idDocumentNumber,
+        idDocumentNumberMasked: `••••${doc.idDocumentNumber.slice(-4)}`,
         nationality: 'GB',
         birthDate: doc.birthDate,
         phone: '+447911123456',
       });
+      const stored = await x.asManager(c, () =>
+        x.prisma.tenant.account.findUniqueOrThrow({
+          where: { id: (res.body as { id: string }).id },
+        }),
+      );
+      expect(stored.idDocumentNumber).toBe(doc.idDocumentNumber);
     });
 
     it('a resident created with a +44 phone logs in with that phone, end to end', async () => {

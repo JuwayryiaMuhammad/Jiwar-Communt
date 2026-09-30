@@ -13,6 +13,7 @@ import { UnitStatesController } from './unit-states.controller';
 import { RegistrationPublicController } from './registration-public.controller';
 import { RegistrationService } from './registration.service';
 import { AuthModule } from '../../core/auth/auth.module';
+import { ResidentsController } from './residents.controller';
 import { ResidentsService } from './residents.service';
 
 /** Residents, occupancies, unit states and self-registration (API v0). */
@@ -23,6 +24,7 @@ import { ResidentsService } from './residents.service';
     UnitActionsController,
     OccupanciesController,
     UnitStatesController,
+    ResidentsController,
   ],
   imports: [
     AccountsModule,

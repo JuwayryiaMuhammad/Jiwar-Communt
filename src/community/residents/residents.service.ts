@@ -10,7 +10,7 @@ import {
   type AfterCommit,
 } from '../../core/accounts/account-lifecycle';
 import { AccountWriter } from '../../core/accounts/account-writer';
-import { isoDate } from '../../core/accounts/dto/account.view';
+import { isoDate } from '../../core/accounts/account-record';
 import { AuditService } from '../../core/audit/audit.service';
 import { diffChanges } from '../../core/audit/diff';
 import { RequestContext } from '../../core/common/cls/request-context';
@@ -50,6 +50,7 @@ import type {
 /** Keyset on (household_review_flagged_at, id), newest flag first. */
 const REVIEW_ORDER = keysetCursor('flaggedAt');
 const REVIEW_PAGE = keysetCursor('flaggedAt');
+const RESIDENT_PAGE = keysetCursor('createdAt');
 
 const WITH_OCCUPANCIES = {
   occupancies: {
@@ -153,13 +154,27 @@ export class ResidentsService {
     return this.get(id);
   }
 
-  async list(): Promise<ResidentView[]> {
+  /** Resident accounts, newest first, a page at a time. */
+  async list(
+    q: { cursor?: string; limit?: number } = {},
+  ): Promise<Page<ResidentView>> {
+    const limit = clampLimit(q.limit);
     const rows = await this.prisma.tenant.account.findMany({
-      where: { type: 'resident' },
+      where: {
+        AND: [
+          { type: 'resident' },
+          ...(RESIDENT_PAGE.after(q.cursor) as Prisma.AccountWhereInput[]),
+        ],
+      },
       include: WITH_OCCUPANCIES,
-      orderBy: { createdAt: 'asc' },
+      orderBy: RESIDENT_PAGE.orderBy,
+      take: limit + 1,
     });
-    return rows.map(toResidentView);
+    const page = RESIDENT_PAGE.toPage(rows, limit);
+    return {
+      items: page.items.map(toResidentView),
+      nextCursor: page.nextCursor,
+    };
   }
 
   async get(accountId: string): Promise<ResidentView> {

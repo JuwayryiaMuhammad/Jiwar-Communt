@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { SecurityEventsService } from '../audit/security-events.service';
 import { RequestContext } from '../common/cls/request-context';
+import { clampLimit, keysetCursor, type Page } from '../common/cursor';
 import { appError, ErrorCode } from '../common/errors';
 import {
   REASON_CODES,
@@ -11,9 +13,11 @@ import { PrismaService } from '../database/prisma.service';
 import { TenantTx } from '../database/tenant-tx.service';
 import { runAfterCommit } from './account-lifecycle';
 import { AccountWriter } from './account-writer';
-import { AccountView } from './dto/account.view';
+import { AccountRecord } from './account-record';
 import type { CreateAccountDto } from './dto/create-account.dto';
 import type { UpdateAccountStatusDto } from './dto/update-account-status.dto';
+
+const ACCOUNT_PAGE = keysetCursor('createdAt');
 
 @Injectable()
 export class AccountsService {
@@ -27,38 +31,50 @@ export class AccountsService {
     private readonly securityEvents: SecurityEventsService,
   ) {}
 
-  async list(): Promise<AccountView[]> {
-    const accounts = await this.prisma.tenant.account.findMany({
-      orderBy: { createdAt: 'asc' },
+  /** Every account of the compound, newest first, a page at a time. */
+  async list(
+    q: { cursor?: string; limit?: number } = {},
+  ): Promise<Page<AccountRecord>> {
+    const limit = clampLimit(q.limit);
+    const rows = await this.prisma.tenant.account.findMany({
+      where: {
+        AND: ACCOUNT_PAGE.after(q.cursor) as Prisma.AccountWhereInput[],
+      },
+      orderBy: ACCOUNT_PAGE.orderBy,
+      take: limit + 1,
     });
-    return accounts.map((a) => AccountView.from(a));
+    const page = ACCOUNT_PAGE.toPage(rows, limit);
+    return {
+      items: page.items.map((a) => AccountRecord.from(a)),
+      nextCursor: page.nextCursor,
+    };
   }
 
-  async get(id: string): Promise<AccountView> {
+  async get(id: string): Promise<AccountRecord> {
     const account = await this.prisma.tenant.account.findUnique({
       where: { id },
     });
     if (!account) throw notFound();
-    return AccountView.from(account);
+    return AccountRecord.from(account);
   }
 
-  me(): Promise<AccountView> {
+  me(): Promise<AccountRecord> {
     return this.get(this.ctx.accountId);
   }
 
   /** A manager creating an account; the role follows the type (ADR 0010). */
-  async create(dto: CreateAccountDto): Promise<AccountView> {
+  async create(dto: CreateAccountDto): Promise<AccountRecord> {
     const tenantId = this.ctx.tenantId;
     const account = await this.tenantTx.withTenantTx((tx) =>
       this.writer.create(tx, tenantId, dto),
     );
-    return AccountView.from(account);
+    return AccountRecord.from(account);
   }
 
   async updateStatus(
     id: string,
     dto: UpdateAccountStatusDto,
-  ): Promise<AccountView> {
+  ): Promise<AccountRecord> {
     if (id === this.ctx.accountId) {
       throw appError.conflict(
         ErrorCode.CANNOT_CHANGE_OWN_STATUS,
@@ -81,7 +97,7 @@ export class AccountsService {
         },
       });
     }
-    return AccountView.from(change.account);
+    return AccountRecord.from(change.account);
   }
 
   /**
@@ -90,7 +106,7 @@ export class AccountsService {
    * channel — with OTP by email, the number's new holder never reaches the
    * account to press it.
    */
-  async freeze(id: string, reasonInput: ReasonInput): Promise<AccountView> {
+  async freeze(id: string, reasonInput: ReasonInput): Promise<AccountRecord> {
     const reason = requireReasonCode(reasonInput, REASON_CODES.accountFreeze);
     if (id === this.ctx.accountId) {
       throw appError.conflict(
@@ -111,28 +127,28 @@ export class AccountsService {
         sessionsRevoked: frozen.sessionsRevoked,
       },
     });
-    return AccountView.from(frozen.account);
+    return AccountRecord.from(frozen.account);
   }
 
   /** Recovery step 1 (`accounts.manage`): a new phone (never the released one). */
   async updateContact(
     id: string,
     input: { phone?: string; email?: string },
-  ): Promise<AccountView> {
+  ): Promise<AccountRecord> {
     const updated = await this.tenantTx.withTenantTx((tx) =>
       this.writer.updateContact(tx, id, input),
     );
     if (!updated) throw notFound();
-    return AccountView.from(updated);
+    return AccountRecord.from(updated);
   }
 
   /** Recovery step 2 (`accounts.manage`): back to active. */
-  async reactivate(id: string): Promise<AccountView> {
+  async reactivate(id: string): Promise<AccountRecord> {
     const account = await this.tenantTx.withTenantTx((tx) =>
       this.writer.reactivate(tx, id),
     );
     if (!account) throw notFound();
-    return AccountView.from(account);
+    return AccountRecord.from(account);
   }
 }
 

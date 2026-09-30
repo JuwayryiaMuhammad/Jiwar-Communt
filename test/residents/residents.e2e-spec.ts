@@ -259,7 +259,7 @@ describe('Residents', () => {
     );
     const all = await asManager(c, () => residents.list());
     expect(
-      all.filter((r) => r.occupancies.some((o) => o.unitId === unitId)),
+      all.items.filter((r) => r.occupancies.some((o) => o.unitId === unitId)),
     ).toHaveLength(2);
   });
 
@@ -281,7 +281,7 @@ describe('Residents', () => {
       ),
     ).rejects.toMatchObject({ code: 'UNIT_NOT_FOUND' });
     // Nothing was half-created: the failed resident has no account.
-    expect(await asManager(c, () => residents.list())).toEqual([]);
+    expect((await asManager(c, () => residents.list())).items).toEqual([]);
   });
 
   it('records who created the occupancy', async () => {

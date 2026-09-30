@@ -6,7 +6,11 @@ import type {
   Locale,
 } from '@prisma/client';
 
-export class AccountView {
+/**
+ * An account as the services return it: every field, unmasked. Responses
+ * never carry it as is; they go through the views in `views/` (ADR 0025).
+ */
+export class AccountRecord {
   id: string;
   type: AccountType;
   /** Personal fields are null on an erased account (a deleted user, ADR 0023). */
@@ -23,7 +27,7 @@ export class AccountView {
   preferredLocale: Locale;
   createdAt: Date;
 
-  static from(account: Account): AccountView {
+  static from(account: Account): AccountRecord {
     return {
       id: account.id,
       type: account.type,

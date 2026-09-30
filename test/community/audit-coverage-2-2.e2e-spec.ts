@@ -506,7 +506,7 @@ describe('Audit coverage — Phase 2.2', () => {
       });
       const u = await x.unit(c);
       await registered(reg, request(token, u.code));
-      const [first] = await x.asManager(c, () => reg.pending());
+      const [first] = (await x.asManager(c, () => reg.pending())).items;
       expect(
         await single(c, 'resident.self_registered', first.id),
       ).toMatchObject({
@@ -536,7 +536,7 @@ describe('Audit coverage — Phase 2.2', () => {
       });
 
       await registered(reg, request(token, 'R-2'));
-      const [second] = await x.asManager(c, () => reg.pending());
+      const [second] = (await x.asManager(c, () => reg.pending())).items;
       await x.asManager(c, () =>
         reg.reject(second.id, { code: 'other', text: 'No' }),
       );
@@ -548,7 +548,7 @@ describe('Audit coverage — Phase 2.2', () => {
       });
 
       await registered(reg, request(token, 'R-3'));
-      const [third] = await x.asManager(c, () => reg.pending());
+      const [third] = (await x.asManager(c, () => reg.pending())).items;
       await h.moduleRef
         .get(SweepRunner)
         .run(REGISTRATION_EXPIRY_SWEEP, new Date(Date.now() + 40 * 86_400_000));

@@ -461,6 +461,8 @@ model InviteToken {
 /// before anyone is logged in — like `invite_tokens`. No PII.
 model RegistrationLink {
   tokenHash String    @id @map("token_hash") @db.Char(64)
+  /// Listed and revoked by this id; the token itself is shown once (ADR 0025).
+  id        String    @unique @db.Uuid
   tenantId  String    @map("tenant_id") @db.Uuid
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)

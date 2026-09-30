@@ -3,9 +3,11 @@ import { newId } from '../../src/core/common/uuid';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { hashPassword } from '../../src/core/platform/password';
 import { PlatformSessionService } from '../../src/core/platform/platform-session.service';
+import { RegistrationService } from '../../src/community/residents/registration.service';
 import { communityHelpers, type Compound } from '../setup/community';
-import { uniqueSuffix } from '../setup/fixtures';
-import type { HttpHarness } from '../setup/http-app';
+import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
+import { uniqueEmail, uniquePhone, type HttpHarness } from '../setup/http-app';
+import { waitForOtp } from '../setup/mailpit';
 
 /** The tenant accounts every API suite acts as. */
 export type Persona = 'manager' | 'owner' | 'tenant' | 'landlord' | 'family';
@@ -42,6 +44,9 @@ export interface World {
   platform: { adminId: string; token: string; restrictedToken: string };
   /** An open separation flag on B's rented unit (a foreign flag id). */
   bFlagId: string;
+  /** B's registration link and a pending registration request. */
+  bLinkId: string;
+  bRegistrationId: string;
   /** A fresh token (and session) for any account. */
   tokenFor(
     side: Compound,
@@ -148,8 +153,31 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       text: 'World fixture',
     }),
   );
+  const registrations = h.moduleRef.get(RegistrationService);
+  const link = await helpers.asManager(b, () => registrations.createLink());
+  const request = {
+    linkToken: link.token,
+    fullName: 'World Registrant',
+    unitCode: 'NO-SUCH',
+    phone: uniquePhone(),
+    email: uniqueEmail('world-reg'),
+    idDocumentType: 'national_id' as const,
+    idDocumentNumber: nationalIdFor(),
+    occupancyType: 'owner' as const,
+  };
+  const since = new Date();
+  await registrations.start(request, '10.99.0.1', 'en');
+  await registrations.complete(
+    request,
+    await waitForOtp(request.email, since),
+    '10.99.0.1',
+  );
+  const [pending] = (await helpers.asManager(b, () => registrations.pending()))
+    .items;
   return {
     bFlagId,
+    bLinkId: link.id,
+    bRegistrationId: pending.id,
     h,
     helpers,
     a,

@@ -21,6 +21,7 @@ import {
 import { OtpService } from '../../core/auth/otp.service';
 import type { AppClsStore } from '../../core/common/cls/app-cls';
 import { RequestContext } from '../../core/common/cls/request-context';
+import { clampLimit, keysetCursor, type Page } from '../../core/common/cursor';
 import {
   appError,
   ErrorCode,
@@ -53,6 +54,23 @@ import { lockUnits } from '../units/unit-lock';
 import { ResidentsService } from './residents.service';
 
 export const REGISTRATION_EXPIRY_SWEEP = 'residents.registration_expiry';
+
+const LINK_PAGE = keysetCursor('createdAt');
+/** The review queue: oldest first. */
+const PENDING_PAGE = keysetCursor('createdAt', 'asc');
+
+export interface CreatedRegistrationLink {
+  id: string;
+  /** Shown once; only its HMAC is stored. */
+  token: string;
+  createdAt: Date;
+}
+
+export interface RegistrationLinkView {
+  id: string;
+  createdAt: Date;
+  revokedAt: Date | null;
+}
 
 /** What a registrant sends, at start and again (with the code) at completion. */
 export interface RegistrationRequest extends IdentityDocumentInput {
@@ -169,19 +187,71 @@ export class RegistrationService implements OnModuleInit {
   // --------------------------------------------------------------------------
 
   /** A new link, returned once; older live links keep working until revoked. */
-  async createLink(): Promise<{ token: string }> {
+  async createLink(): Promise<CreatedRegistrationLink> {
     const token = randomBytes(32).toString('base64url');
     const tenantId = this.ctx.tenantId;
-    await this.tenantTx.withTenantTx(async (tx) => {
-      await this.globalDb.in(tx).registrationLink.create({
-        data: { tokenHash: this.hasher.hashRegistrationLink(token), tenantId },
+    const id = newId();
+    const created = await this.tenantTx.withTenantTx(async (tx) => {
+      const row = await this.globalDb.in(tx).registrationLink.create({
+        data: {
+          id,
+          tokenHash: this.hasher.hashRegistrationLink(token),
+          tenantId,
+        },
       });
       await this.audit.record(tx, {
         action: 'registration_link.created',
         targetId: tenantId,
+        metadata: { linkId: id },
+      });
+      return row;
+    });
+    return { id, token, createdAt: created.createdAt };
+  }
+
+  /**
+   * The compound's links, newest first, live and revoked. The table is
+   * global (the link is read before anyone is logged in), so the compound
+   * is filtered explicitly.
+   */
+  async listLinks(
+    q: { cursor?: string; limit?: number } = {},
+  ): Promise<Page<RegistrationLinkView>> {
+    const limit = clampLimit(q.limit);
+    const rows = await this.globalDb.registrationLink.findMany({
+      where: {
+        AND: [
+          { tenantId: this.ctx.tenantId },
+          ...(LINK_PAGE.after(q.cursor) as Prisma.RegistrationLinkWhereInput[]),
+        ],
+      },
+      select: { id: true, createdAt: true, revokedAt: true },
+      orderBy: LINK_PAGE.orderBy,
+      take: limit + 1,
+    });
+    return LINK_PAGE.toPage(rows, limit);
+  }
+
+  /** One live link stops at once; the others keep working. */
+  async revokeLink(id: string): Promise<void> {
+    const tenantId = this.ctx.tenantId;
+    await this.tenantTx.withTenantTx(async (tx) => {
+      const { count } = await this.globalDb.in(tx).registrationLink.updateMany({
+        where: { id, tenantId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      if (count === 0) {
+        throw appError.notFound(
+          ErrorCode.REGISTRATION_LINK_NOT_FOUND,
+          'Registration link not found',
+        );
+      }
+      await this.audit.record(tx, {
+        action: 'registration_link.revoked',
+        targetId: tenantId,
+        metadata: { count, linkId: id },
       });
     });
-    return { token };
   }
 
   /** Every live link stops at once: registration is off. */
@@ -275,16 +345,27 @@ export class RegistrationService implements OnModuleInit {
   // The manager (`residents.manage`)
   // --------------------------------------------------------------------------
 
-  /** Pending requests, oldest first, each with its conflicts as of now. */
-  async pending(): Promise<PendingRegistration[]> {
+  /** Pending requests, oldest first, a page at a time, each with its conflicts as of now. */
+  async pending(
+    q: { cursor?: string; limit?: number } = {},
+  ): Promise<Page<PendingRegistration>> {
+    const limit = clampLimit(q.limit);
     return this.tenantTx.withTenantTx(async (tx) => {
       const rows = await tx.residentRegistration.findMany({
-        where: { status: 'pending' },
-        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-        take: 100,
+        where: {
+          AND: [
+            { status: 'pending' },
+            ...(PENDING_PAGE.after(
+              q.cursor,
+            ) as Prisma.ResidentRegistrationWhereInput[]),
+          ],
+        },
+        orderBy: PENDING_PAGE.orderBy,
+        take: limit + 1,
       });
+      const page = PENDING_PAGE.toPage(rows, limit);
       const out: PendingRegistration[] = [];
-      for (const r of rows) {
+      for (const r of page.items) {
         const { unitId, conflicts } = await this.conflicts(tx, r);
         out.push({
           id: r.id,
@@ -299,7 +380,7 @@ export class RegistrationService implements OnModuleInit {
           conflicts,
         });
       }
-      return out;
+      return { items: out, nextCursor: page.nextCursor };
     });
   }
 

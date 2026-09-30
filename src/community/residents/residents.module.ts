@@ -12,6 +12,7 @@ import { UnitActionsController } from './unit-actions.controller';
 import { UnitStatesController } from './unit-states.controller';
 import { RegistrationPublicController } from './registration-public.controller';
 import { RegistrationService } from './registration.service';
+import { RegistrationsController } from './registrations.controller';
 import { AuthModule } from '../../core/auth/auth.module';
 import { ResidentsController } from './residents.controller';
 import { ResidentsService } from './residents.service';
@@ -25,6 +26,7 @@ import { ResidentsService } from './residents.service';
     OccupanciesController,
     UnitStatesController,
     ResidentsController,
+    RegistrationsController,
   ],
   imports: [
     AccountsModule,

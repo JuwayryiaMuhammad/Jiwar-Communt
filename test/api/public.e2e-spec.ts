@@ -98,7 +98,7 @@ describe('API v0 — public', () => {
     const pending = await w.helpers.asManager(w.a, () =>
       registrations.pending(),
     );
-    expect(pending.map((p) => p.email)).toContain(email);
+    expect(pending.items.map((p) => p.email)).toContain(email);
   });
 
   it('answers a shape error with the service field codes, all at once', async () => {

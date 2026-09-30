@@ -5,7 +5,13 @@ import {
   OccupancyType,
   UnitType,
 } from '@prisma/client';
-import { IsBoolean, IsOptional, IsString, Matches } from 'class-validator';
+import {
+  IsBoolean,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+} from 'class-validator';
 import { withParams } from '../../../core/common/validation/validation-errors';
 
 /**
@@ -114,4 +120,26 @@ export class CompleteRegistrationDto extends RegistrationRequestDto {
   @ApiProperty({ type: String, pattern: '^\\\\d{6}$' })
   @Matches(/^\d{6}$/, withParams({ length: 6 }))
   code: string;
+}
+
+export class ApproveRegistrationDto {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description: 'Corrects a mistyped unit.',
+  })
+  @IsOptional()
+  @IsUUID()
+  unitId?: string;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    description:
+      "Adds the unit to the same person's existing resident account (same phone AND email).",
+  })
+  @IsOptional()
+  @IsBoolean()
+  linkToExistingAccount?: boolean;
 }

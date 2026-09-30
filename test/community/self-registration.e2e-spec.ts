@@ -69,7 +69,8 @@ describe('Self-registration', () => {
     return { started, done };
   }
 
-  const pending = (c: Compound) => x.asManager(c, () => reg.pending());
+  const pending = async (c: Compound) =>
+    (await x.asManager(c, () => reg.pending())).items;
 
   it('happy path: request, manager approval, then the real login', async () => {
     const { c, linkToken } = await compound();
@@ -233,6 +234,53 @@ describe('Self-registration', () => {
       code: 'REGISTRATION_RECEIVED',
     });
     expect(await pending(c)).toEqual([]);
+  });
+
+  it('links are listed with ids and revoked one at a time', async () => {
+    const { c, linkToken } = await compound();
+    const second = await x.asManager(c, () => reg.createLink());
+    expect(Object.keys(second).sort()).toEqual(['createdAt', 'id', 'token']);
+    const listed = await x.asManager(c, () => reg.listLinks());
+    expect(listed.items.map((l) => [l.id, l.revokedAt])).toEqual([
+      [second.id, null],
+      [expect.any(String), null],
+    ]);
+    expect(JSON.stringify(listed)).not.toContain(linkToken);
+
+    await x.asManager(c, () => reg.revokeLink(second.id));
+    expect(await codeOf(x.asManager(c, () => reg.revokeLink(second.id)))).toBe(
+      'REGISTRATION_LINK_NOT_FOUND',
+    );
+    const other = await x.compound();
+    const first = listed.items[1].id;
+    expect(await codeOf(x.asManager(other, () => reg.revokeLink(first)))).toBe(
+      'REGISTRATION_LINK_NOT_FOUND',
+    );
+    expect((await x.asManager(other, () => reg.listLinks())).items).toEqual([]);
+
+    // The other link still works; the revoked one writes nothing.
+    const u = await x.unit(c);
+    await register(request(second.token, u.code));
+    expect(await pending(c)).toEqual([]);
+    await register(request(linkToken, u.code));
+    expect(await pending(c)).toHaveLength(1);
+  });
+
+  it('pending requests page oldest first', async () => {
+    const { c, linkToken } = await compound();
+    const emails: string[] = [];
+    for (const code of ['P-1', 'P-2', 'P-3']) {
+      const r = request(linkToken, code);
+      emails.push(r.email);
+      await register(r);
+    }
+    const first = await x.asManager(c, () => reg.pending({ limit: 2 }));
+    expect(first.items.map((p) => p.email)).toEqual(emails.slice(0, 2));
+    const rest = await x.asManager(c, () =>
+      reg.pending({ limit: 2, cursor: first.nextCursor! }),
+    );
+    expect(rest.items.map((p) => p.email)).toEqual([emails[2]]);
+    expect(rest.nextCursor).toBeNull();
   });
 
   it('the code confirms only what was sent: a wrong code or a swapped payload is OTP_INVALID', async () => {

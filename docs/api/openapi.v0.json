@@ -198,6 +198,37 @@
         ],
         "type": "object"
       },
+      "ApproveRegistrationDto": {
+        "properties": {
+          "linkToExistingAccount": {
+            "description": "Adds the unit to the same person's existing resident account (same phone AND email).",
+            "type": "boolean"
+          },
+          "unitId": {
+            "description": "Corrects a mistyped unit.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ApprovedRegistrationView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "occupancyId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountId",
+          "occupancyId"
+        ],
+        "type": "object"
+      },
       "AuditActorType": {
         "enum": [
           "account",
@@ -655,6 +686,28 @@
         },
         "required": [
           "code"
+        ],
+        "type": "object"
+      },
+      "CreatedLinkView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "token": {
+            "description": "Shown once; only its hash is stored.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "token",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -1452,6 +1505,94 @@
         ],
         "type": "object"
       },
+      "PendingRegistrationView": {
+        "properties": {
+          "conflicts": {
+            "items": {
+              "enum": [
+                "unit_not_found",
+                "unit_has_primary",
+                "unit_has_residing_occupants",
+                "phone_in_use",
+                "email_in_use",
+                "same_person_existing_account",
+                "duplicate_pending_for_unit"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "occupancyType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OccupancyType"
+              }
+            ]
+          },
+          "phone": {
+            "type": "string"
+          },
+          "resides": {
+            "type": "boolean"
+          },
+          "unitCode": {
+            "description": "As the registrant typed it.",
+            "type": "string"
+          },
+          "unitId": {
+            "description": "Null when no unit has that code.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "phone",
+          "email",
+          "unitCode",
+          "unitId",
+          "occupancyType",
+          "resides",
+          "createdAt",
+          "conflicts"
+        ],
+        "type": "object"
+      },
+      "PendingRegistrationViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PendingRegistrationView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "PlatformAuditEntryView": {
         "properties": {
           "action": {
@@ -1653,6 +1794,48 @@
         },
         "required": [
           "code"
+        ],
+        "type": "object"
+      },
+      "RegistrationLinkResponse": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "revokedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "revokedAt"
+        ],
+        "type": "object"
+      },
+      "RegistrationLinkResponseList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/RegistrationLinkResponse"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -4334,6 +4517,157 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/registration-links": {
+      "get": {
+        "operationId": "RegistrationsController_links",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationLinkResponseList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "registration"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "RegistrationsController_createLink",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedLinkView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "registration"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/registration-links/{id}/revoke": {
+      "post": {
+        "operationId": "RegistrationsController_revokeLink",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "registration"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/registrations": {
+      "get": {
+        "operationId": "RegistrationsController_pending",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingRegistrationViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "registration"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/registrations/complete": {
       "post": {
         "operationId": "RegistrationPublicController_complete",
@@ -4403,6 +4737,91 @@
         },
         "tags": [
           "public"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/registrations/{id}/approve": {
+      "post": {
+        "operationId": "RegistrationsController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveRegistrationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovedRegistrationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "registration"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/registrations/{id}/reject": {
+      "post": {
+        "operationId": "RegistrationsController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "registration"
         ],
         "x-stability": "draft"
       }

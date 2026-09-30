@@ -45,5 +45,7 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   legal_holds_one_active: null,
   // Upserted by the registration flow (ON CONFLICT); never a response.
   resident_registrations_one_pending_per_email: null,
+  // Client-generated (UUIDv7): a violation is an id collision.
+  registration_links_id_key: null,
   household_members_tenant_id_id_is_minor_key: null,
 };

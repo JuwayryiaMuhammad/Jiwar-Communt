@@ -26,8 +26,9 @@ export class WorkersAuthority {
     private readonly household: HouseholdAuthority,
   ) {}
 
+  /** A landlord sees the unit, never who works in it (ADR 0020). */
   assertVisible(tx: TenantTxClient, unitId: string): Promise<void> {
-    return this.household.assertVisible(tx, unitId);
+    return this.household.assertHouseholdVisible(tx, unitId);
   }
 
   async forRegister(tx: TenantTxClient, unitId: string): Promise<Authority> {
@@ -48,7 +49,13 @@ export class WorkersAuthority {
       return { accountId, onBehalfOf: null };
     }
     await this.household.assertVisible(tx, e.unitId);
-    if (e.requestedById === accountId) return { accountId, onBehalfOf: null };
+    if (
+      e.requestedById === accountId &&
+      (this.ctx.accountType !== 'resident' ||
+        (await this.occupies(tx, e.unitId, accountId)))
+    ) {
+      return { accountId, onBehalfOf: null };
+    }
     return this.viaDelegation(tx, e.unitId);
   }
 
@@ -80,7 +87,8 @@ export class WorkersAuthority {
   ): Promise<boolean> {
     return (
       (await tx.unitOccupancy.count({
-        where: { unitId, accountId, status: 'active' },
+        // Living there: an owner-landlord does not arrange the tenant's workers.
+        where: { unitId, accountId, status: 'active', resides: true },
       })) > 0
     );
   }

@@ -63,6 +63,22 @@ export class HouseholdAuthority {
     return { accountId, onBehalfOf: delegation.delegatorAccountId };
   }
 
+  /**
+   * The unit's household (members, workers) as the caller may see it: an
+   * owner-landlord sees the unit but never the household living in it
+   * (ADR 0020) — only its financial matters, which other domains serve.
+   */
+  async assertHouseholdVisible(
+    tx: TenantTxClient,
+    unitId: string,
+  ): Promise<void> {
+    await this.assertVisible(tx, unitId);
+    if (this.ctx.accountType !== 'resident') return;
+    if (!(await residesIn(tx, unitId, this.ctx.accountId))) {
+      throw notResiding();
+    }
+  }
+
   /** The unit as the caller may see it, inside the transaction. */
   async assertVisible(tx: TenantTxClient, unitId: string): Promise<void> {
     const unit = await tx.unit.findFirst({
@@ -83,6 +99,26 @@ export async function isPrimary(
     (await tx.unitOccupancy.count({
       where: { unitId, accountId, status: 'active', isPrimary: true },
     })) > 0
+  );
+}
+
+/** An active occupancy of someone who lives in the unit (not a landlord). */
+export async function residesIn(
+  tx: TenantTxClient,
+  unitId: string,
+  accountId: string,
+): Promise<boolean> {
+  return (
+    (await tx.unitOccupancy.count({
+      where: { unitId, accountId, status: 'active', resides: true },
+    })) > 0
+  );
+}
+
+export function notResiding() {
+  return appError.forbidden(
+    ErrorCode.FORBIDDEN,
+    "The unit's household is visible only to the people who live in it",
   );
 }
 

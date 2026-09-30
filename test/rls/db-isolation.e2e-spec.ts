@@ -283,7 +283,11 @@ describe('RLS tenant isolation (database level)', () => {
       await h.asTenant(tenantA, () =>
         h.prisma.tenant.unitOccupancy.update({
           where: { id: occupancyA.id },
-          data: { status: 'ended', endedAt: new Date() },
+          data: {
+            status: 'ended',
+            endedAt: new Date(),
+            endReason: 'moved_out',
+          },
         }),
       );
       await expect(again()).resolves.toMatchObject({ status: 'active' });

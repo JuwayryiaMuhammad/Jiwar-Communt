@@ -30,6 +30,11 @@ export const AUDIT_ACTIONS = {
   'occupancy.created': { log: 'tenant', target: 'occupancy' },
   'occupancy.ended': { log: 'tenant', target: 'occupancy' },
   'occupancy.primary_changed': { log: 'tenant', target: 'occupancy' },
+  // capacities (ADR 0020)
+  'occupancy.converted': { log: 'tenant', target: 'occupancy' },
+  'occupancy.residence_changed': { log: 'tenant', target: 'occupancy' },
+  'occupancy.handed_over': { log: 'tenant', target: 'occupancy' },
+  'unit.closed_mode_changed': { log: 'tenant', target: 'unit' },
   'unit.created': { log: 'tenant', target: 'unit' },
   'unit.household_review_flagged': { log: 'tenant', target: 'unit' },
   'tenant.settings_changed': { log: 'tenant', target: 'tenant' },

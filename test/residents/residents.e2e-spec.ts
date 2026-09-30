@@ -14,6 +14,7 @@ import {
   type HttpHarness,
 } from '../setup/http-app';
 import { loginViaOtp, type Tokens } from '../setup/login';
+import { MOVED_OUT } from '../setup/fixtures';
 
 /** Residents, multi-unit occupancy and unit resource access (ADR 0012). */
 describe('Residents', () => {
@@ -176,7 +177,9 @@ describe('Residents', () => {
     await get(tokens, `/units/${c.units['A-102']}`).expect(200);
 
     const rented = resident.occupancies.find((o) => o.unitCode === 'A-102')!;
-    const ended = await asManager(c, () => residents.endOccupancy(rented.id));
+    const ended = await asManager(c, () =>
+      residents.endOccupancy(rented.id, MOVED_OUT),
+    );
     expect(ended).toMatchObject({
       status: 'ended',
       endedAt: expect.any(Date) as Date,
@@ -194,7 +197,7 @@ describe('Residents', () => {
       ['A-102', 'ended'],
     ]);
     await expect(
-      asManager(c, () => residents.endOccupancy(rented.id)),
+      asManager(c, () => residents.endOccupancy(rented.id, MOVED_OUT)),
     ).rejects.toMatchObject({
       code: 'OCCUPANCY_NOT_FOUND',
     });
@@ -216,7 +219,7 @@ describe('Residents', () => {
     ]);
     const resident = await asManager(c, () => residents.createResident(input));
     await asManager(c, () =>
-      residents.endOccupancy(resident.occupancies[0].id),
+      residents.endOccupancy(resident.occupancies[0].id, MOVED_OUT),
     );
     const tokens = await loginViaOtp(h, input.email, resident.id);
     const units = await get(tokens, '/units').expect(200);

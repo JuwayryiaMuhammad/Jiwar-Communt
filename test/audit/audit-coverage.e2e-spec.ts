@@ -21,7 +21,10 @@ import { PlatformModule } from '../../src/core/platform/platform.module';
 import { TenantsService } from '../../src/core/platform/tenants.service';
 import { ResidentsService } from '../../src/community/residents/residents.service';
 import { auditReaders } from '../setup/audit';
-import { COMMUNITY_COVERAGE } from '../setup/audit-coverage-split';
+import {
+  COMMUNITY_COVERAGE,
+  PHASE_2_2_COVERAGE,
+} from '../setup/audit-coverage-split';
 import { loginViaOtp } from '../setup/login';
 import { waitForOtp } from '../setup/mailpit';
 import {
@@ -31,6 +34,7 @@ import {
   uniquePhone,
   type HttpHarness,
 } from '../setup/http-app';
+import { MOVED_OUT } from '../setup/fixtures';
 
 /**
  * One scenario per catalog entry (ADR 0014), each asserting actor, target
@@ -263,10 +267,11 @@ describe('Audit coverage', () => {
         unitId: { from: null, to: unitId },
         accountId: { from: null, to: resident.id },
         occupancyType: { from: null, to: 'tenant' },
+        resides: { from: null, to: true },
         status: { from: null, to: 'active' },
       });
 
-      await asManager(c, () => residents.endOccupancy(occupancyId));
+      await asManager(c, () => residents.endOccupancy(occupancyId, MOVED_OUT));
       const ended = await single(c.tenantId, 'occupancy.ended', occupancyId);
       expect(ended).toMatchObject({
         actorType: 'account',
@@ -276,6 +281,7 @@ describe('Audit coverage', () => {
         status: { from: 'active', to: 'ended' },
         endedAt: { from: null, to: expect.any(String) as string },
       });
+      expect(ended.metadata).toMatchObject({ reasonCode: 'moved_out' });
     });
 
     it('role.permissions_replaced', async () => {
@@ -806,8 +812,9 @@ describe('Audit coverage', () => {
     it('every audit action and security event has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];
       // Phase 2 community entries have their own suite (audit-coverage-split).
-      for (const key of COMMUNITY_COVERAGE) expect(all).toContain(key);
-      const mine = all.filter((k) => !COMMUNITY_COVERAGE.includes(k)).sort();
+      const elsewhere = [...COMMUNITY_COVERAGE, ...PHASE_2_2_COVERAGE];
+      for (const key of elsewhere) expect(all).toContain(key);
+      const mine = all.filter((k) => !elsewhere.includes(k)).sort();
       expect([...covered].sort()).toEqual(mine);
     });
   });

@@ -6,3 +6,9 @@ export { ResidentsService } from './residents/residents.service';
 export { UnitsModule } from './units/units.module';
 export { WorkersModule } from './workers/workers.module';
 export { WorkersService } from './workers/workers.service';
+export { CapabilitiesModule } from './capabilities/capabilities.module';
+export { CapabilitiesService } from './capabilities/capabilities.service';
+export {
+  capabilitiesFor,
+  type Capabilities,
+} from './capabilities/capabilities';

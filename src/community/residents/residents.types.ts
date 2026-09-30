@@ -3,6 +3,7 @@ import type {
   AccountStatus,
   IdDocumentType,
   Locale,
+  OccupancyEndReason,
   OccupancyStatus,
   OccupancyType,
 } from '@prisma/client';
@@ -13,6 +14,8 @@ import type {
 export interface OccupancyInput {
   unitId: string;
   occupancyType: OccupancyType;
+  /** Owners only: false = owner-landlord (ADR 0020). Tenants always reside. */
+  resides?: boolean;
 }
 
 export interface NewResident extends IdentityDocumentInput {
@@ -29,11 +32,15 @@ export interface OccupancyView {
   unitId: string;
   unitCode: string;
   occupancyType: OccupancyType;
+  /** False for an owner-landlord (ADR 0020). */
+  resides: boolean;
   /** The unit's primary resident (ADR 0016). */
   isPrimary: boolean;
   status: OccupancyStatus;
   startedAt: Date;
   endedAt: Date | null;
+  endReason: OccupancyEndReason | null;
+  handedOverAt: Date | null;
 }
 
 export interface ResidentView {

@@ -11,7 +11,7 @@ import {
   type Compound,
   type Person,
 } from '../setup/community';
-import { bornYearsAgo, nationalIdFor } from '../setup/fixtures';
+import { bornYearsAgo, nationalIdFor, MOVED_OUT } from '../setup/fixtures';
 import {
   createHttpHarness,
   uniqueEmail,
@@ -368,7 +368,9 @@ describe('Delegation', () => {
       const hm = await home();
       const d = await delegate(hm);
       const occupancy = (await x.occupancies(hm.c, hm.unitId))[0];
-      await x.asManager(hm.c, () => x.residents.endOccupancy(occupancy.id));
+      await x.asManager(hm.c, () =>
+        x.residents.endOccupancy(occupancy.id, MOVED_OUT),
+      );
       expect(await endReason(hm, d.id)).toBe('primary_changed');
     });
 

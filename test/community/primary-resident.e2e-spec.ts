@@ -3,6 +3,7 @@ import { PlatformModule } from '../../src/core/platform/platform.module';
 import { communityHelpers } from '../setup/community';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { auditReaders } from '../setup/audit';
+import { MOVED_OUT } from '../setup/fixtures';
 
 /** Primary resident per unit and the household-review flag (ADR 0016). */
 describe('Primary resident', () => {
@@ -95,7 +96,9 @@ describe('Primary resident', () => {
     const occupancy = (await x.occupancies(c, u.id)).find(
       (o) => o.accountId === primary.id,
     )!;
-    await x.asManager(c, () => x.residents.endOccupancy(occupancy.id));
+    await x.asManager(c, () =>
+      x.residents.endOccupancy(occupancy.id, MOVED_OUT),
+    );
 
     const unit = await x.unitRow(c, u.id);
     expect(unit.needsHouseholdReview).toBe(true);
@@ -131,7 +134,9 @@ describe('Primary resident', () => {
     const occupancy = (await x.occupancies(c, u.id)).find(
       (o) => o.accountId === other.id,
     )!;
-    await x.asManager(c, () => x.residents.endOccupancy(occupancy.id));
+    await x.asManager(c, () =>
+      x.residents.endOccupancy(occupancy.id, MOVED_OUT),
+    );
     expect((await x.unitRow(c, u.id)).needsHouseholdReview).toBe(false);
   });
 
@@ -162,7 +167,7 @@ describe('Primary resident', () => {
     });
 
     // The primary leaves; a new primary clears the flag.
-    await x.asManager(c, () => x.residents.endOccupancy(view.id));
+    await x.asManager(c, () => x.residents.endOccupancy(view.id, MOVED_OUT));
     expect((await x.unitRow(c, u.id)).needsHouseholdReview).toBe(true);
     await x.asManager(c, () => x.residents.setPrimary(u.id, first.id));
     const unit = await x.unitRow(c, u.id);
@@ -197,7 +202,9 @@ describe('Primary resident', () => {
       const occupancy = (await x.occupancies(c, u.id)).find(
         (o) => o.accountId === primary.id,
       )!;
-      await x.asManager(c, () => x.residents.endOccupancy(occupancy.id));
+      await x.asManager(c, () =>
+        x.residents.endOccupancy(occupancy.id, MOVED_OUT),
+      );
       return u;
     }
 

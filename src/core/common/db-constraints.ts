@@ -33,4 +33,5 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   household_members_tenant_id_id_key: null,
   domestic_workers_tenant_id_id_key: null,
   worker_engagements_tenant_id_id_key: null,
+  unit_occupancies_tenant_id_id_key: null,
 };

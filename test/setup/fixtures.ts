@@ -108,3 +108,15 @@ export function createAccountRow(
     }),
   );
 }
+
+/** A valid reason for ending an occupancy (Phase 2.2 reason codes). */
+export const MOVED_OUT = { code: 'moved_out', text: 'Moved out' } as const;
+
+/** 'resolved', or the error code a call failed with (or its message). */
+export function codeOf(p: Promise<unknown>): Promise<string> {
+  return p.then(
+    () => 'resolved',
+    (e: { response?: { code?: string }; message?: string }) =>
+      e.response?.code ?? e.message ?? 'rejected',
+  );
+}

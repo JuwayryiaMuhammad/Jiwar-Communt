@@ -7,6 +7,7 @@ import type { Request } from 'express';
 import { ClsModule } from 'nestjs-cls';
 import { LoggerModule } from 'nestjs-pino';
 import {
+  CapabilitiesModule,
   HouseholdsModule,
   ResidentsModule,
   UnitsModule,
@@ -109,6 +110,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     ResidentsModule,
     HouseholdsModule,
     WorkersModule,
+    CapabilitiesModule,
   ],
   controllers: [AppController],
   providers: [

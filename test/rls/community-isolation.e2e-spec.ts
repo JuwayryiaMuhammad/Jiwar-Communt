@@ -378,6 +378,7 @@ describe('RLS isolation — household and worker tables', () => {
           accountId,
           occupancyType: 'owner',
           isPrimary,
+          primarySince: isPrimary ? new Date() : null,
           createdById: accountId,
         },
       });
@@ -398,7 +399,11 @@ describe('RLS isolation — household and worker tables', () => {
           const first = await occupancy(tx, unit.id, a.id, true);
           await tx.unitOccupancy.update({
             where: { id: first.id },
-            data: { status: 'ended', endedAt: new Date() },
+            data: {
+              status: 'ended',
+              endedAt: new Date(),
+              endReason: 'moved_out',
+            },
           });
           await occupancy(tx, unit.id, b.id, true);
         }),

@@ -3,6 +3,8 @@
  * - test/community/audit-coverage.e2e-spec.ts covers the entries listed here
  *   (Phase 2 entries: primary resident, household, delegation, workers,
  *   settings, self-service);
+ * - test/community/audit-coverage-2-2.e2e-spec.ts covers PHASE_2_2_COVERAGE
+ *   (the Phase 2.2 community completion);
  * - test/audit/audit-coverage.e2e-spec.ts covers every other entry.
  * Each suite fails when one of its entries has no scenario, and this list may
  * only name real catalog entries, so nothing can fall between the two.
@@ -33,4 +35,12 @@ export const COMMUNITY_COVERAGE: readonly string[] = [
   'worker.unbanned',
   'worker.birth_date_attested',
   'worker.birth_date_corrected',
+];
+
+/** Phase 2.2 entries, covered by test/community/audit-coverage-2-2.e2e-spec.ts. */
+export const PHASE_2_2_COVERAGE: readonly string[] = [
+  'occupancy.converted',
+  'occupancy.residence_changed',
+  'occupancy.handed_over',
+  'unit.closed_mode_changed',
 ];

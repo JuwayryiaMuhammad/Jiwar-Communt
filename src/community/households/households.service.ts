@@ -330,7 +330,7 @@ export class HouseholdsService {
   /** Everyone who can see the unit sees its household (minors by name). */
   async listMembers(unitId: string): Promise<HouseholdMemberView[]> {
     return this.tenantTx.withTenantTx(async (tx) => {
-      await this.authority.assertVisible(tx, unitId);
+      await this.authority.assertHouseholdVisible(tx, unitId);
       const rows = await tx.householdMember.findMany({
         where: { unitId, status: { in: ['active', 'pending_approval'] } },
         include: { account: { select: { fullName: true } } },

@@ -71,6 +71,21 @@ enum OccupancyStatus {
   @@map("occupancy_status")
 }
 
+/// Why an occupancy ended (ADR 0020). The first four are the manager's
+/// reason codes; the rest are set by the flows that end it.
+enum OccupancyEndReason {
+  moved_out
+  contract_ended
+  data_correction
+  other
+  converted_to_owner
+  ownership_transferred
+  household_ended
+  account_erased
+
+  @@map("occupancy_end_reason")
+}
+
 enum PlatformAdminStatus {
   active
   disabled
@@ -322,26 +337,26 @@ model InviteToken {
 /// deleted after retention; dead rows are kept with their personal data
 /// stripped, as evidence that a notice never arrived.
 model OutboxMessage {
-  id            String        @id @db.Uuid
-  tenantId      String?       @map("tenant_id") @db.Uuid
-  channel       OutboxChannel
-  templateKey   String        @map("template_key")
-  locale        Locale
+  id                 String        @id @db.Uuid
+  tenantId           String?       @map("tenant_id") @db.Uuid
+  channel            OutboxChannel
+  templateKey        String        @map("template_key")
+  locale             Locale
   /// Null once stripped (dead rows past retention).
-  recipient     String?
-  params        Json?
-  status        OutboxStatus  @default(pending)
-  attempts      Int           @default(0)
-  nextAttemptAt DateTime      @default(now()) @map("next_attempt_at") @db.Timestamptz(3)
-  lockedUntil   DateTime?     @map("locked_until") @db.Timestamptz(3)
-  lastErrorCode String?       @map("last_error_code")
-  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
-  sentAt        DateTime?     @map("sent_at") @db.Timestamptz(3)
+  recipient          String?
+  params             Json?
+  status             OutboxStatus  @default(pending)
+  attempts           Int           @default(0)
+  nextAttemptAt      DateTime      @default(now()) @map("next_attempt_at") @db.Timestamptz(3)
+  lockedUntil        DateTime?     @map("locked_until") @db.Timestamptz(3)
+  lastErrorCode      String?       @map("last_error_code")
+  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  sentAt             DateTime?     @map("sent_at") @db.Timestamptz(3)
   /// When recipient and params were removed (dead rows past retention).
-  strippedAt    DateTime?     @map("stripped_at") @db.Timestamptz(3)
+  strippedAt         DateTime?     @map("stripped_at") @db.Timestamptz(3)
   /// The account a message is for (a pointer, no FK): erasure strips that
   /// account's pending messages without touching others sharing the address.
-  recipientAccountId String?  @map("recipient_account_id") @db.Uuid
+  recipientAccountId String?       @map("recipient_account_id") @db.Uuid
 
   @@index([status, nextAttemptAt])
   @@index([status, sentAt])
@@ -468,6 +483,8 @@ model Unit {
   needsHouseholdReview     Boolean   @default(false) @map("needs_household_review")
   householdReviewReason    String?   @map("household_review_reason")
   householdReviewFlaggedAt DateTime? @map("household_review_flagged_at") @db.Timestamptz(3)
+  /// Closed-unit mode (ADR 0020), set by the owner-resident primary.
+  closedSince              DateTime? @map("closed_since") @db.Timestamptz(3)
   createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -486,23 +503,38 @@ model Unit {
 /// Resident ↔ unit (ADR 0012). Never deleted: ending sets status + ended_at.
 /// One active occupancy per (unit, account): partial unique index in SQL.
 model UnitOccupancy {
-  id            String          @id @db.Uuid
-  tenantId      String          @map("tenant_id") @db.Uuid
-  unitId        String          @map("unit_id") @db.Uuid
-  accountId     String          @map("account_id") @db.Uuid
-  occupancyType OccupancyType   @map("occupancy_type")
-  status        OccupancyStatus @default(active)
+  id              String              @id @db.Uuid
+  tenantId        String              @map("tenant_id") @db.Uuid
+  unitId          String              @map("unit_id") @db.Uuid
+  accountId       String              @map("account_id") @db.Uuid
+  occupancyType   OccupancyType       @map("occupancy_type")
+  status          OccupancyStatus     @default(active)
   /// One per unit among active occupancies (partial unique index in SQL).
-  isPrimary     Boolean         @default(false) @map("is_primary")
-  startedAt     DateTime        @default(now()) @map("started_at") @db.Timestamptz(3)
-  endedAt       DateTime?       @map("ended_at") @db.Timestamptz(3)
-  createdById   String          @map("created_by") @db.Uuid
-  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  isPrimary       Boolean             @default(false) @map("is_primary")
+  startedAt       DateTime            @default(now()) @map("started_at") @db.Timestamptz(3)
+  endedAt         DateTime?           @map("ended_at") @db.Timestamptz(3)
+  createdById     String              @map("created_by") @db.Uuid
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Capacity (ADR 0020): an owner who does not live there is a landlord.
+  /// A tenant always resides; a landlord is never primary (CHECKs).
+  resides         Boolean             @default(true)
+  endReason       OccupancyEndReason? @map("end_reason")
+  /// Shown to the person; erasable, never in the audit trail.
+  endNote         String?             @map("end_note")
+  /// Tenant → owner conversion keeps the history as two rows.
+  convertedFromId String?             @map("converted_from_id") @db.Uuid
+  /// Set while primary; the new primary reviews members added before it.
+  primarySince    DateTime?           @map("primary_since") @db.Timestamptz(3)
+  /// After leaving: emergency stays visible until the unit is handed over.
+  handedOverAt    DateTime?           @map("handed_over_at") @db.Timestamptz(3)
 
-  unit      Unit    @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
-  account   Account @relation("OccupancyAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
-  createdBy Account @relation("OccupancyCreatedBy", fields: [tenantId, createdById], references: [tenantId, id], onUpdate: Restrict)
+  unit          Unit            @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
+  account       Account         @relation("OccupancyAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
+  createdBy     Account         @relation("OccupancyCreatedBy", fields: [tenantId, createdById], references: [tenantId, id], onUpdate: Restrict)
+  convertedFrom UnitOccupancy?  @relation("OccupancyConversion", fields: [tenantId, convertedFromId], references: [tenantId, id], onUpdate: Restrict)
+  convertedTo   UnitOccupancy[] @relation("OccupancyConversion")
 
+  @@unique([tenantId, id])
   @@index([tenantId, accountId])
   @@index([tenantId, unitId])
   @@map("unit_occupancies")

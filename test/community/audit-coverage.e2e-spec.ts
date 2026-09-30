@@ -8,7 +8,7 @@ import { HouseholdsService } from '../../src/community/households/households.ser
 import type { NewInvite } from '../../src/community/households/households.types';
 import { InviteAcceptanceService } from '../../src/community/households/invite-acceptance.service';
 import { auditReaders } from '../setup/audit';
-import { bornYearsAgo, nationalIdFor } from '../setup/fixtures';
+import { bornYearsAgo, nationalIdFor, MOVED_OUT } from '../setup/fixtures';
 import { waitForOtp } from '../setup/mailpit';
 import { COMMUNITY_COVERAGE } from '../setup/audit-coverage-split';
 import { communityHelpers, type Compound } from '../setup/community';
@@ -83,7 +83,7 @@ describe('Audit coverage — community', () => {
         changes: { isPrimary: { from: false, to: true } },
       });
 
-      await x.asManager(c, () => x.residents.endOccupancy(view.id));
+      await x.asManager(c, () => x.residents.endOccupancy(view.id, MOVED_OUT));
       const flagged = await single(c, 'unit.household_review_flagged', u.id);
       expect(flagged).toMatchObject({
         actorType: 'account',

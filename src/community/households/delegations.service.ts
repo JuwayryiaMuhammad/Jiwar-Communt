@@ -22,6 +22,7 @@ import {
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
 import { Outbox } from '../../core/mail/outbox';
+import { ReviewFlags } from '../units/review-flags';
 import { lockUnits } from '../units/unit-lock';
 import {
   HouseholdAuthority,
@@ -79,6 +80,7 @@ export class DelegationsService implements OnModuleInit {
     private readonly audit: AuditService,
     private readonly outbox: Outbox,
     private readonly lifecycle: AccountLifecycle,
+    private readonly flags: ReviewFlags,
   ) {}
 
   onModuleInit(): void {
@@ -109,6 +111,7 @@ export class DelegationsService implements OnModuleInit {
       await lockUnits(tx, [unitId]);
       await this.authority.assertVisible(tx, unitId);
       await this.requirePrimary(tx, unitId);
+      await this.flags.assertMutable(tx, unitId);
       await this.assertEligible(tx, unitId, delegateAccountId);
 
       const live = await tx.householdDelegation.findFirst({
@@ -170,6 +173,7 @@ export class DelegationsService implements OnModuleInit {
       await lockUnits(tx, [found.unitId]);
       await this.authority.assertVisible(tx, found.unitId);
       await this.requirePrimary(tx, found.unitId);
+      await this.flags.assertMutable(tx, found.unitId);
       const { count } = await tx.householdDelegation.updateMany({
         where: { id: delegationId, revokedAt: null },
         data: {

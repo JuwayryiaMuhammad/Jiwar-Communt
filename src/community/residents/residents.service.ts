@@ -26,18 +26,21 @@ import { DelegationsService } from '../households/delegations.service';
 import { HouseholdsService } from '../households/households.service';
 import { COMMUNITY_NOTICES } from '../notices/community-notices';
 import { CommunityNotifier } from '../notices/community-notifier';
+import { ReviewFlags } from '../units/review-flags';
 import { lockUnits } from '../units/unit-lock';
+import { WorkersService } from '../workers/workers.service';
 import type {
   MyUnit,
   NewResident,
   OccupancyInput,
   OccupancyView,
   ResidentView,
+  MemberToReview,
   UnitNeedingReview,
 } from './residents.types';
 
 /** Keyset on (household_review_flagged_at, id), newest flag first. */
-const REVIEW_ORDER = keysetCursor('householdReviewFlaggedAt');
+const REVIEW_ORDER = keysetCursor('flaggedAt');
 const REVIEW_PAGE = keysetCursor('flaggedAt');
 
 const WITH_OCCUPANCIES = {
@@ -70,6 +73,8 @@ export class ResidentsService {
     private readonly delegations: DelegationsService,
     private readonly households: HouseholdsService,
     private readonly notifier: CommunityNotifier,
+    private readonly flags: ReviewFlags,
+    private readonly workers: WorkersService,
   ) {}
 
   /** Account (resident role) + login identifiers + occupancies, atomically. */
@@ -348,15 +353,33 @@ export class ResidentsService {
             previousAccountId: previous?.accountId ?? null,
           },
         });
+        // Everyone in the household learns who the primary is now. Their
+        // permissions stay as they are until the new primary reviews them.
+        const members = await tx.householdMember.findMany({
+          where: { unitId, status: 'active', accountId: { not: null } },
+          select: { accountId: true },
+        });
+        const primary = await tx.account.findUniqueOrThrow({
+          where: { id: accountId },
+          select: { fullName: true },
+        });
+        await this.notifier.toAccounts(
+          tx,
+          target.tenantId,
+          members.map((m) => m.accountId!),
+          COMMUNITY_NOTICES.primaryChanged,
+          {
+            ...(await this.notifier.place(tx, target.tenantId, unitId)),
+            primaryName: primary.fullName,
+          },
+        );
       }
-      await tx.unit.updateMany({
-        where: { id: unitId, needsHouseholdReview: true },
-        data: {
-          needsHouseholdReview: false,
-          householdReviewReason: null,
-          householdReviewFlaggedAt: null,
-        },
-      });
+      await this.flags.clear(
+        tx,
+        unitId,
+        ['primary_left', 'primary_frozen', 'primary_deceased'],
+        'primary_set',
+      );
       return toOccupancyView({ ...target, isPrimary: true });
     });
     await runAfterCommit(after, this.logger);
@@ -381,6 +404,332 @@ export class ResidentsService {
     });
     if (!updated) throw residentNotFound();
     return this.get(accountId);
+  }
+
+  // --------------------------------------------------------------------------
+  // Special unit states (ADR 0021)
+  // --------------------------------------------------------------------------
+
+  /**
+   * The primary has died (`residents.manage`). Nothing is closed or revoked:
+   * the household's permissions freeze (no grant, no revocation), payments
+   * stop, and tickets, visitors and emergency continue. The adults are told
+   * the unit is under review — never why.
+   */
+  async markPrimaryDeceased(
+    unitId: string,
+    reasonInput: ReasonInput,
+  ): Promise<{ flagId: string }> {
+    const reason = requireReasonCode(reasonInput, REASON_CODES.reviewFlag);
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await lockUnits(tx, [unitId]);
+      const flag = await this.flags.flag(tx, unitId, 'primary_deceased', {
+        reasonCode: reason.code,
+        note: reason.text,
+        byManager: true,
+      });
+      if (flag.created) {
+        await this.tellAdults(tx, unitId, COMMUNITY_NOTICES.unitUnderReview);
+      }
+      return { flagId: flag.id };
+    });
+  }
+
+  /**
+   * A separation or an adult occupant leaving, tagged by the manager
+   * (`residents.manage`): revoking an adult's access becomes a manager
+   * decision and "my activity" stops; emergency, entry, tickets and visitor
+   * notices continue for everyone.
+   */
+  async tagSeparation(
+    unitId: string,
+    reasonInput: ReasonInput,
+  ): Promise<{ flagId: string }> {
+    const reason = requireReasonCode(reasonInput, REASON_CODES.reviewFlag);
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await lockUnits(tx, [unitId]);
+      const flag = await this.flags.flag(tx, unitId, 'separation', {
+        reasonCode: reason.code,
+        note: reason.text,
+        byManager: true,
+      });
+      if (flag.created) {
+        await this.tellAdults(tx, unitId, COMMUNITY_NOTICES.activityPaused);
+      }
+      return { flagId: flag.id };
+    });
+  }
+
+  /**
+   * Clears a death or separation flag (`residents.manage`). A primary who
+   * left is resolved only by a decision: setPrimary (the family stays) or
+   * endHousehold (the unit changed hands); a frozen primary by
+   * reactivation or a new primary.
+   */
+  async clearReviewFlag(
+    flagId: string,
+    clearReasonCode: string,
+  ): Promise<void> {
+    const code = requireCode(clearReasonCode, REASON_CODES.reviewClear);
+    await this.tenantTx.withTenantTx(async (tx) => {
+      const flag = await tx.unitReviewFlag.findFirst({
+        where: { id: flagId, clearedAt: null },
+      });
+      if (!flag) throw reviewFlagNotFound();
+      if (flag.reason !== 'primary_deceased' && flag.reason !== 'separation') {
+        throw appError.conflict(
+          ErrorCode.REVIEW_NEEDS_DECISION,
+          'Set a new primary or end the household instead',
+        );
+      }
+      await lockUnits(tx, [flag.unitId]);
+      await this.flags.clear(tx, flag.unitId, [flag.reason], code);
+    });
+  }
+
+  /**
+   * The unit changed hands (`residents.manage`), or its primary left and the
+   * family did not stay: every membership, delegation and worker engagement
+   * of the unit ends, each person is told, and the review flags close.
+   * Occupancies are not touched here.
+   */
+  async endHousehold(unitId: string, reasonInput: ReasonInput): Promise<void> {
+    const reason = requireReasonCode(reasonInput, REASON_CODES.householdEnd);
+    const after: AfterCommit[] = [];
+    await this.tenantTx.withTenantTx(async (tx) => {
+      await lockUnits(tx, [unitId]);
+      after.push(...(await this.endHouseholdIn(tx, unitId, reason)));
+    });
+    await runAfterCommit(after, this.logger);
+  }
+
+  /**
+   * Ownership moves to another resident (`residents.manage`). Every active
+   * occupancy of the unit ends (`ownership_transferred`, each occupant
+   * told), the household ends with it, and the new owner's occupancy
+   * starts — primary when they live there. The old family never keeps
+   * entry or visitor rights to a unit that is no longer theirs.
+   */
+  async transferOwnership(
+    unitId: string,
+    input: { toAccountId: string; resides?: boolean },
+    reasonInput: ReasonInput,
+  ): Promise<OccupancyView> {
+    const reason = requireReasonCode(reasonInput, REASON_CODES.householdEnd);
+    const resides = input.resides ?? true;
+    const after: AfterCommit[] = [];
+    const view = await this.tenantTx.withTenantTx(async (tx) => {
+      await lockUnits(tx, [unitId]);
+      const buyer = await tx.account.findFirst({
+        where: { id: input.toAccountId, type: 'resident', status: 'active' },
+        select: { id: true },
+      });
+      if (!buyer) throw residentNotFound();
+      const active = await tx.unitOccupancy.findMany({
+        where: { unitId, status: 'active' },
+      });
+      const place = await this.notifier.place(
+        tx,
+        active[0]?.tenantId ?? this.ctx.tenantId,
+        unitId,
+      );
+      for (const o of active) {
+        await tx.unitOccupancy.update({
+          where: { id: o.id },
+          data: {
+            status: 'ended',
+            endedAt: new Date(),
+            endReason: 'ownership_transferred',
+            endNote: reason.text,
+          },
+        });
+        const ended = await tx.unitOccupancy.findUniqueOrThrow({
+          where: { id: o.id },
+        });
+        after.push(
+          ...(await this.afterEnded(tx, ended, 'ownership_transferred', {
+            flagReview: false,
+          })),
+        );
+        await this.notifier.toAccounts(
+          tx,
+          o.tenantId,
+          [o.accountId],
+          COMMUNITY_NOTICES.occupancyEnded,
+          { ...place, reason: reason.text },
+        );
+      }
+      after.push(...(await this.endHouseholdIn(tx, unitId, reason)));
+      const created = await tx.unitOccupancy.create({
+        data: {
+          id: newId(),
+          tenantId: this.ctx.tenantId,
+          unitId,
+          accountId: buyer.id,
+          occupancyType: 'owner',
+          ...(await this.primaryFields(tx, {
+            unitId,
+            occupancyType: 'owner',
+            resides,
+          })),
+          createdById: this.ctx.accountId,
+        },
+        include: { unit: { select: { code: true } } },
+      });
+      await this.recordCreated(tx, created);
+      await this.audit.record(tx, {
+        action: 'unit.ownership_transferred',
+        targetId: unitId,
+        metadata: {
+          reasonCode: reason.code,
+          endedOccupancyIds: active.map((o) => o.id),
+          newOccupancyId: created.id,
+          newOwnerAccountId: buyer.id,
+        },
+      });
+      return toOccupancyView(created);
+    });
+    await runAfterCommit(after, this.logger);
+    return view;
+  }
+
+  /**
+   * For the unit's primary: the members whose permissions predate them
+   * ("review now / later", 05 §7). Nothing changes until they review.
+   */
+  async membersToReview(unitId: string): Promise<MemberToReview[]> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const primary = await this.primaryOccupancy(tx, unitId);
+      const rows = await tx.householdMember.findMany({
+        where: {
+          unitId,
+          status: 'active',
+          OR: [
+            { permissionsReviewedAt: null },
+            { permissionsReviewedAt: { lt: primary.primarySince! } },
+          ],
+        },
+        include: { account: { select: { fullName: true } } },
+        orderBy: { createdAt: 'asc' },
+      });
+      return rows.map((m) => ({
+        memberId: m.id,
+        accountId: m.accountId,
+        fullName: m.fullName ?? m.account?.fullName ?? null,
+        relation: m.relation,
+        isMinor: m.isMinor,
+      }));
+    });
+  }
+
+  /** The primary confirms members as reviewed (all, or some). */
+  async markMembersReviewed(
+    unitId: string,
+    memberIds: string[] | 'all',
+  ): Promise<number> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await lockUnits(tx, [unitId]);
+      await this.primaryOccupancy(tx, unitId);
+      const { count } = await tx.householdMember.updateMany({
+        where: {
+          unitId,
+          status: 'active',
+          ...(memberIds === 'all' ? {} : { id: { in: memberIds } }),
+        },
+        data: { permissionsReviewedAt: new Date() },
+      });
+      await this.audit.record(tx, {
+        action: 'household.permissions_reviewed',
+        targetId: unitId,
+        metadata: {
+          members: memberIds === 'all' ? 'all' : memberIds,
+          count,
+        },
+      });
+      return count;
+    });
+  }
+
+  /** The caller's primary occupancy on the unit, or NOT_PRIMARY_RESIDENT. */
+  private async primaryOccupancy(tx: TenantTxClient, unitId: string) {
+    const o = await tx.unitOccupancy.findFirst({
+      where: {
+        unitId,
+        accountId: this.ctx.accountId,
+        status: 'active',
+        isPrimary: true,
+      },
+    });
+    if (!o) {
+      throw appError.forbidden(
+        ErrorCode.NOT_PRIMARY_RESIDENT,
+        "Only the unit's primary resident can do this",
+      );
+    }
+    return o;
+  }
+
+  private async endHouseholdIn(
+    tx: TenantTxClient,
+    unitId: string,
+    reason: { code: string; text: string },
+  ): Promise<AfterCommit[]> {
+    const ended = await this.households.endAllForUnit(tx, unitId, reason);
+    const after = [
+      ...ended.after,
+      ...(await this.delegations.endWhere(tx, { unitId }, 'household_ended')),
+    ];
+    const workers = await this.workers.endAllForUnit(
+      tx,
+      unitId,
+      'household_ended',
+    );
+    await this.flags.clear(
+      tx,
+      unitId,
+      ['primary_left', 'primary_frozen', 'primary_deceased', 'separation'],
+      'household_ended',
+    );
+    await this.audit.record(tx, {
+      action: 'unit.household_ended',
+      targetId: unitId,
+      metadata: {
+        reasonCode: reason.code,
+        membersEnded: ended.members,
+        invitesRevoked: ended.invites,
+        engagementsEnded: workers,
+      },
+    });
+    return after;
+  }
+
+  /** The unit's adults: residing occupants and account-holding members. */
+  private async tellAdults(
+    tx: TenantTxClient,
+    unitId: string,
+    key: (typeof COMMUNITY_NOTICES)[keyof typeof COMMUNITY_NOTICES],
+  ) {
+    const [occupants, members] = await Promise.all([
+      tx.unitOccupancy.findMany({
+        where: { unitId, status: 'active', resides: true },
+        select: { accountId: true, tenantId: true },
+      }),
+      tx.householdMember.findMany({
+        where: { unitId, status: 'active', accountId: { not: null } },
+        select: { accountId: true },
+      }),
+    ]);
+    const tenantId = this.ctx.tenantId;
+    await this.notifier.toAccounts(
+      tx,
+      tenantId,
+      [
+        ...occupants.map((o) => o.accountId),
+        ...members.map((m) => m.accountId!),
+      ],
+      key,
+      await this.notifier.place(tx, tenantId, unitId),
+    );
   }
 
   // --------------------------------------------------------------------------
@@ -692,49 +1041,53 @@ export class ResidentsService {
   }
 
   /**
-   * Units flagged for a household review (the primary left), newest flag
-   * first, for managers (`residents.read`). Setting a new primary removes a
-   * unit from the list.
+   * Open review flags, newest first, for managers (`residents.read`): one
+   * item per (unit, reason). Death and separation notes stay out: this
+   * list shows why a unit needs attention, not what was said about it.
    */
   async unitsNeedingReview(
     q: { cursor?: string; limit?: number } = {},
   ): Promise<Page<UnitNeedingReview>> {
     const limit = clampLimit(q.limit);
-    const rows = await this.prisma.tenant.unit.findMany({
+    const rows = await this.prisma.tenant.unitReviewFlag.findMany({
       where: {
         AND: [
-          { needsHouseholdReview: true },
-          ...(REVIEW_ORDER.after(q.cursor) as Prisma.UnitWhereInput[]),
+          { clearedAt: null },
+          ...(REVIEW_ORDER.after(
+            q.cursor,
+          ) as Prisma.UnitReviewFlagWhereInput[]),
         ],
       },
       orderBy: REVIEW_ORDER.orderBy,
       take: limit + 1,
       select: {
         id: true,
-        code: true,
-        householdReviewReason: true,
-        householdReviewFlaggedAt: true,
-        _count: { select: { occupancies: { where: { status: 'active' } } } },
+        reason: true,
+        flaggedAt: true,
+        unit: {
+          select: {
+            id: true,
+            code: true,
+            _count: {
+              select: { occupancies: { where: { status: 'active' } } },
+            },
+          },
+        },
       },
     });
-    const views = rows.map((u) => ({
-      id: u.id,
-      unitId: u.id,
-      code: u.code,
-      reason: u.householdReviewReason!,
-      // Set with the flag (CHECK units_household_review_has_time).
-      flaggedAt: u.householdReviewFlaggedAt!,
-      activeOccupants: u._count.occupancies,
-    }));
-    const page = REVIEW_PAGE.toPage(views, limit);
+    const page = REVIEW_PAGE.toPage(
+      rows.map((f) => ({ id: f.id, flaggedAt: f.flaggedAt, f })),
+      limit,
+    );
     return {
       nextCursor: page.nextCursor,
-      items: page.items.map((v) => ({
-        unitId: v.unitId,
-        code: v.code,
-        reason: v.reason,
-        flaggedAt: v.flaggedAt,
-        activeOccupants: v.activeOccupants,
+      items: page.items.map(({ f }) => ({
+        flagId: f.id,
+        unitId: f.unit.id,
+        code: f.unit.code,
+        reason: f.reason,
+        flaggedAt: f.flaggedAt,
+        activeOccupants: f.unit._count.occupancies,
       })),
     };
   }
@@ -770,24 +1123,7 @@ export class ResidentsService {
     reason: 'primary_left',
     metadata: Record<string, unknown>,
   ) {
-    await tx.unit.update({
-      where: { id: unitId },
-      data: {
-        needsHouseholdReview: true,
-        householdReviewReason: reason,
-        householdReviewFlaggedAt: new Date(),
-      },
-    });
-    await this.audit.record(tx, {
-      action: 'unit.household_review_flagged',
-      targetId: unitId,
-      changes: diffChanges(
-        { needsHouseholdReview: false },
-        { needsHouseholdReview: true },
-        'unit.household_review_flagged',
-      ),
-      metadata: { reason, ...metadata },
-    });
+    await this.flags.flag(tx, unitId, reason, { metadata });
   }
 }
 
@@ -828,6 +1164,18 @@ function occupancyNotFound() {
     ErrorCode.OCCUPANCY_NOT_FOUND,
     'Active occupancy not found',
   );
+}
+
+function reviewFlagNotFound() {
+  return appError.notFound(
+    ErrorCode.REVIEW_FLAG_NOT_FOUND,
+    'Review flag not found',
+  );
+}
+
+/** A lone reason code (no text: clearing a flag tells nobody anything). */
+function requireCode<C extends string>(code: string, allowed: readonly C[]): C {
+  return requireReasonCode({ code, text: code }, allowed).code;
 }
 
 function primaryMustReside() {

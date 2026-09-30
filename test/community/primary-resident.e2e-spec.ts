@@ -100,9 +100,7 @@ describe('Primary resident', () => {
       x.residents.endOccupancy(occupancy.id, MOVED_OUT),
     );
 
-    const unit = await x.unitRow(c, u.id);
-    expect(unit.needsHouseholdReview).toBe(true);
-    expect(unit.householdReviewReason).toBe('primary_left');
+    expect(await x.openReviews(c, u.id)).toEqual(['primary_left']);
     expect(await primaries(c, u.id)).toEqual([]);
     expect(
       (await x.occupancies(c, u.id)).find((o) => o.accountId === other.id)
@@ -122,6 +120,7 @@ describe('Primary resident', () => {
     });
     expect(flag.metadata).toEqual({
       reason: 'primary_left',
+      flagId: expect.any(String) as unknown,
       occupancyId: occupancy.id,
     });
   });
@@ -137,7 +136,7 @@ describe('Primary resident', () => {
     await x.asManager(c, () =>
       x.residents.endOccupancy(occupancy.id, MOVED_OUT),
     );
-    expect((await x.unitRow(c, u.id)).needsHouseholdReview).toBe(false);
+    expect(await x.openReviews(c, u.id)).toEqual([]);
   });
 
   it('setPrimary swaps the primary, clears the flag, and is audited with the previous one', async () => {
@@ -168,11 +167,9 @@ describe('Primary resident', () => {
 
     // The primary leaves; a new primary clears the flag.
     await x.asManager(c, () => x.residents.endOccupancy(view.id, MOVED_OUT));
-    expect((await x.unitRow(c, u.id)).needsHouseholdReview).toBe(true);
+    expect(await x.openReviews(c, u.id)).toEqual(['primary_left']);
     await x.asManager(c, () => x.residents.setPrimary(u.id, first.id));
-    const unit = await x.unitRow(c, u.id);
-    expect(unit.needsHouseholdReview).toBe(false);
-    expect(unit.householdReviewReason).toBeNull();
+    expect(await x.openReviews(c, u.id)).toEqual([]);
   });
 
   it('setPrimary needs an active occupancy on that unit, in this compound', async () => {
@@ -215,6 +212,7 @@ describe('Primary resident', () => {
       const page = await x.asManager(c, () => x.residents.unitsNeedingReview());
       expect(page.items).toEqual([
         {
+          flagId: expect.any(String) as unknown,
           unitId: u.id,
           code: u.code,
           reason: 'primary_left',

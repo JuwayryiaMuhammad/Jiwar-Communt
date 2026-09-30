@@ -89,7 +89,7 @@ describe('Audit coverage — community', () => {
         actorType: 'account',
         actorId: c.managerId,
         targetType: 'unit',
-        changes: { needsHouseholdReview: { from: false, to: true } },
+        changes: { reviewFlag: { from: null, to: 'primary_left' } },
         metadata: { reason: 'primary_left', occupancyId: view.id },
       });
     });

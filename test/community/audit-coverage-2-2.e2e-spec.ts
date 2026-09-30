@@ -6,8 +6,13 @@ import {
   PHASE_2_2_COVERAGE,
 } from '../setup/audit-coverage-split';
 import { communityHelpers, type Compound } from '../setup/community';
-import { MOVED_OUT } from '../setup/fixtures';
-import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { bornYearsAgo, MOVED_OUT, nationalIdFor } from '../setup/fixtures';
+import { WorkersService } from '../../src/community/workers/workers.service';
+import {
+  createHttpHarness,
+  uniquePhone,
+  type HttpHarness,
+} from '../setup/http-app';
 
 /**
  * One scenario per Phase 2.2 catalog entry (ADR 0014), each asserting actor,
@@ -98,6 +103,95 @@ describe('Audit coverage — Phase 2.2', () => {
         targetType: 'unit',
         changes: { closed: { from: false, to: true } },
       });
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  describe('unit states (ADR 0021)', () => {
+    const SOLD = { code: 'unit_changed_hands', text: 'Sold' };
+
+    it('unit.household_review_cleared, household.permissions_reviewed — manager, then the new primary', async () => {
+      const c = await x.compound();
+      const u = await x.unit(c);
+      await x.resident(c, [u.id]);
+      const { flagId } = await x.asManager(c, () =>
+        x.residents.tagSeparation(u.id, { code: 'separation', text: 'Letter' }),
+      );
+      await x.asManager(c, () =>
+        x.residents.clearReviewFlag(flagId, 'resolved'),
+      );
+      expect(
+        await single(c, 'unit.household_review_cleared', u.id),
+      ).toMatchObject({
+        actorType: 'account',
+        actorId: c.managerId,
+        targetType: 'unit',
+        changes: { reviewFlag: { from: 'separation', to: null } },
+        metadata: { reason: 'separation', flagId, clearReasonCode: 'resolved' },
+      });
+
+      const t = await x.resident(c, [u.id], 'tenant');
+      await x.asManager(c, () => x.residents.setPrimary(u.id, t.id));
+      await x.as(c, { id: t.id, type: 'resident' }, () =>
+        x.residents.markMembersReviewed(u.id, 'all'),
+      );
+      expect(
+        await single(c, 'household.permissions_reviewed', u.id),
+      ).toMatchObject({
+        actorId: t.id,
+        targetType: 'unit',
+        metadata: { members: 'all', count: 0 },
+      });
+    });
+
+    it('unit.household_ended, worker.wage_obligation_recorded — by the manager', async () => {
+      const c = await x.compound();
+      const u = await x.unit(c);
+      const r = await x.resident(c, [u.id]);
+      const workers = h.moduleRef.get(WorkersService);
+      const reg = await x.as(c, { id: r.id, type: 'resident' }, () =>
+        workers.register(u.id, {
+          fullName: 'Audited Worker',
+          idDocumentType: 'national_id',
+          idDocumentNumber: nationalIdFor(bornYearsAgo(30)),
+          phone: uniquePhone(),
+          capacity: 'live_in',
+        }),
+      );
+      await x.asManager(c, () => workers.review(reg.engagementId, 'approve'));
+      await x.asManager(c, () => x.residents.endHousehold(u.id, SOLD));
+      expect(await single(c, 'unit.household_ended', u.id)).toMatchObject({
+        actorId: c.managerId,
+        metadata: { reasonCode: 'unit_changed_hands', engagementsEnded: 1 },
+      });
+      expect(
+        await single(c, 'worker.wage_obligation_recorded', reg.engagementId),
+      ).toMatchObject({
+        actorId: c.managerId,
+        targetType: 'worker_engagement',
+        metadata: { kind: 'settle_before_close', unitId: u.id },
+      });
+    });
+
+    it('unit.ownership_transferred — by the manager', async () => {
+      const c = await x.compound();
+      const u = await x.unit(c);
+      await x.resident(c, [u.id]);
+      const buyer = await x.resident(c, [(await x.unit(c)).id]);
+      const view = await x.asManager(c, () =>
+        x.residents.transferOwnership(u.id, { toAccountId: buyer.id }, SOLD),
+      );
+      expect(await single(c, 'unit.ownership_transferred', u.id)).toMatchObject(
+        {
+          actorId: c.managerId,
+          targetType: 'unit',
+          metadata: {
+            reasonCode: 'unit_changed_hands',
+            newOccupancyId: view.id,
+            newOwnerAccountId: buyer.id,
+          },
+        },
+      );
     });
   });
 

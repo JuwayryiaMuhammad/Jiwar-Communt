@@ -29,6 +29,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'audit.read',
       'settings.manage',
       'household.approve',
+      'household.override',
       'workers.review',
       'workers.ban',
     ],

@@ -43,4 +43,9 @@ export const PHASE_2_2_COVERAGE: readonly string[] = [
   'occupancy.residence_changed',
   'occupancy.handed_over',
   'unit.closed_mode_changed',
+  'unit.household_review_cleared',
+  'unit.household_ended',
+  'unit.ownership_transferred',
+  'household.permissions_reviewed',
+  'worker.wage_obligation_recorded',
 ];

@@ -10,7 +10,6 @@ import {
   NONE,
   type Capabilities,
   type MemberPermission,
-  type ReviewReason,
   type Subject,
   type UnitState,
 } from './capabilities';
@@ -54,7 +53,7 @@ export class CapabilitiesService {
       where: { id: unitId },
       select: {
         closedSince: true,
-        householdReviewReason: true,
+        reviewFlags: { where: { clearedAt: null }, select: { reason: true } },
       },
     });
     if (!unit) {
@@ -62,9 +61,7 @@ export class CapabilitiesService {
     }
     return {
       closed: unit.closedSince !== null,
-      reviewReasons: unit.householdReviewReason
-        ? [unit.householdReviewReason as ReviewReason]
-        : [],
+      reviewReasons: unit.reviewFlags.map((f) => f.reason),
     };
   }
 

@@ -141,7 +141,7 @@ describe('Capacities', () => {
       ownershipCard: false,
     });
     // No household review: conversion is not the primary leaving.
-    expect((await x.unitRow(c, u.id)).needsHouseholdReview).toBe(false);
+    expect(await x.openReviews(c, u.id)).toEqual([]);
     const [mail] = await globalDb.outboxMessage.findMany({
       where: {
         tenantId: c.tenantId,

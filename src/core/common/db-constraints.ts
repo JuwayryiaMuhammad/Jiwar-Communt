@@ -34,4 +34,8 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   domestic_workers_tenant_id_id_key: null,
   worker_engagements_tenant_id_id_key: null,
   unit_occupancies_tenant_id_id_key: null,
+  // Idempotent writers (flag once, record once) check first; a violation is
+  // a race and names nothing.
+  unit_review_flags_one_open_per_reason: null,
+  worker_wage_obligations_one_open_per_kind: null,
 };

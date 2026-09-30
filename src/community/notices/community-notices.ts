@@ -18,6 +18,9 @@ export const COMMUNITY_NOTICES = {
   occupancyEnded: 'community.occupancy_ended',
   capacityChanged: 'community.capacity_changed',
   handedOver: 'community.handed_over',
+  primaryChanged: 'community.primary_changed',
+  unitUnderReview: 'community.unit_under_review',
+  activityPaused: 'community.activity_paused',
 } as const;
 
 export type CommunityNoticeKey =
@@ -93,6 +96,39 @@ const CATALOG: Catalog = {
     en: (p) => ({
       subject: 'Your handover of a unit on Jiwar was recorded',
       lead: `The management recorded that you handed over unit ${p.unitCode} in ${p.compoundName}. Its emergency button is no longer shown to you.`,
+    }),
+  },
+  'community.primary_changed': {
+    ar: (p) => ({
+      subject: 'ساكن رئيسي جديد لوحدتك على جوار',
+      lead: `أصبح ${p.primaryName} الساكن الرئيسي للوحدة ${p.unitCode} في ${p.compoundName}. تبقى صلاحياتك كما هي حتى يراجعها.`,
+    }),
+    en: (p) => ({
+      subject: 'Your unit on Jiwar has a new primary resident',
+      lead: `${p.primaryName} is now the primary resident of unit ${p.unitCode} in ${p.compoundName}. Your permissions stay as they are until they review them.`,
+    }),
+  },
+  // Deliberately says nothing about why (05 §7: the reason is never shown).
+  'community.unit_under_review': {
+    ar: (p) => ({
+      subject: 'شؤون وحدتك قيد المراجعة على جوار',
+      lead: `شؤون الوحدة ${p.unitCode} في ${p.compoundName} قيد المراجعة مع الإدارة. تستمر البلاغات والزوار والطوارئ، وتتوقف الإجراءات المالية ومنح الصلاحيات وسحبها مؤقتاً.`,
+      help: 'للاستفسار تواصل مع إدارة المجمع.',
+    }),
+    en: (p) => ({
+      subject: 'Your unit on Jiwar is under review',
+      lead: `The affairs of unit ${p.unitCode} in ${p.compoundName} are under review with the management. Tickets, visitors and emergency continue; payments and permission changes are paused for now.`,
+      help: 'For questions, contact the compound management.',
+    }),
+  },
+  'community.activity_paused': {
+    ar: (p) => ({
+      subject: 'أُوقف عرض النشاط في وحدتك على جوار',
+      lead: `أُوقف عرض النشاط أثناء المراجعة في الوحدة ${p.unitCode} في ${p.compoundName}. تبقى لك الطوارئ والدخول والبلاغات والتواصل مع الإدارة، ويصلك إشعار الزائر كما كان.`,
+    }),
+    en: (p) => ({
+      subject: 'Activity view paused in your unit on Jiwar',
+      lead: `The activity view is paused during a review in unit ${p.unitCode} in ${p.compoundName}. Emergency, entry, tickets and contacting the management stay, and visitor notices still reach you.`,
     }),
   },
 };

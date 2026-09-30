@@ -37,6 +37,14 @@ export const AUDIT_ACTIONS = {
   'unit.closed_mode_changed': { log: 'tenant', target: 'unit' },
   'unit.created': { log: 'tenant', target: 'unit' },
   'unit.household_review_flagged': { log: 'tenant', target: 'unit' },
+  'unit.household_review_cleared': { log: 'tenant', target: 'unit' },
+  'unit.household_ended': { log: 'tenant', target: 'unit' },
+  'unit.ownership_transferred': { log: 'tenant', target: 'unit' },
+  'household.permissions_reviewed': { log: 'tenant', target: 'unit' },
+  'worker.wage_obligation_recorded': {
+    log: 'tenant',
+    target: 'worker_engagement',
+  },
   'tenant.settings_changed': { log: 'tenant', target: 'tenant' },
   // household (ADR 0016)
   'household.invite_created': { log: 'tenant', target: 'household_invite' },

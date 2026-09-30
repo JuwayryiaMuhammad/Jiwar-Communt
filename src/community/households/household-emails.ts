@@ -96,7 +96,8 @@ export type DelegationEvent =
         | 'expired'
         | 'member_removed'
         | 'primary_changed'
-        | 'account_deactivated';
+        | 'account_deactivated'
+        | 'household_ended';
     };
 
 export interface DelegationEmail {
@@ -126,12 +127,14 @@ const ENDED = {
     member_removed: 'the member left the household',
     primary_changed: "the unit's primary resident changed",
     account_deactivated: 'an account was deactivated',
+    household_ended: "the unit's household was ended by the management",
   },
   ar: {
     expired: 'انتهت مدته',
     member_removed: 'لم يعد الفرد ضمن أسرة الوحدة',
     primary_changed: 'تغيّر الساكن الرئيسي للوحدة',
     account_deactivated: 'تم إيقاف أحد الحسابين',
+    household_ended: 'أنهت الإدارة أسرة الوحدة',
   },
 } as const;
 

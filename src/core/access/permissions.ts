@@ -31,6 +31,8 @@ export const PERMISSIONS = {
   // resident (or a delegate) on top of the permission.
   'household.manage': { kinds: ['resident', 'family'] },
   'household.approve': { kinds: ['manager'] },
+  // Manager decisions on a household: removal during a separation (ADR 0021).
+  'household.override': { kinds: ['manager'] },
   // Only the primary resident delegates (checked by the service).
   'household.delegate': { kinds: ['resident'] },
   // Domestic workers (ADR 0017). The service still requires an occupant of

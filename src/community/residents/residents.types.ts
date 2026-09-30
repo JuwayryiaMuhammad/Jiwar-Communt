@@ -1,11 +1,13 @@
 import type { IdentityDocumentInput } from '../../core/common/identity-document';
 import type {
   AccountStatus,
+  HouseholdRelation,
   IdDocumentType,
   Locale,
   OccupancyEndReason,
   OccupancyStatus,
   OccupancyType,
+  UnitReviewReason,
 } from '@prisma/client';
 
 // Service-level shapes (Phase 1a has no resident endpoints; HTTP shapes come
@@ -75,11 +77,21 @@ export interface MyUnit {
 
 /** A unit whose household needs the manager's attention (ADR 0016). */
 export interface UnitNeedingReview {
+  flagId: string;
   unitId: string;
   code: string;
-  /** Why it was flagged, e.g. `primary_left`. */
-  reason: string;
+  /** Why it was flagged (ADR 0021). */
+  reason: UnitReviewReason;
   flaggedAt: Date;
   /** Occupants still there (one of them may become the primary). */
   activeOccupants: number;
+}
+
+/** A member whose permissions predate the current primary (ADR 0021). */
+export interface MemberToReview {
+  memberId: string;
+  accountId: string | null;
+  fullName: string | null;
+  relation: HouseholdRelation;
+  isMinor: boolean;
 }

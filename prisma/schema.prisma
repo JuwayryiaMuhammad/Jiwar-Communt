@@ -168,6 +168,7 @@ enum DelegationEndReason {
   member_removed
   primary_changed
   account_deactivated
+  household_ended
 
   @@map("delegation_end_reason")
 }
@@ -190,6 +191,26 @@ enum WorkerEngagementStatus {
   rejected
 
   @@map("worker_engagement_status")
+}
+
+/// Why a unit is under review (ADR 0021). Several can be open at once.
+enum UnitReviewReason {
+  primary_left
+  primary_frozen
+  primary_deceased
+  separation
+
+  @@map("unit_review_reason")
+}
+
+/// What payroll owes a worker, recorded by the community side (ADR 0017).
+enum WageObligationKind {
+  /// Found to be under 18: every day worked is paid.
+  pay_in_full
+  /// The file is not closed before the wage is settled.
+  settle_before_close
+
+  @@map("wage_obligation_kind")
 }
 
 enum WorkerNoticeStatus {
@@ -402,18 +423,21 @@ model Account {
   occupancies        UnitOccupancy[]   @relation("OccupancyAccount")
   createdOccupancies UnitOccupancy[]   @relation("OccupancyCreatedBy")
 
-  memberships        HouseholdMember[]     @relation("MemberAccount")
-  addedMembers       HouseholdMember[]     @relation("MemberAddedBy")
-  removedMembers     HouseholdMember[]     @relation("MemberRemovedBy")
-  sentInvites        HouseholdInvite[]     @relation("InviteInvitedBy")
-  acceptedInvites    HouseholdInvite[]     @relation("InviteAcceptedAccount")
-  delegationsGiven   HouseholdDelegation[] @relation("DelegationDelegator")
-  delegationsHeld    HouseholdDelegation[] @relation("DelegationDelegate")
-  delegationsRevoked HouseholdDelegation[] @relation("DelegationRevokedBy")
-  bannedWorkers      DomesticWorker[]      @relation("WorkerBannedBy")
-  verifiedWorkers    DomesticWorker[]      @relation("WorkerBirthDateVerifiedBy")
-  requestedWorkers   WorkerEngagement[]    @relation("EngagementRequestedBy")
-  reviewedWorkers    WorkerEngagement[]    @relation("EngagementReviewedBy")
+  memberships        HouseholdMember[]      @relation("MemberAccount")
+  addedMembers       HouseholdMember[]      @relation("MemberAddedBy")
+  removedMembers     HouseholdMember[]      @relation("MemberRemovedBy")
+  sentInvites        HouseholdInvite[]      @relation("InviteInvitedBy")
+  acceptedInvites    HouseholdInvite[]      @relation("InviteAcceptedAccount")
+  delegationsGiven   HouseholdDelegation[]  @relation("DelegationDelegator")
+  delegationsHeld    HouseholdDelegation[]  @relation("DelegationDelegate")
+  delegationsRevoked HouseholdDelegation[]  @relation("DelegationRevokedBy")
+  bannedWorkers      DomesticWorker[]       @relation("WorkerBannedBy")
+  verifiedWorkers    DomesticWorker[]       @relation("WorkerBirthDateVerifiedBy")
+  requestedWorkers   WorkerEngagement[]     @relation("EngagementRequestedBy")
+  reviewedWorkers    WorkerEngagement[]     @relation("EngagementReviewedBy")
+  flagsRaised        UnitReviewFlag[]       @relation("ReviewFlaggedBy")
+  flagsCleared       UnitReviewFlag[]       @relation("ReviewClearedBy")
+  wagesSettled       WorkerWageObligation[] @relation("WageSettledBy")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -473,20 +497,15 @@ model TenantPermissionCatalog {
 }
 
 model Unit {
-  id                       String    @id @db.Uuid
-  tenantId                 String    @map("tenant_id") @db.Uuid
-  code                     String
-  building                 String?
-  floor                    Int?
-  /// Set when the primary resident's occupancy ends (ADR 0016); cleared when
-  /// a new primary is set. Household memberships are never touched for it.
-  needsHouseholdReview     Boolean   @default(false) @map("needs_household_review")
-  householdReviewReason    String?   @map("household_review_reason")
-  householdReviewFlaggedAt DateTime? @map("household_review_flagged_at") @db.Timestamptz(3)
+  id          String    @id @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  code        String
+  building    String?
+  floor       Int?
   /// Closed-unit mode (ADR 0020), set by the owner-resident primary.
-  closedSince              DateTime? @map("closed_since") @db.Timestamptz(3)
-  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  closedSince DateTime? @map("closed_since") @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   tenant            Tenant                @relation(fields: [tenantId], references: [id])
   occupancies       UnitOccupancy[]
@@ -494,6 +513,7 @@ model Unit {
   householdInvites  HouseholdInvite[]
   delegations       HouseholdDelegation[]
   workerEngagements WorkerEngagement[]
+  reviewFlags       UnitReviewFlag[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -559,23 +579,26 @@ model TenantSettings {
 /// personal data lives there; minors have no account, so their name and
 /// national ID live here (CHECK in SQL). Never deleted: removal is a status.
 model HouseholdMember {
-  id               String                @id @db.Uuid
-  tenantId         String                @map("tenant_id") @db.Uuid
-  unitId           String                @map("unit_id") @db.Uuid
-  accountId        String?               @map("account_id") @db.Uuid
-  relation         HouseholdRelation
-  isMinor          Boolean               @map("is_minor")
-  fullName         String?               @map("full_name")
-  idDocumentNumber String?               @map("id_document_number")
-  idDocumentType   IdDocumentType?       @map("id_document_type")
-  nationality      String?               @db.Char(2)
-  birthDate        DateTime              @map("birth_date") @db.Date
-  status           HouseholdMemberStatus
-  addedById        String                @map("added_by") @db.Uuid
-  removedById      String?               @map("removed_by") @db.Uuid
-  removedReason    String?               @map("removed_reason")
-  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
-  removedAt        DateTime?             @map("removed_at") @db.Timestamptz(3)
+  id                    String                @id @db.Uuid
+  tenantId              String                @map("tenant_id") @db.Uuid
+  unitId                String                @map("unit_id") @db.Uuid
+  accountId             String?               @map("account_id") @db.Uuid
+  relation              HouseholdRelation
+  isMinor               Boolean               @map("is_minor")
+  fullName              String?               @map("full_name")
+  idDocumentNumber      String?               @map("id_document_number")
+  idDocumentType        IdDocumentType?       @map("id_document_type")
+  nationality           String?               @db.Char(2)
+  birthDate             DateTime              @map("birth_date") @db.Date
+  status                HouseholdMemberStatus
+  addedById             String                @map("added_by") @db.Uuid
+  removedById           String?               @map("removed_by") @db.Uuid
+  removedReason         String?               @map("removed_reason")
+  createdAt             DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  removedAt             DateTime?             @map("removed_at") @db.Timestamptz(3)
+  /// The primary confirmed this member's permissions (ADR 0021); earlier
+  /// than the primary's `primary_since` means "to review".
+  permissionsReviewedAt DateTime?             @map("permissions_reviewed_at") @db.Timestamptz(3)
 
   unit      Unit     @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
   account   Account? @relation("MemberAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
@@ -670,10 +693,11 @@ model DomesticWorker {
   createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt             DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  bannedBy            Account?           @relation("WorkerBannedBy", fields: [tenantId, bannedById], references: [tenantId, id], onUpdate: Restrict)
-  birthDateVerifiedBy Account?           @relation("WorkerBirthDateVerifiedBy", fields: [tenantId, birthDateVerifiedById], references: [tenantId, id], onUpdate: Restrict)
+  bannedBy            Account?               @relation("WorkerBannedBy", fields: [tenantId, bannedById], references: [tenantId, id], onUpdate: Restrict)
+  birthDateVerifiedBy Account?               @relation("WorkerBirthDateVerifiedBy", fields: [tenantId, birthDateVerifiedById], references: [tenantId, id], onUpdate: Restrict)
   engagements         WorkerEngagement[]
   notices             WorkerNotice[]
+  obligations         WorkerWageObligation[]
 
   @@unique([tenantId, idDocumentHash])
   @@unique([tenantId, id])
@@ -702,11 +726,12 @@ model WorkerEngagement {
   createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt             DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  worker      DomesticWorker @relation(fields: [tenantId, workerId], references: [tenantId, id], onUpdate: Restrict)
-  unit        Unit           @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
-  requestedBy Account        @relation("EngagementRequestedBy", fields: [tenantId, requestedById], references: [tenantId, id], onUpdate: Restrict)
-  reviewedBy  Account?       @relation("EngagementReviewedBy", fields: [tenantId, reviewedById], references: [tenantId, id], onUpdate: Restrict)
+  worker      DomesticWorker         @relation(fields: [tenantId, workerId], references: [tenantId, id], onUpdate: Restrict)
+  unit        Unit                   @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
+  requestedBy Account                @relation("EngagementRequestedBy", fields: [tenantId, requestedById], references: [tenantId, id], onUpdate: Restrict)
+  reviewedBy  Account?               @relation("EngagementReviewedBy", fields: [tenantId, reviewedById], references: [tenantId, id], onUpdate: Restrict)
   notices     WorkerNotice[]
+  obligations WorkerWageObligation[]
 
   @@unique([tenantId, id])
   @@index([tenantId, unitId])
@@ -731,6 +756,49 @@ model WorkerNotice {
 
   @@index([tenantId, engagementId])
   @@map("worker_notices")
+}
+
+/// A reason a unit is under review (ADR 0021). One open row per reason
+/// (partial unique index); cleared rows stay as history. Never deleted.
+model UnitReviewFlag {
+  id              String           @id @db.Uuid
+  tenantId        String           @map("tenant_id") @db.Uuid
+  unitId          String           @map("unit_id") @db.Uuid
+  reason          UnitReviewReason
+  reasonCode      String?          @map("reason_code")
+  /// Managers only: never shown to members, never audited.
+  note            String?
+  flaggedAt       DateTime         @default(now()) @map("flagged_at") @db.Timestamptz(3)
+  flaggedById     String?          @map("flagged_by") @db.Uuid
+  clearedAt       DateTime?        @map("cleared_at") @db.Timestamptz(3)
+  clearedById     String?          @map("cleared_by") @db.Uuid
+  clearReasonCode String?          @map("clear_reason_code")
+
+  unit      Unit     @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
+  flaggedBy Account? @relation("ReviewFlaggedBy", fields: [tenantId, flaggedById], references: [tenantId, id], onUpdate: Restrict)
+  clearedBy Account? @relation("ReviewClearedBy", fields: [tenantId, clearedById], references: [tenantId, id], onUpdate: Restrict)
+
+  @@index([tenantId, flaggedAt(sort: Desc), id(sort: Desc)])
+  @@map("unit_review_flags")
+}
+
+/// A wage obligation for payroll (ADR 0017): recorded, not paid, here.
+model WorkerWageObligation {
+  id           String             @id @db.Uuid
+  tenantId     String             @map("tenant_id") @db.Uuid
+  engagementId String             @map("engagement_id") @db.Uuid
+  workerId     String             @map("worker_id") @db.Uuid
+  kind         WageObligationKind
+  createdAt    DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  settledAt    DateTime?          @map("settled_at") @db.Timestamptz(3)
+  settledById  String?            @map("settled_by") @db.Uuid
+
+  engagement WorkerEngagement @relation(fields: [tenantId, engagementId], references: [tenantId, id], onUpdate: Restrict)
+  worker     DomesticWorker   @relation(fields: [tenantId, workerId], references: [tenantId, id], onUpdate: Restrict)
+  settledBy  Account?         @relation("WageSettledBy", fields: [tenantId, settledById], references: [tenantId, id], onUpdate: Restrict)
+
+  @@index([tenantId, workerId])
+  @@map("worker_wage_obligations")
 }
 
 // ============================================================================

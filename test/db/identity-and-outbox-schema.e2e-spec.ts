@@ -115,7 +115,12 @@ describe('Identity documents and outbox schema', () => {
 
       // Exactly the DO block the migration ran, as the migrator.
       const sql = readFileSync(MIGRATION, 'utf8');
-      const block = /DO \$\$[\s\S]*?END \$\$;/.exec(sql)![0];
+      // The units statement is left out: those columns moved to
+      // unit_review_flags in Phase 2.2 (20261001090200), so replaying it
+      // against today's schema would fail on a column that no longer exists.
+      const block = /DO \$\$[\s\S]*?END \$\$;/
+        .exec(sql)![0]
+        .replace(/\s*UPDATE "units"[\s\S]*?"needs_household_review";/, '');
       const migrator = new Client({
         connectionString: required('TEST_MIGRATOR_DATABASE_URL'),
       });
@@ -239,19 +244,33 @@ describe('Identity documents and outbox schema', () => {
       ).toMatchObject(violation('household_members_minor_or_account'));
     });
 
-    it('a review flag always has its time; a birth-date attestation has its author', async () => {
+    it('a cleared review flag says why; a birth-date attestation has its author', async () => {
       const unit = await createUnit(h, tenant);
       expect(
         await inTenant((tx) =>
-          tx.unit.update({
-            where: { id: unit.id },
+          tx.unitReviewFlag.create({
             data: {
-              needsHouseholdReview: true,
-              householdReviewReason: 'primary_left',
+              id: newId(),
+              tenantId: tenant,
+              unitId: unit.id,
+              reason: 'primary_left',
+              clearedAt: new Date(),
             },
           }),
         ),
-      ).toMatchObject(violation('units_household_review_has_time'));
+      ).toMatchObject(violation('unit_review_flags_clear_is_complete'));
+      expect(
+        await inTenant((tx) =>
+          tx.unitReviewFlag.create({
+            data: {
+              id: newId(),
+              tenantId: tenant,
+              unitId: unit.id,
+              reason: 'primary_deceased',
+            },
+          }),
+        ),
+      ).toMatchObject(violation('unit_review_flags_manager_reason'));
       expect(
         await inTenant((tx) =>
           tx.domesticWorker.create({

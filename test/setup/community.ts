@@ -146,8 +146,20 @@ export function communityHelpers(h: HttpHarness) {
     );
   }
 
+  /** The unit's open review reasons (ADR 0021), sorted. */
+  async function openReviews(c: Compound, unitId: string) {
+    const rows = await asManager(c, () =>
+      prisma.tenant.unitReviewFlag.findMany({
+        where: { unitId, clearedAt: null },
+        select: { reason: true },
+      }),
+    );
+    return rows.map((r) => r.reason).sort();
+  }
+
   return {
     cls,
+    openReviews,
     prisma,
     residents,
     tenants,

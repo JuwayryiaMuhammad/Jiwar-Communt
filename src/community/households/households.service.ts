@@ -31,6 +31,11 @@ import {
   FieldErrorCode,
   type FieldError,
 } from '../../core/common/errors';
+import {
+  REASON_CODES,
+  requireReasonCode,
+  type ReasonInput,
+} from '../../core/common/reasons';
 import { newId } from '../../core/common/uuid';
 import { GlobalDbService } from '../../core/database/global-db.service';
 import { PrismaService } from '../../core/database/prisma.service';
@@ -40,6 +45,7 @@ import {
 } from '../../core/database/tenant-tx.service';
 import { Outbox } from '../../core/mail/outbox';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
+import { ReviewFlags } from '../units/review-flags';
 import { lockUnits } from '../units/unit-lock';
 import { DelegationsService } from './delegations.service';
 import { HouseholdAuthority, type Authority } from './household-authority';
@@ -83,6 +89,7 @@ export class HouseholdsService {
     private readonly securityEvents: SecurityEventsService,
     private readonly outbox: Outbox,
     private readonly delegations: DelegationsService,
+    private readonly flags: ReviewFlags,
   ) {}
 
   // --------------------------------------------------------------------------
@@ -105,6 +112,7 @@ export class HouseholdsService {
     const inviteId = await this.tenantTx.withTenantTx(async (tx) => {
       await lockUnits(tx, [unitId]);
       const by = await this.authority.require(tx, unitId, 'household');
+      await this.flags.assertMutable(tx, unitId);
       await this.assertRoom(tx, tenantId, unitId);
       const id = newId();
       await tx.householdInvite.create({
@@ -149,6 +157,7 @@ export class HouseholdsService {
       if (!invite) throw inviteNotFound();
       await lockUnits(tx, [invite.unitId]);
       const by = await this.authority.require(tx, invite.unitId, 'household');
+      await this.flags.assertMutable(tx, invite.unitId);
       // An expired invite is persisted as such (and must commit), then
       // reported as not found.
       if (await expireIfDue(tx, invite, this.globalDb)) return false;
@@ -199,6 +208,7 @@ export class HouseholdsService {
     return this.tenantTx.withTenantTx(async (tx) => {
       await lockUnits(tx, [unitId]);
       const by = await this.authority.require(tx, unitId, 'household');
+      await this.flags.assertMutable(tx, unitId);
       await this.assertRoom(tx, tenantId, unitId);
       const member = await tx.householdMember.create({
         data: {
@@ -255,6 +265,10 @@ export class HouseholdsService {
       if (!member) throw memberNotFound();
       await lockUnits(tx, [member.unitId]);
       const by = await this.authority.require(tx, member.unitId, 'household');
+      await this.flags.assertMutable(tx, member.unitId);
+      // An adult's access, during a separation, is the management's call.
+      if (member.accountId)
+        await this.flags.assertNotSeparated(tx, member.unitId);
       if (
         by.onBehalfOf &&
         (member.accountId === by.accountId ||
@@ -281,6 +295,13 @@ export class HouseholdsService {
   /** Management approval when the compound requires it (`household.approve`). */
   async approveMember(memberId: string): Promise<HouseholdMemberView> {
     return this.tenantTx.withTenantTx(async (tx) => {
+      const pending = await tx.householdMember.findFirst({
+        where: { id: memberId, status: 'pending_approval' },
+        select: { unitId: true },
+      });
+      if (!pending) throw memberNotFound();
+      await lockUnits(tx, [pending.unitId]);
+      await this.flags.assertMutable(tx, pending.unitId);
       const { count } = await tx.householdMember.updateMany({
         where: { id: memberId, status: 'pending_approval' },
         data: { status: 'active' },
@@ -314,6 +335,7 @@ export class HouseholdsService {
       });
       if (!member) throw memberNotFound();
       await lockUnits(tx, [member.unitId]);
+      await this.flags.assertMutable(tx, member.unitId);
       after.push(
         ...(await this.endMembership(tx, member, {
           action: 'household.member_rejected',
@@ -325,6 +347,97 @@ export class HouseholdsService {
       );
     });
     await runAfterCommit(after, this.logger);
+  }
+
+  /**
+   * A manager decision (`household.override`): the way to remove an adult
+   * during a separation, or any member when the household cannot act.
+   */
+  async removeMemberByManagement(
+    memberId: string,
+    reasonInput: ReasonInput,
+  ): Promise<void> {
+    const reason = requireReasonCode(
+      reasonInput,
+      REASON_CODES.memberRemovalByManagement,
+    );
+    const after: AfterCommit[] = [];
+    await this.tenantTx.withTenantTx(async (tx) => {
+      const member = await tx.householdMember.findFirst({
+        where: {
+          id: memberId,
+          status: { in: ['active', 'pending_approval'] },
+        },
+      });
+      if (!member) throw memberNotFound();
+      await lockUnits(tx, [member.unitId]);
+      await this.flags.assertMutable(tx, member.unitId);
+      after.push(
+        ...(await this.endMembership(tx, member, {
+          action: 'household.member_removed',
+          kind: 'removed',
+          reason: reason.text,
+          byAccountId: this.ctx.accountId,
+          metadata: { byManagement: true, reasonCode: reason.code },
+        })),
+      );
+    });
+    await runAfterCommit(after, this.logger);
+  }
+
+  /**
+   * The unit changed hands (ADR 0021): every membership ends and every
+   * pending invite is revoked, in the caller's transaction and under its
+   * unit lock. Each person is told, with the reason.
+   */
+  async endAllForUnit(
+    tx: TenantTxClient,
+    unitId: string,
+    reason: { code: string; text: string },
+  ): Promise<{ members: number; invites: number; after: AfterCommit[] }> {
+    const members = await tx.householdMember.findMany({
+      where: { unitId, status: { in: ['active', 'pending_approval'] } },
+      orderBy: { createdAt: 'asc' },
+    });
+    const after: AfterCommit[] = [];
+    for (const member of members) {
+      after.push(
+        ...(await this.endMembership(tx, member, {
+          action: 'household.member_removed',
+          kind: 'removed',
+          reason: reason.text,
+          byAccountId: this.ctx.accountId,
+          metadata: {
+            byManagement: true,
+            householdEnded: true,
+            reasonCode: reason.code,
+          },
+        })),
+      );
+    }
+    const invites = await tx.householdInvite.findMany({
+      where: { unitId, status: 'pending' },
+    });
+    for (const invite of invites) {
+      await tx.householdInvite.update({
+        where: { id: invite.id },
+        data: { status: 'revoked' },
+      });
+      await this.globalDb
+        .in(tx)
+        .inviteToken.deleteMany({ where: { tokenHash: invite.tokenHash } });
+      await this.audit.record(tx, {
+        action: 'household.invite_revoked',
+        targetId: invite.id,
+        changes: diffChanges(
+          { status: 'pending' },
+          { status: 'revoked' },
+          'household.invite_revoked',
+        ),
+        metadata: { unitId, householdEnded: true },
+      });
+    }
+    return { members: members.length, invites: invites.length, after };
   }
 
   /** Everyone who can see the unit sees its household (minors by name). */

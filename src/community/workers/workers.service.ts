@@ -7,6 +7,7 @@ import {
   type WorkerCapacity,
   type WorkerEngagement,
   type WorkerEngagementStatus,
+  type WageObligationKind,
 } from '@prisma/client';
 import { ClsService } from 'nestjs-cls';
 import { AuditService } from '../../core/audit/audit.service';
@@ -712,6 +713,65 @@ export class WorkersService {
       },
     });
     await this.notice(tx, e, 'engagement_ended', { reason });
+    // The file is not closed before the wage is settled (11 §7): payroll
+    // finds it here. Only for someone who could actually have worked.
+    if (e.codeIssuedAt) {
+      await this.recordObligation(tx, e, 'settle_before_close');
+    }
+  }
+
+  /** Once per (engagement, kind) while unsettled; audited when new. */
+  async recordObligation(
+    tx: TenantTxClient,
+    e: { id: string; tenantId: string; workerId: string; unitId: string },
+    kind: WageObligationKind,
+  ): Promise<void> {
+    const open = await tx.workerWageObligation.count({
+      where: { engagementId: e.id, kind, settledAt: null },
+    });
+    if (open) return;
+    const id = newId();
+    await tx.workerWageObligation.create({
+      data: {
+        id,
+        tenantId: e.tenantId,
+        engagementId: e.id,
+        workerId: e.workerId,
+        kind,
+      },
+    });
+    await this.audit.record(tx, {
+      action: 'worker.wage_obligation_recorded',
+      targetId: e.id,
+      metadata: {
+        obligationId: id,
+        kind,
+        workerId: e.workerId,
+        unitId: e.unitId,
+      },
+    });
+  }
+
+  /**
+   * The unit's household ended (ADR 0021): every open engagement ends, in
+   * the caller's transaction, each with its notice and wage obligation.
+   */
+  async endAllForUnit(
+    tx: TenantTxClient,
+    unitId: string,
+    reason: string,
+  ): Promise<number> {
+    const open = await tx.workerEngagement.findMany({
+      where: { unitId, status: { in: OPEN } },
+    });
+    for (const e of open) {
+      if (await this.expireIfDue(tx, e)) continue;
+      await this.close(tx, e, reason);
+      await this.record(tx, e, 'worker.engagement_ended', 'ended', null, {
+        reason,
+      });
+    }
+    return open.length;
   }
 
   private async notice(

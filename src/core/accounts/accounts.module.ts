@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { AccountsController } from './accounts.controller';
+import { ErasureController } from './erasure.controller';
 import { MeController } from './me.controller';
 import { AccountDeletionService } from './account-deletion.service';
 import { AccountEmailTemplates } from './account-emails';
@@ -11,7 +12,7 @@ import { AccountsService } from './accounts.service';
 
 @Module({
   imports: [AuthModule],
-  controllers: [AccountsController, MeController],
+  controllers: [AccountsController, MeController, ErasureController],
   providers: [
     AccountsService,
     AccountWriter,

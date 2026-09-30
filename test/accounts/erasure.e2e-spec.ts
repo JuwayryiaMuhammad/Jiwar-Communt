@@ -138,7 +138,7 @@ describe('Account erasure', () => {
       await x.asManager(c, () => deletion.activeHolds(family.accountId)),
     ).toHaveLength(1);
     expect(
-      (await x.asManager(c, () => deletion.pendingErasures())).find(
+      (await x.asManager(c, () => deletion.pendingErasures())).items.find(
         (p) => p.id === req.id,
       ),
     ).toMatchObject({ onLegalHold: true, daysOverdue: 1 });
@@ -455,7 +455,9 @@ describe('Account erasure', () => {
       deletion.requestDeletion('DELETE'),
     );
     await pastGrace(a.c, req.id);
-    expect(await x.asManager(b, () => deletion.pendingErasures())).toEqual([]);
+    expect(
+      (await x.asManager(b, () => deletion.pendingErasures())).items,
+    ).toEqual([]);
     expect(
       await codeOf(x.asManager(b, () => deletion.erasureScope(req.id))),
     ).toBe('DELETION_REQUEST_NOT_FOUND');
@@ -469,5 +471,31 @@ describe('Account erasure', () => {
         x.asManager(b, () => deletion.placeLegalHold(a.primary.id, HOLD)),
       ),
     ).toBe('ACCOUNT_NOT_FOUND');
+    expect(
+      await codeOf(x.asManager(b, () => deletion.activeHolds(a.primary.id))),
+    ).toBe('ACCOUNT_NOT_FOUND');
+  });
+
+  it('pending erasures page most overdue first', async () => {
+    const a = await household();
+    const first = await asResident(a.c, a.primary.id, () =>
+      deletion.requestDeletion('DELETE'),
+    );
+    const second = await asFamily(a.c, a.family.accountId, () =>
+      deletion.requestDeletion('DELETE'),
+    );
+    await pastGrace(a.c, second.id);
+    const page = await x.asManager(a.c, () =>
+      deletion.pendingErasures({ limit: 1 }),
+    );
+    // Past grace sorts before the one still in grace.
+    expect(page.items.map((p) => p.id)).toEqual([second.id]);
+    const rest = await x.asManager(a.c, () =>
+      deletion.pendingErasures({ limit: 1, cursor: page.nextCursor! }),
+    );
+    expect(rest.items.map((p) => [p.id, p.daysOverdue < 0])).toEqual([
+      [first.id, true],
+    ]);
+    expect(rest.nextCursor).toBeNull();
   });
 });

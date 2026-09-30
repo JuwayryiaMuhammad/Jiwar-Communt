@@ -4,6 +4,7 @@ import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { hashPassword } from '../../src/core/platform/password';
 import { PlatformSessionService } from '../../src/core/platform/platform-session.service';
 import { RegistrationService } from '../../src/community/residents/registration.service';
+import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
 import { communityHelpers, type Compound } from '../setup/community';
 import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
 import { uniqueEmail, uniquePhone, type HttpHarness } from '../setup/http-app';
@@ -47,6 +48,9 @@ export interface World {
   /** B's registration link and a pending registration request. */
   bLinkId: string;
   bRegistrationId: string;
+  /** A pending deletion request in B, and a legal hold on its account. */
+  bDeletionRequestId: string;
+  bLegalHoldId: string;
   /** A fresh token (and session) for any account. */
   tokenFor(
     side: Compound,
@@ -155,7 +159,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
   );
   const registrations = h.moduleRef.get(RegistrationService);
   const link = await helpers.asManager(b, () => registrations.createLink());
-  const request = {
+  const registrant = {
     linkToken: link.token,
     fullName: 'World Registrant',
     unitCode: 'NO-SUCH',
@@ -166,16 +170,28 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     occupancyType: 'owner' as const,
   };
   const since = new Date();
-  await registrations.start(request, '10.99.0.1', 'en');
+  await registrations.start(registrant, '10.99.0.1', 'en');
   await registrations.complete(
-    request,
-    await waitForOtp(request.email, since),
+    registrant,
+    await waitForOtp(registrant.email, since),
     '10.99.0.1',
   );
   const [pending] = (await helpers.asManager(b, () => registrations.pending()))
     .items;
+  const deletion = h.moduleRef.get(AccountDeletionService);
+  const leaving = await helpers.resident(b, [b.homeUnitId], 'tenant');
+  const request = await helpers.as(
+    b,
+    { id: leaving.id, type: 'resident' },
+    () => deletion.requestDeletion('DELETE'),
+  );
+  const holdId = await helpers.asManager(b, () =>
+    deletion.placeLegalHold(leaving.id, { code: 'litigation', text: 'World' }),
+  );
   return {
     bFlagId,
+    bDeletionRequestId: request.id,
+    bLegalHoldId: holdId,
     bLinkId: link.id,
     bRegistrationId: pending.id,
     h,

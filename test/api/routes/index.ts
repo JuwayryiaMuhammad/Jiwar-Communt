@@ -1,5 +1,6 @@
 import type { Row } from '../registry';
 import { ACCOUNTS_ROUTES } from './accounts';
+import { ERASURE_ROUTES } from './erasure';
 import { EXISTING_ROUTES } from './existing';
 import { ME_ROUTES } from './me';
 import { PLATFORM_ROUTES } from './platform';
@@ -17,6 +18,7 @@ export const ROUTES: Row[] = [
   ...ACCOUNTS_ROUTES,
   ...RESIDENTS_ROUTES,
   ...REGISTRATION_ROUTES,
+  ...ERASURE_ROUTES,
   ...PLATFORM_ROUTES,
   ...PUBLIC_ROUTES,
   ...ME_ROUTES,

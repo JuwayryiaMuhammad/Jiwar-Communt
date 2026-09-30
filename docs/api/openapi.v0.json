@@ -762,6 +762,86 @@
         ],
         "type": "object"
       },
+      "EraseDto": {
+        "properties": {
+          "typedScope": {
+            "description": "The `scopePhrase` from step 1, typed exactly.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "typedScope"
+        ],
+        "type": "object"
+      },
+      "ErasedCountsView": {
+        "properties": {
+          "activeMemberships": {
+            "type": "number"
+          },
+          "activeOccupancies": {
+            "type": "number"
+          },
+          "invitesAccepted": {
+            "type": "number"
+          },
+          "pendingMessages": {
+            "type": "number"
+          },
+          "personalFields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "sessions": {
+            "type": "number"
+          },
+          "workerEngagementsRequested": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "personalFields",
+          "activeOccupancies",
+          "activeMemberships",
+          "workerEngagementsRequested",
+          "sessions",
+          "pendingMessages",
+          "invitesAccepted"
+        ],
+        "type": "object"
+      },
+      "ErasureScopeView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "erased": {
+            "$ref": "#/components/schemas/ErasedCountsView"
+          },
+          "kept": {
+            "$ref": "#/components/schemas/KeptCountsView"
+          },
+          "requestId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "scopePhrase": {
+            "description": "Step 3 types exactly this.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "accountId",
+          "scopePhrase",
+          "erased",
+          "kept"
+        ],
+        "type": "object"
+      },
       "FlagCreatedView": {
         "properties": {
           "flagId": {
@@ -816,6 +896,18 @@
         ],
         "type": "string"
       },
+      "IdView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
       "InviteAcceptedView": {
         "properties": {
           "code": {
@@ -862,6 +954,63 @@
         },
         "required": [
           "token"
+        ],
+        "type": "object"
+      },
+      "KeptCountsView": {
+        "properties": {
+          "auditEntries": {
+            "description": "They stay, pointing at a deleted user.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "auditEntries"
+        ],
+        "type": "object"
+      },
+      "LegalHoldResponse": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "placedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reasonCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "accountId",
+          "reasonCode",
+          "placedAt"
+        ],
+        "type": "object"
+      },
+      "LegalHoldResponseList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/LegalHoldResponse"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -1502,6 +1651,70 @@
         "required": [
           "loginTicket",
           "accounts"
+        ],
+        "type": "object"
+      },
+      "PendingErasureView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "daysOverdue": {
+            "description": "Days since the grace period ended; negative while in grace.",
+            "type": "number"
+          },
+          "effectiveAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "onLegalHold": {
+            "type": "boolean"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "cancelled",
+              "completed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "accountId",
+          "status",
+          "requestedAt",
+          "effectiveAt",
+          "daysOverdue",
+          "onLegalHold"
+        ],
+        "type": "object"
+      },
+      "PendingErasureViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PendingErasureView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -3035,6 +3248,86 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/accounts/{id}/legal-holds": {
+      "get": {
+        "operationId": "ErasureController_holds",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegalHoldResponseList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "erasure"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ErasureController_placeHold",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "erasure"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/accounts/{id}/reactivate": {
       "post": {
         "operationId": "AccountsController_reactivate",
@@ -3282,6 +3575,129 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/erasures": {
+      "get": {
+        "operationId": "ErasureController_pending",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingErasureViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "erasure"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/erasures/{id}/erase": {
+      "post": {
+        "operationId": "ErasureController_erase",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EraseDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "erasure"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/erasures/{id}/scope": {
+      "get": {
+        "operationId": "ErasureController_scope",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErasureScopeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "erasure"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -3366,6 +3782,45 @@
         },
         "tags": [
           "public"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/legal-holds/{id}/release": {
+      "post": {
+        "operationId": "ErasureController_releaseHold",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "erasure"
         ],
         "x-stability": "draft"
       }

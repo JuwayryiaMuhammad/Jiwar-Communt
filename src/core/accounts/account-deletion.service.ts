@@ -7,6 +7,7 @@ import { AuditService } from '../audit/audit.service';
 import { diffChanges } from '../audit/diff';
 import type { AppClsStore } from '../common/cls/app-cls';
 import { RequestContext } from '../common/cls/request-context';
+import { clampLimit, keysetCursor, type Page } from '../common/cursor';
 import { appError, ErrorCode } from '../common/errors';
 import {
   REASON_CODES,
@@ -27,6 +28,9 @@ import {
 } from './account-lifecycle';
 
 export const ERASURE_OVERDUE_SWEEP = 'accounts.erasure_overdue';
+
+/** Most overdue first: the oldest end of grace. */
+const ERASURE_PAGE = keysetCursor('effectiveAt', 'asc');
 
 /** The words the holder types to confirm (02 §4), per language. */
 export const CONFIRMATION_WORDS = ['حذف', 'DELETE'] as const;
@@ -226,25 +230,43 @@ export class AccountDeletionService implements OnModuleInit {
   // Staff (`accounts.erase`, `accounts.legal_hold`)
   // --------------------------------------------------------------------------
 
-  /** Pending requests, most overdue first, with their age and hold. */
-  async pendingErasures(now: Date = new Date()): Promise<PendingErasure[]> {
+  /**
+   * Pending requests, most overdue first (oldest `effectiveAt`), a page at
+   * a time, with their age and hold.
+   */
+  async pendingErasures(
+    q: { cursor?: string; limit?: number } = {},
+    now: Date = new Date(),
+  ): Promise<Page<PendingErasure>> {
+    const limit = clampLimit(q.limit);
     return this.tenantTx.withTenantTx(async (tx) => {
       const rows = await tx.accountDeletionRequest.findMany({
-        where: { status: 'pending' },
-        orderBy: [{ effectiveAt: 'asc' }, { id: 'asc' }],
+        where: {
+          AND: [
+            { status: 'pending' },
+            ...(ERASURE_PAGE.after(
+              q.cursor,
+            ) as Prisma.AccountDeletionRequestWhereInput[]),
+          ],
+        },
+        orderBy: ERASURE_PAGE.orderBy,
         include: {
           account: { select: { legalHolds: { where: { releasedAt: null } } } },
         },
-        take: 100,
+        take: limit + 1,
       });
-      return rows.map((r) => ({
-        ...view(r),
-        accountId: r.accountId,
-        daysOverdue: Math.floor(
-          (now.getTime() - r.effectiveAt.getTime()) / 86_400_000,
-        ),
-        onLegalHold: r.account.legalHolds.length > 0,
-      }));
+      const page = ERASURE_PAGE.toPage(rows, limit);
+      return {
+        items: page.items.map((r) => ({
+          ...view(r),
+          accountId: r.accountId,
+          daysOverdue: Math.floor(
+            (now.getTime() - r.effectiveAt.getTime()) / 86_400_000,
+          ),
+          onLegalHold: r.account.legalHolds.length > 0,
+        })),
+        nextCursor: page.nextCursor,
+      };
     });
   }
 
@@ -314,6 +336,11 @@ export class AccountDeletionService implements OnModuleInit {
   /** Step 2: any legal obligation to keep the data blocks erasure. */
   async activeHolds(accountId: string): Promise<LegalHoldView[]> {
     return this.tenantTx.withTenantTx(async (tx) => {
+      const account = await tx.account.findUnique({
+        where: { id: accountId },
+        select: { id: true },
+      });
+      if (!account) throw accountNotFound();
       const rows = await tx.legalHold.findMany({
         where: { accountId, releasedAt: null },
       });

@@ -78,7 +78,7 @@ export const ACCOUNTS_ROUTES: Row[] = [
         {
           field: 'status',
           code: 'INVALID_VALUE',
-          params: { allowed: ['active', 'inactive', 'frozen', 'erased'] },
+          params: { allowed: ['active', 'inactive'] },
         },
       ],
     },

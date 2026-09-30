@@ -140,7 +140,34 @@ describe('TenantsService', () => {
       'phone',
       'status',
     ]);
-    expect((await tenants.list()).map((t) => t.id)).toContain(created.id);
+    expect((await tenants.list()).items.map((t) => t.id)).toContain(created.id);
+  });
+
+  it('lists compounds newest first, a page at a time, without gaps', async () => {
+    const created: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      created.push(
+        (
+          await tenants.createTenant({
+            name: `Paged ${i}`,
+            manager: newManager(),
+          })
+        ).id,
+      );
+    }
+    const seen: string[] = [];
+    let cursor: string | undefined;
+    do {
+      const page = await tenants.list({ cursor, limit: 2 });
+      expect(page.items.length).toBeLessThanOrEqual(2);
+      seen.push(...page.items.map((t) => t.id));
+      cursor = page.nextCursor ?? undefined;
+    } while (cursor);
+    expect(new Set(seen).size).toBe(seen.length);
+    // Newest first: the three appear in reverse creation order.
+    expect(seen.filter((id) => created.includes(id))).toEqual(
+      [...created].reverse(),
+    );
   });
 
   it('rejects a bad name and an unknown compound', async () => {

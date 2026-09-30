@@ -229,7 +229,7 @@ The platform owner is not a tenant account. It manages compounds and their manag
 - It logs in with email + password (argon2id); every failure returns the same error, with rate limits and a lockout.
 - The first login forces a password change. The restricted token issued for that is accepted only by routes marked `@PlatformAuth({ allowPasswordChange: true })`.
 - Platform and tenant tokens use different secrets and audiences, and each guard rejects the other's tokens.
-- Endpoints come in a later phase; the services and `PlatformAuthGuard` are ready.
+- Endpoints live under `/api/v1/platform` (`auth/login`, `auth/change-password`, `auth/refresh`, `auth/logout`, `tenants…`, `audit`, `security-events`).
 
 ## Login flow (tenant accounts)
 

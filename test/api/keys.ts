@@ -3,22 +3,30 @@
  * `household.memberCount`… Array items are merged, so a key present on any
  * item is listed. Values never matter, only names.
  */
-export function keyPaths(value: unknown): string[] {
+export function keyPaths(value: unknown, opaque: string[] = []): string[] {
   const out = new Set<string>();
-  walk(value, '', out);
+  walk(value, '', out, new Set(opaque));
   return [...out].sort();
 }
 
-function walk(value: unknown, prefix: string, out: Set<string>): void {
+/** Audit `changes` and `metadata` differ per action: their insides are not part of the shape. */
+export const AUDIT_OPAQUE = ['changes', 'metadata'];
+
+function walk(
+  value: unknown,
+  prefix: string,
+  out: Set<string>,
+  opaque: Set<string>,
+): void {
   if (Array.isArray(value)) {
-    for (const item of value) walk(item, `${prefix}[]`, out);
+    for (const item of value) walk(item, `${prefix}[]`, out, opaque);
     return;
   }
   if (value && typeof value === 'object') {
     for (const [k, v] of Object.entries(value)) {
       const path = prefix ? `${prefix}.${k}` : k;
       out.add(path);
-      walk(v, path, out);
+      if (!opaque.has(k)) walk(v, path, out, opaque);
     }
   }
 }

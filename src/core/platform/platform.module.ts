@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common';
+import { PlatformAuditController } from './platform-audit.controller';
+import { PlatformAuthController } from './platform-auth.controller';
+import { TenantsController } from './tenants.controller';
 import { AccountsModule } from '../accounts/accounts.module';
 import { AuthModule } from '../auth/auth.module';
 import { PermissionSyncService } from './permission-sync.service';
@@ -9,12 +12,14 @@ import { PLATFORM_JWT, platformJwtProvider } from './platform-jwt';
 import { PlatformSessionService } from './platform-session.service';
 import { TenantsService } from './tenants.service';
 
-/**
- * The platform owner's side of the system (ADR 0011). No controllers yet:
- * endpoints come with the design; services are exercised by tests.
- */
+/** The platform owner's side of the system (ADR 0011), under `/platform`. */
 @Module({
   imports: [AccountsModule, AuthModule],
+  controllers: [
+    PlatformAuthController,
+    TenantsController,
+    PlatformAuditController,
+  ],
   providers: [
     platformJwtProvider,
     PlatformSessionService,

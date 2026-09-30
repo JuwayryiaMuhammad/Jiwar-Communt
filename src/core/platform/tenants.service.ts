@@ -6,6 +6,7 @@ import { AccountWriter } from '../accounts/account-writer';
 import { diffChanges } from '../audit/diff';
 import { PlatformAuditService } from '../audit/platform-audit.service';
 import { SecurityEventsService } from '../audit/security-events.service';
+import { clampLimit, keysetCursor, type Page } from '../common/cursor';
 import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
 import type { IdentityDocumentInput } from '../common/identity-document';
 import { newId } from '../common/uuid';
@@ -41,6 +42,8 @@ export interface ManagerSummary {
 export interface TenantDetails extends TenantSummary {
   managers: ManagerSummary[];
 }
+
+const TENANT_PAGE = keysetCursor('createdAt');
 
 const MANAGER_FIELDS = {
   id: true,
@@ -121,11 +124,18 @@ export class TenantsService {
     });
   }
 
-  async list(): Promise<TenantSummary[]> {
-    const tenants = await this.globalDb.tenant.findMany({
-      orderBy: { createdAt: 'asc' },
+  /** Newest first, a page at a time. */
+  async list(
+    q: { cursor?: string; limit?: number } = {},
+  ): Promise<Page<TenantSummary>> {
+    const limit = clampLimit(q.limit);
+    const rows = await this.globalDb.tenant.findMany({
+      where: { AND: TENANT_PAGE.after(q.cursor) },
+      orderBy: TENANT_PAGE.orderBy,
+      take: limit + 1,
     });
-    return tenants.map(summary);
+    const page = TENANT_PAGE.toPage(rows, limit);
+    return { items: page.items.map(summary), nextCursor: page.nextCursor };
   }
 
   async get(tenantId: string): Promise<TenantDetails> {

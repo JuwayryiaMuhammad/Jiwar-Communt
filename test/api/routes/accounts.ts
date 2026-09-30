@@ -3,15 +3,6 @@ import type { Row } from '../registry';
 export const ACCOUNTS_ROUTES: Row[] = [
   {
     method: 'GET',
-    path: '/accounts/me',
-    auth: 'tenant',
-    as: 'owner',
-    denied: 'none',
-    foreign: 'none',
-    invalid: 'none',
-  },
-  {
-    method: 'GET',
     path: '/accounts',
     auth: 'tenant',
     as: 'manager',

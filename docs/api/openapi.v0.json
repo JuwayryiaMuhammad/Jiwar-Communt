@@ -1,6 +1,29 @@
 {
   "components": {
     "schemas": {
+      "AccountRefView": {
+        "properties": {
+          "erased": {
+            "description": "Present (true) only on an erased account.",
+            "enum": [
+              true
+            ],
+            "type": "boolean"
+          },
+          "fullName": {
+            "description": "Absent when erased.",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
       "AccountStatus": {
         "enum": [
           "active",
@@ -26,6 +49,123 @@
           "system"
         ],
         "type": "string"
+      },
+      "CapabilitiesView": {
+        "properties": {
+          "activityVisibleToPrimary": {
+            "type": "boolean"
+          },
+          "archiveView": {
+            "type": "boolean"
+          },
+          "bookings": {
+            "type": "boolean"
+          },
+          "closedUnitCard": {
+            "type": "boolean"
+          },
+          "conductGuide": {
+            "type": "boolean"
+          },
+          "contactPrimary": {
+            "type": "boolean"
+          },
+          "documentsUpload": {
+            "type": "boolean"
+          },
+          "emergency": {
+            "type": "boolean"
+          },
+          "endLease": {
+            "type": "boolean"
+          },
+          "financeCapPerOperation": {
+            "description": "Per operation, a decimal string; null = no member cap.",
+            "nullable": true,
+            "type": "string"
+          },
+          "financePay": {
+            "type": "boolean"
+          },
+          "financeView": {
+            "type": "boolean"
+          },
+          "governanceBudget": {
+            "type": "boolean"
+          },
+          "governanceCandidacy": {
+            "type": "boolean"
+          },
+          "governanceVote": {
+            "type": "boolean"
+          },
+          "householdManage": {
+            "type": "boolean"
+          },
+          "householdView": {
+            "type": "boolean"
+          },
+          "landlordTenantFinance": {
+            "type": "boolean"
+          },
+          "ownershipCard": {
+            "type": "boolean"
+          },
+          "removeOccupant": {
+            "type": "boolean"
+          },
+          "tickets": {
+            "type": "boolean"
+          },
+          "transferOwnership": {
+            "type": "boolean"
+          },
+          "unitSecurity": {
+            "type": "boolean"
+          },
+          "unitView": {
+            "type": "boolean"
+          },
+          "visitorsInvite": {
+            "type": "boolean"
+          },
+          "visitorsNotify": {
+            "type": "boolean"
+          },
+          "warrantyClaims": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "emergency",
+          "conductGuide",
+          "contactPrimary",
+          "unitView",
+          "householdView",
+          "householdManage",
+          "visitorsInvite",
+          "visitorsNotify",
+          "bookings",
+          "tickets",
+          "unitSecurity",
+          "financeView",
+          "financePay",
+          "financeCapPerOperation",
+          "landlordTenantFinance",
+          "governanceVote",
+          "governanceBudget",
+          "governanceCandidacy",
+          "ownershipCard",
+          "closedUnitCard",
+          "endLease",
+          "transferOwnership",
+          "removeOccupant",
+          "activityVisibleToPrimary",
+          "archiveView",
+          "warrantyClaims",
+          "documentsUpload"
+        ],
+        "type": "object"
       },
       "ChangePasswordDto": {
         "properties": {
@@ -257,6 +397,57 @@
         ],
         "type": "object"
       },
+      "DelegationScope": {
+        "enum": [
+          "household",
+          "workers"
+        ],
+        "type": "string"
+      },
+      "DeletionConfirmationDto": {
+        "properties": {
+          "confirmation": {
+            "description": "The word the holder types: `حذف` or `DELETE`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "confirmation"
+        ],
+        "type": "object"
+      },
+      "DeletionRequestResponse": {
+        "properties": {
+          "effectiveAt": {
+            "description": "Undo is possible until then.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "cancelled",
+              "completed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "requestedAt",
+          "effectiveAt"
+        ],
+        "type": "object"
+      },
       "HouseholdMemberStatus": {
         "description": "`pending_approval` when the compound approves new members first.",
         "enum": [
@@ -265,6 +456,21 @@
           "removed"
         ],
         "type": "string"
+      },
+      "HouseholdSummaryView": {
+        "properties": {
+          "memberCount": {
+            "type": "number"
+          },
+          "pendingInvites": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "memberCount",
+          "pendingInvites"
+        ],
+        "type": "object"
       },
       "IdDocumentType": {
         "enum": [
@@ -329,6 +535,21 @@
         ],
         "type": "string"
       },
+      "LocaleView": {
+        "properties": {
+          "preferredLocale": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Locale"
+              }
+            ]
+          }
+        },
+        "required": [
+          "preferredLocale"
+        ],
+        "type": "object"
+      },
       "LoginAccountView": {
         "properties": {
           "accountId": {
@@ -388,6 +609,281 @@
         },
         "required": [
           "id"
+        ],
+        "type": "object"
+      },
+      "MeView": {
+        "properties": {
+          "email": {
+            "nullable": true,
+            "type": "string"
+          },
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "idDocumentNumberMasked": {
+            "example": "••••1234",
+            "nullable": true,
+            "type": "string"
+          },
+          "idDocumentType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdDocumentType"
+              }
+            ],
+            "nullable": true
+          },
+          "nationality": {
+            "nullable": true,
+            "type": "string"
+          },
+          "phone": {
+            "nullable": true,
+            "type": "string"
+          },
+          "preferredLocale": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Locale"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountStatus"
+              }
+            ]
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "status",
+          "fullName",
+          "phone",
+          "email",
+          "preferredLocale",
+          "idDocumentType",
+          "idDocumentNumberMasked",
+          "nationality"
+        ],
+        "type": "object"
+      },
+      "MemberGrantResponse": {
+        "properties": {
+          "capPerOperation": {
+            "description": "Finance only: the cap per operation.",
+            "nullable": true,
+            "type": "string"
+          },
+          "grantedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "permission": {
+            "enum": [
+              "visitors_invite",
+              "bookings",
+              "tickets",
+              "finance",
+              "unit_security"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "permission",
+          "capPerOperation",
+          "grantedAt"
+        ],
+        "type": "object"
+      },
+      "MyDelegationView": {
+        "properties": {
+          "counterpart": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "The other side, by name only."
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "delegate",
+              "delegator"
+            ],
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "$ref": "#/components/schemas/DelegationScope"
+            },
+            "type": "array"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "unitCode",
+          "role",
+          "counterpart",
+          "scopes",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "MyDelegationViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MyDelegationView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "MyPermissionsView": {
+        "properties": {
+          "baseline": {
+            "description": "Never revocable.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "grants": {
+            "items": {
+              "$ref": "#/components/schemas/MemberGrantResponse"
+            },
+            "type": "array"
+          },
+          "managedByPrimary": {
+            "description": "What the primary manages, never the member.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "memberId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "memberId",
+          "grants",
+          "baseline",
+          "managedByPrimary"
+        ],
+        "type": "object"
+      },
+      "MyUnitView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "capacity": {
+            "enum": [
+              "owner",
+              "tenant",
+              "member"
+            ],
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "floor": {
+            "nullable": true,
+            "type": "number"
+          },
+          "household": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HouseholdSummaryView"
+              }
+            ],
+            "description": "The primary only."
+          },
+          "isPrimary": {
+            "type": "boolean"
+          },
+          "resides": {
+            "description": "False only for an owner-landlord.",
+            "type": "boolean"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "code",
+          "building",
+          "floor",
+          "capacity",
+          "resides",
+          "isPrimary"
+        ],
+        "type": "object"
+      },
+      "MyUnitViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MyUnitView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -799,6 +1295,17 @@
         ],
         "type": "object"
       },
+      "RevokedView": {
+        "properties": {
+          "revoked": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "revoked"
+        ],
+        "type": "object"
+      },
       "SecurityEventView": {
         "properties": {
           "accountId": {
@@ -898,6 +1405,58 @@
         "required": [
           "loginTicket",
           "accountId"
+        ],
+        "type": "object"
+      },
+      "SessionView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "isCurrent": {
+            "description": "The session of this request.",
+            "type": "boolean"
+          },
+          "lastUsedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "userAgent": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "lastUsedAt",
+          "userAgent",
+          "isCurrent"
+        ],
+        "type": "object"
+      },
+      "SessionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/SessionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -1073,6 +1632,21 @@
         ],
         "type": "object"
       },
+      "UpdateLocaleDto": {
+        "properties": {
+          "locale": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Locale"
+              }
+            ]
+          }
+        },
+        "required": [
+          "locale"
+        ],
+        "type": "object"
+      },
       "VerifyOtpDto": {
         "properties": {
           "code": {
@@ -1157,26 +1731,6 @@
         },
         "responses": {
           "201": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "accounts"
-        ],
-        "x-stability": "draft"
-      }
-    },
-    "/api/v1/accounts/me": {
-      "get": {
-        "operationId": "AccountsController_me",
-        "parameters": [],
-        "responses": {
-          "200": {
             "description": ""
           }
         },
@@ -1508,6 +2062,361 @@
         },
         "tags": [
           "public"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "operationId": "MeController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/delegations": {
+      "get": {
+        "operationId": "MeUnitsController_myDelegations",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyDelegationViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/deletion-request": {
+      "get": {
+        "operationId": "MeController_deletionRequest",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionRequestResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "MeController_requestDeletion",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeletionConfirmationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionRequestResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/deletion-request/cancel": {
+      "post": {
+        "operationId": "MeController_cancelDeletion",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/locale": {
+      "patch": {
+        "operationId": "MeController_locale",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLocaleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocaleView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/sessions": {
+      "get": {
+        "operationId": "MeController_sessions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/sessions/revoke-all": {
+      "post": {
+        "operationId": "MeController_revokeAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/sessions/{id}/revoke": {
+      "post": {
+        "operationId": "MeController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/units": {
+      "get": {
+        "operationId": "MeUnitsController_units",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyUnitViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/units/{unitId}/capabilities": {
+      "get": {
+        "operationId": "MeUnitsController_capabilitiesOn",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilitiesView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/units/{unitId}/permissions": {
+      "get": {
+        "operationId": "MeUnitsController_permissionsOn",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyPermissionsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
         ],
         "x-stability": "draft"
       }

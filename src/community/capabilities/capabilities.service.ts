@@ -25,11 +25,20 @@ export class CapabilitiesService {
     private readonly ctx: RequestContext,
   ) {}
 
-  /** The caller's capabilities on a unit. */
+  /**
+   * The caller's capabilities on a unit — what the apps show or hide. A
+   * unit the caller has no place in (no occupancy, membership or archive)
+   * is "not found", like any unit they cannot see: all-false would confirm
+   * that the id exists.
+   */
   mine(unitId: string): Promise<Capabilities> {
-    return this.tenantTx.withTenantTx((tx) =>
-      this.forAccountOnUnit(tx, this.ctx.accountId, unitId),
-    );
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const subject = await this.subject(tx, this.ctx.accountId, unitId);
+      if (!subject) {
+        throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
+      }
+      return capabilitiesFor(subject, await this.unitState(tx, unitId));
+    });
   }
 
   /**

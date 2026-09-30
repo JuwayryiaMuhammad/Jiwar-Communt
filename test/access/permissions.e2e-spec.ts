@@ -61,11 +61,7 @@ describe('Permissions guard', () => {
       .expect(403);
     expect(denied.body).toMatchObject({ code: 'FORBIDDEN' });
     await h.http().get(`${API}/accounts`).set(as(c.residentToken)).expect(403);
-    await h
-      .http()
-      .get(`${API}/accounts/me`)
-      .set(as(c.residentToken))
-      .expect(200);
+    await h.http().get(`${API}/me`).set(as(c.residentToken)).expect(200);
 
     await h
       .http()
@@ -131,7 +127,7 @@ describe('Permissions guard', () => {
       .expect(200);
     const res = await h
       .http()
-      .get(`${API}/accounts/me`)
+      .get(`${API}/me`)
       .set('Authorization', `Bearer ${c.residentToken}`)
       .expect(401);
     expect(res.body).toMatchObject({ code: 'UNAUTHENTICATED' });
@@ -143,7 +139,7 @@ describe('Permissions guard', () => {
     for (const token of [c.managerToken, c.residentToken]) {
       await h
         .http()
-        .get(`${API}/accounts/me`)
+        .get(`${API}/me`)
         .set('Authorization', `Bearer ${token}`)
         .expect(401);
     }

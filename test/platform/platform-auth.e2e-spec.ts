@@ -369,7 +369,7 @@ describe('Platform super admin', () => {
       expect(res.body).toMatchObject({ code: 'UNAUTHENTICATED' });
       await h
         .http()
-        .get(`${API}/accounts/me`)
+        .get(`${API}/me`)
         .set(bearer(tokens.accessToken))
         .expect(401);
     });

@@ -3,6 +3,7 @@ import type {
   AccountStatus,
   AccountType,
   IdDocumentType,
+  Locale,
 } from '@prisma/client';
 
 export class AccountView {
@@ -19,6 +20,7 @@ export class AccountView {
   phone: string | null;
   email: string | null;
   status: AccountStatus;
+  preferredLocale: Locale;
   createdAt: Date;
 
   static from(account: Account): AccountView {
@@ -33,6 +35,7 @@ export class AccountView {
       phone: account.phone,
       email: account.email,
       status: account.status,
+      preferredLocale: account.preferredLocale,
       createdAt: account.createdAt,
     };
   }

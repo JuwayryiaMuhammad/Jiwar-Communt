@@ -37,7 +37,7 @@ describe('Sessions', () => {
   }
 
   const me = (token: string) =>
-    h.http().get(`${API}/accounts/me`).set('Authorization', `Bearer ${token}`);
+    h.http().get(`${API}/me`).set('Authorization', `Bearer ${token}`);
 
   it('records user agent, IP and last use at login and at every refresh', async () => {
     const r = await resident();

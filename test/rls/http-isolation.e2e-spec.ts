@@ -113,7 +113,7 @@ describe('RLS tenant isolation (HTTP)', () => {
       .expect(404);
     const res = await h
       .http()
-      .get(`${API}/accounts/me`)
+      .get(`${API}/me`)
       .set('Authorization', `Bearer ${residentA}`)
       .expect(200);
     expect(res.body).toMatchObject({ id: accountA.id, status: 'active' });

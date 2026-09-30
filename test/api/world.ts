@@ -26,6 +26,8 @@ export interface Side extends Compound {
   rentedUnitId: string;
   ids: Record<Persona, string>;
   tokens: Record<Persona, string>;
+  /** The session behind each token. */
+  sessions: Record<Persona, string>;
 }
 
 export interface World {
@@ -76,13 +78,26 @@ async function side(
       typ: TYPES[persona],
     });
   }
+  const sessions = {} as Record<Persona, string>;
+  for (const persona of Object.keys(tokens) as Persona[]) {
+    sessions[persona] = sessionOf(tokens[persona]);
+  }
   return {
     ...compound,
     homeUnitId: home.id,
     rentedUnitId: rented.id,
     ids,
     tokens,
+    sessions,
   };
+}
+
+/** The `sid` claim of an access token (not verified: our own token). */
+export function sessionOf(token: string): string {
+  const payload = JSON.parse(
+    Buffer.from(token.split('.')[1], 'base64url').toString('utf8'),
+  ) as { sid: string };
+  return payload.sid;
 }
 
 async function platformAdmins(h: HttpHarness) {

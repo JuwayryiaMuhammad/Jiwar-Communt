@@ -1,6 +1,7 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import {
   $Enums,
+  type AccountStatus,
   type DelegationEndReason,
   type DelegationScope,
   type HouseholdDelegation,
@@ -49,6 +50,19 @@ export interface DelegationView {
   unitId: string;
   delegatorAccountId: string;
   delegateAccountId: string;
+  scopes: DelegationScope[];
+  expiresAt: Date;
+}
+
+/** A live delegation the caller gave or holds (`GET /me/delegations`). */
+export interface MyDelegation {
+  id: string;
+  unitId: string;
+  unitCode: string;
+  /** `delegate`: the caller acts for the primary; `delegator`: the caller is that primary. */
+  role: 'delegate' | 'delegator';
+  /** The other side, by name only. */
+  counterpart: { id: string; fullName: string | null; status: AccountStatus };
   scopes: DelegationScope[];
   expiresAt: Date;
 }
@@ -162,6 +176,45 @@ export class DelegationsService implements OnModuleInit {
       return row;
     });
     return view(created);
+  }
+
+  /**
+   * The caller's live delegations, held and given, oldest first. Expired
+   * ones are left out: expiry is checked at use time, never by a job.
+   */
+  async mine(): Promise<MyDelegation[]> {
+    const accountId = this.ctx.accountId;
+    const counterpart = { select: { id: true, fullName: true, status: true } };
+    const rows = await this.tenantTx.withTenantTx((tx) =>
+      tx.householdDelegation.findMany({
+        where: {
+          revokedAt: null,
+          expiresAt: { gt: new Date() },
+          OR: [
+            { delegateAccountId: accountId },
+            { delegatorAccountId: accountId },
+          ],
+        },
+        include: {
+          unit: { select: { code: true } },
+          delegator: counterpart,
+          delegate: counterpart,
+        },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      }),
+    );
+    return rows.map((d) => {
+      const role = d.delegateAccountId === accountId ? 'delegate' : 'delegator';
+      return {
+        id: d.id,
+        unitId: d.unitId,
+        unitCode: d.unit.code,
+        role,
+        counterpart: role === 'delegate' ? d.delegator : d.delegate,
+        scopes: d.scopes,
+        expiresAt: d.expiresAt,
+      };
+    });
   }
 
   async revoke(delegationId: string): Promise<void> {

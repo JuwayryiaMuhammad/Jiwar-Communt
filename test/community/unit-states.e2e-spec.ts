@@ -506,13 +506,15 @@ describe('Unit states', () => {
           .map((m) => m.recipientAccountId)
           .sort(),
       ).toEqual([hm.primary.id, tenant.id].sort());
-      const familyCaps = await x.as(
-        hm.c,
-        { id: hm.family.accountId, type: 'family' },
-        () => caps.mine(hm.unitId),
-      );
-      expect(familyCaps.householdView).toBe(false);
-      expect(familyCaps.visitorsInvite).toBe(false);
+      // The old family keeps nothing: no place in the unit at all, so the
+      // unit is not found (API v0: never an all-false record).
+      expect(
+        await codeOf(
+          x.as(hm.c, { id: hm.family.accountId, type: 'family' }, () =>
+            caps.mine(hm.unitId),
+          ),
+        ),
+      ).toBe('UNIT_NOT_FOUND');
       expect(await x.openReviews(hm.c, hm.unitId)).toEqual([]);
     });
   });

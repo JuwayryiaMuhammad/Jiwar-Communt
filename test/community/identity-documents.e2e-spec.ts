@@ -118,7 +118,7 @@ describe('Identity documents', () => {
         .expect(200);
       const me = await h
         .http()
-        .get(`${API}/accounts/me`)
+        .get(`${API}/me`)
         .set(
           'Authorization',
           `Bearer ${(tokens.body as { accessToken: string }).accessToken}`,

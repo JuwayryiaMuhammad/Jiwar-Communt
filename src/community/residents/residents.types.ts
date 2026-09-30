@@ -64,7 +64,14 @@ export interface ResidentView {
 }
 
 export interface MyUnit {
-  occupancyId: string;
+  /** Null for a household member (a family account). */
+  occupancyId: string | null;
+  /** Set for a household member only. */
+  memberId: string | null;
+  /** The caller's place in the unit. */
+  capacity: OccupancyType | 'member';
+  /** Lives there: false only for an owner-landlord (ADR 0020). */
+  resides: boolean;
   /** The caller is this unit's primary resident (ADR 0016). */
   isPrimary: boolean;
   /** For the primary only: the household at a glance. */
@@ -73,7 +80,8 @@ export interface MyUnit {
   code: string;
   building: string | null;
   floor: number | null;
-  occupancyType: OccupancyType;
+  /** Null for a household member. */
+  occupancyType: OccupancyType | null;
   startedAt: Date;
 }
 

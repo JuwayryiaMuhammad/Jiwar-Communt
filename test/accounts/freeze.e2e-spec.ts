@@ -71,7 +71,7 @@ describe('Frozen accounts', () => {
     // The access token dies on the next request.
     await h
       .http()
-      .get(`${API}/accounts/me`)
+      .get(`${API}/me`)
       .set('Authorization', `Bearer ${tokens.accessToken}`)
       .expect(401);
     const account = await x.asManager(c, () =>

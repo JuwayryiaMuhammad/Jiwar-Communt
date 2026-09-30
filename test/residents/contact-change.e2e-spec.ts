@@ -105,7 +105,7 @@ describe('Contact change with two accounts on one phone', () => {
       .expect(200);
     const me = await h
       .http()
-      .get(`${API}/accounts/me`)
+      .get(`${API}/me`)
       .set(
         'Authorization',
         `Bearer ${(staffTokens.body as { accessToken: string }).accessToken}`,

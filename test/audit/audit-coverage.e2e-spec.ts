@@ -794,7 +794,7 @@ describe('Audit coverage', () => {
         const tokens = await loginViaOtp(h, r.email, r.id);
         await h
           .http()
-          .get(`${API}/accounts/me`)
+          .get(`${API}/me`)
           .set('Authorization', `Bearer ${tokens.accessToken}`)
           .expect(200);
         expect(spy).toHaveBeenCalled();

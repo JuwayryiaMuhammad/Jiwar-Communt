@@ -12,12 +12,6 @@ import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 export class AccountsController {
   constructor(private readonly accounts: AccountsService) {}
 
-  /** The caller's own account. */
-  @Get('me')
-  me(): Promise<AccountView> {
-    return this.accounts.me();
-  }
-
   @RequirePermissions('accounts.read')
   @Get()
   list(): Promise<AccountView[]> {

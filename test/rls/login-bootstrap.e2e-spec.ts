@@ -265,7 +265,7 @@ describe('Login bootstrap', () => {
 
       const meA = await h
         .http()
-        .get(`${API}/accounts/me`)
+        .get(`${API}/me`)
         .set('Authorization', `Bearer ${tokensA.accessToken}`)
         .expect(200);
       expect(meA.body).toMatchObject({ id: inA.id });

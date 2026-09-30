@@ -316,6 +316,53 @@ describe('Delegation', () => {
   });
 
   // --------------------------------------------------------------------------
+  describe('my delegations', () => {
+    it("lists live ones on both sides, by the other side's name, never expired or revoked", async () => {
+      const hm = await home();
+      const d = await delegate(hm, ['workers']);
+
+      const held = await asFamily(hm, hm.member.id, () => delegations.mine());
+      expect(held).toEqual([
+        {
+          id: d.id,
+          unitId: hm.unitId,
+          unitCode: expect.any(String) as string,
+          role: 'delegate',
+          counterpart: {
+            id: hm.primary.id,
+            fullName: hm.primary.fullName,
+            status: 'active',
+          },
+          scopes: ['workers'],
+          expiresAt: d.expiresAt,
+        },
+      ]);
+      const given = await asPrimary(hm, () => delegations.mine());
+      expect(given.map((g) => [g.id, g.role, g.counterpart.id])).toEqual([
+        [d.id, 'delegator', hm.member.id],
+      ]);
+
+      // Expired: gone from the list at once, although not ended yet.
+      await x.asManager(hm.c, () =>
+        x.prisma.tenant.householdDelegation.update({
+          where: { id: d.id },
+          data: {
+            createdAt: new Date(Date.now() - 2 * 86_400_000),
+            expiresAt: new Date(Date.now() - 1000),
+          },
+        }),
+      );
+      expect(await asPrimary(hm, () => delegations.mine())).toEqual([]);
+
+      const renewed = await delegate(hm);
+      await asPrimary(hm, () => delegations.revoke(renewed.id));
+      expect(
+        await asFamily(hm, hm.member.id, () => delegations.mine()),
+      ).toEqual([]);
+    });
+  });
+
+  // --------------------------------------------------------------------------
   describe('ends — never silently', () => {
     async function endReason(hm: Home, id: string) {
       return (

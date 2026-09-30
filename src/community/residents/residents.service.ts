@@ -1131,14 +1131,16 @@ export class ResidentsService {
   }
 
   /**
-   * The current resident's active units, each with its occupancy type and
-   * whether they are its primary resident; the primary also gets the
-   * household counts. Unit fields stay as they are until the design.
+   * The caller's active units: a resident's occupancies (with the occupancy
+   * type and whether they are the primary; the primary also gets the
+   * household counts), then a family account's active memberships. Unit
+   * fields stay as they are until the design.
    */
   async myUnits(): Promise<MyUnit[]> {
     return this.tenantTx.withTenantTx(async (tx) => {
+      const accountId = this.ctx.accountId;
       const rows = await tx.unitOccupancy.findMany({
-        where: { accountId: this.ctx.accountId, status: 'active' },
+        where: { accountId, status: 'active' },
         include: { unit: true },
         orderBy: { startedAt: 'asc' },
       });
@@ -1146,6 +1148,9 @@ export class ResidentsService {
       for (const o of rows) {
         units.push({
           occupancyId: o.id,
+          memberId: null,
+          capacity: o.occupancyType,
+          resides: o.resides,
           isPrimary: o.isPrimary,
           ...(o.isPrimary
             ? { household: await this.households.summary(tx, o.unitId) }
@@ -1156,6 +1161,26 @@ export class ResidentsService {
           floor: o.unit.floor,
           occupancyType: o.occupancyType,
           startedAt: o.startedAt,
+        });
+      }
+      const memberships = await tx.householdMember.findMany({
+        where: { accountId, status: 'active' },
+        include: { unit: true },
+        orderBy: { createdAt: 'asc' },
+      });
+      for (const m of memberships) {
+        units.push({
+          occupancyId: null,
+          memberId: m.id,
+          capacity: 'member',
+          resides: true,
+          isPrimary: false,
+          unitId: m.unitId,
+          code: m.unit.code,
+          building: m.unit.building,
+          floor: m.unit.floor,
+          occupancyType: null,
+          startedAt: m.createdAt,
         });
       }
       return units;

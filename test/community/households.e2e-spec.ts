@@ -488,7 +488,7 @@ describe('Households', () => {
       expect(account.status).toBe('inactive');
       await h
         .http()
-        .get(`${API}/accounts/me`)
+        .get(`${API}/me`)
         .set('Authorization', `Bearer ${tokens.accessToken}`)
         .expect(401);
 

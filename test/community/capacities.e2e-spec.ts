@@ -3,6 +3,7 @@ import { CapabilitiesService } from '../../src/community/capabilities/capabiliti
 import { HouseholdsService } from '../../src/community/households/households.service';
 import { WorkersService } from '../../src/community/workers/workers.service';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
+import { newId } from '../../src/core/common/uuid';
 import { PlatformModule } from '../../src/core/platform/platform.module';
 import { auditReaders } from '../setup/audit';
 import { communityHelpers, type Compound } from '../setup/community';
@@ -48,6 +49,20 @@ describe('Capacities', () => {
     const tenant = await x.resident(c, [u.id], 'tenant');
     return { c, unitId: u.id, landlordId: created.id, tenant };
   }
+
+  it('a unit the caller has no place in is not found, never all-false', async () => {
+    const c = await x.compound('Capacity Court');
+    const mineUnit = await x.unit(c);
+    const other = await x.unit(c);
+    const r = await x.resident(c, [mineUnit.id]);
+    expect(await codeOf(mine(c, r.id, other.id))).toBe('UNIT_NOT_FOUND');
+    expect(await codeOf(mine(c, r.id, newId()))).toBe('UNIT_NOT_FOUND');
+    // Managers hold no capacity on units.
+    expect(await codeOf(x.asManager(c, () => caps.mine(mineUnit.id)))).toBe(
+      'UNIT_NOT_FOUND',
+    );
+    expect(await mine(c, r.id, mineUnit.id)).toMatchObject({ unitView: true });
+  });
 
   it('a landlord is never primary: the first RESIDING occupant is', async () => {
     const { c, unitId, landlordId, tenant } = await landlordThenTenant();

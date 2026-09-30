@@ -1,6 +1,7 @@
 import type { Row } from '../registry';
 import { ACCOUNTS_ROUTES } from './accounts';
 import { EXISTING_ROUTES } from './existing';
+import { ME_ROUTES } from './me';
 import { PLATFORM_ROUTES } from './platform';
 import { PUBLIC_ROUTES } from './public';
 import { UNITS_ROUTES } from './units';
@@ -12,4 +13,5 @@ export const ROUTES: Row[] = [
   ...ACCOUNTS_ROUTES,
   ...PLATFORM_ROUTES,
   ...PUBLIC_ROUTES,
+  ...ME_ROUTES,
 ];

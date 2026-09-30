@@ -38,7 +38,7 @@ describe('Self-service', () => {
   const me = (tokens: Tokens) =>
     h
       .http()
-      .get(`${API}/accounts/me`)
+      .get(`${API}/me`)
       .set('Authorization', `Bearer ${tokens.accessToken}`);
 
   it('the preferred language changes and is audited; an unknown one is refused', async () => {
@@ -195,5 +195,39 @@ describe('Self-service', () => {
       ].sort(),
     );
     for (const m of theirs) expect(m).not.toHaveProperty('household');
+  });
+
+  it("a family account's units are its active memberships", async () => {
+    const c = await x.compound();
+    const u = await x.unit(c);
+    const primary = await x.resident(c, [u.id]);
+    const family = await x.joinFamily(c, u.id, primary);
+    const mine = await x.as(c, { id: family.id, type: 'family' }, () =>
+      x.residents.myUnits(),
+    );
+    expect(mine).toEqual([
+      expect.objectContaining({
+        unitId: u.id,
+        occupancyId: null,
+        memberId: family.memberId,
+        capacity: 'member',
+        occupancyType: null,
+        isPrimary: false,
+        resides: true,
+      }),
+    ]);
+    expect(mine[0]).not.toHaveProperty('household');
+
+    const own = await x.as(c, { id: primary.id, type: 'resident' }, () =>
+      x.residents.myUnits(),
+    );
+    expect(own).toEqual([
+      expect.objectContaining({
+        capacity: 'owner',
+        memberId: null,
+        resides: true,
+        isPrimary: true,
+      }),
+    ]);
   });
 });

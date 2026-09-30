@@ -5,7 +5,7 @@ import type {
   MemberPermission,
 } from '@prisma/client';
 
-// Service-level shapes (no endpoints yet; HTTP shapes come with the design).
+// Service-level shapes; HTTP responses map them through views/ (ADR 0025).
 
 export interface NewInvite extends IdentityDocumentInput {
   fullName: string;

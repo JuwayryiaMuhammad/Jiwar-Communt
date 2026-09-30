@@ -158,7 +158,7 @@ The e2e run wipes `jiwar_test`, migrates it as the migrator, runs `access:sync` 
 | `test/community/*` | National ID and passports (accounts, household, workers with attestation); primary resident (incl. concurrency); households; delegation; self-service; domestic workers; one audit scenario per Phase 2 action plus a secrets scan |
 | `test/community/*` (Phase 2.2) | Capacities and capabilities; death, separation, change of primary, end of household, transfer; member permissions and the finance cap (incl. the DB refusing finance to a minor); deferred actions; minors reaching 18 across time zones; compliance cases and wage obligations; card incidents; self-registration incl. the **enumeration test** (same body and the same models touched for five inputs); undeliverable notices; one audit scenario per Phase 2.2 action |
 | `test/accounts/*` | Frozen accounts (the phone off the account and login, recovery, never reopened for the number's new holder); deletion, legal hold, erasure (tombstone, stripped mail and invites, audit untouched, hold vs erase race), overdue erasures |
-| `test/api/*` | API v0 (ADR 0025): a registry row per endpoint drives the matrix (no token, the other token kind, a missing permission, another compound's id, invalid input, a malformed id); one happy path per endpoint with its exact response keys; Swagger lists exactly the registry, every operation a draft, and the committed OpenAPI file is current |
+| `test/api/*` | API v0 (ADR 0025): a registry row per endpoint drives the matrix (no token, the other token kind, a missing permission, another compound's id, invalid input, a malformed id); one happy path per area with its exact response keys; Swagger lists exactly the registry, every operation a draft, and the committed OpenAPI file is current; enumeration over HTTP (byte-identical public answers); a PII leak scan of every GET as five personas; capabilities vs endpoints; no-store on every secret; erased accounts everywhere; secrets never in the logs |
 
 ## Error contract (ADR 0013)
 
@@ -219,7 +219,7 @@ Three append-only tables:
   - A sensitive key in `metadata` throws.
   - A value that merely looks personal is replaced by `"[redacted]"` with a warning; tests throw instead.
 - **Security events** store only the identifier HMAC, never an email or phone.
-- **Reading:** `AuditQueryService` (current compound, permission `audit.read`), `PlatformAuditQueryService` and `SecurityEventsQueryService` page with opaque `(occurred_at, id)` cursors. Endpoints come with the design.
+- **Reading:** `AuditQueryService` (current compound, permission `audit.read`), `PlatformAuditQueryService` and `SecurityEventsQueryService` page with opaque `(occurred_at, id)` cursors, served at `GET /audit` (compound; no IP or user agent) and `GET /platform/audit`, `GET /platform/security-events`.
 - **Changing a login phone/email** (`ResidentsService.updateContact`) re-keys the login lookup and invalidates every pending OTP code for that account in the same transaction, so a code already sent to the old address stops working.
 
 ## Platform super admin (ADR 0011)
@@ -270,7 +270,7 @@ src/
     tenant-settings/  per-compound settings (household approval, size limit)
   community/     the community domain; other domains import only its index.ts
     units/       units, scoped by ResourceAccess; the unit row lock
-    residents/   residents, occupancies and capacities, the primary resident, unit states, self-registration (ADR 0020, 0021, 0024)
+    residents/   residents, occupancies and capacities, the primary resident, unit states, self-registration (ADR 0020, 0021, 0024); /me units
     households/  household members, invites and acceptance, delegation, member permissions, majority (ADR 0016, 0021)
     workers/     domestic workers, engagements, access codes, notices, compliance, card incidents (ADR 0017, 0022)
     capabilities/  capabilitiesFor: what someone may do on a unit, read by later domains (ADR 0020)
@@ -279,6 +279,7 @@ prisma/        schema, migrations (RLS SQL inside), seed
 docker/        postgres init (roles)
 test/          rls/, access/, platform/, residents/, audit/, db/, auth/, settings/, community/, mail/ suites + setup/
 docs/decisions ADRs
+docs/api       the OpenAPI contract (openapi.v0.json) and v0-notes.md
 ```
 
 Rules the code enforces:

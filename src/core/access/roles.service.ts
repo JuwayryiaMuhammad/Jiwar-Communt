@@ -8,7 +8,7 @@ import { PrismaService } from '../database/prisma.service';
 import { TenantTx } from '../database/tenant-tx.service';
 import { ACCESS_CATALOG, type AccessCatalog } from './access-catalog';
 
-/** Internal view; HTTP shapes come with the design (Phase 1a has no new endpoints). */
+/** Service-level shape; HTTP responses map it through views/ (ADR 0025). */
 export interface RoleWithPermissions {
   id: string;
   key: string;

@@ -20,8 +20,8 @@ export const MAX_HOUSEHOLD_MEMBERS = { min: 1, max: 100 } as const;
 
 /**
  * A compound's own settings (ADR 0016): one row per compound, created with
- * it. Read and changed by its managers (`settings.manage` on future
- * endpoints); domains read it inside their transactions with `inTx`.
+ * it. Read and changed by its managers (`settings.manage`, GET/PATCH
+ * /settings); domains read it inside their transactions with `inTx`.
  */
 @Injectable()
 export class TenantSettingsService {

@@ -21,6 +21,7 @@ import { AuditModule } from './core/audit/audit.module';
 import { AuthModule } from './core/auth/auth.module';
 import { RequestContextModule } from './core/common/cls/request-context.module';
 import { AllExceptionsFilter } from './core/common/filters/all-exceptions.filter';
+import { httpLogOptions } from './core/common/logging/http-log-options';
 import { JwtAuthGuard } from './core/common/guards/jwt-auth.guard';
 import { validateEnv, type Env } from './core/config/env.schema';
 import { DatabaseModule } from './core/database/database.module';
@@ -46,24 +47,10 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
       useFactory: (config: ConfigService<Env, true>) => {
         const env = config.get('NODE_ENV', { infer: true });
         return {
-          pinoHttp: {
+          pinoHttp: httpLogOptions({
             level: config.get('LOG_LEVEL', { infer: true }),
-            genReqId: (req, res) => {
-              const incoming = req.headers['x-request-id'];
-              const id =
-                typeof incoming === 'string' && incoming.length <= 128
-                  ? incoming
-                  : randomUUID();
-              res.setHeader('x-request-id', id);
-              return id;
-            },
-            redact: ['req.headers.authorization', 'req.headers.cookie'],
-            autoLogging: env !== 'test',
-            transport:
-              env === 'development'
-                ? { target: 'pino-pretty', options: { singleLine: true } }
-                : undefined,
-          },
+            env,
+          }),
         };
       },
     }),

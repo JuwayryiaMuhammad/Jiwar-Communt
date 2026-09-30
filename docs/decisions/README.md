@@ -26,3 +26,4 @@
 | [0022](0022-worker-compliance-and-card-incidents.md) | Worker compliance cases, wage obligations, card incidents | Accepted |
 | [0023](0023-frozen-accounts-and-erasure.md) | Frozen accounts ("not me") and account erasure | Accepted |
 | [0024](0024-self-registration.md) | Resident self-registration: a request first | Accepted |
+| [0025](0025-http-api-v0.md) | HTTP API v0: a draft over the services | Accepted |

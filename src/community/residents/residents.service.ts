@@ -65,7 +65,7 @@ type ResidentRow = Prisma.AccountGetPayload<{
 
 /**
  * Residents and their units (ADR 0012). The manager side (create, list,
- * occupancies) is guarded by `residents.*` on future endpoints; the `my*`
+ * occupancies) is guarded by `residents.*` on its endpoints; the `my*`
  * methods serve the resident himself. The tenant always comes from the
  * request context.
  */

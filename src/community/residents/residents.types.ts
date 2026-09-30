@@ -11,8 +11,7 @@ import type {
   UnitType,
 } from '@prisma/client';
 
-// Service-level shapes (Phase 1a has no resident endpoints; HTTP shapes come
-// with the design).
+// Service-level shapes; HTTP responses map them through views/ (ADR 0025).
 
 export interface OccupancyInput {
   unitId: string;

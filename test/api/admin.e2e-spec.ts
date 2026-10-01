@@ -7,11 +7,13 @@ import { buildWorld, type World } from './world';
 
 const ROLE = ['id', 'isSystem', 'key', 'kind', 'name', 'permissions'];
 const SETTINGS = [
+  'emergencyPhone',
   'familyJoinRequiresApproval',
   'gateRequestTimeoutSeconds',
   'maxActiveVisitorPasses',
   'maxHouseholdMembers',
   'timezone',
+  'visitorDirections',
 ];
 
 describe('API v0 — admin', () => {
@@ -92,6 +94,31 @@ describe('API v0 — admin', () => {
     expect(err(bad).fields).toEqual([
       { field: 'timezone', code: 'INVALID_VALUE' },
     ]);
+    // What visitors see (ADR 0030): over HTTP, null clears.
+    const visitors = await call(w, 'PATCH', '/settings', {
+      token: manager(),
+      body: { visitorDirections: 'Gate 2', emergencyPhone: '+20 100 000 0456' },
+    }).expect(200);
+    expect(visitors.body).toMatchObject({
+      visitorDirections: 'Gate 2',
+      emergencyPhone: '+201000000456',
+    });
+    const wrong = await call(w, 'PATCH', '/settings', {
+      token: manager(),
+      body: { visitorDirections: 5, emergencyPhone: 'call me' },
+    });
+    expect(err(wrong).fields).toEqual([
+      { field: 'visitorDirections', code: 'INVALID_TYPE' },
+      { field: 'emergencyPhone', code: 'INVALID_PHONE' },
+    ]);
+    const cleared = await call(w, 'PATCH', '/settings', {
+      token: manager(),
+      body: { visitorDirections: null, emergencyPhone: null },
+    }).expect(200);
+    expect(cleared.body).toMatchObject({
+      visitorDirections: null,
+      emergencyPhone: null,
+    });
   });
 
   it('the audit log, filtered, without IPs', async () => {

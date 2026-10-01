@@ -26,6 +26,18 @@ export class SettingsView {
       'Seconds a household has to answer the gate before its instruction applies.',
   })
   gateRequestTimeoutSeconds: number;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'Shown to visitors on the public pass page (ADR 0030).',
+  })
+  visitorDirections: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'E.164; on the visitor page and the worker card.',
+  })
+  emergencyPhone: string | null;
 
   static from(s: TenantSettingsView): SettingsView {
     return {
@@ -34,6 +46,8 @@ export class SettingsView {
       timezone: s.timezone,
       maxActiveVisitorPasses: s.maxActiveVisitorPasses,
       gateRequestTimeoutSeconds: s.gateRequestTimeoutSeconds,
+      visitorDirections: s.visitorDirections,
+      emergencyPhone: s.emergencyPhone,
     };
   }
 }

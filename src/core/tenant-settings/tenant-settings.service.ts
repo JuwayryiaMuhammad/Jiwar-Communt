@@ -3,6 +3,7 @@ import type { TenantSettings } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { diffChanges } from '../audit/diff';
 import { RequestContext } from '../common/cls/request-context';
+import { normalizePhone } from '../auth/identifier';
 import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
 import { PrismaService } from '../database/prisma.service';
 import { TenantTx, type TenantTxClient } from '../database/tenant-tx.service';
@@ -16,13 +17,19 @@ export interface TenantSettingsView {
   maxActiveVisitorPasses: number;
   /** Seconds a household has to answer the gate before its instruction applies. */
   gateRequestTimeoutSeconds: number;
+  /** Free text for visitors, on the public page (ADR 0030). */
+  visitorDirections: string | null;
+  /** E.164; on the visitor page and the worker card (ADR 0030). */
+  emergencyPhone: string | null;
 }
 
+/** Absent keeps a value; `null` clears the two optional texts. */
 export type TenantSettingsUpdate = Partial<TenantSettingsView>;
 
 export const MAX_HOUSEHOLD_MEMBERS = { min: 1, max: 100 } as const;
 export const MAX_ACTIVE_VISITOR_PASSES = { min: 1, max: 500 } as const;
 export const GATE_REQUEST_TIMEOUT_SECONDS = { min: 30, max: 1800 } as const;
+export const VISITOR_DIRECTIONS_LENGTH = { min: 1, max: 2000 } as const;
 
 /** An integer in range, else the field error the DTO would give. */
 function checkRange(
@@ -114,6 +121,8 @@ export class TenantSettingsService {
         },
       );
     }
+    const directions = checkDirections(input.visitorDirections);
+    const phone = checkPhone(input.emergencyPhone);
     const tenantId = this.ctx.tenantId;
     return this.tenantTx.withTenantTx(async (tx) => {
       const before = await this.inTx(tx, tenantId);
@@ -125,6 +134,8 @@ export class TenantSettingsService {
           timezone: input.timezone,
           maxActiveVisitorPasses: input.maxActiveVisitorPasses,
           gateRequestTimeoutSeconds: input.gateRequestTimeoutSeconds,
+          visitorDirections: directions,
+          emergencyPhone: phone,
         },
       });
       const changes = diffChanges(
@@ -151,7 +162,50 @@ function view(row: TenantSettings): TenantSettingsView {
     timezone: row.timezone,
     maxActiveVisitorPasses: row.maxActiveVisitorPasses,
     gateRequestTimeoutSeconds: row.gateRequestTimeoutSeconds,
+    visitorDirections: row.visitorDirections,
+    emergencyPhone: row.emergencyPhone,
   };
+}
+
+/** Trimmed, 1–2000 characters; `null` clears, absent keeps. */
+function checkDirections(value: string | null | undefined) {
+  if (value === undefined || value === null) return value;
+  const text = value.trim();
+  if (
+    text.length < VISITOR_DIRECTIONS_LENGTH.min ||
+    text.length > VISITOR_DIRECTIONS_LENGTH.max
+  )
+    throw appError.badRequest(
+      ErrorCode.VALIDATION_FAILED,
+      'Invalid visitor directions',
+      {
+        fields: [
+          {
+            field: 'visitorDirections',
+            code: FieldErrorCode.INVALID_LENGTH,
+            params: { ...VISITOR_DIRECTIONS_LENGTH },
+          },
+        ],
+      },
+    );
+  return text;
+}
+
+/** Stored in E.164; `null` clears, absent keeps. */
+function checkPhone(value: string | null | undefined) {
+  if (value === undefined || value === null) return value;
+  const e164 = normalizePhone(value);
+  if (!e164)
+    throw appError.badRequest(
+      ErrorCode.VALIDATION_FAILED,
+      'Invalid emergency phone',
+      {
+        fields: [
+          { field: 'emergencyPhone', code: FieldErrorCode.INVALID_PHONE },
+        ],
+      },
+    );
+  return e164;
 }
 
 /** An IANA zone the runtime knows (plus UTC, which some lists omit). */

@@ -26,6 +26,8 @@ describe('Tenant settings', () => {
       timezone: 'Africa/Cairo',
       maxActiveVisitorPasses: 50,
       gateRequestTimeoutSeconds: 180,
+      visitorDirections: null,
+      emergencyPhone: null,
     });
   });
 
@@ -85,6 +87,8 @@ describe('Tenant settings', () => {
       timezone: 'Africa/Cairo',
       maxActiveVisitorPasses: 50,
       gateRequestTimeoutSeconds: 180,
+      visitorDirections: null,
+      emergencyPhone: null,
     });
     expect(await x.asManager(other, () => settings.get())).toEqual({
       familyJoinRequiresApproval: false,
@@ -92,6 +96,8 @@ describe('Tenant settings', () => {
       timezone: 'Africa/Cairo',
       maxActiveVisitorPasses: 50,
       gateRequestTimeoutSeconds: 180,
+      visitorDirections: null,
+      emergencyPhone: null,
     });
 
     const [entry] = await auditReaders(h).tenant(c.tenantId, {
@@ -109,6 +115,74 @@ describe('Tenant settings', () => {
         action: 'tenant.settings_changed',
       }),
     ).toHaveLength(1);
+  });
+
+  it('visitor directions and the emergency phone: set, normalized, cleared, audited without values (ADR 0030)', async () => {
+    const c = await x.compound();
+    const text = '  Gate 2, then the second left. Show the QR.  ';
+    expect(
+      await x.asManager(c, () =>
+        settings.update({
+          visitorDirections: text,
+          emergencyPhone: '01000000123',
+        }),
+      ),
+    ).toMatchObject({
+      visitorDirections: text.trim(),
+      emergencyPhone: '+201000000123',
+    });
+    // Absent keeps them.
+    expect(
+      await x.asManager(c, () => settings.update({ maxHouseholdMembers: 5 })),
+    ).toMatchObject({
+      visitorDirections: text.trim(),
+      emergencyPhone: '+201000000123',
+    });
+    for (const [input, field, code, params] of [
+      [
+        { visitorDirections: '   ' },
+        'visitorDirections',
+        'INVALID_LENGTH',
+        { min: 1, max: 2000 },
+      ],
+      [
+        { visitorDirections: 'x'.repeat(2001) },
+        'visitorDirections',
+        'INVALID_LENGTH',
+        { min: 1, max: 2000 },
+      ],
+      [{ emergencyPhone: '12' }, 'emergencyPhone', 'INVALID_PHONE', undefined],
+    ] as const) {
+      await expect(
+        x.asManager(c, () => settings.update(input)),
+      ).rejects.toMatchObject({
+        response: {
+          fields: [params ? { field, code, params } : { field, code }],
+        },
+      });
+    }
+    expect(
+      await x.asManager(c, () =>
+        settings.update({ visitorDirections: null, emergencyPhone: null }),
+      ),
+    ).toMatchObject({ visitorDirections: null, emergencyPhone: null });
+
+    const entries = await auditReaders(h).tenant(c.tenantId, {
+      action: 'tenant.settings_changed',
+    });
+    expect(entries.map((e) => e.changes)).toEqual([
+      {
+        visitorDirections: { changed: true },
+        emergencyPhone: { changed: true },
+      },
+      { maxHouseholdMembers: { from: 10, to: 5 } },
+      {
+        visitorDirections: { changed: true },
+        emergencyPhone: { changed: true },
+      },
+    ]);
+    expect(JSON.stringify(entries)).not.toContain('Gate 2');
+    expect(JSON.stringify(entries)).not.toContain('1000000123');
   });
 
   it.each([0, 101, 2.5])('rejects a household limit of %p', async (value) => {

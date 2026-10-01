@@ -4,14 +4,17 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Length,
   Max,
   Min,
 } from 'class-validator';
+import { IsPhone } from '../../common/validation/is-phone';
 import { withParams } from '../../common/validation/validation-errors';
 import {
   GATE_REQUEST_TIMEOUT_SECONDS,
   MAX_ACTIVE_VISITOR_PASSES,
   MAX_HOUSEHOLD_MEMBERS,
+  VISITOR_DIRECTIONS_LENGTH,
 } from '../tenant-settings.service';
 
 export class UpdateSettingsDto {
@@ -75,4 +78,33 @@ export class UpdateSettingsDto {
     withParams({ ...GATE_REQUEST_TIMEOUT_SECONDS }),
   )
   gateRequestTimeoutSeconds?: number;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    maxLength: VISITOR_DIRECTIONS_LENGTH.max,
+    description:
+      'What the compound tells its visitors on the public pass page (ADR 0030). `null` clears it.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(
+    VISITOR_DIRECTIONS_LENGTH.min,
+    VISITOR_DIRECTIONS_LENGTH.max,
+    withParams({ ...VISITOR_DIRECTIONS_LENGTH }),
+  )
+  visitorDirections?: string | null;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    example: '+201000000000',
+    description:
+      'Stored in E.164; on the visitor page and the worker card. `null` clears it.',
+  })
+  @IsOptional()
+  @IsPhone()
+  emergencyPhone?: string | null;
 }

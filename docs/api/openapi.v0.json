@@ -5047,6 +5047,11 @@
       },
       "SettingsView": {
         "properties": {
+          "emergencyPhone": {
+            "description": "E.164; on the visitor page and the worker card.",
+            "nullable": true,
+            "type": "string"
+          },
           "familyJoinRequiresApproval": {
             "type": "boolean"
           },
@@ -5064,6 +5069,11 @@
           "timezone": {
             "description": "IANA; worker schedules are read in it.",
             "type": "string"
+          },
+          "visitorDirections": {
+            "description": "Shown to visitors on the public pass page (ADR 0030).",
+            "nullable": true,
+            "type": "string"
           }
         },
         "required": [
@@ -5071,7 +5081,9 @@
           "maxHouseholdMembers",
           "timezone",
           "maxActiveVisitorPasses",
-          "gateRequestTimeoutSeconds"
+          "gateRequestTimeoutSeconds",
+          "visitorDirections",
+          "emergencyPhone"
         ],
         "type": "object"
       },
@@ -5672,6 +5684,12 @@
       },
       "UpdateSettingsDto": {
         "properties": {
+          "emergencyPhone": {
+            "description": "Stored in E.164; on the visitor page and the worker card. `null` clears it.",
+            "example": "+201000000000",
+            "nullable": true,
+            "type": "string"
+          },
           "familyJoinRequiresApproval": {
             "type": "boolean"
           },
@@ -5695,6 +5713,12 @@
           "timezone": {
             "description": "IANA time zone.",
             "example": "Africa/Cairo",
+            "type": "string"
+          },
+          "visitorDirections": {
+            "description": "What the compound tells its visitors on the public pass page (ADR 0030). `null` clears it.",
+            "maxLength": 2000,
+            "nullable": true,
             "type": "string"
           }
         },

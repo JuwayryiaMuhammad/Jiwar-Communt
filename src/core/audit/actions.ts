@@ -92,7 +92,12 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'worker_engagement',
   },
-  'tenant.settings_changed': { log: 'tenant', target: 'tenant' },
+  // What the compound tells visitors (ADR 0030): changed, never the text.
+  'tenant.settings_changed': {
+    log: 'tenant',
+    target: 'tenant',
+    sensitive: ['visitorDirections', 'emergencyPhone'],
+  },
   // household (ADR 0016)
   'household.invite_created': { log: 'tenant', target: 'household_invite' },
   'household.invite_revoked': { log: 'tenant', target: 'household_invite' },

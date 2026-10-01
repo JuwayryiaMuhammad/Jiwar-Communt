@@ -1,5 +1,7 @@
 # Jiwar Community Backend
 
+[![CI](https://github.com/JuwayryiaMuhammad/Jiwar-Communt/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/JuwayryiaMuhammad/Jiwar-Communt/actions/workflows/ci.yml)
+
 Backend for Jiwar, a multi-tenant platform for managing residential compounds. **One tenant = one compound.** The platform owner creates compounds and their managers; managers create residents and staff; people log in with their email or phone and a one-time code sent by email.
 
 - **Phase 0** proved tenant isolation (Postgres row-level security + Prisma + request context) through accounts, units and the login flow.
@@ -135,6 +137,20 @@ pnpm test:e2e     # test/**/*.e2e-spec.ts against real Postgres, Redis and Mailp
 pnpm lint
 pnpm build
 pnpm openapi:export  # after any API change; the docs suite checks the file
+```
+
+### Reproduce CI locally
+
+CI (`.github/workflows/ci.yml`, ADR 0026) runs on every pull request and push to `main`, against the same images, with `.env.example` as its `.env` and no secrets. The same steps on a fresh stack:
+
+```bash
+docker compose down -v && docker compose up -d   # fresh volume: init.sql runs
+cp .env.example .env                             # only on a scratch checkout: never over your own .env
+pnpm install --frozen-lockfile
+pnpm db:migrate && pnpm access:sync
+pnpm lint:check                                  # ESLint without --fix
+pnpm build && pnpm test:unit && pnpm test:e2e
+pnpm openapi:export && git diff --exit-code docs/api/openapi.v0.json
 ```
 
 The e2e run wipes `jiwar_test`, migrates it as the migrator, runs `access:sync` like a deploy, then connects only as `jiwar_app`. The immutable audit tables are cleared over the superuser connection. `OTP_FIXED_CODE` and `SUPERADMIN_*` are removed for the run.

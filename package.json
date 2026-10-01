@@ -13,6 +13,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,test,prisma}/**/*.ts\" --fix",
+    "lint:check": "eslint \"{src,test,prisma}/**/*.ts\"",
     "test": "pnpm test:unit && pnpm test:e2e",
     "test:unit": "jest",
     "test:watch": "jest --watch",

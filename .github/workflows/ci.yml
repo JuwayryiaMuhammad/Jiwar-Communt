@@ -1,0 +1,97 @@
+# Continuous integration (ADR 0026). The same steps as a local run, against
+# the same images as docker-compose.yml. Every value below is a test value
+# from .env.example; the workflow needs no secret.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_dev
+          POSTGRES_DB: postgres
+        ports:
+          - 5435:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6381:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      mailpit:
+        image: axllent/mailpit
+        ports:
+          - 1025:1025
+          - 8025:8025
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Service containers start before the checkout, so init.sql cannot be
+      # mounted; it runs inside the container instead, where psql 17 reads
+      # the role passwords with \getenv exactly as docker-compose does.
+      - name: Create database roles (docker/postgres/init.sql)
+        run: >-
+          docker exec -i
+          -e JIWAR_MIGRATOR_PASSWORD=jiwar_migrator_dev
+          -e JIWAR_APP_PASSWORD=jiwar_app_dev
+          ${{ job.services.postgres.id }}
+          psql -U postgres -v ON_ERROR_STOP=1 -f - < docker/postgres/init.sql
+
+      - name: Environment (test values only)
+        run: cp .env.example .env
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install (runs prisma generate)
+        run: pnpm install --frozen-lockfile
+
+      # The deploy order from the README, against the dev database.
+      - name: Migrate as the migrator
+        run: pnpm db:migrate
+      - name: Permission sync
+        run: pnpm access:sync
+
+      - name: Lint (no --fix)
+        run: pnpm lint:check
+      - name: Build
+        run: pnpm build
+      - name: Unit tests
+        run: pnpm test:unit
+      - name: E2E tests
+        run: pnpm test:e2e
+
+      - name: OpenAPI contract is current
+        run: |
+          pnpm openapi:export
+          git diff --exit-code docs/api/openapi.v0.json

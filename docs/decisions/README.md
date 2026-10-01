@@ -27,3 +27,4 @@
 | [0023](0023-frozen-accounts-and-erasure.md) | Frozen accounts ("not me") and account erasure | Accepted |
 | [0024](0024-self-registration.md) | Resident self-registration: a request first | Accepted |
 | [0025](0025-http-api-v0.md) | HTTP API v0: a draft over the services | Accepted |
+| [0026](0026-ci.md) | Continuous integration on real Postgres, Redis and Mailpit | Accepted |

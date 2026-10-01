@@ -33,3 +33,4 @@ Phases 1a to 2.2 built every feature as a service with service-level tests, and 
 - Reshaping an endpoint for a screen touches a controller, a view, a registry row and the contract file, never a rule.
 - Draft means unstable: clients must not rely on v0 shapes beyond the Figma prototypes.
 - Paged service methods now return `Page<T>`; in-process callers read `.items`.
+- **Phase 4 areas** (ADR 0027, 0028): `notifications` (`/me/notifications`), `gates` (management), `gate` (the guard: shifts, verify, entries, who is inside, approval requests), `visitors` (passes and gate instructions), `gate-requests` (the household's answers) and worker attendance under `workers`. The registry gained a `guard` persona; the PII scan reads every GET as six personas, the guard included (no resident or visitor name, ever); the capabilities suite probes `visitorsInvite` with a real pass. Gate writes honour `Idempotency-Key`; verify does not (read-only).

@@ -2,6 +2,7 @@ import type { Response } from 'supertest';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { call, err } from './request';
 import { minorBody } from './routes/household';
+import { passBody } from './routes/visitors';
 import { buildWorld, type World } from './world';
 
 type Flags = Record<string, boolean | string | null>;
@@ -17,7 +18,7 @@ interface Probe {
  * /me/units/:unitId/capabilities says is what the endpoints do. For each
  * persona, every flag that has an endpoint is probed: allowed → 2xx,
  * disallowed → 403/404. Flags whose domains have no endpoint yet (finance,
- * governance, visitors, bookings…) are asserted on the flag only.
+ * governance, bookings…) are asserted on the flag only.
  */
 describe('API v0 — capabilities drive access', () => {
   let h: HttpHarness;
@@ -49,6 +50,15 @@ describe('API v0 — capabilities drive access', () => {
         call(w, 'POST', `/units/${u}/household/minors`, {
           token,
           body: minorBody(),
+        }),
+    },
+    {
+      // The gate (ADR 0028): a visitor pass is visitorsInvite, exactly.
+      flag: 'visitorsInvite',
+      run: (token, u) =>
+        call(w, 'POST', `/units/${u}/visitor-passes`, {
+          token,
+          body: passBody(),
         }),
     },
   ];
@@ -90,6 +100,7 @@ describe('API v0 — capabilities drive access', () => {
       householdManage: false,
       landlordTenantFinance: true,
       governanceVote: true,
+      visitorsInvite: false,
     });
   });
 
@@ -101,6 +112,7 @@ describe('API v0 — capabilities drive access', () => {
       ownershipCard: true,
       transferOwnership: false,
       governanceVote: false,
+      visitorsInvite: true,
     });
   });
 
@@ -112,6 +124,7 @@ describe('API v0 — capabilities drive access', () => {
       financeView: false,
       financePay: false,
       bookings: true,
+      visitorsInvite: true,
     });
   });
 

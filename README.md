@@ -22,6 +22,7 @@ Backend for Jiwar, a multi-tenant platform for managing residential compounds. *
 
 - **Phase 2.2** adds occupancy capacities and capabilities, unit states and member permissions, worker compliance, frozen accounts and erasure, and self-registration.
 - **Phase 3** exposes all of it over HTTP as **API v0, a draft** (below).
+- **Phase 4** adds CI (ADR 0026), the in-app notifications inbox (ADR 0027), idempotent writes, and the **gate** domain (ADR 0028): guards and shifts, visitor passes, verify and the append-only gate log, approvals with standing instructions, and workers at the gate with their attendance.
 
 Phases 1a to 2.2 were services tested at the service level; Phase 3 puts thin controllers in front of them. Architecture decisions live in [`docs/decisions/`](docs/decisions/README.md).
 
@@ -176,7 +177,11 @@ The e2e run wipes `jiwar_test`, migrates it as the migrator, runs `access:sync` 
 | `test/community/*` | National ID and passports (accounts, household, workers with attestation); primary resident (incl. concurrency); households; delegation; self-service; domestic workers; one audit scenario per Phase 2 action plus a secrets scan |
 | `test/community/*` (Phase 2.2) | Capacities and capabilities; death, separation, change of primary, end of household, transfer; member permissions and the finance cap (incl. the DB refusing finance to a minor); deferred actions; minors reaching 18 across time zones; compliance cases and wage obligations; card incidents; self-registration incl. the **enumeration test** (same body and the same models touched for five inputs); undeliverable notices; one audit scenario per Phase 2.2 action |
 | `test/accounts/*` | Frozen accounts (the phone off the account and login, recovery, never reopened for the number's new holder); deletion, legal hold, erasure (tombstone, stripped mail and invites, audit untouched, hold vs erase race), overdue erasures |
-| `test/api/*` | API v0 (ADR 0025): a registry row per endpoint drives the matrix (no token, the other token kind, a missing permission, another compound's id, invalid input, a malformed id); one happy path per area with its exact response keys; Swagger lists exactly the registry, every operation a draft, and the committed OpenAPI file is current; enumeration over HTTP (byte-identical public answers); a PII leak scan of every GET as five personas; capabilities vs endpoints; no-store on every secret; erased accounts everywhere; secrets never in the logs |
+| `test/api/*` | API v0 (ADR 0025): a registry row per endpoint drives the matrix (no token, the other token kind, a missing permission, another compound's id, invalid input, a malformed id); one happy path per area with its exact response keys; Swagger lists exactly the registry, every operation a draft, and the committed OpenAPI file is current; enumeration over HTTP (byte-identical public answers, verify included); a PII leak scan of every GET as six personas (the guard included); capabilities vs endpoints; no-store on every secret; erased accounts everywhere; secrets never in the logs |
+| `test/api/*` (Phase 4) | Notifications (paging, counts, own rows only, rollback, retention, erasure, scrubbing); gates and shifts (one open shift, idempotent start/end, deactivation); visitor passes (who may invite, the primary's view, cap, cancel, idempotent replay with a fresh code, host leaving, retention); verify, entries and inside (every refusal, unknown and foreign codes identical, overnight schedules across time zones, backdating, client ids, rate limit, unconfirmed exits); approvals (recipients, first decision wins, deny until entry, every standing instruction on timeout, withdraw, workers off schedule); worker notices and attendance |
+| `test/idempotency/*` | Idempotency-Key on a test-only probe route: replay, concurrent duplicates, payload mismatch, failed actions, lost bodies, a route that forgets to claim, purge |
+| `test/gate/*` | `gate_entries` immutable for the app and the owner; one audit scenario per Phase 4 action; the gate's races under `Promise.all` (approve vs deny, deny vs entry, two guards on one pass, the pass cap, two shift starts) |
+| `test/rls/gate-isolation` | Every Phase 4 tenant table: cross-tenant reads, updates, deletes and inserts refused; composite keys (except the append-only log, which has none) |
 
 ## Error contract (ADR 0013)
 
@@ -208,7 +213,7 @@ Four layers, each enforced in exactly one place:
 2. **Account and compound status:** checked on **every request** by `PermissionsGuard`. A deactivated account or suspended compound is rejected immediately, not when the 15-minute token expires.
 3. **Permissions (ADR 0010):**
    - The catalog and default roles are defined in code (`src/core/access/permissions.ts`, `default-roles.ts`).
-   - Each compound has its own copy of the `manager`, `resident` and `family_member` roles (one default role per account type); a manager can edit his compound's role permissions (`RolesService`). `access:sync` also creates default roles a compound does not have yet.
+   - Each compound has its own copy of the `manager`, `resident`, `family_member` and `guard` (staff, ADR 0028) roles (one default role per account type; a staff account may name another staff role with `roleKey`); a manager can edit his compound's role permissions (`RolesService`). `access:sync` also creates default roles a compound does not have yet.
    - Routes declare `@RequirePermissions('units.read')`. Permissions are not in the JWT; they are cached in Redis under `perm:{tenant}:{role}:{version}`, and every edit bumps the version, so changes apply on the next request.
    - The manager role can never lose `roles.manage` / `residents.manage`.
    - To remove or rename a permission, list it in `RETIRED_PERMISSIONS` / `RENAMED_PERMISSIONS`; `access:sync` never infers removal.
@@ -284,8 +289,12 @@ src/
     redis/       Redis client, rate limiter
     health/      readiness (db, redis, tenant-setting leak canary)
     mail/        the pooled SMTP transport, the bilingual layout, the template registry and the outbox (ADR 0019)
-    sweep/       the in-app sweep; domains register idempotent tasks (ADR 0021)
+    sweep/       the in-app sweep; domains register idempotent tasks (ADR 0021); forEachTenant walks the compounds
+    notifications/  the in-app inbox: a catalog of kinds, Notifier, /me/notifications (ADR 0027)
+    idempotency/ Idempotency-Key claimed in the action's transaction (ADR 0028)
     tenant-settings/  per-compound settings (household approval, size limit)
+  gate/          the gate domain (ADR 0028): gates, shifts, visitor passes, verify, entries, approvals, attendance;
+                 reads community only through CommunityGatePort (src/community/index.ts)
   community/     the community domain; other domains import only its index.ts
     units/       units, scoped by ResourceAccess; the unit row lock
     residents/   residents, occupancies and capacities, the primary resident, unit states, self-registration (ADR 0020, 0021, 0024); /me units
@@ -303,7 +312,7 @@ docs/api       the OpenAPI contract (openapi.v0.json) and v0-notes.md
 Rules the code enforces:
 - **Import boundaries** (ADR 0015): `src/core/` never imports a domain; a domain imports another one only through its `index.ts` (ESLint, `eslint.boundaries.cjs`, proven by a unit test).
 - **Tenant data** goes through `prisma.tenant.<model>` (single queries) or `withTenantTx` (multi-statement work and raw SQL). The raw Prisma client cannot be imported outside `src/core/database/` (ESLint).
-- **`runInTenantUnsafe`** takes the tenant from the caller, not the request. It is allowed only in `src/core/auth/`, `src/core/platform/`, `prisma/seed.ts` and the files named in `eslint.config.mjs`: invite acceptance and registration (before anyone is logged in), and the sweep tasks that walk every compound (ESLint).
+- **`runInTenantUnsafe`** takes the tenant from the caller, not the request. It is allowed only in `src/core/auth/`, `src/core/platform/`, `prisma/seed.ts` and the files named in `eslint.config.mjs`: invite acceptance and registration (before anyone is logged in), and the sweep tasks that walk every compound (ESLint). New sweep tasks use `SweepRunner.forEachTenant`, the one allowed helper.
 - **Core reaches domains only through hooks** (`AccountLifecycle`: deactivation, freeze, reactivation, erasure; `SweepRunner`; `EmailTemplates`), never imports.
 - **Reasons** for every rejection, revocation, freeze and suspension are `{ code, text }`: the code from a closed list goes into the audit trail, the text only to the record and the notice (`core/common/reasons.ts`).
 - **Never silent:** a notice with nobody to receive it is recorded as undeliverable (`Outbox.recordUndeliverable`), never skipped.

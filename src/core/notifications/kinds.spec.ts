@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   checkNotification,
   NOTIFICATION_KINDS,
@@ -50,5 +52,24 @@ describe('notification catalog', () => {
         unitCode: { nested: true } as unknown as string,
       }),
     ).toThrow(/scalar/);
+  });
+
+  it('every kind is written somewhere in src/ (like the audit catalog)', () => {
+    const root = join(__dirname, '..', '..');
+    const files = (dir: string): string[] =>
+      readdirSync(dir).flatMap((name) => {
+        const path = join(dir, name);
+        if (statSync(path).isDirectory()) return files(path);
+        return name.endsWith('.ts') &&
+          !name.endsWith('.spec.ts') &&
+          path !== join(__dirname, 'kinds.ts')
+          ? [readFileSync(path, 'utf8')]
+          : [];
+      });
+    const source = files(root).join('\n');
+    const silent = Object.keys(kinds).filter(
+      (kind) => !source.includes(`'${kind}'`),
+    );
+    expect(silent).toEqual([]);
   });
 });

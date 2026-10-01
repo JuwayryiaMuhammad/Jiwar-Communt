@@ -22,6 +22,8 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 interface Someone {
   id: string;
+  /** Checked for the guard, who sees no resident's name (ADR 0028). */
+  fullName?: string;
   phone: string;
   email: string;
   doc: string;
@@ -84,6 +86,7 @@ describe('API v0 — PII leak scan', () => {
       );
       return {
         id: created.id,
+        fullName: p.fullName,
         phone: p.phone,
         email: p.email,
         doc: p.idDocumentNumber,
@@ -114,6 +117,7 @@ describe('API v0 — PII leak scan', () => {
     );
     const family: Someone = {
       id: joined.accountId,
+      fullName: joined.fullName,
       phone: fp.phone,
       email: fp.email,
       doc: fp.idDocumentNumber,
@@ -200,6 +204,7 @@ describe('API v0 — PII leak scan', () => {
 
     const worker: Someone = {
       id: '',
+      fullName: wp.fullName,
       phone: wp.phone,
       email: '',
       doc: wp.idDocumentNumber,
@@ -309,6 +314,8 @@ describe('API v0 — PII leak scan', () => {
         isManager: false,
       },
       platform: { token: w.platform.token, self: '', isManager: false },
+      // A guard on duty at A's gate: the gate's own views only.
+      guard: { token: a.tokens.guard, self: a.ids.guard, isManager: false },
     };
 
     const leaks: string[] = [];
@@ -335,6 +342,13 @@ describe('API v0 — PII leak scan', () => {
         for (const s of secrets)
           if (found(s)) leaks.push(`${name} ${r.path}: secret ${s}`);
         const others = people.filter((p) => p.id !== persona.self);
+        if (name === 'guard') {
+          for (const p of others)
+            if (p.fullName && found(p.fullName))
+              leaks.push(`${name} ${r.path}: a resident's name`);
+          if (found('PII-VISITOR-name') || found('PII-ASKED-name'))
+            leaks.push(`${name} ${r.path}: a visitor's name`);
+        }
         if (!persona.isManager) {
           for (const p of others) {
             if (found(p.phone)) leaks.push(`${name} ${r.path}: phone`);
@@ -375,6 +389,11 @@ describe('API v0 — PII leak scan', () => {
     expect(seen.get('resident /units/{unitId}/visitor-passes')).toContain(
       visit.id,
     );
+
+    // The guard reads the gate's views (and nothing else).
+    expect(seen.get('guard /gate/shifts/current')).toContain(a.gateName);
+    expect(seen.get('guard /gate/approval-requests/{id}')).toContain(asked.id);
+    expect(seen.get('guard /residents')).toContain('FORBIDDEN');
 
     // Positive controls: the scan reads real data, where it is allowed.
     expect(seen.get('manager /residents/{id}')).toContain(primary.birthDate);

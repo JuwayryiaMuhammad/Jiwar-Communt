@@ -1,0 +1,111 @@
+# Staging stack on the server (deploy/README.md). It ships inside the image
+# and the deploy script extracts it, so an infrastructure change goes out with
+# the code that needs it. APP_IMAGE is set by the deploy script.
+#
+# Nothing listens outside 127.0.0.1: nginx on the host is the only way in.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    # POSTGRES_PASSWORD and the two role passwords read by init.sql.
+    env_file: db.env
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    mem_limit: 512m
+    logging: *logging
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    mem_limit: 128m
+    logging: *logging
+
+  # Presigned URLs are signed for the public host, so nginx forwards the
+  # bucket path here (deploy/nginx.conf).
+  minio:
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    restart: unless-stopped
+    command: ['minio', 'server', '/data']
+    env_file: minio.env
+    ports:
+      - '127.0.0.1:9005:9000'
+    volumes:
+      - minio-data:/data
+    mem_limit: 384m
+    logging: *logging
+
+  # Staging: no email leaves the server. UI through an SSH tunnel to 8125.
+  mailpit:
+    image: axllent/mailpit
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:8125:8025'
+    mem_limit: 64m
+    logging: *logging
+
+  app:
+    image: ${APP_IMAGE:?set by the deploy script}
+    restart: unless-stopped
+    env_file: app.env
+    ports:
+      - '127.0.0.1:3100:3100'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3100/api/v1/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    # main.ts spends at most 11s shutting down.
+    stop_grace_period: 15s
+    mem_limit: 768m
+    logging: *logging
+
+  # One-off: `prisma migrate deploy` as the table owner. Only this service
+  # sees MIGRATOR_DATABASE_URL; the app never does.
+  migrate:
+    image: ${APP_IMAGE:?set by the deploy script}
+    profiles: [tasks]
+    env_file: [app.env, migrator.env]
+    command: ['node_modules/.bin/prisma', 'migrate', 'deploy']
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging: *logging
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:

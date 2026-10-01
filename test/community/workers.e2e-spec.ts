@@ -461,7 +461,8 @@ describe('Domestic workers', () => {
       await x.asManager(hm.c, () =>
         x.prisma.tenant.workerEngagement.update({
           where: { id: second.engagementId },
-          data: { accessCodeHash: firstHash },
+          // The trigger insists a code moves with a token (ADR 0030).
+          data: { accessCodeHash: firstHash, qrTokenHash: 'e'.repeat(64) },
         }),
       );
 

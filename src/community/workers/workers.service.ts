@@ -1,4 +1,3 @@
-import { randomInt } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import {
   $Enums,
@@ -15,6 +14,7 @@ import { ClsService } from 'nestjs-cls';
 import { StaffRecipients } from '../../core/access/staff-recipients';
 import { AuditService } from '../../core/audit/audit.service';
 import { diffChanges } from '../../core/audit/diff';
+import { AccessTokens } from '../../core/auth/access-token';
 import { IdentifierHasher, normalizePhone } from '../../core/auth/identifier';
 import type { AppClsStore } from '../../core/common/cls/app-cls';
 import { RequestContext } from '../../core/common/cls/request-context';
@@ -38,10 +38,12 @@ import {
   type ReasonInput,
 } from '../../core/common/reasons';
 import { newId } from '../../core/common/uuid';
+import { GlobalDbService } from '../../core/database/global-db.service';
 import {
   TenantTx,
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
+import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { COMMUNITY_NOTICES } from '../notices/community-notices';
 import { CommunityNotifier } from '../notices/community-notifier';
 import { lockUnits } from '../units/unit-lock';
@@ -80,10 +82,38 @@ export interface ReviewOptions {
   birthDate?: Date | string;
 }
 
-/** An access code, shown once; only its HMAC is stored. */
+/**
+ * What the worker's printed card shows (ADR 0030), issued once with a new
+ * code: the token is not stored, so a lost card is a reissue. Labels are
+ * the client's, in the worker's language.
+ */
+export interface WorkerCard {
+  qrPayload: string;
+  code: string;
+  workerName: string;
+  capacity: WorkerCapacity;
+  unitCode: string;
+  compoundName: string;
+  schedule: WorkerSchedule;
+  validUntil: Date | null;
+  /** The compound's emergency phone, when it set one. */
+  securityPhone: string | null;
+  preferredLanguage: string;
+}
+
+/** An access code and its card, shown once; only HMACs are stored. */
 export interface IssuedCode {
   engagementId: string;
   accessCode: string;
+  card: WorkerCard;
+}
+
+/** A new code: its token, the code derived from it, their HMACs. */
+interface NewCode {
+  token: string;
+  code: string;
+  hash: string;
+  qrHash: string;
 }
 
 export interface CardIncidentView {
@@ -171,7 +201,6 @@ const OPEN: WorkerEngagementStatus[] = [
   'active',
   'suspended',
 ];
-const CODE_ATTEMPTS = 10;
 
 const ENGAGEMENT_PAGE = keysetCursor('createdAt');
 const INCIDENT_PAGE = keysetCursor('reportedAt');
@@ -186,6 +215,9 @@ const CASE_PAGE = keysetCursor('openedAt');
  *   only while its engagement is `active` — it has no expiry of its own.
  *   Suspension (and a ban) keeps it but it stops working; resume brings the
  *   same code back. End, temporary expiry, reissue and rejection destroy it.
+ *   It is derived from a random token (ADR 0030) whose HMAC is the card's
+ *   QR; the two always change and die together, and the card's data is
+ *   returned once with every new code.
  * - Every suspension, resumption and end writes a worker notice in the same
  *   transaction: it is never silent.
  * - A temporary engagement past `valid_until` reads as ended; the first
@@ -204,6 +236,9 @@ export class WorkersService {
     private readonly audit: AuditService,
     private readonly notifier: CommunityNotifier,
     private readonly staff: StaffRecipients,
+    private readonly tokens: AccessTokens,
+    private readonly globalDb: GlobalDbService,
+    private readonly settings: TenantSettingsService,
   ) {}
 
   // --------------------------------------------------------------------------
@@ -499,9 +534,7 @@ export class WorkersService {
           status: 'active',
           statusReason: null,
           suspendedByManagement: false,
-          ...(replacement
-            ? { accessCodeHash: replacement.hash, codeIssuedAt: new Date() }
-            : {}),
+          ...(replacement ? codeFields(replacement) : {}),
         },
       });
       await this.notice(tx, e, 'engagement_resumed', {});
@@ -515,9 +548,7 @@ export class WorkersService {
           codeReplaced: replacement !== null,
         },
       );
-      return replacement
-        ? { engagementId: e.id, accessCode: replacement.code }
-        : null;
+      return replacement ? this.issued(tx, e, replacement) : null;
     });
   }
 
@@ -731,7 +762,7 @@ export class WorkersService {
     const code = await this.newCode(tx, e.tenantId);
     await tx.workerEngagement.update({
       where: { id: e.id },
-      data: { accessCodeHash: code.hash, codeIssuedAt: new Date() },
+      data: codeFields(code),
     });
     await this.notice(tx, e, 'code_reissued', {});
     await this.audit.record(tx, {
@@ -768,7 +799,7 @@ export class WorkersService {
         },
       );
     }
-    return { engagementId: e.id, accessCode: code.code };
+    return this.issued(tx, e, code);
   }
 
   /**
@@ -878,17 +909,12 @@ export class WorkersService {
       const code = await this.newCode(tx, e.tenantId);
       await tx.workerEngagement.update({
         where: { id: e.id },
-        data: {
-          status: 'active',
-          accessCodeHash: code.hash,
-          codeIssuedAt: new Date(),
-          reviewedById,
-        },
+        data: { status: 'active', ...codeFields(code), reviewedById },
       });
       await this.record(tx, e, 'worker.engagement_reviewed', 'active', null, {
         decision,
       });
-      return { engagementId: e.id, accessCode: code.code };
+      return this.issued(tx, e, code);
     });
     if (outcome && 'underage' in outcome) throw underage();
     return outcome;
@@ -1311,6 +1337,7 @@ export class WorkersService {
         status: 'ended',
         statusReason: reason,
         accessCodeHash: null,
+        qrTokenHash: null,
         suspendedByManagement: false,
       },
     });
@@ -1443,18 +1470,63 @@ export class WorkersService {
     });
   }
 
-  /** 8 digits, unique among the compound's active engagements. */
-  private async newCode(tx: TenantTxClient, tenantId: string) {
-    for (let i = 0; i < CODE_ATTEMPTS; i++) {
-      const code = randomInt(0, 100_000_000).toString().padStart(8, '0');
-      const hash = this.hasher.hashWorkerCode(tenantId, code);
-      const taken = await tx.workerEngagement.count({
-        where: { accessCodeHash: hash, status: 'active' },
-      });
-      if (!taken) return { code, hash };
-    }
-    // 10 collisions in a row among 10^8 codes means something is wrong.
-    throw new Error('Could not find a free access code');
+  /**
+   * A new token whose 8-digit code is free among the compound's active
+   * engagements. A taken code is a new token (ADR 0030).
+   */
+  private async newCode(
+    tx: TenantTxClient,
+    tenantId: string,
+  ): Promise<NewCode> {
+    const hashOf = (code: string) => this.hasher.hashWorkerCode(tenantId, code);
+    const t = await this.tokens.issue(
+      tenantId,
+      8,
+      async (code) =>
+        (await tx.workerEngagement.count({
+          where: { accessCodeHash: hashOf(code), status: 'active' },
+        })) > 0,
+    );
+    return { ...t, hash: hashOf(t.code) };
+  }
+
+  /** The code and the card's data, once (ADR 0030). */
+  private async issued(
+    tx: TenantTxClient,
+    e: WorkerEngagement,
+    code: NewCode,
+  ): Promise<IssuedCode> {
+    const [worker, unit, tenant, settings] = await Promise.all([
+      tx.domesticWorker.findUniqueOrThrow({
+        where: { id: e.workerId },
+        select: { fullName: true, preferredLanguage: true },
+      }),
+      tx.unit.findUniqueOrThrow({
+        where: { id: e.unitId },
+        select: { code: true },
+      }),
+      this.globalDb.in(tx).tenant.findUniqueOrThrow({
+        where: { id: e.tenantId },
+        select: { name: true },
+      }),
+      this.settings.inTx(tx, e.tenantId),
+    ]);
+    return {
+      engagementId: e.id,
+      accessCode: code.code,
+      card: {
+        qrPayload: this.tokens.qrPayload(code.token),
+        code: code.code,
+        workerName: worker.fullName,
+        capacity: e.capacity,
+        unitCode: unit.code,
+        compoundName: tenant.name,
+        schedule: e.schedule as unknown as WorkerSchedule,
+        validUntil: e.validUntil,
+        securityPhone: settings.emergencyPhone,
+        preferredLanguage: worker.preferredLanguage,
+      },
+    };
   }
 }
 
@@ -1579,4 +1651,13 @@ function incidentNotFound() {
 
 function workerNotFound() {
   return appError.notFound(ErrorCode.WORKER_NOT_FOUND, 'Worker not found');
+}
+
+/** A new code and its token, written together (the trigger insists). */
+function codeFields(code: NewCode) {
+  return {
+    accessCodeHash: code.hash,
+    qrTokenHash: code.qrHash,
+    codeIssuedAt: new Date(),
+  };
 }

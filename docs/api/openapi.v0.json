@@ -8,6 +8,16 @@
             "nullable": true,
             "type": "string"
           },
+          "card": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkerCardView"
+              }
+            ],
+            "description": "With every new code, once; null when no code was issued.",
+            "nullable": true,
+            "type": "object"
+          },
           "engagementId": {
             "format": "uuid",
             "type": "string"
@@ -15,7 +25,8 @@
         },
         "required": [
           "engagementId",
-          "accessCode"
+          "accessCode",
+          "card"
         ],
         "type": "object"
       },
@@ -549,6 +560,14 @@
             "description": "8 digits, shown once.",
             "type": "string"
           },
+          "card": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkerCardView"
+              }
+            ],
+            "description": "Shown once."
+          },
           "engagementId": {
             "format": "uuid",
             "type": "string"
@@ -561,7 +580,8 @@
         "required": [
           "incidentId",
           "engagementId",
-          "accessCode"
+          "accessCode",
+          "card"
         ],
         "type": "object"
       },
@@ -5932,6 +5952,64 @@
           "temporary"
         ],
         "type": "string"
+      },
+      "WorkerCardView": {
+        "properties": {
+          "capacity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkerCapacity"
+              }
+            ]
+          },
+          "code": {
+            "description": "8 digits.",
+            "type": "string"
+          },
+          "compoundName": {
+            "type": "string"
+          },
+          "preferredLanguage": {
+            "example": "ar",
+            "type": "string"
+          },
+          "qrPayload": {
+            "example": "JWR1.q3Jz…",
+            "type": "string"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/WorkerScheduleDto"
+          },
+          "securityPhone": {
+            "description": "The compound's emergency phone (E.164), when set.",
+            "nullable": true,
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "validUntil": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "workerName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "qrPayload",
+          "code",
+          "workerName",
+          "capacity",
+          "unitCode",
+          "compoundName",
+          "schedule",
+          "validUntil",
+          "securityPhone",
+          "preferredLanguage"
+        ],
+        "type": "object"
       },
       "WorkerEngagementStatus": {
         "enum": [

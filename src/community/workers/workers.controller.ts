@@ -38,6 +38,7 @@ import {
 import {
   AccessCodeView,
   CardIncidentCreatedView,
+  WorkerCardView,
   CardIncidentResponse,
   CaseCreatedView,
   ComplianceCaseResponse,
@@ -150,6 +151,7 @@ export class WorkersController {
       incidentId: issued.incidentId,
       engagementId: issued.engagementId,
       accessCode: issued.accessCode,
+      card: WorkerCardView.from(issued.card),
     };
   }
 

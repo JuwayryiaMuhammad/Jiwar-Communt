@@ -19,6 +19,7 @@ import type {
   IssuedCode,
   Registered,
   ReviewEngagement,
+  WorkerCard,
 } from '../workers.service';
 
 const schedule = (s: WorkerSchedule): WorkerScheduleDto => ({
@@ -86,6 +87,52 @@ export class RegisteredView {
 }
 
 /** An access code, shown once (no-store); null when none was issued. */
+/**
+ * The printed card's data (ADR 0030), issued once with a new code; there
+ * is no GET for it. Labels are the client's, in `preferredLanguage`.
+ */
+export class WorkerCardView {
+  @ApiProperty({ type: String, example: 'JWR1.q3Jz…' })
+  qrPayload: string;
+  @ApiProperty({ type: String, description: '8 digits.' })
+  code: string;
+  @ApiProperty({ type: String })
+  workerName: string;
+  @ApiProperty({ enum: WorkerCapacity, enumName: 'WorkerCapacity' })
+  capacity: WorkerCapacity;
+  @ApiProperty({ type: String })
+  unitCode: string;
+  @ApiProperty({ type: String })
+  compoundName: string;
+  @ApiProperty({ type: WorkerScheduleDto })
+  schedule: WorkerScheduleDto;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  validUntil: Date | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: "The compound's emergency phone (E.164), when set.",
+  })
+  securityPhone: string | null;
+  @ApiProperty({ type: String, example: 'ar' })
+  preferredLanguage: string;
+
+  static from(c: WorkerCard): WorkerCardView {
+    return {
+      qrPayload: c.qrPayload,
+      code: c.code,
+      workerName: c.workerName,
+      capacity: c.capacity,
+      unitCode: c.unitCode,
+      compoundName: c.compoundName,
+      schedule: schedule(c.schedule),
+      validUntil: c.validUntil,
+      securityPhone: c.securityPhone,
+      preferredLanguage: c.preferredLanguage,
+    };
+  }
+}
+
 export class AccessCodeView {
   @ApiProperty({ type: String, format: 'uuid' })
   engagementId: string;
@@ -95,9 +142,19 @@ export class AccessCodeView {
     description: '8 digits, shown once.',
   })
   accessCode: string | null;
+  @ApiProperty({
+    type: WorkerCardView,
+    nullable: true,
+    description: 'With every new code, once; null when no code was issued.',
+  })
+  card: WorkerCardView | null;
 
   static from(engagementId: string, issued: IssuedCode | null): AccessCodeView {
-    return { engagementId, accessCode: issued?.accessCode ?? null };
+    return {
+      engagementId,
+      accessCode: issued?.accessCode ?? null,
+      card: issued ? WorkerCardView.from(issued.card) : null,
+    };
   }
 }
 
@@ -290,4 +347,6 @@ export class CardIncidentCreatedView {
   engagementId: string;
   @ApiProperty({ type: String, description: '8 digits, shown once.' })
   accessCode: string;
+  @ApiProperty({ type: WorkerCardView, description: 'Shown once.' })
+  card: WorkerCardView;
 }

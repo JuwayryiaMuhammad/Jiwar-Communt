@@ -11,6 +11,6 @@ import { WorkersService } from './workers.service';
   controllers: [WorkersController],
   imports: [AuthModule, HouseholdsModule, NoticesModule],
   providers: [WorkersAuthority, WorkersService],
-  exports: [WorkersService],
+  exports: [WorkersService, WorkersAuthority],
 })
 export class WorkersModule {}

@@ -19,6 +19,7 @@ import {
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
+import { Notifier } from '../../core/notifications/notifier';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { ApprovalsService } from '../approvals/approvals.service';
@@ -112,6 +113,7 @@ export class EntriesService implements OnModuleInit {
     private readonly settings: TenantSettingsService,
     private readonly sweep: SweepRunner,
     private readonly approvals: ApprovalsService,
+    private readonly notifier: Notifier,
     config: ConfigService<Env, true>,
   ) {
     this.unconfirmedAfterMs =
@@ -266,6 +268,23 @@ export class EntriesService implements OnModuleInit {
         approvalRequestId:
           input.direction === 'in' && approval ? approval.id : null,
       });
+      if (subject.engagement) {
+        // The household knows when its worker comes and goes (ADR 0028).
+        const holders = await this.community.holders(
+          tx,
+          subject.unitId,
+          'visitorsNotify',
+        );
+        await this.notifier.notify(tx, holders, {
+          kind: input.direction === 'in' ? 'worker.entered' : 'worker.exited',
+          params: {
+            unitCode: subject.unitCode,
+            gateName: shift.gateName,
+            workerName: subject.engagement.workerName,
+          },
+          targetId: subject.id,
+        });
+      }
       return this.render(tx, entry);
     });
   }

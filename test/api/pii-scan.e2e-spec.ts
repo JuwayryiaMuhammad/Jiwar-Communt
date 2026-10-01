@@ -271,6 +271,7 @@ describe('API v0 — PII leak scan', () => {
       '/roles/{id}': roles[0].id,
       '/erasures/{id}/scope': request.id,
       '/worker-engagements/{id}': registered.engagementId,
+      '/worker-engagements/{id}/attendance': registered.engagementId,
       '/platform/tenants/{id}': a.tenantId,
     };
     /** Where a manager may see a birth date: one person's detail. */

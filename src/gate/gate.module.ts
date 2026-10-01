@@ -4,6 +4,8 @@ import { AccountsModule } from '../core/accounts/accounts.module';
 import { AuthModule } from '../core/auth/auth.module';
 import { TenantSettingsModule } from '../core/tenant-settings/tenant-settings.module';
 import { ApprovalsService } from './approvals/approvals.service';
+import { AttendanceController } from './attendance/attendance.controller';
+import { AttendanceService } from './attendance/attendance.service';
 import {
   GuardApprovalsController,
   HostApprovalsController,
@@ -39,6 +41,7 @@ import { VisitorsController } from './visitors/visitors.controller';
     EntriesController,
     GuardApprovalsController,
     HostApprovalsController,
+    AttendanceController,
   ],
   providers: [
     GatesService,
@@ -50,6 +53,7 @@ import { VisitorsController } from './visitors/visitors.controller';
     EntriesService,
     VerifyService,
     ApprovalsService,
+    AttendanceService,
   ],
 })
 export class GateModule {}

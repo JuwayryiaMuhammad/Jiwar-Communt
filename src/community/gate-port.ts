@@ -15,6 +15,7 @@ import {
   isPrimary,
 } from './households/household-authority';
 import { lockUnits } from './units/unit-lock';
+import { WorkersAuthority } from './workers/workers-authority';
 import {
   checkSchedule,
   isWithinSchedule,
@@ -55,7 +56,25 @@ export class CommunityGatePort {
     private readonly capabilities: CapabilitiesService,
     private readonly household: HouseholdAuthority,
     private readonly hasher: IdentifierHasher,
+    private readonly workers: WorkersAuthority,
   ) {}
+
+  /**
+   * Whether the caller may follow this engagement: its requester, the
+   * unit's primary, a `workers` delegate or a manager (WorkersAuthority,
+   * which also refuses with its own codes). False when it does not exist.
+   */
+  async authorizeEngagement(
+    tx: TenantTxClient,
+    engagementId: string,
+  ): Promise<boolean> {
+    const e = await tx.workerEngagement.findUnique({
+      where: { id: engagementId },
+    });
+    if (!e) return false;
+    await this.workers.forEngagement(tx, e);
+    return true;
+  }
 
   async unitByCode(
     tx: TenantTxClient,

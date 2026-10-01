@@ -247,6 +247,72 @@
         ],
         "type": "object"
       },
+      "AttendanceDayView": {
+        "properties": {
+          "date": {
+            "format": "date",
+            "type": "string"
+          },
+          "firstIn": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "fullDay": {
+            "description": "Every visit that day has a confirmed exit.",
+            "type": "boolean"
+          },
+          "lastOut": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "unconfirmedExit": {
+            "description": "An exit was closed by the system, not seen by a guard.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "date",
+          "firstIn",
+          "lastOut",
+          "unconfirmedExit",
+          "fullDay"
+        ],
+        "type": "object"
+      },
+      "AttendanceView": {
+        "properties": {
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/AttendanceDayView"
+            },
+            "type": "array"
+          },
+          "engagementId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          },
+          "totalDays": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "engagementId",
+          "from",
+          "to",
+          "days",
+          "totalDays"
+        ],
+        "type": "object"
+      },
       "AuditActorType": {
         "enum": [
           "account",
@@ -11536,6 +11602,62 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EngagementDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/worker-engagements/{id}/attendance": {
+      "get": {
+        "operationId": "AttendanceController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Default: 30 days before `to`.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Default: today in the compound. At most 93 days from `from`.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceView"
                 }
               }
             },

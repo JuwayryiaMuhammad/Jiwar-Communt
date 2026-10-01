@@ -25,6 +25,21 @@ enum NotificationPriority {
   @@map("notification_priority")
 }
 
+enum GateKind {
+  pedestrian
+  vehicle
+  mixed
+
+  @@map("gate_kind")
+}
+
+enum GateStatus {
+  active
+  inactive
+
+  @@map("gate_status")
+}
+
 enum TenantStatus {
   active
   suspended
@@ -586,6 +601,7 @@ model Account {
   holdsReleased         LegalHold[]               @relation("HoldReleasedBy")
   notifications         Notification[]            @relation("NotificationAccount")
   idempotencyKeys       IdempotencyKey[]          @relation("IdempotencyAccount")
+  guardShifts           GuardShift[]              @relation("ShiftGuard")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -1212,6 +1228,46 @@ model IdempotencyKey {
   @@id([tenantId, accountId, key])
   @@index([tenantId, expiresAt])
   @@map("idempotency_keys")
+}
+
+// ============================================================================
+// GATE (ADR 0028)
+// ============================================================================
+
+/// A gate of the compound. Never deleted: entries point at it.
+model Gate {
+  id        String     @id @db.Uuid
+  tenantId  String     @map("tenant_id") @db.Uuid
+  name      String
+  kind      GateKind
+  status    GateStatus @default(active)
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  shifts GuardShift[]
+
+  @@unique([tenantId, name])
+  @@unique([tenantId, id])
+  @@map("gates")
+}
+
+/// A guard on duty at one gate; at most one open per guard (partial unique
+/// index in SQL). Every gate action records its shift.
+model GuardShift {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  guardAccountId String    @map("guard_account_id") @db.Uuid
+  gateId         String    @map("gate_id") @db.Uuid
+  startedAt      DateTime  @default(now()) @map("started_at") @db.Timestamptz(3)
+  endedAt        DateTime? @map("ended_at") @db.Timestamptz(3)
+  endReason      String?   @map("end_reason")
+
+  guard Account @relation("ShiftGuard", fields: [tenantId, guardAccountId], references: [tenantId, id], onUpdate: Restrict)
+  gate  Gate    @relation(fields: [tenantId, gateId], references: [tenantId, id], onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, gateId])
+  @@map("guard_shifts")
 }
 
 // ============================================================================

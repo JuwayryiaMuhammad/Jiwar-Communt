@@ -24,6 +24,7 @@ import { auditReaders } from '../setup/audit';
 import {
   COMMUNITY_COVERAGE,
   PHASE_2_2_COVERAGE,
+  PHASE_4_COVERAGE,
 } from '../setup/audit-coverage-split';
 import { loginViaOtp } from '../setup/login';
 import { waitForOtp } from '../setup/mailpit';
@@ -305,6 +306,7 @@ describe('Audit coverage', () => {
             'household.delegate',
             'household.manage',
             'units.read',
+            'visitors.invite',
             'workers.manage',
           ],
           to: [],
@@ -812,7 +814,11 @@ describe('Audit coverage', () => {
     it('every audit action and security event has a scenario above', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];
       // Phase 2 community entries have their own suite (audit-coverage-split).
-      const elsewhere = [...COMMUNITY_COVERAGE, ...PHASE_2_2_COVERAGE];
+      const elsewhere = [
+        ...COMMUNITY_COVERAGE,
+        ...PHASE_2_2_COVERAGE,
+        ...PHASE_4_COVERAGE,
+      ];
       for (const key of elsewhere) expect(all).toContain(key);
       const mine = all.filter((k) => !elsewhere.includes(k)).sort();
       expect([...covered].sort()).toEqual(mine);

@@ -40,6 +40,11 @@ export interface NewAccount extends IdentityDocumentInput {
   preferredLocale?: Locale;
   /** Defaults to the compound's default role for the account type. */
   roleId?: string;
+  /**
+   * A role of the compound by key (staff: `guard` by default); it must be of
+   * the account's own kind, else ROLE_NOT_FOUND.
+   */
+  roleKey?: string;
 }
 
 export interface FreezeResult {
@@ -92,13 +97,20 @@ export class AccountWriter {
     if (!email || !phone) throw invalidContact(!email, !phone);
     const document = parseIdentityDocument(input);
 
+    if (input.roleKey !== undefined) {
+      const named = await tx.role.findUnique({
+        where: { tenantId_key: { tenantId, key: input.roleKey } },
+      });
+      if (!named || named.kind !== input.type)
+        throw appError.notFound(ErrorCode.ROLE_NOT_FOUND, 'Role not found');
+    }
     const role = input.roleId
       ? await tx.role.findUnique({ where: { id: input.roleId } })
       : await tx.role.findUnique({
           where: {
             tenantId_key: {
               tenantId,
-              key: defaultRoleKey(this.catalog, input.type),
+              key: input.roleKey ?? defaultRoleKey(this.catalog, input.type),
             },
           },
         });

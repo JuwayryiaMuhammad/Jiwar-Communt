@@ -213,6 +213,7 @@ describe('Permission sync', () => {
     expect((await role(t, 'family_member')).permissions).toEqual([
       'household.manage',
       'units.read',
+      'visitors.invite',
       'workers.manage',
     ]);
     expect((await role(t, 'resident')).permissions).toContain(
@@ -233,7 +234,12 @@ describe('Permission sync', () => {
       changes: {
         permissions: {
           from: [],
-          to: ['household.manage', 'units.read', 'workers.manage'],
+          to: [
+            'household.manage',
+            'units.read',
+            'visitors.invite',
+            'workers.manage',
+          ],
         },
       },
       metadata: { roleKey: 'family_member', roleCreated: true },
@@ -291,6 +297,55 @@ describe('Permission sync', () => {
     expect((await role(t, 'manager')).permissions).not.toContain(
       'workers.compliance',
     );
+  });
+
+  it('Phase 4 reaches an existing compound: the gate permissions and the guard role (ADR 0028)', async () => {
+    const phase4 = [
+      'gate.operate',
+      'gate.manage',
+      'gate.read',
+      'visitors.invite',
+    ];
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !phase4.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles
+        .filter((r) => r.key !== 'guard')
+        .map((r) => ({
+          ...r,
+          permissions: r.permissions.filter((p) => !phase4.includes(p)),
+        })),
+    };
+    expect(catalogProblems(before)).toEqual([]);
+    const t = newId();
+    await h.globalDb.tenant.create({
+      data: { id: t, name: `Sync 4 compound ${t}` },
+    });
+    await h.asTenant(t, () =>
+      h.tenantTx.withTenantTx(async (tx) => {
+        await new RoleProvisioner(before).provision(tx, t);
+        await tx.tenantSettings.create({ data: { tenantId: t } });
+      }),
+    );
+
+    const report = await sync(base, t);
+    expect([...report.added].sort()).toEqual([...phase4].sort());
+    expect(report.rolesCreated).toEqual(['guard']);
+    expect((await role(t, 'guard')).permissions).toEqual(['gate.operate']);
+    expect((await role(t, 'manager')).permissions).toEqual(
+      expect.arrayContaining(['gate.manage', 'gate.read']),
+    );
+    for (const key of ['resident', 'family_member']) {
+      expect((await role(t, key)).permissions).toContain('visitors.invite');
+      expect((await role(t, key)).permissions).not.toContain('gate.operate');
+    }
+    expect(await sync(base, t)).toMatchObject({
+      added: [],
+      rolesCreated: [],
+      rolesChanged: 0,
+    });
   });
 
   it('a second run is a no-op', async () => {

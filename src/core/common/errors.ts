@@ -109,6 +109,11 @@ export const ErrorCode = {
   NOTIFICATION_NOT_FOUND: 'NOTIFICATION_NOT_FOUND',
   // idempotent writes (ADR 0028)
   IDEMPOTENCY_CONFLICT: 'IDEMPOTENCY_CONFLICT',
+  // the gate (ADR 0028)
+  GATE_NOT_FOUND: 'GATE_NOT_FOUND',
+  /** A gate action needs the caller's open shift (a 403, ADR 0025). */
+  NO_OPEN_SHIFT: 'NO_OPEN_SHIFT',
+  SHIFT_ALREADY_OPEN: 'SHIFT_ALREADY_OPEN',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

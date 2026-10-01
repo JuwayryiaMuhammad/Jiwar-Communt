@@ -86,6 +86,14 @@ export function createUnit(h: DbHarness, tenantId: string, code?: string) {
   );
 }
 
+/** The default role of each account type (ADR 0010, 0028). */
+const DEFAULT_ROLE_KEY: Record<AccountType, string> = {
+  manager: 'manager',
+  resident: 'resident',
+  family: 'family_member',
+  staff: 'guard',
+};
+
 export function createAccountRow(
   h: DbHarness,
   tenantId: string,
@@ -98,7 +106,7 @@ export function createAccountRow(
         id: newId(),
         tenantId,
         type,
-        roleId: await roleId(h, tenantId, type),
+        roleId: await roleId(h, tenantId, DEFAULT_ROLE_KEY[type]),
         fullName: `Person ${s}`,
         idDocumentNumber: nationalIdFor(),
         birthDate: new Date(Date.UTC(1990, 0, 1)),

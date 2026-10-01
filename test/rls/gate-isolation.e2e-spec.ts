@@ -8,6 +8,9 @@ interface Side {
   tenantId: string;
   unitId: string;
   accountId: string;
+  /** A staff account and a gate, for the gate tables. */
+  guardId: string;
+  gateId: string;
 }
 
 /**
@@ -68,6 +71,36 @@ const TABLES: Table[] = [
       return id;
     },
   },
+  {
+    table: 'gates',
+    linked: false,
+    insert: async (tx, own) => {
+      const id = newId();
+      await tx.gate.create({
+        data: { id, tenantId: own.tenantId, name: `G ${id}`, kind: 'vehicle' },
+      });
+      return id;
+    },
+  },
+  {
+    table: 'guard_shifts',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      // Ended, so a second row for the same guard is allowed.
+      await tx.guardShift.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          guardAccountId: link.guardId,
+          gateId: link.gateId,
+          startedAt: new Date(Date.now() - 60_000),
+          endedAt: new Date(),
+          endReason: 'guard',
+        },
+      });
+      return id;
+    },
+  },
 ];
 
 describe('RLS isolation — Phase 4 tables', () => {
@@ -80,7 +113,20 @@ describe('RLS isolation — Phase 4 tables', () => {
     const tenantId = await createTenant(h, `Gate ${label}`);
     const unit = await createUnit(h, tenantId);
     const account = await createAccountRow(h, tenantId, 'resident');
-    return { tenantId, unitId: unit.id, accountId: account.id };
+    const guard = await createAccountRow(h, tenantId, 'staff');
+    const gateId = newId();
+    await h.asTenant(tenantId, () =>
+      h.prisma.tenant.gate.create({
+        data: { id: gateId, tenantId, name: 'Fixture gate', kind: 'mixed' },
+      }),
+    );
+    return {
+      tenantId,
+      unitId: unit.id,
+      accountId: account.id,
+      guardId: guard.id,
+      gateId,
+    };
   };
 
   const inTenant = <T>(s: Side, fn: (tx: TenantTxClient) => Promise<T>) =>

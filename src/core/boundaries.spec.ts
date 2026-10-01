@@ -45,46 +45,46 @@ describe('import boundaries', () => {
     expect(found[0]).toContain('src/core must not import a domain');
   });
 
-  it('a future domain may import core and another domain only through its index.ts', async () => {
+  it('the gate domain imports core, and community only through its index.ts', async () => {
     const gate = 'src/gate/visitors/x.ts';
-    const gateConfig = new ESLint({
-      cwd: repo,
-      overrideConfigFile: true,
-      overrideConfig: [
-        { files: ['**/*.ts'], languageOptions: { parser: tseslint.parser } },
-        // What adding 'gate' to DOMAINS produces for src/gate/**.
-        ...boundaryConfigs,
-        {
-          files: ['src/gate/**/*.ts'],
-          rules: {
-            'no-restricted-imports': [
-              'error',
-              {
-                patterns: DOMAINS.map((d) => ({
-                  group: [`**/${d}/**`, `!**/${d}/index`],
-                  message: `Import ${d} only through its public index.ts (ADR 0015).`,
-                })),
-              },
-            ],
-          },
-        },
-      ],
-    });
-    const lint = async (source: string) =>
-      (await gateConfig.lintText(source, { filePath: gate }))[0].messages;
-
     expect(
-      await lint("import { A } from '../../core/audit/audit.service';"),
+      await problems(
+        gate,
+        "import { A } from '../../core/audit/audit.service';",
+      ),
     ).toEqual([]);
-    expect(await lint("import { A } from '../../community';")).toEqual([]);
-    expect(await lint("import { A } from '../../community/index';")).toEqual(
-      [],
+    expect(
+      await problems(gate, "import { A } from '../../community';"),
+    ).toEqual([]);
+    expect(
+      await problems(gate, "import { A } from '../../community/index';"),
+    ).toEqual([]);
+    for (const deep of [
+      '../../community/residents/residents.service',
+      '../../community/workers/schedule',
+      '../../community/capabilities/capabilities',
+    ]) {
+      const found = await problems(gate, `import { A } from '${deep}';`);
+      expect(found).toHaveLength(1);
+      expect(found[0]).toContain(
+        'Import community only through its public index.ts',
+      );
+    }
+  });
+
+  it('community reaches gate only through its index.ts, and core never', async () => {
+    const found = await problems(
+      'src/community/workers/x.ts',
+      "import { A } from '../../gate/shifts/shifts.service';",
     );
-    const internal = await lint(
-      "import { A } from '../../community/residents/residents.service';",
+    expect(found).toHaveLength(1);
+    expect(found[0]).toContain('Import gate only through its public index.ts');
+    const fromCore = await problems(
+      'src/core/sweep/x.ts',
+      "import { A } from '../../gate';",
     );
-    expect(internal).toHaveLength(1);
-    expect(internal[0].message).toContain('only through its public index.ts');
+    expect(fromCore).toHaveLength(1);
+    expect(fromCore[0]).toContain('src/core must not import a domain');
   });
 
   it('a domain may import core', async () => {

@@ -72,7 +72,7 @@ describe('Permissions guard', () => {
     await h.http().get(`${API}/accounts`).set(as(c.managerToken)).expect(200);
   });
 
-  it('staff accounts cannot be created while staff has no role', async () => {
+  it('staff accounts get the guard role (ADR 0028)', async () => {
     const c = await compound();
     const res = await h
       .http()
@@ -86,11 +86,8 @@ describe('Permissions guard', () => {
         phone: uniquePhone(),
         email: uniqueEmail('staff'),
       })
-      .expect(409);
-    expect(res.body).toMatchObject({
-      code: 'NO_ROLE_FOR_ACCOUNT_TYPE',
-      params: { type: 'staff' },
-    });
+      .expect(201);
+    expect(res.body).toMatchObject({ type: 'staff' });
   });
 
   it('a duplicate email names the field', async () => {

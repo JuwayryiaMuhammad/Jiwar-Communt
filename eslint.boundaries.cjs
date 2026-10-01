@@ -10,7 +10,7 @@
 // - The raw Prisma client ignores the tenant context: only src/core/database/
 //   may import it.
 // - src/core/ is shared by every domain and must not depend on any of them.
-// - A domain (src/community/, later src/gate/, …) may import core freely, and
+// - A domain (src/community/, src/gate/, …) may import core freely, and
 //   another domain only through that domain's public index.ts.
 //
 // `no-restricted-imports` is one rule: a later config block REPLACES the
@@ -18,7 +18,7 @@
 // pieces and each carries every pattern that applies to its files.
 
 /** Top-level domain folders under src/. The unit test keeps this in sync with the disk. */
-const DOMAINS = ['community'];
+const DOMAINS = ['community', 'gate'];
 
 const BASE_PRISMA = {
   group: ['**/base-prisma', '**/database/base-prisma'],

@@ -875,6 +875,10 @@
             "description": "Local Egyptian format, or international with `+`; stored as E.164.",
             "type": "string"
           },
+          "roleKey": {
+            "description": "A role of the account's kind in this compound, by key. Staff default to `guard`; others to their kind's default role.",
+            "type": "string"
+          },
           "type": {
             "allOf": [
               {
@@ -916,6 +920,27 @@
           "delegateAccountId",
           "scopes",
           "expiresAt"
+        ],
+        "type": "object"
+      },
+      "CreateGateDto": {
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateKind"
+              }
+            ]
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "kind"
         ],
         "type": "object"
       },
@@ -1442,6 +1467,77 @@
         ],
         "type": "object"
       },
+      "GateKind": {
+        "enum": [
+          "pedestrian",
+          "vehicle",
+          "mixed"
+        ],
+        "type": "string"
+      },
+      "GateStatus": {
+        "enum": [
+          "active",
+          "inactive"
+        ],
+        "type": "string"
+      },
+      "GateView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateKind"
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "status",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "GateViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GateView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "GrantDto": {
         "properties": {
           "capPerOperation": {
@@ -1490,6 +1586,49 @@
         "required": [
           "permission",
           "capPerOperation"
+        ],
+        "type": "object"
+      },
+      "GuardGateView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateKind"
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind"
+        ],
+        "type": "object"
+      },
+      "GuardGateViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GuardGateView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -4077,6 +4216,50 @@
         ],
         "type": "object"
       },
+      "ShiftView": {
+        "properties": {
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "gateId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "gateName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "gateId",
+          "gateName",
+          "startedAt",
+          "endedAt"
+        ],
+        "type": "object"
+      },
+      "StartShiftDto": {
+        "properties": {
+          "gateId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "gateId"
+        ],
+        "type": "object"
+      },
       "TenantDetailView": {
         "properties": {
           "createdAt": {
@@ -4586,6 +4769,31 @@
         "required": [
           "status"
         ],
+        "type": "object"
+      },
+      "UpdateGateDto": {
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateKind"
+              }
+            ]
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateStatus"
+              }
+            ],
+            "description": "Inactive ends the shifts open at the gate."
+          }
+        },
         "type": "object"
       },
       "UpdateLocaleDto": {
@@ -5761,6 +5969,252 @@
         ],
         "tags": [
           "erasure"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/gates": {
+      "get": {
+        "operationId": "ShiftsController_gatesList",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardGateViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "gate"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/shifts/current": {
+      "get": {
+        "operationId": "ShiftsController_current",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "gate"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/shifts/end": {
+      "post": {
+        "operationId": "ShiftsController_end",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "gate"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/shifts/start": {
+      "post": {
+        "operationId": "ShiftsController_start",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartShiftDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "gate"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gates": {
+      "get": {
+        "operationId": "GatesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "gates"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "GatesController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "gates"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gates/{id}": {
+      "patch": {
+        "operationId": "GatesController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "gates"
         ],
         "x-stability": "draft"
       }

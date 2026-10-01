@@ -10,8 +10,9 @@ export interface DefaultRole {
 
 /**
  * Copied into every new compound (ADR 0010), at most one per kind: a new
- * account gets the default role of its kind. `staff` has no role yet, so
- * staff accounts cannot be created until one is defined here.
+ * account gets the default role of its kind. A staff account may name
+ * another staff-kind role of its compound instead (`roleKey`), so a second
+ * staff role (a technician) does not change how accounts are created.
  */
 export const DEFAULT_ROLES: readonly DefaultRole[] = [
   {
@@ -36,6 +37,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'workers.ban',
       'workers.compliance',
       'workers.incidents',
+      'gate.manage',
+      'gate.read',
     ],
   },
   {
@@ -46,13 +49,25 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'household.manage',
       'household.delegate',
       'workers.manage',
+      'visitors.invite',
     ],
   },
   {
     // Household members with a login (ADR 0016).
     key: 'family_member',
     kind: 'family',
-    permissions: ['units.read', 'household.manage', 'workers.manage'],
+    permissions: [
+      'units.read',
+      'household.manage',
+      'workers.manage',
+      'visitors.invite',
+    ],
+  },
+  {
+    // Gate guards (ADR 0028): the gate only, inside a shift.
+    key: 'guard',
+    kind: 'staff',
+    permissions: ['gate.operate'],
   },
 ];
 

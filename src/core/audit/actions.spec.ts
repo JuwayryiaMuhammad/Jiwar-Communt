@@ -52,6 +52,8 @@ describe('audit catalog', () => {
         'household_deferred_action',
         'resident_registration',
         'account_deletion_request',
+        'gate',
+        'guard_shift',
       ]).toContain(def.target);
     }
   });

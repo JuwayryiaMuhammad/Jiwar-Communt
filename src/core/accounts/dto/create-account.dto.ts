@@ -66,4 +66,15 @@ export class CreateAccountDto {
   @ApiProperty({ type: String, format: 'email' })
   @IsEmail()
   email: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    description:
+      "A role of the account's kind in this compound, by key. Staff default to `guard`; others to their kind's default role.",
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 64, withParams({ min: 1, max: 64 }))
+  roleKey?: string;
 }

@@ -13,12 +13,14 @@ import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
 import { Notifier } from '../../src/core/notifications/notifier';
 import { communityHelpers, type Compound } from '../setup/community';
+import { gateHelpers } from '../setup/gate';
 import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
 import { uniqueEmail, uniquePhone, type HttpHarness } from '../setup/http-app';
 import { waitForOtp } from '../setup/mailpit';
 
 /** The tenant accounts every API suite acts as. */
-export type Persona = 'manager' | 'owner' | 'tenant' | 'landlord' | 'family';
+export type Persona =
+  'manager' | 'owner' | 'tenant' | 'landlord' | 'family' | 'guard';
 
 const TYPES: Record<Persona, AccountType> = {
   manager: 'manager',
@@ -26,6 +28,7 @@ const TYPES: Record<Persona, AccountType> = {
   tenant: 'resident',
   landlord: 'resident',
   family: 'family',
+  guard: 'staff',
 };
 
 /** One compound as the API suites see it. */
@@ -42,6 +45,10 @@ export interface Side extends Compound {
   familyMemberId: string;
   /** Active occupancies: the owner's of home, the landlord's and tenant's of rented. */
   occupancies: Record<'owner' | 'landlord' | 'tenant', string>;
+  /** `guard` is on duty at this gate (ADR 0028). */
+  gateId: string;
+  gateName: string;
+  shiftId: string;
 }
 
 export interface World {
@@ -101,12 +108,14 @@ async function side(
   );
   const tenant = await c.resident(compound, [rented.id], 'tenant');
   const family = await c.joinFamily(compound, home.id, owner);
+  const duty = await gateHelpers(h).onDuty(compound);
   const ids: Record<Persona, string> = {
     manager: compound.managerId,
     owner: owner.id,
     tenant: tenant.id,
     landlord: landlord.id,
     family: family.id,
+    guard: duty.guardId,
   };
   const tokens = {} as Record<Persona, string>;
   for (const persona of Object.keys(ids) as Persona[]) {
@@ -138,6 +147,9 @@ async function side(
     sessions,
     occupancies,
     familyMemberId: family.memberId,
+    gateId: duty.gateId,
+    gateName: duty.gateName,
+    shiftId: duty.shiftId,
   };
 }
 

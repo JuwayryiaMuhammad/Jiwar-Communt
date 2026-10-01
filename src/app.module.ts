@@ -13,6 +13,7 @@ import {
   UnitsModule,
   WorkersModule,
 } from './community';
+import { GateModule } from './gate';
 import { AccessModule } from './core/access/access.module';
 import { PermissionsGuard } from './core/access/permissions.guard';
 import { AccountsModule } from './core/accounts/accounts.module';
@@ -104,6 +105,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     HouseholdsModule,
     WorkersModule,
     CapabilitiesModule,
+    GateModule,
   ],
   controllers: [AppController],
   providers: [

@@ -48,4 +48,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // Client-generated (UUIDv7): a violation is an id collision.
   registration_links_id_key: null,
   household_members_tenant_id_id_is_minor_key: null,
+  // The gate (ADR 0028).
+  gates_tenant_id_name_key: ['name'],
+  gates_tenant_id_id_key: null,
+  guard_shifts_tenant_id_id_key: null,
+  // Checked first and mapped to SHIFT_ALREADY_OPEN; a violation is a race.
+  guard_shifts_one_open_per_guard: null,
 };

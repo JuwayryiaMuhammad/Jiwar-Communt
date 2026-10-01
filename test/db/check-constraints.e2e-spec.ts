@@ -66,6 +66,8 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   notifications_params_object: {},
   idempotency_keys_expiry_after_creation: {},
   idempotency_keys_key_length: {},
+  gates_name_not_blank: {},
+  guard_shifts_end_is_complete: {},
   // Compares nullable columns.
   accounts_identity_document: {
     guarded:
@@ -90,6 +92,10 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'cap_per_operation IS NULL is tested first, so the comparison runs ' +
       'only on a value; finance_has_cap makes finance carry one',
+  },
+  guard_shifts_end_after_start: {
+    guarded:
+      'ended_at IS NULL is tested first; the comparison runs only on a value',
   },
   household_members_minor_or_account: {
     guarded:

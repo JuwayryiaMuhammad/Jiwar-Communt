@@ -47,6 +47,13 @@ export const PERMISSIONS = {
   'workers.compliance': { kinds: ['manager'] },
   // Lost and confiscated cards: management now, security with the gate.
   'workers.incidents': { kinds: ['manager'] },
+  // The gate (ADR 0028). Guards operate it inside a shift; managers set up
+  // the gates and read the entries; occupants and members invite visitors
+  // (capabilities.visitorsInvite decides per unit).
+  'gate.operate': { kinds: ['staff'] },
+  'gate.manage': { kinds: ['manager'] },
+  'gate.read': { kinds: ['manager'] },
+  'visitors.invite': { kinds: ['resident', 'family'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

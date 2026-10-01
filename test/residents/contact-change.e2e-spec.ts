@@ -1,7 +1,6 @@
 import { ClsService } from 'nestjs-cls';
 import { IdentifierHasher } from '../../src/core/auth/identifier';
 import type { AppClsStore } from '../../src/core/common/cls/app-cls';
-import { newId } from '../../src/core/common/uuid';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { PrismaService } from '../../src/core/database/prisma.service';
 import { ResidentsService } from '../../src/community/residents/residents.service';
@@ -44,13 +43,6 @@ describe('Contact change with two accounts on one phone', () => {
         cls.set('accountType', 'manager');
         return await fn();
       });
-
-    // No default staff role exists yet (ADR 0010); this compound gets one.
-    await asManager(() =>
-      h.moduleRef.get(PrismaService).tenant.role.create({
-        data: { id: newId(), tenantId: tenant.id, key: 'staff', kind: 'staff' },
-      }),
-    );
 
     const sharedPhone = uniquePhone();
     const residentEmail = uniqueEmail('res');

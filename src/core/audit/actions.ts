@@ -132,6 +132,11 @@ export const AUDIT_ACTIONS = {
   'worker.banned': { log: 'tenant', target: 'domestic_worker' },
   'worker.unbanned': { log: 'tenant', target: 'domestic_worker' },
   'worker.birth_date_attested': { log: 'tenant', target: 'domestic_worker' },
+  // the gate (ADR 0028)
+  'gate.created': { log: 'tenant', target: 'gate' },
+  'gate.updated': { log: 'tenant', target: 'gate' },
+  'gate.shift_started': { log: 'tenant', target: 'guard_shift' },
+  'gate.shift_ended': { log: 'tenant', target: 'guard_shift' },
   'worker.birth_date_corrected': { log: 'tenant', target: 'domestic_worker' },
   'worker.compliance_case_opened': { log: 'tenant', target: 'domestic_worker' },
   'worker.compliance_case_closed': { log: 'tenant', target: 'domestic_worker' },

@@ -68,6 +68,11 @@ export class IdempotencyInterceptor implements NestInterceptor {
       body = await lastValueFrom(next.handle(), { defaultValue: undefined });
     } catch (error) {
       if (error instanceof IdempotencyReplaySignal) return replay();
+      // A duplicate that committed after our first look can make the action
+      // fail on its own rules (the shift it opened is now open). Our claim
+      // rolled back with the failure, so a key on file is the duplicate's:
+      // the client gets its response, not an error about its own retry.
+      if (await this.idempotency.find(key)) return replay();
       throw error;
     } finally {
       this.cls.set('idempotency', undefined);

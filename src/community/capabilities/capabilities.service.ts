@@ -51,8 +51,17 @@ export class CapabilitiesService {
     accountId: string,
     unitId: string,
   ): Promise<Capabilities> {
+    return (await this.placeOf(tx, accountId, unitId)) ?? { ...NONE };
+  }
+
+  /** As forAccountOnUnit, but null when the account has no place on the unit. */
+  async placeOf(
+    tx: TenantTxClient,
+    accountId: string,
+    unitId: string,
+  ): Promise<Capabilities | null> {
     const subject = await this.subject(tx, accountId, unitId);
-    if (!subject) return { ...NONE };
+    if (!subject) return null;
     return capabilitiesFor(subject, await this.unitState(tx, unitId));
   }
 

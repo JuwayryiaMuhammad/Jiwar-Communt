@@ -76,3 +76,11 @@ export const PHASE_2_2_COVERAGE: readonly string[] = [
   'household.deferred_action_submitted',
   'household.deferred_action_decided',
 ];
+
+/** Phase 4 (the gate), covered by test/gate/audit-coverage.e2e-spec.ts. */
+export const PHASE_4_COVERAGE: readonly string[] = [
+  'gate.created',
+  'gate.updated',
+  'gate.shift_started',
+  'gate.shift_ended',
+];

@@ -1,4 +1,14 @@
-import { applyDecorators, Header } from '@nestjs/common';
+import {
+  applyDecorators,
+  Header,
+  Injectable,
+  UseInterceptors,
+  type CallHandler,
+  type ExecutionContext,
+  type NestInterceptor,
+} from '@nestjs/common';
+import type { Response } from 'express';
+import type { Observable } from 'rxjs';
 import { ApiBearerAuth, ApiExtension, ApiTags } from '@nestjs/swagger';
 
 /**
@@ -24,6 +34,36 @@ export function ApiArea(
 export function NoStore() {
   return applyDecorators(
     Header('Cache-Control', 'no-store'),
+    ApiExtension('x-no-store', true),
+  );
+}
+
+/** The three headers of a public page that carries a secret (ADR 0030). */
+export const PUBLIC_PAGE_HEADERS = {
+  'Cache-Control': 'no-store',
+  'Referrer-Policy': 'no-referrer',
+  'X-Robots-Tag': 'noindex',
+} as const;
+
+@Injectable()
+export class PublicPageHeadersInterceptor implements NestInterceptor {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    // Before the handler: a 404 or a 429 carries them too, so every answer
+    // looks the same and none is cached, indexed or leaked as a referrer.
+    const res = context.switchToHttp().getResponse<Response>();
+    for (const [name, value] of Object.entries(PUBLIC_PAGE_HEADERS))
+      res.setHeader(name, value);
+    return next.handle();
+  }
+}
+
+/**
+ * A public endpoint that takes or returns a link's secret (the visitor
+ * page, ADR 0030): no-store, no referrer, not indexed, on every response.
+ */
+export function PublicPageHeaders() {
+  return applyDecorators(
+    UseInterceptors(PublicPageHeadersInterceptor),
     ApiExtension('x-no-store', true),
   );
 }

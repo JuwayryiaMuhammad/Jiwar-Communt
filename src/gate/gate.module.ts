@@ -20,6 +20,8 @@ import { ShiftsController } from './shifts/shifts.controller';
 import { ShiftsService } from './shifts/shifts.service';
 import { InstructionsService } from './visitors/instructions.service';
 import { VisitorDataSweep } from './visitors/visitor-data.sweep';
+import { VisitorPageController } from './visitors/visitor-page.controller';
+import { VisitorPageService } from './visitors/visitor-page.service';
 import { VisitorPassesService } from './visitors/visitor-passes.service';
 import { VisitorsController } from './visitors/visitors.controller';
 
@@ -38,6 +40,7 @@ import { VisitorsController } from './visitors/visitors.controller';
     GatesController,
     ShiftsController,
     VisitorsController,
+    VisitorPageController,
     EntriesController,
     GuardApprovalsController,
     HostApprovalsController,
@@ -47,6 +50,7 @@ import { VisitorsController } from './visitors/visitors.controller';
     GatesService,
     ShiftsService,
     VisitorPassesService,
+    VisitorPageService,
     InstructionsService,
     VisitorDataSweep,
     GateSubjects,

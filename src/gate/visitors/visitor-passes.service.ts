@@ -447,7 +447,12 @@ export class VisitorPassesService implements OnModuleInit {
     });
   }
 
-  private async close(
+  /**
+   * Cancels an active pass in the caller's transaction, code and token with
+   * it, audited `visitor_pass.cancelled` with the reason code (actor from
+   * the context: the host, or `system`). A pass no longer active is left.
+   */
+  async close(
     tx: TenantTxClient,
     id: string,
     reasonCode: string,

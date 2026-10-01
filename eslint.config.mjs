@@ -52,7 +52,9 @@ export default tseslint.config(
   // the seed. Domain files are added by name: household invite acceptance
   // resolves the compound from the invite link before anyone is logged in
   // (ADR 0005, 0016); the sweep tasks walk every compound in turn (ADR 0021);
-  // SweepRunner.forEachTenant does that for every later task (ADR 0027).
+  // SweepRunner.forEachTenant does that for every later task (ADR 0027);
+  // the visitor page resolves the compound from the link's global pointer,
+  // with no account at all (ADR 0030).
   {
     files: ['**/*.ts'],
     rules: {
@@ -76,6 +78,7 @@ export default tseslint.config(
       'src/community/residents/registration.service.ts',
       'src/core/accounts/account-deletion.service.ts',
       'src/core/sweep/sweep-runner.ts',
+      'src/gate/visitors/visitor-page.service.ts',
       'prisma/seed.ts',
     ],
     rules: {

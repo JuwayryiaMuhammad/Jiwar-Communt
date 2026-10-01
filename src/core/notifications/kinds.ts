@@ -61,6 +61,15 @@ export const NOTIFICATION_KINDS = {
       workerName: { personal: true },
     },
   },
+  /**
+   * The person the host sent a pass link to said "this isn't me" on the
+   * public page (ADR 0030): the pass is cancelled. Nothing about who.
+   */
+  'visitor_pass.not_me': {
+    priority: 'normal',
+    target: 'visitor_pass',
+    params: { unitCode: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

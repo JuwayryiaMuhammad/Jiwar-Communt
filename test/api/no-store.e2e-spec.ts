@@ -91,6 +91,17 @@ describe('API v0 — no-store', () => {
     return { id, review };
   }
 
+  /** A live visitor link's token (ADR 0030): the fragment of `link`. */
+  async function linkToken(): Promise<string> {
+    const pass = await call(
+      w,
+      'POST',
+      `/units/${w.a.homeUnitId}/visitor-passes`,
+      { token: w.a.tokens.owner, body: passBody() },
+    ).expect(201);
+    return body<{ link: string }>(pass).link.split('#')[1];
+  }
+
   const CALLS: Record<string, () => Promise<Response>> = {
     'POST /auth/otp/verify': async () => (await login()).verify,
     'POST /auth/select-account': async () => (await login()).select,
@@ -174,6 +185,14 @@ describe('API v0 — no-store', () => {
       call(w, 'POST', `/units/${w.a.homeUnitId}/visitor-passes`, {
         token: w.a.tokens.owner,
         body: passBody(),
+      }),
+    'POST /public/visitor-passes/lookup': async () =>
+      call(w, 'POST', '/public/visitor-passes/lookup', {
+        body: { token: await linkToken() },
+      }),
+    'POST /public/visitor-passes/not-me': async () =>
+      call(w, 'POST', '/public/visitor-passes/not-me', {
+        body: { token: await linkToken() },
       }),
     'POST /visitor-passes/{id}/reissue-link': async () => {
       const pass = await call(

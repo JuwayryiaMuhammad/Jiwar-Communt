@@ -5933,12 +5933,121 @@
         ],
         "type": "string"
       },
+      "VisitorPageView": {
+        "properties": {
+          "code": {
+            "description": "6 digits to type at the gate. Only while active.",
+            "nullable": true,
+            "type": "string"
+          },
+          "compoundName": {
+            "type": "string"
+          },
+          "emergencyPhone": {
+            "description": "E.164.",
+            "nullable": true,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorPassKind"
+              }
+            ]
+          },
+          "partySize": {
+            "type": "number"
+          },
+          "qrPayload": {
+            "description": "What the QR encodes (`JWR1.<token>`). Only while active.",
+            "nullable": true,
+            "type": "string"
+          },
+          "schedule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitScheduleDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "used",
+              "cancelled",
+              "expired"
+            ],
+            "type": "string"
+          },
+          "statusReason": {
+            "description": "Cancelled passes only.",
+            "enum": [
+              "host_cancelled",
+              "wrong_recipient"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "timeZone": {
+            "description": "The compound’s IANA zone; the schedule is read in it.",
+            "example": "Africa/Cairo",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "validFrom": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "validUntil": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "visitorDirections": {
+            "description": "What the compound tells its visitors.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "compoundName",
+          "unitCode",
+          "kind",
+          "partySize",
+          "validFrom",
+          "validUntil",
+          "timeZone",
+          "schedule",
+          "status",
+          "statusReason",
+          "code",
+          "qrPayload",
+          "visitorDirections",
+          "emergencyPhone"
+        ],
+        "type": "object"
+      },
       "VisitorPassKind": {
         "enum": [
           "one_time",
           "recurring"
         ],
         "type": "string"
+      },
+      "VisitorTokenDto": {
+        "properties": {
+          "token": {
+            "description": "The fragment of the visitor link. Anything that is not a live link answers 404 VISITOR_PASS_NOT_FOUND.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
       },
       "WarningView": {
         "properties": {
@@ -9718,6 +9827,65 @@
         "tags": [
           "platform"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/visitor-passes/lookup": {
+      "post": {
+        "operationId": "VisitorPageController_lookup",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VisitorTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisitorPageView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/visitor-passes/not-me": {
+      "post": {
+        "operationId": "VisitorPageController_notMe",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VisitorTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

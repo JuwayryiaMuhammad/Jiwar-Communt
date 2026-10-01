@@ -154,6 +154,13 @@ export const FieldErrorCode = {
   INVALID_VALUE: 'INVALID_VALUE',
   DUPLICATE_VALUE: 'DUPLICATE_VALUE',
   SAME_AS_CURRENT: 'SAME_AS_CURRENT',
+  // uploaded files (ADR 0029)
+  /** The declared type is not one the action accepts; params.allowed lists them. */
+  FILE_TYPE_NOT_ALLOWED: 'FILE_TYPE_NOT_ALLOWED',
+  /** The bytes are not the declared type (a renamed or spoofed file). */
+  FILE_SIGNATURE_MISMATCH: 'FILE_SIGNATURE_MISMATCH',
+  /** params.maxBytes is the action's limit. */
+  FILE_TOO_LARGE: 'FILE_TOO_LARGE',
 } as const;
 
 export type FieldErrorCode =

@@ -30,3 +30,4 @@
 | [0026](0026-ci.md) | Continuous integration on real Postgres, Redis and Mailpit | Accepted |
 | [0027](0027-notifications-inbox.md) | The notifications inbox: a catalog, rows in the action's transaction | Accepted |
 | [0028](0028-gate-domain.md) | The gate: shifts, passes, approvals, entries, idempotency | Accepted |
+| [0029](0029-object-storage.md) | Object storage: private S3 bucket, uploads inside the owning action | Accepted |

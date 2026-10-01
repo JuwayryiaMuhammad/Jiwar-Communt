@@ -20,6 +20,17 @@ export function applyTestEnv(): void {
   process.env.SMTP_SECURE = 'false';
   delete process.env.SMTP_USER;
   delete process.env.SMTP_PASSWORD;
+  // Same for object storage: files go to the local MinIO's test bucket,
+  // never to a real bucket the developer's .env may point at (ADR 0029).
+  process.env.S3_ENDPOINT =
+    process.env.TEST_S3_ENDPOINT ?? 'http://127.0.0.1:9005';
+  process.env.S3_BUCKET = process.env.TEST_S3_BUCKET ?? 'jiwar-test';
+  process.env.S3_REGION = 'us-east-1';
+  process.env.S3_FORCE_PATH_STYLE = 'true';
+  process.env.S3_ACCESS_KEY_ID =
+    process.env.TEST_S3_ACCESS_KEY_ID ?? 'jiwar_minio';
+  process.env.S3_SECRET_ACCESS_KEY =
+    process.env.TEST_S3_SECRET_ACCESS_KEY ?? 'jiwar_minio_dev';
   // Every test request comes from 127.0.0.1, so the per-IP limit would trip
   // across unrelated tests. The per-identifier limit keeps its real value and
   // is what the rate-limit test exercises.

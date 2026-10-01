@@ -63,6 +63,22 @@ jobs:
           ${{ job.services.postgres.id }}
           psql -U postgres -v ON_ERROR_STOP=1 -f - < docker/postgres/init.sql
 
+      # Service containers cannot be given a command, and MinIO needs
+      # `server /data`, so it is started here (same image as docker-compose).
+      # Global test setup creates the test bucket.
+      - name: Object storage (MinIO)
+        run: |
+          docker run -d --name minio -p 9005:9000 \
+            -e MINIO_ROOT_USER=jiwar_minio \
+            -e MINIO_ROOT_PASSWORD=jiwar_minio_dev \
+            pgsty/minio:RELEASE.2026-08-04T00-00-00Z minio server /data
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:9005/minio/health/live && exit 0
+            sleep 1
+          done
+          docker logs minio
+          exit 1
+
       - name: Environment (test values only)
         run: cp .env.example .env
 

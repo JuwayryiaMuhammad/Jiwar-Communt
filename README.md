@@ -52,7 +52,8 @@ Stack: Node ≥ 22, pnpm, NestJS 11, Prisma 7 (`@prisma/adapter-pg`), PostgreSQL
 corepack enable pnpm          # once per machine
 pnpm install
 cp .env.example .env          # defaults work with docker-compose
-docker compose up -d          # postgres :5435, redis :6381, mailpit :1025/:8025
+docker compose up -d          # postgres :5435, redis :6381, mailpit :1025/:8025, minio :9005/:9006
+pnpm storage:init             # once: the dev bucket on MinIO
 pnpm db:migrate               # 1. migrations, as jiwar_migrator
 pnpm access:sync              # 2. permission sync (see below)
 pnpm seed                     # 3. demo data (idempotent)
@@ -156,7 +157,7 @@ pnpm build && pnpm test:unit && pnpm test:e2e
 pnpm openapi:export && git diff --exit-code docs/api/openapi.v0.json
 ```
 
-The e2e run wipes `jiwar_test`, migrates it as the migrator, runs `access:sync` like a deploy, then connects only as `jiwar_app`. The immutable audit tables are cleared over the superuser connection. `OTP_FIXED_CODE` and `SUPERADMIN_*` are removed for the run.
+The e2e run wipes `jiwar_test`, migrates it as the migrator, runs `access:sync` like a deploy, then connects only as `jiwar_app`. The immutable audit tables are cleared over the superuser connection. `OTP_FIXED_CODE` and `SUPERADMIN_*` are removed for the run. Files go to the local MinIO's `TEST_S3_BUCKET`, created and emptied on start, whatever `S3_*` points at.
 
 | Suite | Covers |
 |---|---|

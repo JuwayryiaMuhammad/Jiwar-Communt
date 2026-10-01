@@ -7,6 +7,9 @@ const base = {
   SMTP_HOST: '127.0.0.1',
   SMTP_PORT: '1025',
   SMTP_FROM: 'Jiwar <no-reply@jiwar.local>',
+  S3_BUCKET: 'jiwar',
+  S3_ACCESS_KEY_ID: 'key',
+  S3_SECRET_ACCESS_KEY: 'secret',
   JWT_ACCESS_SECRET: 'a'.repeat(32),
   IDENTIFIER_PEPPER: 'b'.repeat(32),
   PLATFORM_JWT_SECRET: 'c'.repeat(32),
@@ -19,6 +22,23 @@ describe('validateEnv', () => {
     expect(env.SMTP_PORT).toBe(1025);
     expect(env.SMTP_SECURE).toBe(false);
     expect(env.OTP_FIXED_CODE).toBeUndefined();
+  });
+
+  it('defaults object storage to AWS-style URLs and a 5-minute read URL', () => {
+    const env = validateEnv(base);
+    expect(env.S3_ENDPOINT).toBeUndefined();
+    expect(env.S3_REGION).toBe('us-east-1');
+    expect(env.S3_FORCE_PATH_STYLE).toBe(false);
+    expect(env.S3_URL_TTL_SECONDS).toBe(300);
+  });
+
+  it('requires a bucket and caps presigned URLs at one hour', () => {
+    const { S3_BUCKET: _omit, ...noBucket } = base;
+    void _omit;
+    expect(() => validateEnv(noBucket)).toThrow(/S3_BUCKET/);
+    expect(() => validateEnv({ ...base, S3_URL_TTL_SECONDS: '3601' })).toThrow(
+      /S3_URL_TTL_SECONDS/,
+    );
   });
 
   it('rejects OTP_FIXED_CODE when NODE_ENV=production', () => {

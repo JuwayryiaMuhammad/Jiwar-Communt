@@ -232,7 +232,12 @@ export class EntriesService implements OnModuleInit {
           if (fresh.pass?.kind === 'one_time')
             await tx.visitorPass.update({
               where: { id: fresh.id },
-              data: { status: 'used', usedAt: occurredAt, codeHash: null },
+              data: {
+                status: 'used',
+                usedAt: occurredAt,
+                codeHash: null,
+                qrTokenHash: null,
+              },
             });
           method = 'code';
         }

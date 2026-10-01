@@ -25,7 +25,10 @@ import {
 } from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { parseIdempotencyKey } from '../../core/idempotency/idempotency-key';
-import { IdempotencyHeader } from '../../core/idempotency/idempotent.decorator';
+import {
+  Idempotent,
+  IdempotencyHeader,
+} from '../../core/idempotency/idempotent.decorator';
 import {
   CancelVisitorPassDto,
   CreateVisitorPassDto,
@@ -74,6 +77,23 @@ export class VisitorsController {
     return toList(await this.passes.listForUnit(unitId, q), (p) =>
       PassView.from(p),
     );
+  }
+
+  /**
+   * The host lost the link (ADR 0030): a new link, QR and code for the same
+   * pass, the old ones dead at once. A retry with the same key reissues
+   * again — the secret is never stored to be replayed.
+   */
+  @RequirePermissions('visitors.invite')
+  @Post('visitor-passes/:id/reissue-link')
+  @HttpCode(HttpStatus.OK)
+  @NoStore()
+  @Idempotent({ secret: true })
+  @ApiOkResponse({ type: IssuedPassView })
+  async reissueLink(
+    @Param('id', parseId()) id: string,
+  ): Promise<IssuedPassView> {
+    return IssuedPassView.from(await this.passes.reissueLink(id));
   }
 
   @RequirePermissions('visitors.invite')

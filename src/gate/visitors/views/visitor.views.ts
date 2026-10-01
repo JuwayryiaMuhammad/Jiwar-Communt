@@ -14,7 +14,7 @@ import { VisitScheduleDto } from '../dto/visitors.dto';
 
 const STATUSES = ['active', 'used', 'cancelled', 'expired'];
 
-/** Right after creation: the code, shown once (no-store). */
+/** Right after creation or a link reissue: the secrets, shown once (no-store). */
 export class IssuedPassView {
   @ApiProperty({ type: String, format: 'uuid' })
   id: string;
@@ -25,6 +25,23 @@ export class IssuedPassView {
     description: '6 digits. Null only on a replay of a pass no longer active.',
   })
   code: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'https://app.jiwar.eg/v#q3Jz…',
+    description:
+      'The page to send the visitor: the token is in the fragment, which browsers never send to a server (ADR 0030). Null with `code`.',
+  })
+  link: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'JWR1.q3Jz…',
+    description: 'What the visitor’s QR encodes. Null with `code`.',
+  })
+  qrPayload: string | null;
 
   @ApiProperty({ enum: VisitorPassKind, enumName: 'VisitorPassKind' })
   kind: VisitorPassKind;
@@ -48,6 +65,8 @@ export class IssuedPassView {
     return {
       id: p.id,
       code: p.code,
+      link: p.link,
+      qrPayload: p.qrPayload,
       kind: p.kind,
       partySize: p.partySize,
       validFrom: p.validFrom,

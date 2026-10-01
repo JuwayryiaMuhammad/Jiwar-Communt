@@ -27,7 +27,7 @@ export class VisitorDataSweep implements OnModuleInit {
     return this.sweep.forEachTenant(async (tx) => {
       const expired = await tx.visitorPass.updateMany({
         where: { status: 'active', validUntil: { lte: now } },
-        data: { status: 'expired', codeHash: null },
+        data: { status: 'expired', codeHash: null, qrTokenHash: null },
       });
       const due = await tx.visitorDetails.findMany({
         where: { expiresAt: { lte: now } },

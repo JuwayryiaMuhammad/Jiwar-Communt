@@ -1,3 +1,7 @@
+import { Client } from 'pg';
+import { AccessTokens } from '../../src/core/auth/access-token';
+import { IdentifierHasher } from '../../src/core/auth/identifier';
+import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { VISITOR_DATA_SWEEP } from '../../src/gate/visitors/visitor-data.sweep';
 import { SweepRunner } from '../../src/core/sweep/sweep-runner';
 import { auditReaders } from '../setup/audit';
@@ -6,6 +10,7 @@ import {
   uniquePhone,
   type HttpHarness,
 } from '../setup/http-app';
+import { required } from '../setup/test-env';
 import { keyPaths, listKeys } from './keys';
 import { call, err } from './request';
 import { passBody } from './routes/visitors';
@@ -15,7 +20,9 @@ const ISSUED = [
   'code',
   'id',
   'kind',
+  'link',
   'partySize',
+  'qrPayload',
   'schedule',
   'status',
   'validFrom',
@@ -33,6 +40,16 @@ const LISTED = [
   'validUntil',
   'visitorName',
 ];
+const LINK = /^https:\/\/app\.jiwar\.test\/v#([A-Za-z0-9_-]{43})$/;
+/** The token in a pass's link (ADR 0030). */
+const tokenOf = (body: unknown) => {
+  const link = (body as { link: string }).link;
+  const m = LINK.exec(link);
+  if (!m) throw new Error(`not a visitor link: ${link}`);
+  return m[1];
+};
+const DAY = 86_400_000;
+
 const RECURRING = {
   kind: 'recurring',
   validUntil: new Date(Date.now() + 30 * 86_400_000).toISOString(),
@@ -73,6 +90,25 @@ describe('API v0 — visitors (ADR 0028)', () => {
     w.helpers.asManager(w.a, () =>
       w.helpers.prisma.tenant.visitorPass.findUniqueOrThrow({ where: { id } }),
     );
+  const tokens = () => h.moduleRef.get(AccessTokens);
+  const hasher = () => h.moduleRef.get(IdentifierHasher);
+  const linkOf = (token: string) =>
+    h.moduleRef.get(GlobalDbService).visitorPassLink.findUnique({
+      where: { tokenHash: hasher().hashVisitorLink(token) },
+    });
+  const verify = (code: string) =>
+    call(w, 'POST', '/gate/verify', {
+      token: w.a.tokens.guard,
+      body: { code },
+    }).expect(200);
+  const reissue = (token: string, id: string, key?: string) => {
+    let req = w.h
+      .http()
+      .post(`/api/v1/visitor-passes/${id}/reissue-link`)
+      .set('Authorization', `Bearer ${token}`);
+    if (key) req = req.set('Idempotency-Key', key);
+    return req.send();
+  };
 
   it('a host creates a pass and sees the code once', async () => {
     const res = await create(
@@ -294,6 +330,7 @@ describe('API v0 — visitors (ADR 0028)', () => {
     expect(await passRow(id)).toMatchObject({
       status: 'cancelled',
       codeHash: null,
+      qrTokenHash: null,
       cancelReasonCode: 'other',
     });
     // The owner of home (its primary) cancels a family member's pass.
@@ -318,6 +355,13 @@ describe('API v0 — visitors (ADR 0028)', () => {
     expect((retry.body as { code: string }).code).toMatch(/^\d{6}$/);
     const after = await passRow((first.body as { id: string }).id);
     expect(after.codeHash).not.toBe(before.codeHash);
+    // A new code is a new token: the first link and QR die with it.
+    expect(tokenOf(retry.body)).not.toBe(tokenOf(first.body));
+    expect(after.qrTokenHash).not.toBe(before.qrTokenHash);
+    expect(await linkOf(tokenOf(first.body))).toBeNull();
+    expect(await linkOf(tokenOf(retry.body))).toMatchObject({
+      passId: after.id,
+    });
     const rows = await auditReaders(h).tenant(w.a.tenantId, {
       action: 'visitor_pass.code_reissued',
       targetId: after.id,
@@ -362,6 +406,7 @@ describe('API v0 — visitors (ADR 0028)', () => {
       status: 'cancelled',
       cancelReasonCode: 'host_inactive',
       codeHash: null,
+      qrTokenHash: null,
     });
   });
 
@@ -412,6 +457,7 @@ describe('API v0 — visitors (ADR 0028)', () => {
     expect(await passRow(id)).toMatchObject({
       status: 'expired',
       codeHash: null,
+      qrTokenHash: null,
       visitorDetailsId: detailsId,
     });
     await sweep.run(
@@ -428,5 +474,241 @@ describe('API v0 — visitors (ADR 0028)', () => {
       }),
     );
     expect(left).toBe(0);
+  });
+
+  // --------------------------------------------------------------------------
+  // QR tokens (ADR 0030)
+  // --------------------------------------------------------------------------
+
+  it('a pass carries its link and QR: one token, the code derived from it', async () => {
+    const res = await create(owner(), passBody()).expect(201);
+    const body = res.body as { id: string; code: string; qrPayload: string };
+    const token = tokenOf(body);
+    expect(body.qrPayload).toBe(`JWR1.${token}`);
+    expect(body.code).toBe(tokens().codeOf(token, 6));
+    const row = await passRow(body.id);
+    expect(row.codeHash).toBe(
+      hasher().hashVisitorCode(w.a.tenantId, body.code),
+    );
+    expect(row.qrTokenHash).toBe(hasher().hashQrToken(w.a.tenantId, token));
+    expect(await linkOf(token)).toEqual({
+      tokenHash: hasher().hashVisitorLink(token),
+      tenantId: w.a.tenantId,
+      passId: body.id,
+      expiresAt: new Date(row.validUntil.getTime() + 30 * DAY),
+      createdAt: expect.any(Date) as Date,
+    });
+    expect(JSON.stringify(row)).not.toContain(token);
+  });
+
+  it('a derived code already in use draws a new token', async () => {
+    // Two tokens whose 6-digit codes collide (a birthday search, ~10^3 tries).
+    const byCode = new Map<string, string>();
+    let pair: [string, string] | null = null;
+    while (!pair) {
+      const t = tokens().newToken();
+      const code = tokens().codeOf(t, 6);
+      const seen = byCode.get(code);
+      if (seen) pair = [seen, t];
+      else byCode.set(code, t);
+    }
+    const third = tokens().newToken();
+    const spy = jest.spyOn(tokens(), 'newToken');
+    try {
+      spy.mockReturnValueOnce(pair[0]);
+      const first = await create(owner(), passBody()).expect(201);
+      expect(tokenOf(first.body)).toBe(pair[0]);
+      spy.mockReturnValueOnce(pair[1]).mockReturnValueOnce(third);
+      const second = await create(owner(), passBody()).expect(201);
+      expect(tokenOf(second.body)).toBe(third);
+      expect((second.body as { code: string }).code).toBe(
+        tokens().codeOf(third, 6),
+      );
+      expect(await linkOf(pair[1])).toBeNull();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('reissue-link: a new link, QR and code for the same pass; the old ones die', async () => {
+    const res = await create(owner(), passBody()).expect(201);
+    const id = (res.body as { id: string }).id;
+    const oldToken = tokenOf(res.body);
+    const oldCode = (res.body as { code: string }).code;
+    expect((await verify(oldCode)).body).toMatchObject({ result: 'valid' });
+
+    const again = await reissue(owner(), id).expect(200);
+    expect(again.headers['cache-control']).toBe('no-store');
+    expect(keyPaths(again.body)).toEqual(ISSUED);
+    const newToken = tokenOf(again.body);
+    const newCode = (again.body as { code: string }).code;
+    expect(newToken).not.toBe(oldToken);
+    expect(newCode).toBe(tokens().codeOf(newToken, 6));
+    expect(newCode).not.toBe(oldCode);
+    expect(again.body).toMatchObject({
+      id,
+      status: 'active',
+      qrPayload: `JWR1.${newToken}`,
+    });
+    expect(await passRow(id)).toMatchObject({
+      codeHash: hasher().hashVisitorCode(w.a.tenantId, newCode),
+      qrTokenHash: hasher().hashQrToken(w.a.tenantId, newToken),
+    });
+    expect(await linkOf(oldToken)).toBeNull();
+    expect(
+      await h.moduleRef
+        .get(GlobalDbService)
+        .visitorPassLink.count({ where: { passId: id } }),
+    ).toBe(1);
+    expect((await verify(oldCode)).body).toMatchObject({
+      result: 'invalid',
+      reason: 'unknown_code',
+    });
+    expect((await verify(newCode)).body).toMatchObject({ result: 'valid' });
+    const audit = await auditReaders(h).tenant(w.a.tenantId, {
+      action: 'visitor_pass.code_reissued',
+      targetId: id,
+    });
+    expect(audit.map((a) => a.metadata)).toEqual([{ reason: 'link_reissued' }]);
+  });
+
+  it('reissue-link: the host or the primary, an active pass only', async () => {
+    const familyPass = await create(w.a.tokens.family, passBody()).expect(201);
+    const familyId = (familyPass.body as { id: string }).id;
+    // The unit's primary may; a resident of another unit may not.
+    await reissue(owner(), familyId).expect(200);
+    expect(status(await reissue(w.a.tokens.tenant, familyId))).toEqual({
+      status: 404,
+      code: 'VISITOR_PASS_NOT_FOUND',
+    });
+    // A family member is not the primary: the owner's pass is not theirs.
+    const ownerPass = await create(owner(), passBody()).expect(201);
+    const ownerId = (ownerPass.body as { id: string }).id;
+    expect(status(await reissue(w.a.tokens.family, ownerId))).toEqual({
+      status: 404,
+      code: 'VISITOR_PASS_NOT_FOUND',
+    });
+    expect(status(await reissue(w.a.tokens.manager, ownerId))).toEqual({
+      status: 403,
+      code: 'FORBIDDEN',
+    });
+    // Cancelled.
+    await call(w, 'POST', `/visitor-passes/${ownerId}/cancel`, {
+      token: owner(),
+      body: { reasonCode: 'other' },
+    }).expect(204);
+    expect(status(await reissue(owner(), ownerId))).toEqual({
+      status: 404,
+      code: 'VISITOR_PASS_NOT_FOUND',
+    });
+    // Used by its one entry.
+    const used = await create(owner(), passBody()).expect(201);
+    const usedId = (used.body as { id: string }).id;
+    await call(w, 'POST', '/gate/entries', {
+      token: w.a.tokens.guard,
+      body: {
+        subjectType: 'visitor_pass',
+        subjectId: usedId,
+        direction: 'in',
+      },
+    }).expect(201);
+    expect(await passRow(usedId)).toMatchObject({
+      status: 'used',
+      codeHash: null,
+      qrTokenHash: null,
+    });
+    expect(status(await reissue(owner(), usedId))).toEqual({
+      status: 404,
+      code: 'VISITOR_PASS_NOT_FOUND',
+    });
+    await call(w, 'POST', '/gate/entries', {
+      token: w.a.tokens.guard,
+      body: {
+        subjectType: 'visitor_pass',
+        subjectId: usedId,
+        direction: 'out',
+      },
+    }).expect(201);
+  });
+
+  it('reissue-link with Idempotency-Key: a replay reissues again and stores no secret', async () => {
+    const res = await create(owner(), passBody()).expect(201);
+    const id = (res.body as { id: string }).id;
+    const key = `relink-${Date.now()}`;
+    const first = await reissue(owner(), id, key).expect(200);
+    const replay = await reissue(owner(), id, key).expect(200);
+    expect(replay.headers['idempotent-replayed']).toBe('true');
+    expect(replay.headers['cache-control']).toBe('no-store');
+    expect(keyPaths(replay.body)).toEqual(ISSUED);
+    expect(tokenOf(replay.body)).not.toBe(tokenOf(first.body));
+    expect(await linkOf(tokenOf(first.body))).toBeNull();
+    expect(await linkOf(tokenOf(replay.body))).toMatchObject({ passId: id });
+    const stored = await w.helpers.asManager(w.a, () =>
+      w.helpers.prisma.tenant.idempotencyKey.findMany({ where: { key } }),
+    );
+    expect(stored).toHaveLength(1);
+    expect(stored[0].responseBody).toBeNull();
+    const audit = await auditReaders(h).tenant(w.a.tenantId, {
+      action: 'visitor_pass.code_reissued',
+      targetId: id,
+    });
+    expect(audit.map((a) => a.metadata)).toEqual([
+      { reason: 'link_reissued' },
+      { reason: 'idempotent_replay' },
+    ]);
+    // The key names this pass: another pass is another request.
+    const other = await create(owner(), passBody()).expect(201);
+    expect(
+      status(await reissue(owner(), (other.body as { id: string }).id, key)),
+    ).toEqual({ status: 409, code: 'IDEMPOTENCY_CONFLICT' });
+    // Replayed after the pass ended: what became of it, no secret.
+    await call(w, 'POST', `/visitor-passes/${id}/cancel`, {
+      token: owner(),
+      body: { reasonCode: 'other' },
+    }).expect(204);
+    const late = await reissue(owner(), id, key).expect(200);
+    expect(late.body).toMatchObject({
+      id,
+      status: 'cancelled',
+      code: null,
+      link: null,
+      qrPayload: null,
+    });
+  });
+
+  it('the database refuses a code rotated without its token', async () => {
+    const res = await create(owner(), passBody()).expect(201);
+    const id = (res.body as { id: string }).id;
+    const db = new Client({
+      connectionString: required('TEST_MIGRATOR_DATABASE_URL'),
+    });
+    await db.connect();
+    // FORCE ROW LEVEL SECURITY binds the table owner too.
+    await db.query(`SELECT set_config('app.tenant_id', $1, false)`, [
+      w.a.tenantId,
+    ]);
+    try {
+      await expect(
+        db.query(
+          `UPDATE visitor_passes SET code_hash = repeat('a', 64) WHERE id = $1`,
+          [id],
+        ),
+      ).rejects.toThrow('a visitor pass code changed without its token');
+      // With the token, or cleared together: fine.
+      await db.query(
+        `UPDATE visitor_passes SET code_hash = repeat('b', 64),
+                qr_token_hash = repeat('c', 64) WHERE id = $1`,
+        [id],
+      );
+      await expect(
+        db.query(
+          `UPDATE visitor_passes SET qr_token_hash = repeat('d', 64),
+                  code_hash = NULL WHERE id = $1`,
+          [id],
+        ),
+      ).rejects.toThrow('visitor_passes_code_only_when_active');
+    } finally {
+      await db.end();
+    }
   });
 });

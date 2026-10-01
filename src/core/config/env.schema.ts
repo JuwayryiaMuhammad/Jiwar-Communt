@@ -87,6 +87,17 @@ export const envSchema = z
     // exit; verify attempts per guard per minute.
     GATE_UNCONFIRMED_EXIT_HOURS: positiveInt.default(12),
     GATE_VERIFY_RATE_LIMIT_PER_MINUTE: positiveInt.default(30),
+    /**
+     * The web app visitors open (ADR 0030): a pass's link is
+     * `<PUBLIC_APP_URL>/v#<token>`. https in production; no trailing slash.
+     */
+    PUBLIC_APP_URL: z
+      .string()
+      .regex(/^https?:\/\/[^\s/?#]+(\/[^\s?#]*)?$/, 'must be an http(s) URL')
+      .transform((v) => v.replace(/\/+$/, '')),
+    // The public visitor page (ADR 0030): requests per minute per IP and per link.
+    VISITOR_PAGE_RATE_LIMIT_PER_IP: positiveInt.default(60),
+    VISITOR_PAGE_RATE_LIMIT_PER_TOKEN: positiveInt.default(20),
     // Read notifications are deleted after this (ADR 0027).
     NOTIFICATIONS_RETENTION_DAYS: positiveInt.default(90),
 
@@ -134,6 +145,17 @@ export const envSchema = z
         path: ['SUPERADMIN_PASSWORD'],
         message:
           'SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD must be set together',
+      });
+    }
+    // A visitor's link carries a secret in its fragment: never over http.
+    if (
+      env.NODE_ENV === 'production' &&
+      !env.PUBLIC_APP_URL.startsWith('https://')
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['PUBLIC_APP_URL'],
+        message: 'must be https:// when NODE_ENV=production',
       });
     }
     // A fixed code in production is a universal password. Refuse to boot

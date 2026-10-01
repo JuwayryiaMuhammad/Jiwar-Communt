@@ -30,6 +30,11 @@ none of them: its own containers, nothing listening outside 127.0.0.1.
 | `/srv/jiwar-community/current`, `previous` | Deployed SHAs |
 | `/etc/nginx/sites-available/jiwar-community` | `deploy/nginx.conf`: default server on port 80, `/jiwar/` to MinIO |
 
+`app.env` must set `PUBLIC_APP_URL` (ADR 0030): visitor links are built from
+it and the app refuses to boot without it. The image runs with
+`NODE_ENV=production`, so it must be `https://`, the web app's address (a
+placeholder until the web app exists; this API host itself is plain HTTP).
+
 `deploy.sh` and `nginx.conf` are installed by hand: a change to either is
 copied to the server, it does not ship with the image.
 

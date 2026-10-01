@@ -60,6 +60,19 @@ export const VISITORS_ROUTES: Row[] = [
   },
   {
     method: 'POST',
+    path: '/visitor-passes/{id}/reissue-link',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    noStore: true,
+    foreign: {
+      params: (w) => ({ id: w.bPassId }),
+      code: 'VISITOR_PASS_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
     path: '/visitor-passes/{id}/cancel',
     auth: 'tenant',
     as: 'owner',

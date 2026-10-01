@@ -1835,6 +1835,7 @@
       "GateEntryMethod": {
         "enum": [
           "code",
+          "qr",
           "approval",
           "guard",
           "system"
@@ -2525,8 +2526,20 @@
               }
             ]
           },
+          "link": {
+            "description": "The page to send the visitor: the token is in the fragment, which browsers never send to a server (ADR 0030). Null with `code`.",
+            "example": "https://app.jiwar.eg/v#q3Jz…",
+            "nullable": true,
+            "type": "string"
+          },
           "partySize": {
             "type": "number"
+          },
+          "qrPayload": {
+            "description": "What the visitor’s QR encodes. Null with `code`.",
+            "example": "JWR1.q3Jz…",
+            "nullable": true,
+            "type": "string"
           },
           "schedule": {
             "allOf": [
@@ -2558,6 +2571,8 @@
         "required": [
           "id",
           "code",
+          "link",
+          "qrPayload",
           "kind",
           "partySize",
           "validFrom",
@@ -11524,6 +11539,52 @@
         "tags": [
           "visitors"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/visitor-passes/{id}/reissue-link": {
+      "post": {
+        "operationId": "VisitorsController_reissueLink",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedPassView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "visitors"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

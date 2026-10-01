@@ -26,6 +26,10 @@ export function applyTestEnv(): void {
   process.env.OTP_RATE_LIMIT_PER_IP = '100000';
   process.env.OTP_RATE_LIMIT_PER_IDENTIFIER = '5';
   process.env.PLATFORM_LOGIN_RATE_LIMIT_PER_IP = '100000';
+  // Same for the public visitor page (ADR 0030); its per-link limit is real.
+  process.env.VISITOR_PAGE_RATE_LIMIT_PER_IP = '100000';
+  process.env.VISITOR_PAGE_RATE_LIMIT_PER_TOKEN = '20';
+  process.env.PUBLIC_APP_URL = 'https://app.jiwar.test';
   process.env.PLATFORM_LOGIN_RATE_LIMIT_PER_EMAIL = '10';
   process.env.PLATFORM_LOGIN_MAX_FAILURES = '5';
   // Tests drain the outbox explicitly (processDue), so a poller of one suite

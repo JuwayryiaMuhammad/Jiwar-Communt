@@ -21,6 +21,8 @@ const GLOBAL_WITH_TENANT_ID = [
   'outbox_messages',
   // Resolves a registration link before the tenant is known (ADR 0024); no PII.
   'registration_links',
+  // Resolves a visitor's link before the tenant is known (ADR 0030); no PII.
+  'visitor_pass_links',
 ];
 
 const EXPECTED =

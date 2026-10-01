@@ -10,6 +10,7 @@ const base = {
   JWT_ACCESS_SECRET: 'a'.repeat(32),
   IDENTIFIER_PEPPER: 'b'.repeat(32),
   PLATFORM_JWT_SECRET: 'c'.repeat(32),
+  PUBLIC_APP_URL: 'https://app.jiwar.test',
 };
 
 describe('validateEnv', () => {
@@ -127,6 +128,53 @@ describe('validateEnv', () => {
       expect(() => validateEnv({ ...base, TRUST_PROXY: raw })).toThrow(
         /TRUST_PROXY/,
       );
+    });
+  });
+
+  describe('PUBLIC_APP_URL (ADR 0030)', () => {
+    it('is required', () => {
+      expect(() => validateEnv({ ...base, PUBLIC_APP_URL: undefined })).toThrow(
+        /PUBLIC_APP_URL/,
+      );
+    });
+
+    it('drops a trailing slash', () => {
+      expect(
+        validateEnv({ ...base, PUBLIC_APP_URL: 'https://app.jiwar.eg/' })
+          .PUBLIC_APP_URL,
+      ).toBe('https://app.jiwar.eg');
+    });
+
+    it.each([
+      'app.jiwar.eg',
+      'ftp://app.jiwar.eg',
+      'https://a b',
+      'https://x?y',
+    ])('rejects %s', (raw) => {
+      expect(() => validateEnv({ ...base, PUBLIC_APP_URL: raw })).toThrow(
+        /PUBLIC_APP_URL/,
+      );
+    });
+
+    it('must be https in production', () => {
+      expect(() =>
+        validateEnv({
+          ...base,
+          NODE_ENV: 'production',
+          PUBLIC_APP_URL: 'http://app.jiwar.eg',
+        }),
+      ).toThrow(/PUBLIC_APP_URL/);
+      expect(
+        validateEnv({ ...base, PUBLIC_APP_URL: 'http://localhost:5173' })
+          .PUBLIC_APP_URL,
+      ).toBe('http://localhost:5173');
+      expect(
+        validateEnv({
+          ...base,
+          NODE_ENV: 'production',
+          PUBLIC_APP_URL: 'https://app.jiwar.eg',
+        }).PUBLIC_APP_URL,
+      ).toBe('https://app.jiwar.eg');
     });
   });
 });

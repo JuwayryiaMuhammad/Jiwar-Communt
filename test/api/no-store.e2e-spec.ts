@@ -175,6 +175,20 @@ describe('API v0 — no-store', () => {
         token: w.a.tokens.owner,
         body: passBody(),
       }),
+    'POST /visitor-passes/{id}/reissue-link': async () => {
+      const pass = await call(
+        w,
+        'POST',
+        `/units/${w.a.homeUnitId}/visitor-passes`,
+        { token: w.a.tokens.owner, body: passBody() },
+      ).expect(201);
+      return call(
+        w,
+        'POST',
+        `/visitor-passes/${body<{ id: string }>(pass).id}/reissue-link`,
+        { token: w.a.tokens.owner },
+      );
+    },
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

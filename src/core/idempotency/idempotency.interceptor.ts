@@ -1,14 +1,17 @@
 import {
+  Inject,
   Injectable,
   type CallHandler,
   type ExecutionContext,
   type NestInterceptor,
 } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import type { Request, Response } from 'express';
 import { ClsService } from 'nestjs-cls';
 import { from, lastValueFrom, type Observable } from 'rxjs';
 import type { AppClsStore } from '../common/cls/app-cls';
 import {
+  IDEMPOTENT_SECRET,
   IdempotencyReplaySignal,
   parseIdempotencyKey,
   requestHash,
@@ -29,6 +32,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
   constructor(
     private readonly idempotency: IdempotencyService,
     private readonly cls: ClsService<AppClsStore>,
+    @Inject(Reflector) private readonly reflector: Reflector,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
@@ -40,7 +44,10 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const route =
       (req.route as { path?: string } | undefined)?.path ?? req.path;
     const hash = requestHash(req.method, route, req.params, req.body);
-    return from(this.run(key, hash, route, res, next));
+    const secret =
+      this.reflector.get<boolean>(IDEMPOTENT_SECRET, context.getHandler()) ===
+      true;
+    return from(this.run(key, hash, route, res, next, secret));
   }
 
   private async run(
@@ -49,6 +56,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
     route: string,
     res: Response,
     next: CallHandler,
+    secret: boolean,
   ): Promise<unknown> {
     const replay = async () => {
       const row = await this.idempotency.find(key);
@@ -81,7 +89,8 @@ export class IdempotencyInterceptor implements NestInterceptor {
       throw new Error(
         `${route} is @Idempotent() but its service did not claim the key`,
       );
-    await this.idempotency.store(key, body);
+    // A secret is shown once: its replays are rendered, never stored.
+    if (!secret) await this.idempotency.store(key, body);
     return body;
   }
 }

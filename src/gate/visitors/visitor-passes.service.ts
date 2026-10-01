@@ -1,9 +1,10 @@
-import { randomInt } from 'node:crypto';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma, type VisitorPass, type VisitorPassKind } from '@prisma/client';
 import { CommunityGatePort, type GateSchedule } from '../../community';
 import { AccountLifecycle } from '../../core/accounts/account-lifecycle';
 import { AuditService } from '../../core/audit/audit.service';
+import { AccessTokens } from '../../core/auth/access-token';
 import { IdentifierHasher, normalizePhone } from '../../core/auth/identifier';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { clampLimit, keysetCursor, type Page } from '../../core/common/cursor';
@@ -15,11 +16,14 @@ import {
 } from '../../core/common/errors';
 import { REASON_CODES } from '../../core/common/reasons';
 import { newId } from '../../core/common/uuid';
+import type { Env } from '../../core/config/env.schema';
+import { GlobalDbService } from '../../core/database/global-db.service';
 import {
   TenantTx,
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
 import { requestHash } from '../../core/idempotency/idempotency-key';
+import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 
 export interface NewPass {
@@ -32,11 +36,18 @@ export interface NewPass {
   visitorPhone?: string;
 }
 
-/** A pass as its host sees it right after creating it: the code, once. */
+/**
+ * A pass as its host sees it right after creating it (or reissuing its
+ * link): the code, the link and the QR payload, once (ADR 0030).
+ */
 export interface IssuedPass {
   id: string;
   /** Null only on a replay of a pass that is no longer active. */
   code: string | null;
+  /** `<PUBLIC_APP_URL>/v#<token>`: the token travels in the fragment. */
+  link: string | null;
+  /** `JWR1.<token>`, for the visitor's QR. */
+  qrPayload: string | null;
   kind: VisitorPassKind;
   partySize: number;
   validFrom: Date;
@@ -67,6 +78,16 @@ export const PASS_WINDOW_DAYS = { one_time: 7, recurring: 180 } as const;
 export const VISITOR_DATA_DAYS = 30;
 const DAY = 86_400_000;
 const PAGE = keysetCursor('createdAt');
+/** The idempotency resource of `reissue-link`: replayed, never stored. */
+export const PASS_LINK_RESOURCE = 'visitor_pass_link';
+
+/** A pass's secret, issued once: the token never touches the database. */
+interface PassToken {
+  token: string;
+  code: string;
+  codeHash: string;
+  qrHash: string;
+}
 
 export const passNotFound = () =>
   appError.notFound(ErrorCode.VISITOR_PASS_NOT_FOUND, 'Visitor pass not found');
@@ -83,6 +104,12 @@ export const passNotFound = () =>
  * `Idempotency-Key` lives on the pass itself (never a stored body: the code
  * is a secret). A replay returns the same pass with a fresh code — the
  * first one dies (`visitor_pass.code_reissued`).
+ *
+ * Each code is derived from a random token (ADR 0030): the link the host
+ * shares (`/v#<token>`) and the QR carry the token; the pass keeps the
+ * code's and the token's HMACs, and a global pointer from the link's HMAC
+ * lets the public page find the pass. A new code is always a new token, and
+ * the old pointer goes in the same transaction.
  */
 @Injectable()
 export class VisitorPassesService implements OnModuleInit {
@@ -94,9 +121,22 @@ export class VisitorPassesService implements OnModuleInit {
     private readonly community: CommunityGatePort,
     private readonly settings: TenantSettingsService,
     private readonly lifecycle: AccountLifecycle,
-  ) {}
+    private readonly tokens: AccessTokens,
+    private readonly globalDb: GlobalDbService,
+    private readonly idempotency: IdempotencyService,
+    config: ConfigService<Env, true>,
+  ) {
+    this.appUrl = config.get('PUBLIC_APP_URL', { infer: true });
+  }
+
+  private readonly appUrl: string;
 
   onModuleInit(): void {
+    this.idempotency.renderer(PASS_LINK_RESOURCE, (id) =>
+      this.tenantTx.withTenantTx((tx) =>
+        this.reissueIn(tx, id, 'idempotent_replay'),
+      ),
+    );
     const cancelHosted = async (
       tx: TenantTxClient,
       account: { id: string },
@@ -128,14 +168,20 @@ export class VisitorPassesService implements OnModuleInit {
       ? requestHash('POST', '/units/:unitId/visitor-passes', { unitId }, input)
       : null;
     // A concurrent duplicate loses on the key's unique index; the second
-    // attempt finds the winner and replays it.
+    // attempt finds the winner and replays it. Two passes created at once
+    // in the compound may derive the same code: the loser retries with a
+    // new token.
     for (let attempt = 0; ; attempt++) {
       try {
         return await this.tenantTx.withTenantTx((tx) =>
           this.createIn(tx, unitId, pass, idempotencyKey, hash),
         );
       } catch (error) {
-        if (attempt === 0 && idempotencyKey && isUniqueOn(error, 'idempotency'))
+        if (
+          attempt === 0 &&
+          ((idempotencyKey && isUniqueOn(error, 'idempotency')) ||
+            isUniqueOn(error, 'visitor_passes_active_code'))
+        )
           continue;
         throw error;
       }
@@ -192,7 +238,7 @@ export class VisitorPassesService implements OnModuleInit {
         },
       });
     }
-    const { code, codeHash } = await this.freshCode(tx, tenantId);
+    const secret = await this.freshToken(tx, tenantId);
     const id = newId();
     const created = await tx.visitorPass.create({
       data: {
@@ -207,12 +253,14 @@ export class VisitorPassesService implements OnModuleInit {
         schedule: input.schedule
           ? (input.schedule as unknown as Prisma.InputJsonValue)
           : Prisma.DbNull,
-        codeHash,
+        codeHash: secret.codeHash,
+        qrTokenHash: secret.qrHash,
         visitorDetailsId: detailsId,
         idempotencyKey: key ?? null,
         requestHash: hash,
       },
     });
+    await this.link(tx, created, secret);
     await this.audit.record(tx, {
       action: 'visitor_pass.created',
       targetId: id,
@@ -222,7 +270,7 @@ export class VisitorPassesService implements OnModuleInit {
         partySize: input.partySize,
       },
     });
-    return issued(created, code);
+    return this.issued(created, secret);
   }
 
   /** The same pass, a new code: the first one dies with the retry. */
@@ -236,18 +284,105 @@ export class VisitorPassesService implements OnModuleInit {
         ErrorCode.IDEMPOTENCY_CONFLICT,
         'This Idempotency-Key was used for a different request',
       );
-    if (passStatus(pass) !== 'active') return issued(pass, null);
-    const { code, codeHash } = await this.freshCode(tx, pass.tenantId);
+    await this.lockPass(tx, pass.id);
+    const fresh = await tx.visitorPass.findUniqueOrThrow({
+      where: { id: pass.id },
+    });
+    if (passStatus(fresh) !== 'active') return this.issued(fresh, null);
+    return this.rotate(tx, fresh, 'idempotent_replay');
+  }
+
+  /**
+   * `POST /visitor-passes/:id/reissue-link` (ADR 0030): the host lost the
+   * link. A new token — so a new link, QR and code — for the same pass; the
+   * old ones are dead at commit. The host or the unit's primary, an active
+   * pass only; anything else is "not found". `Idempotency-Key` is claimed
+   * but no body is stored (it holds the secret): a replay reissues again.
+   */
+  async reissueLink(id: string): Promise<IssuedPass> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const pass = await tx.visitorPass.findUnique({ where: { id } });
+      if (!pass || !(await this.mayManage(tx, pass))) throw passNotFound();
+      await this.idempotency.claim(tx, { type: PASS_LINK_RESOURCE, id });
+      return this.reissueIn(tx, id, 'link_reissued');
+    });
+  }
+
+  /** Under the pass lock: an active pass the caller may manage, a new token. */
+  private async reissueIn(
+    tx: TenantTxClient,
+    id: string,
+    reason: 'link_reissued' | 'idempotent_replay',
+  ): Promise<IssuedPass> {
+    await this.lockPass(tx, id);
+    const pass = await tx.visitorPass.findUnique({ where: { id } });
+    if (!pass || !(await this.mayManage(tx, pass))) throw passNotFound();
+    if (passStatus(pass) !== 'active') {
+      // A replay reports what became of the pass; a first call is refused.
+      if (reason === 'idempotent_replay') return this.issued(pass, null);
+      throw passNotFound();
+    }
+    return this.rotate(tx, pass, reason);
+  }
+
+  /** A new token for an active pass: code, QR and link, old ones dead. */
+  private async rotate(
+    tx: TenantTxClient,
+    pass: VisitorPass,
+    reason: 'link_reissued' | 'idempotent_replay',
+  ): Promise<IssuedPass> {
+    const secret = await this.freshToken(tx, pass.tenantId);
     const updated = await tx.visitorPass.update({
       where: { id: pass.id },
-      data: { codeHash },
+      data: { codeHash: secret.codeHash, qrTokenHash: secret.qrHash },
     });
+    await this.globalDb
+      .in(tx)
+      .visitorPassLink.deleteMany({ where: { passId: pass.id } });
+    await this.link(tx, updated, secret);
     await this.audit.record(tx, {
       action: 'visitor_pass.code_reissued',
       targetId: pass.id,
-      metadata: { reason: 'idempotent_replay' },
+      metadata: { reason },
     });
-    return issued(updated, code);
+    return this.issued(updated, secret);
+  }
+
+  /** The public page's pointer, kept as long as the visitor's data (ADR 0030). */
+  private async link(
+    tx: TenantTxClient,
+    pass: VisitorPass,
+    secret: PassToken,
+  ): Promise<void> {
+    await this.globalDb.in(tx).visitorPassLink.create({
+      data: {
+        tokenHash: this.hasher.hashVisitorLink(secret.token),
+        tenantId: pass.tenantId,
+        passId: pass.id,
+        expiresAt: new Date(
+          pass.validUntil.getTime() + VISITOR_DATA_DAYS * DAY,
+        ),
+      },
+    });
+  }
+
+  /** The row lock gate entries take on a pass (ADR 0028). */
+  private async lockPass(tx: TenantTxClient, id: string): Promise<void> {
+    await tx.$queryRaw`SELECT id FROM visitor_passes WHERE id = ${id}::uuid FOR UPDATE`;
+  }
+
+  /** The host while still placed on the unit, or the unit's primary. */
+  private async mayManage(
+    tx: TenantTxClient,
+    pass: VisitorPass,
+  ): Promise<boolean> {
+    const me = this.ctx.accountId;
+    if (
+      pass.hostAccountId === me &&
+      (await this.community.placeIn(tx, me, pass.unitId)) !== null
+    )
+      return true;
+    return this.community.isPrimary(tx, pass.unitId, me);
   }
 
   /** The unit's passes: a host sees their own, the primary every one. */
@@ -300,12 +435,7 @@ export class VisitorPassesService implements OnModuleInit {
     const me = this.ctx.accountId;
     await this.tenantTx.withTenantTx(async (tx) => {
       const pass = await tx.visitorPass.findUnique({ where: { id } });
-      if (!pass) throw passNotFound();
-      const allowed =
-        (pass.hostAccountId === me &&
-          (await this.community.placeIn(tx, me, pass.unitId)) !== null) ||
-        (await this.community.isPrimary(tx, pass.unitId, me));
-      if (!allowed) throw passNotFound();
+      if (!pass || !(await this.mayManage(tx, pass))) throw passNotFound();
       if (pass.status === 'cancelled') return;
       if (passStatus(pass) !== 'active')
         throw appError.conflict(
@@ -328,6 +458,7 @@ export class VisitorPassesService implements OnModuleInit {
       data: {
         status: 'cancelled',
         codeHash: null,
+        qrTokenHash: null,
         cancelledAt: new Date(),
         cancelledById: by,
         cancelReasonCode: reasonCode,
@@ -353,15 +484,38 @@ export class VisitorPassesService implements OnModuleInit {
       );
   }
 
-  /** 6 digits, unique among the compound's active passes. */
-  private async freshCode(tx: TenantTxClient, tenantId: string) {
-    for (let i = 0; i < 10; i++) {
-      const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
-      const codeHash = this.hasher.hashVisitorCode(tenantId, code);
-      if (!(await tx.visitorPass.count({ where: { codeHash } })))
-        return { code, codeHash };
-    }
-    throw new Error('No free visitor code after 10 tries');
+  /**
+   * A new token whose 6-digit code is free among the compound's active
+   * passes (only active passes have a code). A taken code is a new token.
+   */
+  private async freshToken(
+    tx: TenantTxClient,
+    tenantId: string,
+  ): Promise<PassToken> {
+    const hashOf = (code: string) =>
+      this.hasher.hashVisitorCode(tenantId, code);
+    const t = await this.tokens.issue(
+      tenantId,
+      6,
+      async (code) =>
+        (await tx.visitorPass.count({ where: { codeHash: hashOf(code) } })) > 0,
+    );
+    return { ...t, codeHash: hashOf(t.code) };
+  }
+
+  private issued(p: VisitorPass, secret: PassToken | null): IssuedPass {
+    return {
+      id: p.id,
+      code: secret?.code ?? null,
+      link: secret ? `${this.appUrl}/v#${secret.token}` : null,
+      qrPayload: secret ? this.tokens.qrPayload(secret.token) : null,
+      kind: p.kind,
+      partySize: p.partySize,
+      validFrom: p.validFrom,
+      validUntil: p.validUntil,
+      schedule: (p.schedule as GateSchedule | null) ?? null,
+      status: passStatus(p),
+    };
   }
 
   private validate(input: NewPass): NewPass {
@@ -421,19 +575,6 @@ export function passStatus(p: {
   if (p.status === 'active' && p.validUntil.getTime() <= Date.now())
     return 'expired';
   return p.status;
-}
-
-function issued(p: VisitorPass, code: string | null): IssuedPass {
-  return {
-    id: p.id,
-    code,
-    kind: p.kind,
-    partySize: p.partySize,
-    validFrom: p.validFrom,
-    validUntil: p.validUntil,
-    schedule: (p.schedule as GateSchedule | null) ?? null,
-    status: passStatus(p),
-  };
 }
 
 function checkCancelCode(code: string | undefined): string {

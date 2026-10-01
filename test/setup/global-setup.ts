@@ -1,6 +1,9 @@
 import { execSync } from 'node:child_process';
+import { DeleteObjectsCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import Redis from 'ioredis';
 import { Client } from 'pg';
+import { validateEnv } from '../../src/core/config/env.schema';
+import { ensureBucket, s3Client } from '../../src/core/files/object-storage';
 import { applyTestEnv, required } from './test-env';
 
 /**
@@ -32,6 +35,38 @@ export default async function globalSetup(): Promise<void> {
     await redis.flushdb();
   } finally {
     redis.disconnect();
+  }
+
+  await resetTestBucket();
+}
+
+/** The test bucket (TEST_S3_BUCKET on the local MinIO), created and emptied. */
+async function resetTestBucket(): Promise<void> {
+  const env = validateEnv(process.env);
+  const client = s3Client(env);
+  try {
+    await ensureBucket(client, env.S3_BUCKET);
+    let token: string | undefined;
+    do {
+      const page = await client.send(
+        new ListObjectsV2Command({
+          Bucket: env.S3_BUCKET,
+          ContinuationToken: token,
+        }),
+      );
+      const keys = (page.Contents ?? []).map((o) => ({ Key: o.Key }));
+      if (keys.length) {
+        await client.send(
+          new DeleteObjectsCommand({
+            Bucket: env.S3_BUCKET,
+            Delete: { Objects: keys },
+          }),
+        );
+      }
+      token = page.NextContinuationToken;
+    } while (token);
+  } finally {
+    client.destroy();
   }
 }
 

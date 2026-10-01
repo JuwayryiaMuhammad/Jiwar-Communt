@@ -51,6 +51,24 @@ export const envSchema = z
 
     REDIS_URL: z.string().regex(/^rediss?:\/\//, 'must be a redis:// URL'),
 
+    // Object storage (ADR 0029): Cloudflare R2 in production, MinIO in
+    // development, CI and tests; any S3 API works. The bucket is private:
+    // uploads and reads go through short-lived presigned URLs.
+    /** R2: https://<account>.r2.cloudflarestorage.com. Unset = AWS. */
+    S3_ENDPOINT: optional(z.url()),
+    /** R2: `auto`. MinIO: `us-east-1`. */
+    S3_REGION: z.string().min(1).default('us-east-1'),
+    S3_BUCKET: z.string().min(1),
+    S3_ACCESS_KEY_ID: z.string().min(1),
+    S3_SECRET_ACCESS_KEY: z.string().min(1),
+    /** Path-style URLs (endpoint/bucket/key): MinIO needs them, R2 accepts them. */
+    S3_FORCE_PATH_STYLE: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((v) => v === 'true'),
+    /** Lifetime of a presigned upload or read URL. Files hold personal data: keep it short. */
+    S3_URL_TTL_SECONDS: positiveInt.max(3600).default(300),
+
     SMTP_HOST: z.string().min(1),
     SMTP_PORT: positiveInt,
     SMTP_SECURE: z

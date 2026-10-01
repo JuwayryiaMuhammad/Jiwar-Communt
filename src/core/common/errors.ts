@@ -127,6 +127,9 @@ export const ErrorCode = {
   GATE_REQUEST_DECIDED: 'GATE_REQUEST_DECIDED',
   /** The worker may come in on their schedule: nothing to ask. */
   GATE_REQUEST_NOT_NEEDED: 'GATE_REQUEST_NOT_NEEDED',
+  // files (ADR 0029)
+  /** The object store failed or is unreachable (503). */
+  STORAGE_UNAVAILABLE: 'STORAGE_UNAVAILABLE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

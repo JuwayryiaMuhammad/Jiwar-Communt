@@ -191,4 +191,59 @@ describe('API v0 — enumeration', () => {
     expect(started[0].status).toBe(202);
     expect(wrong[0].status).toBe(401);
   });
+
+  it('the visitor page: the same 404 for every link that is not live (ADR 0030)', async () => {
+    const pass = async (side: 'a' | 'b' = 'a') => {
+      const res = await call(
+        w,
+        'POST',
+        `/units/${w[side].homeUnitId}/visitor-passes`,
+        {
+          token: w[side].tokens.owner,
+          body: {
+            kind: 'one_time',
+            partySize: 1,
+            validFrom: new Date().toISOString(),
+            validUntil: new Date(Date.now() + 3_600_000).toISOString(),
+          },
+        },
+      ).expect(201);
+      const b = res.body as { id: string; link: string };
+      return { id: b.id, token: b.link.split('#')[1] };
+    };
+    const replaced = await pass();
+    await call(w, 'POST', `/visitor-passes/${replaced.id}/reissue-link`, {
+      token: w.a.tokens.owner,
+    }).expect(200);
+    const suspended = await pass('b');
+    const globalDb = h.moduleRef.get(GlobalDbService);
+    await globalDb.tenant.update({
+      where: { id: w.b.tenantId },
+      data: { status: 'suspended' },
+    });
+    try {
+      const tokens = [
+        `unknown${'x'.repeat(36)}`,
+        'not-a-token',
+        replaced.token,
+        suspended.token,
+      ];
+      for (const path of [
+        '/public/visitor-passes/lookup',
+        '/public/visitor-passes/not-me',
+      ]) {
+        const answers: Response[] = [];
+        for (const token of tokens)
+          answers.push(await call(w, 'POST', path, { body: { token } }));
+        same(answers);
+        expect(answers[0].status).toBe(404);
+        expect(answers[0].headers['x-robots-tag']).toBe('noindex');
+      }
+    } finally {
+      await globalDb.tenant.update({
+        where: { id: w.b.tenantId },
+        data: { status: 'active' },
+      });
+    }
+  });
 });

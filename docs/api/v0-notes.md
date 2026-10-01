@@ -17,3 +17,7 @@ API v0 is a draft (ADR 0025): it exposes every feature so it can be exercised en
 - Gate entries may be backdated up to 24 h (offline readiness); the manager's entries screen should highlight a large gap between `occurredAt` and `recordedAt`.
 - `GET /me/gate-requests` is bounded (the pending requests of the caller's units); `GET /gate/inside` is paged by entry time. Both may want a push channel rather than polling once the apps exist.
 - `POST /gate/verify` returns one `display` object for visitors and workers (fields of the other kind are null); the guard screen may want two shapes.
+- The visitor's page is two POSTs (`/public/visitor-passes/lookup`, `/not-me`) so the token never sits in a URL; the web app reads it from the link's fragment (ADR 0030).
+- A pass's `link`, `qrPayload` and `code` come once, at creation or from `POST /visitor-passes/:id/reissue-link`; a host who loses the link reissues it, no need to cancel and recreate. There is no GET for a link or for a worker's card data (a lost card is a reissue).
+- The worker card's `preferredLanguage` is always `ar` until worker registration takes a language.
+- `POST /gate/verify` takes `code` or `qr`; the guard app may prefer a dedicated QR route once scanning has its own error states.

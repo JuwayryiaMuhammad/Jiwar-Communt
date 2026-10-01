@@ -404,5 +404,59 @@ describe('API v0 — PII leak scan', () => {
     );
     expect(seen.get('manager /worker-engagements/{id}')).toContain(wp.phone);
     expect(seen.get('manager /card-incidents')).toContain(incident.incidentId);
+
+    // The public persona (ADR 0030): whoever holds a visitor's link. The
+    // page reads by the link's token; for the family member's pass (with a
+    // visitor name and phone) and one of the primary's, it shows no person
+    // and no secret but the pass's own code.
+    const primaryVisit = await c.as(
+      a,
+      { id: primary.id, type: 'resident' },
+      () =>
+        h.moduleRef.get(VisitorPassesService).create(unit.id, {
+          kind: 'one_time',
+          partySize: 1,
+          validFrom: new Date(),
+          validUntil: new Date(Date.now() + 3_600_000),
+        }),
+    );
+    const publicReads = ROUTES.filter(
+      (r) => r.auth === 'public' && r.path.endsWith('/lookup'),
+    ).map((r) => r.path);
+    expect(publicReads).toEqual(['/public/visitor-passes/lookup']);
+    const ids = [...people.map((p) => p.id), ...Object.values(a.ids)].filter(
+      Boolean,
+    );
+    for (const [host, issued] of [
+      ['family', visit],
+      ['primary', primaryVisit],
+    ] as const) {
+      for (const path of publicReads) {
+        const res = await call(w, 'POST', path, {
+          body: { token: issued.link!.split('#')[1] },
+        }).expect(200);
+        const text = res.text;
+        const found = (v: string) => v && text.includes(v);
+        for (const p of people)
+          for (const v of [
+            p.fullName ?? '',
+            p.phone,
+            p.email,
+            p.doc,
+            p.birthDate,
+          ])
+            if (found(v)) leaks.push(`public ${host} ${path}: a person's data`);
+        for (const id of ids)
+          if (found(id)) leaks.push(`public ${host} ${path}: an account id`);
+        for (const v of ['PII-VISITOR-name', visitorPhone, 'PII-ASKED-name'])
+          if (found(v)) leaks.push(`public ${host} ${path}: a visitor's data`);
+        for (const secret of secrets)
+          if (secret !== issued.code && found(secret))
+            leaks.push(`public ${host} ${path}: secret ${secret}`);
+        // Positive control: the pass's own code is there.
+        expect(text).toContain(issued.code!);
+      }
+    }
+    expect(leaks).toEqual([]);
   });
 });

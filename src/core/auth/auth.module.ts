@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AccessTokens } from './access-token';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { EmailOtpChannel } from './email-otp.channel';
@@ -14,8 +15,9 @@ import { SessionService } from './session.service';
     OtpService,
     SessionService,
     IdentifierHasher,
+    AccessTokens,
     { provide: OTP_CHANNEL, useClass: EmailOtpChannel },
   ],
-  exports: [IdentifierHasher, OtpService],
+  exports: [IdentifierHasher, AccessTokens, OtpService],
 })
 export class AuthModule {}

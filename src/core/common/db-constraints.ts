@@ -58,6 +58,9 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   visitor_passes_tenant_id_id_key: null,
   // Retried before it can fire; a violation is a race and names no code.
   visitor_passes_active_code: null,
+  // A 32-byte random token (ADR 0030): a violation is a broken generator.
+  visitor_passes_active_qr: null,
+  worker_engagements_active_qr: null,
   // A duplicate key is replayed by the service; never a response.
   visitor_passes_tenant_id_host_account_id_idempotency_key_key: null,
   gate_approval_requests_tenant_id_id_key: null,

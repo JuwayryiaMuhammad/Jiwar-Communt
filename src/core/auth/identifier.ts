@@ -99,6 +99,29 @@ export class IdentifierHasher {
     return this.hmac(`visitor-code:${tenantId}:${code}`);
   }
 
+  /**
+   * The QR token of a pass or a worker engagement, bound to its compound
+   * (ADR 0030): another compound's QR is simply unknown at this gate.
+   */
+  hashQrToken(tenantId: string, token: string): string {
+    return this.hmac(`qr:${tenantId}:${token}`);
+  }
+
+  /** A visitor's link, global: the public page knows no compound yet (ADR 0030). */
+  hashVisitorLink(token: string): string {
+    return this.hmac(`visitor-link:${token}`);
+  }
+
+  /**
+   * The short code derived from a token (ADR 0030): whoever holds the token
+   * (the link, the card) can show the code, and the server stores neither.
+   * The first 64 bits of the HMAC modulo 10^digits; the bias is ~10^-11.
+   */
+  deriveCode(token: string, digits: 6 | 8): string {
+    const head = BigInt(`0x${this.hmac(`code:${token}`).slice(0, 16)}`);
+    return (head % 10n ** BigInt(digits)).toString().padStart(digits, '0');
+  }
+
   private hmac(data: string): string {
     return createHmac('sha256', this.pepper).update(data).digest('hex');
   }

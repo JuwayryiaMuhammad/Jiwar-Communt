@@ -91,6 +91,7 @@ enum GateDirection {
 
 enum GateEntryMethod {
   code
+  qr
   approval
   guard
   system
@@ -451,6 +452,7 @@ model Tenant {
   inviteTokens      InviteToken[]
   settings          TenantSettings?
   registrationLinks RegistrationLink[]
+  visitorPassLinks  VisitorPassLink[]
 
   @@map("tenants")
 }
@@ -579,6 +581,24 @@ model RegistrationLink {
 
   @@index([tenantId])
   @@map("registration_links")
+}
+
+/// Global pointer from a visitor's link to its pass (ADR 0030), read by the
+/// public page before any compound is known — like `invite_tokens`. No PII:
+/// HMAC(IDENTIFIER_PEPPER, "visitor-link:<token>"). Outlives the code so the
+/// page can say what became of the pass; deleted 30 days after its end.
+model VisitorPassLink {
+  tokenHash String   @id @map("token_hash") @db.Char(64)
+  tenantId  String   @map("tenant_id") @db.Uuid
+  passId    String   @map("pass_id") @db.Uuid
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onUpdate: Restrict)
+
+  @@index([passId])
+  @@index([expiresAt])
+  @@map("visitor_pass_links")
 }
 
 /// Transactional outbox (ADR 0019): written in the transaction of the action
@@ -834,6 +854,10 @@ model TenantSettings {
   maxActiveVisitorPasses     Int      @default(50) @map("max_active_visitor_passes")
   /// How long a household has to answer the gate before its instruction applies.
   gateRequestTimeoutSeconds  Int      @default(180) @map("gate_request_timeout_seconds")
+  /// Free text the compound writes for its visitors (the public page, ADR 0030).
+  visitorDirections          String?  @map("visitor_directions")
+  /// E.164; on the visitor page and the worker card.
+  emergencyPhone             String?  @map("emergency_phone")
   createdAt                  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt                  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -1002,6 +1026,9 @@ model WorkerEngagement {
   suspendedByManagement Boolean                @default(false) @map("suspended_by_management")
   /// HMAC(IDENTIFIER_PEPPER, "worker-code:<tenantId>:<code>")
   accessCodeHash        String?                @map("access_code_hash") @db.Char(64)
+  /// HMAC(IDENTIFIER_PEPPER, "qr:<tenantId>:<token>"): the card's QR (ADR 0030).
+  /// NULL on engagements whose code predates 4.1.
+  qrTokenHash           String?                @map("qr_token_hash") @db.Char(64)
   codeIssuedAt          DateTime?              @map("code_issued_at") @db.Timestamptz(3)
   reviewedById          String?                @map("reviewed_by") @db.Uuid
   createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
@@ -1404,6 +1431,9 @@ model VisitorPass {
   schedule         Json?
   status           VisitorPassStatus @default(active)
   codeHash         String?           @map("code_hash") @db.Char(64)
+  /// HMAC(IDENTIFIER_PEPPER, "qr:<tenantId>:<token>"); with the code, never
+  /// alone (ADR 0030). NULL on passes issued before 4.1.
+  qrTokenHash      String?           @map("qr_token_hash") @db.Char(64)
   visitorDetailsId String?           @map("visitor_details_id") @db.Uuid
   usedAt           DateTime?         @map("used_at") @db.Timestamptz(3)
   cancelledAt      DateTime?         @map("cancelled_at") @db.Timestamptz(3)

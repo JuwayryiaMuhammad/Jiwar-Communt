@@ -85,6 +85,9 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   gate_approval_requests_worker_has_engagement: {},
   gate_approval_requests_decided_matches_status: {},
   gate_approval_requests_expiry_after_creation: {},
+  // Phase 4.1 (ADR 0030)
+  visitor_passes_token_only_with_code: {},
+  worker_engagements_token_only_with_code: {},
   // Compares nullable columns.
   accounts_identity_document: {
     guarded:
@@ -118,6 +121,14 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'decided_by IS NULL is tested first, and the comparison of the ' +
       'nullable decision_source is wrapped in COALESCE(…, false)',
+  },
+  tenant_settings_visitor_directions_length: {
+    guarded:
+      'visitor_directions IS NULL is tested first; the length runs only on a value',
+  },
+  tenant_settings_emergency_phone_e164: {
+    guarded:
+      'emergency_phone IS NULL is tested first; the pattern runs only on a value',
   },
   household_members_minor_or_account: {
     guarded:

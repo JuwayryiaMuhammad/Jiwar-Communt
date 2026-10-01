@@ -2,6 +2,7 @@ import type { Row } from '../registry';
 import { ACCOUNTS_ROUTES } from './accounts';
 import { ADMIN_ROUTES } from './admin';
 import { DELEGATIONS_ROUTES } from './delegations';
+import { ENTRIES_ROUTES } from './entries';
 import { ERASURE_ROUTES } from './erasure';
 import { GATE_ROUTES } from './gate';
 import { EXISTING_ROUTES } from './existing';
@@ -38,4 +39,5 @@ export const ROUTES: Row[] = [
   ...NOTIFICATIONS_ROUTES,
   ...GATE_ROUTES,
   ...VISITORS_ROUTES,
+  ...ENTRIES_ROUTES,
 ];

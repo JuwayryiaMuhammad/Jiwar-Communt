@@ -1444,6 +1444,166 @@
         ],
         "type": "object"
       },
+      "EntryListView": {
+        "properties": {
+          "direction": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateDirection"
+              }
+            ]
+          },
+          "gateId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "guard": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Null for a system entry (an unconfirmed exit).",
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateEntryMethod"
+              }
+            ]
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "recordedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "shiftId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "subjectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "subjectType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateSubjectType"
+              }
+            ]
+          },
+          "unconfirmed": {
+            "type": "boolean"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "gateId",
+          "shiftId",
+          "guard",
+          "subjectType",
+          "subjectId",
+          "unitId",
+          "unitCode",
+          "direction",
+          "method",
+          "unconfirmed",
+          "occurredAt",
+          "recordedAt"
+        ],
+        "type": "object"
+      },
+      "EntryListViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/EntryListView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "EntryView": {
+        "properties": {
+          "direction": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateDirection"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateEntryMethod"
+              }
+            ]
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "recordedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "subjectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "subjectType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateSubjectType"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "subjectType",
+          "subjectId",
+          "unitCode",
+          "direction",
+          "method",
+          "occurredAt",
+          "recordedAt"
+        ],
+        "type": "object"
+      },
       "EraseDto": {
         "properties": {
           "typedScope": {
@@ -1537,6 +1697,22 @@
         ],
         "type": "object"
       },
+      "GateDirection": {
+        "enum": [
+          "in",
+          "out"
+        ],
+        "type": "string"
+      },
+      "GateEntryMethod": {
+        "enum": [
+          "code",
+          "approval",
+          "guard",
+          "system"
+        ],
+        "type": "string"
+      },
       "GateInstructionsDto": {
         "properties": {
           "delivery": {
@@ -1602,6 +1778,14 @@
         "enum": [
           "active",
           "inactive"
+        ],
+        "type": "string"
+      },
+      "GateSubjectType": {
+        "enum": [
+          "visitor_pass",
+          "worker_engagement",
+          "gate_request"
         ],
         "type": "string"
       },
@@ -1931,6 +2115,67 @@
         },
         "required": [
           "id"
+        ],
+        "type": "object"
+      },
+      "InsideView": {
+        "properties": {
+          "enteredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "gateName": {
+            "type": "string"
+          },
+          "kind": {
+            "description": "The pass kind, the worker capacity or the request kind.",
+            "type": "string"
+          },
+          "partySize": {
+            "type": "number"
+          },
+          "subjectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "subjectType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateSubjectType"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "subjectType",
+          "subjectId",
+          "unitCode",
+          "kind",
+          "partySize",
+          "gateName",
+          "enteredAt"
+        ],
+        "type": "object"
+      },
+      "InsideViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/InsideView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -3581,6 +3826,44 @@
         ],
         "type": "object"
       },
+      "RecordEntryDto": {
+        "properties": {
+          "direction": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateDirection"
+              }
+            ]
+          },
+          "id": {
+            "description": "Client-generated (UUIDv7): a retry with the same id records once.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "occurredAt": {
+            "description": "When it happened (offline guards): up to 24 h back.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "subjectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "subjectType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateSubjectType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "subjectType",
+          "subjectId",
+          "direction"
+        ],
+        "type": "object"
+      },
       "RefreshTokenDto": {
         "properties": {
           "refreshToken": {
@@ -5123,6 +5406,49 @@
         },
         "type": "object"
       },
+      "VerifyDisplayView": {
+        "properties": {
+          "capacity": {
+            "nullable": true,
+            "type": "string"
+          },
+          "partySize": {
+            "nullable": true,
+            "type": "number"
+          },
+          "passKind": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "workerName": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitCode",
+          "passKind",
+          "partySize",
+          "workerName",
+          "capacity"
+        ],
+        "type": "object"
+      },
+      "VerifyDto": {
+        "properties": {
+          "code": {
+            "description": "6 digits (a visitor pass) or 8 (a worker).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
       "VerifyOtpDto": {
         "properties": {
           "code": {
@@ -5138,6 +5464,75 @@
         "required": [
           "identifier",
           "code"
+        ],
+        "type": "object"
+      },
+      "VerifyView": {
+        "properties": {
+          "display": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerifyDisplayView"
+              }
+            ],
+            "description": "Null for an unknown code. Never a visitor name or a resident.",
+            "nullable": true,
+            "type": "object"
+          },
+          "next": {
+            "enum": [
+              "in",
+              "out"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              "unknown_code",
+              "not_yet_valid",
+              "expired",
+              "outside_schedule",
+              "host_inactive",
+              "used",
+              "cancelled",
+              "suspended",
+              "ended",
+              "banned",
+              "not_approved"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "result": {
+            "enum": [
+              "valid",
+              "invalid"
+            ],
+            "type": "string"
+          },
+          "subject": {
+            "enum": [
+              "visitor",
+              "worker"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "subjectId": {
+            "description": "Record the entry with it; for a worker outside the schedule, ask the household.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "result",
+          "subject",
+          "reason",
+          "subjectId",
+          "next",
+          "display"
         ],
         "type": "object"
       },
@@ -6322,6 +6717,151 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/gate/entries": {
+      "get": {
+        "operationId": "EntriesController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "gateId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "subjectType",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/GateSubjectType"
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/GateDirection"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryListViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "gate"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "EntriesController_record",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordEntryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "gate"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/gate/gates": {
       "get": {
         "operationId": "ShiftsController_gatesList",
@@ -6332,6 +6872,54 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GuardGateViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "gate"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/inside": {
+      "get": {
+        "operationId": "EntriesController_inside",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsideViewList"
                 }
               }
             },
@@ -6443,6 +7031,43 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ShiftView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "gate"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/verify": {
+      "post": {
+        "operationId": "EntriesController_verify",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyView"
                 }
               }
             },

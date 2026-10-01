@@ -117,6 +117,11 @@ export const ErrorCode = {
   VISITOR_PASS_NOT_FOUND: 'VISITOR_PASS_NOT_FOUND',
   VISITOR_PASS_LIMIT_REACHED: 'VISITOR_PASS_LIMIT_REACHED',
   VISITOR_PASS_NOT_ACTIVE: 'VISITOR_PASS_NOT_ACTIVE',
+  GATE_SUBJECT_NOT_FOUND: 'GATE_SUBJECT_NOT_FOUND',
+  /** An entry the subject's pass or engagement does not allow (params.reason). */
+  GATE_ENTRY_REFUSED: 'GATE_ENTRY_REFUSED',
+  ALREADY_INSIDE: 'ALREADY_INSIDE',
+  NOT_INSIDE: 'NOT_INSIDE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

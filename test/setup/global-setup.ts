@@ -39,7 +39,13 @@ export default async function globalSetup(): Promise<void> {
  * Immutable audit tables (ADR 0014): TRUNCATE is rejected by a trigger for
  * every role, so they are cleared separately over a superuser connection.
  */
-const AUDIT_TABLES = ['audit_log', 'platform_audit_log', 'security_events'];
+const AUDIT_TABLES = [
+  'audit_log',
+  'platform_audit_log',
+  'security_events',
+  // The append-only gate log (ADR 0028) has the same triggers.
+  'gate_entries',
+];
 
 /**
  * Test-only. `session_replication_role = replica` skips ordinary triggers,

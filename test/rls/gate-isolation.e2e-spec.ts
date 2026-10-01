@@ -164,6 +164,30 @@ const TABLES: Table[] = [
       return unitId;
     },
   },
+  {
+    // Append-only and without foreign keys, like the audit tables.
+    table: 'gate_entries',
+    linked: false,
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.gateEntry.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          gateId: link.gateId,
+          shiftId: newId(),
+          guardAccountId: link.guardId,
+          subjectType: 'visitor_pass',
+          subjectId: newId(),
+          unitId: link.unitId,
+          direction: 'in',
+          method: 'code',
+          occurredAt: new Date(),
+        },
+      });
+      return id;
+    },
+  },
 ];
 
 describe('RLS isolation — Phase 4 tables', () => {
@@ -223,13 +247,17 @@ describe('RLS isolation — Phase 4 tables', () => {
     });
 
     it('B updates and deletes nothing of A', async () => {
-      const changed = await inTenant(b, async (tx) => {
-        const updated = await tx.$executeRawUnsafe(
-          `UPDATE "${name}" SET tenant_id = tenant_id WHERE "${key}" = $1::uuid`,
-          ids[name],
-        );
-        return updated;
-      });
+      // An append-only table refuses UPDATE outright, which is also nothing.
+      const changed = await inTenant(b, (tx) =>
+        tx
+          .$executeRawUnsafe(
+            `UPDATE "${name}" SET tenant_id = tenant_id WHERE "${key}" = $1::uuid`,
+            ids[name],
+          )
+          .catch((e: Error) =>
+            /permission denied/.test(e.message) ? 0 : Promise.reject(e),
+          ),
+      );
       expect(changed).toBe(0);
       const deleted = await inTenant(b, (tx) =>
         tx

@@ -74,6 +74,30 @@ enum DeliveryInstruction {
   @@map("delivery_instruction")
 }
 
+enum GateSubjectType {
+  visitor_pass
+  worker_engagement
+  gate_request
+
+  @@map("gate_subject_type")
+}
+
+enum GateDirection {
+  in
+  out
+
+  @@map("gate_direction")
+}
+
+enum GateEntryMethod {
+  code
+  approval
+  guard
+  system
+
+  @@map("gate_entry_method")
+}
+
 enum TenantStatus {
   active
   suspended
@@ -1380,6 +1404,34 @@ model UnitGateInstruction {
 
   @@id([tenantId, unitId])
   @@map("unit_gate_instructions")
+}
+
+/// The gate log (ADR 0028): append-only, like the audit tables. SELECT and
+/// INSERT only for jiwar_app; triggers reject UPDATE, DELETE and TRUNCATE.
+/// No foreign keys on purpose (see the migration): ids are resolved by the
+/// service in its tenant transaction.
+model GateEntry {
+  id                String          @id @db.Uuid
+  tenantId          String          @map("tenant_id") @db.Uuid
+  gateId            String          @map("gate_id") @db.Uuid
+  shiftId           String?         @map("shift_id") @db.Uuid
+  guardAccountId    String?         @map("guard_account_id") @db.Uuid
+  subjectType       GateSubjectType @map("subject_type")
+  subjectId         String          @map("subject_id") @db.Uuid
+  unitId            String          @map("unit_id") @db.Uuid
+  direction         GateDirection
+  method            GateEntryMethod
+  approvalRequestId String?         @map("approval_request_id") @db.Uuid
+  occurredAt        DateTime        @map("occurred_at") @db.Timestamptz(3)
+  recordedAt        DateTime        @default(now()) @map("recorded_at") @db.Timestamptz(3)
+  unconfirmed       Boolean         @default(false)
+  /// A pointer: the details are deleted when they expire.
+  visitorDetailsId  String?         @map("visitor_details_id") @db.Uuid
+
+  @@index([tenantId, subjectType, subjectId, occurredAt(sort: Desc)], map: "gate_entries_tenant_id_subject_idx")
+  @@index([tenantId, occurredAt(sort: Desc), id(sort: Desc)])
+  @@index([tenantId, unitId, occurredAt(sort: Desc)])
+  @@map("gate_entries")
 }
 
 // ============================================================================

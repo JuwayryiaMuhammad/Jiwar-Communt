@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import type { WorkerCapacity, WorkerEngagementStatus } from '@prisma/client';
+import { IdentifierHasher } from '../core/auth/identifier';
 import type { FieldError } from '../core/common/errors';
 import type { TenantTxClient } from '../core/database/tenant-tx.service';
 import type { Capabilities } from './capabilities/capabilities';
@@ -17,6 +19,25 @@ import {
 /** A weekly schedule: days 0–6 and windows in the compound's time zone. */
 export type GateSchedule = WorkerSchedule;
 
+/** A domestic worker's engagement, as the gate needs it (ADR 0017, 0028). */
+export interface GateEngagement {
+  engagementId: string;
+  unitId: string;
+  unitCode: string;
+  workerName: string;
+  capacity: WorkerCapacity;
+  status: WorkerEngagementStatus;
+  schedule: GateSchedule;
+  validUntil: Date | null;
+  banned: boolean;
+  suspendedByManagement: boolean;
+}
+
+const ENGAGEMENT = {
+  worker: { select: { fullName: true, bannedAt: true } },
+  unit: { select: { code: true } },
+} as const;
+
 /**
  * What the gate domain reads from the community domain (ADR 0015, 0028),
  * and nothing else: units, who may do what on a unit (capabilitiesFor), the
@@ -28,7 +49,69 @@ export class CommunityGatePort {
   constructor(
     private readonly capabilities: CapabilitiesService,
     private readonly household: HouseholdAuthority,
+    private readonly hasher: IdentifierHasher,
   ) {}
+
+  async unitCode(tx: TenantTxClient, unitId: string): Promise<string> {
+    const unit = await tx.unit.findUniqueOrThrow({
+      where: { id: unitId },
+      select: { code: true },
+    });
+    return unit.code;
+  }
+
+  async unitCodes(
+    tx: TenantTxClient,
+    unitIds: readonly string[],
+  ): Promise<Map<string, string>> {
+    const units = await tx.unit.findMany({
+      where: { id: { in: [...new Set(unitIds)] } },
+      select: { id: true, code: true },
+    });
+    return new Map(units.map((u) => [u.id, u.code]));
+  }
+
+  /** By the 8-digit code (its HMAC), in this compound only. */
+  async engagementByCode(
+    tx: TenantTxClient,
+    tenantId: string,
+    code: string,
+  ): Promise<GateEngagement | null> {
+    const e = await tx.workerEngagement.findFirst({
+      where: { accessCodeHash: this.hasher.hashWorkerCode(tenantId, code) },
+      include: ENGAGEMENT,
+    });
+    return e ? toGate(e) : null;
+  }
+
+  async engagementById(
+    tx: TenantTxClient,
+    id: string,
+  ): Promise<GateEngagement | null> {
+    const e = await tx.workerEngagement.findUnique({
+      where: { id },
+      include: ENGAGEMENT,
+    });
+    return e ? toGate(e) : null;
+  }
+
+  /** Serializes the gate's entries of one worker. */
+  async lockEngagement(tx: TenantTxClient, id: string): Promise<void> {
+    await tx.$queryRaw`SELECT id FROM worker_engagements WHERE id = ${id}::uuid FOR UPDATE`;
+  }
+
+  /** Of these engagements, the live-in ones (they live there). */
+  async liveInEngagements(
+    tx: TenantTxClient,
+    ids: readonly string[],
+  ): Promise<string[]> {
+    if (!ids.length) return [];
+    const rows = await tx.workerEngagement.findMany({
+      where: { id: { in: [...ids] }, capacity: 'live_in' },
+      select: { id: true },
+    });
+    return rows.map((r) => r.id);
+  }
 
   /** An account's capabilities on a unit, or null when it has no place there. */
   placeIn(
@@ -72,4 +155,29 @@ export class CommunityGatePort {
   ): boolean {
     return isWithinSchedule(schedule, instant, timeZone);
   }
+}
+
+function toGate(e: {
+  id: string;
+  unitId: string;
+  capacity: WorkerCapacity;
+  status: WorkerEngagementStatus;
+  schedule: unknown;
+  validUntil: Date | null;
+  suspendedByManagement: boolean;
+  worker: { fullName: string | null; bannedAt: Date | null };
+  unit: { code: string };
+}): GateEngagement {
+  return {
+    engagementId: e.id,
+    unitId: e.unitId,
+    unitCode: e.unit.code,
+    workerName: e.worker.fullName ?? '',
+    capacity: e.capacity,
+    status: e.status,
+    schedule: e.schedule as GateSchedule,
+    validUntil: e.validUntil,
+    banned: e.worker.bannedAt !== null,
+    suspendedByManagement: e.suspendedByManagement,
+  };
 }

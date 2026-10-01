@@ -3,6 +3,10 @@ import { CommunityGatePortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
 import { AuthModule } from '../core/auth/auth.module';
 import { TenantSettingsModule } from '../core/tenant-settings/tenant-settings.module';
+import { EntriesController } from './entries/entries.controller';
+import { EntriesService } from './entries/entries.service';
+import { GateSubjects } from './entries/subjects';
+import { VerifyService } from './entries/verify.service';
 import { GatesController } from './gates/gates.controller';
 import { GatesService } from './gates/gates.service';
 import { ShiftsController } from './shifts/shifts.controller';
@@ -23,13 +27,21 @@ import { VisitorsController } from './visitors/visitors.controller';
     TenantSettingsModule,
     CommunityGatePortModule,
   ],
-  controllers: [GatesController, ShiftsController, VisitorsController],
+  controllers: [
+    GatesController,
+    ShiftsController,
+    VisitorsController,
+    EntriesController,
+  ],
   providers: [
     GatesService,
     ShiftsService,
     VisitorPassesService,
     InstructionsService,
     VisitorDataSweep,
+    GateSubjects,
+    EntriesService,
+    VerifyService,
   ],
 })
 export class GateModule {}

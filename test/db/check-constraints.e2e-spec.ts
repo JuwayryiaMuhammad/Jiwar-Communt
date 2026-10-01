@@ -78,6 +78,9 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   visitor_passes_idempotency_pair: {},
   tenant_settings_max_active_visitor_passes_range: {},
   tenant_settings_gate_request_timeout_range: {},
+  gate_entries_system_has_no_guard: {},
+  gate_entries_unconfirmed_is_system_out: {},
+  gate_entries_method_matches_direction: {},
   // Compares nullable columns.
   accounts_identity_document: {
     guarded:

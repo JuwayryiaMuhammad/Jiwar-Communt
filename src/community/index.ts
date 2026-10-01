@@ -9,7 +9,11 @@ export { WorkersService } from './workers/workers.service';
 export { CapabilitiesModule } from './capabilities/capabilities.module';
 export { CapabilitiesService } from './capabilities/capabilities.service';
 export { CommunityGatePortModule } from './gate-port.module';
-export { CommunityGatePort, type GateSchedule } from './gate-port';
+export {
+  CommunityGatePort,
+  type GateEngagement,
+  type GateSchedule,
+} from './gate-port';
 export {
   capabilitiesFor,
   type Capabilities,

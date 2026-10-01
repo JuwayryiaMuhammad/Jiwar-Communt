@@ -83,6 +83,10 @@ export const envSchema = z
     // may wait before the erasure holders are told.
     DELETION_GRACE_DAYS: positiveInt.default(30),
     ERASURE_OVERDUE_DAYS: positiveInt.default(7),
+    // The gate (ADR 0028): someone "inside" this long gets an unconfirmed
+    // exit; verify attempts per guard per minute.
+    GATE_UNCONFIRMED_EXIT_HOURS: positiveInt.default(12),
+    GATE_VERIFY_RATE_LIMIT_PER_MINUTE: positiveInt.default(30),
     // Read notifications are deleted after this (ADR 0027).
     NOTIFICATIONS_RETENTION_DAYS: positiveInt.default(90),
 

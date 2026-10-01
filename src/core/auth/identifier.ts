@@ -94,6 +94,11 @@ export class IdentifierHasher {
     return this.hmac(`worker-code:${tenantId}:${code}`);
   }
 
+  /** A visitor pass code (ADR 0028), bound to its compound like a worker's. */
+  hashVisitorCode(tenantId: string, code: string): string {
+    return this.hmac(`visitor-code:${tenantId}:${code}`);
+  }
+
   private hmac(data: string): string {
     return createHmac('sha256', this.pepper).update(data).digest('hex');
   }

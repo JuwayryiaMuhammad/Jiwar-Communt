@@ -54,6 +54,7 @@ describe('audit catalog', () => {
         'account_deletion_request',
         'gate',
         'guard_shift',
+        'visitor_pass',
       ]).toContain(def.target);
     }
   });

@@ -114,6 +114,9 @@ export const ErrorCode = {
   /** A gate action needs the caller's open shift (a 403, ADR 0025). */
   NO_OPEN_SHIFT: 'NO_OPEN_SHIFT',
   SHIFT_ALREADY_OPEN: 'SHIFT_ALREADY_OPEN',
+  VISITOR_PASS_NOT_FOUND: 'VISITOR_PASS_NOT_FOUND',
+  VISITOR_PASS_LIMIT_REACHED: 'VISITOR_PASS_LIMIT_REACHED',
+  VISITOR_PASS_NOT_ACTIVE: 'VISITOR_PASS_NOT_ACTIVE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

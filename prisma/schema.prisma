@@ -40,6 +40,40 @@ enum GateStatus {
   @@map("gate_status")
 }
 
+enum VisitorPassKind {
+  one_time
+  recurring
+
+  @@map("visitor_pass_kind")
+}
+
+enum VisitorPassStatus {
+  active
+  used
+  cancelled
+  expired
+
+  @@map("visitor_pass_status")
+}
+
+/// What the guard does with an uninvited visitor when nobody answers.
+enum VisitorInstruction {
+  ask
+  allow
+  deny
+
+  @@map("visitor_instruction")
+}
+
+enum DeliveryInstruction {
+  ask
+  allow
+  leave_at_gate
+  deny
+
+  @@map("delivery_instruction")
+}
+
 enum TenantStatus {
   active
   suspended
@@ -602,6 +636,9 @@ model Account {
   notifications         Notification[]            @relation("NotificationAccount")
   idempotencyKeys       IdempotencyKey[]          @relation("IdempotencyAccount")
   guardShifts           GuardShift[]              @relation("ShiftGuard")
+  hostedPasses          VisitorPass[]             @relation("PassHost")
+  cancelledPasses       VisitorPass[]             @relation("PassCancelledBy")
+  gateInstructions      UnitGateInstruction[]     @relation("InstructionsUpdatedBy")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -682,6 +719,8 @@ model Unit {
   workerEngagements WorkerEngagement[]
   reviewFlags       UnitReviewFlag[]
   deferredActions   HouseholdDeferredAction[]
+  visitorPasses     VisitorPass[]
+  gateInstructions  UnitGateInstruction[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -736,6 +775,10 @@ model TenantSettings {
   maxHouseholdMembers        Int      @default(10) @map("max_household_members")
   /// IANA time zone for schedules (ADR 0017).
   timezone                   String   @default("Africa/Cairo")
+  /// Active visitor passes per unit (ADR 0028).
+  maxActiveVisitorPasses     Int      @default(50) @map("max_active_visitor_passes")
+  /// How long a household has to answer the gate before its instruction applies.
+  gateRequestTimeoutSeconds  Int      @default(180) @map("gate_request_timeout_seconds")
   createdAt                  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt                  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -1268,6 +1311,75 @@ model GuardShift {
   @@unique([tenantId, id])
   @@index([tenantId, gateId])
   @@map("guard_shifts")
+}
+
+/// A visitor's name and phone (ADR 0028): personal data, deleted by the
+/// retention sweep at `expires_at`; what pointed at it stays.
+model VisitorDetails {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  fullName  String?  @map("full_name")
+  phone     String?
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  passes VisitorPass[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, expiresAt])
+  @@map("visitor_details")
+}
+
+/// A host's pass for visitors (ADR 0028). The code is an HMAC, present only
+/// while the pass is active (CHECK); the key makes creation idempotent.
+model VisitorPass {
+  id               String            @id @db.Uuid
+  tenantId         String            @map("tenant_id") @db.Uuid
+  unitId           String            @map("unit_id") @db.Uuid
+  hostAccountId    String            @map("host_account_id") @db.Uuid
+  kind             VisitorPassKind
+  partySize        Int               @map("party_size")
+  validFrom        DateTime          @map("valid_from") @db.Timestamptz(3)
+  validUntil       DateTime          @map("valid_until") @db.Timestamptz(3)
+  /// Recurring passes only: { days, windows } in the compound's time zone.
+  schedule         Json?
+  status           VisitorPassStatus @default(active)
+  codeHash         String?           @map("code_hash") @db.Char(64)
+  visitorDetailsId String?           @map("visitor_details_id") @db.Uuid
+  usedAt           DateTime?         @map("used_at") @db.Timestamptz(3)
+  cancelledAt      DateTime?         @map("cancelled_at") @db.Timestamptz(3)
+  cancelledById    String?           @map("cancelled_by") @db.Uuid
+  cancelReasonCode String?           @map("cancel_reason_code")
+  idempotencyKey   String?           @map("idempotency_key")
+  requestHash      String?           @map("request_hash")
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  unit           Unit            @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
+  host           Account         @relation("PassHost", fields: [tenantId, hostAccountId], references: [tenantId, id], onUpdate: Restrict)
+  cancelledBy    Account?        @relation("PassCancelledBy", fields: [tenantId, cancelledById], references: [tenantId, id], onUpdate: Restrict)
+  visitorDetails VisitorDetails? @relation(fields: [tenantId, visitorDetailsId], references: [tenantId, id], onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, hostAccountId, idempotencyKey])
+  @@index([tenantId, unitId, createdAt(sort: Desc)])
+  @@index([tenantId, hostAccountId, status])
+  @@map("visitor_passes")
+}
+
+/// A household's standing instructions for the gate (ADR 0028).
+model UnitGateInstruction {
+  tenantId         String              @map("tenant_id") @db.Uuid
+  unitId           String              @map("unit_id") @db.Uuid
+  uninvitedVisitor VisitorInstruction  @default(ask) @map("uninvited_visitor")
+  delivery         DeliveryInstruction @default(ask)
+  updatedById      String              @map("updated_by") @db.Uuid
+  updatedAt        DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  unit      Unit    @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
+  updatedBy Account @relation("InstructionsUpdatedBy", fields: [tenantId, updatedById], references: [tenantId, id], onUpdate: Restrict)
+
+  @@id([tenantId, unitId])
+  @@map("unit_gate_instructions")
 }
 
 // ============================================================================

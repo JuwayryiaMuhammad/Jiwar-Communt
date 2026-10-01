@@ -12,11 +12,35 @@ export interface TenantSettingsView {
   maxHouseholdMembers: number;
   /** IANA time zone; worker schedules are read in it (ADR 0017). */
   timezone: string;
+  /** Active visitor passes per unit (ADR 0028). */
+  maxActiveVisitorPasses: number;
+  /** Seconds a household has to answer the gate before its instruction applies. */
+  gateRequestTimeoutSeconds: number;
 }
 
 export type TenantSettingsUpdate = Partial<TenantSettingsView>;
 
 export const MAX_HOUSEHOLD_MEMBERS = { min: 1, max: 100 } as const;
+export const MAX_ACTIVE_VISITOR_PASSES = { min: 1, max: 500 } as const;
+export const GATE_REQUEST_TIMEOUT_SECONDS = { min: 30, max: 1800 } as const;
+
+/** An integer in range, else the field error the DTO would give. */
+function checkRange(
+  field: string,
+  value: number | undefined,
+  range: { min: number; max: number },
+): void {
+  if (
+    value !== undefined &&
+    (!Number.isInteger(value) || value < range.min || value > range.max)
+  ) {
+    throw appError.badRequest(ErrorCode.VALIDATION_FAILED, `Invalid ${field}`, {
+      fields: [
+        { field, code: FieldErrorCode.INVALID_NUMBER, params: { ...range } },
+      ],
+    });
+  }
+}
 
 /**
  * A compound's own settings (ADR 0016): one row per compound, created with
@@ -71,6 +95,16 @@ export class TenantSettingsService {
         },
       );
     }
+    checkRange(
+      'maxActiveVisitorPasses',
+      input.maxActiveVisitorPasses,
+      MAX_ACTIVE_VISITOR_PASSES,
+    );
+    checkRange(
+      'gateRequestTimeoutSeconds',
+      input.gateRequestTimeoutSeconds,
+      GATE_REQUEST_TIMEOUT_SECONDS,
+    );
     if (input.timezone !== undefined && !isTimeZone(input.timezone)) {
       throw appError.badRequest(
         ErrorCode.VALIDATION_FAILED,
@@ -89,6 +123,8 @@ export class TenantSettingsService {
           familyJoinRequiresApproval: input.familyJoinRequiresApproval,
           maxHouseholdMembers: input.maxHouseholdMembers,
           timezone: input.timezone,
+          maxActiveVisitorPasses: input.maxActiveVisitorPasses,
+          gateRequestTimeoutSeconds: input.gateRequestTimeoutSeconds,
         },
       });
       const changes = diffChanges(
@@ -113,6 +149,8 @@ function view(row: TenantSettings): TenantSettingsView {
     familyJoinRequiresApproval: row.familyJoinRequiresApproval,
     maxHouseholdMembers: row.maxHouseholdMembers,
     timezone: row.timezone,
+    maxActiveVisitorPasses: row.maxActiveVisitorPasses,
+    gateRequestTimeoutSeconds: row.gateRequestTimeoutSeconds,
   };
 }
 

@@ -83,4 +83,8 @@ export const PHASE_4_COVERAGE: readonly string[] = [
   'gate.updated',
   'gate.shift_started',
   'gate.shift_ended',
+  'gate.instructions_changed',
+  'visitor_pass.created',
+  'visitor_pass.cancelled',
+  'visitor_pass.code_reissued',
 ];

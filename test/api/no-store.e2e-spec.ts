@@ -13,6 +13,7 @@ import { waitForOtp } from '../setup/mailpit';
 import { call } from './request';
 import { ROUTES } from './routes';
 import { inviteBody, minorBody } from './routes/household';
+import { passBody } from './routes/visitors';
 import { workerBody } from './routes/workers';
 import { buildWorld, type World } from './world';
 
@@ -169,6 +170,11 @@ describe('API v0 — no-store', () => {
         body: { type: 'confiscated' },
       });
     },
+    'POST /units/{unitId}/visitor-passes': () =>
+      call(w, 'POST', `/units/${w.a.homeUnitId}/visitor-passes`, {
+        token: w.a.tokens.owner,
+        body: passBody(),
+      }),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

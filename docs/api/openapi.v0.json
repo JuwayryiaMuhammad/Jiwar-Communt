@@ -348,6 +348,18 @@
         ],
         "type": "object"
       },
+      "CancelVisitorPassDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `visitorPassCancel`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "CapabilitiesView": {
         "properties": {
           "activityVisibleToPrimary": {
@@ -1046,6 +1058,55 @@
         ],
         "type": "object"
       },
+      "CreateVisitorPassDto": {
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorPassKind"
+              }
+            ]
+          },
+          "partySize": {
+            "maximum": 50,
+            "minimum": 1,
+            "type": "number"
+          },
+          "schedule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitScheduleDto"
+              }
+            ],
+            "description": "Recurring passes only; checked by the service."
+          },
+          "validFrom": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "validUntil": {
+            "description": "At most 7 days after `validFrom` (one-time), 180 (recurring).",
+            "format": "date-time",
+            "type": "string"
+          },
+          "visitorName": {
+            "description": "Shown to the host only; deleted 30 days after the pass ends.",
+            "maxLength": 200,
+            "type": "string"
+          },
+          "visitorPhone": {
+            "description": "Never returned after creation; deleted with the name.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "partySize",
+          "validFrom",
+          "validUntil"
+        ],
+        "type": "object"
+      },
       "CreatedDelegationView": {
         "properties": {
           "delegateAccountId": {
@@ -1248,6 +1309,15 @@
           "effectiveAt"
         ],
         "type": "object"
+      },
+      "DeliveryInstruction": {
+        "enum": [
+          "ask",
+          "allow",
+          "leave_at_gate",
+          "deny"
+        ],
+        "type": "string"
       },
       "EngagementDetailView": {
         "properties": {
@@ -1464,6 +1534,59 @@
         },
         "required": [
           "flagId"
+        ],
+        "type": "object"
+      },
+      "GateInstructionsDto": {
+        "properties": {
+          "delivery": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeliveryInstruction"
+              }
+            ]
+          },
+          "uninvitedVisitor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorInstruction"
+              }
+            ]
+          }
+        },
+        "required": [
+          "uninvitedVisitor",
+          "delivery"
+        ],
+        "type": "object"
+      },
+      "GateInstructionsView": {
+        "properties": {
+          "delivery": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeliveryInstruction"
+              }
+            ]
+          },
+          "uninvitedVisitor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorInstruction"
+              }
+            ]
+          },
+          "updatedAt": {
+            "description": "Null: never set (the defaults apply).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "uninvitedVisitor",
+          "delivery",
+          "updatedAt"
         ],
         "type": "object"
       },
@@ -1857,6 +1980,66 @@
         },
         "required": [
           "token"
+        ],
+        "type": "object"
+      },
+      "IssuedPassView": {
+        "properties": {
+          "code": {
+            "description": "6 digits. Null only on a replay of a pass no longer active.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorPassKind"
+              }
+            ]
+          },
+          "partySize": {
+            "type": "number"
+          },
+          "schedule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitScheduleDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "used",
+              "cancelled",
+              "expired"
+            ],
+            "type": "string"
+          },
+          "validFrom": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "validUntil": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "kind",
+          "partySize",
+          "validFrom",
+          "validUntil",
+          "schedule",
+          "status"
         ],
         "type": "object"
       },
@@ -2841,6 +3024,95 @@
         "required": [
           "loginTicket",
           "accounts"
+        ],
+        "type": "object"
+      },
+      "PassView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorPassKind"
+              }
+            ]
+          },
+          "mine": {
+            "description": "The caller is the host.",
+            "type": "boolean"
+          },
+          "partySize": {
+            "type": "number"
+          },
+          "schedule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitScheduleDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "used",
+              "cancelled",
+              "expired"
+            ],
+            "type": "string"
+          },
+          "validFrom": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "validUntil": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "visitorName": {
+            "description": "On the caller's own passes only, until the data expires.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "partySize",
+          "validFrom",
+          "validUntil",
+          "schedule",
+          "status",
+          "mine",
+          "visitorName",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "PassViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PassView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -4201,6 +4473,14 @@
           "familyJoinRequiresApproval": {
             "type": "boolean"
           },
+          "gateRequestTimeoutSeconds": {
+            "description": "Seconds a household has to answer the gate before its instruction applies.",
+            "type": "number"
+          },
+          "maxActiveVisitorPasses": {
+            "description": "Active visitor passes per unit.",
+            "type": "number"
+          },
           "maxHouseholdMembers": {
             "type": "number"
           },
@@ -4212,7 +4492,9 @@
         "required": [
           "familyJoinRequiresApproval",
           "maxHouseholdMembers",
-          "timezone"
+          "timezone",
+          "maxActiveVisitorPasses",
+          "gateRequestTimeoutSeconds"
         ],
         "type": "object"
       },
@@ -4816,6 +5098,18 @@
           "familyJoinRequiresApproval": {
             "type": "boolean"
           },
+          "gateRequestTimeoutSeconds": {
+            "description": "Seconds a household has to answer the gate before its standing instruction applies.",
+            "maximum": 1800,
+            "minimum": 30,
+            "type": "number"
+          },
+          "maxActiveVisitorPasses": {
+            "description": "Active visitor passes per unit.",
+            "maximum": 500,
+            "minimum": 1,
+            "type": "number"
+          },
           "maxHouseholdMembers": {
             "maximum": 100,
             "minimum": 1,
@@ -4846,6 +5140,61 @@
           "code"
         ],
         "type": "object"
+      },
+      "VisitScheduleDto": {
+        "properties": {
+          "days": {
+            "description": "0 (Sunday) … 6.",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/VisitWindowDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "days",
+          "windows"
+        ],
+        "type": "object"
+      },
+      "VisitWindowDto": {
+        "properties": {
+          "from": {
+            "example": "18:00",
+            "type": "string"
+          },
+          "to": {
+            "description": "Before `from`: an overnight window.",
+            "example": "23:00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
+      "VisitorInstruction": {
+        "enum": [
+          "ask",
+          "allow",
+          "deny"
+        ],
+        "type": "string"
+      },
+      "VisitorPassKind": {
+        "enum": [
+          "one_time",
+          "recurring"
+        ],
+        "type": "string"
       },
       "WarningView": {
         "properties": {
@@ -9571,6 +9920,86 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/units/{unitId}/gate-instructions": {
+      "get": {
+        "operationId": "VisitorsController_getInstructions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateInstructionsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "visitors"
+        ],
+        "x-stability": "draft"
+      },
+      "put": {
+        "operationId": "VisitorsController_setInstructions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GateInstructionsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateInstructionsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "visitors"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/units/{unitId}/household": {
       "get": {
         "operationId": "HouseholdController_household",
@@ -9736,6 +10165,124 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/units/{unitId}/visitor-passes": {
+      "get": {
+        "operationId": "VisitorsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "visitors"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "VisitorsController_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVisitorPassDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedPassView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "visitors"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/units/{unitId}/workers": {
       "get": {
         "operationId": "WorkersController_list",
@@ -9832,6 +10379,45 @@
         ],
         "tags": [
           "workers"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/visitor-passes/{id}/cancel": {
+      "post": {
+        "operationId": "VisitorsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelVisitorPassDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "visitors"
         ],
         "x-stability": "draft"
       }

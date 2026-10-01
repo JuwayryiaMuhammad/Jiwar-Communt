@@ -105,4 +105,6 @@ export const REASON_CODES = {
   legalHold: ['litigation', 'regulator_request', 'financial_audit', 'other'],
   legalHoldRelease: ['resolved', 'other'],
   cardReissue: ['lost', 'compromised', 'other'],
+  // A code only, never text (ADR 0028).
+  visitorPassCancel: ['not_needed', 'plans_changed', 'other'],
 } as const;

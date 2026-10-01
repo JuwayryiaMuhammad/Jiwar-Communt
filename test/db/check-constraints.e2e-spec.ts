@@ -68,6 +68,16 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   idempotency_keys_key_length: {},
   gates_name_not_blank: {},
   guard_shifts_end_is_complete: {},
+  visitor_details_not_empty: {},
+  visitor_passes_party_size_range: {},
+  visitor_passes_window_order: {},
+  visitor_passes_schedule_matches_kind: {},
+  visitor_passes_code_only_when_active: {},
+  visitor_passes_used_matches_status: {},
+  visitor_passes_cancel_is_complete: {},
+  visitor_passes_idempotency_pair: {},
+  tenant_settings_max_active_visitor_passes_range: {},
+  tenant_settings_gate_request_timeout_range: {},
   // Compares nullable columns.
   accounts_identity_document: {
     guarded:

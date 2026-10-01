@@ -54,4 +54,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   guard_shifts_tenant_id_id_key: null,
   // Checked first and mapped to SHIFT_ALREADY_OPEN; a violation is a race.
   guard_shifts_one_open_per_guard: null,
+  visitor_details_tenant_id_id_key: null,
+  visitor_passes_tenant_id_id_key: null,
+  // Retried before it can fire; a violation is a race and names no code.
+  visitor_passes_active_code: null,
+  // A duplicate key is replayed by the service; never a response.
+  visitor_passes_tenant_id_host_account_id_idempotency_key_key: null,
 };

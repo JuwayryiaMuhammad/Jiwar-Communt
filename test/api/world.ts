@@ -12,6 +12,7 @@ import { WorkersService } from '../../src/community/workers/workers.service';
 import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
 import { Notifier } from '../../src/core/notifications/notifier';
+import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
 import { communityHelpers, type Compound } from '../setup/community';
 import { gateHelpers } from '../setup/gate';
 import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
@@ -83,6 +84,8 @@ export interface World {
   bIncidentId: string;
   /** A notification for B's owner. */
   bNotificationId: string;
+  /** An active visitor pass of B's owner. */
+  bPassId: string;
   /** A fresh token (and session) for any account. */
   tokenFor(
     side: Compound,
@@ -318,7 +321,16 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       where: { accountId: b.ids.owner },
     }),
   );
+  const bPass = await asBOwner(() =>
+    h.moduleRef.get(VisitorPassesService).create(b.homeUnitId, {
+      kind: 'one_time',
+      partySize: 1,
+      validFrom: new Date(),
+      validUntil: new Date(Date.now() + 86_400_000),
+    }),
+  );
   return {
+    bPassId: bPass.id,
     bNotificationId: bNotification.id,
     bEngagementId: bEngagement.engagementId,
     bWorkerId: bRow.workerId,

@@ -8,6 +8,8 @@ import { buildWorld, type World } from './world';
 const ROLE = ['id', 'isSystem', 'key', 'kind', 'name', 'permissions'];
 const SETTINGS = [
   'familyJoinRequiresApproval',
+  'gateRequestTimeoutSeconds',
+  'maxActiveVisitorPasses',
   'maxHouseholdMembers',
   'timezone',
 ];

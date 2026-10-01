@@ -137,6 +137,11 @@ export const AUDIT_ACTIONS = {
   'gate.updated': { log: 'tenant', target: 'gate' },
   'gate.shift_started': { log: 'tenant', target: 'guard_shift' },
   'gate.shift_ended': { log: 'tenant', target: 'guard_shift' },
+  'gate.instructions_changed': { log: 'tenant', target: 'unit' },
+  // No visitor name, phone or code ever goes into these.
+  'visitor_pass.created': { log: 'tenant', target: 'visitor_pass' },
+  'visitor_pass.cancelled': { log: 'tenant', target: 'visitor_pass' },
+  'visitor_pass.code_reissued': { log: 'tenant', target: 'visitor_pass' },
   'worker.birth_date_corrected': { log: 'tenant', target: 'domestic_worker' },
   'worker.compliance_case_opened': { log: 'tenant', target: 'domestic_worker' },
   'worker.compliance_case_closed': { log: 'tenant', target: 'domestic_worker' },

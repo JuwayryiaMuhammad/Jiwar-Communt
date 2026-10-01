@@ -3,6 +3,7 @@ import { RegistrationService } from '../../src/community/residents/registration.
 import { WorkersService } from '../../src/community/workers/workers.service';
 import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
+import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
 import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
 import {
   createHttpHarness,
@@ -203,8 +204,23 @@ describe('API v0 — PII leak scan', () => {
       doc: wp.idDocumentNumber,
       birthDate: wp.birthDate,
     };
+    // A family member's visitor: the code and phone are never returned
+    // after creation, the name only to the host (ADR 0028).
+    const visitorPhone = uniquePhone();
+    const visit = await c.as(a, { id: family.id, type: 'family' }, () =>
+      h.moduleRef.get(VisitorPassesService).create(unit.id, {
+        kind: 'one_time',
+        partySize: 2,
+        validFrom: new Date(),
+        validUntil: new Date(Date.now() + 3_600_000),
+        visitorName: 'PII-VISITOR-name',
+        visitorPhone,
+      }),
+    );
     const people = [primary, landlord, tenant, family, leaving, ender, worker];
     const secrets = [
+      visit.code!,
+      visitorPhone,
       ...people.map((p) => p.doc),
       qp.idDocumentNumber,
       firstCode,
@@ -228,6 +244,8 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/workers': unit.id,
       '/units/{unitId}/deferred-actions': unit.id,
       '/units/{unitId}/delegations': unit.id,
+      '/units/{unitId}/visitor-passes': unit.id,
+      '/units/{unitId}/gate-instructions': unit.id,
       '/me/units/{unitId}/capabilities': unit.id,
       '/me/units/{unitId}/permissions': unit.id,
       '/residents/{id}': primary.id,
@@ -314,6 +332,19 @@ describe('API v0 — PII leak scan', () => {
       }
     }
     expect(leaks).toEqual([]);
+
+    // The visitor's name: its host sees it, nobody else does.
+    for (const [key, text] of seen) {
+      if (key === 'family /units/{unitId}/visitor-passes') continue;
+      if (text.includes('PII-VISITOR-name')) leaks.push(`${key}: visitor name`);
+    }
+    expect(leaks).toEqual([]);
+    expect(seen.get('family /units/{unitId}/visitor-passes')).toContain(
+      'PII-VISITOR-name',
+    );
+    expect(seen.get('resident /units/{unitId}/visitor-passes')).toContain(
+      visit.id,
+    );
 
     // Positive controls: the scan reads real data, where it is allowed.
     expect(seen.get('manager /residents/{id}')).toContain(primary.birthDate);

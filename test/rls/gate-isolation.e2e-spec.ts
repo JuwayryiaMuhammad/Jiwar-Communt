@@ -101,6 +101,69 @@ const TABLES: Table[] = [
       return id;
     },
   },
+  {
+    table: 'visitor_details',
+    linked: false,
+    insert: async (tx, own) => {
+      const id = newId();
+      await tx.visitorDetails.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          fullName: 'Visitor',
+          expiresAt: new Date(Date.now() + 86_400_000),
+        },
+      });
+      return id;
+    },
+  },
+  {
+    table: 'visitor_passes',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.visitorPass.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          unitId: link.unitId,
+          hostAccountId: link.accountId,
+          kind: 'one_time',
+          partySize: 1,
+          validFrom: new Date(),
+          validUntil: new Date(Date.now() + 3_600_000),
+          codeHash: id.replace(/-/g, '').padEnd(64, '0'),
+        },
+      });
+      return id;
+    },
+  },
+  {
+    table: 'unit_gate_instructions',
+    key: 'unit_id',
+    insert: async (tx, own, link) => {
+      // Keyed by unit: a fresh unit each time, in the row's own compound.
+      const unitId =
+        link === own
+          ? (
+              await tx.unit.create({
+                data: {
+                  id: newId(),
+                  tenantId: own.tenantId,
+                  code: `GI-${newId()}`,
+                },
+              })
+            ).id
+          : link.unitId;
+      await tx.unitGateInstruction.create({
+        data: {
+          tenantId: own.tenantId,
+          unitId,
+          updatedById: link.accountId,
+        },
+      });
+      return unitId;
+    },
+  },
 ];
 
 describe('RLS isolation — Phase 4 tables', () => {

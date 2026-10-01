@@ -24,7 +24,38 @@ describe('Tenant settings', () => {
       familyJoinRequiresApproval: false,
       maxHouseholdMembers: 10,
       timezone: 'Africa/Cairo',
+      maxActiveVisitorPasses: 50,
+      gateRequestTimeoutSeconds: 180,
     });
+  });
+
+  it('the gate settings are ranged (ADR 0028)', async () => {
+    const c = await x.compound();
+    expect(
+      await x.asManager(c, () =>
+        settings.update({
+          maxActiveVisitorPasses: 5,
+          gateRequestTimeoutSeconds: 60,
+        }),
+      ),
+    ).toMatchObject({
+      maxActiveVisitorPasses: 5,
+      gateRequestTimeoutSeconds: 60,
+    });
+    for (const [field, value, range] of [
+      ['maxActiveVisitorPasses', 0, { min: 1, max: 500 }],
+      ['maxActiveVisitorPasses', 501, { min: 1, max: 500 }],
+      ['gateRequestTimeoutSeconds', 29, { min: 30, max: 1800 }],
+      ['gateRequestTimeoutSeconds', 1801, { min: 30, max: 1800 }],
+    ] as const) {
+      await expect(
+        x.asManager(c, () => settings.update({ [field]: value })),
+      ).rejects.toMatchObject({
+        response: {
+          fields: [{ field, code: 'INVALID_NUMBER', params: range }],
+        },
+      });
+    }
   });
 
   it('the time zone must be a real IANA zone', async () => {
@@ -52,11 +83,15 @@ describe('Tenant settings', () => {
       familyJoinRequiresApproval: true,
       maxHouseholdMembers: 4,
       timezone: 'Africa/Cairo',
+      maxActiveVisitorPasses: 50,
+      gateRequestTimeoutSeconds: 180,
     });
     expect(await x.asManager(other, () => settings.get())).toEqual({
       familyJoinRequiresApproval: false,
       maxHouseholdMembers: 10,
       timezone: 'Africa/Cairo',
+      maxActiveVisitorPasses: 50,
+      gateRequestTimeoutSeconds: 180,
     });
 
     const [entry] = await auditReaders(h).tenant(c.tenantId, {

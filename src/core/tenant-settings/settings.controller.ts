@@ -18,12 +18,22 @@ export class SettingsView {
     description: 'IANA; worker schedules are read in it.',
   })
   timezone: string;
+  @ApiProperty({ type: Number, description: 'Active visitor passes per unit.' })
+  maxActiveVisitorPasses: number;
+  @ApiProperty({
+    type: Number,
+    description:
+      'Seconds a household has to answer the gate before its instruction applies.',
+  })
+  gateRequestTimeoutSeconds: number;
 
   static from(s: TenantSettingsView): SettingsView {
     return {
       familyJoinRequiresApproval: s.familyJoinRequiresApproval,
       maxHouseholdMembers: s.maxHouseholdMembers,
       timezone: s.timezone,
+      maxActiveVisitorPasses: s.maxActiveVisitorPasses,
+      gateRequestTimeoutSeconds: s.gateRequestTimeoutSeconds,
     };
   }
 }

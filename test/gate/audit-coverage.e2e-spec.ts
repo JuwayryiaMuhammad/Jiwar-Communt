@@ -1,6 +1,8 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { GatesService } from '../../src/gate/gates/gates.service';
 import { ShiftsService } from '../../src/gate/shifts/shifts.service';
+import { InstructionsService } from '../../src/gate/visitors/instructions.service';
+import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
 import { auditReaders } from '../setup/audit';
 import {
   COMMUNITY_COVERAGE,
@@ -79,6 +81,75 @@ describe('Audit coverage — the gate', () => {
       expect(await single(c, 'gate.shift_ended', duty.shiftId)).toMatchObject({
         actorId: duty.guardId,
         metadata: { reason: 'guard' },
+      });
+    });
+  });
+
+  describe('visitors', () => {
+    it('visitor_pass.created, code_reissued, cancelled — never a name, phone or code', async () => {
+      const c = await x.compound();
+      const unit = await x.unit(c);
+      const host = await x.resident(c, [unit.id]);
+      const passes = h.moduleRef.get(VisitorPassesService);
+      const asHost = <T>(fn: () => Promise<T>) =>
+        x.as(c, { id: host.id, type: 'resident' }, fn);
+      const input = {
+        kind: 'one_time' as const,
+        partySize: 3,
+        validFrom: new Date(),
+        validUntil: new Date(Date.now() + 3_600_000),
+        visitorName: 'Audit Guest',
+        visitorPhone: '+201011112222',
+      };
+      const pass = await asHost(() =>
+        passes.create(unit.id, input, 'audit-key-1'),
+      );
+      const created = await single(c, 'visitor_pass.created', pass.id);
+      expect(created).toMatchObject({
+        actorType: 'account',
+        actorId: host.id,
+        targetType: 'visitor_pass',
+        metadata: { unitId: unit.id, kind: 'one_time', partySize: 3 },
+      });
+      const again = await asHost(() =>
+        passes.create(unit.id, input, 'audit-key-1'),
+      );
+      const reissued = await single(c, 'visitor_pass.code_reissued', pass.id);
+      expect(reissued).toMatchObject({
+        actorId: host.id,
+        metadata: { reason: 'idempotent_replay' },
+      });
+      await asHost(() => passes.cancel(pass.id, 'plans_changed'));
+      const cancelled = await single(c, 'visitor_pass.cancelled', pass.id);
+      expect(cancelled).toMatchObject({
+        actorId: host.id,
+        metadata: { reasonCode: 'plans_changed' },
+      });
+      const trail = JSON.stringify([created, reissued, cancelled]);
+      for (const secret of [
+        'Audit Guest',
+        '+201011112222',
+        pass.code!,
+        again.code!,
+      ])
+        expect(trail).not.toContain(secret);
+    });
+
+    it('gate.instructions_changed — by the primary, on the unit', async () => {
+      const c = await x.compound();
+      const unit = await x.unit(c);
+      const host = await x.resident(c, [unit.id]);
+      await x.as(c, { id: host.id, type: 'resident' }, () =>
+        h.moduleRef
+          .get(InstructionsService)
+          .set(unit.id, { uninvitedVisitor: 'deny', delivery: 'ask' }),
+      );
+      expect(
+        await single(c, 'gate.instructions_changed', unit.id),
+      ).toMatchObject({
+        actorId: host.id,
+        targetType: 'unit',
+        changes: { uninvitedVisitor: { from: 'ask', to: 'deny' } },
       });
     });
   });

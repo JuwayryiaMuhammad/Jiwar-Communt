@@ -18,6 +18,13 @@ datasource db {
 // ENUMS
 // ============================================================================
 
+enum NotificationPriority {
+  normal
+  critical
+
+  @@map("notification_priority")
+}
+
 enum TenantStatus {
   active
   suspended
@@ -577,6 +584,7 @@ model Account {
   legalHolds            LegalHold[]               @relation("HoldAccount")
   holdsPlaced           LegalHold[]               @relation("HoldPlacedBy")
   holdsReleased         LegalHold[]               @relation("HoldReleasedBy")
+  notifications         Notification[]            @relation("NotificationAccount")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -1159,6 +1167,27 @@ model LegalHold {
 
   @@index([tenantId, accountId])
   @@map("legal_holds")
+}
+
+/// The in-app inbox (ADR 0027): one row per recipient, a catalog code and
+/// params, never text. Read rows are purged by the retention sweep.
+model Notification {
+  id         String               @id @db.Uuid
+  tenantId   String               @map("tenant_id") @db.Uuid
+  accountId  String               @map("account_id") @db.Uuid
+  kind       String
+  priority   NotificationPriority
+  params     Json                 @default("{}")
+  targetType String?              @map("target_type")
+  targetId   String?              @map("target_id") @db.Uuid
+  readAt     DateTime?            @map("read_at") @db.Timestamptz(3)
+  createdAt  DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  account Account @relation("NotificationAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
+
+  @@index([tenantId, accountId, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([tenantId, targetId])
+  @@map("notifications")
 }
 
 // ============================================================================

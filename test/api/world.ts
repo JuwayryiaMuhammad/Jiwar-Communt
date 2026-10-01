@@ -11,6 +11,7 @@ import { RegistrationService } from '../../src/community/residents/registration.
 import { WorkersService } from '../../src/community/workers/workers.service';
 import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
+import { Notifier } from '../../src/core/notifications/notifier';
 import { communityHelpers, type Compound } from '../setup/community';
 import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
 import { uniqueEmail, uniquePhone, type HttpHarness } from '../setup/http-app';
@@ -73,6 +74,8 @@ export interface World {
   bWorkerId: string;
   bCaseId: string;
   bIncidentId: string;
+  /** A notification for B's owner. */
+  bNotificationId: string;
   /** A fresh token (and session) for any account. */
   tokenFor(
     side: Compound,
@@ -289,7 +292,22 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       where: { id: bEngagement.engagementId },
     }),
   );
+  await asBOwner(() =>
+    h.moduleRef.get(TenantTx).withTenantTx((tx) =>
+      h.moduleRef.get(Notifier).notify(tx, [b.ids.owner], {
+        kind: 'worker.entered',
+        params: { unitCode: 'B-HOME', gateName: 'Main', workerName: 'World' },
+        targetId: bEngagement.engagementId,
+      }),
+    ),
+  );
+  const bNotification = await asBOwner(() =>
+    helpers.prisma.tenant.notification.findFirstOrThrow({
+      where: { accountId: b.ids.owner },
+    }),
+  );
   return {
+    bNotificationId: bNotification.id,
     bEngagementId: bEngagement.engagementId,
     bWorkerId: bRow.workerId,
     bCaseId,

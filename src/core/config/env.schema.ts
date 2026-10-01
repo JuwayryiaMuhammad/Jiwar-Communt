@@ -83,6 +83,8 @@ export const envSchema = z
     // may wait before the erasure holders are told.
     DELETION_GRACE_DAYS: positiveInt.default(30),
     ERASURE_OVERDUE_DAYS: positiveInt.default(7),
+    // Read notifications are deleted after this (ADR 0027).
+    NOTIFICATIONS_RETENTION_DAYS: positiveInt.default(90),
 
     JWT_ACCESS_SECRET: secret,
     IDENTIFIER_PEPPER: secret,

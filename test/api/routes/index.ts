@@ -7,6 +7,7 @@ import { EXISTING_ROUTES } from './existing';
 import { HOUSEHOLD_ROUTES } from './household';
 import { ME_ROUTES } from './me';
 import { MEMBER_PERMISSIONS_ROUTES } from './member-permissions';
+import { NOTIFICATIONS_ROUTES } from './notifications';
 import { PLATFORM_ROUTES } from './platform';
 import { PUBLIC_ROUTES } from './public';
 import { REGISTRATION_ROUTES } from './registration';
@@ -32,4 +33,5 @@ export const ROUTES: Row[] = [
   ...PLATFORM_ROUTES,
   ...PUBLIC_ROUTES,
   ...ME_ROUTES,
+  ...NOTIFICATIONS_ROUTES,
 ];

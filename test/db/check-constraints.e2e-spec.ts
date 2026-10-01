@@ -61,6 +61,9 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   worker_engagements_code_matches_status: {},
   worker_engagements_management_suspension: {},
   worker_engagements_temporary_has_end: {},
+  // Phase 4 (ADR 0027, 0028)
+  notifications_target_pair: {},
+  notifications_params_object: {},
   // Compares nullable columns.
   accounts_identity_document: {
     guarded:

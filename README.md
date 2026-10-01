@@ -113,6 +113,7 @@ See `.env.example` for the full list with comments. The important ones:
 | `SWEEP_ENABLED`, `SWEEP_INTERVAL_MS` | The in-app sweep (ADR 0021): majority notices, registration expiry, overdue erasures. Default on, hourly. Every task is idempotent and safe on several instances; tests turn it off and call `SweepRunner.run(name, now)` |
 | `REGISTRATION_PENDING_DAYS` | A self-registration nobody decided expires and loses its personal data (default 30, ADR 0024) |
 | `DELETION_GRACE_DAYS`, `ERASURE_OVERDUE_DAYS` | Account deletion (ADR 0023): the holder can undo for 30 days; the erasure holders are told once when a request waits 7 days past that |
+| `NOTIFICATIONS_RETENTION_DAYS` | Read in-app notifications are deleted after this (default 90, ADR 0027); unread ones stay |
 | `SECURITY_EVENT_TIMEOUT_MS` | Database-side cap on each security event insert (default 500). A locked `security_events` table delays a login by at most this much; the event is dropped with an error log |
 | `REDIS_URL` | Rate limits, login tickets, permission cache |
 | `SMTP_*` | OTP email delivery |

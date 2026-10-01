@@ -2462,6 +2462,87 @@
         ],
         "type": "object"
       },
+      "NotificationView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "description": "A catalog code (ADR 0027).",
+            "type": "string"
+          },
+          "params": {
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "description": "The kind's params; the app renders the text.",
+            "type": "object"
+          },
+          "priority": {
+            "enum": [
+              "normal",
+              "critical"
+            ],
+            "type": "string"
+          },
+          "readAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "targetId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "targetType": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "priority",
+          "params",
+          "targetType",
+          "targetId",
+          "readAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "NotificationViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "OccupancyEndReason": {
         "enum": [
           "moved_out",
@@ -3058,6 +3139,17 @@
           "scope",
           "accessToken",
           "accessTokenExpiresIn"
+        ],
+        "type": "object"
+      },
+      "ReadAllView": {
+        "properties": {
+          "read": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "read"
         ],
         "type": "object"
       },
@@ -4462,6 +4554,22 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "UnreadCountView": {
+        "properties": {
+          "critical": {
+            "description": "Unread and critical.",
+            "type": "number"
+          },
+          "unread": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "unread",
+          "critical"
         ],
         "type": "object"
       },
@@ -6429,6 +6537,149 @@
         ],
         "tags": [
           "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/notifications": {
+      "get": {
+        "operationId": "NotificationsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unread",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/notifications/read-all": {
+      "post": {
+        "operationId": "NotificationsController_readAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadAllView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/notifications/unread-count": {
+      "get": {
+        "operationId": "NotificationsController_unreadCount",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadCountView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/notifications/{id}/read": {
+      "post": {
+        "operationId": "NotificationsController_read",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
         ],
         "x-stability": "draft"
       }

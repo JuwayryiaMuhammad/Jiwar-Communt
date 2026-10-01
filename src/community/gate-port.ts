@@ -173,16 +173,42 @@ export class CommunityGatePort {
     return new Map(units.map((u) => [u.id, u.code]));
   }
 
-  /** By the 8-digit code (its HMAC), in this compound only. */
-  async engagementByCode(
+  /**
+   * By the 8-digit code (its HMAC), in this compound only. A suspended
+   * engagement keeps its code and codes are unique among active ones only,
+   * so another engagement may carry the same code: the active one wins.
+   */
+  engagementByCode(
     tx: TenantTxClient,
     tenantId: string,
     code: string,
   ): Promise<GateEngagement | null> {
-    const e = await tx.workerEngagement.findFirst({
-      where: { accessCodeHash: this.hasher.hashWorkerCode(tenantId, code) },
-      include: ENGAGEMENT,
+    return this.engagementWhere(tx, {
+      accessCodeHash: this.hasher.hashWorkerCode(tenantId, code),
     });
+  }
+
+  /** By the card's QR token (its HMAC, ADR 0030), in this compound only. */
+  engagementByQr(
+    tx: TenantTxClient,
+    tenantId: string,
+    token: string,
+  ): Promise<GateEngagement | null> {
+    return this.engagementWhere(tx, {
+      qrTokenHash: this.hasher.hashQrToken(tenantId, token),
+    });
+  }
+
+  private async engagementWhere(
+    tx: TenantTxClient,
+    where: { accessCodeHash: string } | { qrTokenHash: string },
+  ): Promise<GateEngagement | null> {
+    const rows = await tx.workerEngagement.findMany({
+      where,
+      include: ENGAGEMENT,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+    const e = rows.find((r) => r.status === 'active') ?? rows[0];
     return e ? toGate(e) : null;
   }
 

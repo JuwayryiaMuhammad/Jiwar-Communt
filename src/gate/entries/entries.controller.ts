@@ -42,7 +42,7 @@ export class EntriesController {
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: VerifyView })
   async verify(@Body() dto: VerifyDto): Promise<VerifyView> {
-    return VerifyView.from(await this.verifier.verify(dto.code));
+    return VerifyView.from(await this.verifier.verify(dto));
   }
 
   @RequirePermissions('gate.operate')

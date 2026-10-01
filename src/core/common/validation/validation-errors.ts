@@ -11,6 +11,7 @@ import {
 /** class-validator constraint name → field code. */
 const CONSTRAINT_CODES: Record<string, FieldErrorCode> = {
   whitelistValidation: FieldErrorCode.FIELD_NOT_ALLOWED,
+  exclusiveWith: FieldErrorCode.FIELD_NOT_ALLOWED,
   isNotEmpty: FieldErrorCode.FIELD_REQUIRED,
   isDefined: FieldErrorCode.FIELD_REQUIRED,
   isString: FieldErrorCode.INVALID_TYPE,

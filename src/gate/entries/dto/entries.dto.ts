@@ -4,23 +4,46 @@ import { Type } from 'class-transformer';
 import {
   IsDate,
   IsEnum,
+  IsIn,
   IsOptional,
   IsString,
   IsUUID,
   Length,
+  ValidateIf,
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
+import { ExclusiveWith } from '../../../core/common/validation/exclusive-with';
 import { withParams } from '../../../core/common/validation/validation-errors';
 
+/** Exactly one of `code` (typed) or `qr` (scanned), ADR 0030. */
 export class VerifyDto {
   @ApiProperty({
     type: String,
-    description: '6 digits (a visitor pass) or 8 (a worker).',
+    required: false,
+    description: '6 digits (a visitor pass) or 8 (a worker). Or send `qr`.',
   })
+  @ValidateIf((o: VerifyDto) => o.qr === undefined || o.code !== undefined)
   @IsString()
   @Length(1, 32, withParams({ min: 1, max: 32 }))
-  code: string;
+  code?: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    example: 'JWR1.q3Jz…',
+    description:
+      'A scanned Jiwar QR (`JWR1.<token>`). Anything else answers like an unknown code.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 256, withParams({ min: 1, max: 256 }))
+  @ExclusiveWith('code')
+  qr?: string;
 }
+
+/** How a guard identified who came in (ADR 0030). */
+export const ENTRY_VIA = ['code', 'qr'] as const;
+export type EntryVia = (typeof ENTRY_VIA)[number];
 
 export class RecordEntryDto {
   @ApiProperty({
@@ -48,6 +71,17 @@ export class RecordEntryDto {
   @ApiProperty({ enum: GateDirection, enumName: 'GateDirection' })
   @IsEnum(GateDirection, withParams({ allowed: Object.values(GateDirection) }))
   direction: GateDirection;
+
+  @ApiProperty({
+    enum: ENTRY_VIA,
+    required: false,
+    default: 'code',
+    description:
+      'An entry on a pass or a worker code: typed or scanned. Exits and approvals keep their own method.',
+  })
+  @IsOptional()
+  @IsIn(ENTRY_VIA, withParams({ allowed: [...ENTRY_VIA] }))
+  via?: EntryVia;
 
   @ApiProperty({
     type: String,

@@ -4169,6 +4169,15 @@
                 "$ref": "#/components/schemas/GateSubjectType"
               }
             ]
+          },
+          "via": {
+            "default": "code",
+            "description": "An entry on a pass or a worker code: typed or scanned. Exits and approvals keep their own method.",
+            "enum": [
+              "code",
+              "qr"
+            ],
+            "type": "string"
           }
         },
         "required": [
@@ -5778,13 +5787,15 @@
       "VerifyDto": {
         "properties": {
           "code": {
-            "description": "6 digits (a visitor pass) or 8 (a worker).",
+            "description": "6 digits (a visitor pass) or 8 (a worker). Or send `qr`.",
+            "type": "string"
+          },
+          "qr": {
+            "description": "A scanned Jiwar QR (`JWR1.<token>`). Anything else answers like an unknown code.",
+            "example": "JWR1.q3Jz…",
             "type": "string"
           }
         },
-        "required": [
-          "code"
-        ],
         "type": "object"
       },
       "VerifyOtpDto": {

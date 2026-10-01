@@ -43,6 +43,8 @@ export interface NewEntry {
   subjectId: string;
   direction: GateDirection;
   occurredAt?: Date;
+  /** A code-path entry: typed (default) or scanned (ADR 0030). */
+  via?: 'code' | 'qr';
 }
 
 export interface EntryRecord {
@@ -239,7 +241,7 @@ export class EntriesService implements OnModuleInit {
                 qrTokenHash: null,
               },
             });
-          method = 'code';
+          method = input.via === 'qr' ? 'qr' : 'code';
         }
       } else {
         if (!inside)

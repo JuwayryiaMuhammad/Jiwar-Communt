@@ -64,6 +64,8 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   // Phase 4 (ADR 0027, 0028)
   notifications_target_pair: {},
   notifications_params_object: {},
+  idempotency_keys_expiry_after_creation: {},
+  idempotency_keys_key_length: {},
   // Compares nullable columns.
   accounts_identity_document: {
     guarded:

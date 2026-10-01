@@ -47,6 +47,27 @@ const TABLES: Table[] = [
       return id;
     },
   },
+  {
+    table: 'idempotency_keys',
+    key: 'resource_id',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.idempotencyKey.create({
+        data: {
+          tenantId: own.tenantId,
+          accountId: link.accountId,
+          key: `key-${id}`,
+          requestHash: 'x',
+          route: '/probe',
+          resourceType: 'probe',
+          resourceId: id,
+          responseStatus: 201,
+          expiresAt: new Date(Date.now() + 3_600_000),
+        },
+      });
+      return id;
+    },
+  },
 ];
 
 describe('RLS isolation — Phase 4 tables', () => {

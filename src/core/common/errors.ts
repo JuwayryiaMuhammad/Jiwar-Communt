@@ -107,6 +107,8 @@ export const ErrorCode = {
   CARD_INCIDENT_NOT_FOUND: 'CARD_INCIDENT_NOT_FOUND',
   // notifications (ADR 0027)
   NOTIFICATION_NOT_FOUND: 'NOTIFICATION_NOT_FOUND',
+  // idempotent writes (ADR 0028)
+  IDEMPOTENCY_CONFLICT: 'IDEMPOTENCY_CONFLICT',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

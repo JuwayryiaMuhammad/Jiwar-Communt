@@ -28,6 +28,17 @@ export interface AppClsStore extends ClsStore {
   ip?: string;
   userAgent?: string;
   /**
+   * The request's Idempotency-Key while an `@Idempotent()` route runs
+   * (ADR 0028); the service claims it in its transaction.
+   */
+  idempotency?: {
+    key: string;
+    hash: string;
+    route: string;
+    status: number;
+    claimed: boolean;
+  };
+  /**
    * Explicit audit actor, set ONLY by trusted entry points (seed, CLIs) —
    * never from request data.
    */

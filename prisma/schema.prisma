@@ -585,6 +585,7 @@ model Account {
   holdsPlaced           LegalHold[]               @relation("HoldPlacedBy")
   holdsReleased         LegalHold[]               @relation("HoldReleasedBy")
   notifications         Notification[]            @relation("NotificationAccount")
+  idempotencyKeys       IdempotencyKey[]          @relation("IdempotencyAccount")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -1188,6 +1189,29 @@ model Notification {
   @@index([tenantId, accountId, createdAt(sort: Desc), id(sort: Desc)])
   @@index([tenantId, targetId])
   @@map("notifications")
+}
+
+/// Idempotent writes (ADR 0028): claimed inside the action's transaction;
+/// the body is stored after the response and re-rendered from the
+/// resource when lost. Purged after `expires_at` (24 h).
+model IdempotencyKey {
+  tenantId       String   @map("tenant_id") @db.Uuid
+  accountId      String   @map("account_id") @db.Uuid
+  key            String
+  requestHash    String   @map("request_hash")
+  route          String
+  resourceType   String   @map("resource_type")
+  resourceId     String   @map("resource_id") @db.Uuid
+  responseStatus Int      @map("response_status")
+  responseBody   Json?    @map("response_body")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt      DateTime @map("expires_at") @db.Timestamptz(3)
+
+  account Account @relation("IdempotencyAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
+
+  @@id([tenantId, accountId, key])
+  @@index([tenantId, expiresAt])
+  @@map("idempotency_keys")
 }
 
 // ============================================================================

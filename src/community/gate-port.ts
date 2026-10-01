@@ -4,6 +4,11 @@ import { IdentifierHasher } from '../core/auth/identifier';
 import type { FieldError } from '../core/common/errors';
 import type { TenantTxClient } from '../core/database/tenant-tx.service';
 import type { Capabilities } from './capabilities/capabilities';
+
+/** A yes/no capability (ADR 0020), e.g. visitorsInvite. */
+export type CapabilityFlag = {
+  [K in keyof Capabilities]: Capabilities[K] extends boolean ? K : never;
+}[keyof Capabilities];
 import { CapabilitiesService } from './capabilities/capabilities.service';
 import {
   HouseholdAuthority,
@@ -51,6 +56,84 @@ export class CommunityGatePort {
     private readonly household: HouseholdAuthority,
     private readonly hasher: IdentifierHasher,
   ) {}
+
+  async unitByCode(
+    tx: TenantTxClient,
+    code: string,
+  ): Promise<{ id: string; code: string } | null> {
+    return tx.unit.findFirst({
+      where: { code: code.trim() },
+      select: { id: true, code: true },
+    });
+  }
+
+  /**
+   * Every active account whose capabilities on the unit carry `flag`: the
+   * people to tell (ADR 0020 decides, never the gate).
+   */
+  async holders(
+    tx: TenantTxClient,
+    unitId: string,
+    flag: CapabilityFlag,
+  ): Promise<string[]> {
+    const [occupants, members] = await Promise.all([
+      tx.unitOccupancy.findMany({
+        where: { unitId, status: 'active' },
+        select: { accountId: true },
+      }),
+      tx.householdMember.findMany({
+        where: { unitId, status: 'active', accountId: { not: null } },
+        select: { accountId: true },
+      }),
+    ]);
+    const candidates = [
+      ...new Set([
+        ...occupants.map((o) => o.accountId),
+        ...members.map((m) => m.accountId!),
+      ]),
+    ];
+    const active = await tx.account.findMany({
+      where: { id: { in: candidates }, status: 'active' },
+      select: { id: true },
+      orderBy: { id: 'asc' },
+    });
+    const out: string[] = [];
+    for (const a of active) {
+      const caps = await this.capabilities.placeOf(tx, a.id, unitId);
+      if (caps?.[flag]) out.push(a.id);
+    }
+    return out;
+  }
+
+  /** The units where the account's capabilities carry `flag`. */
+  async unitsWhere(
+    tx: TenantTxClient,
+    accountId: string,
+    flag: CapabilityFlag,
+  ): Promise<string[]> {
+    const [occupancies, memberships] = await Promise.all([
+      tx.unitOccupancy.findMany({
+        where: { accountId, status: 'active' },
+        select: { unitId: true },
+      }),
+      tx.householdMember.findMany({
+        where: { accountId, status: 'active' },
+        select: { unitId: true },
+      }),
+    ]);
+    const units = [
+      ...new Set([
+        ...occupancies.map((o) => o.unitId),
+        ...memberships.map((m) => m.unitId),
+      ]),
+    ];
+    const out: string[] = [];
+    for (const unitId of units) {
+      const caps = await this.capabilities.placeOf(tx, accountId, unitId);
+      if (caps?.[flag]) out.push(unitId);
+    }
+    return out;
+  }
 
   async unitCode(tx: TenantTxClient, unitId: string): Promise<string> {
     const unit = await tx.unit.findUniqueOrThrow({

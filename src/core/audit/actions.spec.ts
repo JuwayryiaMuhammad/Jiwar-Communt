@@ -55,6 +55,7 @@ describe('audit catalog', () => {
         'gate',
         'guard_shift',
         'visitor_pass',
+        'gate_approval_request',
       ]).toContain(def.target);
     }
   });

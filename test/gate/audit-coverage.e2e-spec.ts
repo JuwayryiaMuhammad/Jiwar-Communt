@@ -1,4 +1,5 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
+import { ApprovalsService } from '../../src/gate/approvals/approvals.service';
 import { GatesService } from '../../src/gate/gates/gates.service';
 import { ShiftsService } from '../../src/gate/shifts/shifts.service';
 import { InstructionsService } from '../../src/gate/visitors/instructions.service';
@@ -151,6 +152,67 @@ describe('Audit coverage — the gate', () => {
         targetType: 'unit',
         changes: { uninvitedVisitor: { from: 'ask', to: 'deny' } },
       });
+    });
+  });
+
+  describe('approvals', () => {
+    it('gate.approval_requested, decided, reversed, withdrawn — never a visitor name', async () => {
+      const c = await x.compound();
+      const unit = await x.unit(c);
+      const host = await x.resident(c, [unit.id]);
+      const duty = await g.onDuty(c);
+      const approvals = h.moduleRef.get(ApprovalsService);
+      const asGuard = <T>(fn: () => Promise<T>) =>
+        x.as(c, { id: duty.guardId, type: 'staff' }, fn);
+      const asHost = <T>(fn: () => Promise<T>) =>
+        x.as(c, { id: host.id, type: 'resident' }, fn);
+      const code = (
+        await x.asManager(c, () =>
+          x.prisma.tenant.unit.findUniqueOrThrow({ where: { id: unit.id } }),
+        )
+      ).code;
+      const asked = await asGuard(() =>
+        approvals.request({
+          kind: 'uninvited_visitor',
+          unitCode: code,
+          partySize: 2,
+          visitorName: 'Audit Visitor',
+        }),
+      );
+      const requested = await single(c, 'gate.approval_requested', asked.id);
+      expect(requested).toMatchObject({
+        actorType: 'account',
+        actorId: duty.guardId,
+        targetType: 'gate_approval_request',
+        metadata: {
+          unitId: unit.id,
+          kind: 'uninvited_visitor',
+          partySize: 2,
+          gateId: duty.gateId,
+        },
+      });
+      await asHost(() => approvals.decide(asked.id, 'approve'));
+      const decidedRow = await single(c, 'gate.approval_decided', asked.id);
+      expect(decidedRow).toMatchObject({
+        actorId: host.id,
+        metadata: { decision: 'approved', decisionSource: 'household' },
+      });
+      await asHost(() => approvals.decide(asked.id, 'deny'));
+      const reversed = await single(c, 'gate.approval_reversed', asked.id);
+      expect(reversed).toMatchObject({
+        actorId: host.id,
+        metadata: { from: 'household' },
+      });
+      const second = await asGuard(() =>
+        approvals.request({ kind: 'delivery', unitCode: code }),
+      );
+      await asGuard(() => approvals.withdraw(second.id));
+      expect(
+        await single(c, 'gate.approval_withdrawn', second.id),
+      ).toMatchObject({ actorId: duty.guardId });
+      expect(JSON.stringify([requested, decidedRow, reversed])).not.toContain(
+        'Audit Visitor',
+      );
     });
   });
 

@@ -142,6 +142,11 @@ export const AUDIT_ACTIONS = {
   'visitor_pass.created': { log: 'tenant', target: 'visitor_pass' },
   'visitor_pass.cancelled': { log: 'tenant', target: 'visitor_pass' },
   'visitor_pass.code_reissued': { log: 'tenant', target: 'visitor_pass' },
+  'gate.approval_requested': { log: 'tenant', target: 'gate_approval_request' },
+  // metadata.decisionSource: household, standing_instruction or timeout.
+  'gate.approval_decided': { log: 'tenant', target: 'gate_approval_request' },
+  'gate.approval_reversed': { log: 'tenant', target: 'gate_approval_request' },
+  'gate.approval_withdrawn': { log: 'tenant', target: 'gate_approval_request' },
   'worker.birth_date_corrected': { log: 'tenant', target: 'domestic_worker' },
   'worker.compliance_case_opened': { log: 'tenant', target: 'domestic_worker' },
   'worker.compliance_case_closed': { log: 'tenant', target: 'domestic_worker' },

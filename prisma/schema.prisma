@@ -98,6 +98,34 @@ enum GateEntryMethod {
   @@map("gate_entry_method")
 }
 
+enum GateRequestKind {
+  uninvited_visitor
+  delivery
+  worker_off_schedule
+
+  @@map("gate_request_kind")
+}
+
+enum GateRequestStatus {
+  pending
+  approved
+  denied
+  timed_out
+  leave_at_gate
+  withdrawn
+
+  @@map("gate_request_status")
+}
+
+enum GateDecisionSource {
+  household
+  standing_instruction
+  timeout
+  guard
+
+  @@map("gate_decision_source")
+}
+
 enum TenantStatus {
   active
   suspended
@@ -663,6 +691,8 @@ model Account {
   hostedPasses          VisitorPass[]             @relation("PassHost")
   cancelledPasses       VisitorPass[]             @relation("PassCancelledBy")
   gateInstructions      UnitGateInstruction[]     @relation("InstructionsUpdatedBy")
+  gateRequestsMade      GateApprovalRequest[]     @relation("RequestRequestedBy")
+  gateRequestsDecided   GateApprovalRequest[]     @relation("RequestDecidedBy")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -745,6 +775,7 @@ model Unit {
   deferredActions   HouseholdDeferredAction[]
   visitorPasses     VisitorPass[]
   gateInstructions  UnitGateInstruction[]
+  gateRequests      GateApprovalRequest[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -983,6 +1014,7 @@ model WorkerEngagement {
   notices       WorkerNotice[]
   obligations   WorkerWageObligation[]
   cardIncidents WorkerCardIncident[]
+  gateRequests  GateApprovalRequest[]
 
   @@unique([tenantId, id])
   @@index([tenantId, unitId])
@@ -1311,7 +1343,8 @@ model Gate {
   createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  shifts GuardShift[]
+  shifts   GuardShift[]
+  requests GateApprovalRequest[]
 
   @@unique([tenantId, name])
   @@unique([tenantId, id])
@@ -1329,8 +1362,9 @@ model GuardShift {
   endedAt        DateTime? @map("ended_at") @db.Timestamptz(3)
   endReason      String?   @map("end_reason")
 
-  guard Account @relation("ShiftGuard", fields: [tenantId, guardAccountId], references: [tenantId, id], onUpdate: Restrict)
-  gate  Gate    @relation(fields: [tenantId, gateId], references: [tenantId, id], onUpdate: Restrict)
+  guard    Account               @relation("ShiftGuard", fields: [tenantId, guardAccountId], references: [tenantId, id], onUpdate: Restrict)
+  gate     Gate                  @relation(fields: [tenantId, gateId], references: [tenantId, id], onUpdate: Restrict)
+  requests GateApprovalRequest[]
 
   @@unique([tenantId, id])
   @@index([tenantId, gateId])
@@ -1347,7 +1381,8 @@ model VisitorDetails {
   expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  passes VisitorPass[]
+  passes   VisitorPass[]
+  requests GateApprovalRequest[]
 
   @@unique([tenantId, id])
   @@index([tenantId, expiresAt])
@@ -1432,6 +1467,40 @@ model GateEntry {
   @@index([tenantId, occurredAt(sort: Desc), id(sort: Desc)])
   @@index([tenantId, unitId, occurredAt(sort: Desc)])
   @@map("gate_entries")
+}
+
+/// A guard asks a household (ADR 0028). The first decision wins; a deny
+/// wins over an approval until the entry; a timeout applies the unit's
+/// standing instruction. Never deleted: entries point at it.
+model GateApprovalRequest {
+  id               String              @id @db.Uuid
+  tenantId         String              @map("tenant_id") @db.Uuid
+  unitId           String              @map("unit_id") @db.Uuid
+  gateId           String              @map("gate_id") @db.Uuid
+  shiftId          String              @map("shift_id") @db.Uuid
+  requestedById    String              @map("requested_by") @db.Uuid
+  kind             GateRequestKind
+  partySize        Int                 @map("party_size")
+  engagementId     String?             @map("engagement_id") @db.Uuid
+  visitorDetailsId String?             @map("visitor_details_id") @db.Uuid
+  status           GateRequestStatus   @default(pending)
+  decidedById      String?             @map("decided_by") @db.Uuid
+  decidedAt        DateTime?           @map("decided_at") @db.Timestamptz(3)
+  decisionSource   GateDecisionSource? @map("decision_source")
+  expiresAt        DateTime            @map("expires_at") @db.Timestamptz(3)
+  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  unit           Unit              @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
+  gate           Gate              @relation(fields: [tenantId, gateId], references: [tenantId, id], onUpdate: Restrict)
+  shift          GuardShift        @relation(fields: [tenantId, shiftId], references: [tenantId, id], onUpdate: Restrict)
+  requestedBy    Account           @relation("RequestRequestedBy", fields: [tenantId, requestedById], references: [tenantId, id], onUpdate: Restrict)
+  decidedBy      Account?          @relation("RequestDecidedBy", fields: [tenantId, decidedById], references: [tenantId, id], onUpdate: Restrict)
+  engagement     WorkerEngagement? @relation(fields: [tenantId, engagementId], references: [tenantId, id], onUpdate: Restrict)
+  visitorDetails VisitorDetails?   @relation(fields: [tenantId, visitorDetailsId], references: [tenantId, id], onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, unitId, status])
+  @@map("gate_approval_requests")
 }
 
 // ============================================================================

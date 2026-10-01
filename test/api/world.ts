@@ -13,6 +13,7 @@ import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
 import { Notifier } from '../../src/core/notifications/notifier';
 import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
+import { ApprovalsService } from '../../src/gate/approvals/approvals.service';
 import { communityHelpers, type Compound } from '../setup/community';
 import { gateHelpers } from '../setup/gate';
 import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
@@ -86,6 +87,8 @@ export interface World {
   bNotificationId: string;
   /** An active visitor pass of B's owner. */
   bPassId: string;
+  /** A pending gate request for B's home, from B's guard. */
+  bRequestId: string;
   /** A fresh token (and session) for any account. */
   tokenFor(
     side: Compound,
@@ -329,7 +332,21 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       validUntil: new Date(Date.now() + 86_400_000),
     }),
   );
+  const bRequest = await helpers.as(
+    b,
+    { id: b.ids.guard, type: 'staff' },
+    async () =>
+      h.moduleRef.get(ApprovalsService).request({
+        kind: 'delivery',
+        unitCode: (
+          await helpers.prisma.tenant.unit.findUniqueOrThrow({
+            where: { id: b.homeUnitId },
+          })
+        ).code,
+      }),
+  );
   return {
+    bRequestId: bRequest.id,
     bPassId: bPass.id,
     bNotificationId: bNotification.id,
     bEngagementId: bEngagement.engagementId,

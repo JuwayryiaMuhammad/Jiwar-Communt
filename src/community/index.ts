@@ -11,6 +11,7 @@ export { CapabilitiesService } from './capabilities/capabilities.service';
 export { CommunityGatePortModule } from './gate-port.module';
 export {
   CommunityGatePort,
+  type CapabilityFlag,
   type GateEngagement,
   type GateSchedule,
 } from './gate-port';

@@ -35,14 +35,20 @@ export class VisitorDataSweep implements OnModuleInit {
       });
       if (!due.length) return expired.count;
       const ids = due.map((d) => d.id);
-      const passes = await tx.visitorPass.findMany({
-        where: { visitorDetailsId: { in: ids } },
-        select: { id: true },
-      });
-      await this.notifier.scrubPersonal(
-        tx,
-        passes.map((p) => p.id),
-      );
+      const [passes, requests] = await Promise.all([
+        tx.visitorPass.findMany({
+          where: { visitorDetailsId: { in: ids } },
+          select: { id: true },
+        }),
+        tx.gateApprovalRequest.findMany({
+          where: { visitorDetailsId: { in: ids } },
+          select: { id: true },
+        }),
+      ]);
+      await this.notifier.scrubPersonal(tx, [
+        ...passes.map((p) => p.id),
+        ...requests.map((r) => r.id),
+      ]);
       const { count } = await tx.visitorDetails.deleteMany({
         where: { id: { in: ids } },
       });

@@ -2,6 +2,7 @@ import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   Prisma,
+  type GateApprovalRequest,
   type GateDirection,
   type GateEntry,
   type GateEntryMethod,
@@ -20,6 +21,7 @@ import {
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
+import { ApprovalsService } from '../approvals/approvals.service';
 import { ShiftsService } from '../shifts/shifts.service';
 import { GateSubjects, type GateSubject } from './subjects';
 
@@ -29,6 +31,8 @@ export const UNCONFIRMED_EXITS_SWEEP = 'gate.unconfirmed_exits';
 /** How far an entry may be backdated (offline guards) or run ahead. */
 const MAX_BACKDATE_MS = 24 * 3_600_000;
 const MAX_AHEAD_MS = 5 * 60_000;
+/** An approval lets someone in within this long of the decision. */
+export const APPROVAL_VALID_MS = 30 * 60_000;
 const PAGE = keysetCursor('occurredAt');
 
 export interface NewEntry {
@@ -78,6 +82,11 @@ export interface EntryFilters {
   to?: Date;
 }
 
+const refused = (reason: string) =>
+  appError.conflict(ErrorCode.GATE_ENTRY_REFUSED, 'They may not come in', {
+    params: { reason },
+  });
+
 export const subjectNotFound = () =>
   appError.notFound(ErrorCode.GATE_SUBJECT_NOT_FOUND, 'Not found at this gate');
 
@@ -102,6 +111,7 @@ export class EntriesService implements OnModuleInit {
     private readonly idempotency: IdempotencyService,
     private readonly settings: TenantSettingsService,
     private readonly sweep: SweepRunner,
+    private readonly approvals: ApprovalsService,
     config: ConfigService<Env, true>,
   ) {
     this.unconfirmedAfterMs =
@@ -164,11 +174,32 @@ export class EntriesService implements OnModuleInit {
         }
       }
       await this.idempotency.claim(tx, { type: ENTRY_RESOURCE, id });
-      const subject = await this.subjects.byId(
-        tx,
-        input.subjectType,
-        input.subjectId,
-      );
+      // On a household's approval: the request under its lock (a deny
+      // racing this entry waits for it, or wins before it), its timeout
+      // applied first. A worker let in off schedule stays the worker.
+      let approval: GateApprovalRequest | null = null;
+      let subject: GateSubject | null;
+      if (input.subjectType === 'gate_request') {
+        const exists = await tx.gateApprovalRequest.count({
+          where: { id: input.subjectId },
+        });
+        if (!exists) throw subjectNotFound();
+        approval = await this.approvals.lockedResolved(tx, input.subjectId);
+        subject =
+          approval.kind === 'worker_off_schedule'
+            ? await this.subjects.byId(
+                tx,
+                'worker_engagement',
+                approval.engagementId!,
+              )
+            : await this.subjects.request(tx, approval);
+      } else {
+        subject = await this.subjects.byId(
+          tx,
+          input.subjectType,
+          input.subjectId,
+        );
+      }
       if (!subject) throw subjectNotFound();
       await this.lockSubject(tx, subject.type, subject.id);
       const last = await this.lastOf(tx, subject.type, subject.id);
@@ -181,21 +212,28 @@ export class EntriesService implements OnModuleInit {
             'Record their exit before another entry',
           );
         const tz = (await this.settings.inTx(tx, tenantId)).timezone;
-        // Re-read under the lock: a one-time pass may just have been used.
-        const fresh = (await this.subjects.byId(tx, subject.type, subject.id))!;
-        const refusal = await this.subjects.refusal(tx, fresh, occurredAt, tz);
-        if (refusal)
-          throw appError.conflict(
-            ErrorCode.GATE_ENTRY_REFUSED,
-            'They may not come in',
-            { params: { reason: refusal } },
-          );
-        if (fresh.pass?.kind === 'one_time')
-          await tx.visitorPass.update({
-            where: { id: fresh.id },
-            data: { status: 'used', usedAt: occurredAt, codeHash: null },
-          });
-        method = 'code';
+        if (approval) {
+          await this.checkApproval(tx, approval, subject, occurredAt, tz);
+          method = 'approval';
+        } else {
+          // Re-read under the lock: a one-time pass may just have been used.
+          const fresh = (await this.subjects.byId(
+            tx,
+            subject.type,
+            subject.id,
+          ))!;
+          const refusal =
+            fresh.type === 'gate_request'
+              ? 'not_approved'
+              : await this.subjects.refusal(tx, fresh, occurredAt, tz);
+          if (refusal) throw refused(refusal);
+          if (fresh.pass?.kind === 'one_time')
+            await tx.visitorPass.update({
+              where: { id: fresh.id },
+              data: { status: 'used', usedAt: occurredAt, codeHash: null },
+            });
+          method = 'code';
+        }
       } else {
         if (!inside)
           throw appError.conflict(
@@ -225,7 +263,8 @@ export class EntriesService implements OnModuleInit {
         method,
         occurredAt,
         unconfirmed: false,
-        approvalRequestId: null,
+        approvalRequestId:
+          input.direction === 'in' && approval ? approval.id : null,
       });
       return this.render(tx, entry);
     });
@@ -354,6 +393,28 @@ export class EntriesService implements OnModuleInit {
       }
       return { items, nextCursor: page.nextCursor };
     });
+  }
+
+  /**
+   * An approval lets in once, within APPROVAL_VALID_MS of the decision; a
+   * worker's approval waives only the schedule.
+   */
+  private async checkApproval(
+    tx: TenantTxClient,
+    r: GateApprovalRequest,
+    subject: GateSubject,
+    at: Date,
+    tz: string,
+  ): Promise<void> {
+    if (r.status !== 'approved' || !r.decidedAt || at < r.decidedAt)
+      throw refused('not_approved');
+    if (at.getTime() > r.decidedAt.getTime() + APPROVAL_VALID_MS)
+      throw refused('expired');
+    if (await this.approvals.used(tx, r.id)) throw refused('used');
+    if (subject.engagement) {
+      const refusal = await this.subjects.refusal(tx, subject, at, tz);
+      if (refusal && refusal !== 'outside_schedule') throw refused(refusal);
+    }
   }
 
   /** Whether the subject is inside now (its last entry is an `in`). */

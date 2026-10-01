@@ -165,6 +165,39 @@ const TABLES: Table[] = [
     },
   },
   {
+    table: 'gate_approval_requests',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      const shiftId = newId();
+      // An (ended) shift of the row's own compound; the rest is linked.
+      await tx.guardShift.create({
+        data: {
+          id: shiftId,
+          tenantId: own.tenantId,
+          guardAccountId: own.guardId,
+          gateId: own.gateId,
+          startedAt: new Date(Date.now() - 60_000),
+          endedAt: new Date(),
+          endReason: 'guard',
+        },
+      });
+      await tx.gateApprovalRequest.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          unitId: link.unitId,
+          gateId: link.gateId,
+          shiftId,
+          requestedById: link.guardId,
+          kind: 'delivery',
+          partySize: 1,
+          expiresAt: new Date(Date.now() + 180_000),
+        },
+      });
+      return id;
+    },
+  },
+  {
     // Append-only and without foreign keys, like the audit tables.
     table: 'gate_entries',
     linked: false,

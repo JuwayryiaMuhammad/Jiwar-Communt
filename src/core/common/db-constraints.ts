@@ -60,4 +60,5 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   visitor_passes_active_code: null,
   // A duplicate key is replayed by the service; never a response.
   visitor_passes_tenant_id_host_account_id_idempotency_key_key: null,
+  gate_approval_requests_tenant_id_id_key: null,
 };

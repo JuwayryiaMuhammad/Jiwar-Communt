@@ -3,6 +3,11 @@ import { CommunityGatePortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
 import { AuthModule } from '../core/auth/auth.module';
 import { TenantSettingsModule } from '../core/tenant-settings/tenant-settings.module';
+import { ApprovalsService } from './approvals/approvals.service';
+import {
+  GuardApprovalsController,
+  HostApprovalsController,
+} from './approvals/approvals.controller';
 import { EntriesController } from './entries/entries.controller';
 import { EntriesService } from './entries/entries.service';
 import { GateSubjects } from './entries/subjects';
@@ -32,6 +37,8 @@ import { VisitorsController } from './visitors/visitors.controller';
     ShiftsController,
     VisitorsController,
     EntriesController,
+    GuardApprovalsController,
+    HostApprovalsController,
   ],
   providers: [
     GatesService,
@@ -42,6 +49,7 @@ import { VisitorsController } from './visitors/visitors.controller';
     GateSubjects,
     EntriesService,
     VerifyService,
+    ApprovalsService,
   ],
 })
 export class GateModule {}

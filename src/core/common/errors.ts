@@ -122,6 +122,11 @@ export const ErrorCode = {
   GATE_ENTRY_REFUSED: 'GATE_ENTRY_REFUSED',
   ALREADY_INSIDE: 'ALREADY_INSIDE',
   NOT_INSIDE: 'NOT_INSIDE',
+  GATE_REQUEST_NOT_FOUND: 'GATE_REQUEST_NOT_FOUND',
+  /** Someone answered first, or the time ran out (params.status). */
+  GATE_REQUEST_DECIDED: 'GATE_REQUEST_DECIDED',
+  /** The worker may come in on their schedule: nothing to ask. */
+  GATE_REQUEST_NOT_NEEDED: 'GATE_REQUEST_NOT_NEEDED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

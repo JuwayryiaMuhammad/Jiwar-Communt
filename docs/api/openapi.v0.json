@@ -956,6 +956,40 @@
         ],
         "type": "object"
       },
+      "CreateGateRequestDto": {
+        "properties": {
+          "engagementId": {
+            "description": "worker_off_schedule: the engagement verify returned.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateRequestKind"
+              }
+            ]
+          },
+          "partySize": {
+            "default": 1,
+            "maximum": 50,
+            "minimum": 1,
+            "type": "number"
+          },
+          "unitCode": {
+            "description": "Visitors and deliveries: the unit they came for.",
+            "type": "string"
+          },
+          "visitorName": {
+            "description": "As the visitor gives it; shown to the household only.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "type": "object"
+      },
       "CreateResidentDto": {
         "properties": {
           "birthDate": {
@@ -1190,23 +1224,42 @@
           "decision": {
             "enum": [
               "approve",
-              "decline"
+              "deny"
             ],
-            "type": "string"
-          },
-          "reason": {
-            "description": "What the person is told (at most 1000 characters). Never stored in the audit trail.",
-            "type": "string"
-          },
-          "reasonCode": {
-            "description": "A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE.",
             "type": "string"
           }
         },
         "required": [
-          "reasonCode",
-          "reason",
           "decision"
+        ],
+        "type": "object"
+      },
+      "DecisionResponse": {
+        "properties": {
+          "decisionSource": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateDecisionSource"
+              }
+            ],
+            "nullable": true
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateRequestStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "decisionSource"
         ],
         "type": "object"
       },
@@ -1697,6 +1750,15 @@
         ],
         "type": "object"
       },
+      "GateDecisionSource": {
+        "enum": [
+          "household",
+          "standing_instruction",
+          "timeout",
+          "guard"
+        ],
+        "type": "string"
+      },
       "GateDirection": {
         "enum": [
           "in",
@@ -1771,6 +1833,25 @@
           "pedestrian",
           "vehicle",
           "mixed"
+        ],
+        "type": "string"
+      },
+      "GateRequestKind": {
+        "enum": [
+          "uninvited_visitor",
+          "delivery",
+          "worker_off_schedule"
+        ],
+        "type": "string"
+      },
+      "GateRequestStatus": {
+        "enum": [
+          "pending",
+          "approved",
+          "denied",
+          "timed_out",
+          "leave_at_gate",
+          "withdrawn"
         ],
         "type": "string"
       },
@@ -1925,6 +2006,138 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/GuardGateView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GuardRequestResponse": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decisionSource": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateDecisionSource"
+              }
+            ],
+            "nullable": true
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateRequestKind"
+              }
+            ]
+          },
+          "partySize": {
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateRequestStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "unitCode",
+          "partySize",
+          "status",
+          "decisionSource",
+          "expiresAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "HostRequestResponse": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "gateName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateRequestKind"
+              }
+            ]
+          },
+          "partySize": {
+            "type": "number"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "visitorName": {
+            "description": "As the guard typed it; gone when the data expires.",
+            "nullable": true,
+            "type": "string"
+          },
+          "workerName": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "unitId",
+          "unitCode",
+          "gateName",
+          "partySize",
+          "visitorName",
+          "workerName",
+          "expiresAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "HostRequestResponseList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/HostRequestResponse"
             },
             "type": "array"
           },
@@ -6717,6 +6930,180 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/gate-requests/{id}/decide": {
+      "post": {
+        "operationId": "HostApprovalsController_decide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "gate-requests"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/approval-requests": {
+      "post": {
+        "operationId": "GuardApprovalsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGateRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardRequestResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "gate"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/approval-requests/{id}": {
+      "get": {
+        "operationId": "GuardApprovalsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardRequestResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "gate"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/approval-requests/{id}/withdraw": {
+      "post": {
+        "operationId": "GuardApprovalsController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardRequestResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "gate"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/gate/entries": {
       "get": {
         "operationId": "EntriesController_list",
@@ -7928,6 +8315,33 @@
         ],
         "tags": [
           "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/gate-requests": {
+      "get": {
+        "operationId": "HostApprovalsController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HostRequestResponseList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "gate-requests"
         ],
         "x-stability": "draft"
       }

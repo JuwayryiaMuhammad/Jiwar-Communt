@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import type { GateSubjectType, VisitorPass } from '@prisma/client';
+import type {
+  GateApprovalRequest,
+  GateSubjectType,
+  VisitorPass,
+} from '@prisma/client';
 import {
   CommunityGatePort,
   type GateEngagement,
@@ -35,6 +39,8 @@ export interface GateSubject {
   workerName: string | null;
   pass?: VisitorPass;
   engagement?: GateEngagement;
+  /** A visitor or delivery let in on a household's approval. */
+  request?: GateApprovalRequest;
 }
 
 /**
@@ -57,6 +63,23 @@ export class GateSubjects {
       visitorDetailsId: pass.visitorDetailsId,
       workerName: null,
       pass,
+    };
+  }
+
+  async request(
+    tx: TenantTxClient,
+    r: GateApprovalRequest,
+  ): Promise<GateSubject> {
+    return {
+      type: 'gate_request',
+      id: r.id,
+      unitId: r.unitId,
+      unitCode: await this.community.unitCode(tx, r.unitId),
+      kind: r.kind,
+      partySize: r.partySize,
+      visitorDetailsId: r.visitorDetailsId,
+      workerName: null,
+      request: r,
     };
   }
 
@@ -88,7 +111,8 @@ export class GateSubjects {
       const e = await this.community.engagementById(tx, id);
       return e ? this.worker(e) : null;
     }
-    return null;
+    const r = await tx.gateApprovalRequest.findUnique({ where: { id } });
+    return r ? this.request(tx, r) : null;
   }
 
   /** Null when the subject may come in at `at`, else why not. */

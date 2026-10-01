@@ -4,6 +4,7 @@ import { WorkersService } from '../../src/community/workers/workers.service';
 import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
 import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
+import { ApprovalsService } from '../../src/gate/approvals/approvals.service';
 import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
 import {
   createHttpHarness,
@@ -217,6 +218,20 @@ describe('API v0 — PII leak scan', () => {
         visitorPhone,
       }),
     );
+    // A guard asks the household about a visitor: the name the guard typed
+    // reaches the household's own request list, nowhere else.
+    const unitCode = (
+      await manager(() =>
+        c.prisma.tenant.unit.findUniqueOrThrow({ where: { id: unit.id } }),
+      )
+    ).code;
+    const asked = await c.as(a, { id: a.ids.guard, type: 'staff' }, () =>
+      h.moduleRef.get(ApprovalsService).request({
+        kind: 'uninvited_visitor',
+        unitCode,
+        visitorName: 'PII-ASKED-name',
+      }),
+    );
     const people = [primary, landlord, tenant, family, leaving, ender, worker];
     const secrets = [
       visit.code!,
@@ -246,6 +261,7 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/delegations': unit.id,
       '/units/{unitId}/visitor-passes': unit.id,
       '/units/{unitId}/gate-instructions': unit.id,
+      '/gate/approval-requests/{id}': asked.id,
       '/me/units/{unitId}/capabilities': unit.id,
       '/me/units/{unitId}/permissions': unit.id,
       '/residents/{id}': primary.id,
@@ -338,7 +354,20 @@ describe('API v0 — PII leak scan', () => {
       if (key === 'family /units/{unitId}/visitor-passes') continue;
       if (text.includes('PII-VISITOR-name')) leaks.push(`${key}: visitor name`);
     }
+    // The household's request list and its own notifications about it.
+    const household = new Set([
+      'resident /me/gate-requests',
+      'family /me/gate-requests',
+      'resident /me/notifications',
+      'family /me/notifications',
+    ]);
+    for (const [key, text] of seen) {
+      if (!household.has(key) && text.includes('PII-ASKED-name'))
+        leaks.push(`${key}: asked visitor name`);
+    }
     expect(leaks).toEqual([]);
+    for (const key of household)
+      expect(seen.get(key)).toContain('PII-ASKED-name');
     expect(seen.get('family /units/{unitId}/visitor-passes')).toContain(
       'PII-VISITOR-name',
     );

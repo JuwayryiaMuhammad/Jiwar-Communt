@@ -81,6 +81,10 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   gate_entries_system_has_no_guard: {},
   gate_entries_unconfirmed_is_system_out: {},
   gate_entries_method_matches_direction: {},
+  gate_approval_requests_party_size_range: {},
+  gate_approval_requests_worker_has_engagement: {},
+  gate_approval_requests_decided_matches_status: {},
+  gate_approval_requests_expiry_after_creation: {},
   // Compares nullable columns.
   accounts_identity_document: {
     guarded:
@@ -109,6 +113,11 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   guard_shifts_end_after_start: {
     guarded:
       'ended_at IS NULL is tested first; the comparison runs only on a value',
+  },
+  gate_approval_requests_decider_is_household: {
+    guarded:
+      'decided_by IS NULL is tested first, and the comparison of the ' +
+      'nullable decision_source is wrapped in COALESCE(…, false)',
   },
   household_members_minor_or_account: {
     guarded:

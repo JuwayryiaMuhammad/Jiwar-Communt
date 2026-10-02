@@ -1,11 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import type { FilePurpose, StoredFile } from '@prisma/client';
 import { PermissionsService } from '../access/permissions.service';
+import { AccountLifecycle } from '../accounts/account-lifecycle';
 import { AuditService } from '../audit/audit.service';
 import { RequestContext } from '../common/cls/request-context';
 import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
 import { newId } from '../common/uuid';
 import { TenantTx, type TenantTxClient } from '../database/tenant-tx.service';
+import { SweepRunner } from '../sweep/sweep-runner';
 import {
   ObjectStorage,
   type PresignedRead,
@@ -23,6 +25,10 @@ export const FINALIZE_GRACE_MS = 15 * 60_000;
 export const PENDING_SWEEP_AFTER_MS = 60 * 60_000;
 /** Live (not yet expired) unfinalized uploads one account may hold. */
 export const PENDING_LIMIT = 10;
+/** Rows one sweep run takes per compound and step. */
+const SWEEP_BATCH = 500;
+
+export const FILES_SWEEP = 'files.cleanup';
 
 /** Why a file was deleted (audit metadata.reasonCode). */
 export type FileDeleteReason =
@@ -67,7 +73,7 @@ const invalid = (
  * outside any transaction.
  */
 @Injectable()
-export class FilesService {
+export class FilesService implements OnModuleInit {
   private readonly logger = new Logger(FilesService.name);
 
   constructor(
@@ -76,7 +82,26 @@ export class FilesService {
     private readonly audit: AuditService,
     private readonly permissions: PermissionsService,
     private readonly storage: ObjectStorage,
+    private readonly sweep: SweepRunner,
+    private readonly lifecycle: AccountLifecycle,
   ) {}
+
+  onModuleInit(): void {
+    this.sweep.register(FILES_SWEEP, (now) => this.cleanUp(now));
+    // An erased account's own files go with it (ADR 0023): marked in the
+    // erasure's transaction, objects deleted after it commits (the sweep
+    // finishes whatever fails).
+    this.lifecycle.onErasing(async (tx, account) => {
+      const owned = await tx.storedFile.findMany({
+        where: { ownerAccountId: account.id, deletedAt: null },
+        select: { id: true, purpose: true },
+      });
+      for (const file of owned) await this.markDeleted(tx, file, 'erasure');
+      return owned.map((file) => async () => {
+        await this.purge(file.id);
+      });
+    });
+  }
 
   async createUpload(input: {
     purpose: FilePurpose;
@@ -261,6 +286,63 @@ export class FilesService {
       tx.storedFile.deleteMany({ where: { id, deletedAt: { not: null } } }),
     );
     return true;
+  }
+
+  /**
+   * The sweep (ADR 0029): uploads never finalized are marked deleted once
+   * well past finalize's grace; then every deleted file loses its object
+   * and, only after that succeeded, its row. Store calls run between the
+   * two tenant transactions, never inside one.
+   */
+  async cleanUp(now: Date): Promise<number> {
+    const before = new Date(now.getTime() - PENDING_SWEEP_AFTER_MS);
+    const due = new Map<string, string[]>();
+    let done = await this.sweep.forEachTenant(async (tx, tenantId) => {
+      // SKIP LOCKED: a row a finalize holds is left for the next run, and
+      // finalize sees the deletion if the sweep got there first.
+      const expired = await tx.$queryRaw<
+        { id: string; purpose: FilePurpose }[]
+      >`
+        SELECT id, purpose FROM files
+         WHERE status = 'pending' AND deleted_at IS NULL
+           AND upload_expires_at < ${before}
+         ORDER BY upload_expires_at LIMIT ${SWEEP_BATCH}
+         FOR UPDATE SKIP LOCKED`;
+      for (const file of expired)
+        await this.markDeleted(tx, file, 'upload_expired');
+      const deleted = await tx.storedFile.findMany({
+        where: { deletedAt: { not: null } },
+        select: { id: true },
+        orderBy: { deletedAt: 'asc' },
+        take: SWEEP_BATCH,
+      });
+      if (deleted.length)
+        due.set(
+          tenantId,
+          deleted.map((f) => f.id),
+        );
+      return expired.length;
+    });
+
+    const gone = new Map<string, string[]>();
+    for (const [tenantId, ids] of due) {
+      const ok: string[] = [];
+      for (const id of ids) {
+        if (await this.storage.delete(objectKey({ tenantId, id }))) ok.push(id);
+      }
+      if (ok.length) gone.set(tenantId, ok);
+    }
+    if (gone.size) {
+      done += await this.sweep.forEachTenant(async (tx, tenantId) => {
+        const ids = gone.get(tenantId);
+        if (!ids) return 0;
+        const { count } = await tx.storedFile.deleteMany({
+          where: { id: { in: ids }, deletedAt: { not: null } },
+        });
+        return count;
+      });
+    }
+    return done;
   }
 
   private async removeOwn(id: string, reason: FileDeleteReason): Promise<void> {

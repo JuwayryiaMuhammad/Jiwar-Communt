@@ -30,4 +30,5 @@
 | [0026](0026-ci.md) | Continuous integration on real Postgres, Redis and Mailpit | Accepted |
 | [0027](0027-notifications-inbox.md) | The notifications inbox: a catalog, rows in the action's transaction | Accepted |
 | [0028](0028-gate-domain.md) | The gate: shifts, passes, approvals, entries, idempotency | Accepted |
+| [0029](0029-object-storage.md) | Object storage: a private bucket (R2, MinIO), presigned uploads checked at finalize | Accepted |
 | [0030](0030-qr-entry.md) | QR entry: one token per pass and engagement, derived codes, the visitor's link, the card | Accepted |

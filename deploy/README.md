@@ -35,8 +35,42 @@ it and the app refuses to boot without it. The image runs with
 `NODE_ENV=production`, so it must be `https://`, the web app's address (a
 placeholder until the web app exists; this API host itself is plain HTTP).
 
+Staging stores files on its own MinIO (`minio.env`, the `/jiwar/` nginx
+location). `app.env` must set `S3_*` (ADR 0029; the app refuses to boot
+without them): `S3_ENDPOINT=http://191.218.163.45` (the public address the
+presigned URLs are signed for), `S3_REGION=us-east-1`, `S3_BUCKET=jiwar`,
+`S3_FORCE_PATH_STYLE=true` and MinIO credentials.
+
 `deploy.sh` and `nginx.conf` are installed by hand: a change to either is
 copied to the server, it does not ship with the image.
+
+## Production object storage: Cloudflare R2
+
+Production files live in a private R2 bucket (ADR 0029). The app is
+configured through `S3_*` only; there are no `R2_*` variables.
+
+| Variable | Value |
+|---|---|
+| `S3_ENDPOINT` | `https://<account-id>.r2.cloudflarestorage.com` |
+| `S3_REGION` | `auto` |
+| `S3_BUCKET` | the production bucket, e.g. `jiwar-prod` |
+| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | an R2 API token with **Object Read & Write**, scoped to that bucket only |
+| `S3_FORCE_PATH_STYLE` | `true` (R2 accepts both; path-style keeps the bucket out of the host name) |
+| `S3_URL_TTL_SECONDS` | `300` |
+
+Provisioning, outside the app:
+- **Public access stays off:** no r2.dev subdomain and no custom domain on
+  the bucket. Every read is a presigned URL from the API.
+- **A token per bucket.** The production token never reaches another
+  bucket, and the dev bucket has its own token.
+- **CORS**, because apps upload straight to R2 with the presigned PUT:
+  allow origins = the web app's origin(s); methods `PUT`, `GET`; headers
+  `Content-Type`, `If-None-Match`; no credentials.
+- No object lifecycle rule deletes files: the app's sweep owns deletion.
+
+Before switching an environment to R2, run the smoke test against its dev
+bucket: point `S3_*` in a local `.env` at it, then
+`R2_SMOKE=1 pnpm test:r2-smoke`.
 
 ## Operations
 

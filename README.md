@@ -157,7 +157,7 @@ pnpm build && pnpm test:unit && pnpm test:e2e
 pnpm openapi:export && git diff --exit-code docs/api/openapi.v0.json
 ```
 
-The e2e run wipes `jiwar_test`, migrates it as the migrator, runs `access:sync` like a deploy, then connects only as `jiwar_app`. The immutable audit tables are cleared over the superuser connection. `OTP_FIXED_CODE` and `SUPERADMIN_*` are removed for the run. Files go to the local MinIO's `TEST_S3_BUCKET`, created and emptied on start, whatever `S3_*` points at.
+The e2e run wipes `jiwar_test`, migrates it as the migrator, runs `access:sync` like a deploy, then connects only as `jiwar_app`. The immutable audit tables are cleared over the superuser connection. `OTP_FIXED_CODE` and `SUPERADMIN_*` are removed for the run. Files go to the local MinIO's `TEST_S3_BUCKET`, created and emptied on start, whatever `S3_*` points at. The R2 smoke test (`R2_SMOKE=1 pnpm test:r2-smoke`, skipped otherwise) is the one run that uses the bucket in `S3_*` (ADR 0029, deploy/README.md).
 
 | Suite | Covers |
 |---|---|
@@ -183,6 +183,7 @@ The e2e run wipes `jiwar_test`, migrates it as the migrator, runs `access:sync` 
 | `test/idempotency/*` | Idempotency-Key on a test-only probe route: replay, concurrent duplicates, payload mismatch, failed actions, lost bodies, a route that forgets to claim, purge |
 | `test/gate/*` | `gate_entries` immutable for the app and the owner; one audit scenario per Phase 4 action; the gate's races under `Promise.all` (approve vs deny, deny vs entry, two guards on one pass, the pass cap, two shift starts) |
 | `test/rls/gate-isolation` | Every Phase 4 tenant table: cross-tenant reads, updates, deletes and inserts refused; composite keys (except the append-only log, which has none) |
+| `test/files/*`, `test/api/files` (Phase 4.2) | Object storage on MinIO (ADR 0029): the store refusing another size or type and a second PUT, a private bucket, a stopped store as 503; the upload flow for every type and purpose, limits and uploaders, finalize before the upload, disguised bytes, expiry, owner-only access and RLS, delete (object then row), the pending cap under `Promise.all`, finalize racing finalize and delete; the sweep (expired uploads, a store that would not delete, rows a finalize holds); erasure, and an erasure that rolls back; one audit scenario per files action |
 
 ## Error contract (ADR 0013)
 

@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
-import { ApiArea } from '../../core/common/http/decorators';
+import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
   ListOf,
   PageQueryDto,
@@ -36,9 +36,13 @@ export class EntriesController {
     private readonly verifier: VerifyService,
   ) {}
 
-  /** Read-only (apart from the rate limit): no Idempotency-Key. */
+  /**
+   * Read-only (apart from the rate limit): no Idempotency-Key. No-store: a
+   * valid worker's display carries a presigned photo URL (ADR 0029).
+   */
   @RequirePermissions('gate.operate')
   @Post('verify')
+  @NoStore()
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: VerifyView })
   async verify(@Body() dto: VerifyDto): Promise<VerifyView> {

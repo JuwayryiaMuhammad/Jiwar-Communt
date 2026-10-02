@@ -9,6 +9,7 @@ import {
   accountRef,
   maskDocument,
 } from '../../../core/common/http/personal';
+import { PresignedReadView } from '../../../core/files/views/file.views';
 import { WorkerScheduleDto } from '../dto/workers.dto';
 import type { WorkerSchedule } from '../schedule';
 import type {
@@ -114,8 +115,14 @@ export class WorkerCardView {
     description: "The compound's emergency phone (E.164), when set.",
   })
   securityPhone: string | null;
-  @ApiProperty({ type: String, example: 'ar' })
+  @ApiProperty({ type: String, enum: ['ar', 'en'] })
   preferredLanguage: string;
+  @ApiProperty({
+    type: PresignedReadView,
+    nullable: true,
+    description: "The worker's photo (ADR 0029), when there is one.",
+  })
+  photo: PresignedReadView | null;
 
   static from(c: WorkerCard): WorkerCardView {
     return {
@@ -129,6 +136,7 @@ export class WorkerCardView {
       validUntil: c.validUntil,
       securityPhone: c.securityPhone,
       preferredLanguage: c.preferredLanguage,
+      photo: PresignedReadView.from(c.photo),
     };
   }
 }
@@ -221,6 +229,12 @@ export class ReviewWorkerView {
   birthDateVerifiedAt: Date | null;
   @ApiProperty({ type: Boolean })
   banned: boolean;
+  @ApiProperty({
+    type: PresignedReadView,
+    nullable: true,
+    description: "The worker's photo (ADR 0029), when there is one.",
+  })
+  photo: PresignedReadView | null;
 }
 
 /** One engagement for the manager's review: the document masked. */
@@ -270,6 +284,7 @@ export class EngagementDetailView {
         birthDate: e.worker.birthDate,
         birthDateVerifiedAt: e.worker.birthDateVerifiedAt,
         banned: e.worker.banned,
+        photo: PresignedReadView.from(e.worker.photo),
       },
     };
   }

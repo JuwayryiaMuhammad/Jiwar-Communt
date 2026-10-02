@@ -9,6 +9,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  IsUUID,
   Length,
 } from 'class-validator';
 import { IdentityDocumentDto } from '../../../core/common/http/identity-document.dto';
@@ -16,6 +17,8 @@ import { PageQueryDto } from '../../../core/common/http/list';
 import { ReasonDto } from '../../../core/common/http/reason.dto';
 import { IsPhone } from '../../../core/common/validation/is-phone';
 import { withParams } from '../../../core/common/validation/validation-errors';
+
+export const WORKER_LANGUAGES = ['ar', 'en'] as const;
 
 export class WorkerWindowDto {
   @ApiProperty({ type: String, example: '08:00' })
@@ -72,6 +75,38 @@ export class NewWorkerDto extends IdentityDocumentDto {
   @Type(() => Date)
   @IsDate()
   validUntil?: Date;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'A finalized `worker_photo` of the caller (ADR 0029); it moves to the worker. Used only when the worker has no photo yet.',
+  })
+  @IsOptional()
+  @IsUUID()
+  photoFileId?: string;
+
+  @ApiProperty({
+    enum: WORKER_LANGUAGES,
+    required: false,
+    description:
+      "The card's language (default `ar`). Kept by a worker already known to the compound.",
+  })
+  @IsOptional()
+  @IsIn(WORKER_LANGUAGES, withParams({ allowed: [...WORKER_LANGUAGES] }))
+  preferredLanguage?: (typeof WORKER_LANGUAGES)[number];
+}
+
+/** A manager sets or replaces a worker's photo (ADR 0029). */
+export class WorkerPhotoDto {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    description: "A finalized `worker_photo` of the caller's.",
+  })
+  @IsUUID()
+  fileId: string;
 }
 
 export class ReissueCodeDto {

@@ -21,6 +21,8 @@ const CARD = [
   'card.capacity',
   'card.code',
   'card.compoundName',
+  // Null without a photo (ADR 0029).
+  'card.photo',
   'card.preferredLanguage',
   'card.qrPayload',
   ...SCHEDULE.map((k) => `card.${k}`),
@@ -128,6 +130,7 @@ describe('API v0 — workers', () => {
         'worker.idDocumentType',
         'worker.nationality',
         'worker.phone',
+        'worker.photo',
       ].sort(),
     );
     expect(JSON.stringify(detail.body)).not.toContain(body.idDocumentNumber);
@@ -392,8 +395,9 @@ describe('API v0 — workers', () => {
       schedule: { days: [0, 1], windows: [{ from: '08:00', to: '12:00' }] },
       validUntil: null,
       securityPhone: '+201000000999',
-      // Registration takes no language yet: the column's default.
+      // None given at registration: the default (ADR 0030).
       preferredLanguage: 'ar',
+      photo: null,
     });
     expect((approved.body as { accessCode: string }).accessCode).toBe(
       card.code,

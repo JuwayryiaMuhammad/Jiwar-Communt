@@ -5,6 +5,8 @@ import { AccessTokens } from '../../core/auth/access-token';
 import { IdentifierHasher } from '../../core/auth/identifier';
 import { RequestContext } from '../../core/common/cls/request-context';
 import type { Env } from '../../core/config/env.schema';
+import { FilesService } from '../../core/files/files.service';
+import type { PresignedRead } from '../../core/files/object-storage';
 import {
   TenantTx,
   type TenantTxClient,
@@ -23,6 +25,11 @@ export interface VerifyDisplay {
   /** Workers: name and capacity. */
   workerName: string | null;
   capacity: string | null;
+  /**
+   * A valid worker's photo (ADR 0029), for the guard to compare the face;
+   * never for an invalid result or a visitor.
+   */
+  photo: PresignedRead | null;
 }
 
 export interface VerifyResult {
@@ -70,6 +77,7 @@ export class VerifyService {
     private readonly settings: TenantSettingsService,
     private readonly rateLimit: RateLimitService,
     private readonly tokens: AccessTokens,
+    private readonly files: FilesService,
     config: ConfigService<Env, true>,
   ) {
     this.perMinute = config.get('GATE_VERIFY_RATE_LIMIT_PER_MINUTE', {
@@ -116,6 +124,13 @@ export class VerifyService {
           partySize: isWorker ? null : subject.partySize,
           workerName: subject.workerName,
           capacity: isWorker ? subject.kind : null,
+          photo:
+            isWorker && !refusal
+              ? await this.files.readUrl(
+                  tx,
+                  subject.engagement?.photoFileId ?? null,
+                )
+              : null,
         },
       };
     });

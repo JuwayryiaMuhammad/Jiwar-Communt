@@ -43,12 +43,12 @@ Until now the guard typed a 6-digit visitor code or an 8-digit worker code (ADR 
 - **Idempotency without storing a secret:** `@Idempotent({ secret: true })` claims the key in the action's transaction (ADR 0028) but never stores the response body. A replay is rendered by reissuing again, which is the create replay's rule too. If two duplicates race, the earlier response's link dies, which is rare and better than a retry that cannot get a usable link.
 
 ### The worker's card
-- Approval, reissue, a card incident and a resume that had to replace the code return a `card` block, once (no-store). It has: `qrPayload`, `code`, `workerName`, `capacity`, `unitCode`, `compoundName`, `schedule`, `validUntil`, `securityPhone` (the compound's emergency phone), and `preferredLanguage`. The client resolves the labels in that language.
+- Approval, reissue, a card incident and a resume that had to replace the code return a `card` block, once (no-store). It has: `qrPayload`, `code`, `workerName`, `capacity`, `unitCode`, `compoundName`, `schedule`, `validUntil`, `securityPhone` (the compound's emergency phone), `preferredLanguage` (`ar` or `en`, from the worker's record), and *(Phase 4.2)* `photo`, a presigned URL of the worker's photo or null (ADR 0029). The client resolves the labels in that language.
 - **There is no GET for card data.** The token is not stored, so a lost card means a reissue. A reissue is free and already audited, as a card incident or `worker.code_reissued` (ADR 0022).
-- The PDF and the worker's photo wait for file storage.
+- The PDF still waits. The worker's photo came with file storage (ADR 0029).
 
 ## Consequences
 - `PUBLIC_APP_URL` is required. It must be https in production, so a deploy without it does not boot.
-- Workers have no API to set their language yet. The card carries the column's default (`ar`) until registration takes one.
+- *(Phase 4.2)* Registration takes `preferredLanguage` (`ar` by default). A worker already known to the compound keeps the language they have.
 - A pass's link cannot be shown again, only reissued. The host's pass list never carries a token.
 - A host who shared the link with the wrong person learns it from the notification. The visitor learns only `wrong_recipient` and the compound's name, the unit code and the directions they had already seen.

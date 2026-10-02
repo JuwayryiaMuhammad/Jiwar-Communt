@@ -171,6 +171,8 @@ export const FieldErrorCode = {
   FILE_TYPE_NOT_ALLOWED: 'FILE_TYPE_NOT_ALLOWED',
   /** params.maxBytes is the purpose's limit. */
   FILE_TOO_LARGE: 'FILE_TOO_LARGE',
+  /** Not one of the caller's finalized files of the right purpose. */
+  FILE_NOT_AVAILABLE: 'FILE_NOT_AVAILABLE',
 } as const;
 
 export type FieldErrorCode =

@@ -160,6 +160,8 @@ export const WORKERS_ROUTES: Row[] = [
     denied: 'owner',
     foreign: { params: engagement, code: 'ENGAGEMENT_NOT_FOUND' },
     invalid: 'none',
+    // The photo's presigned URL (ADR 0029).
+    noStore: true,
   },
   {
     method: 'POST',
@@ -199,6 +201,22 @@ export const WORKERS_ROUTES: Row[] = [
     invalid: {
       body: {},
       fields: [{ field: 'birthDate', code: 'FIELD_REQUIRED' }],
+    },
+  },
+  {
+    method: 'PUT',
+    path: '/workers/{id}/photo',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: worker,
+      body: () => ({ fileId: '01a0f000-0000-7000-8000-000000000001' }),
+      code: 'WORKER_NOT_FOUND',
+    },
+    invalid: {
+      body: { fileId: 'nope' },
+      fields: [{ field: 'fileId', code: 'INVALID_UUID' }],
     },
   },
   {

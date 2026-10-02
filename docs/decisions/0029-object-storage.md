@@ -30,15 +30,28 @@ The database repeats types and limits as CHECKs, and a unit test keeps the two i
 
 ### The files table
 - `files` is a tenant table with RLS and FORCE, like every tenant table. It holds the owner, the purpose, the declared type and size, the `pending`/`ready` status, the upload's expiry, `finalized_at` and `deleted_at`.
-- **Everything is the owner's own:** `GET /files/:id` (with a read URL once ready, no-store), finalize and `DELETE /files/:id`. Another account's file, another compound's file and a deleted file are all `FILE_NOT_FOUND`. Features return URLs for their files in their own views, under their own rules.
+- **Everything is the owner's own** (until the file is attached to a record, below): `GET /files/:id` (with a read URL once ready, no-store), finalize and `DELETE /files/:id`. Another account's file, another compound's file, an attached file and a deleted file are all `FILE_NOT_FOUND`. Features return URLs for their files in their own views, under their own rules.
 - **At most 10 live unfinalized uploads per account** (`FILE_PENDING_LIMIT`, 429), counted under the account's row lock so parallel requests cannot pass the limit together. An expired upload stops counting.
-- **Audit:** `file.created` records `{purpose, contentType, size}`. `file.deleted` records `{purpose, reasonCode}`, where the reason is `owner`, `content_mismatch`, `upload_expired` or `erasure`. No file name and no URL is ever recorded.
+- **Audit:** `file.created` records `{purpose, contentType, size}`. `file.deleted` records `{purpose, reasonCode}`, where the reason is `owner`, `content_mismatch`, `upload_expired`, `erasure`, and for attached files `replaced`, `unused` or `retention`. No file name and no URL is ever recorded.
 
 ### Deletion, the sweep, erasure
 - **Deleting a file takes three steps.** The row is marked `deleted_at` in the action's transaction (audited). After commit the object is deleted, then the row. If the object delete fails, the row stays and the sweep tries again. **An object never outlives the row that names it.**
 - **The `files.cleanup` sweep** first marks uploads never finalized an hour after their URL expired (`upload_expired`, actor `system`). Then it deletes the objects of deleted rows, and each row only after its object delete succeeded. Store calls run between two tenant transactions, never inside one.
 - **Races:** finalize, delete and the sweep each lock the row (`FOR UPDATE`). The sweep uses `SKIP LOCKED` and comes long after finalize's grace, so it never takes a file a finalize is working on. A finalize that loses to a delete or the sweep gets `FILE_NOT_FOUND`. Store calls in finalize happen before its transaction, so no database connection waits on the network.
 - **Erasure (ADR 0023)** marks the account's own files deleted in the erasure's transaction and deletes their objects after it commits. A rolled-back erasure deletes nothing.
+
+### Worker photos (the first use)
+- **Attaching.** Registration (`POST /units/:unitId/workers`) takes an optional `photoFileId`, and `PUT /workers/:id/photo {fileId}` (`workers.review`) sets or replaces the photo later. Either way the file must be one of the caller's own finalized `worker_photo` files. Anything else is `FILE_NOT_AVAILABLE` on that field, with one answer for every case: someone else's file, a pending one, a deleted one, one already attached, another purpose, or an unknown id. The file is locked, and it **moves to the worker**: `owner_account_id` becomes NULL and `attached_at` is set (a CHECK keeps the two together, and only a ready file is attached). From then on its uploader can't read or delete it, and their erasure leaves it. `domestic_workers.photo_file_id` points to it (unique; RESTRICT, cleared before the file row goes).
+- **A worker already known to the compound** keeps the photo they have, the same way the record is reused as it is (ADR 0017). The new file is then deleted (`unused`), and the response is identical. Their language is kept too. All of this runs under the worker's row lock, so a parallel registration, a manager's replacement and the retention sweep can't interleave.
+- **A replaced photo** is marked deleted in the same transaction (`replaced`) and its object goes after commit.
+- **Audit:** `worker.registered` and `worker.photo_changed` record the photo as `{ changed: true }` only, never a file id.
+- **Who sees it.** Each reader gets a presigned GET valid for `S3_URL_TTL_SECONDS`, and only in no-store responses:
+  - the worker's card: approval, reissue, card incident, and a resume that had to replace the code;
+  - the manager's engagement detail (`GET /worker-engagements/:id`, now no-store);
+  - the guard's `POST /gate/verify`, for a **valid** worker code or QR only.
+
+  Residents' worker lists never carry it. The PII scan checks that among GET responses only the manager's detail contains the photo's key.
+- **Retention.** A worker's photo is deleted once none of their engagements is pending, active or suspended, and none has changed for `WORKER_PHOTO_RETENTION_DAYS` (default 90). An engagement's last change is its end. The `workers.photo_retention` sweep clears the pointer and marks the file `retention` (audited `worker.photo_changed`, actor `system`), and the files sweep deletes the object and then the row. A worker who comes back gets a new photo with the new registration. When the erasure of a worker's own data exists, it drops the photo through the same path (`WorkersService.dropPhoto`). A banned worker is no exception: a ban needs no photo, because the gate refuses the code anyway.
 
 ### Local, CI, smoke test
 - MinIO runs in docker-compose (API 9005, console 9006). The official images are no longer published, so it is the `pgsty/minio` community build, pinned like on staging. `pnpm storage:init` creates the dev bucket and is refused in production.

@@ -118,6 +118,9 @@ export const envSchema = z
     VISITOR_PAGE_RATE_LIMIT_PER_TOKEN: positiveInt.default(20),
     // Read notifications are deleted after this (ADR 0027).
     NOTIFICATIONS_RETENTION_DAYS: positiveInt.default(90),
+    // A worker's photo is deleted once no engagement of theirs has been
+    // open for this long (ADR 0029).
+    WORKER_PHOTO_RETENTION_DAYS: positiveInt.default(90),
 
     JWT_ACCESS_SECRET: secret,
     IDENTIFIER_PEPPER: secret,

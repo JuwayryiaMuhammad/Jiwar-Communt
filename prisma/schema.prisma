@@ -991,6 +991,8 @@ model DomesticWorker {
   birthDateVerifiedById String?        @map("birth_date_verified_by") @db.Uuid
   birthDateVerifiedAt   DateTime?      @map("birth_date_verified_at") @db.Timestamptz(3)
   preferredLanguage     String         @default("ar") @map("preferred_language")
+  /// The worker's photo (ADR 0029): a file attached to this record.
+  photoFileId           String?        @map("photo_file_id") @db.Uuid
   bannedAt              DateTime?      @map("banned_at") @db.Timestamptz(3)
   bannedById            String?        @map("banned_by") @db.Uuid
   banReason             String?        @map("ban_reason")
@@ -999,6 +1001,7 @@ model DomesticWorker {
 
   bannedBy            Account?               @relation("WorkerBannedBy", fields: [tenantId, bannedById], references: [tenantId, id], onUpdate: Restrict)
   birthDateVerifiedBy Account?               @relation("WorkerBirthDateVerifiedBy", fields: [tenantId, birthDateVerifiedById], references: [tenantId, id], onUpdate: Restrict)
+  photo               StoredFile?            @relation("WorkerPhoto", fields: [tenantId, photoFileId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   engagements         WorkerEngagement[]
   notices             WorkerNotice[]
   obligations         WorkerWageObligation[]
@@ -1557,10 +1560,11 @@ enum FileStatus {
 /// An object in the private bucket (ADR 0029), at `t/<tenantId>/<id>`.
 /// `pending` until finalize has checked the bytes; a deleted row stays until
 /// the sweep has deleted the object. The uploader's file name is not kept.
+/// An attached file (a worker's photo) has no owner: its record decides.
 model StoredFile {
   id              String      @id @db.Uuid
   tenantId        String      @map("tenant_id") @db.Uuid
-  ownerAccountId  String      @map("owner_account_id") @db.Uuid
+  ownerAccountId  String?     @map("owner_account_id") @db.Uuid
   purpose         FilePurpose
   contentType     String      @map("content_type")
   sizeBytes       Int         @map("size_bytes")
@@ -1568,9 +1572,11 @@ model StoredFile {
   uploadExpiresAt DateTime    @map("upload_expires_at") @db.Timestamptz(3)
   finalizedAt     DateTime?   @map("finalized_at") @db.Timestamptz(3)
   deletedAt       DateTime?   @map("deleted_at") @db.Timestamptz(3)
+  attachedAt      DateTime?   @map("attached_at") @db.Timestamptz(3)
   createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  owner Account @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  workers DomesticWorker[] @relation("WorkerPhoto")
+  owner   Account?         @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([tenantId, id])
   @@map("files")

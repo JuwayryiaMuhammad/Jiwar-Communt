@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   $Enums,
   Prisma,
@@ -39,6 +39,12 @@ import {
 } from '../../core/common/reasons';
 import { newId } from '../../core/common/uuid';
 import { GlobalDbService } from '../../core/database/global-db.service';
+import { FilesService } from '../../core/files/files.service';
+import type { PresignedRead } from '../../core/files/object-storage';
+import {
+  runAfterCommit,
+  type AfterCommit,
+} from '../../core/accounts/account-lifecycle';
 import {
   TenantTx,
   type TenantTxClient,
@@ -62,6 +68,10 @@ export interface NewWorker extends IdentityDocumentInput {
   schedule?: WorkerSchedule;
   /** Required for `temporary`. */
   validUntil?: Date;
+  /** A finalized `worker_photo` of the caller (ADR 0029). */
+  photoFileId?: string;
+  /** The card's language; `ar` by default. */
+  preferredLanguage?: 'ar' | 'en';
 }
 
 export interface Registered {
@@ -99,6 +109,8 @@ export interface WorkerCard {
   /** The compound's emergency phone, when it set one. */
   securityPhone: string | null;
   preferredLanguage: string;
+  /** A presigned read of the worker's photo (ADR 0029), or null. */
+  photo: PresignedRead | null;
 }
 
 /** An access code and its card, shown once; only HMACs are stored. */
@@ -186,6 +198,8 @@ export interface EngagementDetail {
     birthDate: string;
     birthDateVerifiedAt: Date | null;
     banned: boolean;
+    /** A presigned read of the photo (ADR 0029), or null. */
+    photo: PresignedRead | null;
   };
 }
 
@@ -227,6 +241,8 @@ const CASE_PAGE = keysetCursor('openedAt');
  */
 @Injectable()
 export class WorkersService {
+  private readonly logger = new Logger(WorkersService.name);
+
   constructor(
     private readonly tenantTx: TenantTx,
     private readonly ctx: RequestContext,
@@ -239,6 +255,7 @@ export class WorkersService {
     private readonly tokens: AccessTokens,
     private readonly globalDb: GlobalDbService,
     private readonly settings: TenantSettingsService,
+    private readonly files: FilesService,
   ) {}
 
   // --------------------------------------------------------------------------
@@ -255,7 +272,8 @@ export class WorkersService {
             valid.document.idDocumentNumber,
           )
         : this.hasher.hashWorkerNationalId(valid.document.idDocumentNumber);
-    return this.tenantTx.withTenantTx(async (tx) => {
+    const after: AfterCommit[] = [];
+    const registered = await this.tenantTx.withTenantTx(async (tx) => {
       await lockUnits(tx, [unitId]);
       const by = await this.authority.forRegister(tx, unitId);
 
@@ -270,16 +288,33 @@ export class WorkersService {
             ...valid.document,
             fullName: valid.fullName,
             phone: valid.phone,
+            preferredLanguage: valid.preferredLanguage,
           },
         ],
         skipDuplicates: true,
       });
-      const worker = await tx.domesticWorker.findUniqueOrThrow({
+      const { id: workerId } = await tx.domesticWorker.findUniqueOrThrow({
         where: {
           tenantId_idDocumentHash: { tenantId, idDocumentHash },
         },
-        select: { id: true, bannedAt: true, birthDate: true },
+        select: { id: true },
       });
+      // The photo is decided under the worker's lock: a parallel
+      // registration, a manager's replacement or the retention sweep
+      // cannot interleave with it.
+      await this.lockWorker(tx, workerId);
+      const worker = await tx.domesticWorker.findUniqueOrThrow({
+        where: { id: workerId },
+        select: {
+          id: true,
+          bannedAt: true,
+          birthDate: true,
+          photoFileId: true,
+        },
+      });
+      const photoAttached = valid.photoFileId
+        ? await this.takePhoto(tx, worker, valid.photoFileId, after)
+        : false;
       if (worker.bannedAt) throw blocked();
       // The stored (possibly corrected) date counts too, not only the
       // entered one: no way around the age rule by re-registering.
@@ -325,6 +360,8 @@ export class WorkersService {
             schedule: valid.schedule,
             validUntil: engagement.validUntil,
             status: engagement.status,
+            // Sensitive for this action: recorded as { changed: true }.
+            photo: photoAttached ? true : null,
           },
           'worker.registered',
         ),
@@ -342,6 +379,124 @@ export class WorkersService {
           : [],
       };
     });
+    await runAfterCommit(after, this.logger);
+    return registered;
+  }
+
+  /**
+   * A worker's photo at registration (ADR 0029). A worker already known to
+   * the compound keeps the photo they have, as the record is reused as it
+   * is: the new file is then deleted, and the answer is the same.
+   */
+  private async takePhoto(
+    tx: TenantTxClient,
+    worker: { id: string; photoFileId: string | null },
+    fileId: string,
+    after: AfterCommit[],
+  ): Promise<boolean> {
+    const file = await this.files.claim(tx, fileId, 'worker_photo');
+    if (!file) throw photoNotAvailable('photoFileId');
+    if (worker.photoFileId) {
+      await this.files.markDeleted(tx, file, 'unused');
+      after.push(() => this.purgeFile(file.id));
+      return false;
+    }
+    await this.files.attach(tx, file);
+    await tx.domesticWorker.update({
+      where: { id: worker.id },
+      data: { photoFileId: file.id },
+    });
+    return true;
+  }
+
+  /**
+   * `workers.review`: sets or replaces a worker's photo with a finalized
+   * `worker_photo` of the manager's. The file moves to the worker; a
+   * replaced photo is deleted (its object after commit).
+   */
+  async setPhoto(workerId: string, fileId: string): Promise<void> {
+    const after: AfterCommit[] = [];
+    await this.tenantTx.withTenantTx(async (tx) => {
+      if (!(await this.lockWorker(tx, workerId))) throw workerNotFound();
+      const worker = await tx.domesticWorker.findUniqueOrThrow({
+        where: { id: workerId },
+        select: { photoFileId: true },
+      });
+      const file = await this.files.claim(tx, fileId, 'worker_photo');
+      if (!file) throw photoNotAvailable('fileId');
+      await this.files.attach(tx, file);
+      await tx.domesticWorker.update({
+        where: { id: workerId },
+        data: { photoFileId: file.id },
+      });
+      if (worker.photoFileId) {
+        await this.files.markDeleted(
+          tx,
+          { id: worker.photoFileId, purpose: 'worker_photo' },
+          'replaced',
+        );
+        const old = worker.photoFileId;
+        after.push(() => this.purgeFile(old));
+      }
+      await this.audit.record(tx, {
+        action: 'worker.photo_changed',
+        targetId: workerId,
+        changes: diffChanges(
+          { photo: worker.photoFileId },
+          { photo: file.id },
+          'worker.photo_changed',
+        ),
+      });
+    });
+    await runAfterCommit(after, this.logger);
+  }
+
+  /**
+   * Drops a worker's photo in the caller's transaction (the retention
+   * sweep; a worker's erasure when it exists). The files sweep deletes the
+   * object, then the row. False when the worker had none.
+   */
+  async dropPhoto(
+    tx: TenantTxClient,
+    workerId: string,
+    reasonCode: 'retention',
+  ): Promise<boolean> {
+    await this.lockWorker(tx, workerId);
+    const worker = await tx.domesticWorker.findUnique({
+      where: { id: workerId },
+      select: { photoFileId: true },
+    });
+    if (!worker?.photoFileId) return false;
+    await tx.domesticWorker.update({
+      where: { id: workerId },
+      data: { photoFileId: null },
+    });
+    await this.files.markDeleted(
+      tx,
+      { id: worker.photoFileId, purpose: 'worker_photo' },
+      reasonCode,
+    );
+    await this.audit.record(tx, {
+      action: 'worker.photo_changed',
+      targetId: workerId,
+      changes: diffChanges(
+        { photo: worker.photoFileId },
+        { photo: null },
+        'worker.photo_changed',
+      ),
+      metadata: { reasonCode },
+    });
+    return true;
+  }
+
+  private async lockWorker(tx: TenantTxClient, id: string): Promise<boolean> {
+    const rows = await tx.$queryRaw<{ id: string }[]>`
+      SELECT id FROM domestic_workers WHERE id = ${id}::uuid FOR UPDATE`;
+    return rows.length > 0;
+  }
+
+  private async purgeFile(id: string): Promise<void> {
+    await this.files.purge(id);
   }
 
   /** The unit's engagements, as a resident (or family member) of it sees them. */
@@ -474,6 +629,7 @@ export class WorkersService {
           birthDate: e.worker.birthDate.toISOString().slice(0, 10),
           birthDateVerifiedAt: e.worker.birthDateVerifiedAt,
           banned: e.worker.bannedAt !== null,
+          photo: await this.files.readUrl(tx, e.worker.photoFileId),
         },
       };
     });
@@ -1499,7 +1655,7 @@ export class WorkersService {
     const [worker, unit, tenant, settings] = await Promise.all([
       tx.domesticWorker.findUniqueOrThrow({
         where: { id: e.workerId },
-        select: { fullName: true, preferredLanguage: true },
+        select: { fullName: true, preferredLanguage: true, photoFileId: true },
       }),
       tx.unit.findUniqueOrThrow({
         where: { id: e.unitId },
@@ -1525,6 +1681,7 @@ export class WorkersService {
         validUntil: e.validUntil,
         securityPhone: settings.emergencyPhone,
         preferredLanguage: worker.preferredLanguage,
+        photo: await this.files.readUrl(tx, worker.photoFileId),
       },
     };
   }
@@ -1582,6 +1739,14 @@ function validateWorker(input: NewWorker) {
   ) {
     fields.push({ field: 'validUntil', code: FieldErrorCode.INVALID_VALUE });
   }
+  const preferredLanguage = input.preferredLanguage ?? 'ar';
+  if (preferredLanguage !== 'ar' && preferredLanguage !== 'en') {
+    fields.push({
+      field: 'preferredLanguage',
+      code: FieldErrorCode.INVALID_VALUE,
+      params: { allowed: ['ar', 'en'] },
+    });
+  }
   if (fields.length || !document || !phone) {
     throw appError.badRequest(ErrorCode.VALIDATION_FAILED, 'Invalid worker', {
       fields,
@@ -1597,7 +1762,17 @@ function validateWorker(input: NewWorker) {
     capacity: input.capacity,
     schedule,
     validUntil,
+    preferredLanguage,
+    photoFileId: input.photoFileId ?? null,
   };
+}
+
+function photoNotAvailable(field: string) {
+  return appError.badRequest(
+    ErrorCode.VALIDATION_FAILED,
+    'Not one of your finalized worker photos',
+    { fields: [{ field, code: FieldErrorCode.FILE_NOT_AVAILABLE }] },
+  );
 }
 
 function validBirthDate(raw: Date | string) {

@@ -93,8 +93,9 @@ export const PHASE_4_COVERAGE: readonly string[] = [
   'gate.approval_withdrawn',
 ];
 
-/** Files (ADR 0029), covered by test/files/audit-coverage.e2e-spec.ts. */
+/** Files and worker photos (ADR 0029), covered by test/files/audit-coverage.e2e-spec.ts. */
 export const FILES_COVERAGE: readonly string[] = [
   'file.created',
   'file.deleted',
+  'worker.photo_changed',
 ];

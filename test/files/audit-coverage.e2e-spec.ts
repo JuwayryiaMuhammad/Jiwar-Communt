@@ -1,4 +1,11 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
+import { WORKER_PHOTO_RETENTION_SWEEP } from '../../src/community/workers/photo-retention';
+import {
+  WorkersService,
+  type NewWorker,
+} from '../../src/community/workers/workers.service';
+import { SweepRunner } from '../../src/core/sweep/sweep-runner';
+import { workerBody } from '../api/routes/workers';
 import { auditReaders } from '../setup/audit';
 import {
   COMMUNITY_COVERAGE,
@@ -12,7 +19,8 @@ import { API, createHttpHarness, type HttpHarness } from '../setup/http-app';
 
 /**
  * One scenario per files catalog entry (ADR 0014, 0029): actor, target and
- * metadata — purpose, type, size and a reason code, never a file name.
+ * metadata — purpose, type, size and a reason code, never a file name; a
+ * worker's photo as { changed: true } only.
  */
 const covered = new Set<string>();
 
@@ -76,6 +84,72 @@ describe('Audit coverage — files', () => {
     expect(deleted.metadata).toEqual({
       purpose: 'worker_photo',
       reasonCode: 'owner',
+    });
+  });
+
+  it('worker.photo_changed — by the manager, then by the retention sweep', async () => {
+    const c = await x.compound();
+    const unit = await x.unit(c);
+    const r = await x.resident(c, [unit.id]);
+    const { engagementId } = await x.as(c, { id: r.id, type: 'resident' }, () =>
+      h.moduleRef
+        .get(WorkersService)
+        .register(unit.id, workerBody() as unknown as NewWorker),
+    );
+    const { workerId } = await x.asManager(c, () =>
+      x.prisma.tenant.workerEngagement.findUniqueOrThrow({
+        where: { id: engagementId },
+      }),
+    );
+    const manager = await h.tokenFor({
+      sub: c.managerId,
+      tid: c.tenantId,
+      typ: 'manager',
+    });
+    const fileId = await f.ready(manager);
+    await h
+      .http()
+      .put(`${API}/workers/${workerId}/photo`)
+      .set('Authorization', `Bearer ${manager}`)
+      .send({ fileId })
+      .expect(204);
+    const set = await single(c, 'worker.photo_changed', workerId);
+    expect(set).toMatchObject({
+      actorType: 'account',
+      actorId: c.managerId,
+      targetType: 'domestic_worker',
+      changes: { photo: { changed: true } },
+    });
+    expect(JSON.stringify(set)).not.toContain(fileId);
+
+    // Retention (ADR 0029): the worker's last engagement long closed.
+    await x.asManager(c, () =>
+      h.moduleRef.get(WorkersService).end(engagementId, {
+        code: 'work_finished',
+        text: 'Done',
+      }),
+    );
+    await x.asManager(c, () =>
+      x.prisma.tenant.workerEngagement.updateMany({
+        where: { workerId },
+        data: { updatedAt: new Date(Date.now() - 91 * 86_400_000) },
+      }),
+    );
+    await h.moduleRef.get(SweepRunner).run(WORKER_PHOTO_RETENTION_SWEEP);
+    const rows = await read.tenant(c.tenantId, {
+      action: 'worker.photo_changed',
+      targetId: workerId,
+    });
+    expect(rows).toHaveLength(2);
+    expect(rows[1]).toMatchObject({
+      actorType: 'system',
+      changes: { photo: { changed: true } },
+      metadata: { reasonCode: 'retention' },
+    });
+    const dropped = await single(c, 'file.deleted', fileId);
+    expect(dropped.metadata).toEqual({
+      purpose: 'worker_photo',
+      reasonCode: 'retention',
     });
   });
 

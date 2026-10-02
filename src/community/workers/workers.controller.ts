@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import {
@@ -34,6 +35,7 @@ import {
   OpenClosedQueryDto,
   ReissueCodeDto,
   ReviewDto,
+  WorkerPhotoDto,
 } from './dto/workers.dto';
 import {
   AccessCodeView,
@@ -168,9 +170,10 @@ export class WorkersController {
     );
   }
 
-  /** The worker with the birth date to attest; the document masked. */
+  /** The worker with the birth date to attest; the document masked; the photo's URL. */
   @RequirePermissions('workers.review')
   @Get('worker-engagements/:id')
+  @NoStore()
   @ApiOkResponse({ type: EngagementDetailView })
   async detail(
     @Param('id', parseId()) id: string,
@@ -212,6 +215,18 @@ export class WorkersController {
     @Body() dto: BirthDateDto,
   ): Promise<void> {
     await this.workers.correctBirthDate(id, dto.birthDate);
+  }
+
+  /** Sets or replaces the photo; the file moves to the worker (ADR 0029). */
+  @RequirePermissions('workers.review')
+  @Put('workers/:id/photo')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  async photo(
+    @Param('id', parseId()) id: string,
+    @Body() dto: WorkerPhotoDto,
+  ): Promise<void> {
+    await this.workers.setPhoto(id, dto.fileId);
   }
 
   @RequirePermissions('workers.ban')

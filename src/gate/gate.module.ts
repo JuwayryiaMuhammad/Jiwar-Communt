@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CommunityGatePortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
+import { FilesModule } from '../core/files/files.module';
 import { AuthModule } from '../core/auth/auth.module';
 import { TenantSettingsModule } from '../core/tenant-settings/tenant-settings.module';
 import { ApprovalsService } from './approvals/approvals.service';
@@ -33,6 +34,7 @@ import { VisitorsController } from './visitors/visitors.controller';
   imports: [
     AccountsModule,
     AuthModule,
+    FilesModule,
     TenantSettingsModule,
     CommunityGatePortModule,
   ],

@@ -3479,6 +3479,19 @@
           "phone": {
             "type": "string"
           },
+          "photoFileId": {
+            "description": "A finalized `worker_photo` of the caller (ADR 0029); it moves to the worker. Used only when the worker has no photo yet.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "preferredLanguage": {
+            "description": "The card's language (default `ar`). Kept by a worker already known to the compound.",
+            "enum": [
+              "ar",
+              "en"
+            ],
+            "type": "string"
+          },
           "schedule": {
             "allOf": [
               {
@@ -4271,6 +4284,23 @@
         ],
         "type": "object"
       },
+      "PresignedReadView": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "url": {
+            "description": "A presigned GET.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
       "ReadAllView": {
         "properties": {
           "read": {
@@ -4915,6 +4945,16 @@
           },
           "phone": {
             "type": "string"
+          },
+          "photo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "description": "The worker's photo (ADR 0029), when there is one.",
+            "nullable": true,
+            "type": "object"
           }
         },
         "required": [
@@ -4926,7 +4966,8 @@
           "nationality",
           "birthDate",
           "birthDateVerifiedAt",
-          "banned"
+          "banned",
+          "photo"
         ],
         "type": "object"
       },
@@ -5977,6 +6018,16 @@
             "nullable": true,
             "type": "string"
           },
+          "photo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "description": "A valid worker's photo, to compare the face (ADR 0029); null otherwise.",
+            "nullable": true,
+            "type": "object"
+          },
           "unitCode": {
             "type": "string"
           },
@@ -5990,7 +6041,8 @@
           "passKind",
           "partySize",
           "workerName",
-          "capacity"
+          "capacity",
+          "photo"
         ],
         "type": "object"
       },
@@ -6299,8 +6351,21 @@
           "compoundName": {
             "type": "string"
           },
+          "photo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "description": "The worker's photo (ADR 0029), when there is one.",
+            "nullable": true,
+            "type": "object"
+          },
           "preferredLanguage": {
-            "example": "ar",
+            "enum": [
+              "ar",
+              "en"
+            ],
             "type": "string"
           },
           "qrPayload": {
@@ -6337,7 +6402,8 @@
           "schedule",
           "validUntil",
           "securityPhone",
-          "preferredLanguage"
+          "preferredLanguage",
+          "photo"
         ],
         "type": "object"
       },
@@ -6350,6 +6416,19 @@
           "rejected"
         ],
         "type": "string"
+      },
+      "WorkerPhotoDto": {
+        "properties": {
+          "fileId": {
+            "description": "A finalized `worker_photo` of the caller's.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId"
+        ],
+        "type": "object"
       },
       "WorkerScheduleDto": {
         "properties": {
@@ -8120,6 +8199,7 @@
         "tags": [
           "gate"
         ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -12306,6 +12386,7 @@
         "tags": [
           "workers"
         ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -12678,6 +12759,45 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/BirthDateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/workers/{id}/photo": {
+      "put": {
+        "operationId": "WorkersController_photo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkerPhotoDto"
               }
             }
           },

@@ -147,6 +147,11 @@ describe('API v0 — PII leak scan', () => {
     );
     const workers = h.moduleRef.get(WorkersService);
     const wp = person(1979, 9, 30);
+    // The worker's photo (ADR 0029): among GETs, only the manager's
+    // engagement detail may carry its URL.
+    const workerPhoto = await fileHelpers(h).ready(
+      await w.tokenFor(a, primary.id, 'resident'),
+    );
     const registered = await asPrimary(() =>
       workers.register(unit.id, {
         fullName: wp.fullName,
@@ -154,6 +159,7 @@ describe('API v0 — PII leak scan', () => {
         idDocumentNumber: wp.idDocumentNumber,
         phone: wp.phone,
         capacity: 'live_in',
+        photoFileId: workerPhoto,
       }),
     );
     const firstCode = (await manager(() =>
@@ -373,13 +379,25 @@ describe('API v0 — PII leak scan', () => {
     }
     expect(leaks).toEqual([]);
 
-    // A file's read URL: its owner's own GET, nowhere else.
-    const photoViews = new Set(['resident /files/{id}']);
-    for (const [key, text] of seen) {
-      if (!photoViews.has(key) && text.includes(photoKey))
-        leaks.push(`${key}: a file URL`);
+    // A file's read URL: its owner's own GET, nowhere else; a worker's
+    // photo: the manager's engagement detail only (not residents' lists).
+    const fileViews: [string, Set<string>][] = [
+      [photoKey, new Set(['resident /files/{id}'])],
+      [
+        `t/${a.tenantId}/${workerPhoto}`,
+        new Set(['manager /worker-engagements/{id}']),
+      ],
+    ];
+    for (const [fileKey, views] of fileViews) {
+      for (const [key, text] of seen) {
+        if (!views.has(key) && text.includes(fileKey))
+          leaks.push(`${key}: a file URL`);
+      }
+      for (const key of views) expect(seen.get(key)).toContain(fileKey);
     }
-    for (const key of photoViews) expect(seen.get(key)).toContain(photoKey);
+    expect(seen.get('resident /units/{unitId}/workers')).toContain(
+      registered.engagementId,
+    );
 
     // The visitor's name: its host sees it, nobody else does.
     for (const [key, text] of seen) {

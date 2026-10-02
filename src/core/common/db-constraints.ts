@@ -66,4 +66,6 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   gate_approval_requests_tenant_id_id_key: null,
   // Server-generated ids (ADR 0029).
   files_tenant_id_id_key: null,
+  // A file is attached once: claim() finds no owned file the second time.
+  domestic_workers_photo_file_id_key: null,
 };

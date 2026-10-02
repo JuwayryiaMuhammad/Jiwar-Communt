@@ -10,6 +10,7 @@ import type {
   EntryRecord,
   InsideItem,
 } from '../entries.service';
+import { PresignedReadView } from '../../../core/files/views/file.views';
 import type { VerifyDisplay, VerifyResult } from '../verify.service';
 
 const REASONS = [
@@ -37,6 +38,13 @@ export class VerifyDisplayView {
   workerName: string | null;
   @ApiProperty({ type: String, nullable: true })
   capacity: string | null;
+  @ApiProperty({
+    type: PresignedReadView,
+    nullable: true,
+    description:
+      "A valid worker's photo, to compare the face (ADR 0029); null otherwise.",
+  })
+  photo: PresignedReadView | null;
 
   static from(d: VerifyDisplay): VerifyDisplayView {
     return {
@@ -45,6 +53,7 @@ export class VerifyDisplayView {
       partySize: d.partySize,
       workerName: d.workerName,
       capacity: d.capacity,
+      photo: PresignedReadView.from(d.photo),
     };
   }
 }

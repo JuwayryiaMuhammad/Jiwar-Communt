@@ -16,6 +16,8 @@ export const ENTRIES_ROUTES: Row[] = [
         { field: 'code', code: 'INVALID_LENGTH', params: { min: 1, max: 32 } },
       ],
     },
+    // A valid worker's photo URL (ADR 0029).
+    noStore: true,
   },
   {
     method: 'POST',

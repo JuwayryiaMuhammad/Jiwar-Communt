@@ -37,10 +37,12 @@ export interface GateEngagement {
   validUntil: Date | null;
   banned: boolean;
   suspendedByManagement: boolean;
+  /** The worker's photo file (ADR 0029): the guard compares the face. */
+  photoFileId: string | null;
 }
 
 const ENGAGEMENT = {
-  worker: { select: { fullName: true, bannedAt: true } },
+  worker: { select: { fullName: true, bannedAt: true, photoFileId: true } },
   unit: { select: { code: true } },
 } as const;
 
@@ -293,7 +295,11 @@ function toGate(e: {
   schedule: unknown;
   validUntil: Date | null;
   suspendedByManagement: boolean;
-  worker: { fullName: string | null; bannedAt: Date | null };
+  worker: {
+    fullName: string | null;
+    bannedAt: Date | null;
+    photoFileId: string | null;
+  };
   unit: { code: string };
 }): GateEngagement {
   return {
@@ -307,5 +313,6 @@ function toGate(e: {
     validUntil: e.validUntil,
     banned: e.worker.bannedAt !== null,
     suspendedByManagement: e.suspendedByManagement,
+    photoFileId: e.worker.photoFileId,
   };
 }

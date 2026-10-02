@@ -32,7 +32,16 @@ export const FILES_SWEEP = 'files.cleanup';
 
 /** Why a file was deleted (audit metadata.reasonCode). */
 export type FileDeleteReason =
-  'owner' | 'content_mismatch' | 'upload_expired' | 'erasure';
+  | 'owner'
+  | 'content_mismatch'
+  | 'upload_expired'
+  | 'erasure'
+  /** An attached file another one replaced. */
+  | 'replaced'
+  /** Handed to an action that did not need it (the record had one). */
+  | 'unused'
+  /** Its record's retention ended (a worker's photo, ADR 0029). */
+  | 'retention';
 
 /** The object key: tenant and file id only, never anything a client sent. */
 export const objectKey = (f: { tenantId: string; id: string }): string =>
@@ -245,6 +254,58 @@ export class FilesService implements OnModuleInit {
 
   async remove(id: string): Promise<void> {
     await this.removeOwn(id, 'owner');
+  }
+
+  /**
+   * Takes one of the caller's own finalized files of this purpose for a
+   * record, in the record's transaction: the row is locked, and null means
+   * it is not such a file (anyone else's, pending, deleted, attached, of
+   * another purpose or unknown — one answer). `attach` or `markDeleted`
+   * must follow in the same transaction.
+   */
+  async claim(
+    tx: TenantTxClient,
+    id: string,
+    purpose: FilePurpose,
+  ): Promise<StoredFile | null> {
+    await this.lock(tx, id);
+    return tx.storedFile.findFirst({
+      where: {
+        id,
+        purpose,
+        status: 'ready',
+        deletedAt: null,
+        ownerAccountId: this.ctx.accountId,
+      },
+    });
+  }
+
+  /**
+   * The claimed file leaves its uploader for the record: no owner, so the
+   * uploader can no longer read or delete it and their erasure leaves it.
+   * The record's own views read it through `readUrl`.
+   */
+  async attach(tx: TenantTxClient, file: StoredFile): Promise<void> {
+    await tx.storedFile.update({
+      where: { id: file.id },
+      data: { ownerAccountId: null, attachedAt: new Date() },
+    });
+  }
+
+  /**
+   * A read URL for a record's attached file (presigning is local: no store
+   * call). The caller has authorized the reader; null when it is gone.
+   */
+  async readUrl(
+    tx: TenantTxClient,
+    id: string | null,
+  ): Promise<PresignedRead | null> {
+    if (!id) return null;
+    const file = await tx.storedFile.findFirst({
+      where: { id, deletedAt: null, attachedAt: { not: null } },
+      select: { id: true, tenantId: true },
+    });
+    return file ? this.storage.presignGet(objectKey(file)) : null;
   }
 
   /**

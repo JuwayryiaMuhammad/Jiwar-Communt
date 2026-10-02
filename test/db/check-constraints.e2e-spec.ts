@@ -91,6 +91,9 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   files_content_type_for_purpose: {},
   files_size_for_purpose: {},
   files_ready_matches_finalized: {},
+  files_owned_or_attached: {},
+  files_attached_is_ready: {},
+  domestic_workers_preferred_language: {},
   worker_engagements_token_only_with_code: {},
   // Compares nullable columns.
   accounts_identity_document: {

@@ -209,6 +209,15 @@ describe('API v0 — no-store', () => {
         { token: w.a.tokens.owner },
       );
     },
+    'GET /worker-engagements/{id}': () =>
+      call(w, 'GET', `/worker-engagements/${w.bEngagementId}`, {
+        token: w.b.tokens.manager,
+      }),
+    'POST /gate/verify': () =>
+      call(w, 'POST', '/gate/verify', {
+        token: w.a.tokens.guard,
+        body: { code: '00000000' },
+      }),
     // Presigned URLs (ADR 0029): an upload target, a read URL.
     'POST /files/uploads': () =>
       call(w, 'POST', '/files/uploads', {

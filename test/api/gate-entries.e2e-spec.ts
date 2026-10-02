@@ -17,6 +17,8 @@ const VERIFY = [
   'display.capacity',
   'display.partySize',
   'display.passKind',
+  // Null but for a valid worker with a photo (ADR 0029).
+  'display.photo',
   'display.unitCode',
   'display.workerName',
   'next',
@@ -141,6 +143,7 @@ describe('API v0 — verify, entries, inside (ADR 0028)', () => {
         partySize: 3,
         workerName: null,
         capacity: null,
+        photo: null,
       },
     });
     const entered = await record({

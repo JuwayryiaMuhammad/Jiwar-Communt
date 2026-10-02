@@ -119,7 +119,17 @@ export const AUDIT_ACTIONS = {
     target: 'household_delegation',
   },
   // domestic workers (ADR 0017)
-  'worker.registered': { log: 'tenant', target: 'worker_engagement' },
+  // The photo is recorded as { changed: true } only (ADR 0029).
+  'worker.registered': {
+    log: 'tenant',
+    target: 'worker_engagement',
+    sensitive: ['photo'],
+  },
+  'worker.photo_changed': {
+    log: 'tenant',
+    target: 'domestic_worker',
+    sensitive: ['photo'],
+  },
   'worker.engagement_reviewed': {
     log: 'tenant',
     target: 'worker_engagement',

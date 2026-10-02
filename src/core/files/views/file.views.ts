@@ -89,3 +89,15 @@ export class FileReadView extends FileView {
     };
   }
 }
+
+/** A presigned read of a record's file (ADR 0029), in no-store responses only. */
+export class PresignedReadView {
+  @ApiProperty({ type: String, description: 'A presigned GET.' })
+  url: string;
+  @ApiProperty({ type: String, format: 'date-time' })
+  expiresAt: Date;
+
+  static from(r: PresignedRead | null): PresignedReadView | null {
+    return r ? { url: r.url, expiresAt: r.expiresAt } : null;
+  }
+}

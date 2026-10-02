@@ -26,6 +26,7 @@ import { httpLogOptions } from './core/common/logging/http-log-options';
 import { JwtAuthGuard } from './core/common/guards/jwt-auth.guard';
 import { validateEnv, type Env } from './core/config/env.schema';
 import { DatabaseModule } from './core/database/database.module';
+import { FilesModule } from './core/files/files.module';
 import { HealthModule } from './core/health/health.module';
 import { MailModule } from './core/mail/mail.module';
 import { IdempotencyModule } from './core/idempotency/idempotency.module';
@@ -94,6 +95,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     MailModule,
     SweepModule,
     TenantSettingsModule,
+    FilesModule,
     HealthModule,
     AuthModule,
     AccountsModule,

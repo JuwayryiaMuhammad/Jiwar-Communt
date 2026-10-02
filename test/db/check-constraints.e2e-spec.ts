@@ -87,6 +87,10 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   gate_approval_requests_expiry_after_creation: {},
   // Phase 4.1 (ADR 0030)
   visitor_passes_token_only_with_code: {},
+  // files (ADR 0029): purpose and content_type are NOT NULL enums/text.
+  files_content_type_for_purpose: {},
+  files_size_for_purpose: {},
+  files_ready_matches_finalized: {},
   worker_engagements_token_only_with_code: {},
   // Compares nullable columns.
   accounts_identity_document: {

@@ -15,6 +15,7 @@ import { Notifier } from '../../src/core/notifications/notifier';
 import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
 import { ApprovalsService } from '../../src/gate/approvals/approvals.service';
 import { communityHelpers, type Compound } from '../setup/community';
+import { fileHelpers } from '../setup/files';
 import { gateHelpers } from '../setup/gate';
 import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
 import { uniqueEmail, uniquePhone, type HttpHarness } from '../setup/http-app';
@@ -89,6 +90,8 @@ export interface World {
   bPassId: string;
   /** A pending gate request for B's home, from B's guard. */
   bRequestId: string;
+  /** A finalized worker photo uploaded by B's owner (ADR 0029). */
+  bFileId: string;
   /** A fresh token (and session) for any account. */
   tokenFor(
     side: Compound,
@@ -345,7 +348,9 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
         ).code,
       }),
   );
+  const bFileId = await fileHelpers(h).ready(b.tokens.owner);
   return {
+    bFileId,
     bRequestId: bRequest.id,
     bPassId: bPass.id,
     bNotificationId: bNotification.id,

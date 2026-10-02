@@ -130,6 +130,15 @@ export const ErrorCode = {
   // files (ADR 0029)
   /** The object store failed or is unreachable (503). */
   STORAGE_UNAVAILABLE: 'STORAGE_UNAVAILABLE',
+  FILE_NOT_FOUND: 'FILE_NOT_FOUND',
+  /** Finalize before the PUT completed (409). */
+  FILE_UPLOAD_MISSING: 'FILE_UPLOAD_MISSING',
+  /** Finalize long after the upload URL expired (409): start again. */
+  FILE_UPLOAD_EXPIRED: 'FILE_UPLOAD_EXPIRED',
+  /** The bytes are not the declared size or type (422); the file is gone. */
+  FILE_CONTENT_MISMATCH: 'FILE_CONTENT_MISMATCH',
+  /** Too many unfinalized uploads (429); params.limit. */
+  FILE_PENDING_LIMIT: 'FILE_PENDING_LIMIT',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -157,6 +166,11 @@ export const FieldErrorCode = {
   INVALID_VALUE: 'INVALID_VALUE',
   DUPLICATE_VALUE: 'DUPLICATE_VALUE',
   SAME_AS_CURRENT: 'SAME_AS_CURRENT',
+  // files (ADR 0029)
+  /** The purpose does not take this type; params.allowed lists those it does. */
+  FILE_TYPE_NOT_ALLOWED: 'FILE_TYPE_NOT_ALLOWED',
+  /** params.maxBytes is the purpose's limit. */
+  FILE_TOO_LARGE: 'FILE_TOO_LARGE',
 } as const;
 
 export type FieldErrorCode =
@@ -205,6 +219,8 @@ export const appError = {
     new AppException(HttpStatus.NOT_FOUND, code, message, extra),
   conflict: (code: ErrorCode, message: string, extra?: Extra) =>
     new AppException(HttpStatus.CONFLICT, code, message, extra),
+  unprocessable: (code: ErrorCode, message: string, extra?: Extra) =>
+    new AppException(HttpStatus.UNPROCESSABLE_ENTITY, code, message, extra),
   tooManyRequests: (code: ErrorCode, message: string, extra?: Extra) =>
     new AppException(HttpStatus.TOO_MANY_REQUESTS, code, message, extra),
   serviceUnavailable: (code: ErrorCode, message: string, extra?: Extra) =>

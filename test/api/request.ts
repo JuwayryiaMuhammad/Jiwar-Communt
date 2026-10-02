@@ -2,7 +2,7 @@ import type { Response, Test } from 'supertest';
 import { API } from '../setup/http-app';
 import type { World } from './world';
 
-export type Method = 'GET' | 'POST' | 'PATCH' | 'PUT';
+export type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
 /** A request with an optional bearer token. */
 export function call(
@@ -20,10 +20,13 @@ export function call(
         ? agent.post(url)
         : method === 'PATCH'
           ? agent.patch(url)
-          : agent.put(url);
+          : method === 'DELETE'
+            ? agent.delete(url)
+            : agent.put(url);
   if (opts.token) req = req.set('Authorization', `Bearer ${opts.token}`);
   if (opts.query) req = req.query(opts.query);
-  if (method !== 'GET') req = req.send(opts.body ?? {});
+  // ADR 0025: no DELETE with a body.
+  if (method !== 'GET' && method !== 'DELETE') req = req.send(opts.body ?? {});
   return req;
 }
 

@@ -168,6 +168,9 @@ export const AUDIT_ACTIONS = {
     log: 'platform',
     target: 'platform_admin',
   },
+  // files (ADR 0029): purpose, type and size only, never a file name.
+  'file.created': { log: 'tenant', target: 'file' },
+  'file.deleted': { log: 'tenant', target: 'file' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

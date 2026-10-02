@@ -713,6 +713,7 @@ model Account {
   gateInstructions      UnitGateInstruction[]     @relation("InstructionsUpdatedBy")
   gateRequestsMade      GateApprovalRequest[]     @relation("RequestRequestedBy")
   gateRequestsDecided   GateApprovalRequest[]     @relation("RequestDecidedBy")
+  files                 StoredFile[]              @relation("FileOwner")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -1538,6 +1539,42 @@ model GateApprovalRequest {
 // reject UPDATE/DELETE/TRUNCATE for every role. No foreign keys on purpose:
 // entries must survive anything that happens to what they reference.
 // ============================================================================
+
+enum FilePurpose {
+  worker_photo
+  document
+
+  @@map("file_purpose")
+}
+
+enum FileStatus {
+  pending
+  ready
+
+  @@map("file_status")
+}
+
+/// An object in the private bucket (ADR 0029), at `t/<tenantId>/<id>`.
+/// `pending` until finalize has checked the bytes; a deleted row stays until
+/// the sweep has deleted the object. The uploader's file name is not kept.
+model StoredFile {
+  id              String      @id @db.Uuid
+  tenantId        String      @map("tenant_id") @db.Uuid
+  ownerAccountId  String      @map("owner_account_id") @db.Uuid
+  purpose         FilePurpose
+  contentType     String      @map("content_type")
+  sizeBytes       Int         @map("size_bytes")
+  status          FileStatus  @default(pending)
+  uploadExpiresAt DateTime    @map("upload_expires_at") @db.Timestamptz(3)
+  finalizedAt     DateTime?   @map("finalized_at") @db.Timestamptz(3)
+  deletedAt       DateTime?   @map("deleted_at") @db.Timestamptz(3)
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  owner Account @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@map("files")
+}
 
 enum AuditActorType {
   account

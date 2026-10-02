@@ -2,6 +2,7 @@ import type { Response } from 'supertest';
 import { newId } from '../../src/core/common/uuid';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { hashPassword } from '../../src/core/platform/password';
+import { fileHelpers } from '../setup/files';
 import { bornYearsAgo, uniqueSuffix } from '../setup/fixtures';
 import {
   createHttpHarness,
@@ -208,6 +209,16 @@ describe('API v0 — no-store', () => {
         { token: w.a.tokens.owner },
       );
     },
+    // Presigned URLs (ADR 0029): an upload target, a read URL.
+    'POST /files/uploads': () =>
+      call(w, 'POST', '/files/uploads', {
+        token: w.a.tokens.owner,
+        body: { purpose: 'worker_photo', contentType: 'image/png', size: 10 },
+      }),
+    'GET /files/{id}': async () =>
+      call(w, 'GET', `/files/${await fileHelpers(h).ready(w.a.tokens.owner)}`, {
+        token: w.a.tokens.owner,
+      }),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

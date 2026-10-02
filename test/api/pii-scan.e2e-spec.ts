@@ -5,6 +5,7 @@ import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
 import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
 import { ApprovalsService } from '../../src/gate/approvals/approvals.service';
+import { fileHelpers } from '../setup/files';
 import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
 import {
   createHttpHarness,
@@ -255,7 +256,15 @@ describe('API v0 — PII leak scan', () => {
     ];
     const birthDates = [...people.map((p) => p.birthDate), qp.birthDate];
 
+    // A worker photo the primary uploaded (ADR 0029): its read URL names the
+    // object, so the key is what the scan looks for.
+    const photoId = await fileHelpers(h).ready(
+      await w.tokenFor(a, primary.id, 'resident'),
+    );
+    const photoKey = `t/${a.tenantId}/${photoId}`;
+
     const params: Record<string, string> = {
+      '/files/{id}': photoId,
       '/units/{id}': unit.id,
       '/units/{id}/activation': unit.id,
       '/units/{id}/household/to-review': unit.id,
@@ -363,6 +372,14 @@ describe('API v0 — PII leak scan', () => {
       }
     }
     expect(leaks).toEqual([]);
+
+    // A file's read URL: its owner's own GET, nowhere else.
+    const photoViews = new Set(['resident /files/{id}']);
+    for (const [key, text] of seen) {
+      if (!photoViews.has(key) && text.includes(photoKey))
+        leaks.push(`${key}: a file URL`);
+    }
+    for (const key of photoViews) expect(seen.get(key)).toContain(photoKey);
 
     // The visitor's name: its host sees it, nobody else does.
     for (const [key, text] of seen) {

@@ -1823,6 +1823,117 @@
         ],
         "type": "object"
       },
+      "FilePurpose": {
+        "enum": [
+          "worker_photo",
+          "document"
+        ],
+        "type": "string"
+      },
+      "FileReadView": {
+        "properties": {
+          "contentType": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "purpose": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FilePurpose"
+              }
+            ]
+          },
+          "size": {
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FileStatus"
+              }
+            ],
+            "description": "`pending` until finalized."
+          },
+          "url": {
+            "description": "A presigned GET, once finalized; valid until `urlExpiresAt`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "urlExpiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "purpose",
+          "contentType",
+          "size",
+          "status",
+          "createdAt",
+          "url",
+          "urlExpiresAt"
+        ],
+        "type": "object"
+      },
+      "FileStatus": {
+        "description": "`pending` until finalized.",
+        "enum": [
+          "pending",
+          "ready"
+        ],
+        "type": "string"
+      },
+      "FileView": {
+        "properties": {
+          "contentType": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "purpose": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FilePurpose"
+              }
+            ]
+          },
+          "size": {
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FileStatus"
+              }
+            ],
+            "description": "`pending` until finalized."
+          }
+        },
+        "required": [
+          "id",
+          "purpose",
+          "contentType",
+          "size",
+          "status",
+          "createdAt"
+        ],
+        "type": "object"
+      },
       "FlagCreatedView": {
         "properties": {
           "flagId": {
@@ -3278,6 +3389,54 @@
           "idDocumentNumber",
           "fullName",
           "relation"
+        ],
+        "type": "object"
+      },
+      "NewUploadDto": {
+        "properties": {
+          "contentType": {
+            "description": "Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED).",
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "application/pdf"
+            ],
+            "type": "string"
+          },
+          "purpose": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FilePurpose"
+              }
+            ]
+          },
+          "size": {
+            "description": "Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE).",
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "purpose",
+          "contentType",
+          "size"
+        ],
+        "type": "object"
+      },
+      "NewUploadView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "upload": {
+            "$ref": "#/components/schemas/UploadTargetView"
+          }
+        },
+        "required": [
+          "id",
+          "upload"
         ],
         "type": "object"
       },
@@ -5753,6 +5912,57 @@
         },
         "type": "object"
       },
+      "UploadHeadersView": {
+        "properties": {
+          "Content-Type": {
+            "type": "string"
+          },
+          "If-None-Match": {
+            "enum": [
+              "*"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "Content-Type",
+          "If-None-Match"
+        ],
+        "type": "object"
+      },
+      "UploadTargetView": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "headers": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UploadHeadersView"
+              }
+            ],
+            "description": "Send exactly these. Content-Length is the body, which must be the declared size."
+          },
+          "method": {
+            "enum": [
+              "PUT"
+            ],
+            "type": "string"
+          },
+          "url": {
+            "description": "Presigned; shown once.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "method",
+          "headers",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
       "VerifyDisplayView": {
         "properties": {
           "capacity": {
@@ -7229,6 +7439,144 @@
         ],
         "tags": [
           "erasure"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/files/uploads": {
+      "post": {
+        "operationId": "FilesController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewUploadDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewUploadView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "files"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/files/{id}": {
+      "delete": {
+        "operationId": "FilesController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "files"
+        ],
+        "x-stability": "draft"
+      },
+      "get": {
+        "operationId": "FilesController_read",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileReadView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "files"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/files/{id}/finalize": {
+      "post": {
+        "operationId": "FilesController_finalize",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "files"
         ],
         "x-stability": "draft"
       }

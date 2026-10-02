@@ -6,6 +6,7 @@ import { ADMIN_ROUTES } from './admin';
 import { DELEGATIONS_ROUTES } from './delegations';
 import { ENTRIES_ROUTES } from './entries';
 import { ERASURE_ROUTES } from './erasure';
+import { FILES_ROUTES } from './files';
 import { GATE_ROUTES } from './gate';
 import { EXISTING_ROUTES } from './existing';
 import { HOUSEHOLD_ROUTES } from './household';
@@ -44,4 +45,5 @@ export const ROUTES: Row[] = [
   ...ENTRIES_ROUTES,
   ...APPROVALS_ROUTES,
   ...ATTENDANCE_ROUTES,
+  ...FILES_ROUTES,
 ];

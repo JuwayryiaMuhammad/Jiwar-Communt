@@ -13,12 +13,15 @@ import {
 } from '../../core/database/tenant-tx.service';
 import { RateLimitService } from '../../core/redis/rate-limit.service';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
+import { parseEntryQr } from '../entry/entry-secrets';
+import { ResidentVerifier } from '../entry/resident-verifier';
 import { ShiftsService } from '../shifts/shifts.service';
 import { EntriesService } from './entries.service';
 import { GateSubjects, type GateSubject, type Refusal } from './subjects';
 
 export interface VerifyDisplay {
-  unitCode: string;
+  /** Null for a resident, who may live in several units (`unitCodes`). */
+  unitCode: string | null;
   /** Visitors: the pass kind and party size. */
   passKind: string | null;
   partySize: number | null;
@@ -30,11 +33,20 @@ export interface VerifyDisplay {
    * never for an invalid result or a visitor.
    */
   photo: PresignedRead | null;
+  /** A valid resident (ADR 0031): the first word of the name, nothing more. */
+  firstName: string | null;
+  /** A valid resident: the units where they live now. */
+  unitCodes: string[] | null;
+  /**
+   * A valid resident's photo as a presigned URL, or null when they have none,
+   * so the guard knows to ask for ID. Never for an invalid result.
+   */
+  photoUrl: string | null;
 }
 
 export interface VerifyResult {
   result: 'valid' | 'invalid';
-  subject: 'visitor' | 'worker' | null;
+  subject: 'visitor' | 'worker' | 'resident' | null;
   reason: Refusal | null;
   /** The pass or engagement, to record the entry (or ask, off schedule). */
   subjectId: string | null;
@@ -60,7 +72,8 @@ const UNKNOWN: VerifyResult = {
  * HMAC in this compound only, so another compound's code is just unknown.
  * A scanned QR (`JWR1.<token>`, ADR 0030) is looked up by the token's
  * compound-bound HMAC and then follows the same path: same answers, same
- * rate limit.
+ * rate limit. A resident's rotating QR (`JWR2.…`, ADR 0031) is checked by
+ * `ResidentVerifier`, which writes nothing at all.
  */
 @Injectable()
 export class VerifyService {
@@ -78,6 +91,7 @@ export class VerifyService {
     private readonly rateLimit: RateLimitService,
     private readonly tokens: AccessTokens,
     private readonly files: FilesService,
+    private readonly residents: ResidentVerifier,
     config: ConfigService<Env, true>,
   ) {
     this.perMinute = config.get('GATE_VERIFY_RATE_LIMIT_PER_MINUTE', {
@@ -97,6 +111,12 @@ export class VerifyService {
       60,
     );
     return this.tenantTx.withTenantTx(async (tx) => {
+      const entry = input.qr !== undefined ? parseEntryQr(input.qr) : null;
+      if (entry) {
+        return (
+          (await this.residents.verify(tx, tenantId, entry)) ?? { ...UNKNOWN }
+        );
+      }
       const subject =
         input.qr !== undefined
           ? await this.byQr(tx, tenantId, input.qr)
@@ -124,6 +144,9 @@ export class VerifyService {
           partySize: isWorker ? null : subject.partySize,
           workerName: subject.workerName,
           capacity: isWorker ? subject.kind : null,
+          firstName: null,
+          unitCodes: null,
+          photoUrl: null,
           photo:
             isWorker && !refusal
               ? await this.files.readUrl(

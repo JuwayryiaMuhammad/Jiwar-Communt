@@ -15,11 +15,15 @@ import { buildWorld, type World } from './world';
 const VERIFY = [
   'display',
   'display.capacity',
+  // A valid resident (ADR 0031); null for visitors and workers.
+  'display.firstName',
   'display.partySize',
   'display.passKind',
   // Null but for a valid worker with a photo (ADR 0029).
   'display.photo',
+  'display.photoUrl',
   'display.unitCode',
+  'display.unitCodes',
   'display.workerName',
   'next',
   'reason',
@@ -144,6 +148,10 @@ describe('API v0 — verify, entries, inside (ADR 0028)', () => {
         workerName: null,
         capacity: null,
         photo: null,
+        // A resident's alone (ADR 0031).
+        firstName: null,
+        unitCodes: null,
+        photoUrl: null,
       },
     });
     const entered = await record({

@@ -23,7 +23,12 @@ export type Refusal =
   | 'suspended'
   | 'ended'
   | 'banned'
-  | 'not_approved';
+  | 'not_approved'
+  // A resident's entry QR (ADR 0031).
+  | 'expired_qr'
+  | 'not_resident'
+  | 'account_inactive'
+  | 'revoked';
 
 /** Who comes through the gate, resolved in this compound (ADR 0028). */
 export interface GateSubject {

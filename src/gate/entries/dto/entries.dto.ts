@@ -32,7 +32,7 @@ export class VerifyDto {
     required: false,
     example: 'JWR1.q3Jz…',
     description:
-      'A scanned Jiwar QR (`JWR1.<token>`). Anything else answers like an unknown code.',
+      "A scanned Jiwar QR: `JWR1.<token>` (a pass or a worker's card) or `JWR2.<credentialId>.<step>.<mac>` (a resident's rotating QR, ADR 0031). Anything else answers like an unknown code.",
   })
   @IsOptional()
   @IsString()

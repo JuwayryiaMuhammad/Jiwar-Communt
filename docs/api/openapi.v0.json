@@ -6107,6 +6107,11 @@
             "nullable": true,
             "type": "string"
           },
+          "firstName": {
+            "description": "A valid resident: the first word of their name, never the full name (ADR 0031). Null otherwise.",
+            "nullable": true,
+            "type": "string"
+          },
           "partySize": {
             "nullable": true,
             "type": "number"
@@ -6125,8 +6130,23 @@
             "nullable": true,
             "type": "object"
           },
-          "unitCode": {
+          "photoUrl": {
+            "description": "A valid resident's photo (a short-lived presigned URL), or null when they have none: ask for ID. Null otherwise.",
+            "nullable": true,
             "type": "string"
+          },
+          "unitCode": {
+            "description": "A pass or a worker: their unit. Null for a resident.",
+            "nullable": true,
+            "type": "string"
+          },
+          "unitCodes": {
+            "description": "A valid resident: the codes of the units where they live now. Null otherwise.",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
           },
           "workerName": {
             "nullable": true,
@@ -6139,7 +6159,10 @@
           "partySize",
           "workerName",
           "capacity",
-          "photo"
+          "photo",
+          "firstName",
+          "unitCodes",
+          "photoUrl"
         ],
         "type": "object"
       },
@@ -6150,7 +6173,7 @@
             "type": "string"
           },
           "qr": {
-            "description": "A scanned Jiwar QR (`JWR1.<token>`). Anything else answers like an unknown code.",
+            "description": "A scanned Jiwar QR: `JWR1.<token>` (a pass or a worker's card) or `JWR2.<credentialId>.<step>.<mac>` (a resident's rotating QR, ADR 0031). Anything else answers like an unknown code.",
             "example": "JWR1.q3Jz…",
             "type": "string"
           }
@@ -6183,7 +6206,7 @@
                 "$ref": "#/components/schemas/VerifyDisplayView"
               }
             ],
-            "description": "Null for an unknown code. Never a visitor name or a resident.",
+            "description": "Null for an unknown code and for any invalid resident result. A resident's is the first name, the unit codes and the photo (ADR 0031); never a visitor name.",
             "nullable": true,
             "type": "object"
           },
@@ -6207,7 +6230,11 @@
               "suspended",
               "ended",
               "banned",
-              "not_approved"
+              "not_approved",
+              "expired_qr",
+              "not_resident",
+              "account_inactive",
+              "revoked"
             ],
             "nullable": true,
             "type": "string"
@@ -6222,7 +6249,8 @@
           "subject": {
             "enum": [
               "visitor",
-              "worker"
+              "worker",
+              "resident"
             ],
             "nullable": true,
             "type": "string"

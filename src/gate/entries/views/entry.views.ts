@@ -25,11 +25,19 @@ const REASONS = [
   'ended',
   'banned',
   'not_approved',
+  'expired_qr',
+  'not_resident',
+  'account_inactive',
+  'revoked',
 ];
 
 export class VerifyDisplayView {
-  @ApiProperty({ type: String })
-  unitCode: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'A pass or a worker: their unit. Null for a resident.',
+  })
+  unitCode: string | null;
   @ApiProperty({ type: String, nullable: true })
   passKind: string | null;
   @ApiProperty({ type: Number, nullable: true })
@@ -45,6 +53,27 @@ export class VerifyDisplayView {
       "A valid worker's photo, to compare the face (ADR 0029); null otherwise.",
   })
   photo: PresignedReadView | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'A valid resident: the first word of their name, never the full name (ADR 0031). Null otherwise.',
+  })
+  firstName: string | null;
+  @ApiProperty({
+    type: [String],
+    nullable: true,
+    description:
+      'A valid resident: the codes of the units where they live now. Null otherwise.',
+  })
+  unitCodes: string[] | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      "A valid resident's photo (a short-lived presigned URL), or null when they have none: ask for ID. Null otherwise.",
+  })
+  photoUrl: string | null;
 
   static from(d: VerifyDisplay): VerifyDisplayView {
     return {
@@ -54,6 +83,9 @@ export class VerifyDisplayView {
       workerName: d.workerName,
       capacity: d.capacity,
       photo: PresignedReadView.from(d.photo),
+      firstName: d.firstName,
+      unitCodes: d.unitCodes,
+      photoUrl: d.photoUrl,
     };
   }
 }
@@ -61,8 +93,8 @@ export class VerifyDisplayView {
 export class VerifyView {
   @ApiProperty({ enum: ['valid', 'invalid'] })
   result: 'valid' | 'invalid';
-  @ApiProperty({ enum: ['visitor', 'worker'], nullable: true })
-  subject: 'visitor' | 'worker' | null;
+  @ApiProperty({ enum: ['visitor', 'worker', 'resident'], nullable: true })
+  subject: 'visitor' | 'worker' | 'resident' | null;
   @ApiProperty({ enum: REASONS, nullable: true })
   reason: string | null;
   @ApiProperty({
@@ -79,7 +111,7 @@ export class VerifyView {
     type: VerifyDisplayView,
     nullable: true,
     description:
-      'Null for an unknown code. Never a visitor name or a resident.',
+      "Null for an unknown code and for any invalid resident result. A resident's is the first name, the unit codes and the photo (ADR 0031); never a visitor name.",
   })
   display: VerifyDisplayView | null;
 

@@ -4118,18 +4118,25 @@ export interface components {
         };
         VerifyDisplayView: {
             capacity: string | null;
+            /** @description A valid resident: the first word of their name, never the full name (ADR 0031). Null otherwise. */
+            firstName: string | null;
             partySize: number | null;
             passKind: string | null;
             /** @description A valid worker's photo, to compare the face (ADR 0029); null otherwise. */
             photo: components["schemas"]["PresignedReadView"] | null;
-            unitCode: string;
+            /** @description A valid resident's photo (a short-lived presigned URL), or null when they have none: ask for ID. Null otherwise. */
+            photoUrl: string | null;
+            /** @description A pass or a worker: their unit. Null for a resident. */
+            unitCode: string | null;
+            /** @description A valid resident: the codes of the units where they live now. Null otherwise. */
+            unitCodes: string[] | null;
             workerName: string | null;
         };
         VerifyDto: {
             /** @description 6 digits (a visitor pass) or 8 (a worker). Or send `qr`. */
             code?: string;
             /**
-             * @description A scanned Jiwar QR (`JWR1.<token>`). Anything else answers like an unknown code.
+             * @description A scanned Jiwar QR: `JWR1.<token>` (a pass or a worker's card) or `JWR2.<credentialId>.<step>.<mac>` (a resident's rotating QR, ADR 0031). Anything else answers like an unknown code.
              * @example JWR1.q3Jz…
              */
             qr?: string;
@@ -4139,16 +4146,16 @@ export interface components {
             identifier: string;
         };
         VerifyView: {
-            /** @description Null for an unknown code. Never a visitor name or a resident. */
+            /** @description Null for an unknown code and for any invalid resident result. A resident's is the first name, the unit codes and the photo (ADR 0031); never a visitor name. */
             display: components["schemas"]["VerifyDisplayView"] | null;
             /** @enum {string|null} */
             next: "in" | "out" | null;
             /** @enum {string|null} */
-            reason: "unknown_code" | "not_yet_valid" | "expired" | "outside_schedule" | "host_inactive" | "used" | "cancelled" | "suspended" | "ended" | "banned" | "not_approved" | null;
+            reason: "unknown_code" | "not_yet_valid" | "expired" | "outside_schedule" | "host_inactive" | "used" | "cancelled" | "suspended" | "ended" | "banned" | "not_approved" | "expired_qr" | "not_resident" | "account_inactive" | "revoked" | null;
             /** @enum {string} */
             result: "valid" | "invalid";
             /** @enum {string|null} */
-            subject: "visitor" | "worker" | null;
+            subject: "visitor" | "worker" | "resident" | null;
             /**
              * Format: uuid
              * @description Record the entry with it; for a worker outside the schedule, ask the household.

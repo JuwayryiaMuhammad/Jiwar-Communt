@@ -15,6 +15,7 @@ import { EntriesController } from './entries/entries.controller';
 import { EntryCredentialsController } from './entry/entry-credentials.controller';
 import { EntryCredentialsService } from './entry/entry-credentials.service';
 import { EntrySecrets } from './entry/entry-secrets';
+import { ResidentVerifier } from './entry/resident-verifier';
 import { EntriesService } from './entries/entries.service';
 import { GateSubjects } from './entries/subjects';
 import { VerifyService } from './entries/verify.service';
@@ -66,6 +67,7 @@ import { VisitorsController } from './visitors/visitors.controller';
     AttendanceService,
     EntrySecrets,
     EntryCredentialsService,
+    ResidentVerifier,
   ],
 })
 export class GateModule {}

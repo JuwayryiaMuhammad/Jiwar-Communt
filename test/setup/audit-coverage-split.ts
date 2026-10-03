@@ -102,3 +102,10 @@ export const FILES_COVERAGE: readonly string[] = [
   'worker.photo_changed',
   'account.photo_changed',
 ];
+
+/** Maintenance (ADR 0032), covered by test/maintenance/audit-coverage.e2e-spec.ts. */
+export const MAINTENANCE_COVERAGE: readonly string[] = [
+  'ticket_category.created',
+  'ticket_category.updated',
+  'maintenance.settings_changed',
+];

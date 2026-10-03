@@ -884,6 +884,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CategoriesController_list"];
+        put?: never;
+        post: operations["CategoriesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/categories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["CategoriesController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["MaintenanceSettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["MaintenanceSettingsController_update"];
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -1732,6 +1780,22 @@ export interface paths {
         patch: operations["SettingsController_update"];
         trace?: never;
     };
+    "/api/v1/ticket-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CategoryOptionsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units": {
         parameters: {
             query?: never;
@@ -2554,6 +2618,41 @@ export interface components {
             /** Format: uuid */
             caseId: string;
         };
+        CategoryOptionView: {
+            commonAreaAllowed: boolean;
+            defaultPriority: components["schemas"]["TicketPriority"];
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+        };
+        CategoryOptionViewList: {
+            data: components["schemas"]["CategoryOptionView"][];
+            nextCursor: string | null;
+        };
+        CategoryView: {
+            active: boolean;
+            commonAreaAllowed: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            defaultPriority: components["schemas"]["TicketPriority"];
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        CategoryViewList: {
+            data: components["schemas"]["CategoryView"][];
+            nextCursor: string | null;
+        };
         ChangePasswordDto: {
             currentPassword: string;
             /** @description At least 12 characters (checked by the service). */
@@ -2649,6 +2748,16 @@ export interface components {
             /** @description A role of the account's kind in this compound, by key. Staff default to `guard`; others to their kind's default role. */
             roleKey?: string;
             type: components["schemas"]["AccountType"];
+        };
+        CreateCategoryDto: {
+            /** @default true */
+            commonAreaAllowed: boolean;
+            /** @default normal */
+            defaultPriority: components["schemas"]["TicketPriority"];
+            /** @description Stable code, lowercase (e.g. `pool`). Never changes once created. */
+            key: string;
+            nameAr: string;
+            nameEn: string;
         };
         CreateDelegationDto: {
             /**
@@ -3187,6 +3296,14 @@ export interface components {
             accountId: string;
             accountType: components["schemas"]["AccountType"];
             tenantName: string;
+        };
+        MaintenanceSettingsResponse: {
+            /** @description Hours a completed ticket waits for the reporter. */
+            autoCloseHours: number;
+            /** @description Report photos per ticket. */
+            maxReportPhotos: number;
+            /** @description Days after closing during which the reporter may reopen. */
+            reopenDays: number;
         };
         MajorityInviteDto: {
             /** Format: email */
@@ -3958,6 +4075,8 @@ export interface components {
             data: components["schemas"]["TenantView"][];
             nextCursor: string | null;
         };
+        /** @enum {string} */
+        TicketPriority: "normal" | "urgent" | "emergency";
         TokensView: {
             accessToken: string;
             /** @description seconds */
@@ -4072,6 +4191,14 @@ export interface components {
             /** @enum {string} */
             status: "active" | "inactive";
         };
+        UpdateCategoryDto: {
+            /** @description False retires it: no new ticket under it. */
+            active?: boolean;
+            commonAreaAllowed?: boolean;
+            defaultPriority?: components["schemas"]["TicketPriority"];
+            nameAr?: string;
+            nameEn?: string;
+        };
         UpdateGateDto: {
             kind?: components["schemas"]["GateKind"];
             name?: string;
@@ -4080,6 +4207,14 @@ export interface components {
         };
         UpdateLocaleDto: {
             locale: components["schemas"]["Locale"];
+        };
+        UpdateMaintenanceSettingsDto: {
+            /** @description Hours a completed ticket waits for the reporter. */
+            autoCloseHours?: number;
+            /** @description Photos the reporter may attach to a ticket. */
+            maxReportPhotos?: number;
+            /** @description Days after closing during which the reporter may reopen. */
+            reopenDays?: number;
         };
         UpdateSettingsDto: {
             /**
@@ -5638,6 +5773,115 @@ export interface operations {
             };
         };
     };
+    CategoriesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryViewList"];
+                };
+            };
+        };
+    };
+    CategoriesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCategoryDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryView"];
+                };
+            };
+        };
+    };
+    CategoriesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCategoryDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryView"];
+                };
+            };
+        };
+    };
+    MaintenanceSettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceSettingsResponse"];
+                };
+            };
+        };
+    };
+    MaintenanceSettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMaintenanceSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceSettingsResponse"];
+                };
+            };
+        };
+    };
     MeController_me: {
         parameters: {
             query?: never;
@@ -6959,6 +7203,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SettingsView"];
+                };
+            };
+        };
+    };
+    CategoryOptionsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryOptionViewList"];
                 };
             };
         };

@@ -691,6 +691,134 @@
         ],
         "type": "object"
       },
+      "CategoryOptionView": {
+        "properties": {
+          "commonAreaAllowed": {
+            "type": "boolean"
+          },
+          "defaultPriority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn",
+          "defaultPriority",
+          "commonAreaAllowed"
+        ],
+        "type": "object"
+      },
+      "CategoryOptionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryOptionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "CategoryView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "commonAreaAllowed": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "defaultPriority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn",
+          "defaultPriority",
+          "commonAreaAllowed",
+          "active",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "CategoryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ChangePasswordDto": {
         "properties": {
           "currentPassword": {
@@ -996,6 +1124,43 @@
           "idDocumentNumber",
           "phone",
           "email"
+        ],
+        "type": "object"
+      },
+      "CreateCategoryDto": {
+        "properties": {
+          "commonAreaAllowed": {
+            "default": true,
+            "type": "boolean"
+          },
+          "defaultPriority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ],
+            "default": "normal"
+          },
+          "key": {
+            "description": "Stable code, lowercase (e.g. `pool`). Never changes once created.",
+            "pattern": "^[a-z][a-z0-9_]{1,39}$",
+            "type": "string"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "nameAr",
+          "nameEn"
         ],
         "type": "object"
       },
@@ -2892,6 +3057,28 @@
           "accountId",
           "tenantName",
           "accountType"
+        ],
+        "type": "object"
+      },
+      "MaintenanceSettingsResponse": {
+        "properties": {
+          "autoCloseHours": {
+            "description": "Hours a completed ticket waits for the reporter.",
+            "type": "number"
+          },
+          "maxReportPhotos": {
+            "description": "Report photos per ticket.",
+            "type": "number"
+          },
+          "reopenDays": {
+            "description": "Days after closing during which the reporter may reopen.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "autoCloseHours",
+          "reopenDays",
+          "maxReportPhotos"
         ],
         "type": "object"
       },
@@ -5564,6 +5751,14 @@
         ],
         "type": "object"
       },
+      "TicketPriority": {
+        "enum": [
+          "normal",
+          "urgent",
+          "emergency"
+        ],
+        "type": "string"
+      },
       "TokensView": {
         "properties": {
           "accessToken": {
@@ -5969,6 +6164,35 @@
         ],
         "type": "object"
       },
+      "UpdateCategoryDto": {
+        "properties": {
+          "active": {
+            "description": "False retires it: no new ticket under it.",
+            "type": "boolean"
+          },
+          "commonAreaAllowed": {
+            "type": "boolean"
+          },
+          "defaultPriority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ]
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateGateDto": {
         "properties": {
           "kind": {
@@ -6007,6 +6231,29 @@
         "required": [
           "locale"
         ],
+        "type": "object"
+      },
+      "UpdateMaintenanceSettingsDto": {
+        "properties": {
+          "autoCloseHours": {
+            "description": "Hours a completed ticket waits for the reporter.",
+            "maximum": 720,
+            "minimum": 1,
+            "type": "number"
+          },
+          "maxReportPhotos": {
+            "description": "Photos the reporter may attach to a ticket.",
+            "maximum": 10,
+            "minimum": 1,
+            "type": "number"
+          },
+          "reopenDays": {
+            "description": "Days after closing during which the reporter may reopen.",
+            "maximum": 90,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
         "type": "object"
       },
       "UpdateSettingsDto": {
@@ -9040,6 +9287,176 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/categories": {
+      "get": {
+        "operationId": "CategoriesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "CategoriesController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCategoryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/categories/{id}": {
+      "patch": {
+        "operationId": "CategoriesController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCategoryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/settings": {
+      "get": {
+        "operationId": "MaintenanceSettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "MaintenanceSettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMaintenanceSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me": {
       "get": {
         "operationId": "MeController_me",
@@ -11320,6 +11737,33 @@
         ],
         "tags": [
           "admin"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/ticket-categories": {
+      "get": {
+        "operationId": "CategoryOptionsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryOptionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
         ],
         "x-stability": "draft"
       }

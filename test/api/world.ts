@@ -99,6 +99,8 @@ export interface World {
   bFileId: string;
   /** A phone B's owner registered for the entry QR (ADR 0031). */
   bEntryCredentialId: string;
+  /** One of B's ticket categories (seeded, ADR 0032). */
+  bCategoryId: string;
   /** A fresh token (and session) for any account. */
   tokenFor(
     side: Compound,
@@ -362,7 +364,13 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     .set('Authorization', `Bearer ${b.tokens.owner}`)
     .send({})
     .expect(201);
+  const bCategory = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.ticketCategory.findFirstOrThrow({
+      where: { key: 'plumbing' },
+    }),
+  );
   return {
+    bCategoryId: bCategory.id,
     bFileId,
     bEntryCredentialId: (bEntryCredential.body as { id: string }).id,
     bRequestId: bRequest.id,

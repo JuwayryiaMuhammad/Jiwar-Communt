@@ -191,6 +191,12 @@ export const AUDIT_ACTIONS = {
   // files (ADR 0029): purpose, type and size only, never a file name.
   'file.created': { log: 'tenant', target: 'file' },
   'file.deleted': { log: 'tenant', target: 'file' },
+  // maintenance (ADR 0032). Admin actions only: a ticket's own status
+  // changes and assignments are its append-only history. Never a
+  // description, a common-area label, a comment, a note or a message.
+  'ticket_category.created': { log: 'tenant', target: 'ticket_category' },
+  'ticket_category.updated': { log: 'tenant', target: 'ticket_category' },
+  'maintenance.settings_changed': { log: 'tenant', target: 'tenant' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

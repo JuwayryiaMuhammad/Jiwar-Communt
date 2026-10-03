@@ -1,0 +1,5 @@
+# The backend is the root package; the dashboards and their shared packages
+# are workspace members (apps/README.md).
+packages:
+  - apps/*
+  - packages/*

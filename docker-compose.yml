@@ -58,6 +58,129 @@ services:
     volumes:
       - minio-data:/data
 
+  # ---------------------------------------------------------------------------
+  # The application: `docker compose up` builds and starts everything below
+  # too. Infrastructure only (to run the API on the host with `pnpm start:dev`):
+  #   docker compose up -d postgres redis mailpit minio
+  # Rebuild after code changes: docker compose up --build
+  # ---------------------------------------------------------------------------
+
+  # One-off, before the API: migrations as the table owner, permission sync,
+  # bucket. The same order as deploy/deploy.sh; only this service sees the
+  # migrator's credentials.
+  api-setup:
+    build: .
+    image: jiwar-community-api:dev
+    container_name: jiwar-community-api-setup
+    # Defaults from .env.example, then your .env (its secrets must match the
+    # host-run API's: both use the `jiwar` database), then the container
+    # addresses below.
+    env_file: &api-env-files
+      - path: .env.example
+      - path: .env
+        required: false
+    environment:
+      <<: &api-env
+        NODE_ENV: development
+        PORT: '3100'
+        DATABASE_URL: postgresql://jiwar_app:${JIWAR_APP_PASSWORD:-jiwar_app_dev}@postgres:5432/jiwar
+        REDIS_URL: redis://redis:6379
+        S3_ENDPOINT: http://minio:9000
+        S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-jiwar_minio}
+        S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-jiwar_minio_dev}
+        S3_REGION: us-east-1
+        S3_BUCKET: jiwar
+        S3_FORCE_PATH_STYLE: 'true'
+        # Every email goes to Mailpit (http://localhost:8025), whatever .env says.
+        SMTP_HOST: mailpit
+        SMTP_PORT: '1025'
+        SMTP_SECURE: 'false'
+        SMTP_USER: ''
+        SMTP_PASSWORD: ''
+      MIGRATOR_DATABASE_URL: postgresql://jiwar_migrator:${JIWAR_MIGRATOR_PASSWORD:-jiwar_migrator_dev}@postgres:5432/jiwar
+    command:
+      - sh
+      - -c
+      - >-
+        node_modules/.bin/prisma migrate deploy &&
+        node dist/core/platform/access-sync.cli.js &&
+        node deploy/ensure-bucket.js
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    restart: 'no'
+
+  # API on http://localhost:3100/api/v1 (Swagger on /docs). Development mode,
+  # so OTP_FIXED_CODE from your .env works. Presigned file URLs point
+  # at minio:9000, which a browser cannot reach: run the API on the host to
+  # work on worker photos.
+  api:
+    build: .
+    image: jiwar-community-api:dev
+    container_name: jiwar-community-api
+    env_file: *api-env-files
+    environment:
+      <<: *api-env
+      MIGRATOR_DATABASE_URL: ''
+    ports:
+      - '127.0.0.1:3100:3100'
+    depends_on:
+      api-setup:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3100/api/v1/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    stop_grace_period: 15s
+
+  # Super admin dashboard on http://localhost:3001 (apps/admin).
+  admin:
+    build:
+      context: .
+      dockerfile: apps/Dockerfile
+      args:
+        APP: admin
+    image: jiwar-community-admin:dev
+    container_name: jiwar-community-admin
+    environment:
+      PORT: '3001'
+      JIWAR_API_URL: http://api:3100
+    ports:
+      - '127.0.0.1:3001:3001'
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # Compound manager dashboard on http://localhost:3002 (apps/manager).
+  manager:
+    build:
+      context: .
+      dockerfile: apps/Dockerfile
+      args:
+        APP: manager
+    image: jiwar-community-manager:dev
+    container_name: jiwar-community-manager
+    environment:
+      PORT: '3002'
+      JIWAR_API_URL: http://api:3100
+    ports:
+      - '127.0.0.1:3002:3002'
+    depends_on:
+      api:
+        condition: service_healthy
+
 volumes:
   postgres-data:
   minio-data:

@@ -27,7 +27,13 @@
     "postinstall": "prisma generate",
     "access:sync": "ts-node --transpile-only src/core/platform/access-sync.cli.ts",
     "storage:init": "ts-node --transpile-only src/core/files/storage-init.cli.ts",
-    "openapi:export": "ts-node --transpile-only src/openapi.cli.ts"
+    "openapi:export": "ts-node --transpile-only src/openapi.cli.ts",
+    "dev:admin": "pnpm --filter @jiwar/admin dev",
+    "dev:manager": "pnpm --filter @jiwar/manager dev",
+    "dashboards:typecheck": "pnpm --filter \"./apps/*\" --filter \"./packages/*\" run typecheck",
+    "dashboards:build": "pnpm --filter \"./apps/*\" run build",
+    "dashboards:test": "pnpm --filter @jiwar/bff test",
+    "api:generate": "pnpm --filter @jiwar/api generate"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1144.0",

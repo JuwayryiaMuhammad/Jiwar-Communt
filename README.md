@@ -46,13 +46,32 @@ Conventions (ADR 0025):
 
 Stack: Node ≥ 22, pnpm, NestJS 11, Prisma 7 (`@prisma/adapter-pg`), PostgreSQL 17, Redis 7, argon2, Jest + Supertest.
 
-## Setup
+## Run everything in Docker
+
+The repo is a pnpm workspace: the backend at the root, the two dashboards in `apps/`, their shared code in `packages/` (see [apps/README.md](apps/README.md)).
+
+```bash
+cp .env.example .env          # once; the containers read it after .env.example
+docker compose up -d --build  # infrastructure, migrations + access:sync, API, both dashboards
+```
+
+| Service | URL |
+|---|---|
+| API | http://localhost:3100/api/v1 (Swagger on `/docs`) |
+| Super admin dashboard | http://localhost:3001 |
+| Manager dashboard | http://localhost:3002 |
+| Mailpit (emails, OTP codes) | http://localhost:8025 |
+| MinIO console | http://localhost:9006 |
+
+The API container uses the same `jiwar` database and the secrets in your `.env`, so it and an API run on the host see the same accounts. Every email from the containers goes to Mailpit. `docker compose up -d --build` again after code changes; `docker compose logs -f api` to follow the API.
+
+## Setup (API on the host)
 
 ```bash
 corepack enable pnpm          # once per machine
 pnpm install
 cp .env.example .env          # defaults work with docker-compose
-docker compose up -d          # postgres :5435, redis :6381, mailpit :1025/:8025, minio :9005/:9006
+docker compose up -d postgres redis mailpit minio   # infrastructure only: postgres :5435, redis :6381, mailpit :1025/:8025, minio :9005/:9006
 pnpm storage:init             # once: the dev bucket on MinIO
 pnpm db:migrate               # 1. migrations, as jiwar_migrator
 pnpm access:sync              # 2. permission sync (see below)
@@ -61,6 +80,7 @@ pnpm start:dev                # http://localhost:3100/api/v1 (PORT in .env)
 ```
 
 - API docs (Swagger): `/docs`, disabled when `NODE_ENV=production`.
+- With the full Docker stack also running, the `api` container already holds port 3100: stop it (`docker compose stop api`) or give the host API another `PORT`.
 - Emails (OTP codes): http://localhost:8025 (Mailpit).
 - Ports are shifted from the usual ones so this project runs next to Jiwar-Hub-backend.
 
@@ -135,7 +155,7 @@ The app validates the environment with zod at startup (`src/core/config/env.sche
 ## Tests
 
 ```bash
-pnpm test         # unit + e2e (needs `docker compose up -d`)
+pnpm test         # unit + e2e (needs the infrastructure: `docker compose up -d postgres redis mailpit minio`)
 pnpm test:unit    # src/**/*.spec.ts, no infrastructure
 pnpm test:e2e     # test/**/*.e2e-spec.ts against real Postgres, Redis and Mailpit
 pnpm lint
@@ -148,7 +168,7 @@ pnpm openapi:export  # after any API change; the docs suite checks the file
 CI (`.github/workflows/ci.yml`, ADR 0026) runs on every pull request and push to `main`, against the same images, with `.env.example` as its `.env` and no secrets. The same steps on a fresh stack:
 
 ```bash
-docker compose down -v && docker compose up -d   # fresh volume: init.sql runs
+docker compose down -v && docker compose up -d postgres redis mailpit minio   # fresh volume: init.sql runs
 cp .env.example .env                             # only on a scratch checkout: never over your own .env
 pnpm install --frozen-lockfile
 pnpm db:migrate && pnpm access:sync

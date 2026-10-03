@@ -111,3 +111,12 @@ jobs:
         run: |
           pnpm openapi:export
           git diff --exit-code docs/api/openapi.v0.json
+
+      # The dashboards (apps/, packages/): their client types must match the
+      # contract above, and they must type-check against it.
+      - name: Dashboard client types are current
+        run: |
+          pnpm api:generate
+          git diff --exit-code packages/api/src/schema.d.ts
+      - name: Dashboards type-check and tests
+        run: pnpm dashboards:typecheck && pnpm dashboards:test

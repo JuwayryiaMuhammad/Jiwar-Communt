@@ -9,7 +9,15 @@ const { boundaryConfigs } = boundaries;
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs', 'eslint.boundaries.cjs', 'dist/**', 'coverage/**'],
+    // apps/ and packages/ are the Next.js dashboards, checked by their own tsc.
+    ignores: [
+      'eslint.config.mjs',
+      'eslint.boundaries.cjs',
+      'dist/**',
+      'coverage/**',
+      'apps/**',
+      'packages/**',
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

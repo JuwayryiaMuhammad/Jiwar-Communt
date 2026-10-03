@@ -8,3 +8,6 @@ coverage
 test
 docs
 *.log
+**/node_modules
+**/.next
+**/*.tsbuildinfo

@@ -57,3 +57,9 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 
+
+# Dashboards (apps/, packages/)
+node_modules/
+.next/
+next-env.d.ts
+*.tsbuildinfo

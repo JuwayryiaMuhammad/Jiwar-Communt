@@ -1,6 +1,7 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { CategoriesService } from '../../src/maintenance/categories/categories.service';
 import { MaintenanceSettingsService } from '../../src/maintenance/settings/maintenance-settings.service';
+import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
 import { auditReaders } from '../setup/audit';
 import {
   COMMUNITY_COVERAGE,
@@ -89,6 +90,41 @@ describe('Audit coverage — maintenance', () => {
         targetType: 'tenant',
         changes: { autoCloseHours: { from: 72, to: 24 } },
       });
+    });
+  });
+
+  describe('tickets', () => {
+    it('ticket.created_on_behalf — codes only, never the description or the label', async () => {
+      const c = await x.compound();
+      const unit = await x.unit(c);
+      const reporter = await x.resident(c, [unit.id]);
+      const category = await x.asManager(c, () =>
+        x.prisma.tenant.ticketCategory.findFirstOrThrow({
+          where: { key: 'electrical' },
+        }),
+      );
+      const ticket = await x.asManager(c, () =>
+        h.moduleRef.get(TicketsService).createOnBehalf({
+          commonArea: 'AUDIT-LABEL lobby',
+          categoryId: category.id,
+          priority: 'urgent',
+          description: 'AUDIT-DESCRIPTION flickering light',
+          reporterAccountId: reporter.id,
+        }),
+      );
+      const row = await single(c, 'ticket.created_on_behalf', ticket.id);
+      expect(row).toMatchObject({
+        actorType: 'account',
+        actorId: c.managerId,
+        targetType: 'ticket',
+        metadata: {
+          categoryKey: 'electrical',
+          priority: 'urgent',
+          location: 'common_area',
+        },
+      });
+      expect(JSON.stringify(row)).not.toMatch(/AUDIT-|flickering|lobby/);
+      expect(JSON.stringify(row)).not.toContain(reporter.id);
     });
   });
 

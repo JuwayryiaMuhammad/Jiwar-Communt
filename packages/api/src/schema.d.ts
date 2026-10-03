@@ -932,6 +932,70 @@ export interface paths {
         patch: operations["MaintenanceSettingsController_update"];
         trace?: never;
     };
+    "/api/v1/maintenance/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DispatchTicketsController_list"];
+        put?: never;
+        post: operations["DispatchTicketsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DispatchTicketsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DispatchTicketsController_assignments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DispatchTicketsController_history"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -1796,6 +1860,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ResidentTicketsController_list"];
+        put?: never;
+        post: operations["ResidentTicketsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ResidentTicketsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{id}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ResidentTicketsController_addPhoto"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units": {
         parameters: {
             query?: never;
@@ -2493,6 +2605,21 @@ export interface components {
             /** Format: uuid */
             occupancyId: string;
         };
+        AssignmentView: {
+            /** Format: date-time */
+            at: string;
+            /** @description Who acted; null for the system. */
+            by: components["schemas"]["AccountRefView"] | null;
+            cycle: number;
+            from: components["schemas"]["AccountRefView"] | null;
+            reasonCode: string | null;
+            to: components["schemas"]["AccountRefView"] | null;
+            type: components["schemas"]["TicketAssignmentType"];
+        };
+        AssignmentViewList: {
+            data: components["schemas"]["AssignmentView"][];
+            nextCursor: string | null;
+        };
         AttendanceDayView: {
             /** Format: date */
             date: string;
@@ -2813,6 +2940,41 @@ export interface components {
             manager: components["schemas"]["NewManagerDto"];
             name: string;
         };
+        CreateTicketDto: {
+            /** Format: uuid */
+            categoryId: string;
+            /** @description A short label for a common area (a corridor, the pool), instead of `unitId`. */
+            commonArea?: string;
+            description: string;
+            /** @description Finalized `ticket_photo` files of the caller's; they move to the ticket. At most the compound's `maxReportPhotos`. */
+            photoFileIds?: string[];
+            /** @description The category's default when absent. */
+            priority?: components["schemas"]["TicketPriority"];
+            /**
+             * Format: uuid
+             * @description The unit; or `commonArea` instead.
+             */
+            unitId?: string;
+        };
+        CreateTicketOnBehalfDto: {
+            /** Format: uuid */
+            categoryId: string;
+            /** @description A short label for a common area (a corridor, the pool), instead of `unitId`. */
+            commonArea?: string;
+            description: string;
+            /** @description The category's default when absent. */
+            priority?: components["schemas"]["TicketPriority"];
+            /**
+             * Format: uuid
+             * @description Whose problem it is: a resident or family member who may open tickets there.
+             */
+            reporterAccountId: string;
+            /**
+             * Format: uuid
+             * @description The unit; or `commonArea` instead.
+             */
+            unitId?: string;
+        };
         CreateUnitDto: {
             building?: string;
             /** @description Unit code, unique within the compound, e.g. `B2-104`. */
@@ -2907,6 +3069,61 @@ export interface components {
         };
         /** @enum {string} */
         DeliveryInstruction: "ask" | "allow" | "leave_at_gate" | "deny";
+        DispatchTicketDetailView: {
+            /** Format: date-time */
+            cancelledAt: string | null;
+            category: components["schemas"]["TicketCategoryRefView"];
+            /** Format: date-time */
+            closedAt: string | null;
+            commonArea: string | null;
+            /** Format: date-time */
+            completedAt: string | null;
+            confirmationStatus: components["schemas"]["TicketConfirmationStatus"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: components["schemas"]["AccountRefView"];
+            cycle: number;
+            description: string;
+            feedback: components["schemas"]["FeedbackView"][];
+            holdReason: components["schemas"]["TicketHoldReason"] | null;
+            /** Format: uuid */
+            id: string;
+            /** @example MT-000123 */
+            number: string;
+            photos: components["schemas"]["PhotoView"][];
+            priority: components["schemas"]["TicketPriority"];
+            rejectionCount: number;
+            reporter: components["schemas"]["AccountRefView"];
+            status: components["schemas"]["TicketStatus"];
+            technician: components["schemas"]["AccountRefView"] | null;
+            unit: components["schemas"]["TicketUnitView"] | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        DispatchTicketView: {
+            category: components["schemas"]["TicketCategoryRefView"];
+            commonArea: string | null;
+            confirmationStatus: components["schemas"]["TicketConfirmationStatus"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            cycle: number;
+            holdReason: components["schemas"]["TicketHoldReason"] | null;
+            /** Format: uuid */
+            id: string;
+            /** @example MT-000123 */
+            number: string;
+            priority: components["schemas"]["TicketPriority"];
+            rejectionCount: number;
+            status: components["schemas"]["TicketStatus"];
+            technician: components["schemas"]["AccountRefView"] | null;
+            unit: components["schemas"]["TicketUnitView"] | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        DispatchTicketViewList: {
+            data: components["schemas"]["DispatchTicketView"][];
+            nextCursor: string | null;
+        };
         EngagementDetailView: {
             capacity: components["schemas"]["WorkerCapacity"];
             /** Format: date-time */
@@ -3013,6 +3230,18 @@ export interface components {
             /** @description Step 3 types exactly this. */
             scopePhrase: string;
         };
+        FeedbackView: {
+            author: components["schemas"]["AccountRefView"];
+            /** @description The confirmation's comment; null once its author is erased. */
+            comment: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            cycle: number;
+            kind: components["schemas"]["TicketFeedbackKind"];
+            /** @description 1–5, confirmed only. */
+            rating: number | null;
+            reasonCode: string | null;
+        };
         /** @enum {string} */
         FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo";
         FileReadView: {
@@ -3045,6 +3274,17 @@ export interface components {
             size: number;
             /** @description `pending` until finalized. */
             status: components["schemas"]["FileStatus"];
+        };
+        FirstNameRefView: {
+            /**
+             * @description Present (true) only on an erased account.
+             * @enum {boolean}
+             */
+            erased?: true;
+            /** @description The first word of the name. Absent when erased. */
+            firstName?: string | null;
+            /** Format: uuid */
+            id: string;
         };
         FlagCreatedView: {
             /**
@@ -3684,6 +3924,24 @@ export interface components {
             data: components["schemas"]["PermissionView"][];
             nextCursor: string | null;
         };
+        PhotoAddedView: {
+            /** Format: date-time */
+            createdAt: string;
+            cycle: number;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["TicketAttachmentKind"];
+        };
+        PhotoView: {
+            cycle: number;
+            /** Format: date-time */
+            expiresAt: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["TicketAttachmentKind"];
+            /** @description A presigned GET, valid until `expiresAt`. */
+            url: string | null;
+        };
         PlatformAuditEntryView: {
             action: string;
             /** Format: uuid */
@@ -3876,6 +4134,71 @@ export interface components {
             data: components["schemas"]["ResidentListItemView"][];
             nextCursor: string | null;
         };
+        ResidentTicketDetailView: {
+            /**
+             * Format: date-time
+             * @description While completed: when it closes by itself if nobody confirms or rejects.
+             */
+            autoCloseAt: string | null;
+            category: components["schemas"]["TicketCategoryRefView"];
+            /** Format: date-time */
+            closedAt: string | null;
+            commonArea: string | null;
+            /** Format: date-time */
+            completedAt: string | null;
+            confirmationStatus: components["schemas"]["TicketConfirmationStatus"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            cycle: number;
+            description: string;
+            holdReason: components["schemas"]["TicketHoldReason"] | null;
+            /** Format: uuid */
+            id: string;
+            /** @example MT-000123 */
+            number: string;
+            /** @description Opened by management for the reporter; never who. */
+            onBehalf: boolean;
+            photos: components["schemas"]["PhotoView"][];
+            priority: components["schemas"]["TicketPriority"];
+            /**
+             * Format: date-time
+             * @description While closed: until when it may be reopened.
+             */
+            reopenUntil: string | null;
+            reportedByMe: boolean;
+            reporter: components["schemas"]["FirstNameRefView"];
+            status: components["schemas"]["TicketStatus"];
+            technician: components["schemas"]["FirstNameRefView"] | null;
+            unitCode: string | null;
+            /** Format: uuid */
+            unitId: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ResidentTicketView: {
+            category: components["schemas"]["TicketCategoryRefView"];
+            commonArea: string | null;
+            confirmationStatus: components["schemas"]["TicketConfirmationStatus"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            holdReason: components["schemas"]["TicketHoldReason"] | null;
+            /** Format: uuid */
+            id: string;
+            /** @example MT-000123 */
+            number: string;
+            priority: components["schemas"]["TicketPriority"];
+            reportedByMe: boolean;
+            status: components["schemas"]["TicketStatus"];
+            unitCode: string | null;
+            /** Format: uuid */
+            unitId: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ResidentTicketViewList: {
+            data: components["schemas"]["ResidentTicketView"][];
+            nextCursor: string | null;
+        };
         ResidentUnitView: {
             isPrimary: boolean;
             occupancyType: components["schemas"]["OccupancyType"];
@@ -4049,6 +4372,20 @@ export interface components {
             /** Format: uuid */
             gateId: string;
         };
+        StatusHistoryView: {
+            /** @description Null for the system. */
+            actor: components["schemas"]["AccountRefView"] | null;
+            /** Format: date-time */
+            at: string;
+            cycle: number;
+            fromStatus: components["schemas"]["TicketStatus"] | null;
+            reasonCode: string | null;
+            toStatus: components["schemas"]["TicketStatus"];
+        };
+        StatusHistoryViewList: {
+            data: components["schemas"]["StatusHistoryView"][];
+            nextCursor: string | null;
+        };
         TenantDetailView: {
             /** Format: date-time */
             createdAt: string;
@@ -4076,7 +4413,48 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
+        TicketAssignmentType: "manual" | "reassignment" | "declined" | "automatic" | "released";
+        /** @enum {string} */
+        TicketAttachmentKind: "report" | "before" | "after";
+        TicketCategoryRefView: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            nameAr: string;
+            nameEn: string;
+        };
+        /** @enum {string} */
+        TicketConfirmationStatus: "pending" | "confirmed" | "rejected" | "auto_closed";
+        TicketCreatedView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @example MT-000123 */
+            number: string;
+            priority: components["schemas"]["TicketPriority"];
+            status: components["schemas"]["TicketStatus"];
+        };
+        /** @enum {string} */
+        TicketFeedbackKind: "confirmed" | "rejected" | "reopened";
+        /** @enum {string} */
+        TicketHoldReason: "awaiting_resident" | "awaiting_parts" | "other";
+        TicketPhotoDto: {
+            /**
+             * Format: uuid
+             * @description A finalized `ticket_photo` of the caller's; it moves to the ticket.
+             */
+            fileId: string;
+        };
+        /** @enum {string} */
         TicketPriority: "normal" | "urgent" | "emergency";
+        /** @enum {string} */
+        TicketStatus: "new" | "assigned" | "in_progress" | "on_hold" | "completed" | "closed" | "cancelled";
+        TicketUnitView: {
+            code: string;
+            /** Format: uuid */
+            id: string;
+        };
         TokensView: {
             accessToken: string;
             /** @description seconds */
@@ -5882,6 +6260,125 @@ export interface operations {
             };
         };
     };
+    DispatchTicketsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["TicketStatus"];
+                priority?: components["schemas"]["TicketPriority"];
+                /** @description `true`: only tickets without a technician. */
+                unassigned?: "true" | "false";
+                technicianId?: string;
+                unitId?: string;
+                categoryId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DispatchTicketViewList"];
+                };
+            };
+        };
+    };
+    DispatchTicketsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTicketOnBehalfDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketCreatedView"];
+                };
+            };
+        };
+    };
+    DispatchTicketsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DispatchTicketDetailView"];
+                };
+            };
+        };
+    };
+    DispatchTicketsController_assignments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssignmentViewList"];
+                };
+            };
+        };
+    };
+    DispatchTicketsController_history: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusHistoryViewList"];
+                };
+            };
+        };
+    };
     MeController_me: {
         parameters: {
             query?: never;
@@ -7222,6 +7719,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CategoryOptionViewList"];
+                };
+            };
+        };
+    };
+    ResidentTicketsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["TicketStatus"];
+                unitId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentTicketViewList"];
+                };
+            };
+        };
+    };
+    ResidentTicketsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTicketDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketCreatedView"];
+                };
+            };
+        };
+    };
+    ResidentTicketsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentTicketDetailView"];
+                };
+            };
+        };
+    };
+    ResidentTicketsController_addPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketPhotoDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhotoAddedView"];
                 };
             };
         };

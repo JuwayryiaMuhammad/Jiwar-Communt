@@ -258,6 +258,85 @@
         ],
         "type": "object"
       },
+      "AssignmentView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "by": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Who acted; null for the system.",
+            "nullable": true,
+            "type": "object"
+          },
+          "cycle": {
+            "type": "number"
+          },
+          "from": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "to": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketAssignmentType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "from",
+          "to",
+          "by",
+          "reasonCode",
+          "cycle",
+          "at"
+        ],
+        "type": "object"
+      },
+      "AssignmentViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AssignmentView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "AttendanceDayView": {
         "properties": {
           "date": {
@@ -1323,6 +1402,93 @@
         ],
         "type": "object"
       },
+      "CreateTicketDto": {
+        "properties": {
+          "categoryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "commonArea": {
+            "description": "A short label for a common area (a corridor, the pool), instead of `unitId`.",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "photoFileIds": {
+            "description": "Finalized `ticket_photo` files of the caller's; they move to the ticket. At most the compound's `maxReportPhotos`.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ],
+            "description": "The category's default when absent."
+          },
+          "unitId": {
+            "description": "The unit; or `commonArea` instead.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "categoryId",
+          "description"
+        ],
+        "type": "object"
+      },
+      "CreateTicketOnBehalfDto": {
+        "properties": {
+          "categoryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "commonArea": {
+            "description": "A short label for a common area (a corridor, the pool), instead of `unitId`.",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ],
+            "description": "The category's default when absent."
+          },
+          "reporterAccountId": {
+            "description": "Whose problem it is: a resident or family member who may open tickets there.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitId": {
+            "description": "The unit; or `commonArea` instead.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "categoryId",
+          "description",
+          "reporterAccountId"
+        ],
+        "type": "object"
+      },
       "CreateUnitDto": {
         "properties": {
           "building": {
@@ -1626,6 +1792,265 @@
           "deny"
         ],
         "type": "string"
+      },
+      "DispatchTicketDetailView": {
+        "properties": {
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/TicketCategoryRefView"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "commonArea": {
+            "nullable": true,
+            "type": "string"
+          },
+          "completedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "confirmationStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketConfirmationStatus"
+              }
+            ],
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "cycle": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          },
+          "feedback": {
+            "items": {
+              "$ref": "#/components/schemas/FeedbackView"
+            },
+            "type": "array"
+          },
+          "holdReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketHoldReason"
+              }
+            ],
+            "nullable": true
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "example": "MT-000123",
+            "type": "string"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/PhotoView"
+            },
+            "type": "array"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ]
+          },
+          "rejectionCount": {
+            "type": "number"
+          },
+          "reporter": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketStatus"
+              }
+            ]
+          },
+          "technician": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketUnitView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unit",
+          "commonArea",
+          "category",
+          "priority",
+          "status",
+          "holdReason",
+          "confirmationStatus",
+          "technician",
+          "cycle",
+          "rejectionCount",
+          "createdAt",
+          "updatedAt",
+          "description",
+          "reporter",
+          "createdBy",
+          "photos",
+          "feedback",
+          "completedAt",
+          "closedAt",
+          "cancelledAt"
+        ],
+        "type": "object"
+      },
+      "DispatchTicketView": {
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/TicketCategoryRefView"
+          },
+          "commonArea": {
+            "nullable": true,
+            "type": "string"
+          },
+          "confirmationStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketConfirmationStatus"
+              }
+            ],
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "cycle": {
+            "type": "number"
+          },
+          "holdReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketHoldReason"
+              }
+            ],
+            "nullable": true
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "example": "MT-000123",
+            "type": "string"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ]
+          },
+          "rejectionCount": {
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketStatus"
+              }
+            ]
+          },
+          "technician": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketUnitView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unit",
+          "commonArea",
+          "category",
+          "priority",
+          "status",
+          "holdReason",
+          "confirmationStatus",
+          "technician",
+          "cycle",
+          "rejectionCount",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "DispatchTicketViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/DispatchTicketView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
       },
       "EngagementDetailView": {
         "properties": {
@@ -2033,6 +2458,51 @@
         ],
         "type": "object"
       },
+      "FeedbackView": {
+        "properties": {
+          "author": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "comment": {
+            "description": "The confirmation's comment; null once its author is erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "cycle": {
+            "type": "number"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketFeedbackKind"
+              }
+            ]
+          },
+          "rating": {
+            "description": "1–5, confirmed only.",
+            "nullable": true,
+            "type": "number"
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "cycle",
+          "kind",
+          "rating",
+          "reasonCode",
+          "comment",
+          "author",
+          "createdAt"
+        ],
+        "type": "object"
+      },
       "FilePurpose": {
         "enum": [
           "worker_photo",
@@ -2143,6 +2613,30 @@
           "size",
           "status",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "FirstNameRefView": {
+        "properties": {
+          "erased": {
+            "description": "Present (true) only on an erased account.",
+            "enum": [
+              true
+            ],
+            "type": "boolean"
+          },
+          "firstName": {
+            "description": "The first word of the name. Absent when erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
         ],
         "type": "object"
       },
@@ -4409,6 +4903,71 @@
         ],
         "type": "object"
       },
+      "PhotoAddedView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "cycle": {
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketAttachmentKind"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "cycle",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "PhotoView": {
+        "properties": {
+          "cycle": {
+            "type": "number"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketAttachmentKind"
+              }
+            ]
+          },
+          "url": {
+            "description": "A presigned GET, valid until `expiresAt`.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "cycle",
+          "url",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
       "PlatformAuditEntryView": {
         "properties": {
           "action": {
@@ -5049,6 +5608,255 @@
         ],
         "type": "object"
       },
+      "ResidentTicketDetailView": {
+        "properties": {
+          "autoCloseAt": {
+            "description": "While completed: when it closes by itself if nobody confirms or rejects.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/TicketCategoryRefView"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "commonArea": {
+            "nullable": true,
+            "type": "string"
+          },
+          "completedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "confirmationStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketConfirmationStatus"
+              }
+            ],
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "cycle": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          },
+          "holdReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketHoldReason"
+              }
+            ],
+            "nullable": true
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "example": "MT-000123",
+            "type": "string"
+          },
+          "onBehalf": {
+            "description": "Opened by management for the reporter; never who.",
+            "type": "boolean"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/PhotoView"
+            },
+            "type": "array"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ]
+          },
+          "reopenUntil": {
+            "description": "While closed: until when it may be reopened.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reportedByMe": {
+            "type": "boolean"
+          },
+          "reporter": {
+            "$ref": "#/components/schemas/FirstNameRefView"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketStatus"
+              }
+            ]
+          },
+          "technician": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FirstNameRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitId",
+          "unitCode",
+          "commonArea",
+          "category",
+          "priority",
+          "status",
+          "holdReason",
+          "confirmationStatus",
+          "reportedByMe",
+          "createdAt",
+          "updatedAt",
+          "description",
+          "cycle",
+          "reporter",
+          "onBehalf",
+          "technician",
+          "photos",
+          "completedAt",
+          "closedAt",
+          "autoCloseAt",
+          "reopenUntil"
+        ],
+        "type": "object"
+      },
+      "ResidentTicketView": {
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/TicketCategoryRefView"
+          },
+          "commonArea": {
+            "nullable": true,
+            "type": "string"
+          },
+          "confirmationStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketConfirmationStatus"
+              }
+            ],
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "holdReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketHoldReason"
+              }
+            ],
+            "nullable": true
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "example": "MT-000123",
+            "type": "string"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ]
+          },
+          "reportedByMe": {
+            "type": "boolean"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitId",
+          "unitCode",
+          "commonArea",
+          "category",
+          "priority",
+          "status",
+          "holdReason",
+          "confirmationStatus",
+          "reportedByMe",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "ResidentTicketViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ResidentTicketView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ResidentUnitView": {
         "properties": {
           "isPrimary": {
@@ -5645,6 +6453,74 @@
         ],
         "type": "object"
       },
+      "StatusHistoryView": {
+        "properties": {
+          "actor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Null for the system.",
+            "nullable": true,
+            "type": "object"
+          },
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "cycle": {
+            "type": "number"
+          },
+          "fromStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketStatus"
+              }
+            ],
+            "nullable": true
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "toStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "fromStatus",
+          "toStatus",
+          "actor",
+          "reasonCode",
+          "cycle",
+          "at"
+        ],
+        "type": "object"
+      },
+      "StatusHistoryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StatusHistoryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "TenantDetailView": {
         "properties": {
           "createdAt": {
@@ -5751,6 +6627,124 @@
         ],
         "type": "object"
       },
+      "TicketAssignmentType": {
+        "enum": [
+          "manual",
+          "reassignment",
+          "declined",
+          "automatic",
+          "released"
+        ],
+        "type": "string"
+      },
+      "TicketAttachmentKind": {
+        "enum": [
+          "report",
+          "before",
+          "after"
+        ],
+        "type": "string"
+      },
+      "TicketCategoryRefView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn"
+        ],
+        "type": "object"
+      },
+      "TicketConfirmationStatus": {
+        "enum": [
+          "pending",
+          "confirmed",
+          "rejected",
+          "auto_closed"
+        ],
+        "type": "string"
+      },
+      "TicketCreatedView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "example": "MT-000123",
+            "type": "string"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "status",
+          "priority",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "TicketFeedbackKind": {
+        "enum": [
+          "confirmed",
+          "rejected",
+          "reopened"
+        ],
+        "type": "string"
+      },
+      "TicketHoldReason": {
+        "enum": [
+          "awaiting_resident",
+          "awaiting_parts",
+          "other"
+        ],
+        "type": "string"
+      },
+      "TicketPhotoDto": {
+        "properties": {
+          "fileId": {
+            "description": "A finalized `ticket_photo` of the caller's; it moves to the ticket.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId"
+        ],
+        "type": "object"
+      },
       "TicketPriority": {
         "enum": [
           "normal",
@@ -5758,6 +6752,34 @@
           "emergency"
         ],
         "type": "string"
+      },
+      "TicketStatus": {
+        "enum": [
+          "new",
+          "assigned",
+          "in_progress",
+          "on_hold",
+          "completed",
+          "closed",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "TicketUnitView": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code"
+        ],
+        "type": "object"
       },
       "TokensView": {
         "properties": {
@@ -9457,6 +10479,264 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/tickets": {
+      "get": {
+        "operationId": "DispatchTicketsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TicketStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "priority",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TicketPriority"
+            }
+          },
+          {
+            "description": "`true`: only tickets without a technician.",
+            "in": "query",
+            "name": "unassigned",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "technicianId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "categoryId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchTicketViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "DispatchTicketsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTicketOnBehalfDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}": {
+      "get": {
+        "operationId": "DispatchTicketsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchTicketDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/assignments": {
+      "get": {
+        "operationId": "DispatchTicketsController_assignments",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/history": {
+      "get": {
+        "operationId": "DispatchTicketsController_history",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusHistoryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me": {
       "get": {
         "operationId": "MeController_me",
@@ -11751,6 +13031,199 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CategoryOptionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/tickets": {
+      "get": {
+        "operationId": "ResidentTicketsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TicketStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentTicketViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ResidentTicketsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTicketDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/tickets/{id}": {
+      "get": {
+        "operationId": "ResidentTicketsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentTicketDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/tickets/{id}/photos": {
+      "post": {
+        "operationId": "ResidentTicketsController_addPhoto",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketPhotoDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoAddedView"
                 }
               }
             },

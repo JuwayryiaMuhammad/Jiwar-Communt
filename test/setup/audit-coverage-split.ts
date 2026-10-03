@@ -108,4 +108,5 @@ export const MAINTENANCE_COVERAGE: readonly string[] = [
   'ticket_category.created',
   'ticket_category.updated',
   'maintenance.settings_changed',
+  'ticket.created_on_behalf',
 ];

@@ -5,6 +5,7 @@ import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
 import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
 import { ApprovalsService } from '../../src/gate/approvals/approvals.service';
+import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
 import { fileHelpers } from '../setup/files';
 import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
 import {
@@ -294,7 +295,20 @@ describe('API v0 — PII leak scan', () => {
       await w.tokenFor(a, family.id, 'family'),
     );
 
+    // A ticket the family member opened on the primary's unit (ADR 0032).
+    const ticket = await c.as(a, { id: family.id, type: 'family' }, () =>
+      h.moduleRef.get(TicketsService).create({
+        unitId: unit.id,
+        categoryId: w.aCategoryId,
+        description: 'PII-TICKET-description',
+      }),
+    );
+
     const params: Record<string, string> = {
+      '/tickets/{id}': ticket.id,
+      '/maintenance/tickets/{id}': ticket.id,
+      '/maintenance/tickets/{id}/history': ticket.id,
+      '/maintenance/tickets/{id}/assignments': ticket.id,
       '/files/{id}': photoId,
       '/units/{id}': unit.id,
       '/units/{id}/activation': unit.id,

@@ -14,6 +14,7 @@ import { waitForOtp } from '../setup/mailpit';
 import { call } from './request';
 import { ROUTES } from './routes';
 import { inviteBody, minorBody } from './routes/household';
+import { ticketBody } from './routes/maintenance';
 import { passBody } from './routes/visitors';
 import { workerBody } from './routes/workers';
 import { buildWorld, type World } from './world';
@@ -35,6 +36,15 @@ describe('API v0 — no-store', () => {
   afterAll(() => h.close());
 
   const body = <T>(res: Response) => res.body as T;
+
+  /** A ticket the owner opened on their home. */
+  async function aTicket(): Promise<string> {
+    const res = await call(w, 'POST', '/tickets', {
+      token: w.a.tokens.owner,
+      body: ticketBody(w.a.homeUnitId, w.aCategoryId),
+    }).expect(201);
+    return body<{ id: string }>(res).id;
+  }
 
   async function login(): Promise<{
     verify: Response;
@@ -231,6 +241,15 @@ describe('API v0 — no-store', () => {
         body: {},
       }),
     'GET /me': async () => call(w, 'GET', '/me', { token: w.a.tokens.owner }),
+    // A ticket's detail carries its photos' presigned URLs (ADR 0032).
+    'GET /tickets/{id}': async () =>
+      call(w, 'GET', `/tickets/${await aTicket()}`, {
+        token: w.a.tokens.owner,
+      }),
+    'GET /maintenance/tickets/{id}': async () =>
+      call(w, 'GET', `/maintenance/tickets/${await aTicket()}`, {
+        token: w.a.tokens.manager,
+      }),
     'GET /files/{id}': async () =>
       call(w, 'GET', `/files/${await fileHelpers(h).ready(w.a.tokens.owner)}`, {
         token: w.a.tokens.owner,

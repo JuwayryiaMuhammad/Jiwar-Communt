@@ -80,6 +80,27 @@ export const NOTIFICATION_KINDS = {
     target: 'entry_credential',
     params: {},
   },
+  // --------------------------------------------------------------------------
+  // Maintenance (ADR 0032). The ticket number and codes only: never the
+  // description, a common-area label (free text, so a common-area ticket
+  // has no unitCode), a message or anyone's contact data.
+  // --------------------------------------------------------------------------
+  /** Opened at emergency priority (or raised to it): every dispatcher, now. */
+  'ticket.emergency': {
+    priority: 'critical',
+    target: 'ticket',
+    params: {
+      ticketNumber: {},
+      unitCode: { optional: true },
+      categoryKey: {},
+    },
+  },
+  /** Dispatch opened a ticket in the reporter's name. */
+  'ticket.opened_on_behalf': {
+    priority: 'normal',
+    target: 'ticket',
+    params: { ticketNumber: {}, unitCode: { optional: true } },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

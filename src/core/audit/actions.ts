@@ -197,6 +197,8 @@ export const AUDIT_ACTIONS = {
   'ticket_category.created': { log: 'tenant', target: 'ticket_category' },
   'ticket_category.updated': { log: 'tenant', target: 'ticket_category' },
   'maintenance.settings_changed': { log: 'tenant', target: 'tenant' },
+  // metadata: categoryKey, priority, location (unit | common_area).
+  'ticket.created_on_behalf': { log: 'tenant', target: 'ticket' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

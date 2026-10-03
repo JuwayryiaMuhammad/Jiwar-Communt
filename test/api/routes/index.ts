@@ -11,7 +11,7 @@ import { FILES_ROUTES } from './files';
 import { GATE_ROUTES } from './gate';
 import { EXISTING_ROUTES } from './existing';
 import { HOUSEHOLD_ROUTES } from './household';
-import { MAINTENANCE_ROUTES } from './maintenance';
+import { MAINTENANCE_ROUTES, TICKET_ROUTES } from './maintenance';
 import { ME_ROUTES } from './me';
 import { MEMBER_PERMISSIONS_ROUTES } from './member-permissions';
 import { NOTIFICATIONS_ROUTES } from './notifications';
@@ -50,4 +50,5 @@ export const ROUTES: Row[] = [
   ...FILES_ROUTES,
   ...ENTRY_CREDENTIALS_ROUTES,
   ...MAINTENANCE_ROUTES,
+  ...TICKET_ROUTES,
 ];

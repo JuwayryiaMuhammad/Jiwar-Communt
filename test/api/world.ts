@@ -14,6 +14,7 @@ import { AccountDeletionService } from '../../src/core/accounts/account-deletion
 import { Notifier } from '../../src/core/notifications/notifier';
 import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
 import { ApprovalsService } from '../../src/gate/approvals/approvals.service';
+import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
 import { communityHelpers, type Compound } from '../setup/community';
 import { fileHelpers } from '../setup/files';
 import { gateHelpers } from '../setup/gate';
@@ -28,7 +29,13 @@ import { waitForOtp } from '../setup/mailpit';
 
 /** The tenant accounts every API suite acts as. */
 export type Persona =
-  'manager' | 'owner' | 'tenant' | 'landlord' | 'family' | 'guard';
+  | 'manager'
+  | 'owner'
+  | 'tenant'
+  | 'landlord'
+  | 'family'
+  | 'guard'
+  | 'technician';
 
 const TYPES: Record<Persona, AccountType> = {
   manager: 'manager',
@@ -37,6 +44,7 @@ const TYPES: Record<Persona, AccountType> = {
   landlord: 'resident',
   family: 'family',
   guard: 'staff',
+  technician: 'staff',
 };
 
 /** One compound as the API suites see it. */
@@ -101,6 +109,10 @@ export interface World {
   bEntryCredentialId: string;
   /** One of B's ticket categories (seeded, ADR 0032). */
   bCategoryId: string;
+  /** A ticket B's owner opened on B's home. */
+  bTicketId: string;
+  /** One of A's categories, for valid ticket bodies. */
+  aCategoryId: string;
   /** A fresh token (and session) for any account. */
   tokenFor(
     side: Compound,
@@ -127,6 +139,8 @@ async function side(
   const tenant = await c.resident(compound, [rented.id], 'tenant');
   const family = await c.joinFamily(compound, home.id, owner);
   const duty = await gateHelpers(h).onDuty(compound);
+  // A maintenance technician (ADR 0032): a staff account by roleKey.
+  const technician = await gateHelpers(h).guard(compound, 'technician');
   const ids: Record<Persona, string> = {
     manager: compound.managerId,
     owner: owner.id,
@@ -134,6 +148,7 @@ async function side(
     landlord: landlord.id,
     family: family.id,
     guard: duty.guardId,
+    technician: technician.id,
   };
   const tokens = {} as Record<Persona, string>;
   for (const persona of Object.keys(ids) as Persona[]) {
@@ -369,8 +384,22 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       where: { key: 'plumbing' },
     }),
   );
+  const bTicket = await asBOwner(() =>
+    h.moduleRef.get(TicketsService).create({
+      unitId: b.homeUnitId,
+      categoryId: bCategory.id,
+      description: 'World',
+    }),
+  );
+  const aCategory = await helpers.asManager(a, () =>
+    helpers.prisma.tenant.ticketCategory.findFirstOrThrow({
+      where: { key: 'plumbing' },
+    }),
+  );
   return {
     bCategoryId: bCategory.id,
+    bTicketId: bTicket.id,
+    aCategoryId: aCategory.id,
     bFileId,
     bEntryCredentialId: (bEntryCredential.body as { id: string }).id,
     bRequestId: bRequest.id,

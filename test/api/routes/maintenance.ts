@@ -100,3 +100,182 @@ export const MAINTENANCE_ROUTES: Row[] = [
     invalid: 'none',
   },
 ];
+
+const STATUSES = [
+  'new',
+  'assigned',
+  'in_progress',
+  'on_hold',
+  'completed',
+  'closed',
+  'cancelled',
+];
+
+/** A ticket body that passes validation (the lookup is what fails). */
+export const ticketBody = (unitId: string, categoryId: string) => ({
+  unitId,
+  categoryId,
+  description: 'A leak under the sink',
+});
+
+/** Tickets: residents, and dispatch (ADR 0032). */
+export const TICKET_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/tickets',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: () => ({}),
+      body: (w) => ticketBody(w.b.homeUnitId, w.aCategoryId),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      body: { categoryId: 'x', priority: 'high', description: '' },
+      fields: [
+        { field: 'categoryId', code: 'INVALID_UUID' },
+        {
+          field: 'priority',
+          code: 'INVALID_VALUE',
+          params: { allowed: PRIORITIES },
+        },
+        {
+          field: 'description',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 2000 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/tickets',
+    auth: 'tenant',
+    as: 'family',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'open' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: STATUSES },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/tickets/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/tickets/{id}/photos',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      body: (w) => ({ fileId: w.bFileId }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: {
+      body: { fileId: 'x' },
+      fields: [{ field: 'fileId', code: 'INVALID_UUID' }],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/tickets',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: {
+      query: { unassigned: 'yes' },
+      fields: [
+        {
+          field: 'unassigned',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['true', 'false'] },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/tickets',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: () => ({}),
+      body: (w) => ({
+        ...ticketBody(w.b.homeUnitId, w.aCategoryId),
+        reporterAccountId: w.a.ids.owner,
+      }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      body: { reporterAccountId: 'x', categoryId: 'y', description: '' },
+      // A subclass's own fields come first.
+      fields: [
+        { field: 'reporterAccountId', code: 'INVALID_UUID' },
+        { field: 'categoryId', code: 'INVALID_UUID' },
+        {
+          field: 'description',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 2000 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/tickets/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/tickets/{id}/history',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/tickets/{id}/assignments',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'family',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+];

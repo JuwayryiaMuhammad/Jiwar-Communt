@@ -25,6 +25,7 @@ Worker photos (ADR 0030 left them for later), identity scans and registration do
 |---|---|---|---|
 | `worker_photo` | JPEG, PNG, WebP | 5 MB | `workers.manage` (whoever registers a worker) or `workers.review` (the manager sets or replaces it) |
 | `document` | JPEG, PNG, WebP, PDF | 10 MB | `accounts.manage` (management) |
+| `resident_photo` | JPEG, PNG, WebP | 5 MB | `profile.photo` (the account itself, ADR 0031) |
 
 The database repeats types and limits as CHECKs, and a unit test keeps the two in step.
 
@@ -52,6 +53,9 @@ The database repeats types and limits as CHECKs, and a unit test keeps the two i
 
   Residents' worker lists never carry it. The PII scan checks that among GET responses only the manager's detail contains the photo's key.
 - **Retention.** A worker's photo is deleted once none of their engagements is pending, active or suspended, and none has changed for `WORKER_PHOTO_RETENTION_DAYS` (default 90). An engagement's last change is its end. The `workers.photo_retention` sweep clears the pointer and marks the file `retention` (audited `worker.photo_changed`, actor `system`), and the files sweep deletes the object and then the row. A worker who comes back gets a new photo with the new registration. When the erasure of a worker's own data exists, it drops the photo through the same path (`WorkersService.dropPhoto`). A banned worker is no exception: a ban needs no photo, because the gate refuses the code anyway.
+
+### Resident photos (Phase 4.3)
+An account's own photo (ADR 0031) uses the same flow: `PUT /me/photo` claims the caller's finalized `resident_photo`, the file moves to the account (`accounts.photo_file_id`, unique) and a replaced one is deleted. It is read by the person (`GET /me`) and by the guard on a valid resident scan, nowhere else. Erasure drops it. `FilesService.readUrl` now delegates to `AttachedFileUrls` in `ObjectStorageModule`.
 
 ### Local, CI, smoke test
 - MinIO runs in docker-compose (API 9005, console 9006). The official images are no longer published, so it is the `pgsty/minio` community build, pinned like on staging. `pnpm storage:init` creates the dev bucket and is refused in production.

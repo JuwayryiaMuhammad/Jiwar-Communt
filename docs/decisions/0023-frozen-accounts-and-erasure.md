@@ -41,6 +41,10 @@
   - the workers they registered end with a notice and `settle_before_close`;
   - delegations end.
 
+## Update (Phase 4.3, ADR 0031)
+- Freeze, deactivation and erasure revoke the account's **entry credentials** (the resident's rotating QR) in the same transaction (`onFrozen`, `onDeactivated`, `onErasing`).
+- An erased account keeps **no photo**: the pointer is cleared and the file deleted in the erasure's transaction (`accounts_erased_shape` also requires `photo_file_id` to be NULL).
+
 ## Audit
 - `account.frozen` (phone as `{ changed: true }`), `account.reactivated`, `account.deletion_requested`, `account.deletion_cancelled`, `account.legal_hold_placed`, `account.legal_hold_released`.
 - `account.erased`: every personal field as `{ changed: true }`, counts only.

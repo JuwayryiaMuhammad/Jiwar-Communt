@@ -52,3 +52,6 @@ Until now the guard typed a 6-digit visitor code or an 8-digit worker code (ADR 
 - *(Phase 4.2)* Registration takes `preferredLanguage` (`ar` by default). A worker already known to the compound keeps the language they have.
 - A pass's link cannot be shown again, only reissued. The host's pass list never carries a token.
 - A host who shared the link with the wrong person learns it from the notification. The visitor learns only `wrong_recipient` and the compound's name, the unit code and the directions they had already seen.
+
+## Update (Phase 4.3)
+`POST /gate/verify` also takes a resident's rotating QR, `JWR2.<credentialId>.<step>.<mac>` (ADR 0031). It is a different scheme from `JWR1`: no token is stored, and a scan writes nothing.

@@ -21,3 +21,5 @@ API v0 is a draft (ADR 0025): it exposes every feature so it can be exercised en
 - A pass's `link`, `qrPayload` and `code` come once, at creation or from `POST /visitor-passes/:id/reissue-link`; a host who loses the link reissues it, no need to cancel and recreate. There is no GET for a link or for a worker's card data (a lost card is a reissue).
 - The worker card's `preferredLanguage` is always `ar` until worker registration takes a language.
 - `POST /gate/verify` takes `code` or `qr`; the guard app may prefer a dedicated QR route once scanning has its own error states.
+- A resident's entry QR (ADR 0031): `POST /me/entry-credentials` returns the secret once; the phone computes `JWR2.<id>.<step>.<mac>` offline every 30 seconds (the formula and test vectors are in the ADR). `GET /me/entry-credentials` shows only id, device name and creation time. The guard's `display` is one flat object for visitors, workers and residents; the guard screen may want three shapes.
+- `GET /me` carries `photoUrl` (short-lived, no-store); the app re-reads it rather than caching it.

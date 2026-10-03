@@ -1,0 +1,191 @@
+import { Client } from 'pg';
+import { call } from '../api/request';
+import { ticketBody } from '../api/routes/maintenance';
+import { buildWorld, type World } from '../api/world';
+import { nationalIdFor } from '../setup/fixtures';
+import {
+  createHttpHarness,
+  uniqueEmail,
+  uniquePhone,
+  type HttpHarness,
+} from '../setup/http-app';
+import { required } from '../setup/test-env';
+
+/**
+ * The races of a ticket (ADR 0032), run for real: every outcome is one of
+ * the allowed ones, and the history agrees with the row. Where a race
+ * hinges on a lock, the lock is held from another connection to prove the
+ * request waits on it.
+ */
+describe('Maintenance concurrency', () => {
+  let h: HttpHarness;
+  let w: World;
+  let db: Client;
+
+  beforeAll(async () => {
+    h = await createHttpHarness();
+    w = await buildWorld(h);
+    db = new Client({ connectionString: process.env.DATABASE_URL });
+    await db.connect();
+  }, 120_000);
+
+  afterAll(async () => {
+    await db.end();
+    await h.close();
+  });
+
+  const ROUNDS = 5;
+  const manager = () => w.a.tokens.manager;
+  const code = (res: { status: number; body: unknown }) => ({
+    status: res.status,
+    code: (res.body as { code?: string }).code,
+  });
+
+  async function newTicket(): Promise<string> {
+    const res = await call(w, 'POST', '/tickets', {
+      token: w.a.tokens.owner,
+      body: ticketBody(w.a.homeUnitId, w.aCategoryId),
+    }).expect(201);
+    return (res.body as { id: string }).id;
+  }
+
+  async function staff(roleKey: string) {
+    const res = await call(w, 'POST', '/accounts', {
+      token: manager(),
+      body: {
+        type: 'staff',
+        roleKey,
+        fullName: `Race ${Date.now()}`,
+        idDocumentType: 'national_id',
+        idDocumentNumber: nationalIdFor(),
+        phone: uniquePhone(),
+        email: uniqueEmail(roleKey),
+      },
+    }).expect(201);
+    const id = (res.body as { id: string }).id;
+    return { id, token: await w.tokenFor(w.a, id, 'staff') };
+  }
+
+  const row = (id: string) =>
+    w.helpers.asManager(w.a, () =>
+      w.helpers.prisma.tenant.ticket.findUniqueOrThrow({ where: { id } }),
+    );
+  const trail = (ticketId: string) =>
+    w.helpers.asManager(w.a, () =>
+      w.helpers.prisma.tenant.ticketAssignment.findMany({
+        where: { ticketId },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      }),
+    );
+
+  /** Holds a row lock in A from another connection until settled. */
+  async function holding(table: string, id: string) {
+    const held = new Client({
+      connectionString: required('TEST_MIGRATOR_DATABASE_URL'),
+    });
+    await held.connect();
+    await held.query('BEGIN');
+    await held.query(`SELECT set_config('app.tenant_id', $1, true)`, [
+      w.a.tenantId,
+    ]);
+    await held.query(`SELECT id FROM ${table} WHERE id = $1 FOR UPDATE`, [id]);
+    return held;
+  }
+  const settle = async (held: Client, sql?: string, params: unknown[] = []) => {
+    if (sql) await held.query(sql, params);
+    await held.query('COMMIT');
+    await held.end();
+  };
+  const waitForLockWaiter = async () => {
+    for (let i = 0; i < 100; i++) {
+      const waiting = await db.query(
+        `SELECT count(*) FROM pg_locks WHERE NOT granted`,
+      );
+      if (Number((waiting.rows[0] as { count: string }).count) > 0) return;
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    throw new Error('the request never waited on the lock');
+  };
+
+  it('two dispatchers assign at once: one wins, one manual row', async () => {
+    const supervisor = await staff('maintenance_supervisor');
+    const other = await staff('technician');
+    for (let i = 0; i < ROUNDS; i++) {
+      const id = await newTicket();
+      const results = await Promise.all([
+        call(w, 'POST', `/maintenance/tickets/${id}/assign`, {
+          token: manager(),
+          body: { technicianId: w.a.ids.technician },
+        }),
+        call(w, 'POST', `/maintenance/tickets/${id}/assign`, {
+          token: supervisor.token,
+          body: { technicianId: other.id },
+        }),
+      ]);
+      expect(results.map((r) => r.status).sort()).toEqual([204, 409]);
+      const rows = await trail(id);
+      expect(rows).toHaveLength(1);
+      expect((await row(id)).technicianId).toBe(rows[0].toId);
+    }
+  });
+
+  it('an assignment waits for a deactivation in flight, and is then refused', async () => {
+    const tech = await staff('technician');
+    const id = await newTicket();
+    const held = await holding('accounts', tech.id);
+    const pending = call(w, 'POST', `/maintenance/tickets/${id}/assign`, {
+      token: manager(),
+      body: { technicianId: tech.id },
+    }).then((r) => r);
+    await waitForLockWaiter();
+    await settle(
+      held,
+      `UPDATE accounts SET status = 'inactive' WHERE id = $1`,
+      [tech.id],
+    );
+    const res = await pending;
+    expect(code(res)).toEqual({ status: 404, code: 'TECHNICIAN_NOT_FOUND' });
+    expect(await row(id)).toMatchObject({ status: 'new', technicianId: null });
+    expect(await trail(id)).toEqual([]);
+  });
+
+  it('a decline and a reassignment at once: one of them, never both', async () => {
+    const other = await staff('technician');
+    for (let i = 0; i < ROUNDS; i++) {
+      const id = await newTicket();
+      await call(w, 'POST', `/maintenance/tickets/${id}/assign`, {
+        token: manager(),
+        body: { technicianId: w.a.ids.technician },
+      }).expect(204);
+      const [decline, reassign] = await Promise.all([
+        call(w, 'POST', `/technician/tickets/${id}/decline`, {
+          token: w.a.tokens.technician,
+          body: { reasonCode: 'unavailable' },
+        }),
+        call(w, 'POST', `/maintenance/tickets/${id}/reassign`, {
+          token: manager(),
+          body: { technicianId: other.id, reasonCode: 'workload' },
+        }),
+      ]);
+      const t = await row(id);
+      const types = (await trail(id)).map((r) => r.assignmentType);
+      if (decline.status === 204) {
+        // The reassignment came second and found the queue.
+        expect(code(reassign)).toEqual({
+          status: 409,
+          code: 'TICKET_INVALID_TRANSITION',
+        });
+        expect(t).toMatchObject({ status: 'new', technicianId: null });
+        expect(types).toEqual(['manual', 'declined']);
+      } else {
+        expect(code(decline)).toEqual({
+          status: 404,
+          code: 'TICKET_NOT_FOUND',
+        });
+        expect(reassign.status).toBe(204);
+        expect(t).toMatchObject({ status: 'assigned', technicianId: other.id });
+        expect(types).toEqual(['manual', 'reassignment']);
+      }
+    }
+  });
+});

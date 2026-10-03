@@ -932,6 +932,22 @@ export interface paths {
         patch: operations["MaintenanceSettingsController_update"];
         trace?: never;
     };
+    "/api/v1/maintenance/technicians": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["TechniciansController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/tickets": {
         parameters: {
             query?: never;
@@ -964,6 +980,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/tickets/{id}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DispatchTicketsController_assign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/tickets/{id}/assignments": {
         parameters: {
             query?: never;
@@ -990,6 +1022,38 @@ export interface paths {
         get: operations["DispatchTicketsController_history"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/priority": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DispatchTicketsController_priority"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/reassign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DispatchTicketsController_reassign"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1844,6 +1908,134 @@ export interface paths {
         patch: operations["SettingsController_update"];
         trace?: never;
     };
+    "/api/v1/technician/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["TechnicianTicketsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["TechnicianTicketsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["TechnicianTicketsController_complete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["TechnicianTicketsController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["TechnicianTicketsController_hold"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["TechnicianTicketsController_addPhoto"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["TechnicianTicketsController_resume"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["TechnicianTicketsController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/ticket-categories": {
         parameters: {
             query?: never;
@@ -2604,6 +2796,10 @@ export interface components {
             accountId: string;
             /** Format: uuid */
             occupancyId: string;
+        };
+        AssignDto: {
+            /** Format: uuid */
+            technicianId: string;
         };
         AssignmentView: {
             /** Format: date-time */
@@ -3372,6 +3568,9 @@ export interface components {
             status: components["schemas"]["GateRequestStatus"];
             unitCode: string;
         };
+        HoldDto: {
+            holdReason: components["schemas"]["TicketHoldReason"];
+        };
         HostRequestResponse: {
             /** Format: date-time */
             createdAt: string;
@@ -3995,14 +4194,29 @@ export interface components {
             /** @description A presigned GET. */
             url: string;
         };
+        PriorityDto: {
+            priority: components["schemas"]["TicketPriority"];
+            /** @description From the closed list `ticketPriority`. */
+            reasonCode: string;
+        };
         ReadAllView: {
             read: number;
+        };
+        ReasonCodeDto: {
+            /** @description A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. */
+            reasonCode: string;
         };
         ReasonDto: {
             /** @description What the person is told (at most 1000 characters). Never stored in the audit trail. */
             reason: string;
             /** @description A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. */
             reasonCode: string;
+        };
+        ReassignDto: {
+            /** @description From the closed list `ticketReassign`. */
+            reasonCode: string;
+            /** Format: uuid */
+            technicianId: string;
         };
         RecordEntryDto: {
             direction: components["schemas"]["GateDirection"];
@@ -4386,6 +4600,61 @@ export interface components {
             data: components["schemas"]["StatusHistoryView"][];
             nextCursor: string | null;
         };
+        TechnicianOptionView: {
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description Tickets assigned, in progress or on hold. */
+            openTickets: number;
+        };
+        TechnicianOptionViewList: {
+            data: components["schemas"]["TechnicianOptionView"][];
+            nextCursor: string | null;
+        };
+        TechnicianTicketDetailView: {
+            /** Format: date-time */
+            assignedAt: string | null;
+            category: components["schemas"]["TicketCategoryRefView"];
+            commonArea: string | null;
+            confirmationStatus: components["schemas"]["TicketConfirmationStatus"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            cycle: number;
+            description: string;
+            holdReason: components["schemas"]["TicketHoldReason"] | null;
+            /** Format: uuid */
+            id: string;
+            /** @example MT-000123 */
+            number: string;
+            photos: components["schemas"]["PhotoView"][];
+            priority: components["schemas"]["TicketPriority"];
+            /** @description Rejections and reopens so far. */
+            rejectionCount: number;
+            /** @description The reporter's first name, and nothing else about them: coordination goes through messages. */
+            reporterFirstName: string | null;
+            status: components["schemas"]["TicketStatus"];
+            unitCode: string | null;
+        };
+        TechnicianTicketView: {
+            /** Format: date-time */
+            assignedAt: string | null;
+            category: components["schemas"]["TicketCategoryRefView"];
+            commonArea: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            holdReason: components["schemas"]["TicketHoldReason"] | null;
+            /** Format: uuid */
+            id: string;
+            /** @example MT-000123 */
+            number: string;
+            priority: components["schemas"]["TicketPriority"];
+            status: components["schemas"]["TicketStatus"];
+            unitCode: string | null;
+        };
+        TechnicianTicketViewList: {
+            data: components["schemas"]["TechnicianTicketView"][];
+            nextCursor: string | null;
+        };
         TenantDetailView: {
             /** Format: date-time */
             createdAt: string;
@@ -4731,6 +5000,15 @@ export interface components {
         WarningView: {
             /** @enum {string} */
             code: "WORKER_SCHEDULE_CONFLICT";
+        };
+        WorkPhotoDto: {
+            /**
+             * Format: uuid
+             * @description A finalized `ticket_photo` of the caller's; it moves to the ticket.
+             */
+            fileId: string;
+            /** @enum {string} */
+            kind: "before" | "after";
         };
         /** @enum {string} */
         WorkerCapacity: "live_in" | "hourly" | "driver" | "nanny" | "temporary";
@@ -6260,6 +6538,25 @@ export interface operations {
             };
         };
     };
+    TechniciansController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicianOptionViewList"];
+                };
+            };
+        };
+    };
     DispatchTicketsController_list: {
         parameters: {
             query?: {
@@ -6337,6 +6634,29 @@ export interface operations {
             };
         };
     };
+    DispatchTicketsController_assign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     DispatchTicketsController_assignments: {
         parameters: {
             query?: never;
@@ -6376,6 +6696,52 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["StatusHistoryViewList"];
                 };
+            };
+        };
+    };
+    DispatchTicketsController_priority: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PriorityDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DispatchTicketsController_reassign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReassignDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -7701,6 +8067,179 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SettingsView"];
                 };
+            };
+        };
+    };
+    TechnicianTicketsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["TicketStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicianTicketViewList"];
+                };
+            };
+        };
+    };
+    TechnicianTicketsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicianTicketDetailView"];
+                };
+            };
+        };
+    };
+    TechnicianTicketsController_complete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    TechnicianTicketsController_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    TechnicianTicketsController_hold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HoldDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    TechnicianTicketsController_addPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkPhotoDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhotoAddedView"];
+                };
+            };
+        };
+    };
+    TechnicianTicketsController_resume: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    TechnicianTicketsController_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

@@ -258,6 +258,18 @@
         ],
         "type": "object"
       },
+      "AssignDto": {
+        "properties": {
+          "technicianId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "technicianId"
+        ],
+        "type": "object"
+      },
       "AssignmentView": {
         "properties": {
           "at": {
@@ -2979,6 +2991,21 @@
         ],
         "type": "object"
       },
+      "HoldDto": {
+        "properties": {
+          "holdReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketHoldReason"
+              }
+            ]
+          }
+        },
+        "required": [
+          "holdReason"
+        ],
+        "type": "object"
+      },
       "HostRequestResponse": {
         "properties": {
           "createdAt": {
@@ -5145,6 +5172,26 @@
         ],
         "type": "object"
       },
+      "PriorityDto": {
+        "properties": {
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ]
+          },
+          "reasonCode": {
+            "description": "From the closed list `ticketPriority`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "priority",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "ReadAllView": {
         "properties": {
           "read": {
@@ -5153,6 +5200,18 @@
         },
         "required": [
           "read"
+        ],
+        "type": "object"
+      },
+      "ReasonCodeDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -5170,6 +5229,23 @@
         "required": [
           "reasonCode",
           "reason"
+        ],
+        "type": "object"
+      },
+      "ReassignDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `ticketReassign`.",
+            "type": "string"
+          },
+          "technicianId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "technicianId",
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -6521,6 +6597,235 @@
         ],
         "type": "object"
       },
+      "TechnicianOptionView": {
+        "properties": {
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "openTickets": {
+            "description": "Tickets assigned, in progress or on hold.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "openTickets"
+        ],
+        "type": "object"
+      },
+      "TechnicianOptionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TechnicianOptionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "TechnicianTicketDetailView": {
+        "properties": {
+          "assignedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/TicketCategoryRefView"
+          },
+          "commonArea": {
+            "nullable": true,
+            "type": "string"
+          },
+          "confirmationStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketConfirmationStatus"
+              }
+            ],
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "cycle": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          },
+          "holdReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketHoldReason"
+              }
+            ],
+            "nullable": true
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "example": "MT-000123",
+            "type": "string"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/PhotoView"
+            },
+            "type": "array"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ]
+          },
+          "rejectionCount": {
+            "description": "Rejections and reopens so far.",
+            "type": "number"
+          },
+          "reporterFirstName": {
+            "description": "The reporter's first name, and nothing else about them: coordination goes through messages.",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitCode",
+          "commonArea",
+          "category",
+          "priority",
+          "status",
+          "holdReason",
+          "assignedAt",
+          "createdAt",
+          "description",
+          "cycle",
+          "rejectionCount",
+          "confirmationStatus",
+          "reporterFirstName",
+          "photos"
+        ],
+        "type": "object"
+      },
+      "TechnicianTicketView": {
+        "properties": {
+          "assignedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/TicketCategoryRefView"
+          },
+          "commonArea": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "holdReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketHoldReason"
+              }
+            ],
+            "nullable": true
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "example": "MT-000123",
+            "type": "string"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitCode",
+          "commonArea",
+          "category",
+          "priority",
+          "status",
+          "holdReason",
+          "assignedAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "TechnicianTicketViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TechnicianTicketView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "TenantDetailView": {
         "properties": {
           "createdAt": {
@@ -7717,6 +8022,27 @@
         },
         "required": [
           "code"
+        ],
+        "type": "object"
+      },
+      "WorkPhotoDto": {
+        "properties": {
+          "fileId": {
+            "description": "A finalized `ticket_photo` of the caller's; it moves to the ticket.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "before",
+              "after"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId",
+          "kind"
         ],
         "type": "object"
       },
@@ -10479,6 +10805,33 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/technicians": {
+      "get": {
+        "operationId": "TechniciansController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnicianOptionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/tickets": {
       "get": {
         "operationId": "DispatchTicketsController_list",
@@ -10665,6 +11018,45 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/tickets/{id}/assign": {
+      "post": {
+        "operationId": "DispatchTicketsController_assign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/tickets/{id}/assignments": {
       "get": {
         "operationId": "DispatchTicketsController_assignments",
@@ -10723,6 +11115,84 @@
                 }
               }
             },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/priority": {
+      "post": {
+        "operationId": "DispatchTicketsController_priority",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PriorityDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/reassign": {
+      "post": {
+        "operationId": "DispatchTicketsController_reassign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReassignDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
             "description": ""
           }
         },
@@ -13017,6 +13487,310 @@
         ],
         "tags": [
           "admin"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets": {
+      "get": {
+        "operationId": "TechnicianTicketsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TicketStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnicianTicketViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "technician"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}": {
+      "get": {
+        "operationId": "TechnicianTicketsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnicianTicketDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "technician"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}/complete": {
+      "post": {
+        "operationId": "TechnicianTicketsController_complete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "technician"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}/decline": {
+      "post": {
+        "operationId": "TechnicianTicketsController_decline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "technician"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}/hold": {
+      "post": {
+        "operationId": "TechnicianTicketsController_hold",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HoldDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "technician"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}/photos": {
+      "post": {
+        "operationId": "TechnicianTicketsController_addPhoto",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkPhotoDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoAddedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "technician"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}/resume": {
+      "post": {
+        "operationId": "TechnicianTicketsController_resume",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "technician"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}/start": {
+      "post": {
+        "operationId": "TechnicianTicketsController_start",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "technician"
         ],
         "x-stability": "draft"
       }

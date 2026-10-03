@@ -1,6 +1,12 @@
 import { MemberPermissionsService } from '../../src/community/households/member-permissions.service';
 import { fileHelpers } from '../setup/files';
-import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
+import {
+  createHttpHarness,
+  uniqueEmail,
+  uniquePhone,
+  type HttpHarness,
+} from '../setup/http-app';
 import { keyPaths, listKeys } from './keys';
 import { call, err } from './request';
 import { buildWorld, type World } from './world';
@@ -75,6 +81,28 @@ const DISPATCH = [
   'unit.code',
   'unit.id',
   'updatedAt',
+].sort();
+const TECHNICIAN = [
+  'assignedAt',
+  'category',
+  ...CATEGORY_REF,
+  'commonArea',
+  'createdAt',
+  'holdReason',
+  'id',
+  'number',
+  'priority',
+  'status',
+  'unitCode',
+].sort();
+const TECHNICIAN_DETAIL = [
+  ...TECHNICIAN,
+  'confirmationStatus',
+  'cycle',
+  'description',
+  'photos',
+  'rejectionCount',
+  'reporterFirstName',
 ].sort();
 const DISPATCH_DETAIL = [
   ...DISPATCH,
@@ -480,6 +508,442 @@ describe('API v0 — maintenance (ADR 0032)', () => {
           ticketNumber: (created.body as { number: string }).number,
           categoryKey: 'plumbing',
         },
+      });
+    });
+  });
+
+  /** A staff account with a role, created over HTTP, and its token. */
+  async function staff(roleKey: string) {
+    const res = await call(w, 'POST', '/accounts', {
+      token: manager(),
+      body: {
+        type: 'staff',
+        roleKey,
+        fullName: `Tech ${uniqueSuffix()} Second`,
+        idDocumentType: 'national_id',
+        idDocumentNumber: nationalIdFor(),
+        phone: uniquePhone(),
+        email: uniqueEmail(roleKey),
+      },
+    }).expect(201);
+    const id = (res.body as { id: string }).id;
+    return { id, token: await w.tokenFor(w.a, id, 'staff') };
+  }
+
+  /** A fresh ticket on the owner's home, assigned to `technicianId`. */
+  async function assigned(technicianId: string, token = manager()) {
+    const t = (
+      await open(w.a.tokens.owner, { unitId: w.a.homeUnitId }).expect(201)
+    ).body as { id: string; number: string };
+    await call(w, 'POST', `/maintenance/tickets/${t.id}/assign`, {
+      token,
+      body: { technicianId },
+    }).expect(204);
+    return t;
+  }
+
+  const kinds = async (token: string, id: string) =>
+    (
+      (await call(w, 'GET', '/me/notifications', { token }).expect(200))
+        .body as { data: { kind: string; targetId: string }[] }
+    ).data
+      .filter((n) => n.targetId === id)
+      .map((n) => n.kind);
+
+  describe('assignment and the technician’s workflow', () => {
+    it('assign, start, hold, resume, complete: the reporter follows along', async () => {
+      const tech = w.a.tokens.technician;
+      const t = await assigned(w.a.ids.technician);
+      expect(await kinds(tech, t.id)).toEqual(['ticket.assigned']);
+      expect(await ticketIds('/technician/tickets', tech)).toContain(t.id);
+      const list = await call(w, 'GET', '/technician/tickets', {
+        token: tech,
+      }).expect(200);
+      expect(keyPaths(list.body)).toEqual(listKeys(TECHNICIAN));
+      const detail = await call(w, 'GET', `/technician/tickets/${t.id}`, {
+        token: tech,
+      }).expect(200);
+      expect(keyPaths(detail.body)).toEqual(TECHNICIAN_DETAIL);
+      expect(detail.headers['cache-control']).toBe('no-store');
+      const firstName = (
+        await w.helpers.asManager(w.a, () =>
+          w.helpers.prisma.tenant.account.findUniqueOrThrow({
+            where: { id: w.a.ids.owner },
+          }),
+        )
+      ).fullName!.split(' ')[0];
+      expect(detail.body).toMatchObject({
+        status: 'assigned',
+        reporterFirstName: firstName,
+        unitCode: expect.any(String) as string,
+      });
+
+      const act = (verb: string, body: object = {}) =>
+        call(w, 'POST', `/technician/tickets/${t.id}/${verb}`, {
+          token: tech,
+          body,
+        });
+      // Not before it starts.
+      expect(code(await act('complete'))).toEqual({
+        status: 409,
+        code: 'TICKET_INVALID_TRANSITION',
+      });
+      await act('start').expect(204);
+      await act('hold', { holdReason: 'awaiting_parts' }).expect(204);
+      const held = await call(w, 'GET', `/tickets/${t.id}`, {
+        token: w.a.tokens.owner,
+      }).expect(200);
+      expect(held.body).toMatchObject({
+        status: 'on_hold',
+        holdReason: 'awaiting_parts',
+        technician: { id: w.a.ids.technician },
+      });
+      await act('resume').expect(204);
+      await act('complete').expect(204);
+      const done = await call(w, 'GET', `/tickets/${t.id}`, {
+        token: w.a.tokens.owner,
+      }).expect(200);
+      expect(done.body).toMatchObject({
+        status: 'completed',
+        confirmationStatus: 'pending',
+        holdReason: null,
+        autoCloseAt: expect.any(String) as string,
+      });
+      expect(await kinds(w.a.tokens.owner, t.id)).toEqual(
+        expect.arrayContaining(['ticket.status_changed', 'ticket.completed']),
+      );
+
+      const history = await call(
+        w,
+        'GET',
+        `/maintenance/tickets/${t.id}/history`,
+        { token: manager() },
+      ).expect(200);
+      expect(
+        (
+          history.body as {
+            data: {
+              fromStatus: string;
+              toStatus: string;
+              reasonCode: string;
+            }[];
+          }
+        ).data.map((r) => [r.fromStatus, r.toStatus, r.reasonCode]),
+      ).toEqual([
+        [null, 'new', null],
+        ['new', 'assigned', null],
+        ['assigned', 'in_progress', null],
+        ['in_progress', 'on_hold', 'awaiting_parts'],
+        ['on_hold', 'in_progress', null],
+        ['in_progress', 'completed', null],
+      ]);
+      const trail = await call(
+        w,
+        'GET',
+        `/maintenance/tickets/${t.id}/assignments`,
+        { token: manager() },
+      ).expect(200);
+      expect(trail.body).toMatchObject({
+        data: [
+          {
+            type: 'manual',
+            from: null,
+            to: { id: w.a.ids.technician },
+            by: { id: w.a.ids.manager },
+            reasonCode: null,
+            cycle: 1,
+          },
+        ],
+      });
+    });
+
+    it('two dispatchers assign the same ticket: one wins', async () => {
+      const t = (
+        await open(w.a.tokens.owner, { unitId: w.a.homeUnitId }).expect(201)
+      ).body as { id: string };
+      const supervisor = await staff('maintenance_supervisor');
+      const other = await staff('technician');
+      const results = await Promise.all([
+        call(w, 'POST', `/maintenance/tickets/${t.id}/assign`, {
+          token: manager(),
+          body: { technicianId: w.a.ids.technician },
+        }),
+        call(w, 'POST', `/maintenance/tickets/${t.id}/assign`, {
+          token: supervisor.token,
+          body: { technicianId: other.id },
+        }),
+      ]);
+      expect(results.map((r) => r.status).sort()).toEqual([204, 409]);
+      expect(code(results.find((r) => r.status === 409)!)).toEqual({
+        status: 409,
+        code: 'TICKET_INVALID_TRANSITION',
+      });
+      const trail = await call(
+        w,
+        'GET',
+        `/maintenance/tickets/${t.id}/assignments`,
+        { token: manager() },
+      ).expect(200);
+      expect((trail.body as { data: unknown[] }).data).toHaveLength(1);
+    });
+
+    it('only a technician: a guard, a manager, an unknown or foreign id is TECHNICIAN_NOT_FOUND', async () => {
+      const t = (
+        await open(w.a.tokens.owner, { unitId: w.a.homeUnitId }).expect(201)
+      ).body as { id: string };
+      for (const technicianId of [
+        w.a.ids.guard,
+        w.a.ids.manager,
+        w.b.ids.technician,
+        '01900000-0000-7000-8000-000000000000',
+      ]) {
+        const res = await call(
+          w,
+          'POST',
+          `/maintenance/tickets/${t.id}/assign`,
+          {
+            token: manager(),
+            body: { technicianId },
+          },
+        );
+        expect(code(res)).toEqual({
+          status: 404,
+          code: 'TECHNICIAN_NOT_FOUND',
+        });
+      }
+      const list = await call(w, 'GET', '/maintenance/technicians', {
+        token: manager(),
+      }).expect(200);
+      expect(keyPaths(list.body)).toEqual(
+        listKeys(['fullName', 'id', 'openTickets']),
+      );
+      const ids = (list.body as { data: { id: string }[] }).data.map(
+        (x) => x.id,
+      );
+      expect(ids).toContain(w.a.ids.technician);
+      expect(ids).not.toContain(w.a.ids.guard);
+    });
+
+    it('a decline returns the ticket to the queue: the technician loses it, dispatch is told', async () => {
+      const t = await assigned(w.a.ids.technician);
+      const decline = (body: object) =>
+        call(w, 'POST', `/technician/tickets/${t.id}/decline`, {
+          token: w.a.tokens.technician,
+          body,
+        });
+      expect(code(await decline({}))).toEqual({
+        status: 400,
+        code: 'REASON_REQUIRED',
+      });
+      expect(err(await decline({ reasonCode: 'tired' })).fields).toEqual([
+        {
+          field: 'reasonCode',
+          code: 'INVALID_REASON_CODE',
+          params: {
+            allowed: [
+              'not_my_specialty',
+              'unavailable',
+              'needs_parts_or_tools',
+              'unsafe',
+              'other',
+            ],
+          },
+        },
+      ]);
+      await decline({ reasonCode: 'not_my_specialty' }).expect(204);
+      const gone = await call(w, 'GET', `/technician/tickets/${t.id}`, {
+        token: w.a.tokens.technician,
+      });
+      expect(code(gone)).toEqual({ status: 404, code: 'TICKET_NOT_FOUND' });
+      expect(
+        await ticketIds('/technician/tickets', w.a.tokens.technician),
+      ).not.toContain(t.id);
+      const queued = await call(w, 'GET', `/maintenance/tickets/${t.id}`, {
+        token: manager(),
+      }).expect(200);
+      expect(queued.body).toMatchObject({ status: 'new', technician: null });
+      expect(await kinds(manager(), t.id)).toContain('ticket.declined');
+      const trail = await call(
+        w,
+        'GET',
+        `/maintenance/tickets/${t.id}/assignments`,
+        { token: manager() },
+      ).expect(200);
+      expect((trail.body as { data: object[] }).data[1]).toMatchObject({
+        type: 'declined',
+        from: { id: w.a.ids.technician },
+        to: null,
+        by: { id: w.a.ids.technician },
+        reasonCode: 'not_my_specialty',
+      });
+      // Once started, it is the dispatcher's to reassign.
+      const started = await assigned(w.a.ids.technician);
+      await call(w, 'POST', `/technician/tickets/${started.id}/start`, {
+        token: w.a.tokens.technician,
+      }).expect(204);
+      const late = await call(
+        w,
+        'POST',
+        `/technician/tickets/${started.id}/decline`,
+        { token: w.a.tokens.technician, body: { reasonCode: 'unavailable' } },
+      );
+      expect(code(late)).toEqual({
+        status: 409,
+        code: 'TICKET_INVALID_TRANSITION',
+      });
+    });
+
+    it('a reassignment moves the ticket: the old technician loses it and is told', async () => {
+      const other = await staff('technician');
+      const t = await assigned(w.a.ids.technician);
+      await call(w, 'POST', `/technician/tickets/${t.id}/start`, {
+        token: w.a.tokens.technician,
+      }).expect(204);
+      const reassign = (body: object) =>
+        call(w, 'POST', `/maintenance/tickets/${t.id}/reassign`, {
+          token: manager(),
+          body,
+        });
+      expect(code(await reassign({ technicianId: other.id }))).toEqual({
+        status: 400,
+        code: 'REASON_REQUIRED',
+      });
+      expect(
+        err(
+          await reassign({
+            technicianId: w.a.ids.technician,
+            reasonCode: 'workload',
+          }),
+        ).fields,
+      ).toEqual([{ field: 'technicianId', code: 'SAME_AS_CURRENT' }]);
+      await reassign({ technicianId: other.id, reasonCode: 'workload' }).expect(
+        204,
+      );
+      expect(
+        code(
+          await call(w, 'GET', `/technician/tickets/${t.id}`, {
+            token: w.a.tokens.technician,
+          }),
+        ),
+      ).toEqual({ status: 404, code: 'TICKET_NOT_FOUND' });
+      // Its writes are refused the same way.
+      expect(
+        code(
+          await call(w, 'POST', `/technician/tickets/${t.id}/complete`, {
+            token: w.a.tokens.technician,
+          }),
+        ),
+      ).toEqual({ status: 404, code: 'TICKET_NOT_FOUND' });
+      expect(await kinds(w.a.tokens.technician, t.id)).toContain(
+        'ticket.unassigned',
+      );
+      const now = await call(w, 'GET', `/technician/tickets/${t.id}`, {
+        token: other.token,
+      }).expect(200);
+      expect(now.body).toMatchObject({ status: 'assigned' });
+    });
+
+    it('a priority change takes a reason, is audited, and an emergency alerts dispatch', async () => {
+      const t = await assigned(w.a.ids.technician);
+      const supervisor = await staff('maintenance_supervisor');
+      await call(w, 'POST', `/maintenance/tickets/${t.id}/priority`, {
+        token: supervisor.token,
+        body: { priority: 'emergency', reasonCode: 'safety_risk' },
+      }).expect(204);
+      expect(await kinds(manager(), t.id)).toContain('ticket.emergency');
+      expect(await kinds(w.a.tokens.technician, t.id)).toContain(
+        'ticket.priority_changed',
+      );
+      const same = await call(
+        w,
+        'POST',
+        `/maintenance/tickets/${t.id}/priority`,
+        {
+          token: manager(),
+          body: { priority: 'emergency', reasonCode: 'reassessed' },
+        },
+      );
+      expect(err(same).fields).toEqual([
+        { field: 'priority', code: 'SAME_AS_CURRENT' },
+      ]);
+    });
+
+    it('before and after photos: the technician, while working, ten per cycle', async () => {
+      const t = await assigned(w.a.ids.technician);
+      const add = async (kind: string) =>
+        call(w, 'POST', `/technician/tickets/${t.id}/photos`, {
+          token: w.a.tokens.technician,
+          body: {
+            fileId: await fileHelpers(h).ready(
+              w.a.tokens.technician,
+              'ticket_photo',
+            ),
+            kind,
+          },
+        });
+      expect(code(await add('before'))).toEqual({
+        status: 409,
+        code: 'TICKET_INVALID_TRANSITION',
+      });
+      await call(w, 'POST', `/technician/tickets/${t.id}/start`, {
+        token: w.a.tokens.technician,
+      }).expect(204);
+      for (let i = 0; i < 10; i++)
+        expect((await add(i < 5 ? 'before' : 'after')).status).toBe(201);
+      const eleventh = await add('after');
+      expect(code(eleventh)).toEqual({
+        status: 409,
+        code: 'TICKET_PHOTO_LIMIT_REACHED',
+      });
+      const seen = await call(w, 'GET', `/tickets/${t.id}`, {
+        token: w.a.tokens.owner,
+      }).expect(200);
+      expect((seen.body as { photos: unknown[] }).photos).toHaveLength(10);
+    });
+
+    it('a deactivated technician’s tickets go back to the queue', async () => {
+      const gone = await staff('technician');
+      const a = await assigned(gone.id);
+      const b = await assigned(gone.id);
+      await call(w, 'POST', `/technician/tickets/${b.id}/start`, {
+        token: gone.token,
+      }).expect(204);
+      await call(w, 'PATCH', `/accounts/${gone.id}/status`, {
+        token: manager(),
+        body: { status: 'inactive' },
+      }).expect(200);
+      for (const t of [a, b]) {
+        const res = await call(w, 'GET', `/maintenance/tickets/${t.id}`, {
+          token: manager(),
+        }).expect(200);
+        expect(res.body).toMatchObject({ status: 'new', technician: null });
+        const trail = await call(
+          w,
+          'GET',
+          `/maintenance/tickets/${t.id}/assignments`,
+          { token: manager() },
+        ).expect(200);
+        expect((trail.body as { data: object[] }).data.at(-1)).toMatchObject({
+          type: 'released',
+          from: { id: gone.id },
+          to: null,
+          by: null,
+          reasonCode: 'technician_unavailable',
+        });
+        expect(await kinds(manager(), t.id)).toContain(
+          'ticket.technician_unavailable',
+        );
+      }
+      // And they can no longer be assigned.
+      const again = await call(
+        w,
+        'POST',
+        `/maintenance/tickets/${a.id}/assign`,
+        { token: manager(), body: { technicianId: gone.id } },
+      );
+      expect(code(again)).toEqual({
+        status: 404,
+        code: 'TECHNICIAN_NOT_FOUND',
       });
     });
   });

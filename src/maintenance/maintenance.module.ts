@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CommunityMaintenancePortModule } from '../community';
+import { AccountsModule } from '../core/accounts/accounts.module';
 import { FilesModule } from '../core/files/files.module';
 import {
   CategoriesController,
@@ -10,7 +11,14 @@ import { MaintenanceProvisioning } from './provisioning';
 import { MaintenanceSettingsController } from './settings/maintenance-settings.controller';
 import { MaintenanceSettingsService } from './settings/maintenance-settings.service';
 import { AttachmentsService } from './tickets/attachments.service';
-import { DispatchTicketsController } from './tickets/dispatch-tickets.controller';
+import {
+  DispatchTicketsController,
+  TechniciansController,
+} from './tickets/dispatch-tickets.controller';
+import { DispatchService } from './tickets/dispatch.service';
+import { TechnicianRelease } from './tickets/technician-release';
+import { TechnicianTicketsController } from './tickets/technician-tickets.controller';
+import { WorkService } from './tickets/work.service';
 import { ResidentTicketsController } from './tickets/resident-tickets.controller';
 import { TicketAccess } from './tickets/ticket-access';
 import { TicketLog } from './tickets/ticket-log';
@@ -23,13 +31,15 @@ import { TicketsService } from './tickets/tickets.service';
  * the gate.
  */
 @Module({
-  imports: [CommunityMaintenancePortModule, FilesModule],
+  imports: [AccountsModule, CommunityMaintenancePortModule, FilesModule],
   controllers: [
     CategoriesController,
     CategoryOptionsController,
     MaintenanceSettingsController,
     ResidentTicketsController,
     DispatchTicketsController,
+    TechnicianTicketsController,
+    TechniciansController,
   ],
   providers: [
     MaintenanceProvisioning,
@@ -40,6 +50,9 @@ import { TicketsService } from './tickets/tickets.service';
     TicketNotices,
     TicketsService,
     AttachmentsService,
+    DispatchService,
+    WorkService,
+    TechnicianRelease,
   ],
 })
 export class MaintenanceModule {}

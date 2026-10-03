@@ -246,6 +246,16 @@ describe('API v0 — no-store', () => {
       call(w, 'GET', `/tickets/${await aTicket()}`, {
         token: w.a.tokens.owner,
       }),
+    'GET /technician/tickets/{id}': async () => {
+      const id = await aTicket();
+      await call(w, 'POST', `/maintenance/tickets/${id}/assign`, {
+        token: w.a.tokens.manager,
+        body: { technicianId: w.a.ids.technician },
+      }).expect(204);
+      return call(w, 'GET', `/technician/tickets/${id}`, {
+        token: w.a.tokens.technician,
+      });
+    },
     'GET /maintenance/tickets/{id}': async () =>
       call(w, 'GET', `/maintenance/tickets/${await aTicket()}`, {
         token: w.a.tokens.manager,

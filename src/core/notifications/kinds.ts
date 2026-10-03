@@ -95,6 +95,58 @@ export const NOTIFICATION_KINDS = {
       categoryKey: {},
     },
   },
+  /** A ticket is yours now (the technician). */
+  'ticket.assigned': {
+    priority: 'normal',
+    target: 'ticket',
+    params: {
+      ticketNumber: {},
+      unitCode: { optional: true },
+      priority: {},
+      categoryKey: {},
+    },
+  },
+  /** Reassigned to someone else: the old technician no longer sees it. */
+  'ticket.unassigned': {
+    priority: 'normal',
+    target: 'ticket',
+    params: { ticketNumber: {}, unitCode: { optional: true } },
+  },
+  /** The reporter's ticket moved (assigned, started, on hold, resumed…). */
+  'ticket.status_changed': {
+    priority: 'normal',
+    target: 'ticket',
+    params: {
+      ticketNumber: {},
+      unitCode: { optional: true },
+      status: {},
+      holdReason: { optional: true },
+    },
+  },
+  /** The work is done: please confirm, or reject (the reporter). */
+  'ticket.completed': {
+    priority: 'normal',
+    target: 'ticket',
+    params: { ticketNumber: {}, unitCode: { optional: true } },
+  },
+  /** A technician declined it: it is back in the queue (dispatchers). */
+  'ticket.declined': {
+    priority: 'normal',
+    target: 'ticket',
+    params: { ticketNumber: {}, unitCode: { optional: true } },
+  },
+  /** Its technician can no longer work: back in the queue (dispatchers). */
+  'ticket.technician_unavailable': {
+    priority: 'normal',
+    target: 'ticket',
+    params: { ticketNumber: {}, unitCode: { optional: true } },
+  },
+  /** A dispatcher changed the priority of the technician's ticket. */
+  'ticket.priority_changed': {
+    priority: 'normal',
+    target: 'ticket',
+    params: { ticketNumber: {}, unitCode: { optional: true }, priority: {} },
+  },
   /** Dispatch opened a ticket in the reporter's name. */
   'ticket.opened_on_behalf': {
     priority: 'normal',

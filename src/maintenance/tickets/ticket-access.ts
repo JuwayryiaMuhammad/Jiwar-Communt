@@ -120,6 +120,20 @@ export class TicketAccess {
     return place?.tickets === true;
   }
 
+  /** An active staff account holding tickets.work: one who can take work. */
+  async isTechnician(tx: TenantTxClient, accountId: string): Promise<boolean> {
+    return (
+      (await tx.account.count({
+        where: {
+          id: accountId,
+          status: 'active',
+          type: 'staff',
+          role: { permissions: { some: { permission: 'tickets.work' } } },
+        },
+      })) > 0
+    );
+  }
+
   /** The reporter's and the creator's own actions (confirm, cancel…). */
   requireParty(ticket: Pick<Ticket, 'createdById' | 'reporterId'>): void {
     const me = this.ctx.accountId;

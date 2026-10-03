@@ -279,3 +279,175 @@ export const TICKET_ROUTES: Row[] = [
     invalid: 'none',
   },
 ];
+
+const HOLD_REASONS = ['awaiting_resident', 'awaiting_parts', 'other'];
+
+/** A technician action on another compound's ticket: just not found. */
+const technicianAction = (
+  verb: string,
+  invalid: Row['invalid'] = 'none',
+  body?: object,
+): Row => ({
+  method: 'POST',
+  path: `/technician/tickets/{id}/${verb}`,
+  auth: 'tenant',
+  as: 'technician',
+  denied: 'manager',
+  foreign: {
+    params: (w) => ({ id: w.bTicketId }),
+    ...(body ? { body: () => body } : {}),
+    code: 'TICKET_NOT_FOUND',
+  },
+  invalid,
+});
+
+/** The technician's workflow and manual dispatch (ADR 0032). */
+export const WORK_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/technician/tickets',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'done' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: STATUSES },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/technician/tickets/{id}',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  technicianAction('start'),
+  technicianAction(
+    'hold',
+    {
+      body: { holdReason: 'lunch' },
+      fields: [
+        {
+          field: 'holdReason',
+          code: 'INVALID_VALUE',
+          params: { allowed: HOLD_REASONS },
+        },
+      ],
+    },
+    { holdReason: 'awaiting_parts' },
+  ),
+  technicianAction('resume'),
+  technicianAction('complete'),
+  technicianAction(
+    'decline',
+    {
+      body: { reasonCode: 5 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    { reasonCode: 'unavailable' },
+  ),
+  {
+    ...technicianAction(
+      'photos',
+      {
+        body: { fileId: 'x', kind: 'during' },
+        fields: [
+          {
+            field: 'kind',
+            code: 'INVALID_VALUE',
+            params: { allowed: ['before', 'after'] },
+          },
+          { field: 'fileId', code: 'INVALID_UUID' },
+        ],
+      },
+      { fileId: '00000000-0000-7000-8000-000000000000', kind: 'before' },
+    ),
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      body: (w) => ({ fileId: w.bFileId, kind: 'before' }),
+      code: 'TICKET_NOT_FOUND',
+    },
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/tickets/{id}/assign',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      body: (w) => ({ technicianId: w.a.ids.technician }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: {
+      body: { technicianId: 'x' },
+      fields: [{ field: 'technicianId', code: 'INVALID_UUID' }],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/tickets/{id}/reassign',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      body: (w) => ({
+        technicianId: w.a.ids.technician,
+        reasonCode: 'workload',
+      }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: {
+      body: { technicianId: 'x', reasonCode: 1 },
+      fields: [
+        { field: 'reasonCode', code: 'INVALID_TYPE' },
+        { field: 'technicianId', code: 'INVALID_UUID' },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/tickets/{id}/priority',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      body: () => ({ priority: 'urgent', reasonCode: 'reassessed' }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: {
+      body: { priority: 'high' },
+      fields: [
+        {
+          field: 'priority',
+          code: 'INVALID_VALUE',
+          params: { allowed: PRIORITIES },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/technicians',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: 'none',
+  },
+];

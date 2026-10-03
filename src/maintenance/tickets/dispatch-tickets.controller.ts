@@ -1,5 +1,19 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
+import {
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiProperty,
+} from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
@@ -10,9 +24,13 @@ import {
 } from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
+import { DispatchService, type TechnicianOption } from './dispatch.service';
 import {
+  AssignDto,
   CreateTicketOnBehalfDto,
   DispatchTicketsQueryDto,
+  PriorityDto,
+  ReassignDto,
 } from './dto/tickets.dto';
 import { TicketsService } from './tickets.service';
 import {
@@ -31,7 +49,10 @@ import {
 @RequirePermissions('tickets.dispatch')
 @Controller('maintenance/tickets')
 export class DispatchTicketsController {
-  constructor(private readonly tickets: TicketsService) {}
+  constructor(
+    private readonly tickets: TicketsService,
+    private readonly dispatch: DispatchService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ type: ListOf(DispatchTicketView) })
@@ -88,6 +109,71 @@ export class DispatchTicketsController {
     return bounded(
       AssignmentView.list(await this.tickets.assignments(id)),
       (r) => r,
+    );
+  }
+
+  /** From the queue (`new`) to a technician. */
+  @Post(':id/assign')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  assign(
+    @Param('id', parseId()) id: string,
+    @Body() dto: AssignDto,
+  ): Promise<void> {
+    return this.dispatch.assign(id, dto.technicianId);
+  }
+
+  /** `reasonCode` from the closed list `ticketReassign`. */
+  @Post(':id/reassign')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  reassign(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ReassignDto,
+  ): Promise<void> {
+    return this.dispatch.reassign(id, dto.technicianId, dto.reasonCode);
+  }
+
+  /** `reasonCode` from the closed list `ticketPriority`; audited. */
+  @Post(':id/priority')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  priority(
+    @Param('id', parseId()) id: string,
+    @Body() dto: PriorityDto,
+  ): Promise<void> {
+    return this.dispatch.changePriority(id, dto.priority, dto.reasonCode);
+  }
+}
+
+export class TechnicianOptionView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String, nullable: true })
+  fullName: string | null;
+  @ApiProperty({
+    type: Number,
+    description: 'Tickets assigned, in progress or on hold.',
+  })
+  openTickets: number;
+
+  static from(t: TechnicianOption): TechnicianOptionView {
+    return { id: t.id, fullName: t.fullName, openTickets: t.openTickets };
+  }
+}
+
+/** Who dispatch can assign to (ADR 0032). */
+@ApiArea('maintenance')
+@RequirePermissions('tickets.dispatch')
+@Controller('maintenance/technicians')
+export class TechniciansController {
+  constructor(private readonly dispatch: DispatchService) {}
+
+  @Get()
+  @ApiOkResponse({ type: ListOf(TechnicianOptionView) })
+  async list(): Promise<ListResponse<TechnicianOptionView>> {
+    return bounded(await this.dispatch.technicians(), (t) =>
+      TechnicianOptionView.from(t),
     );
   }
 }

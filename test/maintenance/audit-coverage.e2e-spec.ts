@@ -1,6 +1,7 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { CategoriesService } from '../../src/maintenance/categories/categories.service';
 import { MaintenanceSettingsService } from '../../src/maintenance/settings/maintenance-settings.service';
+import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
 import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
 import { auditReaders } from '../setup/audit';
 import {
@@ -125,6 +126,39 @@ describe('Audit coverage — maintenance', () => {
       });
       expect(JSON.stringify(row)).not.toMatch(/AUDIT-|flickering|lobby/);
       expect(JSON.stringify(row)).not.toContain(reporter.id);
+    });
+  });
+
+  describe('dispatch', () => {
+    it('ticket.priority_changed — the change and its reason code', async () => {
+      const c = await x.compound();
+      const unit = await x.unit(c);
+      const reporter = await x.resident(c, [unit.id]);
+      const category = await x.asManager(c, () =>
+        x.prisma.tenant.ticketCategory.findFirstOrThrow({
+          where: { key: 'plumbing' },
+        }),
+      );
+      const ticket = await x.as(c, { id: reporter.id, type: 'resident' }, () =>
+        h.moduleRef.get(TicketsService).create({
+          unitId: unit.id,
+          categoryId: category.id,
+          description: 'AUDIT-DESCRIPTION',
+        }),
+      );
+      await x.asManager(c, () =>
+        h.moduleRef
+          .get(DispatchService)
+          .changePriority(ticket.id, 'urgent', 'safety_risk'),
+      );
+      const row = await single(c, 'ticket.priority_changed', ticket.id);
+      expect(row).toMatchObject({
+        actorId: c.managerId,
+        targetType: 'ticket',
+        changes: { priority: { from: 'normal', to: 'urgent' } },
+        metadata: { reasonCode: 'safety_risk' },
+      });
+      expect(JSON.stringify(row)).not.toContain('AUDIT-');
     });
   });
 

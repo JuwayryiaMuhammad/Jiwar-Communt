@@ -477,6 +477,9 @@
           "financeView": {
             "type": "boolean"
           },
+          "gateEntry": {
+            "type": "boolean"
+          },
           "governanceBudget": {
             "type": "boolean"
           },
@@ -535,6 +538,7 @@
           "bookings",
           "tickets",
           "unitSecurity",
+          "gateEntry",
           "financeView",
           "financePay",
           "financeCapPerOperation",

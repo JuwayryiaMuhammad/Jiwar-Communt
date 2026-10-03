@@ -2449,6 +2449,7 @@ export interface components {
             financeCapPerOperation: string | null;
             financePay: boolean;
             financeView: boolean;
+            gateEntry: boolean;
             governanceBudget: boolean;
             governanceCandidacy: boolean;
             governanceVote: boolean;

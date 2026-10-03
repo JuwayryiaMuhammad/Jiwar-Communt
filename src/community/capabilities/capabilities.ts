@@ -64,6 +64,13 @@ export interface Capabilities {
   bookings: boolean;
   tickets: boolean;
   unitSecurity: boolean;
+  /**
+   * May hold a rotating entry QR for this unit (ADR 0031): a residing
+   * occupant or an active adult member with an account. Never a landlord,
+   * a pending or removed member, a minor or an ended occupancy. A death
+   * review or a separation does not take it away: it is access to one's home.
+   */
+  gateEntry: boolean;
 
   financeView: boolean;
   financePay: boolean;
@@ -107,6 +114,7 @@ export const NONE: Capabilities = Object.freeze({
   bookings: false,
   tickets: false,
   unitSecurity: false,
+  gateEntry: false,
   financeView: false,
   financePay: false,
   financeCapPerOperation: null,
@@ -179,6 +187,7 @@ function occupancy(
     bookings: daily,
     tickets: daily,
     unitSecurity: daily,
+    gateEntry: daily,
     financeView: true,
     financePay: true,
     landlordTenantFinance: landlord,
@@ -214,6 +223,7 @@ function member(m: Extract<Subject, { kind: 'member' }>): Capabilities {
     bookings: has('bookings'),
     tickets: has('tickets'),
     unitSecurity: has('unit_security'),
+    gateEntry: true,
     financeView: finance !== undefined,
     financePay: finance !== undefined,
     financeCapPerOperation: finance?.capPerOperation ?? null,

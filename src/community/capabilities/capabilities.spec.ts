@@ -251,4 +251,42 @@ describe('capabilitiesFor', () => {
       ).toEqual(capabilitiesFor(occ(), OPEN));
     }
   });
+  it('gateEntry (ADR 0031): who lives there, per capacity — and it survives a death review and a separation', () => {
+    const gate = (s: Subject, state: UnitState = OPEN) =>
+      capabilitiesFor(s, state).gateEntry;
+    // Lives there.
+    expect(gate(occ())).toBe(true); // owner-resident
+    expect(gate(occ({ occupancyType: 'tenant' }))).toBe(true);
+    expect(gate(occ({ isPrimary: true }))).toBe(true);
+    expect(gate(occ(), { closed: true, reviewReasons: [] })).toBe(true);
+    // An adult member with an account, with or without any grant.
+    expect(gate(member())).toBe(true);
+    expect(
+      gate(
+        member({
+          grants: [{ permission: 'finance', capPerOperation: '5.00' }],
+        }),
+      ),
+    ).toBe(true);
+    // Does not live there, or is not (yet / any more) a member.
+    expect(gate(occ({ resides: false }))).toBe(false); // landlord
+    expect(gate(occ({ status: 'ended' }))).toBe(false);
+    expect(gate(member({ status: 'pending_approval' }))).toBe(false);
+    expect(gate(member({ status: 'removed' }))).toBe(false);
+    expect(gate(member({ isMinor: true, hasAccount: false }))).toBe(false);
+    expect(gate({ kind: 'registration', status: 'pending' })).toBe(false);
+    expect(gate({ kind: 'registration', status: 'approved' })).toBe(false);
+    // Baseline access to one's home: no review takes it away.
+    for (const reason of [
+      'primary_deceased',
+      'separation',
+      'primary_left',
+      'primary_frozen',
+    ] as const) {
+      const state: UnitState = { closed: false, reviewReasons: [reason] };
+      expect(gate(occ(), state)).toBe(true);
+      expect(gate(member(), state)).toBe(true);
+      expect(gate(occ({ resides: false }), state)).toBe(false);
+    }
+  });
 });

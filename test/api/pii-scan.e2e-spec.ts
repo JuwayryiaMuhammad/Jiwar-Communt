@@ -245,7 +245,15 @@ describe('API v0 — PII leak scan', () => {
       }),
     );
     const people = [primary, landlord, tenant, family, leaving, ender, worker];
+    // A resident's entry secret (ADR 0031): shown once, in no GET.
+    const entry = (
+      await call(w, 'POST', '/me/entry-credentials', {
+        token: await w.tokenFor(a, primary.id, 'resident'),
+        body: { deviceName: 'PII-DEVICE-name' },
+      }).expect(201)
+    ).body as { secret: string };
     const secrets = [
+      entry.secret,
       visit.code!,
       visitorPhone,
       ...people.map((p) => p.doc),
@@ -416,6 +424,15 @@ describe('API v0 — PII leak scan', () => {
     }
     expect(seen.get('resident /units/{unitId}/workers')).toContain(
       registered.engagementId,
+    );
+
+    // A phone's name: its owner's own list, nobody else's, and no secret.
+    for (const [key, text] of seen) {
+      if (key !== 'resident /me/entry-credentials')
+        if (text.includes('PII-DEVICE-name')) leaks.push(`${key}: device name`);
+    }
+    expect(seen.get('resident /me/entry-credentials')).toContain(
+      'PII-DEVICE-name',
     );
 
     // The visitor's name: its host sees it, nobody else does.

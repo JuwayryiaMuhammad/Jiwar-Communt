@@ -94,6 +94,19 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   files_owned_or_attached: {},
   files_attached_is_ready: {},
   domestic_workers_preferred_language: {},
+  // Entry credentials (ADR 0031): revoked together; a device name only while live.
+  entry_credentials_revoked_together: {},
+  entry_credentials_device_name: {
+    guarded:
+      'device_name IS NULL comes first; the length is compared only for a ' +
+      'live credential that has a name.',
+  },
+  // Compares a nullable column.
+  entry_credentials_revoke_reason: {
+    guarded:
+      'revoke_reason IS NULL comes first; a reason is compared only when ' +
+      'there is one, and entry_credentials_revoked_together ties it to revoked_at.',
+  },
   worker_engagements_token_only_with_code: {},
   // Compares nullable columns.
   accounts_identity_document: {

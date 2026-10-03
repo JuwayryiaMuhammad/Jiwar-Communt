@@ -9,6 +9,7 @@ import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
 import { LOCALES, type Locale } from '../common/i18n/locale';
 import { GlobalDbService } from '../database/global-db.service';
 import { TenantTx } from '../database/tenant-tx.service';
+import { AccountLifecycle } from './account-lifecycle';
 
 export interface MySession {
   id: string;
@@ -33,6 +34,7 @@ export class AccountSelfService {
     private readonly globalDb: GlobalDbService,
     private readonly audit: AuditService,
     private readonly securityEvents: SecurityEventsService,
+    private readonly lifecycle: AccountLifecycle,
   ) {}
 
   async updatePreferredLocale(locale: Locale): Promise<Locale> {
@@ -110,20 +112,28 @@ export class AccountSelfService {
 
   /**
    * "That wasn't me": every session ends, the current one included — its
-   * access token stops working on the next request.
+   * access token stops working on the next request. The domains react in
+   * the same transaction (`AccountLifecycle.onSessionsRevoked`: entry
+   * credentials go, ADR 0031). The account row is locked first, so a
+   * request still in flight under one of these sessions cannot register
+   * something after the revocation (it re-checks its session under the
+   * same lock).
    */
   async revokeAllMySessions(): Promise<number> {
-    const { count } = await this.globalDb.session.updateMany({
-      where: {
-        accountId: this.ctx.accountId,
-        tenantId: this.ctx.tenantId,
-        revokedAt: null,
-      },
-      data: { revokedAt: new Date() },
+    const accountId = this.ctx.accountId;
+    const tenantId = this.ctx.tenantId;
+    const count = await this.tenantTx.withTenantTx(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM accounts WHERE id = ${accountId}::uuid FOR UPDATE`;
+      const { count } = await this.globalDb.in(tx).session.updateMany({
+        where: { accountId, tenantId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      await this.lifecycle.sessionsRevoked(tx, { id: accountId, tenantId });
+      return count;
     });
     await this.securityEvents.record('session.revoked', {
-      tenantId: this.ctx.tenantId,
-      accountId: this.ctx.accountId,
+      tenantId,
+      accountId,
       metadata: { reason: 'self', scope: 'all', count },
     });
     return count;

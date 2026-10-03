@@ -12,6 +12,7 @@ const base = {
   S3_SECRET_ACCESS_KEY: 'secret',
   JWT_ACCESS_SECRET: 'a'.repeat(32),
   IDENTIFIER_PEPPER: 'b'.repeat(32),
+  ENTRY_CREDENTIAL_KEY: 'd'.repeat(32),
   PLATFORM_JWT_SECRET: 'c'.repeat(32),
   PUBLIC_APP_URL: 'https://app.jiwar.test',
 };
@@ -96,6 +97,25 @@ describe('validateEnv', () => {
     expect(() =>
       validateEnv({ ...base, DATABASE_URL: 'mysql://x@y/z' }),
     ).toThrow(/DATABASE_URL/);
+  });
+
+  describe('entry credential key (ADR 0031)', () => {
+    it('is required, at least 32 characters', () => {
+      const { ENTRY_CREDENTIAL_KEY: _omit, ...without } = base;
+      void _omit;
+      expect(() => validateEnv(without)).toThrow(/ENTRY_CREDENTIAL_KEY/);
+      expect(() =>
+        validateEnv({ ...base, ENTRY_CREDENTIAL_KEY: 'short' }),
+      ).toThrow(/ENTRY_CREDENTIAL_KEY/);
+    });
+
+    it('must differ from the identifier pepper', () => {
+      expect(() =>
+        validateEnv({ ...base, ENTRY_CREDENTIAL_KEY: base.IDENTIFIER_PEPPER }),
+      ).toThrow(
+        /must differ from IDENTIFIER_PEPPER[\s\S]*ENTRY_CREDENTIAL_KEY/,
+      );
+    });
   });
 
   describe('platform', () => {

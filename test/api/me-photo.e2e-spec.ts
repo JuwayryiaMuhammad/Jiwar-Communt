@@ -144,7 +144,7 @@ describe('API v0 — my photo', () => {
         size: 100,
       })
       .expect(400);
-    expect(err(asPdf).fields[0]).toMatchObject({
+    expect(err(asPdf).fields?.[0]).toMatchObject({
       field: 'contentType',
       code: 'FILE_TYPE_NOT_ALLOWED',
     });
@@ -158,7 +158,7 @@ describe('API v0 — my photo', () => {
         size: 5 * 1024 * 1024 + 1,
       })
       .expect(400);
-    expect(err(big).fields[0]).toMatchObject({
+    expect(err(big).fields?.[0]).toMatchObject({
       field: 'size',
       code: 'FILE_TOO_LARGE',
     });

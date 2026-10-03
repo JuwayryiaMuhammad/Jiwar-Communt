@@ -948,6 +948,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/entry-credentials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["EntryCredentialsController_list"];
+        put?: never;
+        post: operations["EntryCredentialsController_issue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/entry-credentials/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["EntryCredentialsController_revoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/gate-requests": {
         parameters: {
             query?: never;
@@ -2797,6 +2829,17 @@ export interface components {
             data: components["schemas"]["EngagementResponse"][];
             nextCursor: string | null;
         };
+        EntryCredentialView: {
+            /** Format: date-time */
+            createdAt: string;
+            deviceName: string | null;
+            /** Format: uuid */
+            id: string;
+        };
+        EntryCredentialViewList: {
+            data: components["schemas"]["EntryCredentialView"][];
+            nextCursor: string | null;
+        };
         EntryListView: {
             direction: components["schemas"]["GateDirection"];
             /** Format: uuid */
@@ -3076,6 +3119,21 @@ export interface components {
         InviteTokenDto: {
             /** @description The token from the invitation link. */
             token: string;
+        };
+        IssueEntryCredentialDto: {
+            /**
+             * @description A label the owner sees in their list (1–60 characters). Kept only while the credential is live; never audited.
+             * @example Mona's phone
+             */
+            deviceName?: string;
+        };
+        IssuedEntryCredentialView: {
+            /** Format: uuid */
+            id: string;
+            /** @description base64url of 32 bytes. Keep it in the phone's secure storage; the server cannot show it again. The QR is `JWR2.<id>.<step>.<mac>`: step = floor(unix seconds / 30), mac = base64url of the first 16 bytes of HMAC-SHA256 keyed with the secret's decoded bytes over "<id>.<step>". */
+            secret: string;
+            /** @example 30 */
+            stepSeconds: number;
         };
         IssuedPassView: {
             /** @description 6 digits. Null only on a replay of a pass no longer active. */
@@ -5658,6 +5716,70 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    EntryCredentialsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryCredentialViewList"];
+                };
+            };
+        };
+    };
+    EntryCredentialsController_issue: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueEntryCredentialDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuedEntryCredentialView"];
+                };
+            };
+        };
+    };
+    EntryCredentialsController_revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
             cookie?: never;
         };
         requestBody?: never;

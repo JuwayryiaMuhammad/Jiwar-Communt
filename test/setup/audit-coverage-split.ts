@@ -87,6 +87,8 @@ export const PHASE_4_COVERAGE: readonly string[] = [
   'visitor_pass.created',
   'visitor_pass.cancelled',
   'visitor_pass.code_reissued',
+  'entry_credential.issued',
+  'entry_credential.revoked',
   'gate.approval_requested',
   'gate.approval_decided',
   'gate.approval_reversed',

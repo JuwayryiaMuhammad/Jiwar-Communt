@@ -224,6 +224,12 @@ describe('API v0 — no-store', () => {
         token: w.a.tokens.owner,
         body: { purpose: 'worker_photo', contentType: 'image/png', size: 10 },
       }),
+    // The entry credential's secret, once (ADR 0031).
+    'POST /me/entry-credentials': () =>
+      call(w, 'POST', '/me/entry-credentials', {
+        token: w.a.tokens.tenant,
+        body: {},
+      }),
     'GET /me': async () => call(w, 'GET', '/me', { token: w.a.tokens.owner }),
     'GET /files/{id}': async () =>
       call(w, 'GET', `/files/${await fileHelpers(h).ready(w.a.tokens.owner)}`, {

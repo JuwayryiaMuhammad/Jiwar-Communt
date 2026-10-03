@@ -27,6 +27,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // Technical keys that back composite foreign keys; a violation would mean
   // an id collision, so they stay neutral like primary keys.
   accounts_tenant_id_id_key: null,
+  // An account has at most one photo and a photo one account (ADR 0031);
+  // the service attaches under the account lock, so a violation is a race.
+  accounts_photo_file_id_key: null,
+  entry_credentials_tenant_id_id_key: null,
   units_tenant_id_id_key: null,
   roles_tenant_id_id_key: null,
   roles_tenant_id_id_kind_key: null,

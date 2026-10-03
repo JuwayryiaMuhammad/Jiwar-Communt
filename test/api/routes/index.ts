@@ -5,6 +5,7 @@ import { ACCOUNTS_ROUTES } from './accounts';
 import { ADMIN_ROUTES } from './admin';
 import { DELEGATIONS_ROUTES } from './delegations';
 import { ENTRIES_ROUTES } from './entries';
+import { ENTRY_CREDENTIALS_ROUTES } from './entry-credentials';
 import { ERASURE_ROUTES } from './erasure';
 import { FILES_ROUTES } from './files';
 import { GATE_ROUTES } from './gate';
@@ -46,4 +47,5 @@ export const ROUTES: Row[] = [
   ...APPROVALS_ROUTES,
   ...ATTENDANCE_ROUTES,
   ...FILES_ROUTES,
+  ...ENTRY_CREDENTIALS_ROUTES,
 ];

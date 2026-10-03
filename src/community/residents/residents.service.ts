@@ -1,3 +1,4 @@
+import { AccountLifecycle } from '../../core/accounts/account-lifecycle';
 import { Injectable, Logger } from '@nestjs/common';
 import {
   $Enums,
@@ -85,6 +86,7 @@ export class ResidentsService {
     private readonly flags: ReviewFlags,
     private readonly workers: WorkersService,
     private readonly authority: HouseholdAuthority,
+    private readonly lifecycle: AccountLifecycle,
   ) {}
 
   /** Account (resident role) + login identifiers + occupancies, atomically. */
@@ -272,10 +274,26 @@ export class ResidentsService {
           reason: reason.text,
         },
       );
+      await this.residenceChanged(tx, ended);
       return toOccupancyView(ended);
     });
     await runAfterCommit(after, this.logger);
     return view;
+  }
+
+  /**
+   * Where this account lives may have changed (ADR 0031): the domains that
+   * keep something for residents (entry credentials) re-check, in this
+   * transaction, after the action's writes.
+   */
+  private residenceChanged(
+    tx: TenantTxClient,
+    o: { accountId: string; tenantId: string },
+  ): Promise<void> {
+    return this.lifecycle.residenceChanged(tx, {
+      id: o.accountId,
+      tenantId: o.tenantId,
+    });
   }
 
   /**
@@ -728,6 +746,9 @@ export class ResidentsService {
           newOwnerAccountId: buyer.id,
         },
       });
+      // After the buyer's own occupancy exists: an occupant who buys keeps
+      // their entry credentials (ADR 0031).
+      for (const o of active) await this.residenceChanged(tx, o);
       return toOccupancyView(created);
     });
     await runAfterCommit(after, this.logger);
@@ -963,6 +984,7 @@ export class ResidentsService {
           capacity: resides ? 'owner_resident' : 'owner_landlord',
         },
       );
+      await this.residenceChanged(tx, old);
       return toOccupancyView(created);
     });
   }
@@ -1015,6 +1037,7 @@ export class ResidentsService {
           capacity: resides ? 'owner_resident' : 'owner_landlord',
         },
       );
+      await this.residenceChanged(tx, o);
       return toOccupancyView(updated);
     });
   }

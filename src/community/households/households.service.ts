@@ -1,3 +1,4 @@
+import { AccountLifecycle } from '../../core/accounts/account-lifecycle';
 import { randomBytes } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import {
@@ -105,6 +106,7 @@ export class HouseholdsService {
     private readonly outbox: Outbox,
     private readonly delegations: DelegationsService,
     private readonly flags: ReviewFlags,
+    private readonly lifecycle: AccountLifecycle,
   ) {}
 
   // --------------------------------------------------------------------------
@@ -853,6 +855,12 @@ export class HouseholdsService {
         sessionsRevoked = change?.sessionsRevoked ?? 0;
         lifecycleTasks.push(...(change?.afterCommit ?? []));
       }
+      // After the deactivation, so a person who lost their account loses
+      // their entry credentials for that reason (ADR 0031).
+      await this.lifecycle.residenceChanged(tx, {
+        id: member.accountId,
+        tenantId: member.tenantId,
+      });
     }
 
     await this.audit.record(tx, {

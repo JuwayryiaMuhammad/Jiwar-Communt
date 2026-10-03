@@ -1587,6 +1587,47 @@
         ],
         "type": "object"
       },
+      "EntryCredentialView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deviceName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "deviceName",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "EntryCredentialViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/EntryCredentialView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "EntryListView": {
         "properties": {
           "direction": {
@@ -2641,6 +2682,38 @@
         },
         "required": [
           "token"
+        ],
+        "type": "object"
+      },
+      "IssueEntryCredentialDto": {
+        "properties": {
+          "deviceName": {
+            "description": "A label the owner sees in their list (1–60 characters). Kept only while the credential is live; never audited.",
+            "example": "Mona's phone",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "IssuedEntryCredentialView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "secret": {
+            "description": "base64url of 32 bytes. Keep it in the phone's secure storage; the server cannot show it again. The QR is `JWR2.<id>.<step>.<mac>`: step = floor(unix seconds / 30), mac = base64url of the first 16 bytes of HMAC-SHA256 keyed with the secret's decoded bytes over \"<id>.<step>\".",
+            "type": "string"
+          },
+          "stepSeconds": {
+            "example": 30,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "secret",
+          "stepSeconds"
         ],
         "type": "object"
       },
@@ -9071,6 +9144,108 @@
         ],
         "tags": [
           "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/entry-credentials": {
+      "get": {
+        "operationId": "EntryCredentialsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryCredentialViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "entry-credentials"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "EntryCredentialsController_issue",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssueEntryCredentialDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedEntryCredentialView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "entry-credentials"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/entry-credentials/{id}/revoke": {
+      "post": {
+        "operationId": "EntryCredentialsController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "entry-credentials"
         ],
         "x-stability": "draft"
       }

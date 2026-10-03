@@ -57,6 +57,7 @@ describe('audit catalog', () => {
         'visitor_pass',
         'gate_approval_request',
         'file',
+        'entry_credential',
       ]).toContain(def.target);
     }
   });

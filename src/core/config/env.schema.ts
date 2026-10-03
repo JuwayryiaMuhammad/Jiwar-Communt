@@ -124,6 +124,13 @@ export const envSchema = z
 
     JWT_ACCESS_SECRET: secret,
     IDENTIFIER_PEPPER: secret,
+    /**
+     * Derives every resident's entry secret (ADR 0031). Whoever holds it can
+     * forge a resident QR in every compound; rotating it invalidates every
+     * entry credential. Must differ from IDENTIFIER_PEPPER and from
+     * environment to environment.
+     */
+    ENTRY_CREDENTIAL_KEY: secret,
     OTP_TTL_SECONDS: positiveInt.default(300),
     OTP_MAX_ATTEMPTS: positiveInt.default(5),
     LOGIN_TICKET_TTL_SECONDS: positiveInt.default(300),
@@ -155,6 +162,15 @@ export const envSchema = z
         code: 'custom',
         path: ['PLATFORM_JWT_SECRET'],
         message: 'must differ from JWT_ACCESS_SECRET',
+      });
+    }
+    // One key must not open two doors: the pepper hashes login identifiers
+    // and codes, this one forges resident QRs (ADR 0031).
+    if (env.ENTRY_CREDENTIAL_KEY === env.IDENTIFIER_PEPPER) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['ENTRY_CREDENTIAL_KEY'],
+        message: 'must differ from IDENTIFIER_PEPPER',
       });
     }
     if (

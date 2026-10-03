@@ -61,6 +61,27 @@ describe('API v0 — capabilities drive access', () => {
           body: passBody(),
         }),
     },
+    {
+      // The resident's entry QR (ADR 0031): registering a phone needs
+      // gateEntry on some unit (these personas live in one at most). The
+      // probe revokes what it registers, so the limit never bites.
+      flag: 'gateEntry',
+      run: async (token) => {
+        const res = await call(w, 'POST', '/me/entry-credentials', {
+          token,
+          body: {},
+        });
+        if (res.status === 201) {
+          await call(
+            w,
+            'POST',
+            `/me/entry-credentials/${(res.body as { id: string }).id}/revoke`,
+            { token },
+          ).expect(204);
+        }
+        return res;
+      },
+    },
   ];
 
   async function check(
@@ -101,6 +122,7 @@ describe('API v0 — capabilities drive access', () => {
       landlordTenantFinance: true,
       governanceVote: true,
       visitorsInvite: false,
+      gateEntry: false,
     });
   });
 
@@ -113,6 +135,7 @@ describe('API v0 — capabilities drive access', () => {
       transferOwnership: false,
       governanceVote: false,
       visitorsInvite: true,
+      gateEntry: true,
     });
   });
 
@@ -125,6 +148,7 @@ describe('API v0 — capabilities drive access', () => {
       financePay: false,
       bookings: true,
       visitorsInvite: true,
+      gateEntry: true,
     });
   });
 
@@ -152,6 +176,8 @@ describe('API v0 — capabilities drive access', () => {
       householdManage: false,
       financeView: false,
       financePay: false,
+      // A death review takes nothing away from living at home (ADR 0031).
+      gateEntry: true,
     });
     await check(
       'familyUnderReview',

@@ -35,6 +35,15 @@ it and the app refuses to boot without it. The image runs with
 `NODE_ENV=production`, so it must be `https://`, the web app's address (a
 placeholder until the web app exists; this API host itself is plain HTTP).
 
+`app.env` must set `ENTRY_CREDENTIAL_KEY` (ADR 0031; the app refuses to boot
+without it): the key every resident's entry secret is derived from. Generate
+it with `openssl rand -base64 48`, give staging and production **different**
+values, and never reuse `IDENTIFIER_PEPPER`'s (boot refuses an equal value).
+It lives in `app.env` only, never in the repository. Leaking it forges
+resident QRs in every compound; changing it makes every entry credential stop
+verifying, so every phone must register again (the ADR has the rotation
+procedure).
+
 Staging stores files on its own MinIO (`minio.env`, the `/jiwar/` nginx
 location). `app.env` must set `S3_*` (ADR 0029; the app refuses to boot
 without them): `S3_ENDPOINT=http://191.218.163.45` (the public address the

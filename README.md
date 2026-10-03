@@ -146,6 +146,7 @@ See `.env.example` for the full list with comments. The important ones:
 | `PLATFORM_LOGIN_*`, `PLATFORM_LOCKOUT_SECONDS` | Super admin rate limits and lockout |
 | `TRUST_PROXY` | `false` (default) or the **number** of reverse-proxy hops in front of the app. Behind one nginx on the VPS use `1` and bind the app to localhost. It decides `req.ip`, which feeds audit IPs and per-IP rate limits. Never "trust all": clients could forge `X-Forwarded-For` |
 | `TEST_SUPERUSER_DATABASE_URL` | Superuser on `jiwar_test`, used **only** by `test/` to clear the immutable audit tables between runs |
+| `ENTRY_CREDENTIAL_KEY` | Derives every resident's entry secret (≥ 32 chars, must differ from `IDENTIFIER_PEPPER`). Leaking it forges resident QRs in every compound; rotating it invalidates every entry credential (ADR 0031) |
 | `IDENTIFIER_PEPPER` | HMAC key for login identifiers and OTP codes (≥ 32 chars). Rotating it invalidates every login identifier |
 | `OTP_*` | Code TTL, max attempts, rate limits |
 | `OTP_FIXED_CODE` | **Development only.** Every code becomes this value (emails are still sent). The app refuses to start with it when `NODE_ENV=production` |

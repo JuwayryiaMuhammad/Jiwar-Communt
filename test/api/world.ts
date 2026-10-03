@@ -18,7 +18,12 @@ import { communityHelpers, type Compound } from '../setup/community';
 import { fileHelpers } from '../setup/files';
 import { gateHelpers } from '../setup/gate';
 import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
-import { uniqueEmail, uniquePhone, type HttpHarness } from '../setup/http-app';
+import {
+  API,
+  uniqueEmail,
+  uniquePhone,
+  type HttpHarness,
+} from '../setup/http-app';
 import { waitForOtp } from '../setup/mailpit';
 
 /** The tenant accounts every API suite acts as. */
@@ -92,6 +97,8 @@ export interface World {
   bRequestId: string;
   /** A finalized worker photo uploaded by B's owner (ADR 0029). */
   bFileId: string;
+  /** A phone B's owner registered for the entry QR (ADR 0031). */
+  bEntryCredentialId: string;
   /** A fresh token (and session) for any account. */
   tokenFor(
     side: Compound,
@@ -349,8 +356,15 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       }),
   );
   const bFileId = await fileHelpers(h).ready(b.tokens.owner);
+  const bEntryCredential = await h
+    .http()
+    .post(`${API}/me/entry-credentials`)
+    .set('Authorization', `Bearer ${b.tokens.owner}`)
+    .send({})
+    .expect(201);
   return {
     bFileId,
+    bEntryCredentialId: (bEntryCredential.body as { id: string }).id,
     bRequestId: bRequest.id,
     bPassId: bPass.id,
     bNotificationId: bNotification.id,

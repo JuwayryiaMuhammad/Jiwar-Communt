@@ -12,6 +12,9 @@ import {
   HostApprovalsController,
 } from './approvals/approvals.controller';
 import { EntriesController } from './entries/entries.controller';
+import { EntryCredentialsController } from './entry/entry-credentials.controller';
+import { EntryCredentialsService } from './entry/entry-credentials.service';
+import { EntrySecrets } from './entry/entry-secrets';
 import { EntriesService } from './entries/entries.service';
 import { GateSubjects } from './entries/subjects';
 import { VerifyService } from './entries/verify.service';
@@ -47,6 +50,7 @@ import { VisitorsController } from './visitors/visitors.controller';
     GuardApprovalsController,
     HostApprovalsController,
     AttendanceController,
+    EntryCredentialsController,
   ],
   providers: [
     GatesService,
@@ -60,6 +64,8 @@ import { VisitorsController } from './visitors/visitors.controller';
     VerifyService,
     ApprovalsService,
     AttendanceService,
+    EntrySecrets,
+    EntryCredentialsService,
   ],
 })
 export class GateModule {}

@@ -717,6 +717,7 @@ model Account {
   gateRequestsMade      GateApprovalRequest[]     @relation("RequestRequestedBy")
   gateRequestsDecided   GateApprovalRequest[]     @relation("RequestDecidedBy")
   files                 StoredFile[]              @relation("FileOwner")
+  entryCredentials      EntryCredential[]         @relation("CredentialAccount")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -1657,4 +1658,24 @@ model SecurityEvent {
   @@index([event])
   @@index([identifierHash])
   @@map("security_events")
+}
+
+/// A phone registered for the rotating entry QR (ADR 0031). The secret is
+/// derived from ENTRY_CREDENTIAL_KEY and never stored; there is no last-used
+/// time, because a resident's scan leaves no trace. Never deleted.
+model EntryCredential {
+  id           String    @id @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  accountId    String    @map("account_id") @db.Uuid
+  /// Personal: kept only while the credential is live (CHECK).
+  deviceName   String?   @map("device_name")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  revokedAt    DateTime? @map("revoked_at") @db.Timestamptz(3)
+  /// ENTRY_REVOKE_REASONS in src/gate/entry/entry-credentials.service.ts.
+  revokeReason String?   @map("revoke_reason")
+
+  account Account @relation("CredentialAccount", fields: [tenantId, accountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@map("entry_credentials")
 }

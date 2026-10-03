@@ -12,7 +12,7 @@ import {
 } from '../setup/audit-coverage-split';
 import { communityHelpers, type Compound } from '../setup/community';
 import { gateHelpers } from '../setup/gate';
-import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { API, createHttpHarness, type HttpHarness } from '../setup/http-app';
 
 /**
  * One scenario per Phase 4 catalog entry (ADR 0014, 0028): actor, target,
@@ -213,6 +213,83 @@ describe('Audit coverage — the gate', () => {
       expect(JSON.stringify([requested, decidedRow, reversed])).not.toContain(
         'Audit Visitor',
       );
+    });
+  });
+
+  describe('entry credentials (ADR 0031)', () => {
+    it('entry_credential.issued and .revoked — by the resident, then by a deactivation', async () => {
+      const c = await x.compound();
+      const unit = await x.unit(c);
+      const r = await x.resident(c, [unit.id]);
+      const token = await h.tokenFor({
+        sub: r.id,
+        tid: c.tenantId,
+        typ: 'resident',
+      });
+      const manager = await h.tokenFor({
+        sub: c.managerId,
+        tid: c.tenantId,
+        typ: 'manager',
+      });
+      const issue = async () =>
+        (
+          await h
+            .http()
+            .post(`${API}/me/entry-credentials`)
+            .set('Authorization', `Bearer ${token}`)
+            .send({ deviceName: 'Audit Phone' })
+            .expect(201)
+        ).body as { id: string; secret: string };
+      const first = await issue();
+      const issued = await single(c, 'entry_credential.issued', first.id);
+      expect(issued).toMatchObject({
+        actorType: 'account',
+        actorId: r.id,
+        targetType: 'entry_credential',
+        changes: null,
+        metadata: null,
+      });
+
+      await h
+        .http()
+        .post(`${API}/me/entry-credentials/${first.id}/revoke`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({})
+        .expect(204);
+      const revoked = await single(c, 'entry_credential.revoked', first.id);
+      expect(revoked).toMatchObject({
+        actorType: 'account',
+        actorId: r.id,
+        targetType: 'entry_credential',
+        metadata: { reasonCode: 'owner' },
+      });
+
+      // Another phone, ended by the manager deactivating the account.
+      const second = await issue();
+      await h
+        .http()
+        .patch(`${API}/accounts/${r.id}/status`)
+        .set('Authorization', `Bearer ${manager}`)
+        .send({ status: 'inactive' })
+        .expect(200);
+      const byManager = await read.tenant(c.tenantId, {
+        action: 'entry_credential.revoked',
+        targetId: second.id,
+      });
+      expect(byManager).toHaveLength(1);
+      expect(byManager[0]).toMatchObject({
+        actorType: 'account',
+        actorId: c.managerId,
+        metadata: { reasonCode: 'account_deactivated' },
+      });
+
+      // Never the secret, never the device.
+      for (const row of [issued, revoked, ...byManager]) {
+        const text = JSON.stringify(row);
+        expect(text).not.toContain(first.secret);
+        expect(text).not.toContain(second.secret);
+        expect(text).not.toContain('Audit Phone');
+      }
     });
   });
 

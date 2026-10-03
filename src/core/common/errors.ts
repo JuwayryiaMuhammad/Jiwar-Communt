@@ -123,6 +123,11 @@ export const ErrorCode = {
   ALREADY_INSIDE: 'ALREADY_INSIDE',
   NOT_INSIDE: 'NOT_INSIDE',
   GATE_REQUEST_NOT_FOUND: 'GATE_REQUEST_NOT_FOUND',
+  // the resident's entry QR (ADR 0031)
+  /** No unit where the caller lives (a landlord, a pending member, a guard…). */
+  NOT_A_RESIDENT: 'NOT_A_RESIDENT',
+  ENTRY_CREDENTIAL_LIMIT_REACHED: 'ENTRY_CREDENTIAL_LIMIT_REACHED',
+  ENTRY_CREDENTIAL_NOT_FOUND: 'ENTRY_CREDENTIAL_NOT_FOUND',
   /** Someone answered first, or the time ran out (params.status). */
   GATE_REQUEST_DECIDED: 'GATE_REQUEST_DECIDED',
   /** The worker may come in on their schedule: nothing to ask. */

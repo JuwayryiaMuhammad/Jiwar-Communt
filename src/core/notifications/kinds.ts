@@ -70,6 +70,16 @@ export const NOTIFICATION_KINDS = {
     target: 'visitor_pass',
     params: { unitCode: {} },
   },
+  /**
+   * A phone was registered for the account's entry QR (ADR 0031). A stolen
+   * account's first move is to register a phone and walk in: the owner must
+   * see it and may revoke it. Nothing about the device.
+   */
+  'entry_credential.issued': {
+    priority: 'normal',
+    target: 'entry_credential',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

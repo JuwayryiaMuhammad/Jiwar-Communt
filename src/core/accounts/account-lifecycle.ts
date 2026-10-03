@@ -27,6 +27,42 @@ export class AccountLifecycle {
   private readonly freezing: AccountHandler[] = [];
   private readonly reactivation: AccountHandler[] = [];
   private readonly erasure: DeactivationHandler[] = [];
+  private readonly sessionsRevokedAll: AccountHandler[] = [];
+  private readonly residence: AccountHandler[] = [];
+
+  /**
+   * "That wasn't me" (ADR 0031): every session of the account just ended.
+   * Whatever a session could have set up for later (an entry credential)
+   * ends with them.
+   */
+  onSessionsRevoked(handler: AccountHandler): void {
+    this.sessionsRevokedAll.push(handler);
+  }
+
+  async sessionsRevoked(
+    tx: TenantTxClient,
+    account: { id: string; tenantId: string },
+  ): Promise<void> {
+    for (const handler of this.sessionsRevokedAll) await handler(tx, account);
+  }
+
+  /**
+   * Where the account lives may have changed (an occupancy ended, a
+   * residence flag turned off, a membership ended): the domains that keep
+   * something for people who live in a unit re-check, in the same
+   * transaction and after the writes (ADR 0031). Handlers re-evaluate; they
+   * are not told what changed.
+   */
+  onResidenceChanged(handler: AccountHandler): void {
+    this.residence.push(handler);
+  }
+
+  async residenceChanged(
+    tx: TenantTxClient,
+    account: { id: string; tenantId: string },
+  ): Promise<void> {
+    for (const handler of this.residence) await handler(tx, account);
+  }
 
   /** Before an erasure: the domains end what hangs off the account. */
   onErasing(handler: DeactivationHandler): void {

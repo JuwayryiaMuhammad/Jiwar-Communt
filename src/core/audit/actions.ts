@@ -163,6 +163,10 @@ export const AUDIT_ACTIONS = {
   'visitor_pass.created': { log: 'tenant', target: 'visitor_pass' },
   'visitor_pass.cancelled': { log: 'tenant', target: 'visitor_pass' },
   'visitor_pass.code_reissued': { log: 'tenant', target: 'visitor_pass' },
+  // The resident's entry QR (ADR 0031). Ids and a reason code only: never the
+  // secret, never the device name. A resident's scan is not audited at all.
+  'entry_credential.issued': { log: 'tenant', target: 'entry_credential' },
+  'entry_credential.revoked': { log: 'tenant', target: 'entry_credential' },
   'gate.approval_requested': { log: 'tenant', target: 'gate_approval_request' },
   // metadata.decisionSource: household, standing_instruction or timeout.
   'gate.approval_decided': { log: 'tenant', target: 'gate_approval_request' },

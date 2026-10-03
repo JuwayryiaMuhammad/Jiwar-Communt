@@ -16,15 +16,22 @@ import {
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
-import { ListOf, toList, type ListResponse } from '../../core/common/http/list';
+import {
+  ListOf,
+  PageQueryDto,
+  toList,
+  type ListResponse,
+} from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { ReasonDto, reasonOf } from '../../core/common/http/reason.dto';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import { AttachmentsService } from './attachments.service';
+import { MessagesService } from './messages.service';
 import { ConfirmationService } from './confirmation.service';
 import {
   ConfirmDto,
   CreateTicketDto,
+  MessageDto,
   ReasonCodeDto,
   ResidentTicketsQueryDto,
   TicketPhotoDto,
@@ -36,6 +43,7 @@ import {
   ResidentTicketView,
   TicketCreatedView,
 } from './views/ticket.views';
+import { MessageCreatedView, ResidentMessageView } from './views/message.views';
 
 /**
  * A resident's tickets (ADR 0032): `tickets.create`, and the `tickets`
@@ -49,6 +57,7 @@ export class ResidentTicketsController {
     private readonly tickets: TicketsService,
     private readonly attachments: AttachmentsService,
     private readonly confirmation: ConfirmationService,
+    private readonly messages: MessagesService,
     private readonly ctx: RequestContext,
   ) {}
 
@@ -138,5 +147,29 @@ export class ResidentTicketsController {
     @Body() dto: ReasonDto,
   ): Promise<void> {
     return this.confirmation.reopen(id, reasonOf(dto));
+  }
+
+  /** The thread, oldest first; never an internal message. */
+  @Get(':id/messages')
+  @ApiOkResponse({ type: ListOf(ResidentMessageView) })
+  async messagesOf(
+    @Param('id', parseId()) id: string,
+    @Query() q: PageQueryDto,
+  ): Promise<ListResponse<ResidentMessageView>> {
+    return toList(await this.messages.list(id, 'resident', q), (m) =>
+      ResidentMessageView.from(m),
+    );
+  }
+
+  @Post(':id/messages')
+  @Idempotent()
+  @ApiCreatedResponse({ type: MessageCreatedView })
+  async post(
+    @Param('id', parseId()) id: string,
+    @Body() dto: MessageDto,
+  ): Promise<MessageCreatedView> {
+    return MessageCreatedView.from(
+      await this.messages.post(id, 'resident', dto.body),
+    );
   }
 }

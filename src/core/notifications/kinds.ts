@@ -183,6 +183,12 @@ export const NOTIFICATION_KINDS = {
     target: 'ticket',
     params: { ticketNumber: {}, unitCode: { optional: true } },
   },
+  /** A new message on a ticket the reader may see; never its body. */
+  'ticket.message': {
+    priority: 'normal',
+    target: 'ticket',
+    params: { ticketNumber: {}, unitCode: { optional: true } },
+  },
   /** Dispatch opened a ticket in the reporter's name. */
   'ticket.opened_on_behalf': {
     priority: 'normal',

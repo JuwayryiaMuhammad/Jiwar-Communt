@@ -1234,6 +1234,153 @@ describe('API v0 — maintenance (ADR 0032)', () => {
     });
   });
 
+  describe('messages', () => {
+    const MESSAGE = [
+      'body',
+      'createdAt',
+      'deleted',
+      'id',
+      'sender',
+      'sender.firstName',
+      'sender.id',
+      'senderKind',
+    ];
+    const post = (path: string, token: string, body: object) =>
+      call(w, 'POST', path, { token, body });
+    const bodies = async (path: string, token: string) =>
+      (
+        (await call(w, 'GET', path, { token }).expect(200)).body as {
+          data: { body: string }[];
+        }
+      ).data.map((m) => m.body);
+
+    it('the people on a ticket talk; internal messages stay with staff; nobody is told the words', async () => {
+      // A family member's ticket on the owner's home, assigned.
+      const t = (
+        await open(w.a.tokens.family, { unitId: w.a.homeUnitId }).expect(201)
+      ).body as { id: string };
+      await call(w, 'POST', `/maintenance/tickets/${t.id}/assign`, {
+        token: manager(),
+        body: { technicianId: w.a.ids.technician },
+      }).expect(204);
+      const resident = `/tickets/${t.id}/messages`;
+      const tech = `/technician/tickets/${t.id}/messages`;
+      const dispatch = `/maintenance/tickets/${t.id}/messages`;
+
+      const created = await post(resident, w.a.tokens.family, {
+        body: 'The valve is behind the washing machine',
+      }).expect(201);
+      expect(keyPaths(created.body)).toEqual(['createdAt', 'id']);
+      // The primary sees the ticket, so they take part.
+      await post(resident, w.a.tokens.owner, { body: 'Ring twice' }).expect(
+        201,
+      );
+      await post(tech, w.a.tokens.technician, {
+        body: 'Coming at five',
+      }).expect(201);
+      await post(tech, w.a.tokens.technician, {
+        body: 'Needs a new part from the store',
+        internal: true,
+      }).expect(201);
+      await post(dispatch, manager(), {
+        body: 'Part ordered',
+        internal: true,
+      }).expect(201);
+      // A resident cannot write for staff only.
+      const sneaky = await post(resident, w.a.tokens.family, {
+        body: 'x',
+        internal: true,
+      });
+      expect(err(sneaky).fields).toEqual([
+        { field: 'internal', code: 'FIELD_NOT_ALLOWED' },
+      ]);
+
+      const asResident = await call(w, 'GET', resident, {
+        token: w.a.tokens.owner,
+      }).expect(200);
+      expect(keyPaths(asResident.body)).toEqual(listKeys(MESSAGE));
+      expect(await bodies(resident, w.a.tokens.owner)).toEqual([
+        'The valve is behind the washing machine',
+        'Ring twice',
+        'Coming at five',
+      ]);
+      const asTech = await call(w, 'GET', tech, {
+        token: w.a.tokens.technician,
+      }).expect(200);
+      expect(keyPaths(asTech.body)).toEqual(
+        listKeys([...MESSAGE, 'internal'].sort()),
+      );
+      expect(await bodies(tech, w.a.tokens.technician)).toHaveLength(5);
+      const asDispatch = await call(w, 'GET', dispatch, {
+        token: manager(),
+      }).expect(200);
+      expect(keyPaths(asDispatch.body)).toEqual(
+        listKeys(
+          [
+            'body',
+            'createdAt',
+            'deleted',
+            'id',
+            'internal',
+            'sender',
+            'sender.fullName',
+            'sender.id',
+            'senderKind',
+          ].sort(),
+        ),
+      );
+      expect(
+        (asResident.body as { data: { senderKind: string }[] }).data.map(
+          (m) => m.senderKind,
+        ),
+      ).toEqual(['resident', 'resident', 'staff']);
+
+      // Everyone who can read a message is told — never with its words.
+      expect(await kinds(w.a.tokens.technician, t.id)).toContain(
+        'ticket.message',
+      );
+      expect(await kinds(w.a.tokens.owner, t.id)).toContain('ticket.message');
+      const inbox = JSON.stringify(
+        (
+          await call(w, 'GET', '/me/notifications', {
+            token: w.a.tokens.owner,
+          }).expect(200)
+        ).body,
+      );
+      for (const words of ['valve', 'Coming at five', 'Needs a new part'])
+        expect(inbox).not.toContain(words);
+      // An internal message tells staff only: the family member, who sent
+      // nothing internal, heard of three messages it may read.
+      const familyTold = (await kinds(w.a.tokens.family, t.id)).filter(
+        (k) => k === 'ticket.message',
+      );
+      expect(familyTold).toHaveLength(2);
+
+      // Others: not found.
+      for (const token of [w.a.tokens.tenant, w.a.tokens.landlord]) {
+        const res = await call(w, 'GET', resident, { token });
+        expect(code(res)).toEqual({ status: 404, code: 'TICKET_NOT_FOUND' });
+      }
+    });
+
+    it('no message on a closed or cancelled ticket', async () => {
+      const t = (
+        await open(w.a.tokens.owner, { unitId: w.a.homeUnitId }).expect(201)
+      ).body as { id: string };
+      await call(w, 'POST', `/tickets/${t.id}/cancel`, {
+        token: w.a.tokens.owner,
+        body: { reasonCode: 'duplicate' },
+      }).expect(204);
+      const res = await post(`/tickets/${t.id}/messages`, w.a.tokens.owner, {
+        body: 'Never mind',
+      });
+      expect(code(res)).toEqual({
+        status: 409,
+        code: 'TICKET_INVALID_TRANSITION',
+      });
+    });
+  });
+
   describe('categories and settings', () => {
     it('the manager lists, adds, renames and retires categories; residents see the active ones', async () => {
       const list = await call(w, 'GET', '/maintenance/categories', {

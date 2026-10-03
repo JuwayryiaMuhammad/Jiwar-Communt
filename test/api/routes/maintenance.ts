@@ -531,3 +531,45 @@ export const CONFIRMATION_ROUTES: Row[] = [
     },
   },
 ];
+
+const BODY_LENGTH = {
+  body: { body: '' },
+  fields: [
+    { field: 'body', code: 'INVALID_LENGTH', params: { min: 1, max: 2000 } },
+  ],
+};
+
+/** A ticket's thread, per audience (ADR 0032). */
+export const MESSAGE_ROUTES: Row[] = (
+  [
+    ['/tickets/{id}/messages', 'owner', 'guard'],
+    ['/technician/tickets/{id}/messages', 'technician', 'manager'],
+    ['/maintenance/tickets/{id}/messages', 'manager', 'technician'],
+  ] as const
+).flatMap(([path, as, denied]): Row[] => [
+  {
+    method: 'GET',
+    path,
+    auth: 'tenant',
+    as,
+    denied,
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path,
+    auth: 'tenant',
+    as,
+    denied,
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      body: () => ({ body: 'Hello' }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: BODY_LENGTH,
+  },
+]);

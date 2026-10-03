@@ -307,6 +307,9 @@ describe('API v0 — PII leak scan', () => {
     const params: Record<string, string> = {
       '/tickets/{id}': ticket.id,
       '/technician/tickets/{id}': ticket.id,
+      '/tickets/{id}/messages': ticket.id,
+      '/technician/tickets/{id}/messages': ticket.id,
+      '/maintenance/tickets/{id}/messages': ticket.id,
       '/maintenance/tickets/{id}': ticket.id,
       '/maintenance/tickets/{id}/history': ticket.id,
       '/maintenance/tickets/{id}/assignments': ticket.id,

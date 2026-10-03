@@ -1824,6 +1824,69 @@
         ],
         "type": "string"
       },
+      "DispatchMessageView": {
+        "properties": {
+          "body": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "internal": {
+            "description": "Staff only.",
+            "type": "boolean"
+          },
+          "sender": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "senderKind": {
+            "enum": [
+              "resident",
+              "staff",
+              "manager"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sender",
+          "senderKind",
+          "body",
+          "deleted",
+          "internal",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "DispatchMessageViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/DispatchMessageView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "DispatchTicketDetailView": {
         "properties": {
           "cancelledAt": {
@@ -3877,6 +3940,36 @@
         },
         "type": "object"
       },
+      "MessageCreatedView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "MessageDto": {
+        "properties": {
+          "body": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
       "MyDelegationView": {
         "properties": {
           "counterpart": {
@@ -5703,6 +5796,65 @@
         ],
         "type": "object"
       },
+      "ResidentMessageView": {
+        "properties": {
+          "body": {
+            "description": "Null once its sender was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "sender": {
+            "$ref": "#/components/schemas/FirstNameRefView"
+          },
+          "senderKind": {
+            "enum": [
+              "resident",
+              "staff",
+              "manager"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sender",
+          "senderKind",
+          "body",
+          "deleted",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ResidentMessageViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ResidentMessageView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ResidentTicketDetailView": {
         "properties": {
           "autoCloseAt": {
@@ -6536,6 +6688,24 @@
         ],
         "type": "object"
       },
+      "StaffMessageDto": {
+        "properties": {
+          "body": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "internal": {
+            "default": false,
+            "description": "Staff only: never shown to residents.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
       "StartShiftDto": {
         "properties": {
           "gateId": {
@@ -6602,6 +6772,70 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/StatusHistoryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "TechnicianMessageView": {
+        "properties": {
+          "body": {
+            "description": "Null once its sender was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "internal": {
+            "description": "Staff only.",
+            "type": "boolean"
+          },
+          "sender": {
+            "$ref": "#/components/schemas/FirstNameRefView"
+          },
+          "senderKind": {
+            "enum": [
+              "resident",
+              "staff",
+              "manager"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sender",
+          "senderKind",
+          "body",
+          "deleted",
+          "createdAt",
+          "internal"
+        ],
+        "type": "object"
+      },
+      "TechnicianMessageViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TechnicianMessageView"
             },
             "type": "array"
           },
@@ -11187,6 +11421,115 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/tickets/{id}/messages": {
+      "get": {
+        "operationId": "DispatchTicketsController_messagesOf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchMessageViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "DispatchTicketsController_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/tickets/{id}/priority": {
       "post": {
         "operationId": "DispatchTicketsController_priority",
@@ -13749,6 +14092,115 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/technician/tickets/{id}/messages": {
+      "get": {
+        "operationId": "TechnicianTicketsController_messagesOf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnicianMessageViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "technician"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "TechnicianTicketsController_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "technician"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/technician/tickets/{id}/photos": {
       "post": {
         "operationId": "TechnicianTicketsController_addPhoto",
@@ -14091,6 +14543,115 @@
         },
         "responses": {
           "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/tickets/{id}/messages": {
+      "get": {
+        "operationId": "ResidentTicketsController_messagesOf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentMessageViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ResidentTicketsController_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageCreatedView"
+                }
+              }
+            },
             "description": ""
           }
         },

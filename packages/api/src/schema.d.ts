@@ -1044,6 +1044,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/tickets/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DispatchTicketsController_messagesOf"];
+        put?: never;
+        post: operations["DispatchTicketsController_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/tickets/{id}/priority": {
         parameters: {
             query?: never;
@@ -2004,6 +2020,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/technician/tickets/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["TechnicianTicketsController_messagesOf"];
+        put?: never;
+        post: operations["TechnicianTicketsController_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/technician/tickets/{id}/photos": {
         parameters: {
             query?: never;
@@ -2126,6 +2158,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["ResidentTicketsController_confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ResidentTicketsController_messagesOf"];
+        put?: never;
+        post: operations["ResidentTicketsController_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3350,6 +3398,23 @@ export interface components {
         };
         /** @enum {string} */
         DeliveryInstruction: "ask" | "allow" | "leave_at_gate" | "deny";
+        DispatchMessageView: {
+            body: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            deleted: boolean;
+            /** Format: uuid */
+            id: string;
+            /** @description Staff only. */
+            internal: boolean;
+            sender: components["schemas"]["AccountRefView"];
+            /** @enum {string} */
+            senderKind: "resident" | "staff" | "manager";
+        };
+        DispatchMessageViewList: {
+            data: components["schemas"]["DispatchMessageView"][];
+            nextCursor: string | null;
+        };
         DispatchTicketDetailView: {
             /** Format: date-time */
             cancelledAt: string | null;
@@ -3896,6 +3961,15 @@ export interface components {
             /** @description Member ids; or send `all: true` instead. */
             memberIds?: string[];
         };
+        MessageCreatedView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+        };
+        MessageDto: {
+            body: string;
+        };
         MyDelegationView: {
             /** @description The other side, by name only. */
             counterpart: components["schemas"]["AccountRefView"];
@@ -4433,6 +4507,22 @@ export interface components {
             data: components["schemas"]["ResidentListItemView"][];
             nextCursor: string | null;
         };
+        ResidentMessageView: {
+            /** @description Null once its sender was erased. */
+            body: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            deleted: boolean;
+            /** Format: uuid */
+            id: string;
+            sender: components["schemas"]["FirstNameRefView"];
+            /** @enum {string} */
+            senderKind: "resident" | "staff" | "manager";
+        };
+        ResidentMessageViewList: {
+            data: components["schemas"]["ResidentMessageView"][];
+            nextCursor: string | null;
+        };
         ResidentTicketDetailView: {
             /**
              * Format: date-time
@@ -4667,6 +4757,14 @@ export interface components {
             /** Format: date-time */
             startedAt: string;
         };
+        StaffMessageDto: {
+            body: string;
+            /**
+             * @description Staff only: never shown to residents.
+             * @default false
+             */
+            internal: boolean;
+        };
         StartShiftDto: {
             /** Format: uuid */
             gateId: string;
@@ -4683,6 +4781,24 @@ export interface components {
         };
         StatusHistoryViewList: {
             data: components["schemas"]["StatusHistoryView"][];
+            nextCursor: string | null;
+        };
+        TechnicianMessageView: {
+            /** @description Null once its sender was erased. */
+            body: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            deleted: boolean;
+            /** Format: uuid */
+            id: string;
+            /** @description Staff only. */
+            internal: boolean;
+            sender: components["schemas"]["FirstNameRefView"];
+            /** @enum {string} */
+            senderKind: "resident" | "staff" | "manager";
+        };
+        TechnicianMessageViewList: {
+            data: components["schemas"]["TechnicianMessageView"][];
             nextCursor: string | null;
         };
         TechnicianOptionView: {
@@ -6807,6 +6923,59 @@ export interface operations {
             };
         };
     };
+    DispatchTicketsController_messagesOf: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DispatchMessageViewList"];
+                };
+            };
+        };
+    };
+    DispatchTicketsController_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffMessageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageCreatedView"];
+                };
+            };
+        };
+    };
     DispatchTicketsController_priority: {
         parameters: {
             query?: never;
@@ -8288,6 +8457,59 @@ export interface operations {
             };
         };
     };
+    TechnicianTicketsController_messagesOf: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicianMessageViewList"];
+                };
+            };
+        };
+    };
+    TechnicianTicketsController_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffMessageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageCreatedView"];
+                };
+            };
+        };
+    };
     TechnicianTicketsController_addPhoto: {
         parameters: {
             query?: never;
@@ -8485,6 +8707,59 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    ResidentTicketsController_messagesOf: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentMessageViewList"];
+                };
+            };
+        };
+    };
+    ResidentTicketsController_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MessageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageCreatedView"];
+                };
             };
         };
     };

@@ -19,6 +19,7 @@ import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
   bounded,
   ListOf,
+  PageQueryDto,
   toList,
   type ListResponse,
 } from '../../core/common/http/list';
@@ -26,6 +27,7 @@ import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import { ConfirmationService } from './confirmation.service';
 import { DispatchService, type TechnicianOption } from './dispatch.service';
+import { MessagesService } from './messages.service';
 import {
   AssignDto,
   CreateTicketOnBehalfDto,
@@ -33,6 +35,7 @@ import {
   PriorityDto,
   ReasonCodeDto,
   ReassignDto,
+  StaffMessageDto,
 } from './dto/tickets.dto';
 import { TicketsService } from './tickets.service';
 import {
@@ -42,6 +45,7 @@ import {
   StatusHistoryView,
   TicketCreatedView,
 } from './views/ticket.views';
+import { DispatchMessageView, MessageCreatedView } from './views/message.views';
 
 /**
  * Dispatch (ADR 0032): every ticket of the compound, for
@@ -55,6 +59,7 @@ export class DispatchTicketsController {
     private readonly tickets: TicketsService,
     private readonly dispatch: DispatchService,
     private readonly confirmation: ConfirmationService,
+    private readonly messages: MessagesService,
   ) {}
 
   @Get()
@@ -157,6 +162,30 @@ export class DispatchTicketsController {
     @Body() dto: ReasonCodeDto,
   ): Promise<void> {
     return this.confirmation.cancelByDispatcher(id, dto.reasonCode);
+  }
+
+  /** The thread, oldest first, internal messages included. */
+  @Get(':id/messages')
+  @ApiOkResponse({ type: ListOf(DispatchMessageView) })
+  async messagesOf(
+    @Param('id', parseId()) id: string,
+    @Query() q: PageQueryDto,
+  ): Promise<ListResponse<DispatchMessageView>> {
+    return toList(await this.messages.list(id, 'dispatch', q), (m) =>
+      DispatchMessageView.from(m),
+    );
+  }
+
+  @Post(':id/messages')
+  @Idempotent()
+  @ApiCreatedResponse({ type: MessageCreatedView })
+  async post(
+    @Param('id', parseId()) id: string,
+    @Body() dto: StaffMessageDto,
+  ): Promise<MessageCreatedView> {
+    return MessageCreatedView.from(
+      await this.messages.post(id, 'dispatch', dto.body, dto.internal),
+    );
   }
 }
 

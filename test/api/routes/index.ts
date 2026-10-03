@@ -14,6 +14,7 @@ import { HOUSEHOLD_ROUTES } from './household';
 import {
   CONFIRMATION_ROUTES,
   MAINTENANCE_ROUTES,
+  MESSAGE_ROUTES,
   TICKET_ROUTES,
   WORK_ROUTES,
 } from './maintenance';
@@ -58,4 +59,5 @@ export const ROUTES: Row[] = [
   ...TICKET_ROUTES,
   ...WORK_ROUTES,
   ...CONFIRMATION_ROUTES,
+  ...MESSAGE_ROUTES,
 ];

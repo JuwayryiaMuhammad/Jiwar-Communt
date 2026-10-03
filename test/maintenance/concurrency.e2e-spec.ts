@@ -325,4 +325,37 @@ describe('Maintenance concurrency', () => {
       expect((await history(id)).filter((s) => s === 'closed')).toHaveLength(1);
     }
   });
+
+  it('a message waits for an erasure in flight on its sender, and is then refused', async () => {
+    const sender = await w.helpers.resident(w.a, [w.a.homeUnitId]);
+    const token = await w.tokenFor(w.a, sender.id, 'resident');
+    // The sender's own ticket, so they may post on it.
+    const mine = (
+      (
+        await call(w, 'POST', '/tickets', {
+          token,
+          body: ticketBody(w.a.homeUnitId, w.aCategoryId),
+        }).expect(201)
+      ).body as { id: string }
+    ).id;
+    // The erasure locks the account row first (ADR 0023).
+    const held = await holding('accounts', sender.id);
+    const pending = call(w, 'POST', `/tickets/${mine}/messages`, {
+      token,
+      body: { body: 'Sent while being erased' },
+    }).then((r) => r);
+    await waitForLockWaiter();
+    await settle(
+      held,
+      `UPDATE accounts SET status = 'inactive' WHERE id = $1`,
+      [sender.id],
+    );
+    expect((await pending).status).toBe(401);
+    const bodies = await w.helpers.asManager(w.a, () =>
+      w.helpers.prisma.tenant.ticketMessage.count({
+        where: { ticketId: mine },
+      }),
+    );
+    expect(bodies).toBe(0);
+  });
 });

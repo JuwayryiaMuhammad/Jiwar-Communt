@@ -2846,7 +2846,7 @@ export interface components {
             scopePhrase: string;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document";
+        FilePurpose: "worker_photo" | "document" | "resident_photo";
         FileReadView: {
             contentType: string;
             /** Format: date-time */

@@ -54,6 +54,8 @@ export const PERMISSIONS = {
   'gate.manage': { kinds: ['manager'] },
   'gate.read': { kinds: ['manager'] },
   'visitors.invite': { kinds: ['resident', 'family'] },
+  // One's own photo, shown to the guard at the gate (ADR 0031).
+  'profile.photo': { kinds: ['resident', 'family'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

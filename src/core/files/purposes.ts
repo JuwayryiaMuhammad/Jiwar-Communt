@@ -20,7 +20,8 @@ export interface FilePurposeDefinition {
  * files_size_for_purpose); a unit test keeps the two in step.
  *
  * A worker's photo is uploaded by whoever may register a worker, and by the
- * manager, who may set or replace it later.
+ * manager, who may set or replace it later. A resident's own photo is
+ * uploaded by the account itself (`profile.photo`, ADR 0031).
  */
 export const FILE_PURPOSES = {
   worker_photo: {
@@ -32,6 +33,11 @@ export const FILE_PURPOSES = {
     types: FILE_TYPES,
     maxBytes: 10 * MB,
     uploaders: ['accounts.manage'],
+  },
+  resident_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['profile.photo'],
   },
 } as const satisfies Record<FilePurpose, FilePurposeDefinition>;
 

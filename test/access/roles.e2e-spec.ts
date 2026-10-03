@@ -91,6 +91,7 @@ describe('Roles', () => {
       permissions: [
         'household.delegate',
         'household.manage',
+        'profile.photo',
         'units.read',
         'visitors.invite',
         'workers.manage',
@@ -220,6 +221,7 @@ describe('Roles', () => {
         'household.delegate',
         'workers.manage',
         'visitors.invite',
+        'profile.photo',
       ]),
     );
     expect(await version()).toBe(before);

@@ -306,6 +306,7 @@ describe('Audit coverage', () => {
           from: [
             'household.delegate',
             'household.manage',
+            'profile.photo',
             'units.read',
             'visitors.invite',
             'workers.manage',

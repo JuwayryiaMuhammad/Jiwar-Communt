@@ -3,10 +3,17 @@ import { join } from 'node:path';
 import { FILE_PURPOSES, FILE_TYPES } from './purposes';
 import { matchesSignature } from './signatures';
 
+const migrations = '../../../prisma/migrations';
 const migration = readFileSync(
+  join(__dirname, migrations, '20261005090000_files/migration.sql'),
+  'utf8',
+);
+/** The size CHECK as it stands now (ADR 0031 recreated it). */
+const sizeCheck = readFileSync(
   join(
     __dirname,
-    '../../../prisma/migrations/20261005090000_files/migration.sql',
+    migrations,
+    '20261006090100_resident_photo_purpose/migration.sql',
   ),
   'utf8',
 );
@@ -14,10 +21,13 @@ const migration = readFileSync(
 describe('file purposes', () => {
   it('match the CHECKs in the database', () => {
     // files_size_for_purpose
-    expect(migration).toContain(
+    expect(sizeCheck).toContain(
       `WHEN 'worker_photo' THEN ${FILE_PURPOSES.worker_photo.maxBytes}`,
     );
-    expect(migration).toContain(`ELSE ${FILE_PURPOSES.document.maxBytes} END`);
+    expect(sizeCheck).toContain(
+      `WHEN 'resident_photo' THEN ${FILE_PURPOSES.resident_photo.maxBytes}`,
+    );
+    expect(sizeCheck).toContain(`ELSE ${FILE_PURPOSES.document.maxBytes} END`);
     // files_content_type_for_purpose: images for every purpose, a PDF only
     // as a document.
     expect(FILE_PURPOSES.worker_photo.types).toEqual([
@@ -25,6 +35,9 @@ describe('file purposes', () => {
       'image/png',
       'image/webp',
     ]);
+    expect(FILE_PURPOSES.resident_photo.types).toEqual(
+      FILE_PURPOSES.worker_photo.types,
+    );
     expect(FILE_PURPOSES.document.types).toEqual(FILE_TYPES);
     expect(migration).toContain(
       `"content_type" IN ('image/jpeg', 'image/png', 'image/webp')`,

@@ -1546,6 +1546,7 @@ model GateApprovalRequest {
 enum FilePurpose {
   worker_photo
   document
+  resident_photo
 
   @@map("file_purpose")
 }

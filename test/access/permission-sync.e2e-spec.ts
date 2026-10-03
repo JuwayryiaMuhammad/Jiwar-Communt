@@ -212,6 +212,7 @@ describe('Permission sync', () => {
     // units.read was offered long ago, yet the new role has it.
     expect((await role(t, 'family_member')).permissions).toEqual([
       'household.manage',
+      'profile.photo',
       'units.read',
       'visitors.invite',
       'workers.manage',
@@ -236,6 +237,7 @@ describe('Permission sync', () => {
           from: [],
           to: [
             'household.manage',
+            'profile.photo',
             'units.read',
             'visitors.invite',
             'workers.manage',
@@ -346,6 +348,43 @@ describe('Permission sync', () => {
       rolesCreated: [],
       rolesChanged: 0,
     });
+  });
+
+  it('Phase 4.3 reaches an existing compound: profile.photo to residents and family only (ADR 0031)', async () => {
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => p !== 'profile.photo'),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => p !== 'profile.photo'),
+      })),
+    };
+    expect(catalogProblems(before)).toEqual([]);
+    const t = newId();
+    await h.globalDb.tenant.create({
+      data: { id: t, name: `Sync 4.3 compound ${t}` },
+    });
+    await h.asTenant(t, () =>
+      h.tenantTx.withTenantTx(async (tx) => {
+        await new RoleProvisioner(before).provision(tx, t);
+        await tx.tenantSettings.create({ data: { tenantId: t } });
+      }),
+    );
+
+    const report = await sync(base, t);
+    expect(report.added).toEqual(['profile.photo']);
+    for (const key of ['resident', 'family_member'])
+      expect((await role(t, key)).permissions).toContain('profile.photo');
+    for (const key of ['manager', 'guard'])
+      expect((await role(t, key)).permissions).not.toContain('profile.photo');
+    // A resident role that dropped it by hand keeps it dropped.
+    await removeByHand(t, 'resident', 'profile.photo');
+    expect((await sync(base, t)).added).toEqual([]);
+    expect((await role(t, 'resident')).permissions).not.toContain(
+      'profile.photo',
+    );
   });
 
   it('a second run is a no-op', async () => {

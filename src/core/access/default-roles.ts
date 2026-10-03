@@ -50,6 +50,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'household.delegate',
       'workers.manage',
       'visitors.invite',
+      'profile.photo',
     ],
   },
   {
@@ -61,6 +62,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'household.manage',
       'workers.manage',
       'visitors.invite',
+      'profile.photo',
     ],
   },
   {

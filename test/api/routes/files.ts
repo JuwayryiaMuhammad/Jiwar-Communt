@@ -18,7 +18,7 @@ export const FILES_ROUTES: Row[] = [
         {
           field: 'purpose',
           code: 'INVALID_VALUE',
-          params: { allowed: ['worker_photo', 'document'] },
+          params: { allowed: ['worker_photo', 'document', 'resident_photo'] },
         },
         { field: 'contentType', code: 'INVALID_TYPE' },
         { field: 'size', code: 'INVALID_NUMBER', params: { min: 1 } },

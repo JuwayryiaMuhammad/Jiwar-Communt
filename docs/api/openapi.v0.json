@@ -1830,7 +1830,8 @@
       "FilePurpose": {
         "enum": [
           "worker_photo",
-          "document"
+          "document",
+          "resident_photo"
         ],
         "type": "string"
       },

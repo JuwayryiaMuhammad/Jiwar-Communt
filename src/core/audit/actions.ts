@@ -20,6 +20,12 @@ export const AUDIT_ACTIONS = {
   'account.created': { log: 'tenant', target: 'account' },
   'account.status_changed': { log: 'tenant', target: 'account' },
   'account.locale_changed': { log: 'tenant', target: 'account' },
+  // The account's own photo (ADR 0031): never a file id.
+  'account.photo_changed': {
+    log: 'tenant',
+    target: 'account',
+    sensitive: ['photo'],
+  },
   'account.contact_changed': {
     log: 'tenant',
     target: 'account',

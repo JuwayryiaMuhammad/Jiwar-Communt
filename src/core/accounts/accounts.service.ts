@@ -11,6 +11,7 @@ import {
 } from '../common/reasons';
 import { PrismaService } from '../database/prisma.service';
 import { TenantTx } from '../database/tenant-tx.service';
+import { AttachedFileUrls } from '../files/attached-file-urls';
 import { runAfterCommit } from './account-lifecycle';
 import { AccountWriter } from './account-writer';
 import { AccountRecord } from './account-record';
@@ -29,6 +30,7 @@ export class AccountsService {
     private readonly writer: AccountWriter,
     private readonly ctx: RequestContext,
     private readonly securityEvents: SecurityEventsService,
+    private readonly fileUrls: AttachedFileUrls,
   ) {}
 
   /** Every account of the compound, newest first, a page at a time. */
@@ -60,6 +62,23 @@ export class AccountsService {
 
   me(): Promise<AccountRecord> {
     return this.get(this.ctx.accountId);
+  }
+
+  /**
+   * The caller's own photo (ADR 0031) as a presigned read, or null. Only
+   * `GET /me` shows it to the person, and the gate to a guard on a valid
+   * scan; no other view of an account carries it.
+   */
+  myPhotoUrl(): Promise<string | null> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const row = await tx.account.findUnique({
+        where: { id: this.ctx.accountId },
+        select: { photoFileId: true },
+      });
+      return (
+        (await this.fileUrls.read(tx, row?.photoFileId ?? null))?.url ?? null
+      );
+    });
   }
 
   /** A manager creating an account; the role follows the type (ADR 0010). */

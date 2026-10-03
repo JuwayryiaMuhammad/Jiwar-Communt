@@ -8,8 +8,10 @@ import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
 import { newId } from '../common/uuid';
 import { TenantTx, type TenantTxClient } from '../database/tenant-tx.service';
 import { SweepRunner } from '../sweep/sweep-runner';
+import { AttachedFileUrls } from './attached-file-urls';
 import {
   ObjectStorage,
+  objectKey,
   type PresignedRead,
   type PresignedUpload,
 } from './object-storage';
@@ -43,9 +45,7 @@ export type FileDeleteReason =
   /** Its record's retention ended (a worker's photo, ADR 0029). */
   | 'retention';
 
-/** The object key: tenant and file id only, never anything a client sent. */
-export const objectKey = (f: { tenantId: string; id: string }): string =>
-  `t/${f.tenantId}/${f.id}`;
+export { objectKey };
 
 export interface NewUpload {
   file: StoredFile;
@@ -91,6 +91,7 @@ export class FilesService implements OnModuleInit {
     private readonly audit: AuditService,
     private readonly permissions: PermissionsService,
     private readonly storage: ObjectStorage,
+    private readonly attachedUrls: AttachedFileUrls,
     private readonly sweep: SweepRunner,
     private readonly lifecycle: AccountLifecycle,
   ) {}
@@ -106,6 +107,24 @@ export class FilesService implements OnModuleInit {
         select: { id: true, purpose: true },
       });
       for (const file of owned) await this.markDeleted(tx, file, 'erasure');
+      // The account's own photo (ADR 0031) is attached, not owned: the
+      // account points at it, so the pointer goes in the same transaction.
+      const photo = await tx.account.findUnique({
+        where: { id: account.id },
+        select: { photoFileId: true },
+      });
+      if (photo?.photoFileId) {
+        await tx.account.update({
+          where: { id: account.id },
+          data: { photoFileId: null },
+        });
+        const file = {
+          id: photo.photoFileId,
+          purpose: 'resident_photo',
+        } as const;
+        await this.markDeleted(tx, file, 'erasure');
+        owned.push(file);
+      }
       return owned.map((file) => async () => {
         await this.purge(file.id);
       });
@@ -296,16 +315,11 @@ export class FilesService implements OnModuleInit {
    * A read URL for a record's attached file (presigning is local: no store
    * call). The caller has authorized the reader; null when it is gone.
    */
-  async readUrl(
+  readUrl(
     tx: TenantTxClient,
     id: string | null,
   ): Promise<PresignedRead | null> {
-    if (!id) return null;
-    const file = await tx.storedFile.findFirst({
-      where: { id, deletedAt: null, attachedAt: { not: null } },
-      select: { id: true, tenantId: true },
-    });
-    return file ? this.storage.presignGet(objectKey(file)) : null;
+    return this.attachedUrls.read(tx, id);
   }
 
   /**

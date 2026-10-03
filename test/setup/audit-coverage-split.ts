@@ -98,4 +98,5 @@ export const FILES_COVERAGE: readonly string[] = [
   'file.created',
   'file.deleted',
   'worker.photo_changed',
+  'account.photo_changed',
 ];

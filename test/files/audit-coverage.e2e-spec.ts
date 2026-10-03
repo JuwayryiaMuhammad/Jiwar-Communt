@@ -153,6 +153,59 @@ describe('Audit coverage — files', () => {
     });
   });
 
+  it('account.photo_changed — set, replaced and removed by the account itself', async () => {
+    const c = await x.compound();
+    const unit = await x.unit(c);
+    const r = await x.resident(c, [unit.id]);
+    const token = await h.tokenFor({
+      sub: r.id,
+      tid: c.tenantId,
+      typ: 'resident',
+    });
+    const put = (fileId: string) =>
+      h
+        .http()
+        .put(`${API}/me/photo`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ fileId })
+        .expect(204);
+    const first = await f.ready(token, 'resident_photo');
+    await put(first);
+    const second = await f.ready(token, 'resident_photo');
+    await put(second);
+    await h
+      .http()
+      .delete(`${API}/me/photo`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(204);
+
+    const rows = await read.tenant(c.tenantId, {
+      action: 'account.photo_changed',
+      targetId: r.id,
+    });
+    covered.add('account.photo_changed');
+    expect(rows).toHaveLength(3);
+    for (const row of rows) {
+      expect(row).toMatchObject({
+        actorType: 'account',
+        actorId: r.id,
+        targetType: 'account',
+        changes: { photo: { changed: true } },
+      });
+      for (const id of [first, second])
+        expect(JSON.stringify(row)).not.toContain(id);
+    }
+    // A replaced and a removed file are deleted with their reason.
+    expect((await single(c, 'file.deleted', first)).metadata).toEqual({
+      purpose: 'resident_photo',
+      reasonCode: 'replaced',
+    });
+    expect((await single(c, 'file.deleted', second)).metadata).toEqual({
+      purpose: 'resident_photo',
+      reasonCode: 'owner',
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every files entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

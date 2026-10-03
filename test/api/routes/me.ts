@@ -9,6 +9,8 @@ export const ME_ROUTES: Row[] = [
     denied: 'none',
     foreign: 'none',
     invalid: 'none',
+    // The photo is a presigned URL (ADR 0031).
+    noStore: true,
   },
   {
     method: 'PATCH',
@@ -133,6 +135,27 @@ export const ME_ROUTES: Row[] = [
     auth: 'tenant',
     as: 'owner',
     denied: 'none',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'PUT',
+    path: '/me/photo',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: { fileId: 'nope' },
+      fields: [{ field: 'fileId', code: 'INVALID_UUID' }],
+    },
+  },
+  {
+    method: 'DELETE',
+    path: '/me/photo',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
     foreign: 'none',
     invalid: 'none',
   },

@@ -1044,6 +1044,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["MePhotoController_set"];
+        post?: never;
+        delete: operations["MePhotoController_remove"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/sessions": {
         parameters: {
             query?: never;
@@ -3143,6 +3159,8 @@ export interface components {
             idDocumentType: components["schemas"]["IdDocumentType"] | null;
             nationality: string | null;
             phone: string | null;
+            /** @description A short-lived presigned URL of the holder's own photo (ADR 0031), or null. Shown only here and to the guard on a valid scan. */
+            photoUrl: string | null;
             preferredLocale: components["schemas"]["Locale"];
             status: components["schemas"]["AccountStatus"];
             type: components["schemas"]["AccountType"];
@@ -3205,6 +3223,13 @@ export interface components {
             managedByPrimary: string[];
             /** Format: uuid */
             memberId: string;
+        };
+        MyPhotoDto: {
+            /**
+             * Format: uuid
+             * @description A finalized `resident_photo` of the caller's.
+             */
+            fileId: string;
         };
         MyUnitView: {
             building: string | null;
@@ -5756,6 +5781,44 @@ export interface operations {
             path: {
                 id: string;
             };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    MePhotoController_set: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MyPhotoDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    MePhotoController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
+import { ObjectStorageModule } from '../files/object-storage.module';
 import { AccountsController } from './accounts.controller';
 import { ErasureController } from './erasure.controller';
 import { MeController } from './me.controller';
@@ -11,7 +12,7 @@ import { AccountWriter } from './account-writer';
 import { AccountsService } from './accounts.service';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, ObjectStorageModule],
   controllers: [AccountsController, MeController, ErasureController],
   providers: [
     AccountsService,

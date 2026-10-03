@@ -664,10 +664,13 @@ model Account {
   email            String?
   status           AccountStatus   @default(active)
   preferredLocale  Locale          @default(ar) @map("preferred_locale")
+  /// The account's own photo (ADR 0031): a file attached to this record.
+  photoFileId      String?         @map("photo_file_id") @db.Uuid
   createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   tenant             Tenant            @relation(fields: [tenantId], references: [id])
+  photo              StoredFile?       @relation("AccountPhoto", fields: [tenantId, photoFileId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   role               Role              @relation(fields: [tenantId, roleId, type], references: [tenantId, id, kind], onUpdate: Restrict)
   loginIdentifiers   LoginIdentifier[]
   occupancies        UnitOccupancy[]   @relation("OccupancyAccount")
@@ -1576,8 +1579,9 @@ model StoredFile {
   attachedAt      DateTime?   @map("attached_at") @db.Timestamptz(3)
   createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  workers DomesticWorker[] @relation("WorkerPhoto")
-  owner   Account?         @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  workers  DomesticWorker[] @relation("WorkerPhoto")
+  accounts Account[]        @relation("AccountPhoto")
+  owner    Account?         @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([tenantId, id])
   @@map("files")

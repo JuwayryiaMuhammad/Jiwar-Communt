@@ -2910,6 +2910,11 @@
             "nullable": true,
             "type": "string"
           },
+          "photoUrl": {
+            "description": "A short-lived presigned URL of the holder's own photo (ADR 0031), or null. Shown only here and to the guard on a valid scan.",
+            "nullable": true,
+            "type": "string"
+          },
           "preferredLocale": {
             "allOf": [
               {
@@ -2942,7 +2947,8 @@
           "preferredLocale",
           "idDocumentType",
           "idDocumentNumberMasked",
-          "nationality"
+          "nationality",
+          "photoUrl"
         ],
         "type": "object"
       },
@@ -3171,6 +3177,19 @@
           "grants",
           "baseline",
           "managedByPrimary"
+        ],
+        "type": "object"
+      },
+      "MyPhotoDto": {
+        "properties": {
+          "fileId": {
+            "description": "A finalized `resident_photo` of the caller's.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId"
         ],
         "type": "object"
       },
@@ -8943,6 +8962,7 @@
         "tags": [
           "me"
         ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -9258,6 +9278,54 @@
         ],
         "tags": [
           "notifications"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/photo": {
+      "delete": {
+        "operationId": "MePhotoController_remove",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ],
+        "x-stability": "draft"
+      },
+      "put": {
+        "operationId": "MePhotoController_set",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MyPhotoDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
         ],
         "x-stability": "draft"
       }

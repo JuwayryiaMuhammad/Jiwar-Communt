@@ -269,6 +269,23 @@ describe('API v0 — PII leak scan', () => {
     );
     const photoKey = `t/${a.tenantId}/${photoId}`;
 
+    // The residents' own photos (ADR 0031): each is shown in its owner's own
+    // `GET /me` and nowhere else (the guard's valid scan is checked in
+    // test/gate/resident-qr).
+    const ownPhoto = async (token: string) => {
+      const id = await fileHelpers(h).ready(token, 'resident_photo');
+      await call(w, 'PUT', '/me/photo', { token, body: { fileId: id } }).expect(
+        204,
+      );
+      return `t/${a.tenantId}/${id}`;
+    };
+    const residentPhotoKey = await ownPhoto(
+      await w.tokenFor(a, primary.id, 'resident'),
+    );
+    const familyPhotoKey = await ownPhoto(
+      await w.tokenFor(a, family.id, 'family'),
+    );
+
     const params: Record<string, string> = {
       '/files/{id}': photoId,
       '/units/{id}': unit.id,
@@ -383,6 +400,8 @@ describe('API v0 — PII leak scan', () => {
     // photo: the manager's engagement detail only (not residents' lists).
     const fileViews: [string, Set<string>][] = [
       [photoKey, new Set(['resident /files/{id}'])],
+      [residentPhotoKey, new Set(['resident /me'])],
+      [familyPhotoKey, new Set(['family /me'])],
       [
         `t/${a.tenantId}/${workerPhoto}`,
         new Set(['manager /worker-engagements/{id}']),

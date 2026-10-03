@@ -39,8 +39,15 @@ export class MeView {
   idDocumentNumberMasked: string | null;
   @ApiProperty({ type: String, nullable: true })
   nationality: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      "A short-lived presigned URL of the holder's own photo (ADR 0031), or null. Shown only here and to the guard on a valid scan.",
+  })
+  photoUrl: string | null;
 
-  static from(a: AccountRecord): MeView {
+  static from(a: AccountRecord, photoUrl: string | null): MeView {
     return {
       id: a.id,
       type: a.type,
@@ -52,6 +59,7 @@ export class MeView {
       idDocumentType: a.idDocumentType,
       idDocumentNumberMasked: maskDocument(a.idDocumentNumber),
       nationality: a.nationality,
+      photoUrl,
     };
   }
 }

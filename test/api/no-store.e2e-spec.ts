@@ -224,6 +224,7 @@ describe('API v0 — no-store', () => {
         token: w.a.tokens.owner,
         body: { purpose: 'worker_photo', contentType: 'image/png', size: 10 },
       }),
+    'GET /me': async () => call(w, 'GET', '/me', { token: w.a.tokens.owner }),
     'GET /files/{id}': async () =>
       call(w, 'GET', `/files/${await fileHelpers(h).ready(w.a.tokens.owner)}`, {
         token: w.a.tokens.owner,
@@ -252,9 +253,9 @@ describe('API v0 — no-store', () => {
   });
 
   it('a response without a secret is not marked', async () => {
-    const res = await call(w, 'GET', '/me', { token: w.a.tokens.owner }).expect(
-      200,
-    );
+    const res = await call(w, 'GET', '/me/units', {
+      token: w.a.tokens.owner,
+    }).expect(200);
     expect(res.headers['cache-control']).toBeUndefined();
   });
 });

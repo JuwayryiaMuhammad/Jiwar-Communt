@@ -24,6 +24,10 @@ const SIGNED_UPLOAD_HEADERS = new Set([
   'if-none-match',
 ]);
 
+/** The object key: tenant and file id only, never anything a client sent. */
+export const objectKey = (f: { tenantId: string; id: string }): string =>
+  `t/${f.tenantId}/${f.id}`;
+
 export interface PresignedUpload {
   url: string;
   /** Send these with the PUT, unchanged (Content-Length is the body's). */

@@ -14,7 +14,7 @@ import {
   ApiOkResponse,
 } from '@nestjs/swagger';
 import { appError, ErrorCode } from '../common/errors';
-import { ApiArea } from '../common/http/decorators';
+import { ApiArea, NoStore } from '../common/http/decorators';
 import { bounded, ListOf, type ListResponse } from '../common/http/list';
 import { parseId } from '../common/validation/parse-id.pipe';
 import { AccountDeletionService } from './account-deletion.service';
@@ -43,10 +43,13 @@ export class MeController {
     private readonly deletion: AccountDeletionService,
   ) {}
 
+  /** No-store: the photo is a presigned URL (ADR 0031). */
   @Get()
+  @NoStore()
   @ApiOkResponse({ type: MeView })
   async me(): Promise<MeView> {
-    return MeView.from(await this.accounts.me());
+    const account = await this.accounts.me();
+    return MeView.from(account, await this.accounts.myPhotoUrl());
   }
 
   @Patch('locale')

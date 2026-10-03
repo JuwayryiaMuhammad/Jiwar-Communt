@@ -13,6 +13,7 @@ const ME = [
   'idDocumentType',
   'nationality',
   'phone',
+  'photoUrl',
   'preferredLocale',
   'status',
   'type',

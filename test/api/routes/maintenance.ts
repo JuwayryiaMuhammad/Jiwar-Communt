@@ -451,3 +451,83 @@ export const WORK_ROUTES: Row[] = [
     invalid: 'none',
   },
 ];
+
+/** A resident's verdict on another compound's ticket: just not found. */
+const residentAction = (
+  verb: string,
+  body: object,
+  invalid: Row['invalid'],
+): Row => ({
+  method: 'POST',
+  path: `/tickets/{id}/${verb}`,
+  auth: 'tenant',
+  as: 'owner',
+  denied: 'guard',
+  foreign: {
+    params: (w) => ({ id: w.bTicketId }),
+    body: () => body,
+    code: 'TICKET_NOT_FOUND',
+  },
+  invalid,
+});
+
+const REASON_TYPES: Row['invalid'] = {
+  body: { reasonCode: 1, reason: 2 },
+  fields: [
+    { field: 'reasonCode', code: 'INVALID_TYPE' },
+    { field: 'reason', code: 'INVALID_TYPE' },
+  ],
+};
+
+/** Confirmation, rejection, reopen and cancel (ADR 0032). */
+export const CONFIRMATION_ROUTES: Row[] = [
+  residentAction(
+    'cancel',
+    { reasonCode: 'duplicate' },
+    {
+      body: { reasonCode: 1 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+  ),
+  residentAction(
+    'confirm',
+    { rating: 5 },
+    {
+      body: { rating: 6, comment: '' },
+      fields: [
+        { field: 'rating', code: 'INVALID_NUMBER', params: { min: 1, max: 5 } },
+        {
+          field: 'comment',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 1000 },
+        },
+      ],
+    },
+  ),
+  residentAction(
+    'reject',
+    { reasonCode: 'not_fixed', reason: 'Still leaking' },
+    REASON_TYPES,
+  ),
+  residentAction(
+    'reopen',
+    { reasonCode: 'problem_returned', reason: 'It is back' },
+    REASON_TYPES,
+  ),
+  {
+    method: 'POST',
+    path: '/maintenance/tickets/{id}/cancel',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      body: () => ({ reasonCode: 'invalid' }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: ['x'] },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+  },
+];

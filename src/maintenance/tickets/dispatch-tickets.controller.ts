@@ -24,12 +24,14 @@ import {
 } from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
+import { ConfirmationService } from './confirmation.service';
 import { DispatchService, type TechnicianOption } from './dispatch.service';
 import {
   AssignDto,
   CreateTicketOnBehalfDto,
   DispatchTicketsQueryDto,
   PriorityDto,
+  ReasonCodeDto,
   ReassignDto,
 } from './dto/tickets.dto';
 import { TicketsService } from './tickets.service';
@@ -52,6 +54,7 @@ export class DispatchTicketsController {
   constructor(
     private readonly tickets: TicketsService,
     private readonly dispatch: DispatchService,
+    private readonly confirmation: ConfirmationService,
   ) {}
 
   @Get()
@@ -143,6 +146,17 @@ export class DispatchTicketsController {
     @Body() dto: PriorityDto,
   ): Promise<void> {
     return this.dispatch.changePriority(id, dto.priority, dto.reasonCode);
+  }
+
+  /** Any time before it is closed; `reasonCode` from `ticketCancel`. */
+  @Post(':id/cancel')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  cancel(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ReasonCodeDto,
+  ): Promise<void> {
+    return this.confirmation.cancelByDispatcher(id, dto.reasonCode);
   }
 }
 

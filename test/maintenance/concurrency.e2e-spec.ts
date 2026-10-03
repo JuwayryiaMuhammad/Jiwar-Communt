@@ -2,6 +2,8 @@ import { Client } from 'pg';
 import { call } from '../api/request';
 import { ticketBody } from '../api/routes/maintenance';
 import { buildWorld, type World } from '../api/world';
+import { SweepRunner } from '../../src/core/sweep/sweep-runner';
+import { AUTO_CLOSE_SWEEP } from '../../src/maintenance/tickets/confirmation.service';
 import { nationalIdFor } from '../setup/fixtures';
 import {
   createHttpHarness,
@@ -186,6 +188,141 @@ describe('Maintenance concurrency', () => {
         expect(t).toMatchObject({ status: 'assigned', technicianId: other.id });
         expect(types).toEqual(['manual', 'reassignment']);
       }
+    }
+  });
+
+  /** A ticket assigned to the World's technician and started. */
+  async function inProgress(): Promise<string> {
+    const id = await newTicket();
+    await call(w, 'POST', `/maintenance/tickets/${id}/assign`, {
+      token: manager(),
+      body: { technicianId: w.a.ids.technician },
+    }).expect(204);
+    await call(w, 'POST', `/technician/tickets/${id}/start`, {
+      token: w.a.tokens.technician,
+    }).expect(204);
+    return id;
+  }
+  const history = (ticketId: string) =>
+    w.helpers.asManager(w.a, async () =>
+      (
+        await w.helpers.prisma.tenant.ticketStatusHistory.findMany({
+          where: { ticketId },
+          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        })
+      ).map((r) => r.toStatus),
+    );
+
+  it('complete and a dispatcher’s cancel at once: always cancelled, by a valid path', async () => {
+    for (let i = 0; i < ROUNDS; i++) {
+      const id = await inProgress();
+      const [complete, cancel] = await Promise.all([
+        call(w, 'POST', `/technician/tickets/${id}/complete`, {
+          token: w.a.tokens.technician,
+        }),
+        call(w, 'POST', `/maintenance/tickets/${id}/cancel`, {
+          token: manager(),
+          body: { reasonCode: 'invalid' },
+        }),
+      ]);
+      expect(cancel.status).toBe(204);
+      const t = await row(id);
+      expect(t).toMatchObject({
+        status: 'cancelled',
+        confirmationStatus: null,
+      });
+      if (complete.status === 204)
+        expect(await history(id)).toEqual([
+          'new',
+          'assigned',
+          'in_progress',
+          'completed',
+          'cancelled',
+        ]);
+      else {
+        expect(code(complete)).toEqual({
+          status: 409,
+          code: 'TICKET_INVALID_TRANSITION',
+        });
+        expect(await history(id)).toEqual([
+          'new',
+          'assigned',
+          'in_progress',
+          'cancelled',
+        ]);
+      }
+    }
+  });
+
+  /** Completed long enough ago for the sweep to close it. */
+  async function due(): Promise<string> {
+    const id = await inProgress();
+    await call(w, 'POST', `/technician/tickets/${id}/complete`, {
+      token: w.a.tokens.technician,
+    }).expect(204);
+    await w.helpers.asManager(w.a, () =>
+      w.helpers.prisma.tenant.ticket.update({
+        where: { id },
+        data: { completedAt: new Date(Date.now() - 100 * 3_600_000) },
+      }),
+    );
+    return id;
+  }
+  const autoClose = () =>
+    h.moduleRef.get(SweepRunner).run(AUTO_CLOSE_SWEEP, new Date());
+  const confirm = (id: string) =>
+    call(w, 'POST', `/tickets/${id}/confirm`, {
+      token: w.a.tokens.owner,
+      body: { rating: 5 },
+    });
+
+  it('a confirmation holding the row: the sweep skips it, and the confirmation stands', async () => {
+    const id = await due();
+    const held = await holding('tickets', id);
+    // The sweep does not wait for the lock: it leaves the row.
+    await autoClose();
+    await settle(held);
+    expect(await row(id)).toMatchObject({ status: 'completed' });
+    await confirm(id).expect(204);
+    expect(await row(id)).toMatchObject({
+      status: 'closed',
+      confirmationStatus: 'confirmed',
+    });
+  });
+
+  it('a confirmation waiting behind the sweep finds the ticket closed', async () => {
+    const id = await due();
+    const held = await holding('tickets', id);
+    const pending = confirm(id).then((r) => r);
+    await waitForLockWaiter();
+    // What the sweep does, committed while the confirmation waits.
+    await settle(
+      held,
+      `UPDATE tickets SET status = 'closed', confirmation_status = 'auto_closed',
+              closed_at = now() WHERE id = $1`,
+      [id],
+    );
+    expect(code(await pending)).toEqual({
+      status: 409,
+      code: 'TICKET_INVALID_TRANSITION',
+    });
+    expect(await row(id)).toMatchObject({ confirmationStatus: 'auto_closed' });
+    const feedback = await w.helpers.asManager(w.a, () =>
+      w.helpers.prisma.tenant.ticketFeedback.count({ where: { ticketId: id } }),
+    );
+    expect(feedback).toBe(0);
+  });
+
+  it('a confirmation and the sweep at once: exactly one of them closes it', async () => {
+    for (let i = 0; i < ROUNDS; i++) {
+      const id = await due();
+      const [res] = await Promise.all([confirm(id), autoClose()]);
+      const t = await row(id);
+      expect(t.status).toBe('closed');
+      expect(t.confirmationStatus).toBe(
+        res.status === 204 ? 'confirmed' : 'auto_closed',
+      );
+      expect((await history(id)).filter((s) => s === 'closed')).toHaveLength(1);
     }
   });
 });

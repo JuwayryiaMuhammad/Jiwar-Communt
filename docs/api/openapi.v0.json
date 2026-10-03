@@ -1138,6 +1138,25 @@
         ],
         "type": "object"
       },
+      "ConfirmDto": {
+        "properties": {
+          "comment": {
+            "description": "For the maintenance team. Never in the audit trail.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "rating": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "rating"
+        ],
+        "type": "object"
+      },
       "ContactDto": {
         "properties": {
           "email": {
@@ -11093,6 +11112,45 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/tickets/{id}/cancel": {
+      "post": {
+        "operationId": "DispatchTicketsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/tickets/{id}/history": {
       "get": {
         "operationId": "DispatchTicketsController_history",
@@ -13969,6 +14027,84 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/tickets/{id}/cancel": {
+      "post": {
+        "operationId": "ResidentTicketsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/tickets/{id}/confirm": {
+      "post": {
+        "operationId": "ResidentTicketsController_confirm",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/tickets/{id}/photos": {
       "post": {
         "operationId": "ResidentTicketsController_addPhoto",
@@ -14001,6 +14137,84 @@
                 }
               }
             },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/tickets/{id}/reject": {
+      "post": {
+        "operationId": "ResidentTicketsController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/tickets/{id}/reopen": {
+      "post": {
+        "operationId": "ResidentTicketsController_reopen",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
             "description": ""
           }
         },

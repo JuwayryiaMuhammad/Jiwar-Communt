@@ -15,7 +15,9 @@ import {
   DispatchTicketsController,
   TechniciansController,
 } from './tickets/dispatch-tickets.controller';
+import { ConfirmationService } from './tickets/confirmation.service';
 import { DispatchService } from './tickets/dispatch.service';
+import { MessagesService } from './tickets/messages.service';
 import { TechnicianRelease } from './tickets/technician-release';
 import { TechnicianTicketsController } from './tickets/technician-tickets.controller';
 import { WorkService } from './tickets/work.service';
@@ -53,6 +55,8 @@ import { TicketsService } from './tickets/tickets.service';
     DispatchService,
     WorkService,
     TechnicianRelease,
+    MessagesService,
+    ConfirmationService,
   ],
 })
 export class MaintenanceModule {}

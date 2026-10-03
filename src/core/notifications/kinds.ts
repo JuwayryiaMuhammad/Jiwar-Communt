@@ -147,6 +147,42 @@ export const NOTIFICATION_KINDS = {
     target: 'ticket',
     params: { ticketNumber: {}, unitCode: { optional: true }, priority: {} },
   },
+  /** The reporter rejected the work (dispatchers, and the technician it returns to). */
+  'ticket.rejected': {
+    priority: 'normal',
+    target: 'ticket',
+    params: {
+      ticketNumber: {},
+      unitCode: { optional: true },
+      rejectionCount: {},
+    },
+  },
+  /** The reporter reopened a closed ticket (as a rejection). */
+  'ticket.reopened': {
+    priority: 'normal',
+    target: 'ticket',
+    params: {
+      ticketNumber: {},
+      unitCode: { optional: true },
+      rejectionCount: {},
+    },
+  },
+  /** Rejected or reopened again: back in the queue, to look at (dispatchers). */
+  'ticket.escalated': {
+    priority: 'normal',
+    target: 'ticket',
+    params: {
+      ticketNumber: {},
+      unitCode: { optional: true },
+      rejectionCount: {},
+    },
+  },
+  /** Nobody confirmed in time: closed (the reporter may still reopen). */
+  'ticket.auto_closed': {
+    priority: 'normal',
+    target: 'ticket',
+    params: { ticketNumber: {}, unitCode: { optional: true } },
+  },
   /** Dispatch opened a ticket in the reporter's name. */
   'ticket.opened_on_behalf': {
     priority: 'normal',

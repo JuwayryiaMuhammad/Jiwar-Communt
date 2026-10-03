@@ -1,6 +1,7 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { CategoriesService } from '../../src/maintenance/categories/categories.service';
 import { MaintenanceSettingsService } from '../../src/maintenance/settings/maintenance-settings.service';
+import { ConfirmationService } from '../../src/maintenance/tickets/confirmation.service';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
 import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
 import { auditReaders } from '../setup/audit';
@@ -157,6 +158,55 @@ describe('Audit coverage — maintenance', () => {
         targetType: 'ticket',
         changes: { priority: { from: 'normal', to: 'urgent' } },
         metadata: { reasonCode: 'safety_risk' },
+      });
+      expect(JSON.stringify(row)).not.toContain('AUDIT-');
+    });
+  });
+
+  describe('confirmation', () => {
+    it('ticket.cancelled — by the reporter and by a dispatcher, codes only', async () => {
+      const c = await x.compound();
+      const unit = await x.unit(c);
+      const reporter = await x.resident(c, [unit.id]);
+      const category = await x.asManager(c, () =>
+        x.prisma.tenant.ticketCategory.findFirstOrThrow({
+          where: { key: 'ac' },
+        }),
+      );
+      const open = () =>
+        x.as(c, { id: reporter.id, type: 'resident' }, () =>
+          h.moduleRef.get(TicketsService).create({
+            unitId: unit.id,
+            categoryId: category.id,
+            description: 'AUDIT-DESCRIPTION',
+          }),
+        );
+      const confirmation = h.moduleRef.get(ConfirmationService);
+      const mine = await open();
+      await x.as(c, { id: reporter.id, type: 'resident' }, () =>
+        confirmation.cancelByReporter(mine.id, 'duplicate'),
+      );
+      expect(await single(c, 'ticket.cancelled', mine.id)).toMatchObject({
+        actorId: reporter.id,
+        targetType: 'ticket',
+        metadata: {
+          reasonCode: 'duplicate',
+          by: 'reporter',
+          fromStatus: 'new',
+        },
+      });
+      const theirs = await open();
+      await x.asManager(c, () =>
+        confirmation.cancelByDispatcher(theirs.id, 'invalid'),
+      );
+      const row = await single(c, 'ticket.cancelled', theirs.id);
+      expect(row).toMatchObject({
+        actorId: c.managerId,
+        metadata: {
+          reasonCode: 'invalid',
+          by: 'dispatcher',
+          fromStatus: 'new',
+        },
       });
       expect(JSON.stringify(row)).not.toContain('AUDIT-');
     });

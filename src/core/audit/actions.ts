@@ -201,6 +201,8 @@ export const AUDIT_ACTIONS = {
   'ticket.created_on_behalf': { log: 'tenant', target: 'ticket' },
   // changes: priority; metadata: reasonCode.
   'ticket.priority_changed': { log: 'tenant', target: 'ticket' },
+  // metadata: reasonCode, by (reporter | dispatcher), fromStatus.
+  'ticket.cancelled': { log: 'tenant', target: 'ticket' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

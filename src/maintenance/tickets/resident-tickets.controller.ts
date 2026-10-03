@@ -1,14 +1,31 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
+import {
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
+} from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import { ListOf, toList, type ListResponse } from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
+import { ReasonDto, reasonOf } from '../../core/common/http/reason.dto';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import { AttachmentsService } from './attachments.service';
+import { ConfirmationService } from './confirmation.service';
 import {
+  ConfirmDto,
   CreateTicketDto,
+  ReasonCodeDto,
   ResidentTicketsQueryDto,
   TicketPhotoDto,
 } from './dto/tickets.dto';
@@ -31,6 +48,7 @@ export class ResidentTicketsController {
   constructor(
     private readonly tickets: TicketsService,
     private readonly attachments: AttachmentsService,
+    private readonly confirmation: ConfirmationService,
     private readonly ctx: RequestContext,
   ) {}
 
@@ -74,5 +92,51 @@ export class ResidentTicketsController {
     return PhotoAddedView.from(
       await this.attachments.addReport(id, dto.fileId),
     );
+  }
+
+  /** Before the work starts; `reasonCode` from `ticketCancel`. */
+  @Post(':id/cancel')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  cancel(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ReasonCodeDto,
+  ): Promise<void> {
+    return this.confirmation.cancelByReporter(id, dto.reasonCode);
+  }
+
+  @Post(':id/confirm')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  confirm(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ConfirmDto,
+  ): Promise<void> {
+    return this.confirmation.confirm(id, dto.rating, dto.comment);
+  }
+
+  /**
+   * `reasonCode` from `ticketReject`; `reason` is the note, posted to the
+   * ticket's thread for the technician.
+   */
+  @Post(':id/reject')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  reject(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ReasonDto,
+  ): Promise<void> {
+    return this.confirmation.reject(id, reasonOf(dto));
+  }
+
+  /** Within the compound's `reopenDays`; as a rejection. */
+  @Post(':id/reopen')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  reopen(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ReasonDto,
+  ): Promise<void> {
+    return this.confirmation.reopen(id, reasonOf(dto));
   }
 }

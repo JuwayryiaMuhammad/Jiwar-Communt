@@ -1,4 +1,6 @@
 import { MemberPermissionsService } from '../../src/community/households/member-permissions.service';
+import { SweepRunner } from '../../src/core/sweep/sweep-runner';
+import { AUTO_CLOSE_SWEEP } from '../../src/maintenance/tickets/confirmation.service';
 import { fileHelpers } from '../setup/files';
 import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
 import {
@@ -944,6 +946,290 @@ describe('API v0 — maintenance (ADR 0032)', () => {
       expect(code(again)).toEqual({
         status: 404,
         code: 'TECHNICIAN_NOT_FOUND',
+      });
+    });
+  });
+
+  describe('confirmation, rejection, reopen, cancel', () => {
+    const sweep = (now = new Date()) =>
+      h.moduleRef.get(SweepRunner).run(AUTO_CLOSE_SWEEP, now);
+    const work = (id: string, token = w.a.tokens.technician) => ({
+      start: () =>
+        call(w, 'POST', `/technician/tickets/${id}/start`, { token }).expect(
+          204,
+        ),
+      complete: () =>
+        call(w, 'POST', `/technician/tickets/${id}/complete`, {
+          token,
+        }).expect(204),
+    });
+    const as = (token: string, id: string, verb: string, body: object) =>
+      call(w, 'POST', `/tickets/${id}/${verb}`, { token, body });
+    const dispatchView = async (id: string) =>
+      (
+        await call(w, 'GET', `/maintenance/tickets/${id}`, {
+          token: manager(),
+        }).expect(200)
+      ).body as Record<string, unknown>;
+    /** Assigned, started and completed by the World's technician. */
+    async function completed() {
+      const t = await assigned(w.a.ids.technician);
+      await work(t.id).start();
+      await work(t.id).complete();
+      return t;
+    }
+    const setTicket = (id: string, data: object) =>
+      w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.ticket.update({ where: { id }, data }),
+      );
+
+    it('confirm: closed, rated, the comment for dispatch only', async () => {
+      const t = await completed();
+      // The unit's primary did report it here; a family member did not.
+      const notParty = await as(w.a.tokens.family, t.id, 'confirm', {
+        rating: 5,
+      });
+      expect(code(notParty)).toEqual({ status: 404, code: 'TICKET_NOT_FOUND' });
+      await as(w.a.tokens.owner, t.id, 'confirm', {
+        rating: 4,
+        comment: 'Quick and clean',
+      }).expect(204);
+      const seen = await call(w, 'GET', `/tickets/${t.id}`, {
+        token: w.a.tokens.owner,
+      }).expect(200);
+      expect(seen.body).toMatchObject({
+        status: 'closed',
+        confirmationStatus: 'confirmed',
+        autoCloseAt: null,
+        reopenUntil: expect.any(String) as string,
+      });
+      expect(await dispatchView(t.id)).toMatchObject({
+        feedback: [
+          {
+            cycle: 1,
+            kind: 'confirmed',
+            rating: 4,
+            reasonCode: null,
+            comment: 'Quick and clean',
+            author: { id: w.a.ids.owner },
+          },
+        ],
+      });
+      const again = await as(w.a.tokens.owner, t.id, 'confirm', { rating: 5 });
+      expect(code(again)).toEqual({
+        status: 409,
+        code: 'TICKET_INVALID_TRANSITION',
+      });
+    });
+
+    it('the first rejection goes back to the same technician; the second to the queue, escalated', async () => {
+      const t = await completed();
+      const reject = (code: string, reason: string) =>
+        as(w.a.tokens.owner, t.id, 'reject', { reasonCode: code, reason });
+      expect(code(await reject('', ''))).toEqual({
+        status: 400,
+        code: 'REASON_REQUIRED',
+      });
+      await reject('not_fixed', 'Still dripping under the sink').expect(204);
+      let view = await dispatchView(t.id);
+      expect(view).toMatchObject({
+        status: 'assigned',
+        technician: { id: w.a.ids.technician },
+        confirmationStatus: 'rejected',
+        cycle: 2,
+        rejectionCount: 1,
+      });
+      expect(await kinds(manager(), t.id)).toContain('ticket.rejected');
+      expect(await kinds(w.a.tokens.technician, t.id)).toContain(
+        'ticket.rejected',
+      );
+      // The note reached the technician through the thread, not a field.
+      const tech = await call(w, 'GET', `/technician/tickets/${t.id}`, {
+        token: w.a.tokens.technician,
+      }).expect(200);
+      expect(tech.body).toMatchObject({ cycle: 2, rejectionCount: 1 });
+      expect(JSON.stringify(tech.body)).not.toContain('Still dripping');
+      const notes = await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.ticketMessage.findMany({
+          where: { ticketId: t.id },
+        }),
+      );
+      expect(notes).toMatchObject([
+        {
+          senderId: w.a.ids.owner,
+          body: 'Still dripping under the sink',
+          internal: false,
+        },
+      ]);
+
+      await work(t.id).start();
+      await work(t.id).complete();
+      await reject('poor_quality', 'Worse now').expect(204);
+      view = await dispatchView(t.id);
+      expect(view).toMatchObject({
+        status: 'new',
+        technician: null,
+        confirmationStatus: 'rejected',
+        cycle: 3,
+        rejectionCount: 2,
+      });
+      expect(await kinds(manager(), t.id)).toContain('ticket.escalated');
+      expect(
+        code(
+          await call(w, 'GET', `/technician/tickets/${t.id}`, {
+            token: w.a.tokens.technician,
+          }),
+        ),
+      ).toEqual({ status: 404, code: 'TICKET_NOT_FOUND' });
+      const trail = await call(
+        w,
+        'GET',
+        `/maintenance/tickets/${t.id}/assignments`,
+        { token: manager() },
+      ).expect(200);
+      expect((trail.body as { data: object[] }).data.at(-1)).toMatchObject({
+        type: 'released',
+        from: { id: w.a.ids.technician },
+        by: null,
+        reasonCode: 'escalated',
+        cycle: 3,
+      });
+      expect(
+        ((await dispatchView(t.id)).feedback as object[]).map((f) => f),
+      ).toMatchObject([
+        { cycle: 1, kind: 'rejected', reasonCode: 'not_fixed', rating: null },
+        { cycle: 2, kind: 'rejected', reasonCode: 'poor_quality' },
+      ]);
+    });
+
+    it('nobody confirms: the sweep closes it after autoCloseHours, and the reporter is told', async () => {
+      const t = await completed();
+      expect(await sweep()).toBeGreaterThanOrEqual(0);
+      expect(await dispatchView(t.id)).toMatchObject({ status: 'completed' });
+      await sweep(new Date(Date.now() + 73 * 3_600_000));
+      expect(await dispatchView(t.id)).toMatchObject({
+        status: 'closed',
+        confirmationStatus: 'auto_closed',
+      });
+      expect(await kinds(w.a.tokens.owner, t.id)).toContain(
+        'ticket.auto_closed',
+      );
+      const history = await call(
+        w,
+        'GET',
+        `/maintenance/tickets/${t.id}/history`,
+        { token: manager() },
+      ).expect(200);
+      expect((history.body as { data: object[] }).data.at(-1)).toMatchObject({
+        fromStatus: 'completed',
+        toStatus: 'closed',
+        actor: null,
+      });
+      // Too late to confirm; a reopen is the way back.
+      const late = await as(w.a.tokens.owner, t.id, 'confirm', { rating: 3 });
+      expect(code(late)).toEqual({
+        status: 409,
+        code: 'TICKET_INVALID_TRANSITION',
+      });
+    });
+
+    it('reopen within the window, as a rejection; never after it', async () => {
+      const t = await completed();
+      await as(w.a.tokens.owner, t.id, 'confirm', { rating: 5 }).expect(204);
+      await as(w.a.tokens.owner, t.id, 'reopen', {
+        reasonCode: 'problem_returned',
+        reason: 'Leaking again',
+      }).expect(204);
+      expect(await dispatchView(t.id)).toMatchObject({
+        status: 'assigned',
+        technician: { id: w.a.ids.technician },
+        confirmationStatus: 'rejected',
+        cycle: 2,
+        rejectionCount: 1,
+        closedAt: null,
+      });
+      expect(await kinds(manager(), t.id)).toContain('ticket.reopened');
+
+      const old = await completed();
+      await as(w.a.tokens.owner, old.id, 'confirm', { rating: 5 }).expect(204);
+      await setTicket(old.id, {
+        closedAt: new Date(Date.now() - 8 * 24 * 3_600_000),
+      });
+      const late = await as(w.a.tokens.owner, old.id, 'reopen', {
+        reasonCode: 'problem_returned',
+        reason: 'Back',
+      });
+      expect(code(late)).toEqual({
+        status: 409,
+        code: 'TICKET_REOPEN_WINDOW_PASSED',
+      });
+      expect(await dispatchView(old.id)).toMatchObject({ status: 'closed' });
+    });
+
+    it('cancel: the reporter until the work starts, a dispatcher until it is closed', async () => {
+      const early = (
+        await open(w.a.tokens.owner, { unitId: w.a.homeUnitId }).expect(201)
+      ).body as { id: string };
+      expect(code(await as(w.a.tokens.owner, early.id, 'cancel', {}))).toEqual({
+        status: 400,
+        code: 'REASON_REQUIRED',
+      });
+      await as(w.a.tokens.owner, early.id, 'cancel', {
+        reasonCode: 'resolved_without_visit',
+      }).expect(204);
+      expect(await dispatchView(early.id)).toMatchObject({
+        status: 'cancelled',
+        cancelledAt: expect.any(String) as string,
+      });
+
+      const started = await assigned(w.a.ids.technician);
+      await work(started.id).start();
+      const tooLate = await as(w.a.tokens.owner, started.id, 'cancel', {
+        reasonCode: 'reporter_request',
+      });
+      expect(code(tooLate)).toEqual({
+        status: 409,
+        code: 'TICKET_INVALID_TRANSITION',
+      });
+      // The primary sees it but neither reported nor created it.
+      const byFamily = (
+        await open(w.a.tokens.family, { unitId: w.a.homeUnitId }).expect(201)
+      ).body as { id: string };
+      expect(
+        code(
+          await as(w.a.tokens.owner, byFamily.id, 'cancel', {
+            reasonCode: 'duplicate',
+          }),
+        ),
+      ).toEqual({ status: 403, code: 'TICKET_ACTION_NOT_ALLOWED' });
+
+      // A dispatcher cancels a completed ticket: nothing waits any more.
+      await work(started.id).complete();
+      await call(w, 'POST', `/maintenance/tickets/${started.id}/cancel`, {
+        token: manager(),
+        body: { reasonCode: 'invalid' },
+      }).expect(204);
+      expect(await dispatchView(started.id)).toMatchObject({
+        status: 'cancelled',
+        confirmationStatus: null,
+      });
+      expect(await kinds(w.a.tokens.technician, started.id)).toContain(
+        'ticket.status_changed',
+      );
+      // Closed is final, for dispatch too.
+      const closed = await completed();
+      await as(w.a.tokens.owner, closed.id, 'confirm', { rating: 5 }).expect(
+        204,
+      );
+      const after = await call(
+        w,
+        'POST',
+        `/maintenance/tickets/${closed.id}/cancel`,
+        { token: manager(), body: { reasonCode: 'invalid' } },
+      );
+      expect(code(after)).toEqual({
+        status: 409,
+        code: 'TICKET_INVALID_TRANSITION',
       });
     });
   });

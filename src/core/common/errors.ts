@@ -144,6 +144,22 @@ export const ErrorCode = {
   FILE_CONTENT_MISMATCH: 'FILE_CONTENT_MISMATCH',
   /** Too many unfinalized uploads (429); params.limit. */
   FILE_PENDING_LIMIT: 'FILE_PENDING_LIMIT',
+  // maintenance (ADR 0032)
+  /** Unknown, another compound's, or one the caller may not see. */
+  TICKET_NOT_FOUND: 'TICKET_NOT_FOUND',
+  TICKET_CATEGORY_NOT_FOUND: 'TICKET_CATEGORY_NOT_FOUND',
+  /** Not an active staff account holding tickets.work. */
+  TECHNICIAN_NOT_FOUND: 'TECHNICIAN_NOT_FOUND',
+  /** The ticket's status does not allow the action (409, params.status). */
+  TICKET_INVALID_TRANSITION: 'TICKET_INVALID_TRANSITION',
+  /** No `tickets` capability on the unit, or on any unit (403). */
+  TICKETS_NOT_ALLOWED: 'TICKETS_NOT_ALLOWED',
+  /** The caller sees the ticket but is not its reporter or creator (403). */
+  TICKET_ACTION_NOT_ALLOWED: 'TICKET_ACTION_NOT_ALLOWED',
+  /** params.max photos of this kind already (409). */
+  TICKET_PHOTO_LIMIT_REACHED: 'TICKET_PHOTO_LIMIT_REACHED',
+  /** Closed longer ago than the compound's reopen window (409). */
+  TICKET_REOPEN_WINDOW_PASSED: 'TICKET_REOPEN_WINDOW_PASSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -178,6 +194,11 @@ export const FieldErrorCode = {
   FILE_TOO_LARGE: 'FILE_TOO_LARGE',
   /** Not one of the caller's finalized files of the right purpose. */
   FILE_NOT_AVAILABLE: 'FILE_NOT_AVAILABLE',
+  // maintenance (ADR 0032)
+  /** The category may not be used for a common area. */
+  CATEGORY_NOT_FOR_COMMON_AREA: 'CATEGORY_NOT_FOR_COMMON_AREA',
+  /** Unknown, or holds no `tickets` capability where the ticket is. */
+  REPORTER_NOT_ELIGIBLE: 'REPORTER_NOT_ELIGIBLE',
 } as const;
 
 export type FieldErrorCode =

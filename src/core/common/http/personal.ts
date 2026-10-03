@@ -51,3 +51,40 @@ export function accountRef(account: {
     ? erased(account.id)
     : { id: account.id, fullName: account.fullName };
 }
+
+/** The first word of a full name: what a stranger is shown (ADR 0031, 0032). */
+export function firstNameOf(fullName: string | null): string | null {
+  return (fullName ?? '').trim().split(/\s+/)[0] || null;
+}
+
+/** Another account named by its first name only. */
+export class FirstNameRefView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    description: 'The first word of the name. Absent when erased.',
+  })
+  firstName?: string | null;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    enum: [true],
+    description: 'Present (true) only on an erased account.',
+  })
+  erased?: true;
+}
+
+export function firstNameRef(account: {
+  id: string;
+  fullName: string | null;
+  status: string;
+}): FirstNameRefView {
+  return isErased(account)
+    ? erased(account.id)
+    : { id: account.id, firstName: firstNameOf(account.fullName) };
+}

@@ -13,6 +13,11 @@ import {
   type UnitState,
 } from './capabilities';
 
+/** A yes/no capability (ADR 0020), e.g. visitorsInvite or tickets. */
+export type CapabilityFlag = {
+  [K in keyof Capabilities]: Capabilities[K] extends boolean ? K : never;
+}[keyof Capabilities];
+
 /**
  * Loads the subject and the unit state, then asks capabilitiesFor. The one
  * reader other domains call (through the community index), so the rules
@@ -63,6 +68,74 @@ export class CapabilitiesService {
     const subject = await this.subject(tx, accountId, unitId);
     if (!subject) return null;
     return capabilitiesFor(subject, await this.unitState(tx, unitId));
+  }
+
+  /**
+   * Every active account whose capabilities on the unit carry `flag`: the
+   * people other domains tell (ADR 0020 decides, never the caller).
+   */
+  async holders(
+    tx: TenantTxClient,
+    unitId: string,
+    flag: CapabilityFlag,
+  ): Promise<string[]> {
+    const [occupants, members] = await Promise.all([
+      tx.unitOccupancy.findMany({
+        where: { unitId, status: 'active' },
+        select: { accountId: true },
+      }),
+      tx.householdMember.findMany({
+        where: { unitId, status: 'active', accountId: { not: null } },
+        select: { accountId: true },
+      }),
+    ]);
+    const candidates = [
+      ...new Set([
+        ...occupants.map((o) => o.accountId),
+        ...members.map((m) => m.accountId!),
+      ]),
+    ];
+    const active = await tx.account.findMany({
+      where: { id: { in: candidates }, status: 'active' },
+      select: { id: true },
+      orderBy: { id: 'asc' },
+    });
+    const out: string[] = [];
+    for (const a of active) {
+      const caps = await this.placeOf(tx, a.id, unitId);
+      if (caps?.[flag]) out.push(a.id);
+    }
+    return out;
+  }
+
+  /** The units where the account's capabilities carry `flag`. */
+  async unitsWhere(
+    tx: TenantTxClient,
+    accountId: string,
+    flag: CapabilityFlag,
+  ): Promise<string[]> {
+    const [occupancies, memberships] = await Promise.all([
+      tx.unitOccupancy.findMany({
+        where: { accountId, status: 'active' },
+        select: { unitId: true },
+      }),
+      tx.householdMember.findMany({
+        where: { accountId, status: 'active' },
+        select: { unitId: true },
+      }),
+    ]);
+    const units = [
+      ...new Set([
+        ...occupancies.map((o) => o.unitId),
+        ...memberships.map((m) => m.unitId),
+      ]),
+    ];
+    const out: string[] = [];
+    for (const unitId of units) {
+      const caps = await this.placeOf(tx, accountId, unitId);
+      if (caps?.[flag]) out.push(unitId);
+    }
+    return out;
   }
 
   async unitState(tx: TenantTxClient, unitId: string): Promise<UnitState> {

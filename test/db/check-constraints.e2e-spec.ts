@@ -150,6 +150,64 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'emergency_phone IS NULL is tested first; the pattern runs only on a value',
   },
+  // Maintenance (ADR 0032): no nullable column, or only under IS [NOT] NULL.
+  ticket_categories_key_shape: {},
+  ticket_categories_names_length: {},
+  maintenance_settings_ranges: {},
+  ticket_counters_last_number_non_negative: {},
+  tickets_number_positive: {},
+  tickets_location: {},
+  tickets_description_length: {},
+  tickets_technician_matches_status: {},
+  tickets_assigned_at_matches_technician: {},
+  tickets_hold_reason_matches_status: {},
+  tickets_cancelled_shape: {},
+  tickets_cycle_counts: {},
+  ticket_status_history_hold_has_reason: {},
+  ticket_status_history_cycle_positive: {},
+  ticket_assignments_cycle_positive: {},
+  ticket_feedback_reason_shape: {},
+  ticket_feedback_cycle_positive: {},
+  ticket_messages_deleted_shape: {},
+  ticket_attachments_cycle_positive: {},
+  // Maintenance: compares nullable columns.
+  tickets_common_area_length: {
+    guarded:
+      'common_area IS NULL is tested first; the length runs only on a value',
+  },
+  tickets_completed_shape: {
+    guarded:
+      'confirmation_status is compared with IS NOT DISTINCT FROM, which is ' +
+      'never NULL; completed_at only under IS NOT NULL',
+  },
+  tickets_closed_shape: {
+    guarded:
+      'confirmation_status is compared with IS NOT DISTINCT FROM, which is ' +
+      'never NULL; closed_at only under IS NOT NULL',
+  },
+  tickets_rejected_has_count: {
+    guarded:
+      'confirmation_status is compared with IS DISTINCT FROM, which is never NULL',
+  },
+  ticket_status_history_from_shape: {
+    guarded:
+      'from_status IS NOT NULL is tested in the same branch before it is ' +
+      'compared with to_status',
+  },
+  ticket_assignments_type_shape: {
+    guarded:
+      'every comparison of from, to and assigned_by sits in a branch that ' +
+      'first tests each of them IS NOT NULL',
+  },
+  ticket_feedback_rating_shape: {
+    guarded: 'rating IS NULL is tested first; the range runs only on a value',
+  },
+  ticket_feedback_comment_shape: {
+    guarded: 'comment IS NULL is tested first; the length runs only on a value',
+  },
+  ticket_messages_body_length: {
+    guarded: 'body IS NULL is tested first; the length runs only on a value',
+  },
   household_members_minor_or_account: {
     guarded:
       'id_document_type and nationality are tested IS NOT NULL first, and ' +

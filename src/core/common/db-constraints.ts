@@ -72,4 +72,14 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   files_tenant_id_id_key: null,
   // A file is attached once: claim() finds no owned file the second time.
   domestic_workers_photo_file_id_key: null,
+  // Maintenance (ADR 0032). A category's key is chosen by the manager.
+  ticket_categories_tenant_id_key_key: ['key'],
+  ticket_categories_tenant_id_id_key: null,
+  tickets_tenant_id_id_key: null,
+  // Taken from the counter under its row lock; a violation is a race.
+  tickets_tenant_id_number_key: null,
+  // Checked under the ticket lock (TICKET_INVALID_TRANSITION first).
+  ticket_feedback_tenant_id_ticket_id_cycle_kind_key: null,
+  // claim() finds no owned file the second time.
+  ticket_attachments_file_id_key: null,
 };

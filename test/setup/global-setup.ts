@@ -80,6 +80,9 @@ const AUDIT_TABLES = [
   'security_events',
   // The append-only gate log (ADR 0028) has the same triggers.
   'gate_entries',
+  // So do the ticket history tables (ADR 0032).
+  'ticket_status_history',
+  'ticket_assignments',
 ];
 
 /**

@@ -2905,7 +2905,7 @@ export interface components {
             scopePhrase: string;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo";
         FileReadView: {
             contentType: string;
             /** Format: date-time */

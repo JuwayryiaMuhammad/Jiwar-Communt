@@ -87,6 +87,38 @@ describe('import boundaries', () => {
     expect(fromCore[0]).toContain('src/core must not import a domain');
   });
 
+  it('the maintenance domain imports core and community only through its index.ts, and never the gate (ADR 0032)', async () => {
+    const maintenance = 'src/maintenance/tickets/x.ts';
+    expect(
+      await problems(
+        maintenance,
+        "import { A } from '../../core/audit/audit.service';",
+      ),
+    ).toEqual([]);
+    expect(
+      await problems(maintenance, "import { A } from '../../community';"),
+    ).toEqual([]);
+    const deep = await problems(
+      maintenance,
+      "import { A } from '../../community/capabilities/capabilities';",
+    );
+    expect(deep).toHaveLength(1);
+    expect(deep[0]).toContain(
+      'Import community only through its public index.ts',
+    );
+    for (const gate of ['../../gate', '../../gate/entries/verify.service']) {
+      const found = await problems(maintenance, `import { A } from '${gate}';`);
+      expect(found).toHaveLength(1);
+      expect(found[0]).toContain('maintenance must not import gate at all');
+    }
+    const fromCore = await problems(
+      'src/core/sweep/x.ts',
+      "import { A } from '../../maintenance';",
+    );
+    expect(fromCore).toHaveLength(1);
+    expect(fromCore[0]).toContain('src/core must not import a domain');
+  });
+
   it('a domain may import core', async () => {
     expect(
       await problems(

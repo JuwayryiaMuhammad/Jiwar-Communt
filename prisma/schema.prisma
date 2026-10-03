@@ -453,6 +453,9 @@ model Tenant {
   settings          TenantSettings?
   registrationLinks RegistrationLink[]
   visitorPassLinks  VisitorPassLink[]
+  ticketCategories  TicketCategory[]
+  maintenance       MaintenanceSettings?
+  ticketCounter     TicketCounter?
 
   @@map("tenants")
 }
@@ -718,6 +721,12 @@ model Account {
   gateRequestsDecided   GateApprovalRequest[]     @relation("RequestDecidedBy")
   files                 StoredFile[]              @relation("FileOwner")
   entryCredentials      EntryCredential[]         @relation("CredentialAccount")
+  ticketsCreated        Ticket[]                  @relation("TicketCreatedBy")
+  ticketsReported       Ticket[]                  @relation("TicketReporter")
+  ticketsWorked         Ticket[]                  @relation("TicketTechnician")
+  ticketFeedback        TicketFeedback[]          @relation("FeedbackAuthor")
+  ticketMessages        TicketMessage[]           @relation("MessageSender")
+  ticketAttachments     TicketAttachment[]        @relation("AttachmentUploader")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -801,6 +810,7 @@ model Unit {
   visitorPasses     VisitorPass[]
   gateInstructions  UnitGateInstruction[]
   gateRequests      GateApprovalRequest[]
+  tickets           Ticket[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -1551,6 +1561,7 @@ enum FilePurpose {
   worker_photo
   document
   resident_photo
+  ticket_photo
 
   @@map("file_purpose")
 }
@@ -1580,9 +1591,10 @@ model StoredFile {
   attachedAt      DateTime?   @map("attached_at") @db.Timestamptz(3)
   createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  workers  DomesticWorker[] @relation("WorkerPhoto")
-  accounts Account[]        @relation("AccountPhoto")
-  owner    Account?         @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  workers  DomesticWorker[]   @relation("WorkerPhoto")
+  accounts Account[]          @relation("AccountPhoto")
+  tickets  TicketAttachment[] @relation("AttachmentFile")
+  owner    Account?           @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([tenantId, id])
   @@map("files")
@@ -1678,4 +1690,267 @@ model EntryCredential {
 
   @@unique([tenantId, id])
   @@map("entry_credentials")
+}
+
+// ============================================================================
+// MAINTENANCE (ADR 0032)
+// ============================================================================
+
+enum TicketPriority {
+  normal
+  urgent
+  emergency
+
+  @@map("ticket_priority")
+}
+
+enum TicketStatus {
+  new
+  assigned
+  in_progress
+  on_hold
+  completed
+  closed
+  cancelled
+
+  @@map("ticket_status")
+}
+
+enum TicketConfirmationStatus {
+  pending
+  confirmed
+  rejected
+  auto_closed
+
+  @@map("ticket_confirmation_status")
+}
+
+enum TicketHoldReason {
+  awaiting_resident
+  awaiting_parts
+  other
+
+  @@map("ticket_hold_reason")
+}
+
+enum TicketAssignmentType {
+  manual
+  reassignment
+  declined
+  /// Reserved for the dispatch engine (Phase 5.2); never written in 5.1.
+  automatic
+  /// A system unassignment: escalated to the queue, or the technician left.
+  released
+
+  @@map("ticket_assignment_type")
+}
+
+enum TicketAttachmentKind {
+  report
+  before
+  after
+
+  @@map("ticket_attachment_kind")
+}
+
+enum TicketFeedbackKind {
+  confirmed
+  rejected
+  reopened
+
+  @@map("ticket_feedback_kind")
+}
+
+/// The compound's own categories, seeded with five defaults. Never deleted:
+/// tickets point at them; `active = false` retires one.
+model TicketCategory {
+  id                String         @id @db.Uuid
+  tenantId          String         @map("tenant_id") @db.Uuid
+  key               String
+  nameAr            String         @map("name_ar")
+  nameEn            String         @map("name_en")
+  defaultPriority   TicketPriority @default(normal) @map("default_priority")
+  commonAreaAllowed Boolean        @default(true) @map("common_area_allowed")
+  active            Boolean        @default(true)
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  tickets Ticket[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, key])
+  @@map("ticket_categories")
+}
+
+/// One row per compound, created with it.
+model MaintenanceSettings {
+  tenantId        String   @id @map("tenant_id") @db.Uuid
+  autoCloseHours  Int      @default(72) @map("auto_close_hours")
+  reopenDays      Int      @default(7) @map("reopen_days")
+  maxReportPhotos Int      @default(5) @map("max_report_photos")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("maintenance_settings")
+}
+
+/// The last ticket number of a compound, taken under its row lock.
+model TicketCounter {
+  tenantId   String @id @map("tenant_id") @db.Uuid
+  lastNumber Int    @default(0) @map("last_number")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("ticket_counters")
+}
+
+/// A maintenance ticket (ADR 0032): a unit's or a common area's record.
+/// Never deleted. `status` is the work, `confirmationStatus` the reporter's
+/// verdict on the last completion; CHECKs tie them together.
+model Ticket {
+  id                 String                    @id @db.Uuid
+  tenantId           String                    @map("tenant_id") @db.Uuid
+  number             Int
+  unitId             String?                   @map("unit_id") @db.Uuid
+  /// A short label until common areas have a table. Free text: never in
+  /// the audit trail or a notification.
+  commonArea         String?                   @map("common_area")
+  categoryId         String                    @map("category_id") @db.Uuid
+  createdById        String                    @map("created_by_account_id") @db.Uuid
+  reporterId         String                    @map("reporter_account_id") @db.Uuid
+  priority           TicketPriority
+  status             TicketStatus              @default(new)
+  holdReason         TicketHoldReason?         @map("hold_reason")
+  confirmationStatus TicketConfirmationStatus? @map("confirmation_status")
+  technicianId       String?                   @map("technician_account_id") @db.Uuid
+  cycle              Int                       @default(1)
+  rejectionCount     Int                       @default(0) @map("rejection_count")
+  /// Free text, may name people: never in the audit trail or a notification.
+  description        String
+  createdAt          DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  assignedAt         DateTime?                 @map("assigned_at") @db.Timestamptz(3)
+  completedAt        DateTime?                 @map("completed_at") @db.Timestamptz(3)
+  closedAt           DateTime?                 @map("closed_at") @db.Timestamptz(3)
+  cancelledAt        DateTime?                 @map("cancelled_at") @db.Timestamptz(3)
+
+  unit        Unit?              @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  category    TicketCategory     @relation(fields: [tenantId, categoryId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  createdBy   Account            @relation("TicketCreatedBy", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "tickets_tenant_id_created_by_fkey")
+  reporter    Account            @relation("TicketReporter", fields: [tenantId, reporterId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "tickets_tenant_id_reporter_fkey")
+  technician  Account?           @relation("TicketTechnician", fields: [tenantId, technicianId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "tickets_tenant_id_technician_fkey")
+  feedback    TicketFeedback[]
+  messages    TicketMessage[]
+  attachments TicketAttachment[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number])
+  @@index([tenantId, status, createdAt(sort: Desc), id(sort: Desc)], map: "tickets_tenant_id_status_created_at_idx")
+  @@index([tenantId, technicianId, status], map: "tickets_tenant_id_technician_idx")
+  @@index([tenantId, reporterId], map: "tickets_tenant_id_reporter_idx")
+  @@index([tenantId, createdById], map: "tickets_tenant_id_created_by_idx")
+  @@index([tenantId, unitId])
+  @@map("tickets")
+}
+
+/// Append-only (ADR 0032): SELECT and INSERT for jiwar_app, triggers refuse
+/// the rest for every role. No foreign keys, like gate_entries.
+model TicketStatusHistory {
+  id         String        @id @db.Uuid
+  tenantId   String        @map("tenant_id") @db.Uuid
+  ticketId   String        @map("ticket_id") @db.Uuid
+  fromStatus TicketStatus? @map("from_status")
+  toStatus   TicketStatus  @map("to_status")
+  /// NULL for the system (the sweep, an escalation).
+  actorId    String?       @map("actor_account_id") @db.Uuid
+  /// A reason from a closed list; for a hold, the hold reason.
+  reasonCode String?       @map("reason_code")
+  cycle      Int
+  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([tenantId, ticketId, createdAt, id], map: "ticket_status_history_ticket_idx")
+  @@map("ticket_status_history")
+}
+
+/// Append-only, like the status history. A decline or a release has no `to`.
+model TicketAssignment {
+  id             String               @id @db.Uuid
+  tenantId       String               @map("tenant_id") @db.Uuid
+  ticketId       String               @map("ticket_id") @db.Uuid
+  fromId         String?              @map("from_account_id") @db.Uuid
+  toId           String?              @map("to_account_id") @db.Uuid
+  /// Who acted: a dispatcher, the technician on a decline, NULL for system.
+  assignedById   String?              @map("assigned_by_account_id") @db.Uuid
+  assignmentType TicketAssignmentType @map("assignment_type")
+  reasonCode     String?              @map("reason_code")
+  cycle          Int
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([tenantId, ticketId, createdAt, id], map: "ticket_assignments_ticket_idx")
+  @@map("ticket_assignments")
+}
+
+/// The reporter's verdict on a cycle: a confirmation (rating, comment), a
+/// rejection or a reopen (a reason code; the note is a message).
+model TicketFeedback {
+  id         String             @id @db.Uuid
+  tenantId   String             @map("tenant_id") @db.Uuid
+  ticketId   String             @map("ticket_id") @db.Uuid
+  cycle      Int
+  kind       TicketFeedbackKind
+  authorId   String             @map("author_account_id") @db.Uuid
+  rating     Int?
+  reasonCode String?            @map("reason_code")
+  /// Content: erased with its author, never audited.
+  comment    String?
+  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  ticket Ticket  @relation(fields: [tenantId, ticketId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  author Account @relation("FeedbackAuthor", fields: [tenantId, authorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "ticket_feedback_tenant_id_author_fkey")
+
+  @@unique([tenantId, ticketId, cycle, kind])
+  @@map("ticket_feedback")
+}
+
+/// A ticket's thread. An erasure nulls the body and sets `deletedAt`; the
+/// sender stays, pointing at the tombstone.
+model TicketMessage {
+  id        String    @id @db.Uuid
+  tenantId  String    @map("tenant_id") @db.Uuid
+  ticketId  String    @map("ticket_id") @db.Uuid
+  senderId  String    @map("sender_account_id") @db.Uuid
+  body      String?
+  /// Staff only: never shown to a resident.
+  internal  Boolean   @default(false)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  ticket Ticket  @relation(fields: [tenantId, ticketId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  sender Account @relation("MessageSender", fields: [tenantId, senderId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "ticket_messages_tenant_id_sender_fkey")
+
+  @@index([tenantId, ticketId, createdAt, id], map: "ticket_messages_ticket_idx")
+  @@index([tenantId, senderId], map: "ticket_messages_sender_idx")
+  @@map("ticket_messages")
+}
+
+/// A photo attached to a ticket. The file belongs to the ticket (no owner).
+model TicketAttachment {
+  id           String               @id @db.Uuid
+  tenantId     String               @map("tenant_id") @db.Uuid
+  ticketId     String               @map("ticket_id") @db.Uuid
+  fileId       String               @unique @map("file_id") @db.Uuid
+  kind         TicketAttachmentKind
+  uploadedById String               @map("uploaded_by_account_id") @db.Uuid
+  cycle        Int
+  createdAt    DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  ticket     Ticket     @relation(fields: [tenantId, ticketId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  file       StoredFile @relation("AttachmentFile", fields: [tenantId, fileId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  uploadedBy Account    @relation("AttachmentUploader", fields: [tenantId, uploadedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "ticket_attachments_tenant_id_uploaded_by_fkey")
+
+  @@index([tenantId, ticketId, createdAt, id], map: "ticket_attachments_ticket_idx")
+  @@map("ticket_attachments")
 }

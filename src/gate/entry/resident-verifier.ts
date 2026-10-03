@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CommunityGatePort } from '../../community';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
+import { firstNameOf } from '../../core/common/http/personal';
 import { FilesService } from '../../core/files/files.service';
 import {
   ENTRY_SKEW_STEPS,
@@ -80,7 +81,7 @@ export class ResidentVerifier {
         capacity: null,
         photo: null,
         // Only the first word of the name: never the full name.
-        firstName: (account.fullName ?? '').trim().split(/\s+/)[0] || null,
+        firstName: firstNameOf(account.fullName),
         unitCodes: [...codes.values()].sort(),
         photoUrl: photo?.url ?? null,
       },

@@ -18,7 +18,13 @@
 // pieces and each carries every pattern that applies to its files.
 
 /** Top-level domain folders under src/. The unit test keeps this in sync with the disk. */
-const DOMAINS = ['community', 'gate'];
+const DOMAINS = ['community', 'gate', 'maintenance'];
+
+/**
+ * Domains a domain must not import at all, not even through the index:
+ * maintenance reads community only (ADR 0032).
+ */
+const NO_IMPORT = { maintenance: ['gate'] };
 
 const BASE_PRISMA = {
   group: ['**/base-prisma', '**/database/base-prisma'],
@@ -34,10 +40,18 @@ const CORE_TO_DOMAIN = {
 
 /** From inside `domain`: other domains only through their index.ts. */
 function otherDomainsInternals(domain) {
-  return DOMAINS.filter((d) => d !== domain).map((d) => ({
-    group: [`**/${d}/**`, `!**/${d}/index`],
-    message: `Import ${d} only through its public index.ts (ADR 0015).`,
-  }));
+  const banned = NO_IMPORT[domain] ?? [];
+  return DOMAINS.filter((d) => d !== domain).map((d) =>
+    banned.includes(d)
+      ? {
+          group: [`**/${d}`, `**/${d}/**`],
+          message: `${domain} must not import ${d} at all (ADR 0032).`,
+        }
+      : {
+          group: [`**/${d}/**`, `!**/${d}/index`],
+          message: `Import ${d} only through its public index.ts (ADR 0015).`,
+        },
+  );
 }
 
 function rule(patterns) {

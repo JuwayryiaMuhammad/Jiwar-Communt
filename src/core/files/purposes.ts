@@ -21,7 +21,8 @@ export interface FilePurposeDefinition {
  *
  * A worker's photo is uploaded by whoever may register a worker, and by the
  * manager, who may set or replace it later. A resident's own photo is
- * uploaded by the account itself (`profile.photo`, ADR 0031).
+ * uploaded by the account itself (`profile.photo`, ADR 0031). A ticket's
+ * photos come from whoever opens tickets or works them (ADR 0032).
  */
 export const FILE_PURPOSES = {
   worker_photo: {
@@ -38,6 +39,11 @@ export const FILE_PURPOSES = {
     types: IMAGE_TYPES,
     maxBytes: 5 * MB,
     uploaders: ['profile.photo'],
+  },
+  ticket_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['tickets.create', 'tickets.work'],
   },
 } as const satisfies Record<FilePurpose, FilePurposeDefinition>;
 

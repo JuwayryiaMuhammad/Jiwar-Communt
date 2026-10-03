@@ -13,6 +13,7 @@ import { newId } from '../common/uuid';
 import { GlobalDbService } from '../database/global-db.service';
 import { TenantTx } from '../database/tenant-tx.service';
 import { TenantSettingsService } from '../tenant-settings/tenant-settings.service';
+import { TenantLifecycle } from '../tenant-settings/tenant-lifecycle';
 
 export interface NewManager extends IdentityDocumentInput {
   fullName: string;
@@ -71,12 +72,13 @@ export class TenantsService {
     private readonly platformAudit: PlatformAuditService,
     private readonly securityEvents: SecurityEventsService,
     private readonly settings: TenantSettingsService,
+    private readonly lifecycle: TenantLifecycle,
   ) {}
 
   /**
    * One transaction: the compound, its default roles and permissions
-   * (ADR 0010), its settings (ADR 0016) and its first manager with login
-   * identifiers.
+   * (ADR 0010), its settings (ADR 0016), what the domains set up for a new
+   * compound (TenantLifecycle) and its first manager with login identifiers.
    */
   async createTenant(input: {
     name: string;
@@ -105,6 +107,8 @@ export class TenantsService {
         .tenant.create({ data: { id, name } });
       await this.provisioner.provision(tx, id);
       await this.settings.create(tx, id);
+      // The domains' own defaults (maintenance categories, ADR 0032).
+      await this.lifecycle.tenantCreated(tx, id);
       await this.platformAudit.record(tx, {
         action: 'tenant.created',
         targetId: id,

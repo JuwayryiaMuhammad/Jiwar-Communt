@@ -4,9 +4,12 @@ import { CODE_ACCESS_CATALOG } from '../../src/core/access/access-catalog';
 import { RoleProvisioner } from '../../src/core/access/role-provisioner';
 import { egyptToday } from '../../src/core/common/egyptian-national-id';
 import { newId } from '../../src/core/common/uuid';
+import { TenantLifecycle } from '../../src/core/tenant-settings/tenant-lifecycle';
+import { MaintenanceProvisioning } from '../../src/maintenance/provisioning';
 import type { DbHarness } from './db-module';
 
 const provisioner = new RoleProvisioner(CODE_ACCESS_CATALOG);
+const maintenance = new MaintenanceProvisioning(new TenantLifecycle());
 
 /**
  * A valid Egyptian national ID for someone born on `birthDate` (default
@@ -59,6 +62,7 @@ export async function createTenant(
     h.tenantTx.withTenantTx(async (tx) => {
       await provisioner.provision(tx, id);
       await tx.tenantSettings.create({ data: { tenantId: id } });
+      await maintenance.provision(tx, id);
     }),
   );
   return id;

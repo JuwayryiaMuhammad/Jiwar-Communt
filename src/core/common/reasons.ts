@@ -75,6 +75,40 @@ export function requireReasonCode<C extends string>(
 }
 
 /**
+ * A code alone, for actions whose reason never reaches anyone as text (a
+ * pass cancelled, a ticket declined): `REASON_REQUIRED` when missing, a
+ * field error `INVALID_REASON_CODE` with `allowed` outside the list.
+ */
+export function requireReasonCodeOnly<C extends string>(
+  code: string | undefined,
+  allowed: readonly C[],
+): C {
+  if (!code)
+    throw appError.badRequest(
+      ErrorCode.REASON_REQUIRED,
+      'A reason is required',
+      {
+        fields: [{ field: 'reasonCode', code: FieldErrorCode.FIELD_REQUIRED }],
+      },
+    );
+  if (!(allowed as readonly string[]).includes(code))
+    throw appError.badRequest(
+      ErrorCode.VALIDATION_FAILED,
+      'Unknown reason code',
+      {
+        fields: [
+          {
+            field: 'reasonCode',
+            code: FieldErrorCode.INVALID_REASON_CODE,
+            params: { allowed: [...allowed] },
+          },
+        ],
+      },
+    );
+  return code as C;
+}
+
+/**
  * The closed lists, one per action. Adding a code is a reviewed change: the
  * audit trail keeps every code ever used, forever.
  */
@@ -107,4 +141,32 @@ export const REASON_CODES = {
   cardReissue: ['lost', 'compromised', 'other'],
   // A code only, never text (ADR 0028).
   visitorPassCancel: ['not_needed', 'plans_changed', 'other'],
+  // Maintenance (ADR 0032). Codes only, except a rejection and a reopen,
+  // whose note becomes a message in the ticket's thread.
+  ticketReassign: ['technician_unavailable', 'workload', 'specialty', 'other'],
+  ticketDecline: [
+    'not_my_specialty',
+    'unavailable',
+    'needs_parts_or_tools',
+    'unsafe',
+    'other',
+  ],
+  ticketPriority: ['reassessed', 'safety_risk', 'reporter_request', 'other'],
+  ticketCancel: [
+    'duplicate',
+    'resolved_without_visit',
+    'reporter_request',
+    'invalid',
+    'other',
+  ],
+  ticketReject: [
+    'not_fixed',
+    'poor_quality',
+    'damage_caused',
+    'incomplete',
+    'other',
+  ],
+  ticketReopen: ['problem_returned', 'not_fixed', 'other'],
+  // Written by the system only: back to the queue.
+  ticketRelease: ['escalated', 'technician_unavailable'],
 } as const;

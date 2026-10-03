@@ -1872,7 +1872,8 @@
         "enum": [
           "worker_photo",
           "document",
-          "resident_photo"
+          "resident_photo",
+          "ticket_photo"
         ],
         "type": "string"
       },

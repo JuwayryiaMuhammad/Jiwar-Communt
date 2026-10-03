@@ -14,7 +14,7 @@ import {
   FieldErrorCode,
   type FieldError,
 } from '../../core/common/errors';
-import { REASON_CODES } from '../../core/common/reasons';
+import { REASON_CODES, requireReasonCodeOnly } from '../../core/common/reasons';
 import { newId } from '../../core/common/uuid';
 import type { Env } from '../../core/config/env.schema';
 import { GlobalDbService } from '../../core/database/global-db.service';
@@ -431,7 +431,10 @@ export class VisitorPassesService implements OnModuleInit {
 
   /** The host, or the unit's primary. Anyone else: not found. */
   async cancel(id: string, reasonCode: string | undefined): Promise<void> {
-    const code = checkCancelCode(reasonCode);
+    const code = requireReasonCodeOnly(
+      reasonCode,
+      REASON_CODES.visitorPassCancel,
+    );
     const me = this.ctx.accountId;
     await this.tenantTx.withTenantTx(async (tx) => {
       const pass = await tx.visitorPass.findUnique({ where: { id } });
@@ -580,33 +583,6 @@ export function passStatus(p: {
   if (p.status === 'active' && p.validUntil.getTime() <= Date.now())
     return 'expired';
   return p.status;
-}
-
-function checkCancelCode(code: string | undefined): string {
-  const allowed = REASON_CODES.visitorPassCancel as readonly string[];
-  if (!code)
-    throw appError.badRequest(
-      ErrorCode.REASON_REQUIRED,
-      'A reason is required',
-      {
-        fields: [{ field: 'reasonCode', code: FieldErrorCode.FIELD_REQUIRED }],
-      },
-    );
-  if (!allowed.includes(code))
-    throw appError.badRequest(
-      ErrorCode.VALIDATION_FAILED,
-      'Unknown reason code',
-      {
-        fields: [
-          {
-            field: 'reasonCode',
-            code: FieldErrorCode.INVALID_REASON_CODE,
-            params: { allowed: [...allowed] },
-          },
-        ],
-      },
-    );
-  return code;
 }
 
 function isUniqueOn(error: unknown, column: string): boolean {

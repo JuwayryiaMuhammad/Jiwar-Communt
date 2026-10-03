@@ -56,6 +56,14 @@ export const PERMISSIONS = {
   'visitors.invite': { kinds: ['resident', 'family'] },
   // One's own photo, shown to the guard at the gate (ADR 0031).
   'profile.photo': { kinds: ['resident', 'family'] },
+  // Maintenance (ADR 0032). Residents and family open tickets
+  // (capabilities.tickets decides per unit); technicians work the ones
+  // assigned to them; dispatchers (a supervisor, or the manager) assign
+  // them and see every ticket; the manager sets categories and settings.
+  'tickets.create': { kinds: ['resident', 'family'] },
+  'tickets.work': { kinds: ['staff'] },
+  'tickets.dispatch': { kinds: ['staff', 'manager'] },
+  'maintenance.manage': { kinds: ['manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

@@ -1,4 +1,3 @@
-import { newId } from '../../src/core/common/uuid';
 import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
 import { gateHelpers } from '../setup/gate';
 import {
@@ -222,22 +221,13 @@ describe('API v0 — gates and shifts (ADR 0028)', () => {
       );
     expect(await roleOf((byDefault.body as { id: string }).id)).toBe('guard');
 
-    // A second staff role (a technician): created by hand until roles can be.
-    const technician = await w.helpers.asManager(w.a, () =>
-      w.helpers.prisma.tenant.role.create({
-        data: {
-          id: newId(),
-          tenantId: w.a.tenantId,
-          key: `technician_${uniqueSuffix()}`,
-          kind: 'staff',
-        },
-      }),
-    );
-    const explicit = await newGuard({ roleKey: technician.key });
-    expect(explicit.status).toBe(201);
-    expect(await roleOf((explicit.body as { id: string }).id)).toBe(
-      technician.key,
-    );
+    // The other staff roles (ADR 0032): a technician and a maintenance
+    // supervisor are created the same way, by naming the role.
+    for (const roleKey of ['technician', 'maintenance_supervisor']) {
+      const explicit = await newGuard({ roleKey });
+      expect(explicit.status).toBe(201);
+      expect(await roleOf((explicit.body as { id: string }).id)).toBe(roleKey);
+    }
 
     for (const roleKey of ['nope', 'manager', 'resident']) {
       const res = await newGuard({ roleKey });

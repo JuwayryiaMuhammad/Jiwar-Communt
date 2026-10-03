@@ -307,6 +307,7 @@ describe('Audit coverage', () => {
             'household.delegate',
             'household.manage',
             'profile.photo',
+            'tickets.create',
             'units.read',
             'visitors.invite',
             'workers.manage',

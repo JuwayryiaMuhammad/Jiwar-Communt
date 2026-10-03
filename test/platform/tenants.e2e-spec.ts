@@ -80,8 +80,10 @@ describe('TenantsService', () => {
     expect(roles.map((r) => [r.key, r.kind, r.isSystem, r.name])).toEqual([
       ['family_member', 'family', true, null],
       ['guard', 'staff', true, null],
+      ['maintenance_supervisor', 'staff', true, null],
       ['manager', 'manager', true, null],
       ['resident', 'resident', true, null],
+      ['technician', 'staff', true, null],
     ]);
     for (const def of CODE_ACCESS_CATALOG.defaultRoles) {
       const role = roles.find((r) => r.key === def.key)!;

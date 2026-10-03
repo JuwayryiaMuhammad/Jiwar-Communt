@@ -17,6 +17,8 @@ export interface AccessCatalog {
   defaultRoles: readonly {
     key: string;
     kind: AccountType;
+    /** The role new accounts of its kind get; implied for a kind's only role. */
+    kindDefault?: boolean;
     permissions: readonly string[];
   }[];
   retired: readonly string[];
@@ -50,14 +52,14 @@ export function catalogProblems(catalog: AccessCatalog): string[] {
       problems.push(`rename target ${to} is retired`);
   }
   const keys = new Set<string>();
-  const kinds = new Set<AccountType>();
+  const byKind = new Map<AccountType, { key: string; marked: boolean }[]>();
   for (const role of catalog.defaultRoles) {
     if (keys.has(role.key)) problems.push(`duplicate default role ${role.key}`);
     keys.add(role.key);
-    // AccountWriter gives a new account the default role of its kind.
-    if (kinds.has(role.kind))
-      problems.push(`more than one default role of kind ${role.kind}`);
-    kinds.add(role.kind);
+    byKind.set(role.kind, [
+      ...(byKind.get(role.kind) ?? []),
+      { key: role.key, marked: role.kindDefault === true },
+    ]);
     for (const p of role.permissions) {
       const def = catalog.permissions[p];
       if (!def) problems.push(`${role.key}: unknown permission ${p}`);
@@ -65,6 +67,14 @@ export function catalogProblems(catalog: AccessCatalog): string[] {
         problems.push(`${role.key}: ${p} is not assignable to ${role.kind}`);
       }
     }
+  }
+  // AccountWriter gives a new account the kind default of its kind: one,
+  // unambiguous, whatever other roles of that kind exist (ADR 0032).
+  for (const [kind, roles] of byKind) {
+    const marked = roles.filter((r) => r.marked).length;
+    if (marked > 1) problems.push(`more than one kind default for ${kind}`);
+    if (marked === 0 && roles.length > 1)
+      problems.push(`no kind default among the ${kind} roles`);
   }
   const lockRole = catalog.defaultRoles.find(
     (r) => r.key === catalog.lockout.roleKey,
@@ -84,9 +94,11 @@ export function catalogProblems(catalog: AccessCatalog): string[] {
 }
 
 /**
- * The key of the default role new accounts of `type` get, or the type itself
- * when the catalog has none (a compound may define that role on its own).
+ * The key of the role new accounts of `type` get (the kind default, or the
+ * kind's only role), or the type itself when the catalog has none (a
+ * compound may define that role on its own).
  */
 export function defaultRoleKey(catalog: AccessCatalog, type: AccountType) {
-  return catalog.defaultRoles.find((r) => r.kind === type)?.key ?? type;
+  const roles = catalog.defaultRoles.filter((r) => r.kind === type);
+  return (roles.find((r) => r.kindDefault) ?? roles[0])?.key ?? type;
 }

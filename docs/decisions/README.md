@@ -33,3 +33,4 @@
 | [0029](0029-object-storage.md) | Object storage: a private bucket (R2, MinIO), presigned uploads checked at finalize | Accepted |
 | [0030](0030-qr-entry.md) | QR entry: one token per pass and engagement, derived codes, the visitor's link, the card | Accepted |
 | [0031](0031-resident-entry-qr.md) | The resident's entry QR: derived secrets, 30-second steps, no movement log, the photo | Accepted |
+| [0032](0032-maintenance-tickets.md) | Maintenance tickets: statuses, history, manual dispatch, confirmation and reopen, messages, visibility | Accepted |

@@ -26,6 +26,7 @@ Worker photos (ADR 0030 left them for later), identity scans and registration do
 | `worker_photo` | JPEG, PNG, WebP | 5 MB | `workers.manage` (whoever registers a worker) or `workers.review` (the manager sets or replaces it) |
 | `document` | JPEG, PNG, WebP, PDF | 10 MB | `accounts.manage` (management) |
 | `resident_photo` | JPEG, PNG, WebP | 5 MB | `profile.photo` (the account itself, ADR 0031) |
+| `ticket_photo` | JPEG, PNG, WebP | 5 MB | `tickets.create` or `tickets.work` (ADR 0032) |
 
 The database repeats types and limits as CHECKs, and a unit test keeps the two in step.
 
@@ -56,6 +57,9 @@ The database repeats types and limits as CHECKs, and a unit test keeps the two i
 
 ### Resident photos (Phase 4.3)
 An account's own photo (ADR 0031) uses the same flow: `PUT /me/photo` claims the caller's finalized `resident_photo`, the file moves to the account (`accounts.photo_file_id`, unique) and a replaced one is deleted. It is read by the person (`GET /me`) and by the guard on a valid resident scan, nowhere else. Erasure drops it. `FilesService.readUrl` now delegates to `AttachedFileUrls` in `ObjectStorageModule`.
+
+### Ticket photos (Phase 5.1)
+A ticket's photos (ADR 0032) are claimed the same way and move to the ticket (`ticket_attachments`, the file without an owner), so the uploader's erasure leaves them: the ticket is the unit's maintenance record. They are read only in the ticket's no-store details, by those who may see the ticket, and are never deleted in 5.1.
 
 ### Local, CI, smoke test
 - MinIO runs in docker-compose (API 9005, console 9006). The official images are no longer published, so it is the `pgsty/minio` community build, pinned like on staging. `pnpm storage:init` creates the dev bucket and is refused in production.

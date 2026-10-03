@@ -1307,8 +1307,15 @@ describe('API v0 — maintenance (ADR 0032)', () => {
       const asTech = await call(w, 'GET', tech, {
         token: w.a.tokens.technician,
       }).expect(200);
+      // First names only, no account id (ADR 0032).
       expect(keyPaths(asTech.body)).toEqual(
-        listKeys([...MESSAGE, 'internal'].sort()),
+        listKeys(
+          [
+            ...MESSAGE.filter((k) => k !== 'sender.id'),
+            'internal',
+            'mine',
+          ].sort(),
+        ),
       );
       expect(await bodies(tech, w.a.tokens.technician)).toHaveLength(5);
       const asDispatch = await call(w, 'GET', dispatch, {

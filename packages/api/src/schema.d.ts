@@ -3621,6 +3621,15 @@ export interface components {
             /** @description `pending` until finalized. */
             status: components["schemas"]["FileStatus"];
         };
+        FirstNameOnlyView: {
+            /**
+             * @description Present (true) only on an erased account.
+             * @enum {boolean}
+             */
+            erased?: true;
+            /** @description Absent when erased. */
+            firstName?: string | null;
+        };
         FirstNameRefView: {
             /**
              * @description Present (true) only on an erased account.
@@ -4784,7 +4793,6 @@ export interface components {
             nextCursor: string | null;
         };
         TechnicianMessageView: {
-            /** @description Null once its sender was erased. */
             body: string | null;
             /** Format: date-time */
             createdAt: string;
@@ -4793,7 +4801,9 @@ export interface components {
             id: string;
             /** @description Staff only. */
             internal: boolean;
-            sender: components["schemas"]["FirstNameRefView"];
+            /** @description Written by the caller. */
+            mine: boolean;
+            sender: components["schemas"]["FirstNameOnlyView"];
             /** @enum {string} */
             senderKind: "resident" | "staff" | "manager";
         };

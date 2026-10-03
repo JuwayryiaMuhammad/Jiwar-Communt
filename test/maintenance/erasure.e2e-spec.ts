@@ -166,7 +166,7 @@ describe('Maintenance — erasure', () => {
       .expect(200);
     expect(JSON.stringify(techView.body)).not.toContain('ERASE-ME');
     expect(techView.body).toMatchObject({
-      data: [{ sender: { id: leaving.id, erased: true } }, {}],
+      data: [{ sender: { erased: true }, mine: false }, { mine: true }],
     });
   });
 });

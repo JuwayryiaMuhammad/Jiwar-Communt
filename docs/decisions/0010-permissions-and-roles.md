@@ -24,3 +24,7 @@ A permission already in the catalog is never re-added, so a permission a manager
 
 ## Out of scope
 Custom roles, per-account overrides (possible later as overrides on top of the role).
+
+## Update (Phase 5.1, ADR 0032)
+- Two more staff system roles, `technician` (`tickets.work`) and `maintenance_supervisor` (`tickets.dispatch`), beside `guard`. "At most one default role per kind" became **exactly one `kindDefault` per kind**: a new account gets its kind's default unless it names another role of that kind (`roleKey`), and `guard` stays the staff default. `access:sync` creates missing system roles in existing compounds.
+- New permissions: `tickets.create` (resident, family), `tickets.work` (staff), `tickets.dispatch` (staff, manager; the manager has it by default) and `maintenance.manage` (manager).

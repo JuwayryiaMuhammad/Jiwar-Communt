@@ -62,13 +62,64 @@ export class ResidentMessageView {
   }
 }
 
-/** The technician: first names too, and the internal flag. */
-export class TechnicianMessageView extends ResidentMessageView {
+/**
+ * Who wrote a message, for the technician: a first name and nothing that
+ * identifies the account (ADR 0032). An erased sender is `{ erased: true }`.
+ */
+export class FirstNameOnlyView {
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    description: 'Absent when erased.',
+  })
+  firstName?: string | null;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    enum: [true],
+    description: 'Present (true) only on an erased account.',
+  })
+  erased?: true;
+}
+
+/**
+ * The technician: first names only — no account id, so a resident is never
+ * identified beyond what the work needs — and the internal flag.
+ */
+export class TechnicianMessageView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: FirstNameOnlyView })
+  sender: FirstNameOnlyView;
+  @ApiProperty({ enum: SENDER_KINDS })
+  senderKind: SenderKind;
+  @ApiProperty({ type: Boolean, description: 'Written by the caller.' })
+  mine: boolean;
+  @ApiProperty({ type: String, nullable: true })
+  body: string | null;
+  @ApiProperty({ type: Boolean })
+  deleted: boolean;
   @ApiProperty({ type: Boolean, description: 'Staff only.' })
   internal: boolean;
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: Date;
 
-  static from(r: MessageRead): TechnicianMessageView {
-    return { ...ResidentMessageView.from(r), internal: r.message.internal };
+  static from(r: MessageRead, me: string): TechnicianMessageView {
+    const named = firstNameRef(r.sender);
+    return {
+      id: r.message.id,
+      sender: named.erased
+        ? { erased: true }
+        : { firstName: named.firstName ?? null },
+      senderKind: kindOf(r.sender),
+      mine: r.sender.id === me,
+      body: r.message.body,
+      deleted: r.message.deletedAt !== null,
+      internal: r.message.internal,
+      createdAt: r.message.createdAt,
+    };
   }
 }
 

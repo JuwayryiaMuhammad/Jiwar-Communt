@@ -45,6 +45,10 @@
 - Freeze, deactivation and erasure revoke the account's **entry credentials** (the resident's rotating QR) in the same transaction (`onFrozen`, `onDeactivated`, `onErasing`).
 - An erased account keeps **no photo**: the pointer is cleared and the file deleted in the erasure's transaction (`accounts_erased_shape` also requires `photo_file_id` to be NULL).
 
+## Update (Phase 5.1, ADR 0032)
+- Erasure nulls the person's **ticket messages** (body NULL, `deleted_at` set) and their **confirmation comments**; the sender and author stay pointers to the tombstone. Their tickets, descriptions and photos stay: the ticket is the unit's maintenance record.
+- A technician who is deactivated, frozen or erased has their tickets in hand released to the dispatch queue in the same transaction.
+
 ## Audit
 - `account.frozen` (phone as `{ changed: true }`), `account.reactivated`, `account.deletion_requested`, `account.deletion_cancelled`, `account.legal_hold_placed`, `account.legal_hold_released`.
 - `account.erased`: every personal field as `{ changed: true }`, counts only.

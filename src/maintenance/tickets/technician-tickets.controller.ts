@@ -14,6 +14,7 @@ import {
   ApiOkResponse,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
+import { RequestContext } from '../../core/common/cls/request-context';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
   ListOf,
@@ -58,6 +59,7 @@ export class TechnicianTicketsController {
     private readonly work: WorkService,
     private readonly attachments: AttachmentsService,
     private readonly messages: MessagesService,
+    private readonly ctx: RequestContext,
   ) {}
 
   @Get()
@@ -142,8 +144,9 @@ export class TechnicianTicketsController {
     @Param('id', parseId()) id: string,
     @Query() q: PageQueryDto,
   ): Promise<ListResponse<TechnicianMessageView>> {
+    const me = this.ctx.accountId;
     return toList(await this.messages.list(id, 'technician', q), (m) =>
-      TechnicianMessageView.from(m),
+      TechnicianMessageView.from(m, me),
     );
   }
 

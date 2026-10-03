@@ -2,6 +2,7 @@ import type { Response } from 'supertest';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { call, err } from './request';
 import { minorBody } from './routes/household';
+import { ticketBody } from './routes/maintenance';
 import { passBody } from './routes/visitors';
 import { buildWorld, type World } from './world';
 
@@ -82,6 +83,15 @@ describe('API v0 — capabilities drive access', () => {
         return res;
       },
     },
+    {
+      // Maintenance (ADR 0032): opening a ticket on the unit is `tickets`.
+      flag: 'tickets',
+      run: (token, u) =>
+        call(w, 'POST', '/tickets', {
+          token,
+          body: ticketBody(u, w.aCategoryId),
+        }),
+    },
   ];
 
   async function check(
@@ -123,6 +133,7 @@ describe('API v0 — capabilities drive access', () => {
       governanceVote: true,
       visitorsInvite: false,
       gateEntry: false,
+      tickets: false,
     });
   });
 
@@ -136,6 +147,7 @@ describe('API v0 — capabilities drive access', () => {
       governanceVote: false,
       visitorsInvite: true,
       gateEntry: true,
+      tickets: true,
     });
   });
 
@@ -149,6 +161,7 @@ describe('API v0 — capabilities drive access', () => {
       bookings: true,
       visitorsInvite: true,
       gateEntry: true,
+      tickets: true,
     });
   });
 
@@ -176,8 +189,10 @@ describe('API v0 — capabilities drive access', () => {
       householdManage: false,
       financeView: false,
       financePay: false,
-      // A death review takes nothing away from living at home (ADR 0031).
+      // A death review takes nothing away from living at home (ADR 0031),
+      // and maintenance goes on (ADR 0021).
       gateEntry: true,
+      tickets: true,
     });
     await check(
       'familyUnderReview',
@@ -188,6 +203,7 @@ describe('API v0 — capabilities drive access', () => {
         householdView: true,
         householdManage: false,
         financeView: false,
+        tickets: true,
       },
     );
   });

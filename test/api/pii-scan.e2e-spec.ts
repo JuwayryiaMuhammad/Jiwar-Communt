@@ -5,7 +5,12 @@ import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
 import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
 import { ApprovalsService } from '../../src/gate/approvals/approvals.service';
+import { ConfirmationService } from '../../src/maintenance/tickets/confirmation.service';
+import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
+import { MessagesService } from '../../src/maintenance/tickets/messages.service';
 import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
+import { WorkService } from '../../src/maintenance/tickets/work.service';
+import { gateHelpers } from '../setup/gate';
 import { fileHelpers } from '../setup/files';
 import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
 import {
@@ -296,11 +301,62 @@ describe('API v0 — PII leak scan', () => {
     );
 
     // A ticket the family member opened on the primary's unit (ADR 0032).
-    const ticket = await c.as(a, { id: family.id, type: 'family' }, () =>
+    const asFamily = <T>(fn: () => Promise<T>) =>
+      c.as(a, { id: family.id, type: 'family' }, fn);
+    const asManagerA = <T>(fn: () => Promise<T>) => c.asManager(a, fn);
+    const asTech = <T>(id: string, fn: () => Promise<T>) =>
+      c.as(a, { id, type: 'staff' }, fn);
+    const ticketPhoto = await fileHelpers(h).ready(
+      await w.tokenFor(a, family.id, 'family'),
+      'ticket_photo',
+    );
+    const ticket = await asFamily(() =>
       h.moduleRef.get(TicketsService).create({
         unitId: unit.id,
         categoryId: w.aCategoryId,
         description: 'PII-TICKET-description',
+        photoFileIds: [ticketPhoto],
+      }),
+    );
+    const ticketPhotoKey = `t/${a.tenantId}/${ticketPhoto}`;
+    // Another technician took it and declined: dispatch's business, never
+    // the next technician's (ADR 0032).
+    const declined = await gateHelpers(h).guard(a, 'technician');
+    const declinedName = (
+      await asManagerA(() =>
+        c.prisma.tenant.account.findUniqueOrThrow({
+          where: { id: declined.id },
+        }),
+      )
+    ).fullName!;
+    const dispatch = h.moduleRef.get(DispatchService);
+    const work = h.moduleRef.get(WorkService);
+    const messages = h.moduleRef.get(MessagesService);
+    await asManagerA(() => dispatch.assign(ticket.id, declined.id));
+    await asTech(declined.id, () => work.decline(ticket.id, 'unavailable'));
+    await asManagerA(() => dispatch.assign(ticket.id, a.ids.technician));
+    await asFamily(() =>
+      messages.post(ticket.id, 'resident', 'PII-MESSAGE-family'),
+    );
+    await asTech(a.ids.technician, () =>
+      messages.post(ticket.id, 'technician', 'PII-MESSAGE-technician'),
+    );
+    await asManagerA(() =>
+      messages.post(ticket.id, 'dispatch', 'PII-INTERNAL-note', true),
+    );
+    await asTech(a.ids.technician, () => work.start(ticket.id));
+    await asTech(a.ids.technician, () => work.complete(ticket.id));
+    await asFamily(() =>
+      h.moduleRef
+        .get(ConfirmationService)
+        .confirm(ticket.id, 4, 'PII-FEEDBACK-comment'),
+    );
+    // A ticket still in the queue: no technician sees it.
+    const queued = await asPrimary(() =>
+      h.moduleRef.get(TicketsService).create({
+        unitId: unit.id,
+        categoryId: w.aCategoryId,
+        description: 'PII-QUEUED-description',
       }),
     );
 
@@ -374,6 +430,12 @@ describe('API v0 — PII leak scan', () => {
       platform: { token: w.platform.token, self: '', isManager: false },
       // A guard on duty at A's gate: the gate's own views only.
       guard: { token: a.tokens.guard, self: a.ids.guard, isManager: false },
+      // A maintenance technician (ADR 0032): their own tickets only.
+      technician: {
+        token: a.tokens.technician,
+        self: a.ids.technician,
+        isManager: false,
+      },
     };
 
     const leaks: string[] = [];
@@ -407,6 +469,30 @@ describe('API v0 — PII leak scan', () => {
           if (found('PII-VISITOR-name') || found('PII-ASKED-name'))
             leaks.push(`${name} ${r.path}: a visitor's name`);
         }
+        if (name === 'technician') {
+          // First names only, never a resident's account id, never what
+          // is dispatch's (who declined, ratings and comments, the queue).
+          for (const p of others)
+            if (p.fullName && found(p.fullName))
+              leaks.push(`${name} ${r.path}: a resident's name`);
+          // Ids only in a success: an error's `path` echoes the request.
+          if (res.status < 300)
+            for (const id of [family.id, primary.id, declined.id])
+              if (found(id)) leaks.push(`${name} ${r.path}: ${id}`);
+          for (const s of [
+            declinedName,
+            'PII-FEEDBACK-comment',
+            queued.id,
+            'PII-QUEUED-description',
+            w.bTicketId,
+          ])
+            if (found(s)) leaks.push(`${name} ${r.path}: ${s}`);
+        }
+        if (['resident', 'landlord', 'family', 'guard'].includes(name)) {
+          // Internal messages and ratings are staff's (ADR 0032).
+          for (const s of ['PII-INTERNAL-note', 'PII-FEEDBACK-comment'])
+            if (found(s)) leaks.push(`${name} ${r.path}: ${s}`);
+        }
         if (!persona.isManager) {
           for (const p of others) {
             if (found(p.phone)) leaks.push(`${name} ${r.path}: phone`);
@@ -431,6 +517,16 @@ describe('API v0 — PII leak scan', () => {
       [
         `t/${a.tenantId}/${workerPhoto}`,
         new Set(['manager /worker-engagements/{id}']),
+      ],
+      // A ticket's photo: the ticket's own details, for those who see it.
+      [
+        ticketPhotoKey,
+        new Set([
+          'family /tickets/{id}',
+          'resident /tickets/{id}',
+          'technician /technician/tickets/{id}',
+          'manager /maintenance/tickets/{id}',
+        ]),
       ],
     ];
     for (const [fileKey, views] of fileViews) {
@@ -477,6 +573,33 @@ describe('API v0 — PII leak scan', () => {
     );
     expect(seen.get('resident /units/{unitId}/visitor-passes')).toContain(
       visit.id,
+    );
+
+    // The technician reads their ticket: the work, the reporter's first
+    // name, the thread with its internal note — and nothing of dispatch's.
+    const techTicket = seen.get('technician /technician/tickets/{id}')!;
+    expect(techTicket).toContain('PII-TICKET-description');
+    expect(techTicket).toContain(
+      `"reporterFirstName":"${family.fullName!.split(' ')[0]}"`,
+    );
+    expect(seen.get('technician /technician/tickets/{id}/messages')).toContain(
+      'PII-INTERNAL-note',
+    );
+    expect(
+      seen.get('technician /maintenance/tickets/{id}/assignments'),
+    ).toContain('FORBIDDEN');
+    expect(seen.get('manager /maintenance/tickets/{id}/assignments')).toContain(
+      declined.id,
+    );
+    expect(seen.get('manager /maintenance/tickets/{id}')).toContain(
+      'PII-FEEDBACK-comment',
+    );
+    // Residents read the thread without the internal note.
+    expect(seen.get('family /tickets/{id}/messages')).toContain(
+      'PII-MESSAGE-technician',
+    );
+    expect(seen.get('resident /tickets/{id}')).toContain(
+      'PII-TICKET-description',
     );
 
     // The guard reads the gate's views (and nothing else).

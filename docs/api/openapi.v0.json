@@ -2710,6 +2710,23 @@
         ],
         "type": "object"
       },
+      "FirstNameOnlyView": {
+        "properties": {
+          "erased": {
+            "description": "Present (true) only on an erased account.",
+            "enum": [
+              true
+            ],
+            "type": "boolean"
+          },
+          "firstName": {
+            "description": "Absent when erased.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "FirstNameRefView": {
         "properties": {
           "erased": {
@@ -6789,7 +6806,6 @@
       "TechnicianMessageView": {
         "properties": {
           "body": {
-            "description": "Null once its sender was erased.",
             "nullable": true,
             "type": "string"
           },
@@ -6808,8 +6824,12 @@
             "description": "Staff only.",
             "type": "boolean"
           },
+          "mine": {
+            "description": "Written by the caller.",
+            "type": "boolean"
+          },
           "sender": {
-            "$ref": "#/components/schemas/FirstNameRefView"
+            "$ref": "#/components/schemas/FirstNameOnlyView"
           },
           "senderKind": {
             "enum": [
@@ -6824,10 +6844,11 @@
           "id",
           "sender",
           "senderKind",
+          "mine",
           "body",
           "deleted",
-          "createdAt",
-          "internal"
+          "internal",
+          "createdAt"
         ],
         "type": "object"
       },

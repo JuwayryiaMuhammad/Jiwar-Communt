@@ -71,6 +71,55 @@ export const MAINTENANCE_ROUTES: Row[] = [
   },
   {
     method: 'GET',
+    path: '/maintenance/dispatch-settings',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'PATCH',
+    path: '/maintenance/dispatch-settings',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: {
+        autoDispatchEnabled: 'yes',
+        weightAssigned: -1,
+        weightOnHold: 1.234,
+        multiplierNormal: 0,
+        multiplierEmergency: 101,
+      },
+      fields: [
+        { field: 'autoDispatchEnabled', code: 'INVALID_TYPE' },
+        {
+          field: 'weightAssigned',
+          code: 'INVALID_NUMBER',
+          params: { min: 0, max: 100 },
+        },
+        {
+          field: 'weightOnHold',
+          code: 'INVALID_NUMBER',
+          params: { min: 0, max: 100 },
+        },
+        {
+          field: 'multiplierNormal',
+          code: 'INVALID_NUMBER',
+          params: { min: 0.1, max: 100 },
+        },
+        {
+          field: 'multiplierEmergency',
+          code: 'INVALID_NUMBER',
+          params: { min: 0.1, max: 100 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
     path: '/maintenance/specialties',
     auth: 'tenant',
     as: 'manager',

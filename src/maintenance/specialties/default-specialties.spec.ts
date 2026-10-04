@@ -47,4 +47,11 @@ describe('default specialties', () => {
     for (const l of DEFAULT_CATEGORY_SPECIALTIES)
       expect(backfill).toContain(`'${l.categoryKey}'`);
   });
+
+  it('start the dispatch settings of an existing compound with automatic dispatch off', () => {
+    const settings = backfill.slice(
+      backfill.indexOf('INSERT INTO "maintenance_dispatch_settings"'),
+    );
+    expect(settings).toContain('VALUES (t."id", false, CURRENT_TIMESTAMP)');
+  });
 });

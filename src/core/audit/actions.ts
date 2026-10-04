@@ -213,6 +213,8 @@ export const AUDIT_ACTIONS = {
   },
   // target: the technician's account; changes: specialties (keys).
   'technician.specialties_changed': { log: 'tenant', target: 'account' },
+  // changes: autoDispatchEnabled, the weights and the multipliers.
+  'maintenance.dispatch_settings_changed': { log: 'tenant', target: 'tenant' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

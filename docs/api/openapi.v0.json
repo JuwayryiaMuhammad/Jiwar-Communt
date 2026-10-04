@@ -1944,6 +1944,45 @@
         ],
         "type": "object"
       },
+      "DispatchSettingsResponse": {
+        "properties": {
+          "autoDispatchEnabled": {
+            "description": "Off until the manager turns it on.",
+            "type": "boolean"
+          },
+          "multiplierEmergency": {
+            "type": "number"
+          },
+          "multiplierNormal": {
+            "type": "number"
+          },
+          "multiplierUrgent": {
+            "type": "number"
+          },
+          "weightAssigned": {
+            "description": "Weight of an assigned ticket.",
+            "type": "number"
+          },
+          "weightInProgress": {
+            "description": "Weight of a ticket in progress.",
+            "type": "number"
+          },
+          "weightOnHold": {
+            "description": "Weight of a ticket on hold.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "autoDispatchEnabled",
+          "weightAssigned",
+          "weightInProgress",
+          "weightOnHold",
+          "multiplierNormal",
+          "multiplierUrgent",
+          "multiplierEmergency"
+        ],
+        "type": "object"
+      },
       "DispatchTicketDetailView": {
         "properties": {
           "cancelledAt": {
@@ -7988,6 +8027,51 @@
         },
         "type": "object"
       },
+      "UpdateDispatchSettingsDto": {
+        "properties": {
+          "autoDispatchEnabled": {
+            "description": "Assign tickets automatically. Off until the manager turns it on, after setting technicians’ specialties.",
+            "type": "boolean"
+          },
+          "multiplierEmergency": {
+            "description": "Multiplies the weight of an emergency.",
+            "maximum": 100,
+            "minimum": 0.1,
+            "type": "number"
+          },
+          "multiplierNormal": {
+            "description": "Multiplies the weight of a normal-priority ticket.",
+            "maximum": 100,
+            "minimum": 0.1,
+            "type": "number"
+          },
+          "multiplierUrgent": {
+            "description": "Multiplies the weight of an urgent ticket.",
+            "maximum": 100,
+            "minimum": 0.1,
+            "type": "number"
+          },
+          "weightAssigned": {
+            "description": "Weight of an assigned ticket in a technician’s workload.",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number"
+          },
+          "weightInProgress": {
+            "description": "Weight of a ticket in progress.",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number"
+          },
+          "weightOnHold": {
+            "description": "Weight of a ticket on hold (0: it takes no time now).",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
       "UpdateGateDto": {
         "properties": {
           "kind": {
@@ -11255,6 +11339,68 @@
         },
         "responses": {
           "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/dispatch-settings": {
+      "get": {
+        "operationId": "DispatchSettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "DispatchSettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDispatchSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchSettingsResponse"
+                }
+              }
+            },
             "description": ""
           }
         },

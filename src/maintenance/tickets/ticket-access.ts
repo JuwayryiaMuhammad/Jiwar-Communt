@@ -134,6 +134,34 @@ export class TicketAccess {
     );
   }
 
+  /**
+   * The technician's account, locked until the transaction ends: active
+   * staff holding tickets.work, or TECHNICIAN_NOT_FOUND (one answer for an
+   * unknown id, another compound's, a guard, an inactive account).
+   * `FOR SHARE` for what must not race a deactivation (an assignment: the
+   * deactivation updates the account and then releases the technician's
+   * tickets); `FOR NO KEY UPDATE` for what must not race another writer of
+   * the technician's own data (their specialties, their availability).
+   */
+  async lockTechnician(
+    tx: TenantTxClient,
+    technicianId: string,
+    mode: 'share' | 'write' = 'share',
+  ): Promise<void> {
+    const rows =
+      mode === 'share'
+        ? await tx.$queryRaw<{ id: string }[]>`
+            SELECT id FROM accounts WHERE id = ${technicianId}::uuid FOR SHARE`
+        : await tx.$queryRaw<{ id: string }[]>`
+            SELECT id FROM accounts WHERE id = ${technicianId}::uuid
+              FOR NO KEY UPDATE`;
+    if (!rows.length || !(await this.isTechnician(tx, technicianId)))
+      throw appError.notFound(
+        ErrorCode.TECHNICIAN_NOT_FOUND,
+        'Technician not found',
+      );
+  }
+
   /** The reporter's and the creator's own actions (confirm, cancel…). */
   requireParty(ticket: Pick<Ticket, 'createdById' | 'reporterId'>): void {
     const me = this.ctx.accountId;

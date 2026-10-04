@@ -60,6 +60,7 @@ describe('audit catalog', () => {
         'entry_credential',
         'ticket_category',
         'ticket',
+        'specialty',
       ]).toContain(def.target);
     }
   });

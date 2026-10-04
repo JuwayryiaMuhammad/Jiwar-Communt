@@ -113,6 +113,10 @@ export interface World {
   bTicketId: string;
   /** One of A's categories, for valid ticket bodies. */
   aCategoryId: string;
+  /** One of B's specialties (seeded, ADR 0033). */
+  bSpecialtyId: string;
+  /** One of A's specialties, for valid bodies. */
+  aSpecialtyId: string;
   /** A fresh token (and session) for any account. */
   tokenFor(
     side: Compound,
@@ -396,7 +400,19 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       where: { key: 'plumbing' },
     }),
   );
+  const bSpecialty = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.specialty.findFirstOrThrow({
+      where: { key: 'plumbing' },
+    }),
+  );
+  const aSpecialty = await helpers.asManager(a, () =>
+    helpers.prisma.tenant.specialty.findFirstOrThrow({
+      where: { key: 'plumbing' },
+    }),
+  );
   return {
+    bSpecialtyId: bSpecialty.id,
+    aSpecialtyId: aSpecialty.id,
     bCategoryId: bCategory.id,
     bTicketId: bTicket.id,
     aCategoryId: aCategory.id,

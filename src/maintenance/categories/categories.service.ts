@@ -22,6 +22,18 @@ export type CategoryUpdate = Partial<
   >
 >;
 
+/** A category with the specialties that can handle it (ADR 0033). */
+export type CategoryWithSpecialties = TicketCategory & {
+  specialties: { specialtyId: string }[];
+};
+
+const WITH_SPECIALTIES = {
+  specialties: {
+    select: { specialtyId: true },
+    orderBy: { specialtyId: 'asc' },
+  },
+} as const;
+
 export const categoryNotFound = () =>
   appError.notFound(
     ErrorCode.TICKET_CATEGORY_NOT_FOUND,
@@ -54,9 +66,12 @@ export class CategoriesService {
   ) {}
 
   /** Every category, retired ones included (a compound has a handful). */
-  list(): Promise<TicketCategory[]> {
+  list(): Promise<CategoryWithSpecialties[]> {
     return this.tenantTx.withTenantTx((tx) =>
-      tx.ticketCategory.findMany({ orderBy: [{ key: 'asc' }] }),
+      tx.ticketCategory.findMany({
+        orderBy: [{ key: 'asc' }],
+        include: WITH_SPECIALTIES,
+      }),
     );
   }
 
@@ -71,7 +86,7 @@ export class CategoriesService {
   }
 
   /** A duplicate key is DUPLICATE_RESOURCE on `key` (db-constraints). */
-  create(input: CategoryInput): Promise<TicketCategory> {
+  create(input: CategoryInput): Promise<CategoryWithSpecialties> {
     const tenantId = this.ctx.tenantId;
     return this.tenantTx.withTenantTx(async (tx) => {
       const category = await tx.ticketCategory.create({
@@ -84,6 +99,7 @@ export class CategoriesService {
           defaultPriority: input.defaultPriority,
           commonAreaAllowed: input.commonAreaAllowed,
         },
+        include: WITH_SPECIALTIES,
       });
       await this.audit.record(tx, {
         action: 'ticket_category.created',
@@ -99,7 +115,7 @@ export class CategoriesService {
   }
 
   /** The key never changes: apps and reports may hold on to it. */
-  update(id: string, input: CategoryUpdate): Promise<TicketCategory> {
+  update(id: string, input: CategoryUpdate): Promise<CategoryWithSpecialties> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const before = await tx.ticketCategory.findUnique({ where: { id } });
       if (!before) throw categoryNotFound();
@@ -112,6 +128,7 @@ export class CategoriesService {
           commonAreaAllowed: input.commonAreaAllowed,
           active: input.active,
         },
+        include: WITH_SPECIALTIES,
       });
       const changes = diffChanges(
         audited(before),

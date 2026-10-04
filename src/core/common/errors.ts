@@ -148,6 +148,8 @@ export const ErrorCode = {
   /** Unknown, another compound's, or one the caller may not see. */
   TICKET_NOT_FOUND: 'TICKET_NOT_FOUND',
   TICKET_CATEGORY_NOT_FOUND: 'TICKET_CATEGORY_NOT_FOUND',
+  /** Unknown, or another compound's (ADR 0033). */
+  SPECIALTY_NOT_FOUND: 'SPECIALTY_NOT_FOUND',
   /** Not an active staff account holding tickets.work. */
   TECHNICIAN_NOT_FOUND: 'TECHNICIAN_NOT_FOUND',
   /** The ticket's status does not allow the action (409, params.status). */
@@ -197,6 +199,8 @@ export const FieldErrorCode = {
   // maintenance (ADR 0032)
   /** The category may not be used for a common area. */
   CATEGORY_NOT_FOR_COMMON_AREA: 'CATEGORY_NOT_FOR_COMMON_AREA',
+  /** Not an active specialty of this compound (ADR 0033). */
+  SPECIALTY_NOT_AVAILABLE: 'SPECIALTY_NOT_AVAILABLE',
   /** Unknown, or holds no `tickets` capability where the ticket is. */
   REPORTER_NOT_ELIGIBLE: 'REPORTER_NOT_ELIGIBLE',
 } as const;

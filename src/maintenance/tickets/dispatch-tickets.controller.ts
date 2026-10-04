@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import {
@@ -25,6 +26,9 @@ import {
 } from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
+import { SpecialtyIdsDto } from '../specialties/dto/specialties.dto';
+import { SpecialtiesService } from '../specialties/specialties.service';
+import { SpecialtyRefView } from '../specialties/views/specialty.views';
 import { ConfirmationService } from './confirmation.service';
 import { DispatchService, type TechnicianOption } from './dispatch.service';
 import { MessagesService } from './messages.service';
@@ -199,9 +203,19 @@ export class TechnicianOptionView {
     description: 'Tickets assigned, in progress or on hold.',
   })
   openTickets: number;
+  @ApiProperty({
+    type: [SpecialtyRefView],
+    description: 'Their active specialties.',
+  })
+  specialties: SpecialtyRefView[];
 
   static from(t: TechnicianOption): TechnicianOptionView {
-    return { id: t.id, fullName: t.fullName, openTickets: t.openTickets };
+    return {
+      id: t.id,
+      fullName: t.fullName,
+      openTickets: t.openTickets,
+      specialties: t.specialties.map((s) => SpecialtyRefView.from(s)),
+    };
   }
 }
 
@@ -210,7 +224,10 @@ export class TechnicianOptionView {
 @RequirePermissions('tickets.dispatch')
 @Controller('maintenance/technicians')
 export class TechniciansController {
-  constructor(private readonly dispatch: DispatchService) {}
+  constructor(
+    private readonly dispatch: DispatchService,
+    private readonly specialties: SpecialtiesService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ type: ListOf(TechnicianOptionView) })
@@ -218,5 +235,16 @@ export class TechniciansController {
     return bounded(await this.dispatch.technicians(), (t) =>
       TechnicianOptionView.from(t),
     );
+  }
+
+  /** The whole set, replacing the current one; empty clears it (audited). */
+  @Put(':id/specialties')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  setSpecialties(
+    @Param('id', parseId()) id: string,
+    @Body() dto: SpecialtyIdsDto,
+  ): Promise<void> {
+    return this.specialties.setForTechnician(id, dto.specialtyIds);
   }
 }

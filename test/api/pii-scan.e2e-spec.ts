@@ -5,6 +5,8 @@ import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
 import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
 import { ApprovalsService } from '../../src/gate/approvals/approvals.service';
+import { AvailabilityService } from '../../src/maintenance/dispatch/availability.service';
+import { SpecialtiesService } from '../../src/maintenance/specialties/specialties.service';
 import { ConfirmationService } from '../../src/maintenance/tickets/confirmation.service';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
 import { MessagesService } from '../../src/maintenance/tickets/messages.service';
@@ -360,6 +362,25 @@ describe('API v0 — PII leak scan', () => {
       }),
     );
 
+    // Dispatch (ADR 0033). The engine finds nobody for the queued ticket (an
+    // attempt row, an unassignable notice for the dispatchers); then the
+    // technician gets a specialty and goes available, so there is a workload
+    // and an availability to leak.
+    await asManagerA(() => dispatch.autoAssign(queued.id));
+    const plumbing = await asManagerA(() =>
+      c.prisma.tenant.specialty.findFirstOrThrow({
+        where: { key: 'plumbing' },
+      }),
+    );
+    await asManagerA(() =>
+      h.moduleRef
+        .get(SpecialtiesService)
+        .setForTechnician(a.ids.technician, [plumbing.id]),
+    );
+    await asTech(a.ids.technician, () =>
+      h.moduleRef.get(AvailabilityService).setMine('available'),
+    );
+
     const params: Record<string, string> = {
       '/tickets/{id}': ticket.id,
       '/technician/tickets/{id}': ticket.id,
@@ -495,6 +516,24 @@ describe('API v0 — PII leak scan', () => {
         if (['resident', 'landlord', 'family', 'guard'].includes(name)) {
           // Internal messages and ratings are staff's (ADR 0032).
           for (const s of ['PII-INTERNAL-note', 'PII-FEEDBACK-comment'])
+            if (found(s)) leaks.push(`${name} ${r.path}: ${s}`);
+        }
+        // Dispatch (ADR 0033): workload, availability, specialties and the
+        // engine's attempts are dispatch's. A technician sees only their own
+        // availability, at their own route; residents see none of it, and
+        // nobody but dispatch is told a ticket is unassignable.
+        if (name !== 'manager' && name !== 'platform') {
+          const dispatchOnly = [
+            '"workload"',
+            '"candidateCount"',
+            '"specialties"',
+            '"specialtyIds"',
+            'ticket.unassignable',
+            ...(r.path === '/technician/availability'
+              ? []
+              : ['"availability"']),
+          ];
+          for (const s of dispatchOnly)
             if (found(s)) leaks.push(`${name} ${r.path}: ${s}`);
         }
         if (!persona.isManager) {

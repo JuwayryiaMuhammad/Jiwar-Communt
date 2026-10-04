@@ -9,7 +9,8 @@ import {
   AvailabilityService,
   type AvailabilityRead,
 } from '../dispatch/availability.service';
-import { DispatchBusyError, DispatchEngine } from '../dispatch/dispatch-engine';
+import { DispatchBusyError } from '../dispatch/dispatch-busy';
+import { DispatchEngine } from '../dispatch/dispatch-engine';
 import { DispatchSettingsService } from '../dispatch/dispatch-settings.service';
 import { points, workloads } from '../dispatch/workload';
 import { TicketAccess } from './ticket-access';

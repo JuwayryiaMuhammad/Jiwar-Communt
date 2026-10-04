@@ -9,6 +9,7 @@ import {
 import { TicketLog } from '../tickets/ticket-log';
 import { TicketNotices } from '../tickets/ticket-notices';
 import { candidateFilter } from './candidates';
+import { DispatchBusyError, isLockTimeout } from './dispatch-busy';
 import { DispatchLimiter } from './dispatch-limiter';
 import { DispatchSettingsService } from './dispatch-settings.service';
 import {
@@ -37,28 +38,6 @@ export const QUEUE_BATCH = 20;
  * holds a database connection; well under Prisma's 10 s transaction limit.
  */
 export const LOCK_WAIT_MS = 3000;
-
-/** The dispatch lock could not be had in time. */
-export class DispatchBusyError extends Error {
-  constructor() {
-    super('The dispatch lock is busy');
-    this.name = 'DispatchBusyError';
-  }
-}
-
-/** Postgres refused a lock after `lock_timeout` (SQLSTATE 55P03). */
-export function isLockTimeout(error: unknown): boolean {
-  const e = error as {
-    code?: string;
-    meta?: { code?: string };
-    message?: string;
-  };
-  return (
-    e?.meta?.code === '55P03' ||
-    e?.code === '55P03' ||
-    /lock timeout|55P03/i.test(e?.message ?? '')
-  );
-}
 
 /**
  * The triggers that act on a ticket and so leave a `skipped` row when
@@ -193,10 +172,11 @@ export class DispatchEngine {
         );
         if (result?.outcome === 'assigned') assigned++;
       } catch (error) {
-        if (error instanceof DispatchBusyError) {
-          this.limiter.markBusy(tenantId);
+        // The limiter already put the compound in backoff (it must be marked
+        // before the next waiter starts, which is before this runs).
+        if (error instanceof DispatchBusyError)
           this.logger.warn('dispatch lock busy: ticket left to the sweep');
-        } else
+        else
           this.logger.error(
             `dispatch failed for a ticket (${error instanceof Error ? error.name : 'Error'})`,
           );

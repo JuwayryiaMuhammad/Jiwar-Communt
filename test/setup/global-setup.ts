@@ -4,6 +4,7 @@ import Redis from 'ioredis';
 import { Client } from 'pg';
 import { validateEnv } from '../../src/core/config/env.schema';
 import { ensureBucket, s3Client } from '../../src/core/files/object-storage';
+import { resetIdBlocks } from './id-blocks';
 import { applyTestEnv, required } from './test-env';
 
 /**
@@ -13,6 +14,8 @@ import { applyTestEnv, required } from './test-env';
  */
 export default async function globalSetup(): Promise<void> {
   applyTestEnv();
+  // Every suite claims its own block of test phone numbers and national IDs.
+  resetIdBlocks();
   const migratorUrl = required('TEST_MIGRATOR_DATABASE_URL');
 
   // Wipe data BEFORE migrating too: a new migration may add NOT NULL columns

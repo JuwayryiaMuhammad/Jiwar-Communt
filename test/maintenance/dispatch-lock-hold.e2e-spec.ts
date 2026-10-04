@@ -31,8 +31,13 @@ describe('Dispatch — how long the dispatch lock is held', () => {
     await h.close();
   });
 
-  /** Longest continuous time one transaction held an advisory lock. */
+  /**
+   * Longest continuous time one transaction held the compound's dispatch
+   * lock (and only that one: another suite's holder is not this compound's).
+   * The advisory key sits in pg_locks as classid (high 32 bits) and objid.
+   */
   async function watchLocks<T>(
+    tenantId: string,
     work: () => Promise<T>,
   ): Promise<{ result: T; maxHoldMs: number; holders: number }> {
     const seen = new Map<string, { first: number; last: number }>();
@@ -41,7 +46,10 @@ describe('Dispatch — how long the dispatch lock is held', () => {
       while (!stop) {
         const { rows } = await probe.query<{ vxid: string }>(
           `SELECT DISTINCT virtualtransaction AS vxid FROM pg_locks
-            WHERE locktype = 'advisory' AND granted`,
+            WHERE locktype = 'advisory' AND granted
+              AND ((classid::bigint << 32) | objid::bigint)
+                  = hashtextextended('maintenance.dispatch:' || $1::text, 0)`,
+          [tenantId],
         );
         const now = Date.now();
         for (const { vxid } of rows) {
@@ -49,6 +57,8 @@ describe('Dispatch — how long the dispatch lock is held', () => {
           if (known) known.last = now;
           else seen.set(vxid, { first: now, last: now });
         }
+        // Polling in a tight loop would itself load the database.
+        await new Promise((r) => setTimeout(r, 5));
       }
     })();
     try {
@@ -87,7 +97,7 @@ describe('Dispatch — how long the dispatch lock is held', () => {
     for (const t of s.techs) await d.setAvailability(s.c, t.id, 'available');
 
     const started = Date.now();
-    const { result, maxHoldMs, holders } = await watchLocks(() =>
+    const { result, maxHoldMs, holders } = await watchLocks(s.c.tenantId, () =>
       h.moduleRef.get(DispatchSweep).run(),
     );
     const took = Date.now() - started;
@@ -95,6 +105,8 @@ describe('Dispatch — how long the dispatch lock is held', () => {
       `dispatch lock: sweep of 60 took ${took} ms; ${holders} transactions held an advisory lock, the longest for ${maxHoldMs} ms\n`,
     );
     expect(result).toBeGreaterThanOrEqual(60);
+    // One transaction per decision: 60 tickets, 60 holders of the lock.
+    expect(holders).toBeGreaterThanOrEqual(60);
     const rows = await Promise.all(ids.map((id) => d.ticketRow(s.c, id)));
     expect(rows.every((r) => r.status === 'assigned')).toBe(true);
     // One decision is tens of milliseconds; a batch is seconds.

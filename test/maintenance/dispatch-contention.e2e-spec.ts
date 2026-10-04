@@ -1,5 +1,6 @@
 import { Client } from 'pg';
 import { LOCK_WAIT_MS } from '../../src/maintenance/dispatch/dispatch-engine';
+import { BUSY_BACKOFF_MS } from '../../src/maintenance/dispatch/dispatch-limiter';
 import { DispatchSweep } from '../../src/maintenance/dispatch/dispatch-sweep';
 import { dispatchHelpers } from '../setup/dispatch';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
@@ -98,8 +99,10 @@ describe('Dispatch — a stuck dispatch lock', () => {
         status: 'new',
         technicianId: null,
       });
-      // The engine wrote nothing: the sweep, with the lock free, takes it.
+      // The engine wrote nothing: the sweep, with the lock free, takes it
+      // (once the compound's backoff is over: until then it is skipped).
       await release();
+      await new Promise((r) => setTimeout(r, BUSY_BACKOFF_MS + 100));
       await h.moduleRef.get(DispatchSweep).run();
       expect(await d.ticketRow(s.c, id)).toMatchObject({ status: 'assigned' });
     } finally {
@@ -135,11 +138,13 @@ describe('Dispatch — a stuck dispatch lock', () => {
         new Set(responses.map((r) => (r.body as { number: string }).number))
           .size,
       ).toBe(15);
-      // One bounded wait, then the breaker skips the rest: not 15 of them.
-      expect(ms).toBeLessThan(LOCK_WAIT_MS + 4000);
+      // One bounded wait, then the breaker skips the rest: not 15 of them
+      // (15 waits of LOCK_WAIT_MS each, one after the other, were 45 s).
+      expect(ms).toBeLessThan(LOCK_WAIT_MS + 3000);
     } finally {
       await release().catch(() => undefined);
     }
+    await new Promise((r) => setTimeout(r, BUSY_BACKOFF_MS + 100));
     await h.moduleRef.get(DispatchSweep).run();
     const queued = await d.inTenant(s.c, (tx) =>
       tx.ticket.count({ where: { status: 'new' } }),

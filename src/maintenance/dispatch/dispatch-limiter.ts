@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { DispatchBusyError } from './dispatch-busy';
 
 /** After a decision timed out on the dispatch lock, skip for this long. */
 export const BUSY_BACKOFF_MS = 2000;
@@ -17,7 +18,10 @@ export const BUSY_BACKOFF_MS = 2000;
  * - **A breaker**: when a decision gave up waiting for the lock (something
  *   holds it far longer than a decision), the compound's decisions are
  *   skipped for a moment instead of each waiting out its own timeout. Skipped
- *   tickets stay in the queue; the sweep takes them.
+ *   tickets stay in the queue; the sweep takes them. The breaker is set here,
+ *   inside the decision's own turn, before the next waiter's turn starts: set
+ *   by the caller's `catch` it came a few microtasks too late, every waiter
+ *   began its own wait, and a burst of 15 creations took 15 x 3 s.
  */
 @Injectable()
 export class DispatchLimiter {
@@ -59,6 +63,11 @@ export class DispatchLimiter {
     fn: () => Promise<T>,
   ): Promise<T | null> {
     if (this.isBusy(tenantId)) return null;
-    return fn();
+    try {
+      return await fn();
+    } catch (error) {
+      if (error instanceof DispatchBusyError) this.markBusy(tenantId);
+      throw error;
+    }
   }
 }

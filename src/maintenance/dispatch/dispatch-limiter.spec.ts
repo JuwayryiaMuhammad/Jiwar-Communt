@@ -1,3 +1,4 @@
+import { DispatchBusyError } from './dispatch-busy';
 import { BUSY_BACKOFF_MS, DispatchLimiter } from './dispatch-limiter';
 
 const tick = () => new Promise((r) => setTimeout(r, 5));
@@ -67,5 +68,17 @@ describe('DispatchLimiter', () => {
     limiter.markBusy('t1');
     await expect(limiter.run('t1', job)).resolves.toBeNull();
     expect(job).not.toHaveBeenCalled();
+  });
+
+  it('a decision that gave up on the lock puts the compound in backoff before the next waiter starts', async () => {
+    const limiter = new DispatchLimiter();
+    const second = jest.fn(() => Promise.resolve('x'));
+    const first = limiter.run('t1', () =>
+      Promise.reject(new DispatchBusyError()),
+    );
+    const queued = limiter.run('t1', second);
+    await expect(first).rejects.toBeInstanceOf(DispatchBusyError);
+    await expect(queued).resolves.toBeNull();
+    expect(second).not.toHaveBeenCalled();
   });
 });

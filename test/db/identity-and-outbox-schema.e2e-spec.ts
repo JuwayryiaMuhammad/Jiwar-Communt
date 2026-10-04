@@ -9,8 +9,8 @@ import {
   createAccountRow,
   createTenant,
   createUnit,
-  distinctSequence,
   roleId,
+  uniquePhone,
   uniqueSuffix,
 } from '../setup/fixtures';
 import { required } from '../setup/test-env';
@@ -24,8 +24,6 @@ const MIGRATION = join(
  * Phase 2.1 schema (ADR 0018, 0019): the birth-date backfill agrees with the
  * code, and every new constraint holds, asserted by name.
  */
-const dbPhone = distinctSequence(1e8);
-
 describe('Identity documents and outbox schema', () => {
   let h: DbHarness;
   let tenant: string;
@@ -165,7 +163,7 @@ describe('Identity documents and outbox schema', () => {
               roleId: residentRole,
               fullName: 'Doc Holder',
               idDocumentNumber: 'X1234567',
-              phone: `+2010${dbPhone().toString().padStart(8, '0')}`,
+              phone: uniquePhone(),
               email: `doc-${uniqueSuffix()}@example.test`,
               ...data,
             },

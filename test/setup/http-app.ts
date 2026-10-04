@@ -15,7 +15,7 @@ import { newId } from '../../src/core/common/uuid';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import { RoleProvisioner } from '../../src/core/access/role-provisioner';
-import { distinctSequence, nationalIdFor, uniqueSuffix } from './fixtures';
+import { nationalIdFor, uniquePhone, uniqueSuffix } from './fixtures';
 
 export const API = '/api/v1';
 
@@ -118,16 +118,7 @@ export async function createHttpHarness(
   };
 }
 
-const phoneSequence = distinctSequence(1e8);
-
-/**
- * A fresh, valid Egyptian mobile number in E.164, never repeated within a
- * run: a sequence from a random start, not a random draw (which repeats
- * after about the square root of the range).
- */
-export function uniquePhone(): string {
-  return `+2010${phoneSequence().toString().padStart(8, '0')}`;
-}
+export { uniquePhone };
 
 export function uniqueEmail(label = 'user'): string {
   return `${label}-${uniqueSuffix()}@example.test`;

@@ -7,31 +7,37 @@ import { newId } from '../../src/core/common/uuid';
 import { TenantLifecycle } from '../../src/core/tenant-settings/tenant-lifecycle';
 import { MaintenanceProvisioning } from '../../src/maintenance/provisioning';
 import type { DbHarness } from './db-module';
+import { suiteSequence } from './id-blocks';
 
 const provisioner = new RoleProvisioner(CODE_ACCESS_CATALOG);
 const maintenance = new MaintenanceProvisioning(new TenantLifecycle());
 
-/**
- * A sequence of distinct values below `size`, from a random start: calls
- * never repeat until the whole range is used (a random draw repeats after
- * about the square root of the range, which is how two suites in one run
- * once created the same phone number in one compound).
- */
-export function distinctSequence(size: number): () => number {
-  let next = randomInt(size);
-  return () => {
-    const value = next;
-    next = (next + 1) % size;
-    return value;
-  };
+/** 29 governorates x 100,000 sequences; 1,000 per suite. */
+const NATIONAL_ID_SPACE = 29 * 1e5;
+const nationalIdSequence = suiteSequence(NATIONAL_ID_SPACE, 1e3);
+// prettier-ignore
+const GOVERNORATES = [
+  '01', '02', '03', '04', '11', '12', '13', '14', '15', '16', '17', '18', '19',
+  '21', '22', '23', '24', '25', '26', '27', '28', '29', '31', '32', '33', '34', '35',
+  '88',
+];
+
+/** A fresh, valid Egyptian mobile number in E.164, never repeated in a run. */
+const phoneSequence = suiteSequence(1e8, 1e5);
+export function uniquePhone(): string {
+  return `+2010${phoneSequence().toString().padStart(8, '0')}`;
 }
 
-const nationalIdSequence = distinctSequence(1e5);
+/** The digits after 7400 of a UK mobile, never repeated in a run. */
+const ukSequence = suiteSequence(1e6, 1e3);
+export function uniqueUkDigits(): string {
+  return ukSequence().toString().padStart(6, '0');
+}
 
 /**
  * A valid Egyptian national ID for someone born on `birthDate` (default
- * 1990-01-01, an adult): the right century digit, Cairo as governorate, and a
- * sequence that never repeats within a run, whatever the birth date.
+ * 1990-01-01, an adult): the right century digit, and a governorate and
+ * sequence that never repeat within a run, whatever the birth date.
  */
 export function nationalIdFor(
   birthDate: Date = new Date(Date.UTC(1990, 0, 1)),
@@ -44,8 +50,8 @@ export function nationalIdFor(
     pad(year % 100),
     pad(birthDate.getUTCMonth() + 1),
     pad(birthDate.getUTCDate()),
-    '01',
-    pad(Math.floor(sequence / 10), 4),
+    GOVERNORATES[Math.floor(sequence / 1e5)],
+    pad(Math.floor((sequence % 1e5) / 10), 4),
     String(sequence % 10),
   ].join('');
 }
@@ -132,7 +138,7 @@ export function createAccountRow(
         fullName: `Person ${s}`,
         idDocumentNumber: nationalIdFor(),
         birthDate: new Date(Date.UTC(1990, 0, 1)),
-        phone: `+2010${randomInt(1e8).toString().padStart(8, '0')}`,
+        phone: uniquePhone(),
         email: `p-${s}@example.test`,
       },
     }),

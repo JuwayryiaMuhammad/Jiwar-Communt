@@ -1,6 +1,7 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { CategoriesService } from '../../src/maintenance/categories/categories.service';
 import { SpecialtiesService } from '../../src/maintenance/specialties/specialties.service';
+import { DispatchSettingsService } from '../../src/maintenance/dispatch/dispatch-settings.service';
 import { MaintenanceSettingsService } from '../../src/maintenance/settings/maintenance-settings.service';
 import { ConfirmationService } from '../../src/maintenance/tickets/confirmation.service';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
@@ -164,6 +165,29 @@ describe('Audit coverage — maintenance', () => {
         specialties.setForTechnician(technician.id, [id('electrical')]),
       );
       await single(c, 'technician.specialties_changed', technician.id);
+    });
+  });
+
+  describe('dispatch settings', () => {
+    it('maintenance.dispatch_settings_changed — by the manager, numbers and the flag only', async () => {
+      const c = await x.compound();
+      const settings = h.moduleRef.get(DispatchSettingsService);
+      await x.asManager(c, () =>
+        settings.update({ autoDispatchEnabled: true, multiplierUrgent: 2.25 }),
+      );
+      expect(
+        await single(c, 'maintenance.dispatch_settings_changed', c.tenantId),
+      ).toMatchObject({
+        actorId: c.managerId,
+        targetType: 'tenant',
+        changes: {
+          autoDispatchEnabled: { from: false, to: true },
+          multiplierUrgent: { from: 1.5, to: 2.25 },
+        },
+      });
+      // A no-op edit writes nothing.
+      await x.asManager(c, () => settings.update({ multiplierUrgent: 2.25 }));
+      await single(c, 'maintenance.dispatch_settings_changed', c.tenantId);
     });
   });
 

@@ -932,6 +932,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/dispatch-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DispatchSettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["DispatchSettingsController_update"];
+        trace?: never;
+    };
     "/api/v1/maintenance/settings": {
         parameters: {
             query?: never;
@@ -3528,6 +3544,19 @@ export interface components {
             data: components["schemas"]["DispatchMessageView"][];
             nextCursor: string | null;
         };
+        DispatchSettingsResponse: {
+            /** @description Off until the manager turns it on. */
+            autoDispatchEnabled: boolean;
+            multiplierEmergency: number;
+            multiplierNormal: number;
+            multiplierUrgent: number;
+            /** @description Weight of an assigned ticket. */
+            weightAssigned: number;
+            /** @description Weight of a ticket in progress. */
+            weightInProgress: number;
+            /** @description Weight of a ticket on hold. */
+            weightOnHold: number;
+        };
         DispatchTicketDetailView: {
             /** Format: date-time */
             cancelledAt: string | null;
@@ -5209,6 +5238,22 @@ export interface components {
             nameAr?: string;
             nameEn?: string;
         };
+        UpdateDispatchSettingsDto: {
+            /** @description Assign tickets automatically. Off until the manager turns it on, after setting technicians’ specialties. */
+            autoDispatchEnabled?: boolean;
+            /** @description Multiplies the weight of an emergency. */
+            multiplierEmergency?: number;
+            /** @description Multiplies the weight of a normal-priority ticket. */
+            multiplierNormal?: number;
+            /** @description Multiplies the weight of an urgent ticket. */
+            multiplierUrgent?: number;
+            /** @description Weight of an assigned ticket in a technician’s workload. */
+            weightAssigned?: number;
+            /** @description Weight of a ticket in progress. */
+            weightInProgress?: number;
+            /** @description Weight of a ticket on hold (0: it takes no time now). */
+            weightOnHold?: number;
+        };
         UpdateGateDto: {
             kind?: components["schemas"]["GateKind"];
             name?: string;
@@ -6885,6 +6930,48 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    DispatchSettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DispatchSettingsResponse"];
+                };
+            };
+        };
+    };
+    DispatchSettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateDispatchSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DispatchSettingsResponse"];
+                };
             };
         };
     };

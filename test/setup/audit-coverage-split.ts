@@ -116,4 +116,5 @@ export const MAINTENANCE_COVERAGE: readonly string[] = [
   'specialty.updated',
   'ticket_category.specialties_changed',
   'technician.specialties_changed',
+  'maintenance.dispatch_settings_changed',
 ];

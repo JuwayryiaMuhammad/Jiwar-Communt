@@ -12,6 +12,8 @@ import {
   DispatchAvailabilityController,
   TechnicianAvailabilityController,
 } from './dispatch/availability.controller';
+import { DispatchSettingsController } from './dispatch/dispatch-settings.controller';
+import { DispatchSettingsService } from './dispatch/dispatch-settings.service';
 import { MaintenanceProvisioning } from './provisioning';
 import {
   CategorySpecialtiesController,
@@ -56,12 +58,14 @@ import { TicketsService } from './tickets/tickets.service';
     TechniciansController,
     TechnicianAvailabilityController,
     DispatchAvailabilityController,
+    DispatchSettingsController,
   ],
   providers: [
     MaintenanceProvisioning,
     CategoriesService,
     SpecialtiesService,
     AvailabilityService,
+    DispatchSettingsService,
     MaintenanceSettingsService,
     TicketAccess,
     TicketLog,

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { DispatchTrigger, Ticket } from '@prisma/client';
+import { RequestContext } from '../../core/common/cls/request-context';
 import { newId } from '../../core/common/uuid';
 import {
   TenantTx,
@@ -8,6 +9,7 @@ import {
 import { TicketLog } from '../tickets/ticket-log';
 import { TicketNotices } from '../tickets/ticket-notices';
 import { candidateFilter } from './candidates';
+import { DispatchLimiter } from './dispatch-limiter';
 import { DispatchSettingsService } from './dispatch-settings.service';
 import {
   lastAssigned,
@@ -28,6 +30,35 @@ export type DispatchResult =
 
 /** Tickets the "became available" walk looks at in one go. */
 export const QUEUE_BATCH = 20;
+
+/**
+ * How long a decision waits for the dispatch lock. A decision takes tens of
+ * milliseconds, so waiting longer means something is wrong, and a waiter
+ * holds a database connection; well under Prisma's 10 s transaction limit.
+ */
+export const LOCK_WAIT_MS = 3000;
+
+/** The dispatch lock could not be had in time. */
+export class DispatchBusyError extends Error {
+  constructor() {
+    super('The dispatch lock is busy');
+    this.name = 'DispatchBusyError';
+  }
+}
+
+/** Postgres refused a lock after `lock_timeout` (SQLSTATE 55P03). */
+export function isLockTimeout(error: unknown): boolean {
+  const e = error as {
+    code?: string;
+    meta?: { code?: string };
+    message?: string;
+  };
+  return (
+    e?.meta?.code === '55P03' ||
+    e?.code === '55P03' ||
+    /lock timeout|55P03/i.test(e?.message ?? '')
+  );
+}
 
 /**
  * The triggers that act on a ticket and so leave a `skipped` row when
@@ -60,25 +91,44 @@ export class DispatchEngine {
 
   constructor(
     private readonly tenantTx: TenantTx,
+    private readonly ctx: RequestContext,
+    private readonly limiter: DispatchLimiter,
     private readonly settings: DispatchSettingsService,
     private readonly log: TicketLog,
     private readonly notices: TicketNotices,
   ) {}
 
   /**
-   * The compound's dispatch lock, held until the transaction ends. Taking
-   * it twice in one transaction is free.
+   * The compound's dispatch lock, held until the transaction ends, waiting
+   * at most `waitMs` for it (a lock timeout scoped to this one statement):
+   * a transaction must never sit on a pool connection behind a lock held far
+   * longer than a decision. Taking it twice in one transaction is free.
+   * Throws DispatchBusyError when it could not be had.
    */
-  async serialize(tx: TenantTxClient): Promise<void> {
-    await tx.$executeRaw`
-      SELECT pg_advisory_xact_lock(
-        hashtextextended('maintenance.dispatch:' || current_setting('app.tenant_id'), 0))`;
+  async serialize(
+    tx: TenantTxClient,
+    waitMs: number = LOCK_WAIT_MS,
+  ): Promise<void> {
+    await tx.$executeRaw`SELECT set_config('lock_timeout', ${`${waitMs}ms`}, true)`;
+    try {
+      await tx.$executeRaw`
+        SELECT pg_advisory_xact_lock(
+          hashtextextended('maintenance.dispatch:' || current_setting('app.tenant_id'), 0))`;
+    } catch (error) {
+      if (isLockTimeout(error)) throw new DispatchBusyError();
+      throw error;
+    } finally {
+      // Only after a success is the transaction still usable.
+      await tx.$executeRaw`SELECT set_config('lock_timeout', '0', true)`.catch(
+        () => undefined,
+      );
+    }
   }
 
   /**
-   * Tries to give the ticket to a technician. Acts only if it is `new` with
-   * no technician, under its row lock: run twice, it assigns once. Errors
-   * propagate; use `attempt` where a failure must not undo the caller.
+   * Tries to give the ticket to a technician: **one decision**, the unit the
+   * dispatch lock is held for. Acts only if it is `new` with no technician,
+   * under its row lock: run twice, it assigns once. Errors propagate.
    */
   async run(
     tx: TenantTxClient,
@@ -123,68 +173,63 @@ export class DispatchEngine {
   }
 
   /**
-   * `run` for callers whose own work must survive an engine failure (a
-   * resident's new ticket, a technician's decline, a role change): inside a
-   * savepoint, so an error rolls back only the engine's writes. It is
-   * logged by class and the sweep retries. Null on failure.
+   * The tickets, each decided in a transaction of its own (so the dispatch
+   * lock is held for one decision, never a batch), in the request's
+   * compound, AFTER the transaction that caused them committed: a resident's
+   * ticket, a decline, a release, an availability change. A failure, or the
+   * compound being busy, is logged and skipped: the ticket is in the queue
+   * and the sweep retries. Returns how many were assigned.
    */
-  async attempt(
-    tx: TenantTxClient,
-    ticketId: string,
+  async dispatch(
+    ticketIds: readonly string[],
     trigger: DispatchTrigger,
-  ): Promise<DispatchResult | null> {
-    await tx.$executeRaw`SAVEPOINT dispatch_engine`;
-    try {
-      const result = await this.run(tx, ticketId, trigger);
-      await tx.$executeRaw`RELEASE SAVEPOINT dispatch_engine`;
-      return result;
-    } catch (error) {
-      await tx.$executeRaw`ROLLBACK TO SAVEPOINT dispatch_engine`;
-      this.logger.error(
-        `dispatch failed for a ticket (${error instanceof Error ? error.name : 'Error'})`,
-      );
-      return null;
+  ): Promise<number> {
+    let assigned = 0;
+    for (const id of ticketIds) {
+      const tenantId = this.ctx.tenantId;
+      try {
+        const result = await this.limiter.run(tenantId, () =>
+          this.tenantTx.withTenantTx((tx) => this.run(tx, id, trigger)),
+        );
+        if (result?.outcome === 'assigned') assigned++;
+      } catch (error) {
+        if (error instanceof DispatchBusyError) {
+          this.limiter.markBusy(tenantId);
+          this.logger.warn('dispatch lock busy: ticket left to the sweep');
+        } else
+          this.logger.error(
+            `dispatch failed for a ticket (${error instanceof Error ? error.name : 'Error'})`,
+          );
+      }
     }
+    return assigned;
   }
 
   /**
    * A technician just became available: the queued tickets they could take
    * (their specialties, never one they declined), emergency first, then
-   * urgent, then normal, oldest first within each, a bounded batch. Each
-   * goes through the full `attempt`, so the least loaded candidate wins, not
-   * automatically the one who just came back; once they carry load the next
-   * ticket goes to someone else. What is left waits for the sweep.
-   * Does nothing while automatic dispatch is off. Isolated like `attempt`
-   * (the technician's availability change must stand): returns how many
-   * tickets were assigned, 0 on a failure.
+   * urgent, then normal, oldest first within each, a bounded batch. Each is
+   * decided on its own with the full choice, so the least loaded candidate
+   * wins, not automatically the one who just came back; once they carry load
+   * the next ticket goes to someone else. What is left waits for the sweep.
+   * Does nothing while automatic dispatch is off.
    */
-  async runQueueFor(tx: TenantTxClient, technicianId: string): Promise<number> {
-    await tx.$executeRaw`SAVEPOINT dispatch_queue`;
-    try {
-      const assigned = await this.walkQueue(tx, technicianId);
-      await tx.$executeRaw`RELEASE SAVEPOINT dispatch_queue`;
-      return assigned;
-    } catch (error) {
-      await tx.$executeRaw`ROLLBACK TO SAVEPOINT dispatch_queue`;
-      this.logger.error(
-        `dispatch of the queue failed (${error instanceof Error ? error.name : 'Error'})`,
-      );
-      return 0;
-    }
+  async dispatchQueueFor(technicianId: string): Promise<number> {
+    const ids = await this.tenantTx.withTenantTx((tx) =>
+      this.queueFor(tx, technicianId),
+    );
+    return this.dispatch(ids, 'available');
   }
 
-  private async walkQueue(
+  /** The queue a technician could take, best first (no lock needed). */
+  private async queueFor(
     tx: TenantTxClient,
     technicianId: string,
-  ): Promise<number> {
-    await this.serialize(tx);
-    if (!(await this.settings.inTx(tx)).autoDispatchEnabled) return 0;
+  ): Promise<string[]> {
+    if (!(await this.settings.inTx(tx)).autoDispatchEnabled) return [];
     const declined = (
       await tx.ticketAssignment.findMany({
-        where: {
-          fromId: technicianId,
-          assignmentType: 'declined',
-        },
+        where: { fromId: technicianId, assignmentType: 'declined' },
         select: { ticketId: true },
       })
     ).map((r) => r.ticketId);
@@ -216,32 +261,21 @@ export class DispatchEngine {
       take: QUEUE_BATCH,
       select: { id: true },
     });
-    let assigned = 0;
-    for (const { id } of queue)
-      if ((await this.attempt(tx, id, 'available'))?.outcome === 'assigned')
-        assigned++;
-    return assigned;
+    return queue.map((t) => t.id);
   }
 
   /**
    * Tickets that just went back to the queue because their technician can
-   * no longer work: tried again at once, in a transaction of their own,
-   * after the one that released them committed. That one (a deactivation, a
-   * freeze, an erasure) stays free of the engine; an emergency does not wait
-   * for the sweep. A failure is logged and the sweep retries.
+   * no longer work: tried again at once, after the transaction that released
+   * them committed. That one (a deactivation, a freeze, an erasure, a role
+   * change) stays free of the engine; an emergency does not wait for the
+   * sweep.
    */
-  async afterRelease(ticketIds: readonly string[]): Promise<void> {
-    if (!ticketIds.length) return;
-    try {
-      await this.tenantTx.withTenantTx(async (tx) => {
-        await this.serialize(tx);
-        for (const id of ticketIds) await this.attempt(tx, id, 'released');
-      });
-    } catch (error) {
-      this.logger.error(
-        `dispatch after a release failed (${error instanceof Error ? error.name : 'Error'})`,
-      );
-    }
+  afterRelease(
+    ticketIds: readonly string[],
+    trigger: DispatchTrigger = 'released',
+  ): Promise<number> {
+    return this.dispatch(ticketIds, trigger);
   }
 
   /**

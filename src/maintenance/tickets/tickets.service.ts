@@ -151,9 +151,9 @@ export class TicketsService implements OnModuleInit {
    * A resident opens a ticket: `tickets` on the unit, or on any unit for a
    * common area. They are both its creator and its reporter.
    */
-  create(input: NewTicket): Promise<Ticket> {
+  async create(input: NewTicket): Promise<Ticket> {
     const me = this.ctx.accountId;
-    return this.tenantTx.withTenantTx(async (tx) => {
+    const ticket = await this.tenantTx.withTenantTx(async (tx) => {
       const id = newId();
       await this.idempotency.claim(tx, { type: TICKET_RESOURCE, id });
       const where = this.location(input);
@@ -175,8 +175,9 @@ export class TicketsService implements OnModuleInit {
       const ticket = await this.insert(tx, id, input, where, category, me);
       for (const [i, fileId] of photos.entries())
         await this.attach(tx, ticket, fileId, 'report', `photoFileIds.${i}`);
-      return this.dispatched(tx, ticket);
+      return ticket;
     });
+    return this.dispatched(ticket);
   }
 
   /**
@@ -185,10 +186,10 @@ export class TicketsService implements OnModuleInit {
    * active resident or family account with `tickets` there. Audited, and
    * the reporter is told.
    */
-  createOnBehalf(
+  async createOnBehalf(
     input: Omit<NewTicket, 'photoFileIds'> & { reporterAccountId: string },
   ): Promise<Ticket> {
-    return this.tenantTx.withTenantTx(async (tx) => {
+    const ticket = await this.tenantTx.withTenantTx(async (tx) => {
       const id = newId();
       await this.idempotency.claim(tx, { type: TICKET_RESOURCE, id });
       const where = this.location(input);
@@ -234,23 +235,25 @@ export class TicketsService implements OnModuleInit {
         'ticket.opened_on_behalf',
         ticket,
       );
-      return this.dispatched(tx, ticket);
+      return ticket;
     });
+    return this.dispatched(ticket);
   }
 
   /**
-   * The last step of a creation: the dispatch engine tries the new ticket
-   * (ADR 0033). Last, so the dispatch lock is held as briefly as possible,
-   * and isolated: a failure of the engine never costs a resident their
-   * report. The ticket is read again, as the engine may have assigned it.
+   * After a creation committed: the dispatch engine tries the new ticket, in
+   * a transaction of its own (ADR 0033). Not inside the creating one: that
+   * holds the compound's ticket counter row until it commits, and waiting
+   * for the dispatch lock while holding it would queue every creation behind
+   * every decision. A failure, or a busy lock, costs nothing: the ticket is
+   * in the queue and the sweep takes it. The ticket is read again, as the
+   * engine may have assigned it.
    */
-  private async dispatched(
-    tx: TenantTxClient,
-    ticket: Ticket,
-  ): Promise<Ticket> {
-    const result = await this.engine.attempt(tx, ticket.id, 'created');
-    if (result?.outcome !== 'assigned') return ticket;
-    return tx.ticket.findUniqueOrThrow({ where: { id: ticket.id } });
+  private async dispatched(ticket: Ticket): Promise<Ticket> {
+    if (!(await this.engine.dispatch([ticket.id], 'created'))) return ticket;
+    return this.tenantTx.withTenantTx((tx) =>
+      tx.ticket.findUniqueOrThrow({ where: { id: ticket.id } }),
+    );
   }
 
   /** The resident's tickets: created, reported, or of a unit they are primary of. */

@@ -8,7 +8,7 @@ import {
 } from '../../src/community/workers/workers.service';
 import { auditReaders } from '../setup/audit';
 import { communityHelpers, type Compound } from '../setup/community';
-import { bornYearsAgo } from '../setup/fixtures';
+import { bornYearsAgo, distinctSequence } from '../setup/fixtures';
 import { requestAndVerify } from '../setup/login';
 import {
   API,
@@ -19,6 +19,8 @@ import {
 } from '../setup/http-app';
 
 /** National ID or passport, with a stored birth date (ADR 0018). */
+const ukDigits = distinctSequence(1e6);
+
 describe('Identity documents', () => {
   let h: HttpHarness;
   let x: ReturnType<typeof communityHelpers>;
@@ -97,9 +99,7 @@ describe('Identity documents', () => {
       const c = await x.compound();
       const email = uniqueEmail('uk-login');
       // 7400 xxxxxx: a UK mobile range where every number is valid.
-      const digits = Math.floor(Math.random() * 1e6)
-        .toString()
-        .padStart(6, '0');
+      const digits = ukDigits().toString().padStart(6, '0');
       const created = await h
         .http()
         .post(`${API}/accounts`)

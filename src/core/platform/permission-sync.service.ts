@@ -1,6 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ClsService } from 'nestjs-cls';
 import { ACCESS_CATALOG, type AccessCatalog } from '../access/access-catalog';
 import { RoleLifecycle } from '../access/role-lifecycle';
+import {
+  runAfterCommit,
+  type AfterCommit,
+} from '../accounts/account-lifecycle';
 import { AuditService } from '../audit/audit.service';
 import { diffChanges } from '../audit/diff';
 import { newId } from '../common/uuid';
@@ -41,6 +46,7 @@ export class PermissionSyncService {
     private readonly tenantTx: TenantTx,
     private readonly audit: AuditService,
     private readonly lifecycle: RoleLifecycle,
+    private readonly cls: ClsService,
   ) {}
 
   /** roleId → sorted permissions, inside the sync transaction. */
@@ -65,71 +71,85 @@ export class PermissionSyncService {
     return reports;
   }
 
-  syncTenant(tenantId: string): Promise<TenantSyncReport> {
-    return this.tenantTx.runInTenantUnsafe(tenantId, async (tx) => {
-      // Two syncs of the same compound (e.g. two instances deploying) queue.
-      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`access-sync:${tenantId}`}))`;
-      const report: TenantSyncReport = {
-        tenantId,
-        renamed: [],
-        retired: [],
-        added: [],
-        rolesCreated: [],
-        unknown: [],
-        rolesChanged: 0,
-      };
-      const changed = new Set<string>();
-      const created = new Set<string>();
-      const before = await this.snapshot(tx);
+  async syncTenant(tenantId: string): Promise<TenantSyncReport> {
+    const afterCommit: AfterCommit[] = [];
+    const report = await this.tenantTx.runInTenantUnsafe(
+      tenantId,
+      async (tx) => {
+        // Two syncs of the same compound (e.g. two instances deploying) queue.
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`access-sync:${tenantId}`}))`;
+        const report: TenantSyncReport = {
+          tenantId,
+          renamed: [],
+          retired: [],
+          added: [],
+          rolesCreated: [],
+          unknown: [],
+          rolesChanged: 0,
+        };
+        const changed = new Set<string>();
+        const created = new Set<string>();
+        const before = await this.snapshot(tx);
 
-      await this.applyRenames(tx, tenantId, report, changed);
-      await this.applyRetirements(tx, report, changed);
-      await this.createMissingRoles(tx, tenantId, report, changed, created);
-      await this.applyAdditions(tx, tenantId, report, changed);
-      await this.reportUnknown(tx, report);
+        await this.applyRenames(tx, tenantId, report, changed);
+        await this.applyRetirements(tx, report, changed);
+        await this.createMissingRoles(tx, tenantId, report, changed, created);
+        await this.applyAdditions(tx, tenantId, report, changed);
+        await this.reportUnknown(tx, report);
 
-      const after = await this.snapshot(tx);
-      for (const roleId of changed) {
-        const role = await tx.role.update({
-          where: { id: roleId },
-          data: { permissionsVersion: { increment: 1 } },
-        });
-        // The domains react, like after a manager's edit (ADR 0033).
-        const had = new Set(before.get(roleId) ?? []);
-        const has = new Set(after.get(roleId) ?? []);
-        await this.lifecycle.permissionsChanged(
-          tx,
-          roleId,
-          [...has].filter((p) => !had.has(p)),
-          [...had].filter((p) => !has.has(p)),
-        );
-        // Actor is `system`: the sync runs with no account in context.
-        await this.audit.record(tx, {
-          action: 'role.permissions_synced',
-          targetId: roleId,
-          changes: diffChanges(
-            { permissions: before.get(roleId) ?? [] },
-            { permissions: after.get(roleId) ?? [] },
-            'role.permissions_synced',
-          ),
-          metadata: {
-            roleKey: role.key,
-            roleCreated: created.has(roleId),
-            permissionsVersion: role.permissionsVersion,
-            added: report.added,
-            renamed: report.renamed,
-            retired: report.retired,
-          },
-        });
-      }
-      report.rolesChanged = changed.size;
-      if (report.unknown.length) {
-        this.logger.warn(
-          `tenant ${tenantId}: permissions in the database but not in code, left untouched: ${report.unknown.join(', ')}`,
-        );
-      }
-      return report;
-    });
+        const after = await this.snapshot(tx);
+        for (const roleId of changed) {
+          const role = await tx.role.update({
+            where: { id: roleId },
+            data: { permissionsVersion: { increment: 1 } },
+          });
+          // The domains react, like after a manager's edit (ADR 0033).
+          const had = new Set(before.get(roleId) ?? []);
+          const has = new Set(after.get(roleId) ?? []);
+          afterCommit.push(
+            ...(await this.lifecycle.permissionsChanged(
+              tx,
+              roleId,
+              [...has].filter((p) => !had.has(p)),
+              [...had].filter((p) => !has.has(p)),
+            )),
+          );
+          // Actor is `system`: the sync runs with no account in context.
+          await this.audit.record(tx, {
+            action: 'role.permissions_synced',
+            targetId: roleId,
+            changes: diffChanges(
+              { permissions: before.get(roleId) ?? [] },
+              { permissions: after.get(roleId) ?? [] },
+              'role.permissions_synced',
+            ),
+            metadata: {
+              roleKey: role.key,
+              roleCreated: created.has(roleId),
+              permissionsVersion: role.permissionsVersion,
+              added: report.added,
+              renamed: report.renamed,
+              retired: report.retired,
+            },
+          });
+        }
+        report.rolesChanged = changed.size;
+        if (report.unknown.length) {
+          this.logger.warn(
+            `tenant ${tenantId}: permissions in the database but not in code, left untouched: ${report.unknown.join(', ')}`,
+          );
+        }
+        return report;
+      },
+    );
+    // Whatever the domains asked to do once the sync committed, in the
+    // compound's context (there is no request here).
+    if (afterCommit.length)
+      await this.cls.run(async () => {
+        this.cls.set('tenantId', tenantId);
+        await runAfterCommit(afterCommit, this.logger);
+      });
+    return report;
   }
 
   /** `old → new`: assignments and the catalog entry move as they are. */

@@ -1,3 +1,4 @@
+import { ClsService } from 'nestjs-cls';
 import {
   CODE_ACCESS_CATALOG,
   type AccessCatalog,
@@ -327,6 +328,7 @@ describe('Dispatch — a role loses tickets.work', () => {
         h.moduleRef.get(TenantTx),
         h.moduleRef.get(AuditService),
         lifecycle,
+        h.moduleRef.get(ClsService),
       ).syncTenant(tenantId);
 
     it('run inside the app, it releases through the same hook (the deploy retired the permission for everyone, so the queue waits)', async () => {

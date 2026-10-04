@@ -83,7 +83,10 @@ export class DispatchSettingsService {
     return this.tenantTx.withTenantTx((tx) => this.inTx(tx));
   }
 
-  update(input: Partial<DispatchSettingsView>): Promise<DispatchSettingsView> {
+  /** `turnedOn`: this change switched automatic dispatch from off to on. */
+  update(
+    input: Partial<DispatchSettingsView>,
+  ): Promise<DispatchSettingsView & { turnedOn: boolean }> {
     const fields = Object.entries(RANGES).flatMap(([field, range]) => {
       const value = input[field as keyof typeof RANGES];
       return value !== undefined &&
@@ -130,7 +133,10 @@ export class DispatchSettingsService {
           targetId: this.ctx.tenantId,
           changes,
         });
-      return after;
+      return {
+        ...after,
+        turnedOn: !before.autoDispatchEnabled && after.autoDispatchEnabled,
+      };
     });
   }
 }

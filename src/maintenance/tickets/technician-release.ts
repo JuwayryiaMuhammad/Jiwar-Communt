@@ -57,7 +57,9 @@ export class TechnicianRelease implements OnModuleInit {
   ): Promise<AfterCommit[]> {
     await this.availability.markUnavailable(tx, accountId, reason);
     const released = await this.release(tx, accountId);
-    return released.length ? [() => this.engine.afterRelease(released)] : [];
+    return released.length
+      ? [() => this.engine.afterRelease(released).then(() => undefined)]
+      : [];
   }
 
   /** Returns the ids of the tickets it released. */

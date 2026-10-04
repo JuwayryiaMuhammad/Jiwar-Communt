@@ -1,5 +1,6 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { RoleLifecycle } from '../../core/access/role-lifecycle';
+import type { AfterCommit } from '../../core/accounts/account-lifecycle';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { TechnicianRelease } from '../tickets/technician-release';
 import { IN_HAND } from '../tickets/ticket-rules';
@@ -22,10 +23,11 @@ import { DispatchEngine } from './dispatch-engine';
  *   step that boots core only, so no domain handler is registered in that
  *   process; the sweep finds the technicians who no longer qualify instead.
  *
- * Locks: the dispatch lock first, then the role's account rows `FOR NO KEY
- * UPDATE` (an assignment in flight holds its technician `FOR SHARE`, so it
- * finishes first and is then released, and a later one re-reads the
- * permission and is refused), then the tickets.
+ * Locks: the role's account rows `FOR NO KEY UPDATE` (an assignment in
+ * flight holds its technician `FOR SHARE`, so it finishes first and is then
+ * released, and a later one re-reads the permission and is refused), then
+ * the tickets. The dispatch lock is not taken here: the engine takes it for
+ * each ticket it retries, after this transaction committed.
  */
 @Injectable()
 export class TechnicianQualification implements OnModuleInit {
@@ -42,64 +44,85 @@ export class TechnicianQualification implements OnModuleInit {
     );
   }
 
-  /** The hook: only the loss of `tickets.work` matters here. */
+  /**
+   * The hook: only the loss of `tickets.work` matters here. Releases in the
+   * changing transaction (the role's accounts locked `FOR NO KEY UPDATE`, in
+   * id order, then their tickets), and hands the released tickets to the
+   * engine after it commits: the engine's decisions take the dispatch lock,
+   * which a role edit must not wait for.
+   */
   async roleChanged(
     tx: TenantTxClient,
     roleId: string,
     removed: readonly string[],
-  ): Promise<void> {
-    if (!removed.includes('tickets.work')) return;
-    await this.engine.serialize(tx);
+  ): Promise<AfterCommit[]> {
+    if (!removed.includes('tickets.work')) return [];
     const accounts = await tx.$queryRaw<{ id: string }[]>`
       SELECT id FROM accounts WHERE role_id = ${roleId}::uuid
        ORDER BY id FOR NO KEY UPDATE`;
-    await this.revoke(
+    const released = await this.revoke(
       tx,
       accounts.map((a) => a.id),
     );
+    return released.length
+      ? [
+          () =>
+            this.engine
+              .afterRelease(released, 'role_lost')
+              .then(() => undefined),
+        ]
+      : [];
   }
 
   /**
-   * The backstop: whoever holds tickets in hand without being an active
-   * staff account that holds `tickets.work` (whatever the cause, a sync of
-   * the catalog included) loses them now. Returns how many tickets went
-   * back to the queue.
+   * The backstop's first half: whoever holds tickets in hand without being
+   * an active staff account that holds `tickets.work` (whatever the cause, a
+   * sync of the catalog included). No lock; `reconcileOne` takes it.
    */
-  async reconcile(tx: TenantTxClient): Promise<number> {
-    await this.engine.serialize(tx);
+  async unqualifiedHolders(tx: TenantTxClient): Promise<string[]> {
     const holders = await tx.$queryRaw<{ id: string }[]>`
       SELECT DISTINCT t.technician_account_id AS id
         FROM tickets t
+        JOIN accounts a ON a.id = t.technician_account_id
        WHERE t.status::text = ANY(${[...IN_HAND]}::text[])
-         AND t.technician_account_id IS NOT NULL
+         AND NOT (a.status = 'active' AND a.type = 'staff'
+                  AND EXISTS (SELECT 1 FROM role_permissions rp
+                               WHERE rp.role_id = a.role_id
+                                 AND rp.permission = 'tickets.work'))
        ORDER BY 1`;
-    let released = 0;
-    for (const { id } of holders) {
-      // Locked, then looked at again: a role restored in the meantime is fine.
-      await tx.$queryRaw`SELECT id FROM accounts WHERE id = ${id}::uuid FOR NO KEY UPDATE`;
-      const qualified = await tx.account.count({
-        where: {
-          id,
-          status: 'active',
-          type: 'staff',
-          role: { permissions: { some: { permission: 'tickets.work' } } },
-        },
-      });
-      if (!qualified) released += await this.revoke(tx, [id]);
-    }
-    return released;
+    return holders.map((h) => h.id);
   }
 
+  /**
+   * The backstop's second half, in a transaction of its own: the account
+   * locked, then looked at again (a role restored in the meantime is fine),
+   * then released. Returns the ids of the tickets it released, which the
+   * queue pass of the same sweep finds in the queue.
+   */
+  async reconcileOne(tx: TenantTxClient, accountId: string): Promise<number> {
+    await tx.$queryRaw`SELECT id FROM accounts WHERE id = ${accountId}::uuid FOR NO KEY UPDATE`;
+    const qualified = await tx.account.count({
+      where: {
+        id: accountId,
+        status: 'active',
+        type: 'staff',
+        role: { permissions: { some: { permission: 'tickets.work' } } },
+      },
+    });
+    if (qualified) return 0;
+    return (await this.revoke(tx, [accountId])).length;
+  }
+
+  /** Each leaves the pool and releases what they hold; the released ids. */
   private async revoke(
     tx: TenantTxClient,
     accountIds: readonly string[],
-  ): Promise<number> {
+  ): Promise<string[]> {
     const released: string[] = [];
     for (const id of accountIds) {
       await this.availability.markUnavailable(tx, id, 'permission_lost');
       released.push(...(await this.release.release(tx, id)));
     }
-    for (const id of released) await this.engine.attempt(tx, id, 'role_lost');
-    return released.length;
+    return released;
   }
 }

@@ -12,23 +12,41 @@ const provisioner = new RoleProvisioner(CODE_ACCESS_CATALOG);
 const maintenance = new MaintenanceProvisioning(new TenantLifecycle());
 
 /**
+ * A sequence of distinct values below `size`, from a random start: calls
+ * never repeat until the whole range is used (a random draw repeats after
+ * about the square root of the range, which is how two suites in one run
+ * once created the same phone number in one compound).
+ */
+export function distinctSequence(size: number): () => number {
+  let next = randomInt(size);
+  return () => {
+    const value = next;
+    next = (next + 1) % size;
+    return value;
+  };
+}
+
+const nationalIdSequence = distinctSequence(1e5);
+
+/**
  * A valid Egyptian national ID for someone born on `birthDate` (default
  * 1990-01-01, an adult): the right century digit, Cairo as governorate, and a
- * random sequence so values differ between calls.
+ * sequence that never repeats within a run, whatever the birth date.
  */
 export function nationalIdFor(
   birthDate: Date = new Date(Date.UTC(1990, 0, 1)),
 ): string {
   const pad = (n: number, width = 2) => String(n).padStart(width, '0');
   const year = birthDate.getUTCFullYear();
+  const sequence = nationalIdSequence();
   return [
     year >= 2000 ? '3' : '2',
     pad(year % 100),
     pad(birthDate.getUTCMonth() + 1),
     pad(birthDate.getUTCDate()),
     '01',
-    pad(randomInt(1e4), 4),
-    String(randomInt(10)),
+    pad(Math.floor(sequence / 10), 4),
+    String(sequence % 10),
   ].join('');
 }
 

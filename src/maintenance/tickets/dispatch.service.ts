@@ -9,7 +9,7 @@ import {
   AvailabilityService,
   type AvailabilityRead,
 } from '../dispatch/availability.service';
-import { DispatchEngine } from '../dispatch/dispatch-engine';
+import { DispatchBusyError, DispatchEngine } from '../dispatch/dispatch-engine';
 import { DispatchSettingsService } from '../dispatch/dispatch-settings.service';
 import { points, workloads } from '../dispatch/workload';
 import { TicketAccess } from './ticket-access';
@@ -33,6 +33,12 @@ export interface AutoAssignment {
   outcome: 'assigned' | 'no_candidate';
   technician: { id: string; fullName: string | null; status: string } | null;
 }
+
+const dispatchBusy = () =>
+  appError.serviceUnavailable(
+    ErrorCode.DISPATCH_BUSY,
+    'Dispatch is busy; try again in a moment',
+  );
 
 const sameAsCurrent = (field: string) =>
   appError.badRequest(ErrorCode.VALIDATION_FAILED, 'Nothing changes', {
@@ -166,8 +172,11 @@ export class DispatchService {
    */
   autoAssign(id: string): Promise<AutoAssignment> {
     return this.tenantTx.withTenantTx(async (tx) => {
-      // The dispatch lock before the ticket's own (the engine's lock order).
-      await this.engine.serialize(tx);
+      // The dispatch lock before the ticket's own (the engine's lock order);
+      // a lock held too long is an answer, not a hang.
+      await this.engine.serialize(tx).catch((e: unknown) => {
+        throw e instanceof DispatchBusyError ? dispatchBusy() : e;
+      });
       const ticket = await this.access.load(tx, id, 'dispatch', { lock: true });
       assertCan(ticket, 'assign');
       const result = await this.engine.run(tx, id, 'manual');

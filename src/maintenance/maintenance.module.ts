@@ -12,6 +12,7 @@ import {
   DispatchAvailabilityController,
   TechnicianAvailabilityController,
 } from './dispatch/availability.controller';
+import { DispatchLimiter } from './dispatch/dispatch-limiter';
 import { DispatchEngine } from './dispatch/dispatch-engine';
 import { TechnicianQualification } from './dispatch/technician-qualification';
 import { DispatchSweep } from './dispatch/dispatch-sweep';
@@ -69,6 +70,7 @@ import { TicketsService } from './tickets/tickets.service';
     SpecialtiesService,
     AvailabilityService,
     DispatchSettingsService,
+    DispatchLimiter,
     DispatchEngine,
     DispatchSweep,
     TechnicianQualification,

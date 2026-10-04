@@ -1,5 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { AccountType } from '@prisma/client';
+import {
+  runAfterCommit,
+  type AfterCommit,
+} from '../accounts/account-lifecycle';
 import { AuditService } from '../audit/audit.service';
 import { diffChanges } from '../audit/diff';
 import { RequestContext } from '../common/cls/request-context';
@@ -26,6 +30,8 @@ export interface RoleWithPermissions {
  */
 @Injectable()
 export class RolesService {
+  private readonly logger = new Logger(RolesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly tenantTx: TenantTx,
@@ -71,7 +77,8 @@ export class RolesService {
     }
     const tenantId = this.ctx.tenantId;
 
-    return this.tenantTx.withTenantTx(async (tx) => {
+    const afterCommit: AfterCommit[] = [];
+    const view = await this.tenantTx.withTenantTx(async (tx) => {
       // Serialize concurrent edits of the same role.
       await tx.$executeRaw`SELECT 1 FROM roles WHERE id = ${roleId}::uuid FOR UPDATE`;
       const role = await tx.role.findUnique({
@@ -125,7 +132,14 @@ export class RolesService {
       });
       // The domains react in this transaction, after the writes (a technician
       // whose role loses tickets.work releases their tickets, ADR 0033).
-      await this.lifecycle.permissionsChanged(tx, roleId, toAdd, toRemove);
+      afterCommit.push(
+        ...(await this.lifecycle.permissionsChanged(
+          tx,
+          roleId,
+          toAdd,
+          toRemove,
+        )),
+      );
       await this.audit.record(tx, {
         action: 'role.permissions_replaced',
         targetId: roleId,
@@ -141,6 +155,10 @@ export class RolesService {
       });
       return toView(updated);
     });
+    // What the domains asked to do once the change is committed (the engine
+    // retrying the tickets a technician's role edit released).
+    await runAfterCommit(afterCommit, this.logger);
+    return view;
   }
 }
 

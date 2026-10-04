@@ -96,6 +96,7 @@ describe('Permission sync', () => {
       h.tenantTx,
       h.audit,
       lifecycle,
+      h.cls,
     ).syncTenant(tenantId);
 
   async function role(tenantId: string, key: string) {

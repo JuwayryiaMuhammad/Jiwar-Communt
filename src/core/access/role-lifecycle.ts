@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { AfterCommit } from '../accounts/account-lifecycle';
 import type { TenantTxClient } from '../database/tenant-tx.service';
 
 /**
@@ -10,14 +11,16 @@ export type PermissionsChangedHandler = (
   roleId: string,
   added: readonly string[],
   removed: readonly string[],
-) => Promise<void>;
+) => Promise<void | AfterCommit[]>;
 
 /**
  * How core tells domains that a role's permissions changed, without
  * importing them (ADR 0015), the way AccountLifecycle does for accounts:
  * maintenance releases the tickets of technicians whose role loses
  * `tickets.work` (ADR 0033). Handlers run inside the changing transaction,
- * so their writes commit or roll back with the permission change.
+ * so their writes commit or roll back with the permission change, and may
+ * hand back work to run after it commits (the engine retrying what they
+ * released).
  *
  * Two paths change a role's permissions: `PUT /roles/:id/permissions` and
  * `access:sync`. An account never changes role after it is created, and
@@ -37,9 +40,11 @@ export class RoleLifecycle {
     roleId: string,
     added: readonly string[],
     removed: readonly string[],
-  ): Promise<void> {
-    if (!added.length && !removed.length) return;
+  ): Promise<AfterCommit[]> {
+    const tasks: AfterCommit[] = [];
+    if (!added.length && !removed.length) return tasks;
     for (const handler of this.handlers)
-      await handler(tx, roleId, added, removed);
+      tasks.push(...((await handler(tx, roleId, added, removed)) ?? []));
+    return tasks;
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import type { TechnicianAvailabilityState } from '@prisma/client';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { REASON_CODES, requireReasonCodeOnly } from '../../core/common/reasons';
@@ -39,6 +39,8 @@ interface Change {
  */
 @Injectable()
 export class AvailabilityService {
+  private readonly logger = new Logger(AvailabilityService.name);
+
   constructor(
     private readonly tenantTx: TenantTx,
     private readonly ctx: RequestContext,
@@ -54,25 +56,22 @@ export class AvailabilityService {
   }
 
   /** The technician's own change. */
-  setMine(state: TechnicianAvailabilityState): Promise<AvailabilityRead> {
+  async setMine(state: TechnicianAvailabilityState): Promise<AvailabilityRead> {
     const me = this.ctx.accountId;
-    return this.tenantTx.withTenantTx(async (tx) => {
-      if (state === 'available') await this.engine.serialize(tx);
+    const { changed, read } = await this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockTechnician(tx, me, 'write');
       const changed = await this.change(tx, me, state, {
         by: me,
         reasonCode: null,
       });
-      // A technician who has just become available takes the queued tickets
-      // they can (ADR 0033), and an engine failure never undoes the change.
-      if (changed && state === 'available')
-        await this.engine.runQueueFor(tx, me);
-      return this.read(tx, me);
+      return { changed, read: await this.read(tx, me) };
     });
+    await this.becameAvailable(changed, state, me);
+    return read;
   }
 
   /** A dispatcher's change, with a reason from `availabilityChange`. */
-  setFor(
+  async setFor(
     technicianId: string,
     state: TechnicianAvailabilityState,
     reasonCode?: string,
@@ -82,17 +81,36 @@ export class AvailabilityService {
       REASON_CODES.availabilityChange,
     );
     const me = this.ctx.accountId;
-    return this.tenantTx.withTenantTx(async (tx) => {
-      if (state === 'available') await this.engine.serialize(tx);
+    const { changed, read } = await this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockTechnician(tx, technicianId, 'write');
       const changed = await this.change(tx, technicianId, state, {
         by: me,
         reasonCode: code,
       });
-      if (changed && state === 'available')
-        await this.engine.runQueueFor(tx, technicianId);
-      return this.read(tx, technicianId);
+      return { changed, read: await this.read(tx, technicianId) };
     });
+    await this.becameAvailable(changed, state, technicianId);
+    return read;
+  }
+
+  /**
+   * A technician who has just become available takes the queued tickets they
+   * can (ADR 0033), after the change committed: the engine runs in its own
+   * transactions, one decision each, and a failure never undoes the change.
+   */
+  private async becameAvailable(
+    changed: boolean,
+    state: TechnicianAvailabilityState,
+    technicianId: string,
+  ): Promise<void> {
+    if (!changed || state !== 'available') return;
+    try {
+      await this.engine.dispatchQueueFor(technicianId);
+    } catch (error) {
+      this.logger.error(
+        `dispatch of the queue failed (${error instanceof Error ? error.name : 'Error'})`,
+      );
+    }
   }
 
   /**

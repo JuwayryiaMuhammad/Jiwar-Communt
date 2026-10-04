@@ -152,6 +152,8 @@ export const ErrorCode = {
   SPECIALTY_NOT_FOUND: 'SPECIALTY_NOT_FOUND',
   /** Not an active staff account holding tickets.work. */
   TECHNICIAN_NOT_FOUND: 'TECHNICIAN_NOT_FOUND',
+  /** The dispatch lock stayed held too long (503): try again (ADR 0033). */
+  DISPATCH_BUSY: 'DISPATCH_BUSY',
   /** The ticket's status does not allow the action (409, params.status). */
   TICKET_INVALID_TRANSITION: 'TICKET_INVALID_TRANSITION',
   /** No `tickets` capability on the unit, or on any unit (403). */

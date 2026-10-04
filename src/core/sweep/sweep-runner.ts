@@ -100,17 +100,10 @@ export class SweepRunner
   async forEachTenant(
     fn: (tx: TenantTxClient, tenantId: string) => Promise<number>,
   ): Promise<number> {
-    const tenants = await this.globalDb.tenant.findMany({
-      select: { id: true },
-      orderBy: { id: 'asc' },
-    });
     let done = 0;
-    for (const t of tenants) {
+    for (const tenantId of await this.tenantIds()) {
       try {
-        done += await this.cls.run({ ifNested: 'inherit' }, () => {
-          this.cls.set('auditActor', { type: 'system', id: null });
-          return this.tenantTx.runInTenantUnsafe(t.id, (tx) => fn(tx, t.id));
-        });
+        done += await this.inTenant(tenantId, (tx) => fn(tx, tenantId));
       } catch (error) {
         this.logger.error(
           `sweep failed in a compound (${error instanceof Error ? error.name : 'Error'})`,
@@ -118,6 +111,63 @@ export class SweepRunner
       }
     }
     return done;
+  }
+
+  /**
+   * Like forEachTenant for work that must not hold one transaction for a
+   * whole batch (a lock the work takes would be held that long): `list` runs
+   * once per compound and names the items; each item then runs in a
+   * transaction of its own, so whatever it locks is held for that item alone.
+   * An item that fails is logged and skipped, and so is a compound whose
+   * `list` fails. Returns the sum of what `item` returned.
+   */
+  async forEachTenantItem<T>(
+    list: (tx: TenantTxClient, tenantId: string) => Promise<T[]>,
+    item: (tx: TenantTxClient, tenantId: string, one: T) => Promise<number>,
+  ): Promise<number> {
+    let done = 0;
+    for (const tenantId of await this.tenantIds()) {
+      let items: T[];
+      try {
+        items = await this.inTenant(tenantId, (tx) => list(tx, tenantId));
+      } catch (error) {
+        this.logger.error(
+          `sweep failed in a compound (${error instanceof Error ? error.name : 'Error'})`,
+        );
+        continue;
+      }
+      for (const one of items) {
+        try {
+          done += await this.inTenant(tenantId, (tx) =>
+            item(tx, tenantId, one),
+          );
+        } catch (error) {
+          this.logger.error(
+            `sweep item failed (${error instanceof Error ? error.name : 'Error'})`,
+          );
+        }
+      }
+    }
+    return done;
+  }
+
+  private async tenantIds(): Promise<string[]> {
+    const tenants = await this.globalDb.tenant.findMany({
+      select: { id: true },
+      orderBy: { id: 'asc' },
+    });
+    return tenants.map((t) => t.id);
+  }
+
+  /** One transaction in the compound, as the `system` actor. */
+  private inTenant<T>(
+    tenantId: string,
+    fn: (tx: TenantTxClient) => Promise<T>,
+  ): Promise<T> {
+    return this.cls.run({ ifNested: 'inherit' }, () => {
+      this.cls.set('auditActor', { type: 'system', id: null });
+      return this.tenantTx.runInTenantUnsafe(tenantId, fn);
+    });
   }
 
   private schedule(): void {

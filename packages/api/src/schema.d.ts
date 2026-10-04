@@ -3671,7 +3671,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        DispatchTrigger: "created" | "declined" | "available" | "manual" | "sweep" | "role_lost" | "released";
+        DispatchTrigger: "created" | "declined" | "available" | "manual" | "sweep" | "role_lost" | "released" | "enabled";
         EngagementDetailView: {
             capacity: components["schemas"]["WorkerCapacity"];
             /** Format: date-time */

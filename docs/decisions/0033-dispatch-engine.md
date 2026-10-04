@@ -26,7 +26,7 @@ ADR 0032 gave maintenance manual assignment. 5.2 adds **automatic** assignment: 
 ### Dispatch settings
 
 - **`maintenance_dispatch_settings`**, one row per compound (`maintenance.manage`, audited as `maintenance.dispatch_settings_changed`): `auto_dispatch_enabled`, the status weights (`assigned` 1, `in_progress` 2, `on_hold` **0**) and the priority multipliers (`normal` 1, `urgent` 1.5, `emergency` 3), two decimals each, with CHECK ranges.
-- **Automatic dispatch is off in every compound**, new and backfilled. A deploy must not change how an existing compound works, and a new compound has no technician specialties yet, so "on" would only produce an unassignable notice per ticket. The manager turns it on after setting specialties; queued tickets then wait for the next sweep or a dispatcher's `auto-assign`.
+- **Automatic dispatch is off in every compound**, new and backfilled. A deploy must not change how an existing compound works, and a new compound has no technician specialties yet, so "on" would only produce an unassignable notice per ticket. The manager turns it on after setting specialties; turning it on starts a bounded pass over the queue at once (below).
 
 ### The engine
 
@@ -62,6 +62,7 @@ The engine runs on:
 - a technician **becoming available**, by themselves or by a dispatcher, after the change committed: the queued tickets they can take (their specialties, never one they declined), emergency, then urgent, then normal, oldest first within each, `LIMIT 20`, each ticket through the full choice, so the least loaded candidate wins, not automatically the one who just came back;
 - a dispatcher's **`POST /maintenance/tickets/:id/auto-assign`**, which ignores `auto_dispatch_enabled` (it is a deliberate request, and the way to try the engine ticket by ticket in a compound where it is still off). `no_candidate` is an answer, not an error;
 - the **sweep** `maintenance.dispatch`, a backstop: every compound with automatic dispatch on and not suspended, emergencies first, then the tickets tried least recently (a stuck batch never starves the rest), then the oldest, `LIMIT 100`, **each ticket in its own transaction**;
+- a manager **turning automatic dispatch on**: a bounded pass (`LIMIT 50`, trigger `enabled`) over the queue, same order as the sweep, started after the change committed and not awaited by the response, so enabling has a visible effect without waiting up to an hour for the sweep. Only the change from off to on starts it; what is beyond the 50 waits for the sweep, and a failure leaves the setting changed and the tickets to the sweep;
 - a technician who can **no longer work**: tickets released by a deactivation, a freeze, an erasure, or a first rejection whose technician cannot take it back (trigger `released`), and tickets released by losing `tickets.work` (`role_lost`).
 
 **Not an escalation:** a second rejection or reopen goes to the dispatchers on purpose (ADR 0032).
@@ -112,6 +113,6 @@ Workload, availability (state, since, reason, who), specialties and the attempts
 
 - This **amends ADR 0032**: its last consequence (a technician whose role loses `tickets.work` keeps their tickets) no longer holds; `automatic` is now written.
 - The queue is only as good as the specialties: a compound that turns automatic dispatch on before setting any gets `no_candidate` for every ticket (the dispatch-settings screen should show how many available technicians have specialties first).
-- Turning dispatch on does not drain the queue at once: the next sweep (`SWEEP_INTERVAL_MS`, one hour by default) or a dispatcher's `auto-assign` does.
+- Turning dispatch on assigns up to 50 queued tickets at once; the rest wait for the next sweep (`SWEEP_INTERVAL_MS`, one hour by default) or a dispatcher's `auto-assign`.
 - The dispatch lock is held for one decision, so a creation waits behind at most one. Decisions of one compound in one process run one after the other (the price of not holding connections while waiting), so a creation's response can take as long as the decisions queued before it: a burst of 40 creations during a sweep of 100 took 8 s for the last. No request fails, and a stuck lock costs a creation one bounded wait of 3 s at most, after which the ticket waits for the sweep.
 - A ticket released by a sync of `access:sync` waits for the next sweep, not for the deploy.

@@ -1,5 +1,8 @@
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import type { TenantTxClient } from '../../core/database/tenant-tx.service';
+import {
+  TenantTx,
+  type TenantTxClient,
+} from '../../core/database/tenant-tx.service';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { DispatchBusyError } from './dispatch-busy';
 import { DispatchEngine } from './dispatch-engine';
@@ -11,6 +14,9 @@ export const DISPATCH_SWEEP = 'maintenance.dispatch';
 
 /** Queued tickets one sweep run tries per compound. */
 export const SWEEP_BATCH = 100;
+
+/** Queued tickets the pass that follows enabling automatic dispatch tries. */
+export const DRAIN_BATCH = 50;
 
 /**
  * The backstop (ADR 0033): every trigger of the engine is an event, and an
@@ -39,6 +45,7 @@ export class DispatchSweep implements OnModuleInit {
     private readonly limiter: DispatchLimiter,
     private readonly settings: DispatchSettingsService,
     private readonly qualification: TechnicianQualification,
+    private readonly tenantTx: TenantTx,
   ) {}
 
   onModuleInit(): void {
@@ -66,6 +73,18 @@ export class DispatchSweep implements OnModuleInit {
       },
       (tx, tenantId, ticketId) => this.decide(tx, tenantId, ticketId, 'sweep'),
     );
+  }
+
+  /**
+   * Turning automatic dispatch on: a bounded pass over this compound's queue
+   * (the request's), so enabling has an effect now, not at the next sweep.
+   * Each ticket is decided in a transaction of its own.
+   */
+  async drain(): Promise<number> {
+    const ids = await this.tenantTx.withTenantTx((tx) =>
+      this.queue(tx, DRAIN_BATCH),
+    );
+    return this.engine.dispatch(ids, 'enabled');
   }
 
   private async active(tx: TenantTxClient, tenantId: string): Promise<boolean> {

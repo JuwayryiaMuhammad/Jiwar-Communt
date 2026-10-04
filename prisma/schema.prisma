@@ -1978,6 +1978,8 @@ enum DispatchTrigger {
   sweep
   role_lost
   released
+  /// A manager turned automatic dispatch on: the bounded pass over the queue.
+  enabled
 
   @@map("dispatch_trigger")
 }

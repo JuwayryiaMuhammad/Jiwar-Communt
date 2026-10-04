@@ -21,6 +21,14 @@ export class DispatchSettingsResponse {
   multiplierEmergency: number;
 
   static from(s: DispatchSettingsView): DispatchSettingsResponse {
-    return { ...s };
+    return {
+      autoDispatchEnabled: s.autoDispatchEnabled,
+      weightAssigned: s.weightAssigned,
+      weightInProgress: s.weightInProgress,
+      weightOnHold: s.weightOnHold,
+      multiplierNormal: s.multiplierNormal,
+      multiplierUrgent: s.multiplierUrgent,
+      multiplierEmergency: s.multiplierEmergency,
+    };
   }
 }

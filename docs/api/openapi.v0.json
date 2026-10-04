@@ -2361,7 +2361,8 @@
           "manual",
           "sweep",
           "role_lost",
-          "released"
+          "released",
+          "enabled"
         ],
         "type": "string"
       },

@@ -1,6 +1,7 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { AccountLifecycle } from '../../core/accounts/account-lifecycle';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
+import { AvailabilityService } from '../dispatch/availability.service';
 import { TicketLog } from './ticket-log';
 import { TicketNotices } from './ticket-notices';
 import { IN_HAND } from './ticket-rules';
@@ -18,18 +19,36 @@ export class TechnicianRelease implements OnModuleInit {
     private readonly lifecycle: AccountLifecycle,
     private readonly log: TicketLog,
     private readonly notices: TicketNotices,
+    private readonly availability: AvailabilityService,
   ) {}
 
   onModuleInit(): void {
     this.lifecycle.onDeactivated(async (tx, account) => {
-      await this.release(tx, account.id);
+      await this.leave(tx, account.id, 'account_deactivated');
       return [];
     });
-    this.lifecycle.onFrozen((tx, account) => this.release(tx, account.id));
+    this.lifecycle.onFrozen((tx, account) =>
+      this.leave(tx, account.id, 'account_frozen'),
+    );
     this.lifecycle.onErasing(async (tx, account) => {
-      await this.release(tx, account.id);
+      await this.leave(tx, account.id, 'account_erased');
       return [];
     });
+  }
+
+  /**
+   * The account can no longer work: it leaves the pool (availability, with
+   * the reason) and its tickets in hand go back to the queue. The caller
+   * holds the account's row. Reactivation does not undo the availability:
+   * a technician opts in again.
+   */
+  private async leave(
+    tx: TenantTxClient,
+    accountId: string,
+    reason: 'account_deactivated' | 'account_frozen' | 'account_erased',
+  ): Promise<void> {
+    await this.availability.markUnavailable(tx, accountId, reason);
+    await this.release(tx, accountId);
   }
 
   async release(tx: TenantTxClient, technicianId: string): Promise<void> {

@@ -15,6 +15,17 @@ export class RequestContext {
     return id;
   }
 
+  /**
+   * The tenant of the running TenantTx transaction: set for requests and for
+   * system work (a sweep, a platform action) alike, where `tenantId` only
+   * exists for requests.
+   */
+  get txTenantId(): string {
+    const id = this.cls.isActive() ? this.cls.get('txTenantId') : undefined;
+    if (!id) throw new TenantContextMissingError();
+    return id;
+  }
+
   get accountId(): string {
     const id = this.cls.isActive() ? this.cls.get('accountId') : undefined;
     if (!id) throw new TenantContextMissingError();

@@ -169,4 +169,13 @@ export const REASON_CODES = {
   ticketReopen: ['problem_returned', 'not_fixed', 'other'],
   // Written by the system only: back to the queue.
   ticketRelease: ['escalated', 'technician_unavailable'],
+  // Dispatch (ADR 0033): a dispatcher setting a technician's availability.
+  availabilityChange: ['sick', 'leave', 'training', 'other'],
+  // Written by the system only: why a technician became unavailable.
+  availabilitySystem: [
+    'account_deactivated',
+    'account_frozen',
+    'account_erased',
+    'permission_lost',
+  ],
 } as const;

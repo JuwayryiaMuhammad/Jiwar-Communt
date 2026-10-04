@@ -3,11 +3,18 @@ import { newId } from '../core/common/uuid';
 import type { TenantTxClient } from '../core/database/tenant-tx.service';
 import { TenantLifecycle } from '../core/tenant-settings/tenant-lifecycle';
 import { DEFAULT_CATEGORIES } from './categories/default-categories';
+import {
+  DEFAULT_CATEGORY_SPECIALTIES,
+  DEFAULT_SPECIALTIES,
+} from './specialties/default-specialties';
 
 /**
- * What a new compound gets from maintenance (ADR 0032), in the creation's
- * transaction: the default categories, its settings row and its ticket
- * counter. Existing compounds got the same from the migration.
+ * What a new compound gets from maintenance (ADR 0032, 0033), in the
+ * creation's transaction: the default categories, its settings row and its
+ * ticket counter, the default specialties (each category handled by its
+ * namesake) and the dispatch settings, with automatic dispatch off until
+ * the manager has given technicians their specialties. Existing compounds
+ * got the same from the migrations.
  */
 @Injectable()
 export class MaintenanceProvisioning implements OnModuleInit {
@@ -29,6 +36,30 @@ export class MaintenanceProvisioning implements OnModuleInit {
         nameEn: c.nameEn,
         defaultPriority: c.defaultPriority,
         commonAreaAllowed: c.commonAreaAllowed,
+      })),
+    });
+    await tx.maintenanceDispatchSettings.create({ data: { tenantId } });
+    const specialties = new Map(
+      DEFAULT_SPECIALTIES.map((s) => [s.key, newId()]),
+    );
+    await tx.specialty.createMany({
+      data: DEFAULT_SPECIALTIES.map((s) => ({
+        id: specialties.get(s.key)!,
+        tenantId,
+        key: s.key,
+        nameAr: s.nameAr,
+        nameEn: s.nameEn,
+      })),
+    });
+    const categories = await tx.ticketCategory.findMany({
+      select: { id: true, key: true },
+    });
+    const categoryIds = new Map(categories.map((c) => [c.key, c.id]));
+    await tx.categorySpecialty.createMany({
+      data: DEFAULT_CATEGORY_SPECIALTIES.map((l) => ({
+        tenantId,
+        categoryId: categoryIds.get(l.categoryKey)!,
+        specialtyId: specialties.get(l.specialtyKey)!,
       })),
     });
   }

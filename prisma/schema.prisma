@@ -456,6 +456,8 @@ model Tenant {
   ticketCategories  TicketCategory[]
   maintenance       MaintenanceSettings?
   ticketCounter     TicketCounter?
+  specialties       Specialty[]
+  dispatchSettings  MaintenanceDispatchSettings?
 
   @@map("tenants")
 }
@@ -713,6 +715,8 @@ model Account {
   holdsReleased         LegalHold[]               @relation("HoldReleasedBy")
   notifications         Notification[]            @relation("NotificationAccount")
   idempotencyKeys       IdempotencyKey[]          @relation("IdempotencyAccount")
+  technicianSpecialties TechnicianSpecialty[]     @relation("TechnicianSpecialtyAccount")
+  availability          TechnicianAvailability?   @relation("TechnicianAvailabilityAccount")
   guardShifts           GuardShift[]              @relation("ShiftGuard")
   hostedPasses          VisitorPass[]             @relation("PassHost")
   cancelledPasses       VisitorPass[]             @relation("PassCancelledBy")
@@ -1737,7 +1741,7 @@ enum TicketAssignmentType {
   manual
   reassignment
   declined
-  /// Reserved for the dispatch engine (Phase 5.2); never written in 5.1.
+  /// Written by the dispatch engine (ADR 0033), with no actor.
   automatic
   /// A system unassignment: escalated to the queue, or the technician left.
   released
@@ -1775,8 +1779,9 @@ model TicketCategory {
   createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  tickets Ticket[]
+  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  tickets     Ticket[]
+  specialties CategorySpecialty[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, key])
@@ -1953,4 +1958,154 @@ model TicketAttachment {
 
   @@index([tenantId, ticketId, createdAt, id], map: "ticket_attachments_ticket_idx")
   @@map("ticket_attachments")
+}
+
+enum TechnicianAvailabilityState {
+  available
+  unavailable
+
+  @@map("technician_availability_state")
+}
+
+enum DispatchTrigger {
+  created
+  declined
+  available
+  manual
+  sweep
+  role_lost
+  released
+
+  @@map("dispatch_trigger")
+}
+
+enum DispatchOutcome {
+  assigned
+  no_candidate
+  skipped
+
+  @@map("dispatch_outcome")
+}
+
+/// What a technician can do (ADR 0033): the compound's own data, never
+/// deleted; a retired one is `active: false`.
+model Specialty {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  key       String
+  nameAr    String   @map("name_ar")
+  nameEn    String   @map("name_en")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant      Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  categories  CategorySpecialty[]
+  technicians TechnicianSpecialty[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, key])
+  @@map("specialties")
+}
+
+/// Which specialties can handle a category. A category with none can go to
+/// any technician.
+model CategorySpecialty {
+  tenantId    String   @map("tenant_id") @db.Uuid
+  categoryId  String   @map("category_id") @db.Uuid
+  specialtyId String   @map("specialty_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  category  TicketCategory @relation(fields: [tenantId, categoryId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "category_specialties_tenant_id_category_id_fkey")
+  specialty Specialty      @relation(fields: [tenantId, specialtyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "category_specialties_tenant_id_specialty_id_fkey")
+
+  @@id([tenantId, categoryId, specialtyId])
+  @@index([tenantId, specialtyId], map: "category_specialties_specialty_idx")
+  @@map("category_specialties")
+}
+
+/// Set by dispatchers. A row switched off is kept (`active: false`).
+model TechnicianSpecialty {
+  tenantId    String   @map("tenant_id") @db.Uuid
+  accountId   String   @map("account_id") @db.Uuid
+  specialtyId String   @map("specialty_id") @db.Uuid
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  account   Account   @relation("TechnicianSpecialtyAccount", fields: [tenantId, accountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "technician_specialties_tenant_id_account_id_fkey")
+  specialty Specialty @relation(fields: [tenantId, specialtyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "technician_specialties_tenant_id_specialty_id_fkey")
+
+  @@id([tenantId, accountId, specialtyId])
+  @@index([tenantId, specialtyId], map: "technician_specialties_specialty_idx")
+  @@map("technician_specialties")
+}
+
+/// A technician's current state; no row means unavailable (opt-in).
+model TechnicianAvailability {
+  tenantId  String                      @map("tenant_id") @db.Uuid
+  accountId String                      @map("account_id") @db.Uuid
+  state     TechnicianAvailabilityState
+  changedAt DateTime                    @default(now()) @map("changed_at") @db.Timestamptz(3)
+
+  account Account @relation("TechnicianAvailabilityAccount", fields: [tenantId, accountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "technician_availability_tenant_id_account_id_fkey")
+
+  @@id([tenantId, accountId])
+  @@map("technician_availability")
+}
+
+/// Append-only (ADR 0033), like ticket_assignments: SELECT and INSERT for
+/// jiwar_app, triggers refuse the rest, no foreign keys.
+model TechnicianAvailabilityHistory {
+  id          String                       @id @db.Uuid
+  tenantId    String                       @map("tenant_id") @db.Uuid
+  accountId   String                       @map("account_id") @db.Uuid
+  fromState   TechnicianAvailabilityState? @map("from_state")
+  toState     TechnicianAvailabilityState  @map("to_state")
+  /// The technician, a dispatcher, or NULL for the system.
+  changedById String?                      @map("changed_by_account_id") @db.Uuid
+  reasonCode  String?                      @map("reason_code")
+  createdAt   DateTime                     @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([tenantId, accountId, createdAt, id], map: "technician_availability_history_account_idx")
+  @@map("technician_availability_history")
+}
+
+/// One row per compound (ADR 0033). Automatic dispatch starts off.
+model MaintenanceDispatchSettings {
+  tenantId            String   @id @map("tenant_id") @db.Uuid
+  autoDispatchEnabled Boolean  @default(false) @map("auto_dispatch_enabled")
+  weightAssigned      Decimal  @default(1) @map("weight_assigned") @db.Decimal(5, 2)
+  weightInProgress    Decimal  @default(2) @map("weight_in_progress") @db.Decimal(5, 2)
+  weightOnHold        Decimal  @default(0) @map("weight_on_hold") @db.Decimal(5, 2)
+  multiplierNormal    Decimal  @default(1) @map("multiplier_normal") @db.Decimal(5, 2)
+  multiplierUrgent    Decimal  @default(1.5) @map("multiplier_urgent") @db.Decimal(5, 2)
+  multiplierEmergency Decimal  @default(3) @map("multiplier_emergency") @db.Decimal(5, 2)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("maintenance_dispatch_settings")
+}
+
+/// Every run of the dispatch engine on a ticket (ADR 0033). Append-only,
+/// no foreign keys. `notified` marks the row that told the dispatchers the
+/// ticket is unassignable: at most one per ticket and cycle.
+model TicketDispatchAttempt {
+  id             String          @id @db.Uuid
+  tenantId       String          @map("tenant_id") @db.Uuid
+  ticketId       String          @map("ticket_id") @db.Uuid
+  cycle          Int
+  trigger        DispatchTrigger
+  outcome        DispatchOutcome
+  candidateCount Int             @map("candidate_count")
+  technicianId   String?         @map("technician_account_id") @db.Uuid
+  /// Only for `skipped`.
+  reasonCode     String?         @map("reason_code")
+  notified       Boolean         @default(false)
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([tenantId, ticketId, createdAt, id], map: "ticket_dispatch_attempts_ticket_idx")
+  @@map("ticket_dispatch_attempts")
 }

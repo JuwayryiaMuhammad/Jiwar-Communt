@@ -83,6 +83,9 @@ const AUDIT_TABLES = [
   // So do the ticket history tables (ADR 0032).
   'ticket_status_history',
   'ticket_assignments',
+  // And the dispatch history (ADR 0033).
+  'technician_availability_history',
+  'ticket_dispatch_attempts',
 ];
 
 /**

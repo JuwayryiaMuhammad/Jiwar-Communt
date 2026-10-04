@@ -1108,6 +1108,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/tickets/{id}/auto-assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DispatchTicketsController_autoAssign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/tickets/{id}/cancel": {
         parameters: {
             query?: never;
@@ -1118,6 +1134,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["DispatchTicketsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/dispatch-attempts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DispatchTicketsController_dispatchAttempts"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3102,6 +3134,12 @@ export interface components {
             data: components["schemas"]["AuditEntryView"][];
             nextCursor: string | null;
         };
+        AutoAssignmentView: {
+            /** @enum {string} */
+            outcome: "assigned" | "no_candidate";
+            /** @description Who got it; null when nobody could take it. */
+            technician: components["schemas"]["AccountRefView"] | null;
+        };
         AvailabilityView: {
             /**
              * Format: date-time
@@ -3527,6 +3565,24 @@ export interface components {
         };
         /** @enum {string} */
         DeliveryInstruction: "ask" | "allow" | "leave_at_gate" | "deny";
+        DispatchAttemptView: {
+            /** Format: date-time */
+            at: string;
+            /** @description Technicians who could have taken it. */
+            candidateCount: number;
+            cycle: number;
+            /** @description This run told the dispatchers it is unassignable. */
+            notified: boolean;
+            outcome: components["schemas"]["DispatchOutcome"];
+            /** @description Why it did nothing (`skipped` only). */
+            reasonCode: string | null;
+            technician: components["schemas"]["AccountRefView"] | null;
+            trigger: components["schemas"]["DispatchTrigger"];
+        };
+        DispatchAttemptViewList: {
+            data: components["schemas"]["DispatchAttemptView"][];
+            nextCursor: string | null;
+        };
         DispatchMessageView: {
             body: string | null;
             /** Format: date-time */
@@ -3544,6 +3600,8 @@ export interface components {
             data: components["schemas"]["DispatchMessageView"][];
             nextCursor: string | null;
         };
+        /** @enum {string} */
+        DispatchOutcome: "assigned" | "no_candidate" | "skipped";
         DispatchSettingsResponse: {
             /** @description Off until the manager turns it on. */
             autoDispatchEnabled: boolean;
@@ -3612,6 +3670,8 @@ export interface components {
             data: components["schemas"]["DispatchTicketView"][];
             nextCursor: string | null;
         };
+        /** @enum {string} */
+        DispatchTrigger: "created" | "declined" | "available" | "manual" | "sweep" | "role_lost" | "released";
         EngagementDetailView: {
             capacity: components["schemas"]["WorkerCapacity"];
             /** Format: date-time */
@@ -4998,6 +5058,8 @@ export interface components {
             openTickets: number;
             /** @description Their active specialties. */
             specialties: components["schemas"]["SpecialtyRefView"][];
+            /** @description Weighted open work in points (two decimals): the sum over their assigned, in-progress and on-hold tickets of status weight × priority multiplier. */
+            workload: number;
         };
         TechnicianOptionViewList: {
             data: components["schemas"]["TechnicianOptionView"][];
@@ -7272,6 +7334,27 @@ export interface operations {
             };
         };
     };
+    DispatchTicketsController_autoAssign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutoAssignmentView"];
+                };
+            };
+        };
+    };
     DispatchTicketsController_cancel: {
         parameters: {
             query?: never;
@@ -7292,6 +7375,27 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    DispatchTicketsController_dispatchAttempts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DispatchAttemptViewList"];
+                };
             };
         };
     };

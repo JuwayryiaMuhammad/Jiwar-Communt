@@ -508,6 +508,30 @@ export const WORK_ROUTES: Row[] = [
   },
   {
     method: 'POST',
+    path: '/maintenance/tickets/{id}/auto-assign',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/tickets/{id}/dispatch-attempts',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
     path: '/maintenance/tickets/{id}/reassign',
     auth: 'tenant',
     as: 'manager',

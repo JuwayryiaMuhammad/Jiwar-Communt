@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Ticket } from '@prisma/client';
+import type { Ticket, TicketPriority } from '@prisma/client';
 import { CommunityMaintenancePort } from '../../community';
 import { StaffRecipients } from '../../core/access/staff-recipients';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
@@ -62,6 +62,50 @@ export class TicketNotices {
       tx,
       active.map((a) => a.id),
       { kind, params, targetId: ticket.id },
+    );
+  }
+
+  /**
+   * A ticket is the technician's now (manual or automatic): its priority and
+   * category code. Both assignment paths tell the technician the same way.
+   */
+  async assigned(
+    tx: TenantTxClient,
+    ticket: Pick<Ticket, 'id' | 'number' | 'unitId' | 'categoryId'> & {
+      priority: TicketPriority;
+    },
+    technicianId: string,
+  ): Promise<void> {
+    const category = await tx.ticketCategory.findUniqueOrThrow({
+      where: { id: ticket.categoryId },
+    });
+    await this.send(tx, [technicianId], 'ticket.assigned', ticket, {
+      priority: ticket.priority,
+      categoryKey: category.key,
+    });
+  }
+
+  /**
+   * Nobody can take the queued ticket: every dispatcher is told, critically
+   * for an emergency (ADR 0033).
+   */
+  async unassignable(
+    tx: TenantTxClient,
+    ticket: Pick<Ticket, 'id' | 'number' | 'unitId' | 'categoryId'> & {
+      priority: TicketPriority;
+    },
+  ): Promise<void> {
+    const category = await tx.ticketCategory.findUniqueOrThrow({
+      where: { id: ticket.categoryId },
+    });
+    await this.send(
+      tx,
+      await this.dispatchers(tx),
+      ticket.priority === 'emergency'
+        ? 'ticket.unassignable_emergency'
+        : 'ticket.unassignable',
+      ticket,
+      { categoryKey: category.key },
     );
   }
 }

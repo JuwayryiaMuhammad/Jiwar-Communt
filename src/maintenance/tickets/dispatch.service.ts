@@ -4,14 +4,14 @@ import { AuditService } from '../../core/audit/audit.service';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import { REASON_CODES, requireReasonCodeOnly } from '../../core/common/reasons';
-import {
-  TenantTx,
-  type TenantTxClient,
-} from '../../core/database/tenant-tx.service';
+import { TenantTx } from '../../core/database/tenant-tx.service';
 import {
   AvailabilityService,
   type AvailabilityRead,
 } from '../dispatch/availability.service';
+import { DispatchEngine } from '../dispatch/dispatch-engine';
+import { DispatchSettingsService } from '../dispatch/dispatch-settings.service';
+import { points, workloads } from '../dispatch/workload';
 import { TicketAccess } from './ticket-access';
 import { TicketLog } from './ticket-log';
 import { TicketNotices } from './ticket-notices';
@@ -24,6 +24,14 @@ export interface TechnicianOption {
   /** Their active specialties (ADR 0033). */
   specialties: { id: string; key: string }[];
   availability: AvailabilityRead;
+  /** Weighted open work, in points (two decimals); see ADR 0033. */
+  workload: number;
+}
+
+/** What an automatic assignment request did. */
+export interface AutoAssignment {
+  outcome: 'assigned' | 'no_candidate';
+  technician: { id: string; fullName: string | null; status: string } | null;
 }
 
 const sameAsCurrent = (field: string) =>
@@ -52,6 +60,8 @@ export class DispatchService {
     private readonly notices: TicketNotices,
     private readonly audit: AuditService,
     private readonly availability: AvailabilityService,
+    private readonly engine: DispatchEngine,
+    private readonly dispatchSettings: DispatchSettingsService,
   ) {}
 
   /** Who can take tickets: active staff holding tickets.work. */
@@ -91,9 +101,15 @@ export class DispatchService {
         tx,
         rows.map((r) => r.id),
       );
+      const load = await workloads(
+        tx,
+        rows.map((r) => r.id),
+        await this.dispatchSettings.inTx(tx),
+      );
       return rows.map((r) => ({
         ...r,
         availability: states.get(r.id)!,
+        workload: points(load.get(r.id)!),
         openTickets: counts.get(r.id) ?? 0,
         specialties: links
           .filter((l) => l.accountId === r.id)
@@ -130,7 +146,7 @@ export class DispatchService {
         actorId: me,
         cycle: ticket.cycle,
       });
-      await this.assigned(tx, updated, technicianId);
+      await this.notices.assigned(tx, updated, technicianId);
       await this.notices.send(
         tx,
         [ticket.reporterId],
@@ -139,6 +155,29 @@ export class DispatchService {
         { status: 'assigned' },
         me,
       );
+    });
+  }
+
+  /**
+   * Runs the dispatch engine on a queued ticket now (ADR 0033), whether or
+   * not automatic dispatch is on: a dispatcher's own request. The ticket
+   * goes to the best technician, or stays in the queue with the answer
+   * `no_candidate` (the attempt is recorded either way).
+   */
+  autoAssign(id: string): Promise<AutoAssignment> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      // The dispatch lock before the ticket's own (the engine's lock order).
+      await this.engine.serialize(tx);
+      const ticket = await this.access.load(tx, id, 'dispatch', { lock: true });
+      assertCan(ticket, 'assign');
+      const result = await this.engine.run(tx, id, 'manual');
+      if (result.outcome !== 'assigned')
+        return { outcome: 'no_candidate', technician: null };
+      const technician = await tx.account.findUniqueOrThrow({
+        where: { id: result.technicianId },
+        select: { id: true, fullName: true, status: true },
+      });
+      return { outcome: 'assigned', technician };
     });
   }
 
@@ -180,7 +219,7 @@ export class DispatchService {
         reasonCode: code,
         cycle: ticket.cycle,
       });
-      await this.assigned(tx, updated, technicianId);
+      await this.notices.assigned(tx, updated, technicianId);
       await this.notices.send(
         tx,
         [ticket.technicianId],
@@ -240,26 +279,6 @@ export class DispatchService {
         { priority },
         me,
       );
-    });
-  }
-
-  private async assigned(
-    tx: TenantTxClient,
-    ticket: {
-      id: string;
-      number: number;
-      unitId: string | null;
-      priority: TicketPriority;
-      categoryId: string;
-    },
-    technicianId: string,
-  ): Promise<void> {
-    const category = await tx.ticketCategory.findUniqueOrThrow({
-      where: { id: ticket.categoryId },
-    });
-    await this.notices.send(tx, [technicianId], 'ticket.assigned', ticket, {
-      priority: ticket.priority,
-      categoryKey: category.key,
     });
   }
 }

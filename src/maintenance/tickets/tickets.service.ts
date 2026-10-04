@@ -4,6 +4,7 @@ import {
   type MaintenanceSettings,
   type Ticket,
   type TicketAssignment,
+  type TicketDispatchAttempt,
   type TicketAttachmentKind,
   type TicketFeedback,
   type TicketPriority,
@@ -349,6 +350,24 @@ export class TicketsService implements OnModuleInit {
         tx,
         people,
         rows.flatMap((r) => [r.fromId, r.toId, r.assignedById]),
+      );
+      return { rows, people };
+    });
+  }
+
+  /** Dispatch: why the engine did what it did, oldest first (ADR 0033). */
+  dispatchAttempts(id: string): Promise<HistoryRead<TicketDispatchAttempt>> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.access.load(tx, id, 'dispatch');
+      const rows = await tx.ticketDispatchAttempt.findMany({
+        where: { ticketId: id },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      });
+      const people = new Map<string, Person>();
+      await this.addPeople(
+        tx,
+        people,
+        rows.map((r) => r.technicianId),
       );
       return { rows, people };
     });

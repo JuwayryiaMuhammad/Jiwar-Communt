@@ -80,5 +80,96 @@ export function dispatchHelpers(h: HttpHarness) {
     });
   }
 
-  return { x, g, setUp, who, http, inTenant };
+  type SetUp = Awaited<ReturnType<typeof setUp>>;
+
+  /** A category of the compound by its key. */
+  const categoryId = (c: Compound, key: string) =>
+    inTenant(
+      c,
+      async (tx) =>
+        (await tx.ticketCategory.findFirstOrThrow({ where: { key } })).id,
+    );
+
+  /** A specialty of the compound by its key. */
+  const specialtyId = (c: Compound, key: string) =>
+    inTenant(
+      c,
+      async (tx) =>
+        (await tx.specialty.findFirstOrThrow({ where: { key } })).id,
+    );
+
+  /** Gives a technician exactly these specialties (by key), as a dispatcher would. */
+  async function specialize(s: SetUp, tech: Who, keys: string[]) {
+    const ids = await Promise.all(keys.map((k) => specialtyId(s.c, k)));
+    await http(
+      'put',
+      `/maintenance/technicians/${tech.id}/specialties`,
+      s.supervisor.token,
+      {
+        specialtyIds: ids,
+      },
+    ).expect(204);
+  }
+
+  /** A technician's availability, straight into the tables (setup, not a test). */
+  const setAvailability = (
+    c: Compound,
+    technicianId: string,
+    state: 'available' | 'unavailable',
+  ) =>
+    inTenant(c, (tx) =>
+      tx.technicianAvailability.upsert({
+        where: {
+          tenantId_accountId: { tenantId: c.tenantId, accountId: technicianId },
+        },
+        create: { tenantId: c.tenantId, accountId: technicianId, state },
+        update: { state },
+      }),
+    );
+
+  /** A ticket the unit's resident opens, over HTTP; its id. */
+  async function openTicket(
+    s: SetUp,
+    opts: {
+      category?: string;
+      priority?: 'normal' | 'urgent' | 'emergency';
+    } = {},
+  ): Promise<string> {
+    const res = await http('post', '/tickets', s.owner.token, {
+      unitId: s.unit.id,
+      categoryId: await categoryId(s.c, opts.category ?? 'general'),
+      description: 'Dispatch fixture',
+      ...(opts.priority ? { priority: opts.priority } : {}),
+    }).expect(201);
+    return (res.body as { id: string }).id;
+  }
+
+  /** The ticket row. */
+  const ticketRow = (c: Compound, id: string) =>
+    inTenant(c, (tx) => tx.ticket.findUniqueOrThrow({ where: { id } }));
+
+  /** Turns automatic dispatch on or off for the compound. */
+  const setAutoDispatch = (c: Compound, enabled: boolean) =>
+    inTenant(c, (tx) =>
+      tx.maintenanceDispatchSettings.update({
+        where: { tenantId: c.tenantId },
+        data: { autoDispatchEnabled: enabled },
+      }),
+    );
+
+  return {
+    x,
+    g,
+    setUp,
+    who,
+    http,
+    inTenant,
+    categoryId,
+    specialtyId,
+    specialize,
+    setAvailability,
+    openTicket,
+    ticketRow,
+    setAutoDispatch,
+  };
 }

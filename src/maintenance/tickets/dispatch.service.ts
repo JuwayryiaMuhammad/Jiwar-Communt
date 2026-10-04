@@ -8,6 +8,10 @@ import {
   TenantTx,
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
+import {
+  AvailabilityService,
+  type AvailabilityRead,
+} from '../dispatch/availability.service';
 import { TicketAccess } from './ticket-access';
 import { TicketLog } from './ticket-log';
 import { TicketNotices } from './ticket-notices';
@@ -19,6 +23,7 @@ export interface TechnicianOption {
   openTickets: number;
   /** Their active specialties (ADR 0033). */
   specialties: { id: string; key: string }[];
+  availability: AvailabilityRead;
 }
 
 const sameAsCurrent = (field: string) =>
@@ -46,6 +51,7 @@ export class DispatchService {
     private readonly log: TicketLog,
     private readonly notices: TicketNotices,
     private readonly audit: AuditService,
+    private readonly availability: AvailabilityService,
   ) {}
 
   /** Who can take tickets: active staff holding tickets.work. */
@@ -81,8 +87,13 @@ export class DispatchService {
         },
         orderBy: [{ specialty: { key: 'asc' } }],
       });
+      const states = await this.availability.readMany(
+        tx,
+        rows.map((r) => r.id),
+      );
       return rows.map((r) => ({
         ...r,
+        availability: states.get(r.id)!,
         openTickets: counts.get(r.id) ?? 0,
         specialties: links
           .filter((l) => l.accountId === r.id)

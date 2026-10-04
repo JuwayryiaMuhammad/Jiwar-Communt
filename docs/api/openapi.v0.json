@@ -504,6 +504,29 @@
         ],
         "type": "object"
       },
+      "AvailabilityView": {
+        "properties": {
+          "since": {
+            "description": "When it last changed; null if it never did.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TechnicianAvailabilityState"
+              }
+            ],
+            "description": "A technician who never set it is `unavailable`."
+          }
+        },
+        "required": [
+          "state",
+          "since"
+        ],
+        "type": "object"
+      },
       "BirthDateDto": {
         "properties": {
           "birthDate": {
@@ -6652,6 +6675,21 @@
         ],
         "type": "object"
       },
+      "SetAvailabilityDto": {
+        "properties": {
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TechnicianAvailabilityState"
+              }
+            ]
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "type": "object"
+      },
       "SetPrimaryDto": {
         "properties": {
           "accountId": {
@@ -6662,6 +6700,26 @@
         },
         "required": [
           "accountId"
+        ],
+        "type": "object"
+      },
+      "SetTechnicianAvailabilityDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `availabilityChange`.",
+            "type": "string"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TechnicianAvailabilityState"
+              }
+            ]
+          }
+        },
+        "required": [
+          "state",
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -6919,6 +6977,14 @@
         ],
         "type": "object"
       },
+      "TechnicianAvailabilityState": {
+        "description": "A technician who never set it is `unavailable`.",
+        "enum": [
+          "available",
+          "unavailable"
+        ],
+        "type": "string"
+      },
       "TechnicianMessageView": {
         "properties": {
           "body": {
@@ -6989,6 +7055,9 @@
       },
       "TechnicianOptionView": {
         "properties": {
+          "availability": {
+            "$ref": "#/components/schemas/AvailabilityView"
+          },
           "fullName": {
             "nullable": true,
             "type": "string"
@@ -7013,7 +7082,8 @@
           "id",
           "fullName",
           "openTickets",
-          "specialties"
+          "specialties",
+          "availability"
         ],
         "type": "object"
       },
@@ -11396,6 +11466,52 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/technicians/{id}/availability": {
+      "post": {
+        "operationId": "DispatchAvailabilityController_set",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTechnicianAvailabilityDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilityView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/technicians/{id}/specialties": {
       "put": {
         "operationId": "TechniciansController_setSpecialties",
@@ -14238,6 +14354,68 @@
         ],
         "tags": [
           "admin"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/availability": {
+      "get": {
+        "operationId": "TechnicianAvailabilityController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilityView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "technician"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "TechnicianAvailabilityController_set",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetAvailabilityDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilityView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "technician"
         ],
         "x-stability": "draft"
       }

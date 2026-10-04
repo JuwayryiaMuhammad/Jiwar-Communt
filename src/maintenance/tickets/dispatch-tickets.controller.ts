@@ -26,6 +26,7 @@ import {
 } from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
+import { AvailabilityView } from '../dispatch/views/availability.views';
 import { SpecialtyIdsDto } from '../specialties/dto/specialties.dto';
 import { SpecialtiesService } from '../specialties/specialties.service';
 import { SpecialtyRefView } from '../specialties/views/specialty.views';
@@ -208,6 +209,8 @@ export class TechnicianOptionView {
     description: 'Their active specialties.',
   })
   specialties: SpecialtyRefView[];
+  @ApiProperty({ type: AvailabilityView })
+  availability: AvailabilityView;
 
   static from(t: TechnicianOption): TechnicianOptionView {
     return {
@@ -215,6 +218,7 @@ export class TechnicianOptionView {
       fullName: t.fullName,
       openTickets: t.openTickets,
       specialties: t.specialties.map((s) => SpecialtyRefView.from(s)),
+      availability: AvailabilityView.from(t.availability),
     };
   }
 }

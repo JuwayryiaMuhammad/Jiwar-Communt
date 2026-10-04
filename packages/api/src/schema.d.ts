@@ -996,6 +996,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/technicians/{id}/availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DispatchAvailabilityController_set"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/technicians/{id}/specialties": {
         parameters: {
             query?: never;
@@ -2002,6 +2018,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["SettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/technician/availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["TechnicianAvailabilityController_get"];
+        put?: never;
+        post: operations["TechnicianAvailabilityController_set"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/technician/tickets": {
@@ -3053,6 +3085,15 @@ export interface components {
         AuditEntryViewList: {
             data: components["schemas"]["AuditEntryView"][];
             nextCursor: string | null;
+        };
+        AvailabilityView: {
+            /**
+             * Format: date-time
+             * @description When it last changed; null if it never did.
+             */
+            since: string | null;
+            /** @description A technician who never set it is `unavailable`. */
+            state: components["schemas"]["TechnicianAvailabilityState"];
         };
         BirthDateDto: {
             /** Format: date */
@@ -4806,12 +4847,20 @@ export interface components {
             data: components["schemas"]["SessionView"][];
             nextCursor: string | null;
         };
+        SetAvailabilityDto: {
+            state: components["schemas"]["TechnicianAvailabilityState"];
+        };
         SetPrimaryDto: {
             /**
              * Format: uuid
              * @description An active, residing occupant of the unit.
              */
             accountId: string;
+        };
+        SetTechnicianAvailabilityDto: {
+            /** @description From the closed list `availabilityChange`. */
+            reasonCode: string;
+            state: components["schemas"]["TechnicianAvailabilityState"];
         };
         SettingsView: {
             /** @description E.164; on the visitor page and the worker card. */
@@ -4887,6 +4936,11 @@ export interface components {
             data: components["schemas"]["StatusHistoryView"][];
             nextCursor: string | null;
         };
+        /**
+         * @description A technician who never set it is `unavailable`.
+         * @enum {string}
+         */
+        TechnicianAvailabilityState: "available" | "unavailable";
         TechnicianMessageView: {
             body: string | null;
             /** Format: date-time */
@@ -4907,6 +4961,7 @@ export interface components {
             nextCursor: string | null;
         };
         TechnicianOptionView: {
+            availability: components["schemas"]["AvailabilityView"];
             fullName: string | null;
             /** Format: uuid */
             id: string;
@@ -6961,6 +7016,31 @@ export interface operations {
             };
         };
     };
+    DispatchAvailabilityController_set: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetTechnicianAvailabilityDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvailabilityView"];
+                };
+            };
+        };
+    };
     TechniciansController_setSpecialties: {
         parameters: {
             query?: never;
@@ -8569,6 +8649,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SettingsView"];
+                };
+            };
+        };
+    };
+    TechnicianAvailabilityController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvailabilityView"];
+                };
+            };
+        };
+    };
+    TechnicianAvailabilityController_set: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetAvailabilityDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvailabilityView"];
                 };
             };
         };

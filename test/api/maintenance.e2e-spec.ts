@@ -723,7 +723,15 @@ describe('API v0 — maintenance (ADR 0032)', () => {
         token: manager(),
       }).expect(200);
       expect(keyPaths(list.body)).toEqual(
-        listKeys(['fullName', 'id', 'openTickets', 'specialties']),
+        listKeys([
+          'availability',
+          'availability.since',
+          'availability.state',
+          'fullName',
+          'id',
+          'openTickets',
+          'specialties',
+        ]),
       );
       const ids = (list.body as { data: { id: string }[] }).data.map(
         (x) => x.id,

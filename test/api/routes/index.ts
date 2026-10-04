@@ -12,6 +12,7 @@ import { GATE_ROUTES } from './gate';
 import { EXISTING_ROUTES } from './existing';
 import { HOUSEHOLD_ROUTES } from './household';
 import {
+  AVAILABILITY_ROUTES,
   CONFIRMATION_ROUTES,
   MAINTENANCE_ROUTES,
   MESSAGE_ROUTES,
@@ -58,6 +59,7 @@ export const ROUTES: Row[] = [
   ...MAINTENANCE_ROUTES,
   ...TICKET_ROUTES,
   ...WORK_ROUTES,
+  ...AVAILABILITY_ROUTES,
   ...CONFIRMATION_ROUTES,
   ...MESSAGE_ROUTES,
 ];

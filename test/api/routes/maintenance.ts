@@ -511,6 +511,28 @@ export const WORK_ROUTES: Row[] = [
     invalid: 'none',
   },
   {
+    method: 'POST',
+    path: '/maintenance/technicians/{id}/availability',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.b.ids.technician }),
+      body: () => ({ state: 'unavailable', reasonCode: 'sick' }),
+      code: 'TECHNICIAN_NOT_FOUND',
+    },
+    invalid: {
+      body: { state: 'x' },
+      fields: [
+        {
+          field: 'state',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['available', 'unavailable'] },
+        },
+      ],
+    },
+  },
+  {
     method: 'PUT',
     path: '/maintenance/technicians/{id}/specialties',
     auth: 'tenant',
@@ -649,3 +671,34 @@ export const MESSAGE_ROUTES: Row[] = (
     invalid: BODY_LENGTH,
   },
 ]);
+
+/** The technician's own availability (ADR 0033). */
+export const AVAILABILITY_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/technician/availability',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/technician/availability',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'manager',
+    foreign: 'none',
+    invalid: {
+      body: { state: 'x' },
+      fields: [
+        {
+          field: 'state',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['available', 'unavailable'] },
+        },
+      ],
+    },
+  },
+];

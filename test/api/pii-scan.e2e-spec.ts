@@ -369,6 +369,7 @@ describe('API v0 — PII leak scan', () => {
       '/maintenance/tickets/{id}': ticket.id,
       '/maintenance/tickets/{id}/history': ticket.id,
       '/maintenance/tickets/{id}/assignments': ticket.id,
+      '/maintenance/tickets/{id}/dispatch-attempts': queued.id,
       '/files/{id}': photoId,
       '/units/{id}': unit.id,
       '/units/{id}/activation': unit.id,
@@ -482,7 +483,10 @@ describe('API v0 — PII leak scan', () => {
           for (const s of [
             declinedName,
             'PII-FEEDBACK-comment',
-            queued.id,
+            // Not where the request itself names it (an error echoes its path).
+            ...(r.path === '/maintenance/tickets/{id}/dispatch-attempts'
+              ? []
+              : [queued.id]),
             'PII-QUEUED-description',
             w.bTicketId,
           ])

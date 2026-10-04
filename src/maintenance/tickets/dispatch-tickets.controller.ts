@@ -26,6 +26,10 @@ import {
 } from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
+import {
+  AutoAssignmentView,
+  DispatchAttemptView,
+} from '../dispatch/views/attempt.views';
 import { AvailabilityView } from '../dispatch/views/availability.views';
 import { SpecialtyIdsDto } from '../specialties/dto/specialties.dto';
 import { SpecialtiesService } from '../specialties/specialties.service';
@@ -136,6 +140,31 @@ export class DispatchTicketsController {
     return this.dispatch.assign(id, dto.technicianId);
   }
 
+  /**
+   * Runs the dispatch engine on the queued ticket now, even when automatic
+   * dispatch is off (ADR 0033). `no_candidate` is an answer, not an error.
+   */
+  @Post(':id/auto-assign')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: AutoAssignmentView })
+  async autoAssign(
+    @Param('id', parseId()) id: string,
+  ): Promise<AutoAssignmentView> {
+    return AutoAssignmentView.from(await this.dispatch.autoAssign(id));
+  }
+
+  /** Why the engine did what it did on this ticket, oldest first. */
+  @Get(':id/dispatch-attempts')
+  @ApiOkResponse({ type: ListOf(DispatchAttemptView) })
+  async dispatchAttempts(
+    @Param('id', parseId()) id: string,
+  ): Promise<ListResponse<DispatchAttemptView>> {
+    return bounded(
+      DispatchAttemptView.list(await this.tickets.dispatchAttempts(id)),
+      (r) => r,
+    );
+  }
+
   /** `reasonCode` from the closed list `ticketReassign`. */
   @Post(':id/reassign')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -211,6 +240,12 @@ export class TechnicianOptionView {
   specialties: SpecialtyRefView[];
   @ApiProperty({ type: AvailabilityView })
   availability: AvailabilityView;
+  @ApiProperty({
+    type: Number,
+    description:
+      'Weighted open work in points (two decimals): the sum over their assigned, in-progress and on-hold tickets of status weight × priority multiplier.',
+  })
+  workload: number;
 
   static from(t: TechnicianOption): TechnicianOptionView {
     return {
@@ -219,6 +254,7 @@ export class TechnicianOptionView {
       openTickets: t.openTickets,
       specialties: t.specialties.map((s) => SpecialtyRefView.from(s)),
       availability: AvailabilityView.from(t.availability),
+      workload: t.workload,
     };
   }
 }

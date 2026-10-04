@@ -504,6 +504,32 @@
         ],
         "type": "object"
       },
+      "AutoAssignmentView": {
+        "properties": {
+          "outcome": {
+            "enum": [
+              "assigned",
+              "no_candidate"
+            ],
+            "type": "string"
+          },
+          "technician": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Who got it; null when nobody could take it.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "outcome",
+          "technician"
+        ],
+        "type": "object"
+      },
       "AvailabilityView": {
         "properties": {
           "since": {
@@ -1881,6 +1907,83 @@
         ],
         "type": "string"
       },
+      "DispatchAttemptView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "candidateCount": {
+            "description": "Technicians who could have taken it.",
+            "type": "number"
+          },
+          "cycle": {
+            "type": "number"
+          },
+          "notified": {
+            "description": "This run told the dispatchers it is unassignable.",
+            "type": "boolean"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DispatchOutcome"
+              }
+            ]
+          },
+          "reasonCode": {
+            "description": "Why it did nothing (`skipped` only).",
+            "nullable": true,
+            "type": "string"
+          },
+          "technician": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "trigger": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DispatchTrigger"
+              }
+            ]
+          }
+        },
+        "required": [
+          "trigger",
+          "outcome",
+          "cycle",
+          "candidateCount",
+          "technician",
+          "reasonCode",
+          "notified",
+          "at"
+        ],
+        "type": "object"
+      },
+      "DispatchAttemptViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/DispatchAttemptView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "DispatchMessageView": {
         "properties": {
           "body": {
@@ -1943,6 +2046,14 @@
           "nextCursor"
         ],
         "type": "object"
+      },
+      "DispatchOutcome": {
+        "enum": [
+          "assigned",
+          "no_candidate",
+          "skipped"
+        ],
+        "type": "string"
       },
       "DispatchSettingsResponse": {
         "properties": {
@@ -2241,6 +2352,18 @@
           "nextCursor"
         ],
         "type": "object"
+      },
+      "DispatchTrigger": {
+        "enum": [
+          "created",
+          "declined",
+          "available",
+          "manual",
+          "sweep",
+          "role_lost",
+          "released"
+        ],
+        "type": "string"
       },
       "EngagementDetailView": {
         "properties": {
@@ -7115,6 +7238,10 @@
               "$ref": "#/components/schemas/SpecialtyRefView"
             },
             "type": "array"
+          },
+          "workload": {
+            "description": "Weighted open work in points (two decimals): the sum over their assigned, in-progress and on-hold tickets of status weight × priority multiplier.",
+            "type": "number"
           }
         },
         "required": [
@@ -7122,7 +7249,8 @@
           "fullName",
           "openTickets",
           "specialties",
-          "availability"
+          "availability",
+          "workload"
         ],
         "type": "object"
       },
@@ -11958,6 +12086,42 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/tickets/{id}/auto-assign": {
+      "post": {
+        "operationId": "DispatchTicketsController_autoAssign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoAssignmentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/tickets/{id}/cancel": {
       "post": {
         "operationId": "DispatchTicketsController_cancel",
@@ -11983,6 +12147,42 @@
         },
         "responses": {
           "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/dispatch-attempts": {
+      "get": {
+        "operationId": "DispatchTicketsController_dispatchAttempts",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchAttemptViewList"
+                }
+              }
+            },
             "description": ""
           }
         },

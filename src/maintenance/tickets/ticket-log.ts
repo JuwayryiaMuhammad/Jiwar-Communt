@@ -45,7 +45,7 @@ export class TicketLog {
     tx: TenantTxClient,
     ticket: Pick<Ticket, 'id' | 'tenantId'>,
     row: {
-      type: Exclude<TicketAssignmentType, 'automatic'>;
+      type: TicketAssignmentType;
       fromId: string | null;
       toId: string | null;
       assignedById: string | null;

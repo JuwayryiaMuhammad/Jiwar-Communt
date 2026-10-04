@@ -731,6 +731,7 @@ describe('API v0 — maintenance (ADR 0032)', () => {
           'id',
           'openTickets',
           'specialties',
+          'workload',
         ]),
       );
       const ids = (list.body as { data: { id: string }[] }).data.map(

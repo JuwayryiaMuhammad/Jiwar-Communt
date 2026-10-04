@@ -195,6 +195,29 @@ export const NOTIFICATION_KINDS = {
     target: 'ticket',
     params: { ticketNumber: {}, unitCode: { optional: true } },
   },
+  // Dispatch (ADR 0033). The engine found nobody to give the ticket to: the
+  // dispatchers, once per ticket and cycle. Two kinds because the priority
+  // belongs to the kind.
+  /** The queued ticket has no technician who can take it (dispatchers). */
+  'ticket.unassignable': {
+    priority: 'normal',
+    target: 'ticket',
+    params: {
+      ticketNumber: {},
+      unitCode: { optional: true },
+      categoryKey: {},
+    },
+  },
+  /** The same, for an emergency. */
+  'ticket.unassignable_emergency': {
+    priority: 'critical',
+    target: 'ticket',
+    params: {
+      ticketNumber: {},
+      unitCode: { optional: true },
+      categoryKey: {},
+    },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

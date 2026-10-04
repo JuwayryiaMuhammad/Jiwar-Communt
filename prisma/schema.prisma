@@ -1895,6 +1895,9 @@ model TicketAssignment {
   createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@index([tenantId, ticketId, createdAt, id], map: "ticket_assignments_ticket_idx")
+  /// What the dispatch engine's tie-break reads (ADR 0033): when a technician
+  /// was last given a ticket. The only 5.2 change to a 5.1 table, and only an index.
+  @@index([tenantId, toId, createdAt], map: "ticket_assignments_to_account_idx")
   @@map("ticket_assignments")
 }
 

@@ -29,3 +29,8 @@ API v0 is a draft (ADR 0025): it exposes every feature so it can be exercised en
 - Every dispatcher is told of every message on every ticket (`ticket.message`); per-account preferences come with the design.
 - A rejection's or reopen's note shows up as the reporter's message in the thread, not as a field of the ticket.
 - Photos are never removed from a ticket in v0, and a ticket's list has no photo; the detail carries presigned URLs (no-store).
+- Dispatch (ADR 0033): automatic dispatch is off in every compound until the manager turns it on in `PATCH /maintenance/dispatch-settings`. The settings screen should show **how many available technicians have specialties** before the manager enables it (`GET /maintenance/technicians` has what it needs): with none, every new ticket is `no_candidate` and every dispatcher is told.
+- Turning dispatch on does not assign the queue at once: the next sweep (hourly by default) or a dispatcher's `POST /maintenance/tickets/:id/auto-assign` does. The screen may want a "dispatch the queue" button that calls it per ticket.
+- A technician's availability history is readable nowhere in v0; `GET /maintenance/technicians` shows the current state and when it changed. `workload` is in points with two decimals (status weight × priority multiplier over assigned, in-progress and on-hold tickets).
+- `GET /maintenance/tickets/:id/dispatch-attempts` answers "why wasn't this assigned?"; the screen decides how much of it to show.
+- Specialties are read by dispatch (`tickets.dispatch`) and written by the manager (`maintenance.manage`); a supervisor who is not also a manager cannot change which specialties a category needs.

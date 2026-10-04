@@ -136,7 +136,7 @@ The ticket number, the unit code (never for a common area: the label is free tex
 Ticket creation (both routes) and message posts honour `Idempotency-Key` (ADR 0028). Their responses carry no description and no body, so no free text is stored with the key.
 
 ## What 5.2 and 5.3 add
-- **5.2:** specialties and availability tables, and an engine that writes `automatic` assignments. It excludes a technician with a `declined` row on the ticket, per ticket or per cycle: the cycle is on the row.
+- **5.2** (ADR 0033): specialties and availability tables, and an engine that writes `automatic` assignments. It excludes a technician with a `declined` row on the ticket, in every cycle.
 - **5.3:** visits with absence consent, and an SLA computed from `ticket_status_history`. Hold reasons pause it, and priorities and categories set targets.
 
 Neither changes these tables.
@@ -144,4 +144,4 @@ Neither changes these tables.
 ## Consequences
 - Every dispatcher is told of every message on every ticket; per-account notification preferences come with the design (ADR 0027).
 - Dispatch never sees a reporter's phone. Whether an emergency should show it is a design decision (`docs/api/v0-notes.md`).
-- A technician whose role loses `tickets.work` keeps the tickets assigned to them until a dispatcher reassigns them; only deactivation, freezing and erasure release them automatically.
+- A technician whose role loses `tickets.work` keeps the tickets assigned to them until a dispatcher reassigns them; only deactivation, freezing and erasure release them automatically. *(Superseded by ADR 0033: losing `tickets.work` now releases them too.)*

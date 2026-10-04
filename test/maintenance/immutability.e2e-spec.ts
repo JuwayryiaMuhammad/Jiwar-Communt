@@ -3,8 +3,9 @@ import { newId } from '../../src/core/common/uuid';
 import { required } from '../setup/test-env';
 
 /**
- * ADR 0032: a ticket's status history and assignment trail are append-only
- * like gate_entries (ADR 0028): rows can be inserted and read, never changed
+ * ADR 0032, 0033: a ticket's status history and assignment trail, the
+ * availability history and the dispatch attempts are append-only like
+ * gate_entries (ADR 0028): rows can be inserted and read, never changed
  * or removed — not by the app, not by the table owner.
  */
 describe.each([
@@ -25,6 +26,24 @@ describe.each([
        VALUES ('${id}', '${tenantId}', '${newId()}', '${newId()}',
          '${newId()}', 'manual', 1)`,
     update: 'SET reason_code = $$x$$',
+  },
+  {
+    table: 'technician_availability_history',
+    insert: (id: string, tenantId: string) =>
+      `INSERT INTO technician_availability_history (id, tenant_id, account_id,
+         from_state, to_state, changed_by_account_id, reason_code)
+       VALUES ('${id}', '${tenantId}', '${newId()}', NULL, 'available',
+         '${newId()}', 'sick')`,
+    update: 'SET reason_code = $$x$$',
+  },
+  {
+    table: 'ticket_dispatch_attempts',
+    insert: (id: string, tenantId: string) =>
+      `INSERT INTO ticket_dispatch_attempts (id, tenant_id, ticket_id, cycle,
+         trigger, outcome, candidate_count, technician_account_id)
+       VALUES ('${id}', '${tenantId}', '${newId()}', 1, 'created', 'assigned',
+         2, '${newId()}')`,
+    update: 'SET candidate_count = 9',
   },
 ])('$table is immutable', ({ table, insert, update: set }) => {
   let app: Client;

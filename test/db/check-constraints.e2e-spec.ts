@@ -208,6 +208,21 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   ticket_messages_body_length: {
     guarded: 'body IS NULL is tested first; the length runs only on a value',
   },
+  // Dispatch (ADR 0033): no nullable column, or only under IS [NOT] NULL.
+  specialties_key_shape: {},
+  specialties_names_length: {},
+  maintenance_dispatch_settings_ranges: {},
+  ticket_dispatch_attempts_shape: {},
+  // Dispatch: compares nullable columns.
+  technician_availability_history_from_shape: {
+    guarded:
+      'from_state IS NULL is tested first; the comparison runs only on a value',
+  },
+  technician_availability_history_reason_shape: {
+    guarded:
+      'changed_by_account_id IS NOT NULL is tested in the same branch before ' +
+      'it is compared with account_id, so a NULL actor never satisfies it',
+  },
   household_members_minor_or_account: {
     guarded:
       'id_document_type and nationality are tested IS NOT NULL first, and ' +

@@ -82,4 +82,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   ticket_feedback_tenant_id_ticket_id_cycle_kind_key: null,
   // claim() finds no owned file the second time.
   ticket_attachments_file_id_key: null,
+  // Dispatch (ADR 0033). A specialty's key is chosen by the manager.
+  specialties_tenant_id_key_key: ['key'],
+  specialties_tenant_id_id_key: null,
+  // The engine writes the notified row under the compound's dispatch lock
+  // after checking for one; a violation is a race and names nothing.
+  ticket_dispatch_attempts_one_notice_per_cycle: null,
 };

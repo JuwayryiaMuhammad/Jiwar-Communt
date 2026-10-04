@@ -72,7 +72,7 @@ async function attachedFile(tx: TenantTxClient, tenantId: string) {
 }
 
 /**
- * Maintenance tenant tables (ADR 0032): isolated like every other tenant
+ * Maintenance tenant tables (ADR 0032, 0033): isolated like every other tenant
  * table, linked with composite keys. The RLS coverage test checks the
  * policies exist; this suite checks they hold, table by table.
  */
@@ -209,6 +209,136 @@ const TABLES: Table[] = [
           assignedById: link.accountId,
           assignmentType: 'manual',
           cycle: 1,
+        },
+      });
+      return id;
+    },
+  },
+  // Dispatch (ADR 0033).
+  {
+    table: 'specialties',
+    linked: false,
+    insert: async (tx, own) => {
+      const id = newId();
+      await tx.specialty.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          key: `s_${id.slice(-8)}`,
+          nameAr: 'تخصص',
+          nameEn: 'Specialty',
+        },
+      });
+      return id;
+    },
+  },
+  {
+    // The category is the link's; the specialty is always the row's own.
+    table: 'category_specialties',
+    key: 'specialty_id',
+    insert: async (tx, own, link) => {
+      const specialtyId = newId();
+      await tx.specialty.create({
+        data: {
+          id: specialtyId,
+          tenantId: own.tenantId,
+          key: `c_${specialtyId.slice(-8)}`,
+          nameAr: 'تخصص',
+          nameEn: 'Specialty',
+        },
+      });
+      await tx.categorySpecialty.create({
+        data: {
+          tenantId: own.tenantId,
+          categoryId: link.categoryId,
+          specialtyId,
+        },
+      });
+      return specialtyId;
+    },
+  },
+  {
+    table: 'technician_specialties',
+    key: 'specialty_id',
+    insert: async (tx, own, link) => {
+      const specialtyId = newId();
+      await tx.specialty.create({
+        data: {
+          id: specialtyId,
+          tenantId: own.tenantId,
+          key: `t_${specialtyId.slice(-8)}`,
+          nameAr: 'تخصص',
+          nameEn: 'Specialty',
+        },
+      });
+      await tx.technicianSpecialty.create({
+        data: {
+          tenantId: own.tenantId,
+          accountId: link.staffId,
+          specialtyId,
+        },
+      });
+      return specialtyId;
+    },
+  },
+  {
+    table: 'technician_availability',
+    key: 'account_id',
+    insert: async (tx, own, link) => {
+      await tx.technicianAvailability.create({
+        data: {
+          tenantId: own.tenantId,
+          accountId: link.staffId,
+          state: 'available',
+        },
+      });
+      return link.staffId;
+    },
+  },
+  {
+    table: 'technician_availability_history',
+    linked: false,
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.technicianAvailabilityHistory.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          accountId: link.staffId,
+          toState: 'available',
+          changedById: link.staffId,
+        },
+      });
+      return id;
+    },
+  },
+  {
+    table: 'maintenance_dispatch_settings',
+    key: 'tenant_id',
+    linked: false,
+    insert: async (tx, own) => {
+      await tx.maintenanceDispatchSettings.upsert({
+        where: { tenantId: own.tenantId },
+        create: { tenantId: own.tenantId },
+        update: {},
+      });
+      return own.tenantId;
+    },
+  },
+  {
+    table: 'ticket_dispatch_attempts',
+    linked: false,
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.ticketDispatchAttempt.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          ticketId: link.ticketId,
+          cycle: 1,
+          trigger: 'created',
+          outcome: 'no_candidate',
+          candidateCount: 0,
         },
       });
       return id;

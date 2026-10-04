@@ -1,4 +1,8 @@
 import { DEFAULT_CATEGORIES } from '../../src/maintenance/categories/default-categories';
+import {
+  DEFAULT_CATEGORY_SPECIALTIES,
+  DEFAULT_SPECIALTIES,
+} from '../../src/maintenance/specialties/default-specialties';
 import { communityHelpers } from '../setup/community';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 
@@ -52,5 +56,47 @@ describe('Maintenance — a new compound', () => {
       maxReportPhotos: 5,
     });
     expect(counter.lastNumber).toBe(0);
+  });
+
+  it('gets the default specialties, each category handled by its namesake, and dispatch off (ADR 0033)', async () => {
+    const c = await x.compound();
+    const { specialties, links, settings } = await x.asManager(c, async () => ({
+      specialties: await x.prisma.tenant.specialty.findMany({
+        orderBy: { key: 'asc' },
+      }),
+      links: await x.prisma.tenant.categorySpecialty.findMany({
+        include: { category: true, specialty: true },
+      }),
+      settings:
+        await x.prisma.tenant.maintenanceDispatchSettings.findUniqueOrThrow({
+          where: { tenantId: c.tenantId },
+        }),
+    }));
+    expect(
+      specialties.map((r) => [r.key, r.nameAr, r.nameEn, r.active]),
+    ).toEqual(
+      [...DEFAULT_SPECIALTIES]
+        .sort((p, q) => p.key.localeCompare(q.key))
+        .map((d) => [d.key, d.nameAr, d.nameEn, true]),
+    );
+    expect(
+      links
+        .map((l) => [l.category.key, l.specialty.key])
+        .sort((p, q) => p[0].localeCompare(q[0])),
+    ).toEqual(
+      DEFAULT_CATEGORY_SPECIALTIES.map((l) => [
+        l.categoryKey,
+        l.specialtyKey,
+      ]).sort((p, q) => p[0].localeCompare(q[0])),
+    );
+    // A new compound has no technician specialties yet: automatic dispatch
+    // stays off until the manager has set them (ADR 0033).
+    expect(settings.autoDispatchEnabled).toBe(false);
+    expect(settings.weightAssigned.toNumber()).toBe(1);
+    expect(settings.weightInProgress.toNumber()).toBe(2);
+    expect(settings.weightOnHold.toNumber()).toBe(0);
+    expect(settings.multiplierNormal.toNumber()).toBe(1);
+    expect(settings.multiplierUrgent.toNumber()).toBe(1.5);
+    expect(settings.multiplierEmergency.toNumber()).toBe(3);
   });
 });

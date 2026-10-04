@@ -6,6 +6,7 @@ import {
   TenantTx,
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
+import { DispatchEngine } from '../dispatch/dispatch-engine';
 import { TicketAccess } from './ticket-access';
 import { TicketLog } from './ticket-log';
 import { TicketNotices } from './ticket-notices';
@@ -25,6 +26,7 @@ export class WorkService {
     private readonly access: TicketAccess,
     private readonly log: TicketLog,
     private readonly notices: TicketNotices,
+    private readonly engine: DispatchEngine,
   ) {}
 
   start(id: string): Promise<void> {
@@ -48,12 +50,16 @@ export class WorkService {
   /**
    * Not for me, with a reason: back to the queue, and every dispatcher is
    * told. The technician loses the ticket at once; the dispatch engine
-   * (Phase 5.2) will not offer it to them again (the `declined` row).
+   * (ADR 0033) tries the next candidate and never offers it to them again.
    */
   decline(id: string, reasonCode?: string): Promise<void> {
     const code = requireReasonCodeOnly(reasonCode, REASON_CODES.ticketDecline);
     const me = this.ctx.accountId;
     return this.tenantTx.withTenantTx(async (tx) => {
+      // The dispatch lock before the ticket's own: the engine takes them in
+      // that order, and a decline holding the ticket while it waited for the
+      // dispatch lock could deadlock with a sweep holding that lock.
+      await this.engine.serialize(tx);
       const ticket = await this.lock(tx, id, 'decline');
       await tx.ticket.update({
         where: { id },
@@ -82,6 +88,9 @@ export class WorkService {
         {},
         me,
       );
+      // The `declined` row above is what keeps the engine from offering the
+      // ticket back to the technician who just refused it.
+      await this.engine.attempt(tx, id, 'declined');
     });
   }
 

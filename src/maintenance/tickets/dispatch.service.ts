@@ -42,8 +42,8 @@ const sameAsCurrent = (field: string) =>
 /**
  * Manual dispatch (ADR 0032), for `tickets.dispatch`: assign a ticket from
  * the queue, reassign it with a reason, change its priority with a reason.
- * The dispatch engine (Phase 5.2) will write `automatic` assignments next
- * to these.
+ * The dispatch engine (ADR 0033) writes `automatic` assignments next to
+ * these.
  *
  * Every write locks the target technician's account row first (FOR SHARE)
  * and then the ticket (FOR UPDATE), the same order as the deactivation

@@ -30,6 +30,7 @@ import type { PresignedRead } from '../../core/files/object-storage';
 import { FilesService } from '../../core/files/files.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { categoryNotFound } from '../categories/categories.service';
+import { DispatchEngine } from '../dispatch/dispatch-engine';
 import { MaintenanceSettingsService } from '../settings/maintenance-settings.service';
 import { ticketNotFound, TicketAccess, type Audience } from './ticket-access';
 import { COMMON_AREA_LENGTH, DESCRIPTION_LENGTH } from './ticket-limits';
@@ -132,6 +133,7 @@ export class TicketsService implements OnModuleInit {
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
     private readonly settings: MaintenanceSettingsService,
+    private readonly engine: DispatchEngine,
   ) {}
 
   onModuleInit(): void {
@@ -173,7 +175,7 @@ export class TicketsService implements OnModuleInit {
       const ticket = await this.insert(tx, id, input, where, category, me);
       for (const [i, fileId] of photos.entries())
         await this.attach(tx, ticket, fileId, 'report', `photoFileIds.${i}`);
-      return ticket;
+      return this.dispatched(tx, ticket);
     });
   }
 
@@ -232,8 +234,23 @@ export class TicketsService implements OnModuleInit {
         'ticket.opened_on_behalf',
         ticket,
       );
-      return ticket;
+      return this.dispatched(tx, ticket);
     });
+  }
+
+  /**
+   * The last step of a creation: the dispatch engine tries the new ticket
+   * (ADR 0033). Last, so the dispatch lock is held as briefly as possible,
+   * and isolated: a failure of the engine never costs a resident their
+   * report. The ticket is read again, as the engine may have assigned it.
+   */
+  private async dispatched(
+    tx: TenantTxClient,
+    ticket: Ticket,
+  ): Promise<Ticket> {
+    const result = await this.engine.attempt(tx, ticket.id, 'created');
+    if (result?.outcome !== 'assigned') return ticket;
+    return tx.ticket.findUniqueOrThrow({ where: { id: ticket.id } });
   }
 
   /** The resident's tickets: created, reported, or of a unit they are primary of. */

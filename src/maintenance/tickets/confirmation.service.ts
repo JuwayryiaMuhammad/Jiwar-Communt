@@ -15,6 +15,7 @@ import {
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
+import { DispatchEngine } from '../dispatch/dispatch-engine';
 import { MaintenanceSettingsService } from '../settings/maintenance-settings.service';
 import { MessagesService } from './messages.service';
 import { TicketAccess } from './ticket-access';
@@ -54,6 +55,7 @@ export class ConfirmationService implements OnModuleInit {
     private readonly audit: AuditService,
     private readonly settings: MaintenanceSettingsService,
     private readonly sweep: SweepRunner,
+    private readonly engine: DispatchEngine,
   ) {}
 
   onModuleInit(): void {
@@ -124,19 +126,20 @@ export class ConfirmationService implements OnModuleInit {
   }
 
   /** Not fixed: a reason code and a note, and the ticket goes back. */
-  reject(id: string, reason: ReasonInput): Promise<void> {
+  async reject(id: string, reason: ReasonInput): Promise<void> {
     const r = requireReasonCode(reason, REASON_CODES.ticketReject);
-    return this.tenantTx.withTenantTx(async (tx) => {
+    const requeued = await this.tenantTx.withTenantTx(async (tx) => {
       const ticket = await this.resident(tx, id);
       assertCan(ticket, 'reject');
-      await this.goBack(tx, ticket, 'rejected', r);
+      return this.goBack(tx, ticket, 'rejected', r);
     });
+    if (requeued) await this.engine.afterRelease([id]);
   }
 
   /** The problem came back within the compound's window after closing. */
-  reopen(id: string, reason: ReasonInput): Promise<void> {
+  async reopen(id: string, reason: ReasonInput): Promise<void> {
     const r = requireReasonCode(reason, REASON_CODES.ticketReopen);
-    return this.tenantTx.withTenantTx(async (tx) => {
+    const requeued = await this.tenantTx.withTenantTx(async (tx) => {
       const ticket = await this.resident(tx, id);
       assertCan(ticket, 'reopen');
       const { reopenDays } = await this.settings.inTx(tx);
@@ -146,8 +149,9 @@ export class ConfirmationService implements OnModuleInit {
           'Too late to reopen; open a new ticket',
           { params: { reopenDays } },
         );
-      await this.goBack(tx, ticket, 'reopened', r);
+      return this.goBack(tx, ticket, 'reopened', r);
     });
+    if (requeued) await this.engine.afterRelease([id]);
   }
 
   /**
@@ -252,12 +256,19 @@ export class ConfirmationService implements OnModuleInit {
     );
   }
 
+  /**
+   * Returns whether the ticket went back to the queue **without** being an
+   * escalation (its technician cannot take it back): the dispatch engine
+   * may then give it to someone else, after commit (ADR 0033). An
+   * escalation (a second rejection or reopen) goes to the dispatchers on
+   * purpose and is never the engine's.
+   */
   private async goBack(
     tx: TenantTxClient,
     ticket: Ticket,
     kind: 'rejected' | 'reopened',
     reason: { code: string; text: string },
-  ): Promise<void> {
+  ): Promise<boolean> {
     const me = this.ctx.accountId;
     const next = afterRejection({
       rejectionCount: ticket.rejectionCount,
@@ -327,5 +338,6 @@ export class ConfirmationService implements OnModuleInit {
         extra,
         me,
       );
+    return next.status === 'new' && !next.escalated;
   }
 }

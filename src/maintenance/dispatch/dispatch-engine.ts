@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { DispatchTrigger, Ticket } from '@prisma/client';
 import { newId } from '../../core/common/uuid';
-import type { TenantTxClient } from '../../core/database/tenant-tx.service';
+import {
+  TenantTx,
+  type TenantTxClient,
+} from '../../core/database/tenant-tx.service';
 import { TicketLog } from '../tickets/ticket-log';
 import { TicketNotices } from '../tickets/ticket-notices';
 import { candidateFilter } from './candidates';
@@ -56,6 +59,7 @@ export class DispatchEngine {
   private readonly logger = new Logger(DispatchEngine.name);
 
   constructor(
+    private readonly tenantTx: TenantTx,
     private readonly settings: DispatchSettingsService,
     private readonly log: TicketLog,
     private readonly notices: TicketNotices,
@@ -140,6 +144,103 @@ export class DispatchEngine {
         `dispatch failed for a ticket (${error instanceof Error ? error.name : 'Error'})`,
       );
       return null;
+    }
+  }
+
+  /**
+   * A technician just became available: the queued tickets they could take
+   * (their specialties, never one they declined), emergency first, then
+   * urgent, then normal, oldest first within each, a bounded batch. Each
+   * goes through the full `attempt`, so the least loaded candidate wins, not
+   * automatically the one who just came back; once they carry load the next
+   * ticket goes to someone else. What is left waits for the sweep.
+   * Does nothing while automatic dispatch is off. Isolated like `attempt`
+   * (the technician's availability change must stand): returns how many
+   * tickets were assigned, 0 on a failure.
+   */
+  async runQueueFor(tx: TenantTxClient, technicianId: string): Promise<number> {
+    await tx.$executeRaw`SAVEPOINT dispatch_queue`;
+    try {
+      const assigned = await this.walkQueue(tx, technicianId);
+      await tx.$executeRaw`RELEASE SAVEPOINT dispatch_queue`;
+      return assigned;
+    } catch (error) {
+      await tx.$executeRaw`ROLLBACK TO SAVEPOINT dispatch_queue`;
+      this.logger.error(
+        `dispatch of the queue failed (${error instanceof Error ? error.name : 'Error'})`,
+      );
+      return 0;
+    }
+  }
+
+  private async walkQueue(
+    tx: TenantTxClient,
+    technicianId: string,
+  ): Promise<number> {
+    await this.serialize(tx);
+    if (!(await this.settings.inTx(tx)).autoDispatchEnabled) return 0;
+    const declined = (
+      await tx.ticketAssignment.findMany({
+        where: {
+          fromId: technicianId,
+          assignmentType: 'declined',
+        },
+        select: { ticketId: true },
+      })
+    ).map((r) => r.ticketId);
+    const queue = await tx.ticket.findMany({
+      where: {
+        status: 'new',
+        technicianId: null,
+        id: { notIn: declined },
+        category: {
+          OR: [
+            { specialties: { none: { specialty: { active: true } } } },
+            {
+              specialties: {
+                some: {
+                  specialty: {
+                    active: true,
+                    technicians: {
+                      some: { accountId: technicianId, active: true },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+      // Enum order is declaration order: normal, urgent, emergency.
+      orderBy: [{ priority: 'desc' }, { createdAt: 'asc' }, { id: 'asc' }],
+      take: QUEUE_BATCH,
+      select: { id: true },
+    });
+    let assigned = 0;
+    for (const { id } of queue)
+      if ((await this.attempt(tx, id, 'available'))?.outcome === 'assigned')
+        assigned++;
+    return assigned;
+  }
+
+  /**
+   * Tickets that just went back to the queue because their technician can
+   * no longer work: tried again at once, in a transaction of their own,
+   * after the one that released them committed. That one (a deactivation, a
+   * freeze, an erasure) stays free of the engine; an emergency does not wait
+   * for the sweep. A failure is logged and the sweep retries.
+   */
+  async afterRelease(ticketIds: readonly string[]): Promise<void> {
+    if (!ticketIds.length) return;
+    try {
+      await this.tenantTx.withTenantTx(async (tx) => {
+        await this.serialize(tx);
+        for (const id of ticketIds) await this.attempt(tx, id, 'released');
+      });
+    } catch (error) {
+      this.logger.error(
+        `dispatch after a release failed (${error instanceof Error ? error.name : 'Error'})`,
+      );
     }
   }
 

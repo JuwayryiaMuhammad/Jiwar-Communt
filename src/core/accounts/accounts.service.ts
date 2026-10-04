@@ -137,6 +137,7 @@ export class AccountsService {
       this.writer.freeze(tx, id, reason),
     );
     if (!frozen) throw notFound();
+    await runAfterCommit(frozen.afterCommit, this.logger);
     // After commit: a rolled-back freeze must leave no event.
     await this.securityEvents.record('account.phone_reassigned', {
       tenantId: frozen.account.tenantId,

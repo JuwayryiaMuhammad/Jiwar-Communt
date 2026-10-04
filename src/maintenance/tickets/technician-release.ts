@@ -1,7 +1,11 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
-import { AccountLifecycle } from '../../core/accounts/account-lifecycle';
+import {
+  AccountLifecycle,
+  type AfterCommit,
+} from '../../core/accounts/account-lifecycle';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { AvailabilityService } from '../dispatch/availability.service';
+import { DispatchEngine } from '../dispatch/dispatch-engine';
 import { TicketLog } from './ticket-log';
 import { TicketNotices } from './ticket-notices';
 import { IN_HAND } from './ticket-rules';
@@ -20,20 +24,19 @@ export class TechnicianRelease implements OnModuleInit {
     private readonly log: TicketLog,
     private readonly notices: TicketNotices,
     private readonly availability: AvailabilityService,
+    private readonly engine: DispatchEngine,
   ) {}
 
   onModuleInit(): void {
-    this.lifecycle.onDeactivated(async (tx, account) => {
-      await this.leave(tx, account.id, 'account_deactivated');
-      return [];
-    });
+    this.lifecycle.onDeactivated((tx, account) =>
+      this.leave(tx, account.id, 'account_deactivated'),
+    );
     this.lifecycle.onFrozen((tx, account) =>
       this.leave(tx, account.id, 'account_frozen'),
     );
-    this.lifecycle.onErasing(async (tx, account) => {
-      await this.leave(tx, account.id, 'account_erased');
-      return [];
-    });
+    this.lifecycle.onErasing((tx, account) =>
+      this.leave(tx, account.id, 'account_erased'),
+    );
   }
 
   /**
@@ -41,24 +44,31 @@ export class TechnicianRelease implements OnModuleInit {
    * the reason) and its tickets in hand go back to the queue. The caller
    * holds the account's row. Reactivation does not undo the availability:
    * a technician opts in again.
+   *
+   * The released tickets are handed to the dispatch engine **after** the
+   * caller's transaction commits, in one of its own (ADR 0033): the
+   * deactivation, freeze or erasure itself stays free of the engine, and an
+   * emergency does not wait for the sweep.
    */
   private async leave(
     tx: TenantTxClient,
     accountId: string,
     reason: 'account_deactivated' | 'account_frozen' | 'account_erased',
-  ): Promise<void> {
+  ): Promise<AfterCommit[]> {
     await this.availability.markUnavailable(tx, accountId, reason);
-    await this.release(tx, accountId);
+    const released = await this.release(tx, accountId);
+    return released.length ? [() => this.engine.afterRelease(released)] : [];
   }
 
-  async release(tx: TenantTxClient, technicianId: string): Promise<void> {
+  /** Returns the ids of the tickets it released. */
+  async release(tx: TenantTxClient, technicianId: string): Promise<string[]> {
     const rows = await tx.$queryRaw<{ id: string }[]>`
       SELECT id FROM tickets
        WHERE technician_account_id = ${technicianId}::uuid
          AND status::text = ANY(${[...IN_HAND]}::text[])
        ORDER BY id
          FOR UPDATE`;
-    if (!rows.length) return;
+    if (!rows.length) return [];
     const dispatchers = await this.notices.dispatchers(tx);
     for (const { id } of rows) {
       const ticket = await tx.ticket.findUniqueOrThrow({ where: { id } });
@@ -93,5 +103,6 @@ export class TechnicianRelease implements OnModuleInit {
         ticket,
       );
     }
+    return rows.map((r) => r.id);
   }
 }

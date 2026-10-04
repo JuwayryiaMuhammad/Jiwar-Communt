@@ -32,15 +32,25 @@ export class CategoryOptionView {
 export class CategoryView extends CategoryOptionView {
   @ApiProperty({ type: Boolean })
   active: boolean;
+  @ApiProperty({
+    type: [String],
+    format: 'uuid',
+    description:
+      'The specialties that can handle it; none means any technician (ADR 0033).',
+  })
+  specialtyIds: string[];
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
   @ApiProperty({ type: String, format: 'date-time' })
   updatedAt: Date;
 
-  static from(c: TicketCategory): CategoryView {
+  static from(
+    c: TicketCategory & { specialties: { specialtyId: string }[] },
+  ): CategoryView {
     return {
       ...CategoryOptionView.from(c),
       active: c.active,
+      specialtyIds: c.specialties.map((s) => s.specialtyId),
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
     };

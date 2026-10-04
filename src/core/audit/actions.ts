@@ -203,6 +203,16 @@ export const AUDIT_ACTIONS = {
   'ticket.priority_changed': { log: 'tenant', target: 'ticket' },
   // metadata: reasonCode, by (reporter | dispatcher), fromStatus.
   'ticket.cancelled': { log: 'tenant', target: 'ticket' },
+  // dispatch (ADR 0033). Codes and keys only, never a name.
+  'specialty.created': { log: 'tenant', target: 'specialty' },
+  'specialty.updated': { log: 'tenant', target: 'specialty' },
+  // changes: specialties (the keys of the set, before and after).
+  'ticket_category.specialties_changed': {
+    log: 'tenant',
+    target: 'ticket_category',
+  },
+  // target: the technician's account; changes: specialties (keys).
+  'technician.specialties_changed': { log: 'tenant', target: 'account' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

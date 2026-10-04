@@ -21,7 +21,13 @@ const OPTION = [
   'nameAr',
   'nameEn',
 ];
-const CATEGORY = [...OPTION, 'active', 'createdAt', 'updatedAt'].sort();
+const CATEGORY = [
+  ...OPTION,
+  'active',
+  'createdAt',
+  'specialtyIds',
+  'updatedAt',
+].sort();
 const SETTINGS = ['autoCloseHours', 'maxReportPhotos', 'reopenDays'];
 const CREATED = ['createdAt', 'id', 'number', 'priority', 'status'];
 const CATEGORY_REF = [
@@ -717,7 +723,7 @@ describe('API v0 — maintenance (ADR 0032)', () => {
         token: manager(),
       }).expect(200);
       expect(keyPaths(list.body)).toEqual(
-        listKeys(['fullName', 'id', 'openTickets']),
+        listKeys(['fullName', 'id', 'openTickets', 'specialties']),
       );
       const ids = (list.body as { data: { id: string }[] }).data.map(
         (x) => x.id,

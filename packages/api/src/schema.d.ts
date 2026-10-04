@@ -916,6 +916,22 @@ export interface paths {
         patch: operations["CategoriesController_update"];
         trace?: never;
     };
+    "/api/v1/maintenance/categories/{id}/specialties": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["CategorySpecialtiesController_setForCategory"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/settings": {
         parameters: {
             query?: never;
@@ -932,6 +948,38 @@ export interface paths {
         patch: operations["MaintenanceSettingsController_update"];
         trace?: never;
     };
+    "/api/v1/maintenance/specialties": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["SpecialtiesController_list"];
+        put?: never;
+        post: operations["SpecialtiesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/specialties/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["SpecialtiesController_update"];
+        trace?: never;
+    };
     "/api/v1/maintenance/technicians": {
         parameters: {
             query?: never;
@@ -941,6 +989,22 @@ export interface paths {
         };
         get: operations["TechniciansController_list"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/technicians/{id}/specialties": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["TechniciansController_setSpecialties"];
         post?: never;
         delete?: never;
         options?: never;
@@ -3097,6 +3161,8 @@ export interface components {
             nameAr: string;
             /** @description Written by the compound. */
             nameEn: string;
+            /** @description The specialties that can handle it; none means any technician (ADR 0033). */
+            specialtyIds: string[];
             /** Format: date-time */
             updatedAt: string;
         };
@@ -3264,6 +3330,12 @@ export interface components {
             preferredLocale?: components["schemas"]["Locale"];
             /** @description At least one (checked by the service). */
             units: components["schemas"]["OccupancyInputDto"][];
+        };
+        CreateSpecialtyDto: {
+            /** @description Stable code, lowercase (e.g. `hvac`). Never changes once created. */
+            key: string;
+            nameAr: string;
+            nameEn: string;
         };
         CreateTenantDto: {
             manager: components["schemas"]["NewManagerDto"];
@@ -4766,6 +4838,29 @@ export interface components {
             /** Format: date-time */
             startedAt: string;
         };
+        SpecialtyIdsDto: {
+            /** @description The whole set, replacing the current one; empty clears it. Active specialties of the compound only. */
+            specialtyIds: string[];
+        };
+        SpecialtyRefView: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+        };
+        SpecialtyView: {
+            active: boolean;
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+        };
+        SpecialtyViewList: {
+            data: components["schemas"]["SpecialtyView"][];
+            nextCursor: string | null;
+        };
         StaffMessageDto: {
             body: string;
             /**
@@ -4817,6 +4912,8 @@ export interface components {
             id: string;
             /** @description Tickets assigned, in progress or on hold. */
             openTickets: number;
+            /** @description Their active specialties. */
+            specialties: components["schemas"]["SpecialtyRefView"][];
         };
         TechnicianOptionViewList: {
             data: components["schemas"]["TechnicianOptionView"][];
@@ -5093,6 +5190,12 @@ export interface components {
             timezone?: string;
             /** @description What the compound tells its visitors on the public pass page (ADR 0030). `null` clears it. */
             visitorDirections?: string | null;
+        };
+        UpdateSpecialtyDto: {
+            /** @description False retires it: it counts for no category and no technician. */
+            active?: boolean;
+            nameAr?: string;
+            nameEn?: string;
         };
         UploadHeadersView: {
             "Content-Type": string;
@@ -6707,6 +6810,29 @@ export interface operations {
             };
         };
     };
+    CategorySpecialtiesController_setForCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpecialtyIdsDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     MaintenanceSettingsController_get: {
         parameters: {
             query?: never;
@@ -6749,6 +6875,73 @@ export interface operations {
             };
         };
     };
+    SpecialtiesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpecialtyViewList"];
+                };
+            };
+        };
+    };
+    SpecialtiesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSpecialtyDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpecialtyView"];
+                };
+            };
+        };
+    };
+    SpecialtiesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateSpecialtyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpecialtyView"];
+                };
+            };
+        };
+    };
     TechniciansController_list: {
         parameters: {
             query?: never;
@@ -6765,6 +6958,29 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TechnicianOptionViewList"];
                 };
+            };
+        };
+    };
+    TechniciansController_setSpecialties: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpecialtyIdsDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

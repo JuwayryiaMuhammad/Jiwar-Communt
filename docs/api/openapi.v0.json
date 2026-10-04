@@ -873,6 +873,14 @@
             "description": "Written by the compound.",
             "type": "string"
           },
+          "specialtyIds": {
+            "description": "The specialties that can handle it; none means any technician (ADR 0033).",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
           "updatedAt": {
             "format": "date-time",
             "type": "string"
@@ -886,6 +894,7 @@
           "defaultPriority",
           "commonAreaAllowed",
           "active",
+          "specialtyIds",
           "createdAt",
           "updatedAt"
         ],
@@ -1413,6 +1422,31 @@
           "phone",
           "email",
           "units"
+        ],
+        "type": "object"
+      },
+      "CreateSpecialtyDto": {
+        "properties": {
+          "key": {
+            "description": "Stable code, lowercase (e.g. `hvac`). Never changes once created.",
+            "pattern": "^[a-z][a-z0-9_]{1,39}$",
+            "type": "string"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "nameAr",
+          "nameEn"
         ],
         "type": "object"
       },
@@ -6705,6 +6739,88 @@
         ],
         "type": "object"
       },
+      "SpecialtyIdsDto": {
+        "properties": {
+          "specialtyIds": {
+            "description": "The whole set, replacing the current one; empty clears it. Active specialties of the compound only.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          }
+        },
+        "required": [
+          "specialtyIds"
+        ],
+        "type": "object"
+      },
+      "SpecialtyRefView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key"
+        ],
+        "type": "object"
+      },
+      "SpecialtyView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn",
+          "active"
+        ],
+        "type": "object"
+      },
+      "SpecialtyViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/SpecialtyView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StaffMessageDto": {
         "properties": {
           "body": {
@@ -6884,12 +7000,20 @@
           "openTickets": {
             "description": "Tickets assigned, in progress or on hold.",
             "type": "number"
+          },
+          "specialties": {
+            "description": "Their active specialties.",
+            "items": {
+              "$ref": "#/components/schemas/SpecialtyRefView"
+            },
+            "type": "array"
           }
         },
         "required": [
           "id",
           "fullName",
-          "openTickets"
+          "openTickets",
+          "specialties"
         ],
         "type": "object"
       },
@@ -7894,6 +8018,25 @@
             "description": "What the compound tells its visitors on the public pass page (ADR 0030). `null` clears it.",
             "maxLength": 2000,
             "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateSpecialtyDto": {
+        "properties": {
+          "active": {
+            "description": "False retires it: it counts for no category and no technician.",
+            "type": "boolean"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
             "type": "string"
           }
         },
@@ -11017,6 +11160,45 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/categories/{id}/specialties": {
+      "put": {
+        "operationId": "CategorySpecialtiesController_setForCategory",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpecialtyIdsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/settings": {
       "get": {
         "operationId": "MaintenanceSettingsController_get",
@@ -11079,6 +11261,114 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/specialties": {
+      "get": {
+        "operationId": "SpecialtiesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpecialtyViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "SpecialtiesController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSpecialtyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpecialtyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/specialties/{id}": {
+      "patch": {
+        "operationId": "SpecialtiesController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSpecialtyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpecialtyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/technicians": {
       "get": {
         "operationId": "TechniciansController_list",
@@ -11092,6 +11382,45 @@
                 }
               }
             },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/technicians/{id}/specialties": {
+      "put": {
+        "operationId": "TechniciansController_setSpecialties",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpecialtyIdsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
             "description": ""
           }
         },

@@ -8,6 +8,11 @@ import {
 } from './categories/categories.controller';
 import { CategoriesService } from './categories/categories.service';
 import { MaintenanceProvisioning } from './provisioning';
+import {
+  CategorySpecialtiesController,
+  SpecialtiesController,
+} from './specialties/specialties.controller';
+import { SpecialtiesService } from './specialties/specialties.service';
 import { MaintenanceSettingsController } from './settings/maintenance-settings.controller';
 import { MaintenanceSettingsService } from './settings/maintenance-settings.service';
 import { AttachmentsService } from './tickets/attachments.service';
@@ -37,6 +42,8 @@ import { TicketsService } from './tickets/tickets.service';
   controllers: [
     CategoriesController,
     CategoryOptionsController,
+    SpecialtiesController,
+    CategorySpecialtiesController,
     MaintenanceSettingsController,
     ResidentTicketsController,
     DispatchTicketsController,
@@ -46,6 +53,7 @@ import { TicketsService } from './tickets/tickets.service';
   providers: [
     MaintenanceProvisioning,
     CategoriesService,
+    SpecialtiesService,
     MaintenanceSettingsService,
     TicketAccess,
     TicketLog,

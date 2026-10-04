@@ -17,10 +17,9 @@ export interface TechnicianOption {
   id: string;
   fullName: string | null;
   openTickets: number;
+  /** Their active specialties (ADR 0033). */
+  specialties: { id: string; key: string }[];
 }
-
-const technicianNotFound = () =>
-  appError.notFound(ErrorCode.TECHNICIAN_NOT_FOUND, 'Technician not found');
 
 const sameAsCurrent = (field: string) =>
   appError.badRequest(ErrorCode.VALIDATION_FAILED, 'Nothing changes', {
@@ -70,7 +69,25 @@ export class DispatchService {
         _count: { _all: true },
       });
       const counts = new Map(open.map((o) => [o.technicianId, o._count._all]));
-      return rows.map((r) => ({ ...r, openTickets: counts.get(r.id) ?? 0 }));
+      const links = await tx.technicianSpecialty.findMany({
+        where: {
+          accountId: { in: rows.map((r) => r.id) },
+          active: true,
+          specialty: { active: true },
+        },
+        select: {
+          accountId: true,
+          specialty: { select: { id: true, key: true } },
+        },
+        orderBy: [{ specialty: { key: 'asc' } }],
+      });
+      return rows.map((r) => ({
+        ...r,
+        openTickets: counts.get(r.id) ?? 0,
+        specialties: links
+          .filter((l) => l.accountId === r.id)
+          .map((l) => l.specialty),
+      }));
     });
   }
 
@@ -78,7 +95,7 @@ export class DispatchService {
   assign(id: string, technicianId: string): Promise<void> {
     const me = this.ctx.accountId;
     return this.tenantTx.withTenantTx(async (tx) => {
-      await this.lockTechnician(tx, technicianId);
+      await this.access.lockTechnician(tx, technicianId);
       const ticket = await this.access.load(tx, id, 'dispatch', { lock: true });
       assertCan(ticket, 'assign');
       const updated = await tx.ticket.update({
@@ -123,7 +140,7 @@ export class DispatchService {
     const code = requireReasonCodeOnly(reasonCode, REASON_CODES.ticketReassign);
     const me = this.ctx.accountId;
     return this.tenantTx.withTenantTx(async (tx) => {
-      await this.lockTechnician(tx, technicianId);
+      await this.access.lockTechnician(tx, technicianId);
       const ticket = await this.access.load(tx, id, 'dispatch', { lock: true });
       assertCan(ticket, 'reassign');
       if (ticket.technicianId === technicianId)
@@ -213,21 +230,6 @@ export class DispatchService {
         me,
       );
     });
-  }
-
-  /**
-   * The technician's account, shared-locked until the transaction ends:
-   * active staff holding tickets.work, or TECHNICIAN_NOT_FOUND (one answer
-   * for an unknown id, another compound's, a guard, an inactive account).
-   */
-  private async lockTechnician(
-    tx: TenantTxClient,
-    technicianId: string,
-  ): Promise<void> {
-    const rows = await tx.$queryRaw<{ id: string }[]>`
-      SELECT id FROM accounts WHERE id = ${technicianId}::uuid FOR SHARE`;
-    if (!rows.length || !(await this.access.isTechnician(tx, technicianId)))
-      throw technicianNotFound();
   }
 
   private async assigned(

@@ -111,4 +111,9 @@ export const MAINTENANCE_COVERAGE: readonly string[] = [
   'ticket.created_on_behalf',
   'ticket.priority_changed',
   'ticket.cancelled',
+  // Dispatch (ADR 0033).
+  'specialty.created',
+  'specialty.updated',
+  'ticket_category.specialties_changed',
+  'technician.specialties_changed',
 ];

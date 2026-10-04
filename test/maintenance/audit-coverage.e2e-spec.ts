@@ -1,5 +1,6 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { CategoriesService } from '../../src/maintenance/categories/categories.service';
+import { SpecialtiesService } from '../../src/maintenance/specialties/specialties.service';
 import { MaintenanceSettingsService } from '../../src/maintenance/settings/maintenance-settings.service';
 import { ConfirmationService } from '../../src/maintenance/tickets/confirmation.service';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
@@ -13,6 +14,7 @@ import {
   PHASE_4_COVERAGE,
 } from '../setup/audit-coverage-split';
 import { communityHelpers, type Compound } from '../setup/community';
+import { gateHelpers } from '../setup/gate';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 
 /**
@@ -92,6 +94,76 @@ describe('Audit coverage — maintenance', () => {
         targetType: 'tenant',
         changes: { autoCloseHours: { from: 72, to: 24 } },
       });
+    });
+  });
+
+  describe('specialties', () => {
+    it('specialty.created and specialty.updated — keys and names, by the manager', async () => {
+      const c = await x.compound();
+      const specialties = h.moduleRef.get(SpecialtiesService);
+      const created = await x.asManager(c, () =>
+        specialties.create({ key: 'pool', nameAr: 'مسبح', nameEn: 'Pool' }),
+      );
+      expect(await single(c, 'specialty.created', created.id)).toMatchObject({
+        actorType: 'account',
+        actorId: c.managerId,
+        targetType: 'specialty',
+        changes: {
+          key: { from: null, to: 'pool' },
+          nameEn: { from: null, to: 'Pool' },
+          active: { from: null, to: true },
+        },
+      });
+      await x.asManager(c, () =>
+        specialties.update(created.id, { active: false }),
+      );
+      expect(await single(c, 'specialty.updated', created.id)).toMatchObject({
+        actorId: c.managerId,
+        changes: { active: { from: true, to: false } },
+      });
+      // A no-op edit writes nothing.
+      await x.asManager(c, () => specialties.update(created.id, {}));
+      await single(c, 'specialty.updated', created.id);
+    });
+
+    it('ticket_category.specialties_changed and technician.specialties_changed — the keys before and after', async () => {
+      const c = await x.compound();
+      const specialties = h.moduleRef.get(SpecialtiesService);
+      const technician = await gateHelpers(h).guard(c, 'technician');
+      const all = await x.asManager(c, () => specialties.list());
+      const id = (key: string) => all.find((r) => r.key === key)!.id;
+      const category = await x.asManager(c, () =>
+        x.prisma.tenant.ticketCategory.findFirstOrThrow({
+          where: { key: 'general' },
+        }),
+      );
+      await x.asManager(c, () =>
+        specialties.setForCategory(category.id, [id('plumbing'), id('ac')]),
+      );
+      expect(
+        await single(c, 'ticket_category.specialties_changed', category.id),
+      ).toMatchObject({
+        actorId: c.managerId,
+        targetType: 'ticket_category',
+        changes: {
+          specialties: { from: ['general'], to: ['ac', 'plumbing'] },
+        },
+      });
+      await x.asManager(c, () =>
+        specialties.setForTechnician(technician.id, [id('electrical')]),
+      );
+      expect(
+        await single(c, 'technician.specialties_changed', technician.id),
+      ).toMatchObject({
+        actorId: c.managerId,
+        targetType: 'account',
+        changes: { specialties: { from: [], to: ['electrical'] } },
+      });
+      // The same set again writes nothing.
+      await x.asManager(c, () =>
+        specialties.setForTechnician(technician.id, [id('electrical')]),
+      );
+      await single(c, 'technician.specialties_changed', technician.id);
     });
   });
 

@@ -54,6 +54,66 @@ export const MAINTENANCE_ROUTES: Row[] = [
     },
   },
   {
+    method: 'PUT',
+    path: '/maintenance/categories/{id}/specialties',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bCategoryId }),
+      body: () => ({ specialtyIds: [] }),
+      code: 'TICKET_CATEGORY_NOT_FOUND',
+    },
+    invalid: {
+      body: { specialtyIds: 'x' },
+      fields: [{ field: 'specialtyIds', code: 'INVALID_TYPE' }],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/specialties',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/specialties',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: { key: 'Pool!', nameAr: '', nameEn: 'Pool' },
+      fields: [
+        { field: 'key', code: 'INVALID_FORMAT' },
+        {
+          field: 'nameAr',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 80 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'PATCH',
+    path: '/maintenance/specialties/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bSpecialtyId }),
+      body: () => ({ active: false }),
+      code: 'SPECIALTY_NOT_FOUND',
+    },
+    invalid: {
+      body: { active: 'no' },
+      fields: [{ field: 'active', code: 'INVALID_TYPE' }],
+    },
+  },
+  {
     method: 'GET',
     path: '/maintenance/settings',
     auth: 'tenant',
@@ -449,6 +509,22 @@ export const WORK_ROUTES: Row[] = [
     denied: 'technician',
     foreign: 'none',
     invalid: 'none',
+  },
+  {
+    method: 'PUT',
+    path: '/maintenance/technicians/{id}/specialties',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.b.ids.technician }),
+      body: () => ({ specialtyIds: [] }),
+      code: 'TECHNICIAN_NOT_FOUND',
+    },
+    invalid: {
+      body: { specialtyIds: 'x' },
+      fields: [{ field: 'specialtyIds', code: 'INVALID_TYPE' }],
+    },
   },
 ];
 

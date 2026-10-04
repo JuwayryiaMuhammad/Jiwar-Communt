@@ -13,6 +13,7 @@ import {
   TechnicianAvailabilityController,
 } from './dispatch/availability.controller';
 import { DispatchEngine } from './dispatch/dispatch-engine';
+import { DispatchSweep } from './dispatch/dispatch-sweep';
 import { DispatchSettingsController } from './dispatch/dispatch-settings.controller';
 import { DispatchSettingsService } from './dispatch/dispatch-settings.service';
 import { MaintenanceProvisioning } from './provisioning';
@@ -68,6 +69,7 @@ import { TicketsService } from './tickets/tickets.service';
     AvailabilityService,
     DispatchSettingsService,
     DispatchEngine,
+    DispatchSweep,
     MaintenanceSettingsService,
     TicketAccess,
     TicketLog,

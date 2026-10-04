@@ -51,6 +51,8 @@ export interface FreezeResult {
   account: Account;
   sessionsRevoked: number;
   freezeId: string;
+  /** Work the domains asked for; the caller runs it after commit. */
+  afterCommit: AfterCommit[];
 }
 
 export interface StatusChange {
@@ -393,12 +395,12 @@ export class AccountWriter {
         codesInvalidated,
       },
     });
-    await this.lifecycle.frozen(tx, {
+    const afterCommit = await this.lifecycle.frozen(tx, {
       id: accountId,
       tenantId: account.tenantId,
     });
     await this.tellHolder(tx, account, ACCOUNT_EMAILS.frozen);
-    return { account, sessionsRevoked, freezeId };
+    return { account, sessionsRevoked, freezeId, afterCommit };
   }
 
   /**

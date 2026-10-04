@@ -8,6 +8,7 @@ import {
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
 import { TicketAccess } from '../tickets/ticket-access';
+import { DispatchEngine } from './dispatch-engine';
 
 export interface AvailabilityRead {
   state: TechnicianAvailabilityState;
@@ -42,6 +43,7 @@ export class AvailabilityService {
     private readonly tenantTx: TenantTx,
     private readonly ctx: RequestContext,
     private readonly access: TicketAccess,
+    private readonly engine: DispatchEngine,
   ) {}
 
   /** The caller's own state. */
@@ -55,8 +57,16 @@ export class AvailabilityService {
   setMine(state: TechnicianAvailabilityState): Promise<AvailabilityRead> {
     const me = this.ctx.accountId;
     return this.tenantTx.withTenantTx(async (tx) => {
+      if (state === 'available') await this.engine.serialize(tx);
       await this.access.lockTechnician(tx, me, 'write');
-      await this.change(tx, me, state, { by: me, reasonCode: null });
+      const changed = await this.change(tx, me, state, {
+        by: me,
+        reasonCode: null,
+      });
+      // A technician who has just become available takes the queued tickets
+      // they can (ADR 0033), and an engine failure never undoes the change.
+      if (changed && state === 'available')
+        await this.engine.runQueueFor(tx, me);
       return this.read(tx, me);
     });
   }
@@ -73,8 +83,14 @@ export class AvailabilityService {
     );
     const me = this.ctx.accountId;
     return this.tenantTx.withTenantTx(async (tx) => {
+      if (state === 'available') await this.engine.serialize(tx);
       await this.access.lockTechnician(tx, technicianId, 'write');
-      await this.change(tx, technicianId, state, { by: me, reasonCode: code });
+      const changed = await this.change(tx, technicianId, state, {
+        by: me,
+        reasonCode: code,
+      });
+      if (changed && state === 'available')
+        await this.engine.runQueueFor(tx, technicianId);
       return this.read(tx, technicianId);
     });
   }

@@ -16,6 +16,15 @@ export type AccountHandler = (
 ) => Promise<void>;
 
 /**
+ * A freeze handler may also hand back work to run after the freeze commits
+ * (maintenance retries the tickets it released, ADR 0033).
+ */
+export type FreezeHandler = (
+  tx: TenantTxClient,
+  account: { id: string; tenantId: string },
+) => Promise<void | AfterCommit[]>;
+
+/**
  * How core tells domains that an account changed, without importing them
  * (ADR 0015). Domains register handlers at startup; AccountWriter runs them
  * inside its own transaction, so their writes commit or roll back with the
@@ -24,7 +33,7 @@ export type AccountHandler = (
 @Injectable()
 export class AccountLifecycle {
   private readonly deactivation: DeactivationHandler[] = [];
-  private readonly freezing: AccountHandler[] = [];
+  private readonly freezing: FreezeHandler[] = [];
   private readonly reactivation: AccountHandler[] = [];
   private readonly erasure: DeactivationHandler[] = [];
   private readonly sessionsRevokedAll: AccountHandler[] = [];
@@ -83,7 +92,7 @@ export class AccountLifecycle {
     this.deactivation.push(handler);
   }
 
-  onFrozen(handler: AccountHandler): void {
+  onFrozen(handler: FreezeHandler): void {
     this.freezing.push(handler);
   }
 
@@ -94,8 +103,11 @@ export class AccountLifecycle {
   async frozen(
     tx: TenantTxClient,
     account: { id: string; tenantId: string },
-  ): Promise<void> {
-    for (const handler of this.freezing) await handler(tx, account);
+  ): Promise<AfterCommit[]> {
+    const tasks: AfterCommit[] = [];
+    for (const handler of this.freezing)
+      tasks.push(...((await handler(tx, account)) ?? []));
+    return tasks;
   }
 
   async reactivated(

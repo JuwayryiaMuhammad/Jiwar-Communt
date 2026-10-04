@@ -7,28 +7,57 @@ import { newId } from '../../src/core/common/uuid';
 import { TenantLifecycle } from '../../src/core/tenant-settings/tenant-lifecycle';
 import { MaintenanceProvisioning } from '../../src/maintenance/provisioning';
 import type { DbHarness } from './db-module';
+import { suiteSequence } from './id-blocks';
 
 const provisioner = new RoleProvisioner(CODE_ACCESS_CATALOG);
 const maintenance = new MaintenanceProvisioning(new TenantLifecycle());
 
 /**
+ * Generated phones and national IDs live in a space hand-written test values
+ * never use: hand-written phones are `+2010...` and hand-written national IDs
+ * use one of these governorates, so a literal can never equal a generated
+ * value (id-blocks.e2e-spec.ts checks every literal under test/).
+ */
+export const HAND_WRITTEN_GOVERNORATES = ['01', '12', '35', '88'];
+// prettier-ignore
+const GOVERNORATES = [
+  '02', '03', '04', '11', '13', '14', '15', '16', '17', '18', '19',
+  '21', '22', '23', '24', '25', '26', '27', '28', '29', '31', '32', '33', '34',
+];
+/** Each governorate x 100,000 sequences; 1,000 per suite. */
+const nationalIdSequence = suiteSequence(GOVERNORATES.length * 1e5, 1e3);
+
+/** A fresh, valid Egyptian mobile number in E.164, never repeated in a run. */
+const phoneSequence = suiteSequence(1e8, 1e5);
+export function uniquePhone(): string {
+  return `+2012${phoneSequence().toString().padStart(8, '0')}`;
+}
+
+/** The digits after 7400 of a UK mobile, never repeated in a run. */
+const ukSequence = suiteSequence(1e6, 1e3);
+export function uniqueUkDigits(): string {
+  return ukSequence().toString().padStart(6, '0');
+}
+
+/**
  * A valid Egyptian national ID for someone born on `birthDate` (default
- * 1990-01-01, an adult): the right century digit, Cairo as governorate, and a
- * random sequence so values differ between calls.
+ * 1990-01-01, an adult): the right century digit, and a governorate and
+ * sequence that never repeat within a run, whatever the birth date.
  */
 export function nationalIdFor(
   birthDate: Date = new Date(Date.UTC(1990, 0, 1)),
 ): string {
   const pad = (n: number, width = 2) => String(n).padStart(width, '0');
   const year = birthDate.getUTCFullYear();
+  const sequence = nationalIdSequence();
   return [
     year >= 2000 ? '3' : '2',
     pad(year % 100),
     pad(birthDate.getUTCMonth() + 1),
     pad(birthDate.getUTCDate()),
-    '01',
-    pad(randomInt(1e4), 4),
-    String(randomInt(10)),
+    GOVERNORATES[Math.floor(sequence / 1e5)],
+    pad(Math.floor((sequence % 1e5) / 10), 4),
+    String(sequence % 10),
   ].join('');
 }
 
@@ -114,7 +143,7 @@ export function createAccountRow(
         fullName: `Person ${s}`,
         idDocumentNumber: nationalIdFor(),
         birthDate: new Date(Date.UTC(1990, 0, 1)),
-        phone: `+2010${randomInt(1e8).toString().padStart(8, '0')}`,
+        phone: uniquePhone(),
         email: `p-${s}@example.test`,
       },
     }),

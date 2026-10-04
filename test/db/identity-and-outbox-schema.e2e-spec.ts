@@ -10,6 +10,7 @@ import {
   createTenant,
   createUnit,
   roleId,
+  uniquePhone,
   uniqueSuffix,
 } from '../setup/fixtures';
 import { required } from '../setup/test-env';
@@ -162,9 +163,7 @@ describe('Identity documents and outbox schema', () => {
               roleId: residentRole,
               fullName: 'Doc Holder',
               idDocumentNumber: 'X1234567',
-              phone: `+2010${Math.floor(Math.random() * 1e8)
-                .toString()
-                .padStart(8, '0')}`,
+              phone: uniquePhone(),
               email: `doc-${uniqueSuffix()}@example.test`,
               ...data,
             },

@@ -8,7 +8,7 @@ import {
 } from '../../src/community/workers/workers.service';
 import { auditReaders } from '../setup/audit';
 import { communityHelpers, type Compound } from '../setup/community';
-import { bornYearsAgo } from '../setup/fixtures';
+import { bornYearsAgo, uniqueUkDigits } from '../setup/fixtures';
 import { requestAndVerify } from '../setup/login';
 import {
   API,
@@ -97,9 +97,7 @@ describe('Identity documents', () => {
       const c = await x.compound();
       const email = uniqueEmail('uk-login');
       // 7400 xxxxxx: a UK mobile range where every number is valid.
-      const digits = Math.floor(Math.random() * 1e6)
-        .toString()
-        .padStart(6, '0');
+      const digits = uniqueUkDigits();
       const created = await h
         .http()
         .post(`${API}/accounts`)

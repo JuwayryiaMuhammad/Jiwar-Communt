@@ -13,6 +13,7 @@ import {
   TechnicianAvailabilityController,
 } from './dispatch/availability.controller';
 import { DispatchEngine } from './dispatch/dispatch-engine';
+import { TechnicianQualification } from './dispatch/technician-qualification';
 import { DispatchSweep } from './dispatch/dispatch-sweep';
 import { DispatchSettingsController } from './dispatch/dispatch-settings.controller';
 import { DispatchSettingsService } from './dispatch/dispatch-settings.service';
@@ -70,6 +71,7 @@ import { TicketsService } from './tickets/tickets.service';
     DispatchSettingsService,
     DispatchEngine,
     DispatchSweep,
+    TechnicianQualification,
     MaintenanceSettingsService,
     TicketAccess,
     TicketLog,

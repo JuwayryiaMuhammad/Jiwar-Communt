@@ -2,6 +2,7 @@ import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { DispatchEngine } from './dispatch-engine';
 import { DispatchSettingsService } from './dispatch-settings.service';
+import { TechnicianQualification } from './technician-qualification';
 
 export const DISPATCH_SWEEP = 'maintenance.dispatch';
 
@@ -12,6 +13,8 @@ export const SWEEP_BATCH = 100;
  * The backstop (ADR 0033): every trigger of the engine is an event, and an
  * event can be missed (a technician set available with the setting off, an
  * engine failure, a release the app crashed before retrying). The sweep
+ * first releases the tickets of technicians who no longer qualify (a role
+ * that lost `tickets.work` in an `access:sync`), in every compound, and then
  * tries the queue of every compound that has automatic dispatch on.
  *
  * A suspended compound is skipped: nothing is assigned and nobody is told
@@ -25,6 +28,7 @@ export class DispatchSweep implements OnModuleInit {
     private readonly sweep: SweepRunner,
     private readonly engine: DispatchEngine,
     private readonly settings: DispatchSettingsService,
+    private readonly qualification: TechnicianQualification,
   ) {}
 
   onModuleInit(): void {
@@ -39,8 +43,11 @@ export class DispatchSweep implements OnModuleInit {
         select: { status: true },
       });
       if (tenant?.status !== 'active') return 0;
-      if (!(await this.settings.inTx(tx)).autoDispatchEnabled) return 0;
       await this.engine.serialize(tx);
+      // Whatever the setting: a technician who can no longer work must not
+      // keep tickets (ADR 0033). The engine retries what that releases.
+      await this.qualification.reconcile(tx);
+      if (!(await this.settings.inTx(tx)).autoDispatchEnabled) return 0;
       const queue = await tx.$queryRaw<{ id: string }[]>`
         SELECT t.id FROM tickets t
           LEFT JOIN LATERAL (

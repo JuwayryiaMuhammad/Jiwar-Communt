@@ -4,6 +4,7 @@ import { ACCESS_CATALOG, CODE_ACCESS_CATALOG } from './access-catalog';
 import { PermissionsService } from './permissions.service';
 import { RoleProvisioner } from './role-provisioner';
 import { ResourceAccess } from './resource-access';
+import { RoleLifecycle } from './role-lifecycle';
 import { RolesService } from './roles.service';
 import { StaffRecipients } from './staff-recipients';
 
@@ -15,6 +16,7 @@ import { StaffRecipients } from './staff-recipients';
     RoleProvisioner,
     PermissionsService,
     RolesService,
+    RoleLifecycle,
     ResourceAccess,
     StaffRecipients,
   ],
@@ -25,6 +27,7 @@ import { StaffRecipients } from './staff-recipients';
     RoleProvisioner,
     PermissionsService,
     RolesService,
+    RoleLifecycle,
   ],
 })
 export class AccessModule {}

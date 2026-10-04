@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ACCESS_CATALOG, type AccessCatalog } from '../access/access-catalog';
+import { RoleLifecycle } from '../access/role-lifecycle';
 import { AuditService } from '../audit/audit.service';
 import { diffChanges } from '../audit/diff';
 import { newId } from '../common/uuid';
@@ -39,6 +40,7 @@ export class PermissionSyncService {
     private readonly globalDb: GlobalDbService,
     private readonly tenantTx: TenantTx,
     private readonly audit: AuditService,
+    private readonly lifecycle: RoleLifecycle,
   ) {}
 
   /** roleId → sorted permissions, inside the sync transaction. */
@@ -92,6 +94,15 @@ export class PermissionSyncService {
           where: { id: roleId },
           data: { permissionsVersion: { increment: 1 } },
         });
+        // The domains react, like after a manager's edit (ADR 0033).
+        const had = new Set(before.get(roleId) ?? []);
+        const has = new Set(after.get(roleId) ?? []);
+        await this.lifecycle.permissionsChanged(
+          tx,
+          roleId,
+          [...has].filter((p) => !had.has(p)),
+          [...had].filter((p) => !has.has(p)),
+        );
         // Actor is `system`: the sync runs with no account in context.
         await this.audit.record(tx, {
           action: 'role.permissions_synced',

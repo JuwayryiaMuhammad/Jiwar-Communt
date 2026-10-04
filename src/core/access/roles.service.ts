@@ -7,6 +7,7 @@ import { appError, ErrorCode } from '../common/errors';
 import { PrismaService } from '../database/prisma.service';
 import { TenantTx } from '../database/tenant-tx.service';
 import { ACCESS_CATALOG, type AccessCatalog } from './access-catalog';
+import { RoleLifecycle } from './role-lifecycle';
 
 /** Service-level shape; HTTP responses map it through views/ (ADR 0025). */
 export interface RoleWithPermissions {
@@ -31,6 +32,7 @@ export class RolesService {
     private readonly ctx: RequestContext,
     @Inject(ACCESS_CATALOG) private readonly catalog: AccessCatalog,
     private readonly audit: AuditService,
+    private readonly lifecycle: RoleLifecycle,
   ) {}
 
   async list(): Promise<RoleWithPermissions[]> {
@@ -121,6 +123,9 @@ export class RolesService {
         data: { permissionsVersion: { increment: 1 } },
         include: { permissions: { select: { permission: true } } },
       });
+      // The domains react in this transaction, after the writes (a technician
+      // whose role loses tickets.work releases their tickets, ADR 0033).
+      await this.lifecycle.permissionsChanged(tx, roleId, toAdd, toRemove);
       await this.audit.record(tx, {
         action: 'role.permissions_replaced',
         targetId: roleId,

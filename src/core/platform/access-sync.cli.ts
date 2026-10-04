@@ -8,6 +8,7 @@ import {
   CODE_ACCESS_CATALOG,
   catalogProblems,
 } from '../access/access-catalog';
+import { RoleLifecycle } from '../access/role-lifecycle';
 import { AuditModule } from '../audit/audit.module';
 import { validateEnv } from '../config/env.schema';
 import { DatabaseModule } from '../database/database.module';
@@ -32,6 +33,8 @@ import { PermissionSyncService } from './permission-sync.service';
   providers: [
     { provide: ACCESS_CATALOG, useValue: CODE_ACCESS_CATALOG },
     PermissionSyncService,
+    // This process boots core only: no domain registers a handler here.
+    RoleLifecycle,
   ],
 })
 class AccessSyncCliModule {}

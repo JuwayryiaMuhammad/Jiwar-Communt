@@ -4,6 +4,7 @@ import {
   catalogProblems,
   type AccessCatalog,
 } from '../../src/core/access/access-catalog';
+import { RoleLifecycle } from '../../src/core/access/role-lifecycle';
 import { RoleProvisioner } from '../../src/core/access/role-provisioner';
 import { newId } from '../../src/core/common/uuid';
 import { PermissionSyncService } from '../../src/core/platform/permission-sync.service';
@@ -84,12 +85,17 @@ describe('Permission sync', () => {
     };
   })();
 
-  const sync = (catalog: AccessCatalog, tenantId: string) =>
+  const sync = (
+    catalog: AccessCatalog,
+    tenantId: string,
+    lifecycle = new RoleLifecycle(),
+  ) =>
     new PermissionSyncService(
       catalog,
       h.globalDb,
       h.tenantTx,
       h.audit,
+      lifecycle,
     ).syncTenant(tenantId);
 
   async function role(tenantId: string, key: string) {
@@ -512,6 +518,27 @@ describe('Permission sync', () => {
     expect(manager.permissions).not.toContain('accounts.read');
     expect(manager.version).toBe(before.version + 1);
     expect((await catalogOf(t)).has('accounts.read')).toBe(false);
+  });
+
+  it('tells the domains what each role gained and lost, in the sync’s transaction (ADR 0033)', async () => {
+    const t = await createTenant(h, 'Sync hook');
+    const manager = await role(t, 'manager');
+    const calls: { roleId: string; added: string[]; removed: string[] }[] = [];
+    const lifecycle = new RoleLifecycle();
+    lifecycle.onPermissionsChanged((_tx, roleId, added, removed) => {
+      calls.push({ roleId, added: [...added], removed: [...removed] });
+      return Promise.resolve();
+    });
+    await sync(retired, t, lifecycle);
+    // Every default role that held accounts.read lost it; none gained anything.
+    expect(calls.length).toBeGreaterThan(0);
+    expect(calls.every((c) => c.removed.join() === 'accounts.read')).toBe(true);
+    expect(calls.every((c) => c.added.length === 0)).toBe(true);
+    expect(calls.map((c) => c.roleId)).toContain(manager.id);
+    // A second run changes nothing, so tells nobody.
+    calls.length = 0;
+    await sync(retired, t, lifecycle);
+    expect(calls).toEqual([]);
   });
 
   it('a rollback leaves unknown permissions alone, and a roll-forward does not re-grant them', async () => {

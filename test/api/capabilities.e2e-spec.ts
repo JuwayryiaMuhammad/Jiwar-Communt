@@ -134,6 +134,7 @@ describe('API v0 — capabilities drive access', () => {
       visitorsInvite: false,
       gateEntry: false,
       visitConsent: false,
+      parcels: false,
       tickets: false,
     });
   });
@@ -149,6 +150,7 @@ describe('API v0 — capabilities drive access', () => {
       visitorsInvite: true,
       gateEntry: true,
       visitConsent: true,
+      parcels: true,
       tickets: true,
     });
   });
@@ -164,6 +166,7 @@ describe('API v0 — capabilities drive access', () => {
       visitorsInvite: true,
       gateEntry: true,
       visitConsent: true,
+      parcels: true,
       tickets: true,
     });
   });
@@ -196,6 +199,7 @@ describe('API v0 — capabilities drive access', () => {
       // and maintenance goes on (ADR 0021).
       gateEntry: true,
       visitConsent: true,
+      parcels: true,
       tickets: true,
     });
     await check(

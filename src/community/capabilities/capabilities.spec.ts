@@ -324,4 +324,46 @@ describe('capabilitiesFor', () => {
       expect(consent(occ({ resides: false }), state)).toBe(false);
     }
   });
+
+  it('parcels (ADR 0035): residing adults, per capacity — the same people as gateEntry, through every review', () => {
+    const parcels = (s: Subject, state: UnitState = OPEN) =>
+      capabilitiesFor(s, state).parcels;
+    // Primary, owner-resident, tenant, a residing adult member with an account.
+    expect(parcels(occ({ isPrimary: true }))).toBe(true);
+    expect(parcels(occ())).toBe(true);
+    expect(parcels(occ({ occupancyType: 'tenant' }))).toBe(true);
+    expect(parcels(member())).toBe(true);
+    // Never a landlord or a non-residing owner, an ended occupancy, a member
+    // who is pending, removed, a minor or without an account, a registration.
+    expect(parcels(occ({ resides: false }))).toBe(false);
+    expect(parcels(occ({ status: 'ended' }))).toBe(false);
+    expect(parcels(member({ status: 'pending_approval' }))).toBe(false);
+    expect(parcels(member({ status: 'removed' }))).toBe(false);
+    expect(parcels(member({ isMinor: true, hasAccount: false }))).toBe(false);
+    expect(parcels(member({ hasAccount: false }))).toBe(false);
+    expect(parcels({ kind: 'registration', status: 'pending' })).toBe(false);
+    for (const reason of [
+      'primary_deceased',
+      'separation',
+      'primary_left',
+      'primary_frozen',
+    ] as const) {
+      const state: UnitState = { closed: false, reviewReasons: [reason] };
+      expect(parcels(occ(), state)).toBe(true);
+      expect(parcels(member(), state)).toBe(true);
+      expect(parcels(occ({ resides: false }), state)).toBe(false);
+    }
+    // Same people as gateEntry, today and as a guard against drift.
+    for (const s of [
+      occ(),
+      occ({ resides: false }),
+      occ({ status: 'ended' }),
+      member(),
+      member({ isMinor: true, hasAccount: false }),
+      member({ status: 'removed' }),
+    ])
+      expect(capabilitiesFor(s, OPEN).parcels).toBe(
+        capabilitiesFor(s, OPEN).gateEntry,
+      );
+  });
 });

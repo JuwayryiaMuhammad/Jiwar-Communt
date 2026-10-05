@@ -80,6 +80,13 @@ export interface Capabilities {
    * refused). Like gateEntry, no review takes it away.
    */
   visitConsent: boolean;
+  /**
+   * Receives parcels for this unit and may collect, reject or delegate them
+   * (ADR 0035): a residing occupant or an active adult member with an
+   * account. Never a landlord or non-residing owner, a pending or removed
+   * member, a minor or an ended occupancy. A review does not take it away.
+   */
+  parcels: boolean;
 
   financeView: boolean;
   financePay: boolean;
@@ -125,6 +132,7 @@ export const NONE: Capabilities = Object.freeze({
   unitSecurity: false,
   gateEntry: false,
   visitConsent: false,
+  parcels: false,
   financeView: false,
   financePay: false,
   financeCapPerOperation: null,
@@ -199,6 +207,7 @@ function occupancy(
     unitSecurity: daily,
     gateEntry: daily,
     visitConsent: daily,
+    parcels: daily,
     financeView: true,
     financePay: true,
     landlordTenantFinance: landlord,
@@ -236,6 +245,7 @@ function member(m: Extract<Subject, { kind: 'member' }>): Capabilities {
     unitSecurity: has('unit_security'),
     gateEntry: true,
     visitConsent: true,
+    parcels: true,
     financeView: finance !== undefined,
     financePay: finance !== undefined,
     financeCapPerOperation: finance?.capPerOperation ?? null,

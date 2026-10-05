@@ -3602,6 +3602,7 @@ export interface components {
             householdView: boolean;
             landlordTenantFinance: boolean;
             ownershipCard: boolean;
+            parcels: boolean;
             removeOccupant: boolean;
             tickets: boolean;
             transferOwnership: boolean;

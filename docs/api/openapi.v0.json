@@ -669,6 +669,9 @@
           "ownershipCard": {
             "type": "boolean"
           },
+          "parcels": {
+            "type": "boolean"
+          },
           "removeOccupant": {
             "type": "boolean"
           },
@@ -711,6 +714,7 @@
           "unitSecurity",
           "gateEntry",
           "visitConsent",
+          "parcels",
           "financeView",
           "financePay",
           "financeCapPerOperation",

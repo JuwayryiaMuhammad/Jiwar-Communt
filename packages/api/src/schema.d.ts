@@ -532,6 +532,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/parcels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GateParcelsController_list"];
+        put?: never;
+        post: operations["GateParcelsController_receive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/parcels/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GateParcelsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/shifts/current": {
         parameters: {
             query?: never;
@@ -4386,6 +4418,53 @@ export interface components {
         };
         /** @enum {string} */
         GateKind: "pedestrian" | "vehicle" | "mixed";
+        GateParcelDetailView: {
+            carrier: components["schemas"]["ParcelCarrier"];
+            events: components["schemas"]["ParcelEventView"][];
+            /** Format: date-time */
+            handedOverAt: string | null;
+            handoverPhoto: components["schemas"]["PresignedReadView"] | null;
+            /** @description False once the photo is deleted (30 days after it closed). */
+            hasPhoto: boolean;
+            /** Format: uuid */
+            id: string;
+            /** @description The compound’s running number. */
+            number: number;
+            photo: components["schemas"]["PresignedReadView"] | null;
+            pieces: number;
+            /** Format: date-time */
+            receivedAt: string;
+            /** Format: date-time */
+            rejectedAt: string | null;
+            /** Format: date-time */
+            returnedAt: string | null;
+            status: components["schemas"]["ParcelStatus"];
+            unitCode: string;
+        };
+        GateParcelView: {
+            carrier: components["schemas"]["ParcelCarrier"];
+            /** Format: date-time */
+            handedOverAt: string | null;
+            /** @description False once the photo is deleted (30 days after it closed). */
+            hasPhoto: boolean;
+            /** Format: uuid */
+            id: string;
+            /** @description The compound’s running number. */
+            number: number;
+            pieces: number;
+            /** Format: date-time */
+            receivedAt: string;
+            /** Format: date-time */
+            rejectedAt: string | null;
+            /** Format: date-time */
+            returnedAt: string | null;
+            status: components["schemas"]["ParcelStatus"];
+            unitCode: string;
+        };
+        GateParcelViewList: {
+            data: components["schemas"]["GateParcelView"][];
+            nextCursor: string | null;
+        };
         /** @enum {string} */
         GateRequestKind: "uninvited_visitor" | "delivery" | "worker_off_schedule";
         /** @enum {string} */
@@ -4912,6 +4991,28 @@ export interface components {
             /** @description Single use, short-lived. Exchange it with POST /auth/select-account. */
             loginTicket: string;
         };
+        /** @enum {string} */
+        ParcelActorSide: "guard" | "resident" | "system";
+        /** @enum {string} */
+        ParcelCarrier: "aramex" | "dhl" | "fedex" | "ups" | "bosta" | "mylerz" | "egypt_post" | "amazon" | "noon" | "jumia" | "talabat" | "other";
+        /** @enum {string} */
+        ParcelEventKind: "received" | "delegate_authorized" | "delegate_revoked" | "handed_over" | "rejected" | "returned";
+        ParcelEventView: {
+            actorSide: components["schemas"]["ParcelActorSide"];
+            /** Format: date-time */
+            at: string;
+            kind: components["schemas"]["ParcelEventKind"];
+            /** @description A hand-over only. */
+            method: components["schemas"]["ParcelMethod"] | null;
+            reasonCode: string | null;
+        };
+        /**
+         * @description A hand-over only.
+         * @enum {string}
+         */
+        ParcelMethod: "code" | "resident_qr" | "delegate";
+        /** @enum {string} */
+        ParcelStatus: "held" | "handed_over" | "rejected" | "returned";
         PassView: {
             /** Format: date-time */
             createdAt: string;
@@ -5102,6 +5203,19 @@ export interface components {
             reasonCode: string;
             /** Format: uuid */
             technicianId: string;
+        };
+        ReceiveParcelDto: {
+            carrier: components["schemas"]["ParcelCarrier"];
+            /** @description The recipient as printed on the label. Only the unit’s residents read it back; the guard and the managers never do. */
+            labelName?: string;
+            /**
+             * Format: uuid
+             * @description A finalized `parcel_photo` of the caller's; it moves to the parcel.
+             */
+            photoFileId: string;
+            pieces: number;
+            /** @description The unit the parcel is for. */
+            unitCode: string;
         };
         RecordEntryDto: {
             direction: components["schemas"]["GateDirection"];
@@ -7126,6 +7240,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InsideViewList"];
+                };
+            };
+        };
+    };
+    GateParcelsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description Default: held and rejected. */
+                status?: components["schemas"]["ParcelStatus"];
+                unitCode?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateParcelViewList"];
+                };
+            };
+        };
+    };
+    GateParcelsController_receive: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReceiveParcelDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateParcelView"];
+                };
+            };
+        };
+    };
+    GateParcelsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateParcelDetailView"];
                 };
             };
         };

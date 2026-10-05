@@ -211,4 +211,9 @@ export const REASON_CODES = {
     'sla_disabled',
     'new_cycle',
   ],
+  // Parcels (ADR 0035). A resident's "not mine", the system's end of a
+  // delegate, and why a parcel went back to the carrier (derived).
+  parcelReject: ['not_ours', 'not_expected', 'other'],
+  parcelDelegateEnd: ['revoked', 'authorizer_left'],
+  parcelReturn: ['rejected', 'unclaimed'],
 } as const;

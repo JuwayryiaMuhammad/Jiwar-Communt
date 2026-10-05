@@ -3425,6 +3425,190 @@
         ],
         "type": "string"
       },
+      "GateParcelDetailView": {
+        "properties": {
+          "carrier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelCarrier"
+              }
+            ]
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/ParcelEventView"
+            },
+            "type": "array"
+          },
+          "handedOverAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "handoverPhoto": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "hasPhoto": {
+            "description": "False once the photo is deleted (30 days after it closed).",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "description": "The compound’s running number.",
+            "type": "number"
+          },
+          "photo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "pieces": {
+            "type": "number"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "rejectedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "returnedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitCode",
+          "carrier",
+          "pieces",
+          "status",
+          "receivedAt",
+          "handedOverAt",
+          "rejectedAt",
+          "returnedAt",
+          "hasPhoto",
+          "photo",
+          "handoverPhoto",
+          "events"
+        ],
+        "type": "object"
+      },
+      "GateParcelView": {
+        "properties": {
+          "carrier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelCarrier"
+              }
+            ]
+          },
+          "handedOverAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "hasPhoto": {
+            "description": "False once the photo is deleted (30 days after it closed).",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "description": "The compound’s running number.",
+            "type": "number"
+          },
+          "pieces": {
+            "type": "number"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "rejectedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "returnedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitCode",
+          "carrier",
+          "pieces",
+          "status",
+          "receivedAt",
+          "handedOverAt",
+          "rejectedAt",
+          "returnedAt",
+          "hasPhoto"
+        ],
+        "type": "object"
+      },
+      "GateParcelViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GateParcelView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "GateRequestKind": {
         "enum": [
           "uninvited_visitor",
@@ -5267,6 +5451,103 @@
         ],
         "type": "object"
       },
+      "ParcelActorSide": {
+        "enum": [
+          "guard",
+          "resident",
+          "system"
+        ],
+        "type": "string"
+      },
+      "ParcelCarrier": {
+        "enum": [
+          "aramex",
+          "dhl",
+          "fedex",
+          "ups",
+          "bosta",
+          "mylerz",
+          "egypt_post",
+          "amazon",
+          "noon",
+          "jumia",
+          "talabat",
+          "other"
+        ],
+        "type": "string"
+      },
+      "ParcelEventKind": {
+        "enum": [
+          "received",
+          "delegate_authorized",
+          "delegate_revoked",
+          "handed_over",
+          "rejected",
+          "returned"
+        ],
+        "type": "string"
+      },
+      "ParcelEventView": {
+        "properties": {
+          "actorSide": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelActorSide"
+              }
+            ]
+          },
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelEventKind"
+              }
+            ]
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelMethod"
+              }
+            ],
+            "description": "A hand-over only.",
+            "nullable": true
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "actorSide",
+          "method",
+          "reasonCode",
+          "at"
+        ],
+        "type": "object"
+      },
+      "ParcelMethod": {
+        "description": "A hand-over only.",
+        "enum": [
+          "code",
+          "resident_qr",
+          "delegate"
+        ],
+        "type": "string"
+      },
+      "ParcelStatus": {
+        "enum": [
+          "held",
+          "handed_over",
+          "rejected",
+          "returned"
+        ],
+        "type": "string"
+      },
       "PassView": {
         "properties": {
           "createdAt": {
@@ -5949,6 +6230,43 @@
         "required": [
           "technicianId",
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "ReceiveParcelDto": {
+        "properties": {
+          "carrier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelCarrier"
+              }
+            ]
+          },
+          "labelName": {
+            "description": "The recipient as printed on the label. Only the unit’s residents read it back; the guard and the managers never do.",
+            "maxLength": 80,
+            "type": "string"
+          },
+          "photoFileId": {
+            "description": "A finalized `parcel_photo` of the caller's; it moves to the parcel.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "pieces": {
+            "maximum": 20,
+            "minimum": 1,
+            "type": "number"
+          },
+          "unitCode": {
+            "description": "The unit the parcel is for.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitCode",
+          "carrier",
+          "pieces",
+          "photoFileId"
         ],
         "type": "object"
       },
@@ -11616,6 +11934,153 @@
         "tags": [
           "gate"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/parcels": {
+      "get": {
+        "operationId": "GateParcelsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "Default: held and rejected.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ParcelStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitCode",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateParcelViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "parcels"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "GateParcelsController_receive",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReceiveParcelDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateParcelView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "parcels"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/parcels/{id}": {
+      "get": {
+        "operationId": "GateParcelsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateParcelDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "parcels"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

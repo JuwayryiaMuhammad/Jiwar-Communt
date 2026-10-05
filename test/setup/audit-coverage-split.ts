@@ -122,3 +122,6 @@ export const MAINTENANCE_COVERAGE: readonly string[] = [
   'ticket_category.sla_targets_changed',
   'ticket.category_changed',
 ];
+
+/** Parcels (ADR 0035), covered by test/parcels/audit-coverage.e2e-spec.ts. */
+export const PARCELS_COVERAGE: readonly string[] = ['parcel.received'];

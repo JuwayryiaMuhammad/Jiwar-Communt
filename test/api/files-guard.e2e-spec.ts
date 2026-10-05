@@ -3,6 +3,7 @@ import { newId } from '../../src/core/common/uuid';
 import { fileHelpers } from '../setup/files';
 import { gateHelpers } from '../setup/gate';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { parcelHelpers } from '../setup/parcels';
 import { call } from './request';
 import { buildWorld, type World } from './world';
 
@@ -104,6 +105,36 @@ describe('API v0 — the guard and the files routes (ADR 0029, 0035)', () => {
     expect((await read(otherGuard, theirs)).status).toBe(200);
     expect((await finalize(otherGuard, pending)).status).toBe(200);
     expect((await remove(otherGuard, theirs)).status).toBe(204);
+  });
+
+  it('an attached parcel_photo has no owner: not even the guard who took it reaches it', async () => {
+    const guard = await parcelHelpers(h).guardOnDuty(w.a);
+    const unit = await w.helpers.unit(w.a);
+    const res = await parcelHelpers(h).receive(guard.token, unit.code);
+    expect(res.status).toBe(201);
+    const parcel = await w.helpers.asManager(w.a, () =>
+      w.helpers.prisma.tenant.parcel.findUniqueOrThrow({
+        where: { id: (res.body as { id: string }).id },
+      }),
+    );
+    const id = parcel.photoFileId!;
+    expect(await row(id)).toMatchObject({
+      ownerAccountId: null,
+      purpose: 'parcel_photo',
+    });
+    // The guard who received it, another guard, and the world's guard.
+    const other = await parcelHelpers(h).guardOnDuty(w.a);
+    for (const token of [guard.token, other.token, w.a.tokens.guard])
+      for (const [name, r] of [
+        ['finalize', await finalize(token, id)],
+        ['read', await read(token, id)],
+        ['delete', await remove(token, id)],
+      ] as const)
+        expect([name, outcome(r)]).toEqual([
+          name,
+          { status: 404, code: 'FILE_NOT_FOUND' },
+        ]);
+    expect(await row(id)).toMatchObject({ deletedAt: null });
   });
 
   it('a guard without parcels.handle is refused at the route on all four files routes', async () => {

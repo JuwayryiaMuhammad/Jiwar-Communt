@@ -15,6 +15,7 @@ import { WorkService } from '../../src/maintenance/tickets/work.service';
 import { VisitConsentService } from '../../src/maintenance/visits/visit-consent.service';
 import { VisitsService } from '../../src/maintenance/visits/visits.service';
 import { gateHelpers } from '../setup/gate';
+import { parcelHelpers } from '../setup/parcels';
 import { fileHelpers } from '../setup/files';
 import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
 import {
@@ -254,6 +255,19 @@ describe('API v0 — PII leak scan', () => {
         visitorName: 'PII-ASKED-name',
       }),
     );
+    // A parcel for the unit (ADR 0035): the label's name is for the unit's
+    // residents alone, and the guard sees no code.
+    const parcelRes = await parcelHelpers(h).receive(a.tokens.guard, unitCode, {
+      labelName: 'PII-PARCEL-label',
+    });
+    if (parcelRes.status !== 201)
+      throw new Error(`parcel: ${parcelRes.status} ${parcelRes.text}`);
+    const parcel = parcelRes.body as { id: string };
+    const parcelPhotoId = (
+      await manager(() =>
+        c.prisma.tenant.parcel.findUniqueOrThrow({ where: { id: parcel.id } }),
+      )
+    ).photoFileId!;
     const people = [primary, landlord, tenant, family, leaving, ender, worker];
     // A resident's entry secret (ADR 0031): shown once, in no GET.
     const entry = (
@@ -447,6 +461,7 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/visitor-passes': unit.id,
       '/units/{unitId}/gate-instructions': unit.id,
       '/gate/approval-requests/{id}': asked.id,
+      '/gate/parcels/{id}': parcel.id,
       '/me/units/{unitId}/capabilities': unit.id,
       '/me/units/{unitId}/permissions': unit.id,
       '/residents/{id}': primary.id,
@@ -644,6 +659,10 @@ describe('API v0 — PII leak scan', () => {
         ]),
       ],
     ];
+    fileViews.push([
+      `t/${a.tenantId}/${parcelPhotoId}`,
+      new Set(['guard /gate/parcels/{id}']),
+    ]);
     for (const [fileKey, views] of fileViews) {
       for (const [key, text] of seen) {
         if (!views.has(key) && text.includes(fileKey))
@@ -663,6 +682,11 @@ describe('API v0 — PII leak scan', () => {
     expect(seen.get('resident /me/entry-credentials')).toContain(
       'PII-DEVICE-name',
     );
+
+    // The label's name (ADR 0035): no response carries it yet.
+    for (const [key, text] of seen)
+      if (text.includes('PII-PARCEL-label')) leaks.push(`${key}: label name`);
+    expect(leaks).toEqual([]);
 
     // The visitor's name: its host sees it, nobody else does.
     for (const [key, text] of seen) {

@@ -19,6 +19,7 @@ import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
 import { VisitsService } from '../../src/maintenance/visits/visits.service';
 import { communityHelpers, type Compound } from '../setup/community';
 import { fileHelpers } from '../setup/files';
+import { parcelHelpers } from '../setup/parcels';
 import { gateHelpers } from '../setup/gate';
 import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
 import {
@@ -105,6 +106,9 @@ export interface World {
   bPassId: string;
   /** A pending gate request for B's home, from B's guard. */
   bRequestId: string;
+  /** A held parcel for B's home, and that unit's code (ADR 0035). */
+  bParcelId: string;
+  bUnitCode: string;
   /** A finalized worker photo uploaded by B's owner (ADR 0029). */
   bFileId: string;
   /** A phone B's owner registered for the entry QR (ADR 0031). */
@@ -382,6 +386,18 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
         ).code,
       }),
   );
+  const bUnitCode = (
+    await helpers.asManager(b, () =>
+      helpers.prisma.tenant.unit.findUniqueOrThrow({
+        where: { id: b.homeUnitId },
+      }),
+    )
+  ).code;
+  const bParcel = await parcelHelpers(h).receive(b.tokens.guard, bUnitCode);
+  if (bParcel.status !== 201)
+    throw new Error(
+      `B's parcel: ${bParcel.status} ${JSON.stringify(bParcel.body)}`,
+    );
   const bFileId = await fileHelpers(h).ready(b.tokens.owner);
   const bEntryCredential = await h
     .http()
@@ -440,6 +456,8 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bVisitId: bVisit.id,
     bUnitId: b.homeUnitId,
     aCategoryId: aCategory.id,
+    bParcelId: (bParcel.body as { id: string }).id,
+    bUnitCode,
     bFileId,
     bEntryCredentialId: (bEntryCredential.body as { id: string }).id,
     bRequestId: bRequest.id,

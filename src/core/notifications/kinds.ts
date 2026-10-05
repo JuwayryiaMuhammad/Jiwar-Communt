@@ -291,6 +291,23 @@ export const NOTIFICATION_KINDS = {
       categoryKey: {},
     },
   },
+  // --------------------------------------------------------------------------
+  // Parcels (ADR 0035). The carrier, the pieces, the unit, the parcel number
+  // and a time: never a name (the label's, a delegate's) and never a code,
+  // which the resident reads from the parcel in a no-store response.
+  // --------------------------------------------------------------------------
+  /** A parcel is at the gate for your unit (every eligible occupant). */
+  'parcel.arrived': {
+    priority: 'normal',
+    target: 'parcel',
+    params: { carrier: {}, pieces: {}, receivedAt: {}, unitCode: {} },
+  },
+  /** A parcel arrived for a unit nobody can collect for (the managers, once). */
+  'parcel.unclaimable': {
+    priority: 'normal',
+    target: 'parcel',
+    params: { parcelNumber: {}, unitCode: {}, carrier: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

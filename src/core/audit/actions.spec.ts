@@ -61,6 +61,7 @@ describe('audit catalog', () => {
         'ticket_category',
         'ticket',
         'specialty',
+        'parcel',
       ]).toContain(def.target);
     }
   });

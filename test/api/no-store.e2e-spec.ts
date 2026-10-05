@@ -3,6 +3,7 @@ import { newId } from '../../src/core/common/uuid';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { hashPassword } from '../../src/core/platform/password';
 import { fileHelpers } from '../setup/files';
+import { parcelHelpers } from '../setup/parcels';
 import { bornYearsAgo, uniqueSuffix } from '../setup/fixtures';
 import {
   createHttpHarness,
@@ -43,6 +44,13 @@ describe('API v0 — no-store', () => {
       token: w.a.tokens.owner,
       body: ticketBody(w.a.homeUnitId, w.aCategoryId),
     }).expect(201);
+    return body<{ id: string }>(res).id;
+  }
+
+  /** A parcel the guard received for A's home. */
+  async function aParcel(): Promise<string> {
+    const unit = await w.helpers.unitRow(w.a, w.a.homeUnitId);
+    const res = await parcelHelpers(h).receive(w.a.tokens.guard, unit.code);
     return body<{ id: string }>(res).id;
   }
 
@@ -326,6 +334,10 @@ describe('API v0 — no-store', () => {
     'GET /files/{id}': async () =>
       call(w, 'GET', `/files/${await fileHelpers(h).ready(w.a.tokens.owner)}`, {
         token: w.a.tokens.owner,
+      }), // A parcel's photos, as short-lived URLs (ADR 0035).
+    'GET /gate/parcels/{id}': async () =>
+      call(w, 'GET', `/gate/parcels/${await aParcel()}`, {
+        token: w.a.tokens.guard,
       }),
   };
 

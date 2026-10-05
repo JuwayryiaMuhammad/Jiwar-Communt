@@ -132,6 +132,18 @@ export const ErrorCode = {
   GATE_REQUEST_DECIDED: 'GATE_REQUEST_DECIDED',
   /** The worker may come in on their schedule: nothing to ask. */
   GATE_REQUEST_NOT_NEEDED: 'GATE_REQUEST_NOT_NEEDED',
+  // parcels (ADR 0035)
+  /** Unknown, another compound's, or not the caller's to see: one answer. */
+  PARCEL_NOT_FOUND: 'PARCEL_NOT_FOUND',
+  /** An unknown, dead or foreign code or QR: one answer, whatever was wrong. */
+  PARCEL_CODE_INVALID: 'PARCEL_CODE_INVALID',
+  /** A genuine resident QR whose time has passed (ADR 0031's expired_qr). */
+  PARCEL_QR_EXPIRED: 'PARCEL_QR_EXPIRED',
+  /** The parcel is not in a status that allows this (params.status). */
+  PARCEL_STATE_CONFLICT: 'PARCEL_STATE_CONFLICT',
+  PARCEL_DELEGATE_EXISTS: 'PARCEL_DELEGATE_EXISTS',
+  /** An unclaimed parcel may be returned only after the manager days. */
+  PARCEL_NOT_YET_RETURNABLE: 'PARCEL_NOT_YET_RETURNABLE',
   // files (ADR 0029)
   /** The object store failed or is unreachable (503). */
   STORAGE_UNAVAILABLE: 'STORAGE_UNAVAILABLE',

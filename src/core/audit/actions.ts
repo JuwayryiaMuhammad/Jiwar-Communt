@@ -226,6 +226,9 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'ticket_category',
   },
+  // parcels (ADR 0035). Ids, carrier, pieces, a reason code or a method:
+  // never a name (the label's, a delegate's), a code, a token or a file id.
+  'parcel.received': { log: 'tenant', target: 'parcel' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

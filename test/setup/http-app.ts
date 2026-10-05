@@ -14,7 +14,7 @@ import type { AccessTokenClaims } from '../../src/core/common/guards/access-toke
 import { newId } from '../../src/core/common/uuid';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
-import { RoleProvisioner } from '../../src/core/access/role-provisioner';
+import { TenantsService } from '../../src/core/platform/tenants.service';
 import { nationalIdFor, uniquePhone, uniqueSuffix } from './fixtures';
 
 export const API = '/api/v1';
@@ -58,20 +58,23 @@ export async function createHttpHarness(
   const cls = moduleRef.get<ClsService<AppClsStore>>(ClsService);
   const jwt = moduleRef.get(JwtService);
   const tenantTx = moduleRef.get(TenantTx);
-  const provisioner = moduleRef.get(RoleProvisioner);
+  const tenants = moduleRef.get(TenantsService);
 
   return {
     app,
     moduleRef,
     http: () => request(app.getHttpServer() as Server),
+    // The row and everything a real compound gets (roles, settings, the
+    // domains' defaults through TenantLifecycle), in one transaction, the
+    // way TenantsService creates one; without its first manager or the
+    // platform audit entry, which each test adds as it needs.
     async createTenant(name) {
       const tenant = { id: newId(), name: `${name} ${uniqueSuffix()}` };
-      await globalDb.tenant.create({ data: tenant });
       await cls.run(async () => {
         cls.set('tenantId', tenant.id);
         await tenantTx.withTenantTx(async (tx) => {
-          await provisioner.provision(tx, tenant.id);
-          await tx.tenantSettings.create({ data: { tenantId: tenant.id } });
+          await globalDb.in(tx).tenant.create({ data: tenant });
+          await tenants.provision(tx, tenant.id);
         });
       });
       return tenant;

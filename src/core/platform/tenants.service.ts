@@ -11,7 +11,7 @@ import { appError, ErrorCode, FieldErrorCode } from '../common/errors';
 import type { IdentityDocumentInput } from '../common/identity-document';
 import { newId } from '../common/uuid';
 import { GlobalDbService } from '../database/global-db.service';
-import { TenantTx } from '../database/tenant-tx.service';
+import { TenantTx, type TenantTxClient } from '../database/tenant-tx.service';
 import { TenantSettingsService } from '../tenant-settings/tenant-settings.service';
 import { TenantLifecycle } from '../tenant-settings/tenant-lifecycle';
 
@@ -105,10 +105,7 @@ export class TenantsService {
       const tenant = await this.globalDb
         .in(tx)
         .tenant.create({ data: { id, name } });
-      await this.provisioner.provision(tx, id);
-      await this.settings.create(tx, id);
-      // The domains' own defaults (maintenance categories, ADR 0032).
-      await this.lifecycle.tenantCreated(tx, id);
+      await this.provision(tx, id);
       await this.platformAudit.record(tx, {
         action: 'tenant.created',
         targetId: id,
@@ -126,6 +123,19 @@ export class TenantsService {
       });
       return { ...summary(tenant), managers: [pickManager(manager)] };
     });
+  }
+
+  /**
+   * What every new compound gets, in the transaction that creates its row:
+   * its default roles and permissions (ADR 0010), its settings (ADR 0016)
+   * and the domains' own defaults (TenantLifecycle: maintenance's
+   * categories and dispatch settings, ADR 0032, 0033). The test harness
+   * builds its compounds with this too, so they are never missing a part.
+   */
+  async provision(tx: TenantTxClient, id: string): Promise<void> {
+    await this.provisioner.provision(tx, id);
+    await this.settings.create(tx, id);
+    await this.lifecycle.tenantCreated(tx, id);
   }
 
   /** Newest first, a page at a time. */

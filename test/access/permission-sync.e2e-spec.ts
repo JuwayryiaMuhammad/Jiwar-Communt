@@ -9,7 +9,7 @@ import { RoleProvisioner } from '../../src/core/access/role-provisioner';
 import { newId } from '../../src/core/common/uuid';
 import { PermissionSyncService } from '../../src/core/platform/permission-sync.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
-import { createTenant } from '../setup/fixtures';
+import { createTenant, tenantLifecycle } from '../setup/fixtures';
 
 /**
  * `access:sync` against real compounds, with catalogs that simulate future
@@ -211,6 +211,8 @@ describe('Permission sync', () => {
       h.tenantTx.withTenantTx(async (tx) => {
         await new RoleProvisioner(before).provision(tx, t);
         await tx.tenantSettings.create({ data: { tenantId: t } });
+        // The domains' rows, as the migrations' backfills gave it.
+        await tenantLifecycle.tenantCreated(tx, t);
       }),
     );
 
@@ -290,6 +292,8 @@ describe('Permission sync', () => {
       h.tenantTx.withTenantTx(async (tx) => {
         await new RoleProvisioner(before).provision(tx, t);
         await tx.tenantSettings.create({ data: { tenantId: t } });
+        // The domains' rows, as the migrations' backfills gave it.
+        await tenantLifecycle.tenantCreated(tx, t);
       }),
     );
     const residentBefore = await role(t, 'resident');
@@ -339,6 +343,8 @@ describe('Permission sync', () => {
       h.tenantTx.withTenantTx(async (tx) => {
         await new RoleProvisioner(before).provision(tx, t);
         await tx.tenantSettings.create({ data: { tenantId: t } });
+        // The domains' rows, as the migrations' backfills gave it.
+        await tenantLifecycle.tenantCreated(tx, t);
       }),
     );
 
@@ -384,6 +390,8 @@ describe('Permission sync', () => {
       h.tenantTx.withTenantTx(async (tx) => {
         await new RoleProvisioner(before).provision(tx, t);
         await tx.tenantSettings.create({ data: { tenantId: t } });
+        // The domains' rows, as the migrations' backfills gave it.
+        await tenantLifecycle.tenantCreated(tx, t);
       }),
     );
 
@@ -431,6 +439,8 @@ describe('Permission sync', () => {
       h.tenantTx.withTenantTx(async (tx) => {
         await new RoleProvisioner(before).provision(tx, t);
         await tx.tenantSettings.create({ data: { tenantId: t } });
+        // The domains' rows, as the migrations' backfills gave it.
+        await tenantLifecycle.tenantCreated(tx, t);
       }),
     );
 

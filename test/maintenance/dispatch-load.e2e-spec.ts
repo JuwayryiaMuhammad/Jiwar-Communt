@@ -29,20 +29,10 @@ describe('Dispatch — a busy compound', () => {
     await h.close();
   });
 
-  /**
-   * Everything the engine and the sweep log when a decision does not go
-   * through. Not "sweep failed in a compound": the sweep walks every compound
-   * of the shared test database, and the bare ones other suites leave (no
-   * dispatch settings row) fail it by design; a decision of this suite's own
-   * compound that failed is logged as "dispatch failed" or "sweep item
-   * failed", and would leave tickets unassigned below.
-   */
+  /** Everything the engine and the sweeps log when something does not go through. */
   beforeEach(() => {
     problems = [];
-    const note = (message: unknown) => {
-      const text = String(message);
-      if (!text.startsWith('sweep failed in a compound')) problems.push(text);
-    };
+    const note = (message: unknown) => problems.push(String(message));
     jest.spyOn(Logger.prototype, 'error').mockImplementation(note);
     jest.spyOn(Logger.prototype, 'warn').mockImplementation(note);
   });

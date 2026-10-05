@@ -10,7 +10,15 @@ import type { DbHarness } from './db-module';
 import { suiteSequence } from './id-blocks';
 
 const provisioner = new RoleProvisioner(CODE_ACCESS_CATALOG);
-const maintenance = new MaintenanceProvisioning(new TenantLifecycle());
+
+/**
+ * TenantLifecycle wired as the app wires it (each domain registers its
+ * handler in onModuleInit), for harnesses that boot core only: what a new
+ * compound gets from the domains, and what the migrations' backfills gave
+ * every compound that already existed.
+ */
+export const tenantLifecycle = new TenantLifecycle();
+new MaintenanceProvisioning(tenantLifecycle).onModuleInit();
 
 /**
  * Generated phones and national IDs live in a space hand-written test values
@@ -91,7 +99,7 @@ export async function createTenant(
     h.tenantTx.withTenantTx(async (tx) => {
       await provisioner.provision(tx, id);
       await tx.tenantSettings.create({ data: { tenantId: id } });
-      await maintenance.provision(tx, id);
+      await tenantLifecycle.tenantCreated(tx, id);
     }),
   );
   return id;

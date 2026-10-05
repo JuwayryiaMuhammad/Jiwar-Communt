@@ -13,6 +13,7 @@ import { newId } from '../../src/core/common/uuid';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { PrismaService } from '../../src/core/database/prisma.service';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
+import { TenantLifecycle } from '../../src/core/tenant-settings/tenant-lifecycle';
 import { hashPassword } from '../../src/core/platform/password';
 import { PermissionSyncService } from '../../src/core/platform/permission-sync.service';
 import { PlatformAuthService } from '../../src/core/platform/platform-auth.service';
@@ -345,11 +346,11 @@ describe('Audit coverage', () => {
         .tenant.create({ data: { id: tenantId, name: 'Old Compound' } });
       await cls.run(async () => {
         cls.set('tenantId', tenantId);
-        await h.moduleRef
-          .get(TenantTx)
-          .withTenantTx((tx) =>
-            new RoleProvisioner(withoutAudit).provision(tx, tenantId),
-          );
+        await h.moduleRef.get(TenantTx).withTenantTx(async (tx) => {
+          await new RoleProvisioner(withoutAudit).provision(tx, tenantId);
+          // The domains' rows, as the migrations' backfills gave it.
+          await h.moduleRef.get(TenantLifecycle).tenantCreated(tx, tenantId);
+        });
       });
 
       const report = await h.moduleRef

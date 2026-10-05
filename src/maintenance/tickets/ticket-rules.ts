@@ -26,6 +26,7 @@ export type TicketAction =
   | 'autoClose'
   | 'changePriority'
   | 'changeCategory'
+  | 'visit'
   | 'message'
   | 'reportPhoto'
   | 'workPhoto';
@@ -59,6 +60,9 @@ export const ALLOWED_FROM: Record<TicketAction, readonly TicketStatus[]> = {
   changePriority: [...OPEN, 'completed'],
   // ADR 0034: like the priority; the technician keeps the ticket.
   changeCategory: [...OPEN, 'completed'],
+  // ADR 0034: a visit is arranged, changed and made while a technician
+  // holds the ticket.
+  visit: IN_HAND,
   message: [...OPEN, 'completed'],
   reportPhoto: OPEN,
   workPhoto: ['in_progress', 'on_hold'],

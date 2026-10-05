@@ -51,6 +51,15 @@ import { TicketAccess } from './tickets/ticket-access';
 import { TicketLog } from './tickets/ticket-log';
 import { TicketNotices } from './tickets/ticket-notices';
 import { TicketsService } from './tickets/tickets.service';
+import { VisitAccess } from './visits/visit-access';
+import { VisitLog } from './visits/visit-log';
+import {
+  DispatchVisitsController,
+  ResidentVisitsController,
+  TechnicianVisitsController,
+  UnitVisitsController,
+} from './visits/visits.controller';
+import { VisitsService } from './visits/visits.service';
 
 /**
  * The maintenance domain (ADR 0032). It imports core freely and the
@@ -74,6 +83,10 @@ import { TicketsService } from './tickets/tickets.service';
     DispatchSettingsController,
     SlaSettingsController,
     CategorySlaTargetsController,
+    ResidentVisitsController,
+    TechnicianVisitsController,
+    DispatchVisitsController,
+    UnitVisitsController,
   ],
   providers: [
     MaintenanceProvisioning,
@@ -101,6 +114,9 @@ import { TicketsService } from './tickets/tickets.service';
     SlaRecorder,
     SlaService,
     SlaSweep,
+    VisitAccess,
+    VisitLog,
+    VisitsService,
   ],
 })
 export class MaintenanceModule {}

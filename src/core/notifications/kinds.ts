@@ -233,6 +233,39 @@ export const NOTIFICATION_KINDS = {
     target: 'ticket',
     params: { ticketNumber: {}, clock: {} },
   },
+  // A visit (ADR 0034): the ticket number and the window, nothing else —
+  // never the unit's code (a window and a unit say which home is empty
+  // when), never consent or a receiver.
+  /** A window is proposed (to the other side). */
+  'ticket.visit_proposed': {
+    priority: 'normal',
+    target: 'ticket',
+    params: { ticketNumber: {}, startsAt: {}, endsAt: {} },
+  },
+  /** The other side confirmed the window. */
+  'ticket.visit_confirmed': {
+    priority: 'normal',
+    target: 'ticket',
+    params: { ticketNumber: {}, startsAt: {}, endsAt: {} },
+  },
+  /** The visit was cancelled (by a side or by the system). */
+  'ticket.visit_cancelled': {
+    priority: 'normal',
+    target: 'ticket',
+    params: { ticketNumber: {}, startsAt: {}, endsAt: {} },
+  },
+  /** The technician is at the door (the residents). */
+  'ticket.visit_arrived': {
+    priority: 'normal',
+    target: 'ticket',
+    params: { ticketNumber: {}, startsAt: {}, endsAt: {} },
+  },
+  /** Nobody let the technician in: choose a new time (the residents). */
+  'ticket.visit_no_access': {
+    priority: 'normal',
+    target: 'ticket',
+    params: { ticketNumber: {}, startsAt: {}, endsAt: {} },
+  },
   /** A dispatcher corrected the category of the technician's ticket. */
   'ticket.category_changed': {
     priority: 'normal',

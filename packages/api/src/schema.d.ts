@@ -1284,6 +1284,102 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/tickets/{id}/visit-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DispatchVisitsController_events"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/visits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DispatchVisitsController_list"];
+        put?: never;
+        post: operations["DispatchVisitsController_propose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/visits/{visitId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DispatchVisitsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/visits/{visitId}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DispatchVisitsController_confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/visits/{visitId}/counter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DispatchVisitsController_counter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/visits/{visitId}/reschedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DispatchVisitsController_reschedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -1580,6 +1676,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["MeUnitsController_permissionsOn"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/units/{unitId}/visits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["UnitVisitsController_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2292,6 +2404,134 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/technician/tickets/{id}/visits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["TechnicianVisitsController_list"];
+        put?: never;
+        post: operations["TechnicianVisitsController_propose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/visits/{visitId}/arrive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["TechnicianVisitsController_arrive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/visits/{visitId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["TechnicianVisitsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/visits/{visitId}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["TechnicianVisitsController_confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/visits/{visitId}/counter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["TechnicianVisitsController_counter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/visits/{visitId}/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["TechnicianVisitsController_done"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/visits/{visitId}/no-access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["TechnicianVisitsController_noAccess"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/technician/tickets/{id}/visits/{visitId}/reschedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["TechnicianVisitsController_reschedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/ticket-categories": {
         parameters: {
             query?: never;
@@ -2430,6 +2670,86 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["ResidentTicketsController_reopen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{id}/visits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ResidentVisitsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{id}/visits/{visitId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ResidentVisitsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{id}/visits/{visitId}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ResidentVisitsController_confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{id}/visits/{visitId}/counter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ResidentVisitsController_counter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{id}/visits/{visitId}/reschedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ResidentVisitsController_reschedule"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3048,6 +3368,13 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AbsenceEntryView: {
+            /** @description The technician may enter while nobody is home, for this visit only. False unless someone who lives there said so. */
+            approved: boolean;
+            /** Format: date-time */
+            grantedAt: string | null;
+            grantedBy: components["schemas"]["ConsenterView"] | null;
+        };
         AccessCodeView: {
             /** @description 8 digits, shown once. */
             accessCode: string | null;
@@ -3413,6 +3740,19 @@ export interface components {
             comment?: string;
             rating: number;
         };
+        ConsenterView: {
+            /**
+             * @description Present (true) only on an erased account.
+             * @enum {boolean}
+             */
+            erased?: true;
+            /** @description The first word of the name. Absent when erased. */
+            firstName?: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description The reader granted it. */
+            mine: boolean;
+        };
         ContactDto: {
             /** Format: email */
             email?: string;
@@ -3641,6 +3981,12 @@ export interface components {
         };
         /** @enum {string} */
         DeliveryInstruction: "ask" | "allow" | "leave_at_gate" | "deny";
+        DispatchAbsenceEntryView: {
+            approved: boolean;
+            /** Format: date-time */
+            grantedAt: string | null;
+            grantedBy: components["schemas"]["AccountRefView"] | null;
+        };
         DispatchAttemptView: {
             /** Format: date-time */
             at: string;
@@ -3678,6 +4024,12 @@ export interface components {
         };
         /** @enum {string} */
         DispatchOutcome: "assigned" | "no_candidate" | "skipped";
+        DispatchReceiverView: {
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["VisitReceiverKind"];
+        };
         DispatchSettingsResponse: {
             /** @description Off until the manager turns it on. */
             autoDispatchEnabled: boolean;
@@ -3766,6 +4118,42 @@ export interface components {
         };
         /** @enum {string} */
         DispatchTrigger: "created" | "declined" | "available" | "manual" | "sweep" | "role_lost" | "released" | "enabled";
+        DispatchVisitView: {
+            absenceEntry: components["schemas"]["DispatchAbsenceEntryView"];
+            /** Format: date-time */
+            arrivedAt: string | null;
+            cancelReasonCode: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** @description Null for the system. */
+            cancelledBy: components["schemas"]["AccountRefView"] | null;
+            cancelledBySide: components["schemas"]["VisitSide"] | null;
+            /** Format: date-time */
+            confirmedAt: string | null;
+            confirmedBy: components["schemas"]["AccountRefView"] | null;
+            cycle: number;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: date-time */
+            finishedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            lateNotifiedAt: string | null;
+            /** Format: uuid */
+            previousVisitId: string | null;
+            proposedBy: components["schemas"]["AccountRefView"];
+            proposedBySide: components["schemas"]["VisitSide"];
+            receiver: components["schemas"]["DispatchReceiverView"] | null;
+            /** Format: date-time */
+            startsAt: string;
+            status: components["schemas"]["VisitStatus"];
+            technician: components["schemas"]["AccountRefView"];
+        };
+        DispatchVisitViewList: {
+            data: components["schemas"]["DispatchVisitView"][];
+            nextCursor: string | null;
+        };
         EngagementDetailView: {
             capacity: components["schemas"]["WorkerCapacity"];
             /** Format: date-time */
@@ -4828,6 +5216,15 @@ export interface components {
             data: components["schemas"]["ResidentMessageView"][];
             nextCursor: string | null;
         };
+        ResidentReceiverView: {
+            firstName: string | null;
+            /**
+             * Format: uuid
+             * @description The household account, or the worker’s engagement.
+             */
+            id: string;
+            kind: components["schemas"]["VisitReceiverKind"];
+        };
         ResidentTicketDetailView: {
             /**
              * Format: date-time
@@ -4901,6 +5298,35 @@ export interface components {
             unitCode: string;
             /** Format: uuid */
             unitId: string;
+        };
+        ResidentVisitView: {
+            absenceEntry: components["schemas"]["AbsenceEntryView"];
+            /** Format: date-time */
+            arrivedAt: string | null;
+            cancelReasonCode: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            cancelledBySide: components["schemas"]["VisitSide"] | null;
+            /** Format: date-time */
+            confirmedAt: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: date-time */
+            finishedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            previousVisitId: string | null;
+            proposedBySide: components["schemas"]["VisitSide"];
+            receiver: components["schemas"]["ResidentReceiverView"] | null;
+            /** Format: date-time */
+            startsAt: string;
+            status: components["schemas"]["VisitStatus"];
+            technician: components["schemas"]["FirstNameRefView"];
+        };
+        ResidentVisitViewList: {
+            data: components["schemas"]["ResidentVisitView"][];
+            nextCursor: string | null;
         };
         ReviewDto: {
             /**
@@ -5217,6 +5643,10 @@ export interface components {
             data: components["schemas"]["TechnicianOptionView"][];
             nextCursor: string | null;
         };
+        TechnicianReceiverView: {
+            firstName: string | null;
+            kind: components["schemas"]["VisitReceiverKind"];
+        };
         TechnicianTicketDetailView: {
             /** Format: date-time */
             assignedAt: string | null;
@@ -5259,6 +5689,31 @@ export interface components {
         };
         TechnicianTicketViewList: {
             data: components["schemas"]["TechnicianTicketView"][];
+            nextCursor: string | null;
+        };
+        TechnicianVisitView: {
+            /** @description Someone who lives there allowed entry while nobody is home, for this visit. False: do not enter unless let in. */
+            absenceEntryApproved: boolean;
+            /** Format: date-time */
+            arrivedAt: string | null;
+            cancelReasonCode: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            cancelledBySide: components["schemas"]["VisitSide"] | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: date-time */
+            finishedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            proposedBySide: components["schemas"]["VisitSide"];
+            receiver: components["schemas"]["TechnicianReceiverView"] | null;
+            /** Format: date-time */
+            startsAt: string;
+            status: components["schemas"]["VisitStatus"];
+        };
+        TechnicianVisitViewList: {
+            data: components["schemas"]["TechnicianVisitView"][];
             nextCursor: string | null;
         };
         TenantDetailView: {
@@ -5449,6 +5904,29 @@ export interface components {
             data: components["schemas"]["UnitView"][];
             nextCursor: string | null;
         };
+        UnitVisitView: {
+            absenceEntry: components["schemas"]["AbsenceEntryView"];
+            category: components["schemas"]["TicketCategoryRefView"];
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            proposedBySide: components["schemas"]["VisitSide"];
+            receiver: components["schemas"]["ResidentReceiverView"] | null;
+            /** Format: date-time */
+            startsAt: string;
+            status: components["schemas"]["VisitStatus"];
+            technician: components["schemas"]["FirstNameRefView"];
+            /** Format: uuid */
+            ticketId: string;
+            /** @example MT-000123 */
+            ticketNumber: string;
+            ticketStatus: components["schemas"]["TicketStatus"];
+        };
+        UnitVisitViewList: {
+            data: components["schemas"]["UnitVisitView"][];
+            nextCursor: string | null;
+        };
         UnreadCountView: {
             /** @description Unread and critical. */
             critical: number;
@@ -5590,19 +6068,68 @@ export interface components {
              */
             subjectId: string | null;
         };
+        VisitCreatedView: {
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            startsAt: string;
+            status: components["schemas"]["VisitStatus"];
+        };
+        /** @enum {string} */
+        VisitEventKind: "proposed" | "countered" | "confirmed" | "rescheduled" | "cancelled" | "consent_granted" | "consent_revoked" | "consent_voided" | "receiver_set" | "receiver_cleared" | "arrived" | "done" | "no_access" | "late_notified";
+        VisitEventView: {
+            /** @description Null for the system. */
+            actor: components["schemas"]["AccountRefView"] | null;
+            actorSide: components["schemas"]["VisitSide"];
+            /** Format: date-time */
+            at: string;
+            kind: components["schemas"]["VisitEventKind"];
+            reasonCode: string | null;
+            /** Format: uuid */
+            visitId: string;
+        };
+        VisitEventViewList: {
+            data: components["schemas"]["VisitEventView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        VisitReceiverKind: "household" | "worker";
+        VisitRescheduleDto: {
+            /**
+             * Format: date-time
+             * @description After `startsAt`, at most four hours later.
+             */
+            endsAt: string;
+            /** @description From the closed list `visitChange`. */
+            reasonCode: string;
+            /**
+             * Format: date-time
+             * @description At least 15 minutes from now, within 30 days.
+             */
+            startsAt: string;
+        };
         VisitScheduleDto: {
             /** @description 0 (Sunday) … 6. */
             days: number[];
             windows: components["schemas"]["VisitWindowDto"][];
         };
+        /** @enum {string} */
+        VisitSide: "technician" | "resident" | "system";
+        /** @enum {string} */
+        VisitStatus: "proposed" | "confirmed" | "arrived" | "done" | "no_access" | "cancelled" | "rescheduled";
         VisitWindowDto: {
-            /** @example 18:00 */
-            from: string;
             /**
-             * @description Before `from`: an overnight window.
-             * @example 23:00
+             * Format: date-time
+             * @description After `startsAt`, at most four hours later.
              */
-            to: string;
+            endsAt: string;
+            /**
+             * Format: date-time
+             * @description At least 15 minutes from now, within 30 days.
+             */
+            startsAt: string;
         };
         /** @enum {string} */
         VisitorInstruction: "ask" | "allow" | "deny";
@@ -7798,6 +8325,169 @@ export interface operations {
             };
         };
     };
+    DispatchVisitsController_events: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitEventViewList"];
+                };
+            };
+        };
+    };
+    DispatchVisitsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DispatchVisitViewList"];
+                };
+            };
+        };
+    };
+    DispatchVisitsController_propose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitWindowDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitCreatedView"];
+                };
+            };
+        };
+    };
+    DispatchVisitsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DispatchVisitsController_confirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DispatchVisitsController_counter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitWindowDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitCreatedView"];
+                };
+            };
+        };
+    };
+    DispatchVisitsController_reschedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitRescheduleDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitCreatedView"];
+                };
+            };
+        };
+    };
     MeController_me: {
         parameters: {
             query?: never;
@@ -8234,6 +8924,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MyPermissionsView"];
+                };
+            };
+        };
+    };
+    UnitVisitsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitVisitViewList"];
                 };
             };
         };
@@ -9391,6 +10102,210 @@ export interface operations {
             };
         };
     };
+    TechnicianVisitsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicianVisitViewList"];
+                };
+            };
+        };
+    };
+    TechnicianVisitsController_propose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitWindowDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitCreatedView"];
+                };
+            };
+        };
+    };
+    TechnicianVisitsController_arrive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicianVisitView"];
+                };
+            };
+        };
+    };
+    TechnicianVisitsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    TechnicianVisitsController_confirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    TechnicianVisitsController_counter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitWindowDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitCreatedView"];
+                };
+            };
+        };
+    };
+    TechnicianVisitsController_done: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    TechnicianVisitsController_noAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    TechnicianVisitsController_reschedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitRescheduleDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitCreatedView"];
+                };
+            };
+        };
+    };
     CategoryOptionsController_list: {
         parameters: {
             query?: never;
@@ -9649,6 +10564,123 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    ResidentVisitsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentVisitViewList"];
+                };
+            };
+        };
+    };
+    ResidentVisitsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ResidentVisitsController_confirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ResidentVisitsController_counter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitWindowDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitCreatedView"];
+                };
+            };
+        };
+    };
+    ResidentVisitsController_reschedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitRescheduleDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitCreatedView"];
+                };
             };
         };
     };

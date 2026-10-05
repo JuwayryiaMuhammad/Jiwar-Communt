@@ -861,3 +861,189 @@ export const AVAILABILITY_ROUTES: Row[] = [
     },
   },
 ];
+
+// --- visits (ADR 0034) --------------------------------------------------------
+
+/** A valid window: tomorrow, one hour (computed when the row runs). */
+const visitWindow = () => ({
+  startsAt: new Date(Date.now() + 86_400_000).toISOString(),
+  endsAt: new Date(Date.now() + 86_400_000 + 3_600_000).toISOString(),
+});
+
+const WINDOW_INVALID: Row['invalid'] = {
+  body: { startsAt: 'tomorrow' },
+  fields: [
+    { field: 'startsAt', code: 'INVALID_FORMAT' },
+    { field: 'endsAt', code: 'FIELD_REQUIRED' },
+  ],
+};
+
+const RESCHEDULE_INVALID: Row['invalid'] = {
+  body: { startsAt: 'tomorrow', reasonCode: 7 },
+  // The subclass's own field first (class-validator's order).
+  fields: [
+    { field: 'reasonCode', code: 'INVALID_TYPE' },
+    { field: 'startsAt', code: 'INVALID_FORMAT' },
+    { field: 'endsAt', code: 'FIELD_REQUIRED' },
+  ],
+};
+
+const CODE_INVALID: Row['invalid'] = {
+  body: { reasonCode: 7 },
+  fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+};
+
+/** One action on a visit of another compound's ticket: just not found. */
+const visitAction = (
+  base: '/tickets' | '/technician/tickets' | '/maintenance/tickets',
+  verb: string,
+  invalid: Row['invalid'],
+  body?: () => object,
+): Row => ({
+  method: 'POST',
+  path: `${base}/{id}/visits/{visitId}/${verb}`,
+  auth: 'tenant',
+  as:
+    base === '/tickets'
+      ? 'owner'
+      : base === '/technician/tickets'
+        ? 'technician'
+        : 'manager',
+  denied: base === '/maintenance/tickets' ? 'technician' : 'guard',
+  foreign: {
+    params: (w) => ({ id: w.bTicketId, visitId: w.bVisitId }),
+    ...(body ? { body } : {}),
+    code: 'TICKET_NOT_FOUND',
+  },
+  invalid,
+});
+
+const rescheduleBody = () => ({
+  ...visitWindow(),
+  reasonCode: 'schedule_conflict',
+});
+
+/** Visits: the residents', the technician's and dispatch's routes. */
+export const VISIT_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/tickets/{id}/visits',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  visitAction('/tickets', 'confirm', 'none'),
+  visitAction('/tickets', 'counter', WINDOW_INVALID, visitWindow),
+  visitAction('/tickets', 'reschedule', RESCHEDULE_INVALID, rescheduleBody),
+  visitAction('/tickets', 'cancel', CODE_INVALID, () => ({
+    reasonCode: 'other',
+  })),
+  {
+    method: 'GET',
+    path: '/technician/tickets/{id}/visits',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/technician/tickets/{id}/visits',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      body: visitWindow,
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: WINDOW_INVALID,
+  },
+  visitAction('/technician/tickets', 'confirm', 'none'),
+  visitAction('/technician/tickets', 'counter', WINDOW_INVALID, visitWindow),
+  visitAction(
+    '/technician/tickets',
+    'reschedule',
+    RESCHEDULE_INVALID,
+    rescheduleBody,
+  ),
+  visitAction('/technician/tickets', 'cancel', CODE_INVALID, () => ({
+    reasonCode: 'other',
+  })),
+  { ...visitAction('/technician/tickets', 'arrive', 'none'), noStore: true },
+  visitAction('/technician/tickets', 'done', 'none'),
+  visitAction('/technician/tickets', 'no-access', 'none'),
+  {
+    method: 'GET',
+    path: '/maintenance/tickets/{id}/visits',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/tickets/{id}/visit-events',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/tickets/{id}/visits',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      body: visitWindow,
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: WINDOW_INVALID,
+  },
+  visitAction('/maintenance/tickets', 'confirm', 'none'),
+  visitAction('/maintenance/tickets', 'counter', WINDOW_INVALID, visitWindow),
+  visitAction(
+    '/maintenance/tickets',
+    'reschedule',
+    RESCHEDULE_INVALID,
+    rescheduleBody,
+  ),
+  visitAction('/maintenance/tickets', 'cancel', CODE_INVALID, () => ({
+    reasonCode: 'other',
+  })),
+  {
+    method: 'GET',
+    path: '/me/units/{unitId}/visits',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.bUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+];

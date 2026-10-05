@@ -97,43 +97,59 @@ export class WorkService {
     to: TicketStatus,
     holdReason: TicketHoldReason | null = null,
   ): Promise<void> {
-    const me = this.ctx.accountId;
     return this.tenantTx.withTenantTx(async (tx) => {
       const ticket = await this.lock(tx, id, action);
-      const now = new Date();
-      await tx.ticket.update({
-        where: { id },
-        data: {
-          status: to,
-          holdReason,
-          ...(to === 'completed'
-            ? { confirmationStatus: 'pending', completedAt: now }
-            : {}),
-        },
-      });
-      await this.log.status(tx, ticket, {
-        from: ticket.status,
-        to,
-        actorId: me,
-        reasonCode: holdReason,
-        cycle: ticket.cycle,
-      });
-      if (to === 'completed')
-        await this.notices.send(
-          tx,
-          [ticket.reporterId],
-          'ticket.completed',
-          ticket,
-        );
-      else
-        await this.notices.send(
-          tx,
-          [ticket.reporterId],
-          'ticket.status_changed',
-          ticket,
-          holdReason ? { status: to, holdReason } : { status: to },
-        );
+      await this.moveInTx(tx, ticket, to, holdReason);
     });
+  }
+
+  /**
+   * The technician's move of a locked ticket whose rules the caller checked
+   * (`assertCan`): the row, its history row and the reporter's notice. A
+   * visit's arrival starts the work and a visit with no access puts it on
+   * hold through here (ADR 0034), so both read exactly as the technician's
+   * own start and hold.
+   */
+  async moveInTx(
+    tx: TenantTxClient,
+    ticket: Ticket,
+    to: TicketStatus,
+    holdReason: TicketHoldReason | null = null,
+  ): Promise<void> {
+    const me = this.ctx.accountId;
+    const now = new Date();
+    await tx.ticket.update({
+      where: { id: ticket.id },
+      data: {
+        status: to,
+        holdReason,
+        ...(to === 'completed'
+          ? { confirmationStatus: 'pending', completedAt: now }
+          : {}),
+      },
+    });
+    await this.log.status(tx, ticket, {
+      from: ticket.status,
+      to,
+      actorId: me,
+      reasonCode: holdReason,
+      cycle: ticket.cycle,
+    });
+    if (to === 'completed')
+      await this.notices.send(
+        tx,
+        [ticket.reporterId],
+        'ticket.completed',
+        ticket,
+      );
+    else
+      await this.notices.send(
+        tx,
+        [ticket.reporterId],
+        'ticket.status_changed',
+        ticket,
+        holdReason ? { status: to, holdReason } : { status: to },
+      );
   }
 
   private async lock(

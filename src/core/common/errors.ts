@@ -164,6 +164,21 @@ export const ErrorCode = {
   TICKET_PHOTO_LIMIT_REACHED: 'TICKET_PHOTO_LIMIT_REACHED',
   /** Closed longer ago than the compound's reopen window (409). */
   TICKET_REOPEN_WINDOW_PASSED: 'TICKET_REOPEN_WINDOW_PASSED',
+  // visits (ADR 0034)
+  /** Unknown, another ticket's, or not the caller's to see. */
+  VISIT_NOT_FOUND: 'VISIT_NOT_FOUND',
+  /** The ticket already has a proposed, confirmed or arrived visit (409). */
+  VISIT_ALREADY_ACTIVE: 'VISIT_ALREADY_ACTIVE',
+  /** The visit's status does not allow the action (409, params.status). */
+  VISIT_INVALID_TRANSITION: 'VISIT_INVALID_TRANSITION',
+  /** Arrival outside [start − 30 min, end + 2 h] (409). */
+  VISIT_OUTSIDE_ARRIVAL_WINDOW: 'VISIT_OUTSIDE_ARRIVAL_WINDOW',
+  /** A common-area ticket has no visits (409). */
+  VISIT_NOT_FOR_COMMON_AREA: 'VISIT_NOT_FOR_COMMON_AREA',
+  /** The other side confirms a proposal, never its own side (403). */
+  VISIT_SAME_SIDE: 'VISIT_SAME_SIDE',
+  /** No `visitConsent` on the unit (403). */
+  VISITS_NOT_ALLOWED: 'VISITS_NOT_ALLOWED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -208,6 +223,13 @@ export const FieldErrorCode = {
   // visits and the SLA (ADR 0034)
   /** A response target longer than the resolution target of its priority. */
   SLA_RESPONSE_AFTER_RESOLUTION: 'SLA_RESPONSE_AFTER_RESOLUTION',
+  /** A visit must start at least 15 minutes from now. */
+  VISIT_TOO_SOON: 'VISIT_TOO_SOON',
+  /** A visit must start within 30 days. */
+  VISIT_TOO_FAR: 'VISIT_TOO_FAR',
+  /** A visit lasts at most four hours. */
+  VISIT_TOO_LONG: 'VISIT_TOO_LONG',
+  VISIT_ENDS_BEFORE_START: 'VISIT_ENDS_BEFORE_START',
 } as const;
 
 export type FieldErrorCode =

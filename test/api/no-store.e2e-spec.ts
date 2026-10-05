@@ -46,6 +46,36 @@ describe('API v0 — no-store', () => {
     return body<{ id: string }>(res).id;
   }
 
+  /** A ticket of A's home, assigned, with a visit soon; `confirmed` agrees to it. */
+  async function aVisit(
+    confirmed = false,
+  ): Promise<{ ticketId: string; visitId: string }> {
+    const ticketId = await aTicket();
+    await call(w, 'POST', `/maintenance/tickets/${ticketId}/assign`, {
+      token: w.a.tokens.manager,
+      body: { technicianId: w.a.ids.technician },
+    }).expect(204);
+    const start = Date.now() + 20 * 60_000;
+    const visit = await call(
+      w,
+      'POST',
+      `/technician/tickets/${ticketId}/visits`,
+      {
+        token: w.a.tokens.technician,
+        body: {
+          startsAt: new Date(start).toISOString(),
+          endsAt: new Date(start + 3_600_000).toISOString(),
+        },
+      },
+    ).expect(201);
+    const visitId = body<{ id: string }>(visit).id;
+    if (confirmed)
+      await call(w, 'POST', `/tickets/${ticketId}/visits/${visitId}/confirm`, {
+        token: w.a.tokens.owner,
+      }).expect(204);
+    return { ticketId, visitId };
+  }
+
   async function login(): Promise<{
     verify: Response;
     select: Response;
@@ -260,6 +290,39 @@ describe('API v0 — no-store', () => {
       call(w, 'GET', `/maintenance/tickets/${await aTicket()}`, {
         token: w.a.tokens.manager,
       }),
+    'GET /tickets/{id}/visits': async () =>
+      call(w, 'GET', `/tickets/${(await aVisit()).ticketId}/visits`, {
+        token: w.a.tokens.owner,
+      }),
+    'GET /technician/tickets/{id}/visits': async () =>
+      call(
+        w,
+        'GET',
+        `/technician/tickets/${(await aVisit()).ticketId}/visits`,
+        { token: w.a.tokens.technician },
+      ),
+    'POST /technician/tickets/{id}/visits/{visitId}/arrive': async () => {
+      const { ticketId, visitId } = await aVisit(true);
+      return call(
+        w,
+        'POST',
+        `/technician/tickets/${ticketId}/visits/${visitId}/arrive`,
+        { token: w.a.tokens.technician },
+      );
+    },
+    'GET /maintenance/tickets/{id}/visits': async () =>
+      call(
+        w,
+        'GET',
+        `/maintenance/tickets/${(await aVisit()).ticketId}/visits`,
+        { token: w.a.tokens.manager },
+      ),
+    'GET /me/units/{unitId}/visits': async () => {
+      await aVisit();
+      return call(w, 'GET', `/me/units/${w.a.homeUnitId}/visits`, {
+        token: w.a.tokens.owner,
+      });
+    },
     'GET /files/{id}': async () =>
       call(w, 'GET', `/files/${await fileHelpers(h).ready(w.a.tokens.owner)}`, {
         token: w.a.tokens.owner,

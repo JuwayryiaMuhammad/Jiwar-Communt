@@ -1,0 +1,356 @@
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+} from '@nestjs/common';
+import {
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
+} from '@nestjs/swagger';
+import { RequirePermissions } from '../../core/access/require-permissions.decorator';
+import { RequestContext } from '../../core/common/cls/request-context';
+import { ApiArea, NoStore } from '../../core/common/http/decorators';
+import {
+  bounded,
+  ListOf,
+  type ListResponse,
+} from '../../core/common/http/list';
+import { parseId } from '../../core/common/validation/parse-id.pipe';
+import { ReasonCodeDto } from '../tickets/dto/tickets.dto';
+import { VisitRescheduleDto, VisitWindowDto } from './dto/visits.dto';
+import {
+  DispatchVisitView,
+  ResidentVisitView,
+  TechnicianVisitView,
+  UnitVisitView,
+  VisitCreatedView,
+  VisitEventView,
+} from './views/visit.views';
+import { VisitsService } from './visits.service';
+
+// ============================================================================
+// Visits (ADR 0034). Every read is no-store: a window says when a home may
+// be empty. Common-area tickets have none (409 VISIT_NOT_FOR_COMMON_AREA).
+// ============================================================================
+
+/**
+ * The residents' side: those who see the ticket and may still act on it,
+ * or any adult who lives in its unit (`visitConsent`).
+ */
+@ApiArea('tickets')
+@RequirePermissions('tickets.create')
+@Controller('tickets')
+export class ResidentVisitsController {
+  constructor(
+    private readonly visits: VisitsService,
+    private readonly ctx: RequestContext,
+  ) {}
+
+  @Get(':id/visits')
+  @NoStore()
+  @ApiOkResponse({ type: ListOf(ResidentVisitView) })
+  async list(
+    @Param('id', parseId()) id: string,
+  ): Promise<ListResponse<ResidentVisitView>> {
+    const me = this.ctx.accountId;
+    return bounded(await this.visits.list(id, 'resident'), (r) =>
+      ResidentVisitView.from(r, me),
+    );
+  }
+
+  /** The technician's proposal, agreed. */
+  @Post(':id/visits/:visitId/confirm')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  confirm(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+  ): Promise<void> {
+    return this.visits.confirm(id, visitId, 'resident');
+  }
+
+  /** Another window instead of the technician's proposal. */
+  @Post(':id/visits/:visitId/counter')
+  @ApiCreatedResponse({ type: VisitCreatedView })
+  async counter(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+    @Body() dto: VisitWindowDto,
+  ): Promise<VisitCreatedView> {
+    return VisitCreatedView.from(
+      await this.visits.counter(id, visitId, dto, 'resident'),
+    );
+  }
+
+  /** A confirmed window moves; `reasonCode` from `visitChange`. */
+  @Post(':id/visits/:visitId/reschedule')
+  @ApiCreatedResponse({ type: VisitCreatedView })
+  async reschedule(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+    @Body() dto: VisitRescheduleDto,
+  ): Promise<VisitCreatedView> {
+    return VisitCreatedView.from(
+      await this.visits.reschedule(
+        id,
+        visitId,
+        dto,
+        dto.reasonCode,
+        'resident',
+      ),
+    );
+  }
+
+  /** `reasonCode` from `visitChange`. */
+  @Post(':id/visits/:visitId/cancel')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  cancel(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+    @Body() dto: ReasonCodeDto,
+  ): Promise<void> {
+    return this.visits.cancel(id, visitId, dto.reasonCode, 'resident');
+  }
+}
+
+/** The technician's own visits, on the tickets assigned to them now. */
+@ApiArea('technician')
+@RequirePermissions('tickets.work')
+@Controller('technician/tickets')
+export class TechnicianVisitsController {
+  constructor(private readonly visits: VisitsService) {}
+
+  @Get(':id/visits')
+  @NoStore()
+  @ApiOkResponse({ type: ListOf(TechnicianVisitView) })
+  async list(
+    @Param('id', parseId()) id: string,
+  ): Promise<ListResponse<TechnicianVisitView>> {
+    return bounded(await this.visits.list(id, 'technician'), (r) =>
+      TechnicianVisitView.from(r),
+    );
+  }
+
+  /** A window for the residents to confirm; none may be active. */
+  @Post(':id/visits')
+  @ApiCreatedResponse({ type: VisitCreatedView })
+  async propose(
+    @Param('id', parseId()) id: string,
+    @Body() dto: VisitWindowDto,
+  ): Promise<VisitCreatedView> {
+    return VisitCreatedView.from(
+      await this.visits.propose(id, dto, 'technician'),
+    );
+  }
+
+  /** The residents' counter-proposal, agreed. */
+  @Post(':id/visits/:visitId/confirm')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  confirm(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+  ): Promise<void> {
+    return this.visits.confirm(id, visitId, 'technician');
+  }
+
+  @Post(':id/visits/:visitId/counter')
+  @ApiCreatedResponse({ type: VisitCreatedView })
+  async counter(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+    @Body() dto: VisitWindowDto,
+  ): Promise<VisitCreatedView> {
+    return VisitCreatedView.from(
+      await this.visits.counter(id, visitId, dto, 'technician'),
+    );
+  }
+
+  @Post(':id/visits/:visitId/reschedule')
+  @ApiCreatedResponse({ type: VisitCreatedView })
+  async reschedule(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+    @Body() dto: VisitRescheduleDto,
+  ): Promise<VisitCreatedView> {
+    return VisitCreatedView.from(
+      await this.visits.reschedule(
+        id,
+        visitId,
+        dto,
+        dto.reasonCode,
+        'technician',
+      ),
+    );
+  }
+
+  @Post(':id/visits/:visitId/cancel')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  cancel(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+    @Body() dto: ReasonCodeDto,
+  ): Promise<void> {
+    return this.visits.cancel(id, visitId, dto.reasonCode, 'technician');
+  }
+
+  /**
+   * At the door, within the window. The answer says whether entry while
+   * nobody is home was allowed, as of this moment.
+   */
+  @Post(':id/visits/:visitId/arrive')
+  @HttpCode(HttpStatus.OK)
+  @NoStore()
+  @ApiOkResponse({ type: TechnicianVisitView })
+  async arrive(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+  ): Promise<TechnicianVisitView> {
+    return TechnicianVisitView.from(await this.visits.arrive(id, visitId));
+  }
+
+  @Post(':id/visits/:visitId/done')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  done(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+  ): Promise<void> {
+    return this.visits.done(id, visitId);
+  }
+
+  /** Nobody let them in: the ticket waits for the residents. */
+  @Post(':id/visits/:visitId/no-access')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  noAccess(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+  ): Promise<void> {
+    return this.visits.noAccess(id, visitId);
+  }
+}
+
+/** Dispatch: every visit, and the technician's side on their behalf. */
+@ApiArea('maintenance')
+@RequirePermissions('tickets.dispatch')
+@Controller('maintenance/tickets')
+export class DispatchVisitsController {
+  constructor(private readonly visits: VisitsService) {}
+
+  @Get(':id/visits')
+  @NoStore()
+  @ApiOkResponse({ type: ListOf(DispatchVisitView) })
+  async list(
+    @Param('id', parseId()) id: string,
+  ): Promise<ListResponse<DispatchVisitView>> {
+    return bounded(await this.visits.list(id, 'dispatch'), (r) =>
+      DispatchVisitView.from(r),
+    );
+  }
+
+  /** What happened to the ticket's visits and who did it; never a window. */
+  @Get(':id/visit-events')
+  @ApiOkResponse({ type: ListOf(VisitEventView) })
+  async events(
+    @Param('id', parseId()) id: string,
+  ): Promise<ListResponse<VisitEventView>> {
+    return bounded(VisitEventView.list(await this.visits.events(id)), (e) => e);
+  }
+
+  /** For the ticket's technician. */
+  @Post(':id/visits')
+  @ApiCreatedResponse({ type: VisitCreatedView })
+  async propose(
+    @Param('id', parseId()) id: string,
+    @Body() dto: VisitWindowDto,
+  ): Promise<VisitCreatedView> {
+    return VisitCreatedView.from(
+      await this.visits.propose(id, dto, 'dispatch'),
+    );
+  }
+
+  @Post(':id/visits/:visitId/confirm')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  confirm(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+  ): Promise<void> {
+    return this.visits.confirm(id, visitId, 'dispatch');
+  }
+
+  @Post(':id/visits/:visitId/counter')
+  @ApiCreatedResponse({ type: VisitCreatedView })
+  async counter(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+    @Body() dto: VisitWindowDto,
+  ): Promise<VisitCreatedView> {
+    return VisitCreatedView.from(
+      await this.visits.counter(id, visitId, dto, 'dispatch'),
+    );
+  }
+
+  @Post(':id/visits/:visitId/reschedule')
+  @ApiCreatedResponse({ type: VisitCreatedView })
+  async reschedule(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+    @Body() dto: VisitRescheduleDto,
+  ): Promise<VisitCreatedView> {
+    return VisitCreatedView.from(
+      await this.visits.reschedule(
+        id,
+        visitId,
+        dto,
+        dto.reasonCode,
+        'dispatch',
+      ),
+    );
+  }
+
+  @Post(':id/visits/:visitId/cancel')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  cancel(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+    @Body() dto: ReasonCodeDto,
+  ): Promise<void> {
+    return this.visits.cancel(id, visitId, dto.reasonCode, 'dispatch');
+  }
+}
+
+/**
+ * The visits coming to one of the caller's units: for an adult who lives
+ * there (`visitConsent`), without the tickets themselves.
+ */
+@ApiArea('me')
+@RequirePermissions('tickets.create')
+@Controller('me/units')
+export class UnitVisitsController {
+  constructor(
+    private readonly visits: VisitsService,
+    private readonly ctx: RequestContext,
+  ) {}
+
+  @Get(':unitId/visits')
+  @NoStore()
+  @ApiOkResponse({ type: ListOf(UnitVisitView) })
+  async list(
+    @Param('unitId', parseId('unitId')) unitId: string,
+  ): Promise<ListResponse<UnitVisitView>> {
+    const me = this.ctx.accountId;
+    return bounded(await this.visits.forUnit(unitId), (r) =>
+      UnitVisitView.from(r, me),
+    );
+  }
+}

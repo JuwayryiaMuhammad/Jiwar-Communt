@@ -14,7 +14,9 @@ import { AccountDeletionService } from '../../src/core/accounts/account-deletion
 import { Notifier } from '../../src/core/notifications/notifier';
 import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
 import { ApprovalsService } from '../../src/gate/approvals/approvals.service';
+import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
 import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
+import { VisitsService } from '../../src/maintenance/visits/visits.service';
 import { communityHelpers, type Compound } from '../setup/community';
 import { fileHelpers } from '../setup/files';
 import { gateHelpers } from '../setup/gate';
@@ -109,8 +111,12 @@ export interface World {
   bEntryCredentialId: string;
   /** One of B's ticket categories (seeded, ADR 0032). */
   bCategoryId: string;
-  /** A ticket B's owner opened on B's home. */
+  /** A ticket B's owner opened on B's home, assigned to B's technician. */
   bTicketId: string;
+  /** A visit B's technician proposed on that ticket (ADR 0034). */
+  bVisitId: string;
+  /** B's home, for unit-scoped routes. */
+  bUnitId: string;
   /** One of A's categories, for valid ticket bodies. */
   aCategoryId: string;
   /** One of B's specialties (seeded, ADR 0033). */
@@ -395,6 +401,22 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       description: 'World',
     }),
   );
+  await helpers.asManager(b, () =>
+    h.moduleRef.get(DispatchService).assign(bTicket.id, b.ids.technician),
+  );
+  const bVisit = await helpers.as(
+    b,
+    { id: b.ids.technician, type: 'staff' },
+    () =>
+      h.moduleRef.get(VisitsService).propose(
+        bTicket.id,
+        {
+          startsAt: new Date(Date.now() + 86_400_000),
+          endsAt: new Date(Date.now() + 86_400_000 + 3_600_000),
+        },
+        'technician',
+      ),
+  );
   const aCategory = await helpers.asManager(a, () =>
     helpers.prisma.tenant.ticketCategory.findFirstOrThrow({
       where: { key: 'plumbing' },
@@ -415,6 +437,8 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     aSpecialtyId: aSpecialty.id,
     bCategoryId: bCategory.id,
     bTicketId: bTicket.id,
+    bVisitId: bVisit.id,
+    bUnitId: b.homeUnitId,
     aCategoryId: aCategory.id,
     bFileId,
     bEntryCredentialId: (bEntryCredential.body as { id: string }).id,

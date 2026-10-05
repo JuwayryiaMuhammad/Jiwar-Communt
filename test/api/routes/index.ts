@@ -17,6 +17,7 @@ import {
   MAINTENANCE_ROUTES,
   MESSAGE_ROUTES,
   TICKET_ROUTES,
+  VISIT_ROUTES,
   WORK_ROUTES,
 } from './maintenance';
 import { ME_ROUTES } from './me';
@@ -62,4 +63,5 @@ export const ROUTES: Row[] = [
   ...AVAILABILITY_ROUTES,
   ...CONFIRMATION_ROUTES,
   ...MESSAGE_ROUTES,
+  ...VISIT_ROUTES,
 ];

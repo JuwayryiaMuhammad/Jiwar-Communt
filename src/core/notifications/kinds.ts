@@ -266,6 +266,12 @@ export const NOTIFICATION_KINDS = {
     target: 'ticket',
     params: { ticketNumber: {}, startsAt: {}, endsAt: {} },
   },
+  /** Confirmed, and not arrived 15 minutes after the start (residents, dispatch). */
+  'ticket.visit_late': {
+    priority: 'normal',
+    target: 'ticket',
+    params: { ticketNumber: {}, startsAt: {}, endsAt: {} },
+  },
   /**
    * Someone other than the primary allowed the technician in while nobody
    * is home (to the primary, who may revoke it until the arrival).

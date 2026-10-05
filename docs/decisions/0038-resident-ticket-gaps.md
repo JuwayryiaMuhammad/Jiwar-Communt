@@ -1,4 +1,4 @@
-# 0038 — The resident's ticket screens: arrival confirmation, the technician on the way
+# 0038 — The resident's ticket screens: arrival confirmation, the technician on the way, visit slots
 
 **Status:** Accepted · Resident journey (Figma, "الساكن")
 
@@ -39,8 +39,24 @@ The design's progress line reads "Sent · Assigned · Technician on the way · I
 - **Who is told:** the reporter (`ticket.status_changed` with `status: en_route`), like every technician move. The history row is the 5.1 `ticket_status_history` row (`assigned → en_route`), so the resident's timeline has its time.
 - No location tracking: "on the way" is a status, not a position.
 
+### Free slots for a visit
+
+The design's "Change visit time" shows days and "Available times" (08:00, 09:00, …): the resident picks one instead of typing a window.
+
+- `GET /tickets/:id/visit-slots?from=YYYY-MM-DD&days=N` (`tickets.create`), for whoever reaches the ticket's visits (ADR 0034). `from` is a day in the compound's time zone (today by default); `days` is 1 to 14 (7 by default). The answer is a bounded list of `{ startsAt, endsAt }`, oldest first, no-store like every visit read.
+- **Visiting hours** are the compound's: `maintenance_settings` gains `visit_hours_start`, `visit_hours_end` (minutes after local midnight) and `visit_slot_minutes`, 08:00–18:00 in one-hour slots by default (existing compounds too). The manager changes them with `PATCH /maintenance/settings` (audited with the other settings). The hours must hold at least one slot (`VISIT_HOURS_TOO_SHORT` on `visitHoursEnd`, and a CHECK), and a slot is 15 minutes to 4 hours (a visit's longest, ADR 0034).
+- **A slot is offered when:**
+  - it starts inside the hours, read in the compound's time zone (`tenant_settings.timezone`). A start that does not exist (a daylight-saving gap) is skipped; a slot lasts its length in real time;
+  - a proposal there would be accepted now: at least 15 minutes and at most 30 days ahead, by the database's clock;
+  - it overlaps none of the assigned technician's **other** active visits (proposed, confirmed or arrived). The ticket's own visit is the one being moved, so it never blocks.
+- **Only while a technician holds the ticket** (the `visit` action): 409 `TICKET_INVALID_TRANSITION` in the queue, 409 `VISIT_NOT_FOR_COMMON_AREA` for a common area.
+- **A read, not a reservation.** `counter` and `reschedule` take any valid window as before and check it under the ticket's lock. A slot taken in between is not refused: the technician answers the proposal like any other.
+- **Privacy:** a missing slot says nothing about why. The list carries no other ticket, unit or visit, so nobody learns from it when another home is empty.
+- Days off, technician working hours and travel time are not modelled: every day has the same hours.
+
 ## Consequences
 
 - This **amends ADR 0034**: a visit gains a resident-side action at the door, and two columns (`ticket_visits` was a 5.3 table). The SLA's response is also met by `en_route`.
 - This **amends ADR 0032**: the status list gains `en_route`, and one CHECK is replaced to include it. Clients that switch over `status` must handle the new value; it only appears once a technician app sends the new action.
 - This **amends ADR 0033**: `en_route` is open work and weighs like `in_progress`.
+- `GET`/`PATCH /maintenance/settings` gain the three visiting-hours fields.

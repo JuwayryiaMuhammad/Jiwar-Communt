@@ -2079,12 +2079,16 @@ model TicketCategory {
 
 /// One row per compound, created with it.
 model MaintenanceSettings {
-  tenantId        String   @id @map("tenant_id") @db.Uuid
-  autoCloseHours  Int      @default(72) @map("auto_close_hours")
-  reopenDays      Int      @default(7) @map("reopen_days")
-  maxReportPhotos Int      @default(5) @map("max_report_photos")
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  tenantId         String   @id @map("tenant_id") @db.Uuid
+  autoCloseHours   Int      @default(72) @map("auto_close_hours")
+  reopenDays       Int      @default(7) @map("reopen_days")
+  maxReportPhotos  Int      @default(5) @map("max_report_photos")
+  /// Visiting hours (ADR 0038): minutes after local midnight, and the slot.
+  visitHoursStart  Int      @default(480) @map("visit_hours_start")
+  visitHoursEnd    Int      @default(1080) @map("visit_hours_end")
+  visitSlotMinutes Int      @default(60) @map("visit_slot_minutes")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 

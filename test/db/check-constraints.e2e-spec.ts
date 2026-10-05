@@ -282,6 +282,7 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   ticket_visits_late_shape: {},
   // ADR 0038.
   ticket_visits_arrival_confirmed_shape: {},
+  maintenance_settings_visit_hours: {},
   ticket_visit_events_actor_shape: {},
   maintenance_sla_settings_enabled_shape: {},
   sla_targets_ranges: {},

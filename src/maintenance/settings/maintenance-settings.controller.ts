@@ -21,12 +21,31 @@ export class MaintenanceSettingsResponse {
   reopenDays: number;
   @ApiProperty({ type: Number, description: 'Report photos per ticket.' })
   maxReportPhotos: number;
+  @ApiProperty({
+    type: Number,
+    description:
+      'Visiting hours start, minutes after midnight in the compound’s time zone.',
+  })
+  visitHoursStart: number;
+  @ApiProperty({
+    type: Number,
+    description: 'Visiting hours end, minutes after local midnight.',
+  })
+  visitHoursEnd: number;
+  @ApiProperty({
+    type: Number,
+    description: 'The length of a slot residents may pick.',
+  })
+  visitSlotMinutes: number;
 
   static from(s: MaintenanceSettingsView): MaintenanceSettingsResponse {
     return {
       autoCloseHours: s.autoCloseHours,
       reopenDays: s.reopenDays,
       maxReportPhotos: s.maxReportPhotos,
+      visitHoursStart: s.visitHoursStart,
+      visitHoursEnd: s.visitHoursEnd,
+      visitSlotMinutes: s.visitSlotMinutes,
     };
   }
 }

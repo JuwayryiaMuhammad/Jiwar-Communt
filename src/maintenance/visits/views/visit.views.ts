@@ -56,6 +56,18 @@ export class VisitCreatedView {
   }
 }
 
+/** A free window the residents may pick (ADR 0038). */
+export class VisitSlotView {
+  @ApiProperty({ type: String, format: 'date-time' })
+  startsAt: Date;
+  @ApiProperty({ type: String, format: 'date-time' })
+  endsAt: Date;
+
+  static from(s: { startsAt: Date; endsAt: Date }): VisitSlotView {
+    return { startsAt: s.startsAt, endsAt: s.endsAt };
+  }
+}
+
 export class ConsenterView extends FirstNameRefView {
   @ApiProperty({ type: Boolean, description: 'The reader granted it.' })
   mine: boolean;

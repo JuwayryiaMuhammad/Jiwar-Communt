@@ -8,6 +8,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
@@ -27,6 +28,7 @@ import { ReasonCodeDto } from '../tickets/dto/tickets.dto';
 import {
   VisitReceiverDto,
   VisitRescheduleDto,
+  VisitSlotsQueryDto,
   VisitWindowDto,
 } from './dto/visits.dto';
 import { VisitConsentService } from './visit-consent.service';
@@ -37,6 +39,7 @@ import {
   UnitVisitView,
   VisitCreatedView,
   VisitEventView,
+  VisitSlotView,
 } from './views/visit.views';
 import { VisitsService } from './visits.service';
 
@@ -68,6 +71,23 @@ export class ResidentVisitsController {
     const me = this.ctx.accountId;
     return bounded(await this.visits.list(id, 'resident'), (r) =>
       ResidentVisitView.from(r, me),
+    );
+  }
+
+  /**
+   * Free windows to counter or reschedule with (ADR 0038): the compound's
+   * visiting hours minus the technician's other visits, oldest first.
+   * No-store like every visit read.
+   */
+  @Get(':id/visit-slots')
+  @NoStore()
+  @ApiOkResponse({ type: ListOf(VisitSlotView) })
+  async slots(
+    @Param('id', parseId()) id: string,
+    @Query() q: VisitSlotsQueryDto,
+  ): Promise<ListResponse<VisitSlotView>> {
+    return bounded(await this.visits.slots(id, q), (s) =>
+      VisitSlotView.from(s),
     );
   }
 

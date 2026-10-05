@@ -3220,6 +3220,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tickets/{id}/visit-slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ResidentVisitsController_slots"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tickets/{id}/visits": {
         parameters: {
             query?: never;
@@ -5377,6 +5393,12 @@ export interface components {
             maxReportPhotos: number;
             /** @description Days after closing during which the reporter may reopen. */
             reopenDays: number;
+            /** @description Visiting hours end, minutes after local midnight. */
+            visitHoursEnd: number;
+            /** @description Visiting hours start, minutes after midnight in the compound’s time zone. */
+            visitHoursStart: number;
+            /** @description The length of a slot residents may pick. */
+            visitSlotMinutes: number;
         };
         MajorityInviteDto: {
             /** Format: email */
@@ -7014,6 +7036,12 @@ export interface components {
             maxReportPhotos?: number;
             /** @description Days after closing during which the reporter may reopen. */
             reopenDays?: number;
+            /** @description Visiting hours end, minutes after local midnight; at least one slot after the start. */
+            visitHoursEnd?: number;
+            /** @description Visiting hours start, minutes after local midnight (ADR 0038). */
+            visitHoursStart?: number;
+            /** @description The length of a slot residents may pick. */
+            visitSlotMinutes?: number;
         };
         UpdateParcelSettingsDto: {
             /** @description Days before the managers are told, once, and an unclaimed parcel may be returned. Always more than the reminder. */
@@ -7181,6 +7209,16 @@ export interface components {
         };
         /** @enum {string} */
         VisitSide: "technician" | "resident" | "system";
+        VisitSlotView: {
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: date-time */
+            startsAt: string;
+        };
+        VisitSlotViewList: {
+            data: components["schemas"]["VisitSlotView"][];
+            nextCursor: string | null;
+        };
         /** @enum {string} */
         VisitStatus: "proposed" | "confirmed" | "arrived" | "done" | "no_access" | "cancelled" | "rescheduled";
         VisitWindowDto: {
@@ -12505,6 +12543,31 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    ResidentVisitsController_slots: {
+        parameters: {
+            query?: {
+                /** @description The first day, `YYYY-MM-DD` in the compound’s time zone; today by default. */
+                from?: string;
+                days?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitSlotViewList"];
+                };
             };
         };
     };

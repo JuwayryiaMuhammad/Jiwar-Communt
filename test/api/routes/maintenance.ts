@@ -928,6 +928,30 @@ const rescheduleBody = () => ({
 
 /** Visits: the residents', the technician's and dispatch's routes. */
 export const VISIT_ROUTES: Row[] = [
+  // ADR 0038.
+  {
+    method: 'GET',
+    path: '/tickets/{id}/visit-slots',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: {
+      query: { days: '15', from: '11/10/2026' },
+      fields: [
+        {
+          field: 'from',
+          code: 'INVALID_FORMAT',
+          params: { format: 'YYYY-MM-DD' },
+        },
+        { field: 'days', code: 'INVALID_NUMBER', params: { min: 1, max: 14 } },
+      ],
+    },
+    noStore: true,
+  },
   {
     method: 'GET',
     path: '/tickets/{id}/visits',

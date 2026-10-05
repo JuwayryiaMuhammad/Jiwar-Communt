@@ -266,6 +266,8 @@ export const FieldErrorCode = {
   SPECIALTY_NOT_AVAILABLE: 'SPECIALTY_NOT_AVAILABLE',
   /** Unknown, or holds no `tickets` capability where the ticket is. */
   REPORTER_NOT_ELIGIBLE: 'REPORTER_NOT_ELIGIBLE',
+  /** Visiting hours shorter than one slot; params.min is the earliest end (ADR 0038). */
+  VISIT_HOURS_TOO_SHORT: 'VISIT_HOURS_TOO_SHORT',
   // visits and the SLA (ADR 0034)
   /** A response target longer than the resolution target of its priority. */
   SLA_RESPONSE_AFTER_RESOLUTION: 'SLA_RESPONSE_AFTER_RESOLUTION',

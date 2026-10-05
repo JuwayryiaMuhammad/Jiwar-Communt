@@ -635,6 +635,8 @@ describe('API v0 — PII leak scan', () => {
       '/maintenance/tickets/{id}/dispatch-attempts': queued.id,
       '/maintenance/tickets/{id}/sla-events': ticket.id,
       '/tickets/{id}/visits': visitTicket.id,
+      // ADR 0038: windows of free time, never anyone's.
+      '/tickets/{id}/visit-slots': visitTicket.id,
       '/technician/tickets/{id}/visits': visitTicket.id,
       '/maintenance/tickets/{id}/visits': visitTicket.id,
       '/maintenance/tickets/{id}/visit-events': visitTicket.id,

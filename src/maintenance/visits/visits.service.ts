@@ -8,7 +8,7 @@ import type {
 } from '@prisma/client';
 import { CommunityMaintenancePort } from '../../community';
 import { RequestContext } from '../../core/common/cls/request-context';
-import { appError, ErrorCode } from '../../core/common/errors';
+import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import { REASON_CODES, requireReasonCodeOnly } from '../../core/common/reasons';
 import { newId } from '../../core/common/uuid';
 import {
@@ -16,11 +16,13 @@ import {
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
 import type { NotificationKind } from '../../core/notifications/kinds';
+import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { dbNow } from '../db-clock';
+import { MaintenanceSettingsService } from '../settings/maintenance-settings.service';
 import { SlaRecorder } from '../sla/sla-recorder';
 import type { Audience } from '../tickets/ticket-access';
 import { TicketNotices } from '../tickets/ticket-notices';
-import { can } from '../tickets/ticket-rules';
+import { assertCan, can } from '../tickets/ticket-rules';
 import { TicketsService, type Person } from '../tickets/tickets.service';
 import { WorkService } from '../tickets/work.service';
 import { sideOf, VisitAccess } from './visit-access';
@@ -32,6 +34,14 @@ import {
   assertWindow,
   inArrivalWindow,
 } from './visit-rules';
+import {
+  addDays,
+  DEFAULT_SLOT_DAYS,
+  freeSlots,
+  localDate,
+  type LocalDate,
+  type Slot,
+} from './visit-slots';
 
 export interface Window {
   startsAt: Date;
@@ -90,6 +100,8 @@ export class VisitsService {
     private readonly tickets: TicketsService,
     private readonly work: WorkService,
     private readonly sla: SlaRecorder,
+    private readonly maintenanceSettings: MaintenanceSettingsService,
+    private readonly tenantSettings: TenantSettingsService,
   ) {}
 
   // --- proposals -----------------------------------------------------------
@@ -370,6 +382,73 @@ export class VisitsService {
   }
 
   // --- reads ---------------------------------------------------------------------
+
+  /**
+   * Free windows for a visit (ADR 0038): the compound's visiting hours cut
+   * into slots, in its time zone, from `from` (today by default) for `days`
+   * days, minus what a proposal would be refused for (too soon, too far)
+   * and the technician's other active visits. For the residents who reach
+   * the ticket's visits; the ticket must be in a technician's hands. It
+   * says nothing about why a slot is missing, so nobody learns another
+   * home's window from it. A read: `counter` and `reschedule` still check
+   * the window they get, under the ticket's lock.
+   */
+  slots(
+    ticketId: string,
+    q: { from?: LocalDate; days?: number },
+  ): Promise<Slot[]> {
+    // The DTO checked the shape; this is a real day (not 2030-02-31).
+    if (q.from !== undefined && addDays(q.from, 0) !== q.from)
+      throw appError.badRequest(ErrorCode.VALIDATION_FAILED, 'Invalid day', {
+        fields: [
+          {
+            field: 'from',
+            code: FieldErrorCode.INVALID_FORMAT,
+            params: { format: 'YYYY-MM-DD' },
+          },
+        ],
+      });
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const ticket = await this.access.forRead(tx, ticketId, 'resident');
+      if (ticket.unitId === null)
+        throw appError.conflict(
+          ErrorCode.VISIT_NOT_FOR_COMMON_AREA,
+          'A common-area ticket has no visits',
+        );
+      assertCan(ticket, 'visit');
+      const settings = await this.maintenanceSettings.inTx(tx);
+      const { timezone } = await this.tenantSettings.inTx(tx, ticket.tenantId);
+      const now = await dbNow(tx);
+      const from = q.from ?? localDate(now, timezone);
+      const days = q.days ?? DEFAULT_SLOT_DAYS;
+      // A day either side covers every time zone's offset.
+      const lo = new Date(`${addDays(from, -1)}T00:00:00.000Z`);
+      const hi = new Date(`${addDays(from, days + 1)}T00:00:00.000Z`);
+      const busy = await tx.ticketVisit.findMany({
+        where: {
+          technicianId: ticket.technicianId!,
+          status: { in: [...ACTIVE] },
+          // The ticket's own visit is the one being moved.
+          ticketId: { not: ticket.id },
+          startsAt: { lt: hi },
+          endsAt: { gt: lo },
+        },
+        select: { startsAt: true, endsAt: true },
+      });
+      return freeSlots({
+        from,
+        days,
+        hours: {
+          startMinute: settings.visitHoursStart,
+          endMinute: settings.visitHoursEnd,
+          slotMinutes: settings.visitSlotMinutes,
+        },
+        timeZone: timezone,
+        now,
+        busy,
+      });
+    });
+  }
 
   /** A ticket's visits, newest first: the technician sees their own. */
   list(ticketId: string, audience: Audience): Promise<VisitRead[]> {

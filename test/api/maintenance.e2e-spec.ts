@@ -35,7 +35,21 @@ const CATEGORY = [
     `slaTargets.${p}.resolutionMinutes`,
   ]),
 ].sort();
-const SETTINGS = ['autoCloseHours', 'maxReportPhotos', 'reopenDays'];
+const SETTINGS = [
+  'autoCloseHours',
+  'maxReportPhotos',
+  'reopenDays',
+  // ADR 0038.
+  'visitHoursEnd',
+  'visitHoursStart',
+  'visitSlotMinutes',
+];
+/** The visiting hours every compound starts with (ADR 0038). */
+const VISIT_HOURS = {
+  visitHoursStart: 480,
+  visitHoursEnd: 1080,
+  visitSlotMinutes: 60,
+};
 const CREATED = ['createdAt', 'id', 'number', 'priority', 'status'];
 const CATEGORY_REF = [
   'category.id',
@@ -1498,6 +1512,7 @@ describe('API v0 — maintenance (ADR 0032)', () => {
         autoCloseHours: 72,
         reopenDays: 7,
         maxReportPhotos: 5,
+        ...VISIT_HOURS,
       });
       const patched = await call(w, 'PATCH', '/maintenance/settings', {
         token: manager(),
@@ -1507,6 +1522,7 @@ describe('API v0 — maintenance (ADR 0032)', () => {
         autoCloseHours: 48,
         reopenDays: 7,
         maxReportPhotos: 5,
+        ...VISIT_HOURS,
       });
       await call(w, 'PATCH', '/maintenance/settings', {
         token: manager(),

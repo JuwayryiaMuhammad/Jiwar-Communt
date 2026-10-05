@@ -4951,12 +4951,27 @@
           "reopenDays": {
             "description": "Days after closing during which the reporter may reopen.",
             "type": "number"
+          },
+          "visitHoursEnd": {
+            "description": "Visiting hours end, minutes after local midnight.",
+            "type": "number"
+          },
+          "visitHoursStart": {
+            "description": "Visiting hours start, minutes after midnight in the compound’s time zone.",
+            "type": "number"
+          },
+          "visitSlotMinutes": {
+            "description": "The length of a slot residents may pick.",
+            "type": "number"
           }
         },
         "required": [
           "autoCloseHours",
           "reopenDays",
-          "maxReportPhotos"
+          "maxReportPhotos",
+          "visitHoursStart",
+          "visitHoursEnd",
+          "visitSlotMinutes"
         ],
         "type": "object"
       },
@@ -10733,6 +10748,24 @@
             "maximum": 90,
             "minimum": 1,
             "type": "number"
+          },
+          "visitHoursEnd": {
+            "description": "Visiting hours end, minutes after local midnight; at least one slot after the start.",
+            "maximum": 1440,
+            "minimum": 1,
+            "type": "number"
+          },
+          "visitHoursStart": {
+            "description": "Visiting hours start, minutes after local midnight (ADR 0038).",
+            "maximum": 1439,
+            "minimum": 0,
+            "type": "number"
+          },
+          "visitSlotMinutes": {
+            "description": "The length of a slot residents may pick.",
+            "maximum": 240,
+            "minimum": 15,
+            "type": "number"
           }
         },
         "type": "object"
@@ -11270,6 +11303,42 @@
           "system"
         ],
         "type": "string"
+      },
+      "VisitSlotView": {
+        "properties": {
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "startsAt",
+          "endsAt"
+        ],
+        "type": "object"
+      },
+      "VisitSlotViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/VisitSlotView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
       },
       "VisitStatus": {
         "enum": [
@@ -20795,6 +20864,64 @@
         "tags": [
           "tickets"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/tickets/{id}/visit-slots": {
+      "get": {
+        "operationId": "ResidentVisitsController_slots",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The first day, `YYYY-MM-DD` in the compound’s time zone; today by default.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-10-11",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 14,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisitSlotViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

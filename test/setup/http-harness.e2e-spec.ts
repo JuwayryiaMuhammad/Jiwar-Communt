@@ -36,6 +36,11 @@ describe('Test harness — a compound', () => {
         categories: await tx.ticketCategory.count(),
         specialties: await tx.specialty.count(),
         categorySpecialties: await tx.categorySpecialty.count(),
+        parcelSettings: await tx.parcelSettings.findUnique({
+          where: { tenantId: id },
+          select: { parcelReminderDays: true, parcelManagerDays: true },
+        }),
+        parcelCounters: await tx.parcelCounter.count(),
         dispatch: await tx.maintenanceDispatchSettings.findUnique({
           where: { tenantId: id },
           select: { autoDispatchEnabled: true },
@@ -55,6 +60,8 @@ describe('Test harness — a compound', () => {
       categories: DEFAULT_CATEGORIES.length,
       specialties: DEFAULT_SPECIALTIES.length,
       categorySpecialties: DEFAULT_CATEGORY_SPECIALTIES.length,
+      parcelSettings: { parcelReminderDays: 3, parcelManagerDays: 14 },
+      parcelCounters: 1,
       dispatch: { autoDispatchEnabled: false },
       sla: { slaEnabled: false },
       slaTargets: DEFAULT_CATEGORIES.length * 3,

@@ -70,6 +70,8 @@ describe('Test harness — TenantLifecycle', () => {
     // The comparison means something: the domains' rows are in it.
     expect(fromApp.maintenance_settings).toBe(1);
     expect(fromApp.ticket_categories).toBeGreaterThan(0);
+    expect(fromApp.parcel_settings).toBe(1);
+    expect(fromApp.parcel_counters).toBe(1);
     expect(fromCore).toEqual(fromApp);
   });
 });

@@ -21,19 +21,24 @@ export default async function globalTeardown(): Promise<void> {
               concat_ws(', ',
                 CASE WHEN ms.tenant_id IS NULL THEN 'maintenance_settings' END,
                 CASE WHEN ds.tenant_id IS NULL THEN 'maintenance_dispatch_settings' END,
-                CASE WHEN ss.tenant_id IS NULL THEN 'maintenance_sla_settings' END
+                CASE WHEN ss.tenant_id IS NULL THEN 'maintenance_sla_settings' END,
+                CASE WHEN ps.tenant_id IS NULL THEN 'parcel_settings' END,
+                CASE WHEN pc.tenant_id IS NULL THEN 'parcel_counters' END
               ) AS missing
          FROM tenants t
          LEFT JOIN maintenance_settings ms ON ms.tenant_id = t.id
          LEFT JOIN maintenance_dispatch_settings ds ON ds.tenant_id = t.id
          LEFT JOIN maintenance_sla_settings ss ON ss.tenant_id = t.id
+         LEFT JOIN parcel_settings ps ON ps.tenant_id = t.id
+         LEFT JOIN parcel_counters pc ON pc.tenant_id = t.id
         WHERE t.status = 'active'
-          AND (ms.tenant_id IS NULL OR ds.tenant_id IS NULL OR ss.tenant_id IS NULL)
+          AND (ms.tenant_id IS NULL OR ds.tenant_id IS NULL OR ss.tenant_id IS NULL
+               OR ps.tenant_id IS NULL OR pc.tenant_id IS NULL)
         ORDER BY t.created_at`,
     );
     if (rows.length)
       throw new Error(
-        `${rows.length} active compound(s) without their maintenance rows; ` +
+        `${rows.length} active compound(s) without their maintenance or parcel rows; ` +
           `create test compounds through the harness, or call TenantLifecycle.tenantCreated: ` +
           rows
             .slice(0, 10)

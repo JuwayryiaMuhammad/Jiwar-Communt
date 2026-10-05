@@ -456,6 +456,8 @@ model Tenant {
   ticketCategories  TicketCategory[]
   maintenance       MaintenanceSettings?
   ticketCounter     TicketCounter?
+  parcelSettings    ParcelSettings?
+  parcelCounter     ParcelCounter?
   specialties       Specialty[]
   dispatchSettings  MaintenanceDispatchSettings?
   slaSettings       MaintenanceSlaSettings?
@@ -818,6 +820,7 @@ model Unit {
   gateInstructions  UnitGateInstruction[]
   gateRequests      GateApprovalRequest[]
   tickets           Ticket[]
+  parcels           Parcel[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -1603,6 +1606,8 @@ model StoredFile {
   workers  DomesticWorker[]   @relation("WorkerPhoto")
   accounts Account[]          @relation("AccountPhoto")
   tickets  TicketAttachment[] @relation("AttachmentFile")
+  parcelPhotos         Parcel[]           @relation("ParcelPhoto")
+  parcelHandoverPhotos Parcel[]           @relation("ParcelHandoverPhoto")
   owner    Account?           @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([tenantId, id])
@@ -2126,7 +2131,6 @@ model TicketDispatchAttempt {
 // ============================================================================
 // Phase 5.3 — visits and the SLA (ADR 0034)
 // ============================================================================
-
 enum VisitStatus {
   proposed
   confirmed
@@ -2332,4 +2336,186 @@ model TicketSlaClock {
 
   @@id([tenantId, ticketId, cycle, clock])
   @@map("ticket_sla_clocks")
+}
+
+// ============================================================================
+// Parcels (ADR 0035)
+// ============================================================================
+
+enum ParcelStatus {
+  held
+  handed_over
+  rejected
+  returned
+
+  @@map("parcel_status")
+}
+
+enum ParcelCarrier {
+  aramex
+  dhl
+  fedex
+  ups
+  bosta
+  mylerz
+  egypt_post
+  amazon
+  noon
+  jumia
+  talabat
+  other
+
+  @@map("parcel_carrier")
+}
+
+enum ParcelMethod {
+  code
+  resident_qr
+  delegate
+
+  @@map("parcel_method")
+}
+
+enum ParcelEventKind {
+  received
+  delegate_authorized
+  delegate_revoked
+  handed_over
+  rejected
+  returned
+
+  @@map("parcel_event_kind")
+}
+
+enum ParcelActorSide {
+  guard
+  resident
+  system
+
+  @@map("parcel_actor_side")
+}
+
+enum ParcelCredentialKind {
+  holder
+  delegate
+
+  @@map("parcel_credential_kind")
+}
+
+/// A parcel received at the gate for a unit. `labelName` and the two photos
+/// are personal: never in the audit trail or a notification, and cleared 30
+/// days after the parcel is handed over or returned. The ids of accounts
+/// (guard, recipient) have no foreign key: they name no one.
+model Parcel {
+  id                   String        @id @db.Uuid
+  tenantId             String        @map("tenant_id") @db.Uuid
+  number               Int
+  unitId               String        @map("unit_id") @db.Uuid
+  gateId               String        @map("gate_id") @db.Uuid
+  shiftId              String        @map("shift_id") @db.Uuid
+  receivedById         String        @map("received_by_account_id") @db.Uuid
+  carrier              ParcelCarrier
+  pieces               Int
+  /// The recipient's name as printed on the label. Never shown to a guard
+  /// or a manager.
+  labelName            String?       @map("label_name")
+  photoFileId          String?       @map("photo_file_id") @db.Uuid
+  handoverPhotoFileId  String?       @map("handover_photo_file_id") @db.Uuid
+  status               ParcelStatus  @default(held)
+  receivedAt           DateTime      @default(now()) @map("received_at") @db.Timestamptz(3)
+  handedOverAt         DateTime?     @map("handed_over_at") @db.Timestamptz(3)
+  handedOverMethod     ParcelMethod? @map("handed_over_method")
+  /// The occupant whose entry QR received it (an id, on this row only).
+  handedToId           String?       @map("handed_to_account_id") @db.Uuid
+  rejectedAt           DateTime?     @map("rejected_at") @db.Timestamptz(3)
+  rejectReason         String?       @map("reject_reason")
+  returnedAt           DateTime?     @map("returned_at") @db.Timestamptz(3)
+  returnReason         String?       @map("return_reason")
+  /// Handover or return: the start of the 30 days of retention.
+  closedAt             DateTime?     @map("closed_at") @db.Timestamptz(3)
+  remindedAt           DateTime?     @map("reminded_at") @db.Timestamptz(3)
+  heldLongAt           DateTime?     @map("held_long_at") @db.Timestamptz(3)
+  unclaimableAt        DateTime?     @map("unclaimable_notified_at") @db.Timestamptz(3)
+  dataClearedAt        DateTime?     @map("data_cleared_at") @db.Timestamptz(3)
+  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  unit          Unit               @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  photo         StoredFile?        @relation("ParcelPhoto", fields: [tenantId, photoFileId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "parcels_tenant_id_photo_file_fkey")
+  handoverPhoto StoredFile?        @relation("ParcelHandoverPhoto", fields: [tenantId, handoverPhotoFileId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "parcels_tenant_id_handover_photo_file_fkey")
+  credentials   ParcelCredential[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number])
+  @@index([tenantId, status, receivedAt(sort: Desc), id(sort: Desc)], map: "parcels_tenant_id_status_received_at_idx")
+  @@index([tenantId, unitId, receivedAt(sort: Desc)], map: "parcels_tenant_id_unit_id_idx")
+  @@map("parcels")
+}
+
+/// The codes of a parcel: its holder code, and at most one live delegate
+/// code. Only HMACs are stored, and only while the credential is live; the
+/// token behind them is derived from PARCEL_TOKEN_KEY (ADR 0035).
+model ParcelCredential {
+  id            String               @id @db.Uuid
+  tenantId      String               @map("tenant_id") @db.Uuid
+  parcelId      String               @map("parcel_id") @db.Uuid
+  kind          ParcelCredentialKind
+  /// Collision retries: the token is derived from (credential id, attempt).
+  attempt       Int                  @default(0)
+  codeHash      String?              @map("code_hash") @db.Char(64)
+  qrTokenHash   String?              @map("qr_token_hash") @db.Char(64)
+  /// A delegate's name: personal, kept only while useful (ADR 0035).
+  delegateName  String?              @map("delegate_name")
+  /// The guard who received the parcel, or the occupant who authorized
+  /// the delegate (an id, no foreign key).
+  createdById   String               @map("created_by_account_id") @db.Uuid
+  createdAt     DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  endedAt       DateTime?            @map("ended_at") @db.Timestamptz(3)
+  endReason     String?              @map("end_reason")
+
+  parcel Parcel @relation(fields: [tenantId, parcelId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([tenantId, parcelId], map: "parcel_credentials_parcel_idx")
+  @@map("parcel_credentials")
+}
+
+/// Append-only (ADR 0035): SELECT and INSERT for jiwar_app, triggers refuse
+/// the rest for every role. No foreign keys, like gate_entries. No text.
+model ParcelEvent {
+  id             String          @id @db.Uuid
+  tenantId       String          @map("tenant_id") @db.Uuid
+  parcelId       String          @map("parcel_id") @db.Uuid
+  kind           ParcelEventKind
+  actorSide      ParcelActorSide @map("actor_side")
+  /// NULL for the system (a sweep, a lifecycle hook).
+  actorId        String?         @map("actor_account_id") @db.Uuid
+  method         ParcelMethod?
+  reasonCode     String?         @map("reason_code")
+  at             DateTime        @default(now()) @db.Timestamptz(3)
+
+  @@index([tenantId, parcelId, at, id], map: "parcel_events_parcel_idx")
+  @@map("parcel_events")
+}
+
+/// One row per compound, created with it (like maintenance_settings).
+model ParcelSettings {
+  tenantId           String   @id @map("tenant_id") @db.Uuid
+  parcelReminderDays Int      @default(3) @map("parcel_reminder_days")
+  parcelManagerDays  Int      @default(14) @map("parcel_manager_days")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("parcel_settings")
+}
+
+/// The last parcel number of a compound, taken under its row lock.
+model ParcelCounter {
+  tenantId   String @id @map("tenant_id") @db.Uuid
+  lastNumber Int    @default(0) @map("last_number")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("parcel_counters")
 }

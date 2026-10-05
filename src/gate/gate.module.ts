@@ -23,6 +23,7 @@ import { GatesController } from './gates/gates.controller';
 import { GatesService } from './gates/gates.service';
 import { ShiftsController } from './shifts/shifts.controller';
 import { ShiftsService } from './shifts/shifts.service';
+import { ParcelProvisioning } from './parcels/parcel-provisioning';
 import { InstructionsService } from './visitors/instructions.service';
 import { VisitorDataSweep } from './visitors/visitor-data.sweep';
 import { VisitorPageController } from './visitors/visitor-page.controller';
@@ -68,6 +69,7 @@ import { VisitorsController } from './visitors/visitors.controller';
     EntrySecrets,
     EntryCredentialsService,
     ResidentVerifier,
+    ParcelProvisioning,
   ],
 })
 export class GateModule {}

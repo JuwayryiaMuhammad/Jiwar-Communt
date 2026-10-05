@@ -5,6 +5,7 @@ import { RoleProvisioner } from '../../src/core/access/role-provisioner';
 import { egyptToday } from '../../src/core/common/egyptian-national-id';
 import { newId } from '../../src/core/common/uuid';
 import { TenantLifecycle } from '../../src/core/tenant-settings/tenant-lifecycle';
+import { ParcelProvisioning } from '../../src/gate/parcels/parcel-provisioning';
 import { MaintenanceProvisioning } from '../../src/maintenance/provisioning';
 import type { DbHarness } from './db-module';
 import { suiteSequence } from './id-blocks';
@@ -19,6 +20,7 @@ const provisioner = new RoleProvisioner(CODE_ACCESS_CATALOG);
  */
 export const tenantLifecycle = new TenantLifecycle();
 new MaintenanceProvisioning(tenantLifecycle).onModuleInit();
+new ParcelProvisioning(tenantLifecycle).onModuleInit();
 
 /**
  * Generated phones and national IDs live in a space hand-written test values

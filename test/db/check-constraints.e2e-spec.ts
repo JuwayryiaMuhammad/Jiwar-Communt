@@ -213,6 +213,53 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   specialties_names_length: {},
   maintenance_dispatch_settings_ranges: {},
   ticket_dispatch_attempts_shape: {},
+  // Parcels (ADR 0035): no nullable column, or only under IS [NOT] NULL.
+  parcel_settings_ranges: {},
+  parcels_pieces: {},
+  parcels_handover_photo: {},
+  parcels_data_cleared: {},
+  parcel_credentials_attempt: {},
+  parcel_credentials_hashes_while_live: {},
+  parcel_events_system_has_no_account: {},
+  parcel_events_method: {},
+  // Parcels: compare nullable columns.
+  parcels_label_name_length: {
+    guarded:
+      'label_name IS NULL is tested first; the length runs only on a value',
+  },
+  parcels_reject_reason: {
+    guarded:
+      'reject_reason IS NULL is tested first; the list runs only on a value',
+  },
+  parcels_return_reason: {
+    guarded:
+      'return_reason IS NULL is tested first; the list runs only on a value',
+  },
+  parcels_status_shape: {
+    guarded:
+      'return_reason is compared only in the returned branch, which first ' +
+      'tests return_reason IS NOT NULL',
+  },
+  parcels_handed_to: {
+    guarded: 'handed_over_method IS NOT NULL is tested before it is compared',
+  },
+  parcel_credentials_end: {
+    guarded:
+      'end_reason IS NULL is tested first; the list runs only on a value',
+  },
+  parcel_credentials_delegate_name: {
+    guarded:
+      'delegate_name IS NULL is tested first; the length runs only on a value',
+  },
+  parcel_credentials_revoked_keeps_no_name: {
+    guarded:
+      'end_reason IS NULL is tested first; the list runs only on a value',
+  },
+  parcel_events_reason: {
+    guarded:
+      'reason_code is compared only after reason_code IS NULL, and the ' +
+      'other side is IS NOT NULL',
+  },
   // Dispatch: compares nullable columns.
   technician_availability_history_from_shape: {
     guarded:

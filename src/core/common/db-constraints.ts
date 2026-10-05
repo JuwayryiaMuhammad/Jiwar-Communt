@@ -98,4 +98,13 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   ticket_sla_events_seq_key: null,
   ticket_sla_events_one_start: null,
   ticket_sla_events_one_end: null,
+  // Parcels (ADR 0035). Numbers come from the counter under its row lock;
+  // codes are derived and checked first, with the indexes as the backstop.
+  parcels_tenant_id_id_key: null,
+  parcels_tenant_id_number_key: null,
+  parcel_credentials_live_code: null,
+  parcel_credentials_live_qr: null,
+  parcel_credentials_one_holder: null,
+  // Checked under the parcel's lock (PARCEL_DELEGATE_EXISTS first).
+  parcel_credentials_one_live_delegate: null,
 };

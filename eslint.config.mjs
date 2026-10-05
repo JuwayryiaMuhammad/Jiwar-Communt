@@ -4,8 +4,10 @@ import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 import boundaries from './eslint.boundaries.cjs';
+import txConcurrency from './eslint.tx-concurrency.cjs';
 
 const { boundaryConfigs } = boundaries;
+const { txConcurrencyConfigs } = txConcurrency;
 
 export default tseslint.config(
   {
@@ -13,6 +15,7 @@ export default tseslint.config(
     ignores: [
       'eslint.config.mjs',
       'eslint.boundaries.cjs',
+      'eslint.tx-concurrency.cjs',
       'dist/**',
       'coverage/**',
       'apps/**',
@@ -53,6 +56,10 @@ export default tseslint.config(
   // domain reaches another one only through its index.ts. See
   // eslint.boundaries.cjs (shared with the unit test that proves it fires).
   ...boundaryConfigs,
+  // ==========================================================================
+  // One query at a time on a transaction client (eslint.tx-concurrency.cjs)
+  // ==========================================================================
+  ...txConcurrencyConfigs,
   // runInTenantUnsafe takes a tenant id from the caller instead of the request
   // context, so it is a deliberate hole. It is allowed only where there is no
   // request tenant by design: the login bootstrap (src/core/auth/), the

@@ -2450,6 +2450,8 @@ enum VisitEventKind {
   done
   no_access
   late_notified
+  /// The residents' side says the technician is really there (ADR 0038).
+  arrival_confirmed
 
   @@map("visit_event_kind")
 }
@@ -2513,6 +2515,9 @@ model TicketVisit {
   cancelledBySide      VisitSide?         @map("cancelled_by_side")
   cancelledById        String?            @map("cancelled_by_account_id") @db.Uuid
   lateNotifiedAt       DateTime?          @map("late_notified_at") @db.Timestamptz(3)
+  /// The residents' side confirmed the arrival (ADR 0038), once.
+  arrivalConfirmedAt   DateTime?          @map("arrival_confirmed_at") @db.Timestamptz(3)
+  arrivalConfirmedById String?            @map("arrival_confirmed_by_account_id") @db.Uuid
   createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
 

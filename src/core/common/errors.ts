@@ -189,6 +189,8 @@ export const ErrorCode = {
   VISIT_NOT_FOR_COMMON_AREA: 'VISIT_NOT_FOR_COMMON_AREA',
   /** The other side confirms a proposal, never its own side (403). */
   VISIT_SAME_SIDE: 'VISIT_SAME_SIDE',
+  /** The residents' side already confirmed this arrival (409, ADR 0038). */
+  VISIT_ARRIVAL_ALREADY_CONFIRMED: 'VISIT_ARRIVAL_ALREADY_CONFIRMED',
   /** No `visitConsent` on the unit (403). */
   VISITS_NOT_ALLOWED: 'VISITS_NOT_ALLOWED',
   /**

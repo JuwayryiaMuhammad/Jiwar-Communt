@@ -280,6 +280,39 @@ export class VisitsService {
     });
   }
 
+  /**
+   * The residents' side says the technician is really at the door (ADR
+   * 0038): once, while the visit is `arrived`. The technician is told.
+   * Nothing else moves: the arrival already started the ticket.
+   */
+  confirmArrival(ticketId: string, visitId: string): Promise<void> {
+    const me = this.ctx.accountId;
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const ticket = await this.access.forWrite(tx, ticketId, 'resident');
+      const visit = await this.access.visit(tx, ticket, visitId, 'resident');
+      assertVisit(visit, 'confirmArrival');
+      if (visit.arrivalConfirmedAt)
+        throw appError.conflict(
+          ErrorCode.VISIT_ARRIVAL_ALREADY_CONFIRMED,
+          'The arrival is already confirmed',
+        );
+      const now = await dbNow(tx);
+      await tx.ticketVisit.update({
+        where: { id: visit.id },
+        data: { arrivalConfirmedAt: now, arrivalConfirmedById: me },
+      });
+      await this.log.write(tx, visit, {
+        kind: 'arrival_confirmed',
+        side: 'resident',
+        actorId: me,
+        at: now,
+      });
+      await this.tell(tx, ticket, visit, 'ticket.visit_arrival_confirmed', [
+        visit.technicianId,
+      ]);
+    });
+  }
+
   /** The visit is over; the ticket goes on by its own rules. */
   done(ticketId: string, visitId: string): Promise<void> {
     const me = this.ctx.accountId;
@@ -536,6 +569,7 @@ export class VisitsService {
       visit.confirmedById,
       visit.consentById,
       visit.cancelledById,
+      visit.arrivalConfirmedById,
     ]);
     return { visit, receiver: await this.receiver(tx, ticket, visit), people };
   }

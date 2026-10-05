@@ -425,6 +425,14 @@ export const NOTIFICATION_KINDS = {
     target: 'ticket',
     params: { ticketNumber: {}, startsAt: {}, endsAt: {} },
   },
+  /** The residents' side confirmed the arrival (the technician, ADR 0038). */
+  'ticket.visit_arrival_confirmed': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { ticketNumber: {}, startsAt: {}, endsAt: {} },
+  },
   /** Nobody let the technician in: choose a new time (the residents). */
   'ticket.visit_no_access': {
     priority: 'normal',

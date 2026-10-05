@@ -2887,6 +2887,20 @@
           "absenceEntry": {
             "$ref": "#/components/schemas/DispatchAbsenceEntryView"
           },
+          "arrivalConfirmedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "arrivalConfirmedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
           "arrivedAt": {
             "format": "date-time",
             "nullable": true,
@@ -3008,6 +3022,8 @@
           "absenceEntry",
           "receiver",
           "arrivedAt",
+          "arrivalConfirmedBy",
+          "arrivalConfirmedAt",
           "finishedAt",
           "cancelledAt",
           "cancelReasonCode",
@@ -8183,6 +8199,21 @@
           "absenceEntry": {
             "$ref": "#/components/schemas/AbsenceEntryView"
           },
+          "arrivalConfirmedAt": {
+            "description": "Someone on the residents’ side confirmed the arrival.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "arrivalConfirmedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConsenterView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
           "arrivedAt": {
             "format": "date-time",
             "nullable": true,
@@ -8268,6 +8299,8 @@
           "technician",
           "absenceEntry",
           "receiver",
+          "arrivalConfirmedAt",
+          "arrivalConfirmedBy",
           "previousVisitId",
           "confirmedAt",
           "arrivedAt",
@@ -9656,6 +9689,12 @@
             "description": "Someone who lives there allowed entry while nobody is home, for this visit. False: do not enter unless let in.",
             "type": "boolean"
           },
+          "arrivalConfirmedAt": {
+            "description": "The residents confirmed the arrival; never who.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "arrivedAt": {
             "format": "date-time",
             "nullable": true,
@@ -9728,6 +9767,7 @@
           "absenceEntryApproved",
           "receiver",
           "arrivedAt",
+          "arrivalConfirmedAt",
           "finishedAt",
           "cancelledAt",
           "cancelReasonCode",
@@ -10419,6 +10459,21 @@
           "absenceEntry": {
             "$ref": "#/components/schemas/AbsenceEntryView"
           },
+          "arrivalConfirmedAt": {
+            "description": "Someone on the residents’ side confirmed the arrival.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "arrivalConfirmedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConsenterView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
           "category": {
             "$ref": "#/components/schemas/TicketCategoryRefView"
           },
@@ -10485,6 +10540,8 @@
           "technician",
           "absenceEntry",
           "receiver",
+          "arrivalConfirmedAt",
+          "arrivalConfirmedBy",
           "ticketId",
           "ticketNumber",
           "ticketStatus",
@@ -11064,7 +11121,8 @@
           "arrived",
           "done",
           "no_access",
-          "late_notified"
+          "late_notified",
+          "arrival_confirmed"
         ],
         "type": "string"
       },
@@ -20869,6 +20927,43 @@
     "/api/v1/tickets/{id}/visits/{visitId}/confirm": {
       "post": {
         "operationId": "ResidentVisitsController_confirm",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "visitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/tickets/{id}/visits/{visitId}/confirm-arrival": {
+      "post": {
+        "operationId": "ResidentVisitsController_confirmArrival",
         "parameters": [
           {
             "in": "path",

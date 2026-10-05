@@ -84,6 +84,8 @@ describe('Visit and SLA tables — CHECKs and indexes', () => {
     'cancelled_by_side',
     'cancelled_by_account_id',
     'late_notified_at',
+    'arrival_confirmed_at',
+    'arrival_confirmed_by_account_id',
   ] as const;
   type Visit = Partial<Record<(typeof COLUMNS)[number], unknown>>;
 
@@ -111,6 +113,8 @@ describe('Visit and SLA tables — CHECKs and indexes', () => {
       cancelled_by_side: null,
       cancelled_by_account_id: null,
       late_notified_at: null,
+      arrival_confirmed_at: null,
+      arrival_confirmed_by_account_id: null,
       ...over,
     };
     const values = COLUMNS.map((c) => row[c]);
@@ -275,6 +279,35 @@ describe('Visit and SLA tables — CHECKs and indexes', () => {
       await expect(
         attempt(cancelled({ status: 'rescheduled', cancel_reason_code: null })),
       ).resolves.toBeUndefined();
+    });
+
+    it('an arrival confirmation has who and when, and follows an arrival (ADR 0038, the NULL trap)', async () => {
+      const arrived = (over: Visit) =>
+        visit(confirmed({ status: 'arrived', arrived_at: START, ...over }));
+      await expect(
+        attempt(
+          arrived({
+            arrival_confirmed_at: START,
+            arrival_confirmed_by_account_id: residentId,
+          }),
+        ),
+      ).resolves.toBeUndefined();
+      await expect(
+        attempt(arrived({ arrival_confirmed_at: START })),
+      ).rejects.toThrow(/arrival_confirmed_shape/);
+      await expect(
+        attempt(arrived({ arrival_confirmed_by_account_id: residentId })),
+      ).rejects.toThrow(/arrival_confirmed_shape/);
+      await expect(
+        attempt(
+          visit(
+            confirmed({
+              arrival_confirmed_at: START,
+              arrival_confirmed_by_account_id: residentId,
+            }),
+          ),
+        ),
+      ).rejects.toThrow(/arrival_confirmed_shape/);
     });
 
     it('a late notice is for a confirmed visit', async () => {

@@ -3268,6 +3268,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tickets/{id}/visits/{visitId}/confirm-arrival": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ResidentVisitsController_confirmArrival"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tickets/{id}/visits/{visitId}/counter": {
         parameters: {
             query?: never;
@@ -4768,6 +4784,9 @@ export interface components {
         DispatchTrigger: "created" | "declined" | "available" | "manual" | "sweep" | "role_lost" | "released" | "enabled";
         DispatchVisitView: {
             absenceEntry: components["schemas"]["DispatchAbsenceEntryView"];
+            /** Format: date-time */
+            arrivalConfirmedAt: string | null;
+            arrivalConfirmedBy: components["schemas"]["AccountRefView"] | null;
             /** Format: date-time */
             arrivedAt: string | null;
             cancelReasonCode: string | null;
@@ -6272,6 +6291,12 @@ export interface components {
         };
         ResidentVisitView: {
             absenceEntry: components["schemas"]["AbsenceEntryView"];
+            /**
+             * Format: date-time
+             * @description Someone on the residents’ side confirmed the arrival.
+             */
+            arrivalConfirmedAt: string | null;
+            arrivalConfirmedBy: components["schemas"]["ConsenterView"] | null;
             /** Format: date-time */
             arrivedAt: string | null;
             cancelReasonCode: string | null;
@@ -6680,6 +6705,11 @@ export interface components {
         TechnicianVisitView: {
             /** @description Someone who lives there allowed entry while nobody is home, for this visit. False: do not enter unless let in. */
             absenceEntryApproved: boolean;
+            /**
+             * Format: date-time
+             * @description The residents confirmed the arrival; never who.
+             */
+            arrivalConfirmedAt: string | null;
             /** Format: date-time */
             arrivedAt: string | null;
             cancelReasonCode: string | null;
@@ -6892,6 +6922,12 @@ export interface components {
         };
         UnitVisitView: {
             absenceEntry: components["schemas"]["AbsenceEntryView"];
+            /**
+             * Format: date-time
+             * @description Someone on the residents’ side confirmed the arrival.
+             */
+            arrivalConfirmedAt: string | null;
+            arrivalConfirmedBy: components["schemas"]["ConsenterView"] | null;
             category: components["schemas"]["TicketCategoryRefView"];
             /** Format: date-time */
             endsAt: string;
@@ -7078,7 +7114,7 @@ export interface components {
             status: components["schemas"]["VisitStatus"];
         };
         /** @enum {string} */
-        VisitEventKind: "proposed" | "countered" | "confirmed" | "rescheduled" | "cancelled" | "consent_granted" | "consent_revoked" | "consent_voided" | "receiver_set" | "receiver_cleared" | "arrived" | "done" | "no_access" | "late_notified";
+        VisitEventKind: "proposed" | "countered" | "confirmed" | "rescheduled" | "cancelled" | "consent_granted" | "consent_revoked" | "consent_voided" | "receiver_set" | "receiver_cleared" | "arrived" | "done" | "no_access" | "late_notified" | "arrival_confirmed";
         VisitEventView: {
             /** @description Null for the system. */
             actor: components["schemas"]["AccountRefView"] | null;
@@ -12523,6 +12559,26 @@ export interface operations {
         };
     };
     ResidentVisitsController_confirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ResidentVisitsController_confirmArrival: {
         parameters: {
             query?: never;
             header?: never;

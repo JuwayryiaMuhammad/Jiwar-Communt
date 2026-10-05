@@ -106,10 +106,22 @@ class ResidentVisitBase {
   absenceEntry: AbsenceEntryView;
   @ApiProperty({ type: ResidentReceiverView, nullable: true })
   receiver: ResidentReceiverView | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'Someone on the residents’ side confirmed the arrival.',
+  })
+  arrivalConfirmedAt: Date | null;
+  @ApiProperty({ type: ConsenterView, nullable: true })
+  arrivalConfirmedBy: ConsenterView | null;
 
   static base(r: VisitRead, me: string): ResidentVisitBase {
     const v = r.visit;
     const granter = v.consentById ? first(r, v.consentById) : null;
+    const confirmer = v.arrivalConfirmedById
+      ? first(r, v.arrivalConfirmedById)
+      : null;
     return {
       id: v.id,
       status: v.status,
@@ -128,6 +140,10 @@ class ResidentVisitBase {
             id: r.receiver.id,
             firstName: firstNameOf(r.receiver.fullName),
           }
+        : null,
+      arrivalConfirmedAt: v.arrivalConfirmedAt,
+      arrivalConfirmedBy: confirmer
+        ? { ...confirmer, mine: v.arrivalConfirmedById === me }
         : null,
     };
   }
@@ -217,6 +233,13 @@ export class TechnicianVisitView {
   receiver: TechnicianReceiverView | null;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   arrivedAt: Date | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'The residents confirmed the arrival; never who.',
+  })
+  arrivalConfirmedAt: Date | null;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   finishedAt: Date | null;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
@@ -242,6 +265,7 @@ export class TechnicianVisitView {
           }
         : null,
       arrivedAt: v.arrivedAt,
+      arrivalConfirmedAt: v.arrivalConfirmedAt,
       finishedAt: v.finishedAt,
       cancelledAt: v.cancelledAt,
       cancelReasonCode: v.cancelReasonCode,
@@ -298,6 +322,10 @@ export class DispatchVisitView {
   receiver: DispatchReceiverView | null;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   arrivedAt: Date | null;
+  @ApiProperty({ type: AccountRefView, nullable: true })
+  arrivalConfirmedBy: AccountRefView | null;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  arrivalConfirmedAt: Date | null;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   finishedAt: Date | null;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
@@ -342,6 +370,8 @@ export class DispatchVisitView {
           }
         : null,
       arrivedAt: v.arrivedAt,
+      arrivalConfirmedBy: full(r, v.arrivalConfirmedById),
+      arrivalConfirmedAt: v.arrivalConfirmedAt,
       finishedAt: v.finishedAt,
       cancelledAt: v.cancelledAt,
       cancelReasonCode: v.cancelReasonCode,

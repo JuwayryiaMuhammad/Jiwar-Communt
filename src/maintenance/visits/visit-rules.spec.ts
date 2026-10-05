@@ -29,6 +29,7 @@ const EXPECTED: Record<VisitAction, VisitStatus[]> = {
   arrive: ['confirmed'],
   done: ['arrived'],
   noAccess: ['arrived'],
+  confirmArrival: ['arrived'],
   grantConsent: ['confirmed'],
   revokeConsent: ['confirmed'],
   setReceiver: ['confirmed'],

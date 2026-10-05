@@ -944,6 +944,8 @@ export const VISIT_ROUTES: Row[] = [
   visitAction('/tickets', 'cancel', CODE_INVALID, () => ({
     reasonCode: 'other',
   })),
+  // ADR 0038.
+  visitAction('/tickets', 'confirm-arrival', 'none'),
   visitAction('/tickets', 'absence-consent', 'none'),
   {
     ...visitAction('/tickets', 'absence-consent', 'none'),

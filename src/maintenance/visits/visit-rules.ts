@@ -46,6 +46,7 @@ export type VisitAction =
   | 'arrive'
   | 'done'
   | 'noAccess'
+  | 'confirmArrival'
   | 'grantConsent'
   | 'revokeConsent'
   | 'setReceiver';
@@ -60,6 +61,9 @@ export const VISIT_ALLOWED_FROM: Record<VisitAction, readonly VisitStatus[]> = {
   arrive: ['confirmed'],
   done: ['arrived'],
   noAccess: ['arrived'],
+  // ADR 0038: the residents' side says the technician is really there,
+  // while the visit is at the door.
+  confirmArrival: ['arrived'],
   // Consent and the receiver: on a confirmed visit, until the arrival.
   grantConsent: ['confirmed'],
   revokeConsent: ['confirmed'],

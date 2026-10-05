@@ -127,6 +127,20 @@ export class ResidentVisitsController {
   }
 
   /**
+   * The technician is really at the door (ADR 0038): once, on an arrived
+   * visit; the technician is told.
+   */
+  @Post(':id/visits/:visitId/confirm-arrival')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  confirmArrival(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+  ): Promise<void> {
+    return this.visits.confirmArrival(id, visitId);
+  }
+
+  /**
    * The technician may enter while nobody is home, for this visit only: an
    * adult who lives there, on a confirmed visit. Not implied by confirming.
    */

@@ -241,7 +241,8 @@ export class VisitsService {
 
   /**
    * The technician is there, within [start − 30 min, end + 2 h]. The
-   * residents are told; an `assigned` ticket starts (the 5.1 transition).
+   * residents are told; an `assigned` or `en_route` ticket starts (the 5.1
+   * transition).
    * Returns the visit as the technician sees it, consent read after the
    * lock: what they may do is what was true when they arrived.
    */
@@ -267,7 +268,7 @@ export class VisitsService {
         actorId: me,
         at: now,
       });
-      if (ticket.status === 'assigned' && can(ticket.status, 'start'))
+      if (can(ticket.status, 'start'))
         await this.work.moveInTx(tx, ticket, 'in_progress');
       await this.tell(
         tx,

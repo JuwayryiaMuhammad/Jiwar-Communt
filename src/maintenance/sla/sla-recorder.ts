@@ -27,6 +27,7 @@ const PAUSING: ReadonlySet<string> = new Set([
 export const MEASURED: readonly TicketStatus[] = [
   'new',
   'assigned',
+  'en_route',
   'in_progress',
   'on_hold',
   'completed',
@@ -59,8 +60,9 @@ type SlaTicket = Pick<
  * while the compound's SLA is on (read after the lock too, so a change of
  * the switch is ordered before or after it).
  *
- * - **Response** starts at creation and is met by the first visit proposal
- *   or the first `in_progress`; assignment alone is not a response.
+ * - **Response** starts at creation and is met by the first visit proposal,
+ *   the first `en_route` (ADR 0038) or the first `in_progress`; assignment
+ *   alone is not a response.
  * - **Resolution** starts at creation, pauses at completion
  *   (`awaiting_confirmation`), resumes on a rejection and is met at close.
  * - Both pause on hold for the resident or for parts, resume when the
@@ -149,7 +151,8 @@ export class SlaRecorder implements OnModuleInit {
       for (const clock of CLOCKS) await apply(clock, 'resumed', 'left_hold');
     if (change.from === 'completed')
       await apply('resolution', 'resumed', 'rejected');
-    if (change.to === 'in_progress') await apply('response', 'met', null);
+    if (change.to === 'en_route' || change.to === 'in_progress')
+      await apply('response', 'met', null);
     if (change.to === 'on_hold' && PAUSING.has(change.reasonCode ?? ''))
       for (const clock of CLOCKS)
         await apply(clock, 'paused', change.reasonCode!);
@@ -494,7 +497,7 @@ export class SlaRecorder implements OnModuleInit {
 
   /**
    * Whether the ticket was responded to since it was opened or last
-   * reopened: it went `in_progress`, or a visit was proposed.
+   * reopened: it went `en_route` or `in_progress`, or a visit was proposed.
    */
   private async hasResponded(
     tx: TenantTxClient,
@@ -508,7 +511,8 @@ export class SlaRecorder implements OnModuleInit {
       SELECT EXISTS (
                SELECT 1 FROM ticket_status_history h, since
                 WHERE h.ticket_id = ${ticketId}::uuid
-                  AND h.to_status = 'in_progress' AND h.created_at >= since.at)
+                  AND h.to_status IN ('en_route', 'in_progress')
+                  AND h.created_at >= since.at)
           OR EXISTS (
                SELECT 1 FROM ticket_visits v, since
                 WHERE v.ticket_id = ${ticketId}::uuid

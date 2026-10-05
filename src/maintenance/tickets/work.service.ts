@@ -14,9 +14,10 @@ import { assertCan, type TicketAction } from './ticket-rules';
 
 /**
  * The technician's workflow (ADR 0032), on their own tickets only:
- * start, hold with a reason, resume, complete (the reporter is asked to
- * confirm), and decline before starting (back to the queue). Each action
- * locks the ticket and checks the rules after the lock.
+ * on the way (ADR 0038, optional), start, hold with a reason, resume,
+ * complete (the reporter is asked to confirm), and decline before starting
+ * (back to the queue). Each action locks the ticket and checks the rules
+ * after the lock.
  */
 @Injectable()
 export class WorkService {
@@ -28,6 +29,14 @@ export class WorkService {
     private readonly notices: TicketNotices,
     private readonly engine: DispatchEngine,
   ) {}
+
+  /**
+   * On the way (ADR 0038): the reporter is told, and it counts as the
+   * SLA's response. Optional: `start` works from `assigned` as before.
+   */
+  enRoute(id: string): Promise<void> {
+    return this.move(id, 'enRoute', 'en_route');
+  }
 
   start(id: string): Promise<void> {
     return this.move(id, 'start', 'in_progress');

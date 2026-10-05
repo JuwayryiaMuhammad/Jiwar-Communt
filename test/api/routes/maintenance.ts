@@ -271,6 +271,7 @@ export const MAINTENANCE_ROUTES: Row[] = [
 const STATUSES = [
   'new',
   'assigned',
+  'en_route',
   'in_progress',
   'on_hold',
   'completed',
@@ -501,6 +502,8 @@ export const WORK_ROUTES: Row[] = [
     invalid: 'none',
     noStore: true,
   },
+  // ADR 0038.
+  technicianAction('en-route'),
   technicianAction('start'),
   technicianAction(
     'hold',

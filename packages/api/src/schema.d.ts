@@ -2852,6 +2852,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/technician/tickets/{id}/en-route": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["TechnicianTicketsController_enRoute"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/technician/tickets/{id}/hold": {
         parameters: {
             query?: never;
@@ -6809,7 +6825,7 @@ export interface components {
             responseDueAt: string | null;
         };
         /** @enum {string} */
-        TicketStatus: "new" | "assigned" | "in_progress" | "on_hold" | "completed" | "closed" | "cancelled";
+        TicketStatus: "new" | "assigned" | "en_route" | "in_progress" | "on_hold" | "completed" | "closed" | "cancelled";
         TicketUnitView: {
             code: string;
             /** Format: uuid */
@@ -11860,6 +11876,25 @@ export interface operations {
                 "application/json": components["schemas"]["ReasonCodeDto"];
             };
         };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    TechnicianTicketsController_enRoute: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             204: {
                 headers: {

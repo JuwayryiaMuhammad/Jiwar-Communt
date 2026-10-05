@@ -84,6 +84,17 @@ export class TechnicianTicketsController {
     );
   }
 
+  /**
+   * On the way (ADR 0038): optional, from `assigned`; the reporter is
+   * told. `start` works from either.
+   */
+  @Post(':id/en-route')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  enRoute(@Param('id', parseId()) id: string): Promise<void> {
+    return this.work.enRoute(id);
+  }
+
   @Post(':id/start')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()

@@ -12,6 +12,7 @@ import { appError, ErrorCode } from '../../core/common/errors';
 export type TicketAction =
   | 'assign'
   | 'reassign'
+  | 'enRoute'
   | 'start'
   | 'hold'
   | 'resume'
@@ -34,23 +35,33 @@ export type TicketAction =
 /** Work in a technician's hands. */
 export const IN_HAND: readonly TicketStatus[] = [
   'assigned',
+  'en_route',
   'in_progress',
   'on_hold',
 ];
+
+/**
+ * Before the work starts (ADR 0038): `en_route` allows everything
+ * `assigned` does, so a client that never sends a technician on the way
+ * sees no change.
+ */
+const NOT_STARTED: readonly TicketStatus[] = ['assigned', 'en_route'];
 
 const OPEN: readonly TicketStatus[] = ['new', ...IN_HAND];
 
 export const ALLOWED_FROM: Record<TicketAction, readonly TicketStatus[]> = {
   assign: ['new'],
   reassign: IN_HAND,
-  start: ['assigned'],
+  // ADR 0038: "on the way" is optional; start works from either.
+  enRoute: ['assigned'],
+  start: NOT_STARTED,
   hold: ['in_progress'],
   resume: ['on_hold'],
   complete: ['in_progress'],
   // Before the work starts; after, the dispatcher reassigns.
-  decline: ['assigned'],
+  decline: NOT_STARTED,
   release: IN_HAND,
-  cancelByReporter: ['new', 'assigned'],
+  cancelByReporter: ['new', ...NOT_STARTED],
   // Any time before it is closed.
   cancelByDispatcher: [...OPEN, 'completed'],
   confirm: ['completed'],

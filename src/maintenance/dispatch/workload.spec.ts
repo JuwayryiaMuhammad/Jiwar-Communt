@@ -35,6 +35,18 @@ describe('workload', () => {
     ).toBe(14);
   });
 
+  it('weighs a ticket on the way like one in progress (ADR 0038)', () => {
+    expect(load([{ status: 'en_route', priority: 'urgent', count: 2 }])).toBe(
+      load([{ status: 'in_progress', priority: 'urgent', count: 2 }]),
+    );
+    expect(
+      load([{ status: 'en_route', priority: 'normal', count: 1 }], {
+        ...DEFAULTS,
+        weightInProgress: 4.25,
+      }),
+    ).toBe(4.25);
+  });
+
   it('is zero without tickets', () => {
     expect(load([])).toBe(0);
   });
@@ -55,8 +67,13 @@ describe('workload', () => {
     ).toBe(1.5);
   });
 
-  it('only assigned, in-progress and on-hold tickets are open', () => {
-    expect([...OPEN_STATUSES]).toEqual(['assigned', 'in_progress', 'on_hold']);
+  it('only assigned, en-route, in-progress and on-hold tickets are open', () => {
+    expect([...OPEN_STATUSES]).toEqual([
+      'assigned',
+      'en_route',
+      'in_progress',
+      'on_hold',
+    ]);
   });
 
   it('is exact in hundredths: no floating-point drift in a sum', () => {

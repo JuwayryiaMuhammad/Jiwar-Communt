@@ -1997,6 +1997,8 @@ enum TicketPriority {
 enum TicketStatus {
   new
   assigned
+  /// The technician is on the way (ADR 0038); in their hands like assigned.
+  en_route
   in_progress
   on_hold
   completed

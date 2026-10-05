@@ -9,9 +9,11 @@ import type { DispatchSettingsView } from './dispatch-settings.service';
  *
  * Workload = the sum, over the technician's open tickets, of the weight of
  * its status times the multiplier of its priority. Open means in their
- * hands: `assigned`, `in_progress`, `on_hold`; a completed ticket waits for
- * the reporter, not for them. A ticket is one row with one status and one
- * priority, so it is counted once.
+ * hands: `assigned`, `en_route`, `in_progress`, `on_hold`; a completed
+ * ticket waits for the reporter, not for them. A ticket is one row with one
+ * status and one priority, so it is counted once. A technician on the way
+ * (ADR 0038) is already working on it: `en_route` weighs like
+ * `in_progress`, so the settings keep their three weights.
  *
  * Weights and multipliers have two decimals, so everything is computed in
  * integer hundredths: a product is in ten-thousandths. No floating-point
@@ -19,7 +21,12 @@ import type { DispatchSettingsView } from './dispatch-settings.service';
  */
 
 /** The statuses that weigh on a technician. */
-export const OPEN_STATUSES = ['assigned', 'in_progress', 'on_hold'] as const;
+export const OPEN_STATUSES = [
+  'assigned',
+  'en_route',
+  'in_progress',
+  'on_hold',
+] as const;
 export type OpenStatus = (typeof OPEN_STATUSES)[number];
 
 /** One kind of open ticket a technician holds, and how many. */
@@ -44,6 +51,7 @@ export function scaleWeights(s: DispatchSettingsView): ScaledWeights {
   return {
     status: {
       assigned: hundredths(s.weightAssigned),
+      en_route: hundredths(s.weightInProgress),
       in_progress: hundredths(s.weightInProgress),
       on_hold: hundredths(s.weightOnHold),
     },

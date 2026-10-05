@@ -12,6 +12,7 @@ import {
 const STATUSES: TicketStatus[] = [
   'new',
   'assigned',
+  'en_route',
   'in_progress',
   'on_hold',
   'completed',
@@ -19,33 +20,37 @@ const STATUSES: TicketStatus[] = [
   'cancelled',
 ];
 
+const IN_HAND: TicketStatus[] = [
+  'assigned',
+  'en_route',
+  'in_progress',
+  'on_hold',
+];
+const OPEN: TicketStatus[] = ['new', ...IN_HAND];
+
 /** Every action against every status: the allowed ones, nothing else. */
 const EXPECTED: Record<TicketAction, TicketStatus[]> = {
   assign: ['new'],
-  reassign: ['assigned', 'in_progress', 'on_hold'],
-  start: ['assigned'],
+  reassign: IN_HAND,
+  // ADR 0038: on the way is optional, and allows what assigned allows.
+  enRoute: ['assigned'],
+  start: ['assigned', 'en_route'],
   hold: ['in_progress'],
   resume: ['on_hold'],
   complete: ['in_progress'],
-  decline: ['assigned'],
-  release: ['assigned', 'in_progress', 'on_hold'],
-  cancelByReporter: ['new', 'assigned'],
-  cancelByDispatcher: [
-    'new',
-    'assigned',
-    'in_progress',
-    'on_hold',
-    'completed',
-  ],
+  decline: ['assigned', 'en_route'],
+  release: IN_HAND,
+  cancelByReporter: ['new', 'assigned', 'en_route'],
+  cancelByDispatcher: [...OPEN, 'completed'],
   confirm: ['completed'],
   reject: ['completed'],
   reopen: ['closed'],
   autoClose: ['completed'],
-  changePriority: ['new', 'assigned', 'in_progress', 'on_hold', 'completed'],
-  changeCategory: ['new', 'assigned', 'in_progress', 'on_hold', 'completed'],
-  visit: ['assigned', 'in_progress', 'on_hold'],
-  message: ['new', 'assigned', 'in_progress', 'on_hold', 'completed'],
-  reportPhoto: ['new', 'assigned', 'in_progress', 'on_hold'],
+  changePriority: [...OPEN, 'completed'],
+  changeCategory: [...OPEN, 'completed'],
+  visit: IN_HAND,
+  message: [...OPEN, 'completed'],
+  reportPhoto: OPEN,
   workPhoto: ['in_progress', 'on_hold'],
 };
 

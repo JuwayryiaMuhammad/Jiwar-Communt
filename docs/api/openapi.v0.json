@@ -10056,6 +10056,7 @@
         "enum": [
           "new",
           "assigned",
+          "en_route",
           "in_progress",
           "on_hold",
           "completed",
@@ -19623,6 +19624,35 @@
           },
           "required": true
         },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "technician"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/technician/tickets/{id}/en-route": {
+      "post": {
+        "operationId": "TechnicianTicketsController_enRoute",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "204": {
             "description": ""

@@ -89,6 +89,8 @@ const AUDIT_TABLES = [
   // And the dispatch history (ADR 0033).
   'technician_availability_history',
   'ticket_dispatch_attempts',
+  // And the wage payments (ADR 0037).
+  'worker_wage_payments',
 ];
 
 /**

@@ -528,6 +528,7 @@ describe('Domestic workers', () => {
           status: 'suspended',
           validUntil: null,
           suspendedByManagement: true,
+          monthlyWage: null,
         },
       ]);
       expect(JSON.stringify(seen)).not.toContain('Secret reason');

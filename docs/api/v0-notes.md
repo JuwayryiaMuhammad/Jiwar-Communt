@@ -35,3 +35,4 @@ API v0 is a draft (ADR 0025): it exposes every feature so it can be exercised en
 - `GET /maintenance/tickets/:id/dispatch-attempts` answers "why wasn't this assigned?"; the screen decides how much of it to show.
 - Specialties are read by dispatch (`tickets.dispatch`) and written by the manager (`maintenance.manage`); a supervisor who is not also a manager cannot change which specialties a category needs.
 - `GET /me/units` carries the unit's `unitType`, `areaSqm` (square metres, two decimals) and `status` (`active` or `closed`) for the unit card (ADR 0037). Residents never read `GET /units/:id`.
+- Worker wages (ADR 0037) are recorded, never processed: `PUT /worker-engagements/:id/wage` sets the monthly wage, `POST /worker-engagements/:id/wage-payments` records one month (`YYYY-MM`) once, `GET` lists them. Amounts are decimal strings in the compound's currency; the app shows "Payment sent" after the 201 and the receipts go by email and worker notice.

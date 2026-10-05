@@ -103,6 +103,15 @@ export const FILES_COVERAGE: readonly string[] = [
   'account.photo_changed',
 ];
 
+/**
+ * The resident's screens (ADR 0037), covered by
+ * test/community/audit-coverage-resident.e2e-spec.ts.
+ */
+export const RESIDENT_SCREENS_COVERAGE: readonly string[] = [
+  'worker.wage_changed',
+  'worker.wage_obligation_settled',
+];
+
 /** Maintenance (ADR 0032), covered by test/maintenance/audit-coverage.e2e-spec.ts. */
 export const MAINTENANCE_COVERAGE: readonly string[] = [
   'ticket_category.created',

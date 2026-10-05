@@ -229,6 +229,13 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'the comparison is wrapped in COALESCE(…, false). Rows with each ' +
       'NULL are rejected in identity-and-outbox-schema.e2e-spec.ts',
   },
+  // Wages (ADR 0037).
+  worker_wage_payments_period_is_month: {},
+  worker_wage_payments_amount_range: {},
+  worker_engagements_monthly_wage_range: {
+    guarded:
+      'monthly_wage IS NULL is tested first; the range runs only on a value',
+  },
 };
 
 interface Check {

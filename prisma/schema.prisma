@@ -1053,6 +1053,8 @@ model WorkerEngagement {
   qrTokenHash           String?                @map("qr_token_hash") @db.Char(64)
   codeIssuedAt          DateTime?              @map("code_issued_at") @db.Timestamptz(3)
   reviewedById          String?                @map("reviewed_by") @db.Uuid
+  /// What the household agreed to pay a month (ADR 0037); null until set.
+  monthlyWage           Decimal?               @map("monthly_wage") @db.Decimal(10, 2)
   createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt             DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -1131,6 +1133,25 @@ model WorkerWageObligation {
 
   @@index([tenantId, workerId])
   @@map("worker_wage_obligations")
+}
+
+/// One month's wage, paid by the household (ADR 0037): recorded, not
+/// processed. Append-only, no foreign keys: ids only, like gate_entries.
+model WorkerWagePayment {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  engagementId String   @map("engagement_id") @db.Uuid
+  workerId     String   @map("worker_id") @db.Uuid
+  unitId       String   @map("unit_id") @db.Uuid
+  /// The month paid for: its first day.
+  period       DateTime @db.Date
+  amount       Decimal  @db.Decimal(10, 2)
+  paidById     String   @map("paid_by_account_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, engagementId, period], map: "worker_wage_payments_one_per_period")
+  @@index([tenantId, engagementId, createdAt, id], map: "worker_wage_payments_engagement_idx")
+  @@map("worker_wage_payments")
 }
 
 /// A permission a household member holds (ADR 0021). Revoked, never

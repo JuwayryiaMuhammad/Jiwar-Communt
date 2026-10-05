@@ -42,6 +42,8 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // a race and names nothing.
   unit_review_flags_one_open_per_reason: null,
   worker_wage_obligations_one_open_per_kind: null,
+  // Checked under the unit's lock first (ADR 0037): WAGE_PERIOD_ALREADY_PAID.
+  worker_wage_payments_one_per_period: null,
   household_member_grants_one_live: ['permission'],
   worker_compliance_cases_one_open_per_kind: null,
   account_freezes_one_live: null,

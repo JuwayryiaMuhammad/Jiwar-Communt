@@ -159,6 +159,8 @@ export interface EngagementView {
   status: WorkerEngagementStatus;
   validUntil: Date | null;
   suspendedByManagement: boolean;
+  /** Two decimals; null until the household sets it (ADR 0037). */
+  monthlyWage: string | null;
 }
 
 /** An engagement in the manager's review list; never a birth date or a document number. */
@@ -208,7 +210,9 @@ type NoticeKey =
   | 'engagement_suspended'
   | 'engagement_suspended_by_management'
   | 'engagement_resumed'
-  | 'engagement_ended';
+  | 'engagement_ended'
+  // ADR 0037; written by WorkerWagesService.
+  | 'wage_paid';
 
 const OPEN: WorkerEngagementStatus[] = [
   'pending_review',
@@ -532,6 +536,7 @@ export class WorkersService {
           status: effectiveStatus(e),
           validUntil: e.validUntil,
           suspendedByManagement: e.suspendedByManagement,
+          monthlyWage: e.monthlyWage?.toFixed(2) ?? null,
         })),
         nextCursor: page.nextCursor,
       };
@@ -1470,11 +1475,11 @@ export class WorkersService {
     return result.value;
   }
 
-  /** Temporary work past its end: ended, code destroyed, notice, audit as system. */
-  private async expireIfDue(
-    tx: TenantTxClient,
-    e: WorkerEngagement,
-  ): Promise<boolean> {
+  /**
+   * Temporary work past its end: ended, code destroyed, notice, audit as
+   * system. Also the wages' (ADR 0037): a payment on it goes on.
+   */
+  async expireIfDue(tx: TenantTxClient, e: WorkerEngagement): Promise<boolean> {
     if (!OPEN.includes(e.status) || !isPast(e.validUntil)) return false;
     await this.close(tx, e, 'expired');
     await this.cls.run({ ifNested: 'inherit' }, async () => {

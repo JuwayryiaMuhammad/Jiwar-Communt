@@ -5,6 +5,7 @@ import { FilesModule } from '../../core/files/files.module';
 import { HouseholdsModule } from '../households/households.module';
 import { NoticesModule } from '../notices/notices.module';
 import { WorkerPhotoRetention } from './photo-retention';
+import { WorkerWagesService } from './worker-wages.service';
 import { WorkersAuthority } from './workers-authority';
 import { WorkersService } from './workers.service';
 
@@ -12,7 +13,12 @@ import { WorkersService } from './workers.service';
 @Module({
   controllers: [WorkersController],
   imports: [AuthModule, FilesModule, HouseholdsModule, NoticesModule],
-  providers: [WorkersAuthority, WorkersService, WorkerPhotoRetention],
+  providers: [
+    WorkersAuthority,
+    WorkersService,
+    WorkerWagesService,
+    WorkerPhotoRetention,
+  ],
   exports: [WorkersService, WorkersAuthority],
 })
 export class WorkersModule {}

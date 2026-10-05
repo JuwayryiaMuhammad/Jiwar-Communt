@@ -33,6 +33,7 @@ export const COMMUNITY_NOTICES = {
   registrationApproved: 'community.registration_approved',
   registrationRejected: 'community.registration_rejected',
   registrationExpired: 'community.registration_expired',
+  wagePaid: 'community.wage_paid',
 } as const;
 
 export type CommunityNoticeKey =
@@ -296,6 +297,19 @@ const CATALOG: Catalog = {
     en: (p) => ({
       subject: 'Your Jiwar registration request expired',
       lead: `Your registration request for unit ${p.unitCode} in ${p.compoundName} expired without a decision, and your details were removed from it. You can register again or contact the management.`,
+    }),
+  },
+  // ADR 0037: the household's receipt; the worker gets their own notice.
+  'community.wage_paid': {
+    ar: (p) => ({
+      subject: 'إيصال أجر عامل على جوار',
+      lead: `سُجّل دفع أجر شهر ${p.period} لـ${p.workerName} في الوحدة ${p.unitCode} في ${p.compoundName}، بمبلغ ${p.amount}. أُبلغ العامل بالدفع.`,
+      help: 'جوار يسجّل الدفع فقط ولا يحوّل الأموال.',
+    }),
+    en: (p) => ({
+      subject: 'A worker’s wage receipt on Jiwar',
+      lead: `A wage payment for ${p.period} to ${p.workerName} for unit ${p.unitCode} in ${p.compoundName} was recorded: ${p.amount}. The worker was told.`,
+      help: 'Jiwar records the payment only; it does not move money.',
     }),
   },
 };

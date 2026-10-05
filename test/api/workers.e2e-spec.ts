@@ -74,6 +74,7 @@ describe('API v0 — workers', () => {
         [
           'capacity',
           'id',
+          'monthlyWage',
           ...SCHEDULE,
           'status',
           'suspendedByManagement',

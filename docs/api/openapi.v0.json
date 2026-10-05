@@ -2439,6 +2439,12 @@
             "format": "uuid",
             "type": "string"
           },
+          "monthlyWage": {
+            "description": "Per month; null until the household sets it.",
+            "example": "3200.00",
+            "nullable": true,
+            "type": "string"
+          },
           "schedule": {
             "$ref": "#/components/schemas/WorkerScheduleDto"
           },
@@ -2468,7 +2474,8 @@
           "schedule",
           "status",
           "validUntil",
-          "suspendedByManagement"
+          "suspendedByManagement",
+          "monthlyWage"
         ],
         "type": "object"
       },
@@ -5027,6 +5034,32 @@
         ],
         "type": "object"
       },
+      "PayWageDto": {
+        "properties": {
+          "amount": {
+            "description": "In the compound’s currency, at most two decimals. Need not equal the monthly wage.",
+            "example": "3200.00",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "period": {
+            "description": "`YYYY-MM`",
+            "example": "2026-09",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period",
+          "amount"
+        ],
+        "type": "object"
+      },
       "PendingErasureView": {
         "properties": {
           "accountId": {
@@ -6911,6 +6944,27 @@
         ],
         "type": "object"
       },
+      "SetWageDto": {
+        "properties": {
+          "monthlyWage": {
+            "description": "Per month, in the compound’s currency, at most two decimals; null clears it.",
+            "example": "3200.00",
+            "nullable": true,
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          }
+        },
+        "required": [
+          "monthlyWage"
+        ],
+        "type": "object"
+      },
       "SettingsView": {
         "properties": {
           "emergencyPhone": {
@@ -8733,6 +8787,74 @@
         },
         "required": [
           "token"
+        ],
+        "type": "object"
+      },
+      "WagePaymentView": {
+        "properties": {
+          "amount": {
+            "example": "3200.00",
+            "type": "string"
+          },
+          "engagementId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "paidAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "paidBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "period": {
+            "example": "2026-09",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "engagementId",
+          "period",
+          "amount",
+          "paidAt",
+          "paidBy"
+        ],
+        "type": "object"
+      },
+      "WagePaymentViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/WagePaymentView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "WageView": {
+        "properties": {
+          "monthlyWage": {
+            "example": "3200.00",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "monthlyWage"
         ],
         "type": "object"
       },
@@ -17331,6 +17453,152 @@
         },
         "responses": {
           "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/worker-engagements/{id}/wage": {
+      "put": {
+        "operationId": "WorkersController_setWage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetWageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WageView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/worker-engagements/{id}/wage-payments": {
+      "get": {
+        "operationId": "WorkersController_payments",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WagePaymentViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "WorkersController_pay",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayWageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WagePaymentView"
+                }
+              }
+            },
             "description": ""
           }
         },

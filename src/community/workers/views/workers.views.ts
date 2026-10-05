@@ -47,6 +47,13 @@ export class EngagementResponse {
   validUntil: Date | null;
   @ApiProperty({ type: Boolean })
   suspendedByManagement: boolean;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '3200.00',
+    description: 'Per month; null until the household sets it.',
+  })
+  monthlyWage: string | null;
 
   static from(e: EngagementView): EngagementResponse {
     return {
@@ -57,6 +64,7 @@ export class EngagementResponse {
       status: e.status,
       validUntil: e.validUntil,
       suspendedByManagement: e.suspendedByManagement,
+      monthlyWage: e.monthlyWage,
     };
   }
 }

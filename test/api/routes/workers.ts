@@ -35,6 +35,71 @@ const engagementAction = (
 });
 
 export const WORKERS_ROUTES: Row[] = [
+  // Wages (ADR 0037): a resident's workers.manage; the payments are also
+  // a manager's to read (workers.review).
+  {
+    method: 'PUT',
+    path: '/worker-engagements/{id}/wage',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'manager',
+    foreign: {
+      params: engagement,
+      body: () => ({ monthlyWage: '3200.00' }),
+      code: 'ENGAGEMENT_NOT_FOUND',
+    },
+    invalid: {
+      body: { monthlyWage: '12.345' },
+      fields: [
+        {
+          field: 'monthlyWage',
+          code: 'INVALID_NUMBER',
+          params: { max: '1000000.00' },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/worker-engagements/{id}/wage-payments',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'manager',
+    foreign: {
+      params: engagement,
+      body: () => ({ period: '2026-09', amount: '3200.00' }),
+      code: 'ENGAGEMENT_NOT_FOUND',
+    },
+    invalid: {
+      body: { period: '2026-13', amount: 1 },
+      fields: [
+        {
+          field: 'period',
+          code: 'INVALID_FORMAT',
+          params: { format: 'YYYY-MM' },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/worker-engagements/{id}/wage-payments',
+    auth: 'tenant',
+    as: 'owner',
+    // Every tenant role holds workers.manage or workers.review.
+    denied: 'none',
+    foreign: { params: engagement, code: 'ENGAGEMENT_NOT_FOUND' },
+    invalid: {
+      query: { limit: '0' },
+      fields: [
+        {
+          field: 'limit',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 100 },
+        },
+      ],
+    },
+  },
   {
     method: 'GET',
     path: '/units/{unitId}/workers',

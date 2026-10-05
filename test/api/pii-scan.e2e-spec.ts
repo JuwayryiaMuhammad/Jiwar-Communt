@@ -12,6 +12,8 @@ import { DispatchService } from '../../src/maintenance/tickets/dispatch.service'
 import { MessagesService } from '../../src/maintenance/tickets/messages.service';
 import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
 import { WorkService } from '../../src/maintenance/tickets/work.service';
+import { VisitConsentService } from '../../src/maintenance/visits/visit-consent.service';
+import { VisitsService } from '../../src/maintenance/visits/visits.service';
 import { gateHelpers } from '../setup/gate';
 import { fileHelpers } from '../setup/files';
 import { nationalIdFor, uniqueSuffix } from '../setup/fixtures';
@@ -381,6 +383,42 @@ describe('API v0 — PII leak scan', () => {
       h.moduleRef.get(AvailabilityService).setMine('available'),
     );
 
+    // Visits (ADR 0034): an upcoming visit to the primary's home, confirmed,
+    // the family member allowing entry while nobody is home and receiving
+    // the technician. Its window says when the home is empty: the assigned
+    // technician, dispatch and the people who live there only.
+    const visitTicket = await asPrimary(() =>
+      h.moduleRef.get(TicketsService).create({
+        unitId: unit.id,
+        categoryId: w.aCategoryId,
+        description: 'PII-VISIT-description',
+      }),
+    );
+    await asManagerA(() => dispatch.assign(visitTicket.id, a.ids.technician));
+    const visitStart = new Date(Date.now() + 2 * 86_400_000);
+    visitStart.setUTCMilliseconds(777);
+    const visitEnd = new Date(visitStart.getTime() + 90 * 60_000);
+    const visitsService = h.moduleRef.get(VisitsService);
+    const homeVisit = await asTech(a.ids.technician, () =>
+      visitsService.propose(
+        visitTicket.id,
+        { startsAt: visitStart, endsAt: visitEnd },
+        'technician',
+      ),
+    );
+    await asPrimary(() =>
+      visitsService.confirm(visitTicket.id, homeVisit.id, 'resident'),
+    );
+    const consentService = h.moduleRef.get(VisitConsentService);
+    await asFamily(() => consentService.grant(visitTicket.id, homeVisit.id));
+    await asPrimary(() =>
+      consentService.setReceiver(visitTicket.id, homeVisit.id, {
+        accountId: family.id,
+      }),
+    );
+    const windowMarks = [visitStart.toISOString(), visitEnd.toISOString()];
+    const otherTechnician = await gateHelpers(h).guard(a, 'technician');
+
     const params: Record<string, string> = {
       '/tickets/{id}': ticket.id,
       '/technician/tickets/{id}': ticket.id,
@@ -392,10 +430,10 @@ describe('API v0 — PII leak scan', () => {
       '/maintenance/tickets/{id}/assignments': ticket.id,
       '/maintenance/tickets/{id}/dispatch-attempts': queued.id,
       '/maintenance/tickets/{id}/sla-events': ticket.id,
-      '/tickets/{id}/visits': ticket.id,
-      '/technician/tickets/{id}/visits': ticket.id,
-      '/maintenance/tickets/{id}/visits': ticket.id,
-      '/maintenance/tickets/{id}/visit-events': ticket.id,
+      '/tickets/{id}/visits': visitTicket.id,
+      '/technician/tickets/{id}/visits': visitTicket.id,
+      '/maintenance/tickets/{id}/visits': visitTicket.id,
+      '/maintenance/tickets/{id}/visit-events': visitTicket.id,
       '/me/units/{unitId}/visits': unit.id,
       '/files/{id}': photoId,
       '/units/{id}': unit.id,
@@ -464,6 +502,18 @@ describe('API v0 — PII leak scan', () => {
         self: a.ids.technician,
         isManager: false,
       },
+      // ADR 0034: another technician, and someone whose occupancy ended,
+      // never see a visit's window, consent or receiver.
+      otherTechnician: {
+        token: await w.tokenFor(a, otherTechnician.id, 'staff'),
+        self: otherTechnician.id,
+        isManager: false,
+      },
+      ender: {
+        token: await w.tokenFor(a, ender.id, 'resident'),
+        self: ender.id,
+        isManager: false,
+      },
     };
 
     const leaks: string[] = [];
@@ -519,6 +569,22 @@ describe('API v0 — PII leak scan', () => {
           ])
             if (found(s)) leaks.push(`${name} ${r.path}: ${s}`);
         }
+        // Visits (ADR 0034): a window, a consent and a receiver tell when a
+        // home is empty. Never a guard, a landlord (who does not live
+        // there), another technician or someone who left.
+        if (['guard', 'landlord', 'otherTechnician', 'ender'].includes(name))
+          for (const s of [...windowMarks, '"absenceEntry', '"receiver"'])
+            if (found(s)) leaks.push(`${name} ${r.path}: visit ${s}`);
+        // The assigned technician: whether entry is allowed and a first
+        // name, never who allowed it or who the receiver is.
+        if (name === 'technician')
+          for (const s of ['"grantedBy"', '"consentBy', family.id])
+            if (res.status < 300 && found(s))
+              leaks.push(`${name} ${r.path}: ${s}`);
+        // Never in the audit trail, whoever reads it.
+        if (r.path.includes('audit'))
+          for (const s of [...windowMarks, 'absence', 'receiver', 'consent'])
+            if (found(s)) leaks.push(`${name} ${r.path}: audit ${s}`);
         if (['resident', 'landlord', 'family', 'guard'].includes(name)) {
           // Internal messages and ratings are staff's (ADR 0032).
           for (const s of ['PII-INTERNAL-note', 'PII-FEEDBACK-comment'])
@@ -623,6 +689,42 @@ describe('API v0 — PII leak scan', () => {
     expect(seen.get('resident /units/{unitId}/visitor-passes')).toContain(
       visit.id,
     );
+
+    // Visits, positively (ADR 0034): those who live there and the assigned
+    // technician see the window; the technician learns whether entry is
+    // allowed and the receiver's first name; dispatch's history has no
+    // window. Notification params carry the number and the window only.
+    expect(seen.get('family /tickets/{id}/visits')).toContain(windowMarks[0]);
+    expect(seen.get('resident /me/units/{unitId}/visits')).toContain(
+      windowMarks[0],
+    );
+    const techVisits = seen.get('technician /technician/tickets/{id}/visits')!;
+    expect(techVisits).toContain(windowMarks[0]);
+    expect(techVisits).toContain('"absenceEntryApproved":true');
+    expect(techVisits).toContain(
+      `"receiver":{"kind":"household","firstName":"${family.fullName!.split(' ')[0]}"}`,
+    );
+    const visitEvents = seen.get(
+      'manager /maintenance/tickets/{id}/visit-events',
+    )!;
+    expect(visitEvents).toContain('consent_granted');
+    for (const mark of windowMarks) expect(visitEvents).not.toContain(mark);
+    const visitNotices = await manager(() =>
+      c.prisma.tenant.notification.findMany({
+        where: { kind: { startsWith: 'ticket.visit_' } },
+      }),
+    );
+    expect(visitNotices.length).toBeGreaterThan(0);
+    for (const n of visitNotices)
+      expect(Object.keys(n.params as object).sort()).toEqual([
+        'endsAt',
+        'startsAt',
+        'ticketNumber',
+      ]);
+    const auditRows = await manager(() => c.prisma.tenant.auditLog.findMany());
+    const auditText = JSON.stringify(auditRows);
+    for (const s of [...windowMarks, homeVisit.id, 'absence', 'receiver'])
+      expect(auditText).not.toContain(s);
 
     // The technician reads their ticket: the work, the reporter's first
     // name, the thread with its internal note — and nothing of dispatch's.

@@ -36,3 +36,4 @@
 | [0032](0032-maintenance-tickets.md) | Maintenance tickets: statuses, history, manual dispatch, confirmation and reopen, messages, visibility | Accepted |
 | [0033](0033-dispatch-engine.md) | The dispatch engine: specialties, availability, weighted workload, candidate rules, serialization, triggers, no-candidate handling, the role hook | Accepted |
 | [0034](0034-visits-and-sla.md) | Visits and the SLA: windows, absence-entry consent, the receiver, event-sourced clocks, the lock order | Accepted |
+| [0035](0035-parcels.md) | Parcels: received at the gate, told to the unit, handed over against a derived code, a resident QR or a delegate | Accepted |

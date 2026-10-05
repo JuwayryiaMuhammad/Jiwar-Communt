@@ -52,6 +52,7 @@ import { TicketLog } from './tickets/ticket-log';
 import { TicketNotices } from './tickets/ticket-notices';
 import { TicketsService } from './tickets/tickets.service';
 import { VisitAccess } from './visits/visit-access';
+import { VisitConsentService } from './visits/visit-consent.service';
 import { VisitLog } from './visits/visit-log';
 import {
   DispatchVisitsController,
@@ -117,6 +118,7 @@ import { VisitsService } from './visits/visits.service';
     VisitAccess,
     VisitLog,
     VisitsService,
+    VisitConsentService,
   ],
 })
 export class MaintenanceModule {}

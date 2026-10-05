@@ -1,6 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDate, IsOptional, IsString } from 'class-validator';
+import {
+  IsDate,
+  IsOptional,
+  IsString,
+  IsUUID,
+  ValidateIf,
+} from 'class-validator';
+import { ExclusiveWith } from '../../../core/common/validation/exclusive-with';
 
 /** A window: checked against the database's clock (ADR 0034). */
 export class VisitWindowDto {
@@ -31,4 +38,34 @@ export class VisitRescheduleDto extends VisitWindowDto {
   @IsOptional()
   @IsString()
   reasonCode?: string;
+}
+
+/**
+ * Who lets the technician in: exactly one of an adult who lives in the
+ * unit (`accountId`) or an active domestic worker of it (`engagementId`).
+ */
+export class VisitReceiverDto {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description: 'An adult account of the unit’s household.',
+  })
+  @ValidateIf(
+    (o: VisitReceiverDto) =>
+      o.engagementId === undefined || o.accountId !== undefined,
+  )
+  @IsUUID()
+  accountId?: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description: 'An active worker engagement of the unit.',
+  })
+  @IsOptional()
+  @IsUUID()
+  @ExclusiveWith('accountId')
+  engagementId?: string;
 }

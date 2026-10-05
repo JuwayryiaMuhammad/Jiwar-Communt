@@ -56,7 +56,7 @@ export function dispatchHelpers(h: HttpHarness) {
   }
 
   const http = (
-    method: 'get' | 'post' | 'put' | 'patch',
+    method: 'get' | 'post' | 'put' | 'patch' | 'delete',
     path: string,
     token: string,
     body?: object,
@@ -66,7 +66,7 @@ export function dispatchHelpers(h: HttpHarness) {
       'Authorization',
       `Bearer ${token}`,
     );
-    return method === 'get' ? req : req.send(body ?? {});
+    return method === 'get' || method === 'delete' ? req : req.send(body ?? {});
   };
 
   /** Runs `fn` in a transaction of the compound's tenant. */

@@ -9619,6 +9619,21 @@
         ],
         "type": "object"
       },
+      "VisitReceiverDto": {
+        "properties": {
+          "accountId": {
+            "description": "An adult account of the unit’s household.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "engagementId": {
+            "description": "An active worker engagement of the unit.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "VisitReceiverKind": {
         "enum": [
           "household",
@@ -17740,6 +17755,78 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/tickets/{id}/visits/{visitId}/absence-consent": {
+      "delete": {
+        "operationId": "ResidentVisitsController_revokeConsent",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "visitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ResidentVisitsController_grantConsent",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "visitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/tickets/{id}/visits/{visitId}/cancel": {
       "post": {
         "operationId": "ResidentVisitsController_cancel",
@@ -17864,6 +17951,88 @@
                 }
               }
             },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/tickets/{id}/visits/{visitId}/receiver": {
+      "delete": {
+        "operationId": "ResidentVisitsController_clearReceiver",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "visitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      },
+      "put": {
+        "operationId": "ResidentVisitsController_setReceiver",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "visitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VisitReceiverDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
             "description": ""
           }
         },

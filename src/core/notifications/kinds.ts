@@ -266,6 +266,15 @@ export const NOTIFICATION_KINDS = {
     target: 'ticket',
     params: { ticketNumber: {}, startsAt: {}, endsAt: {} },
   },
+  /**
+   * Someone other than the primary allowed the technician in while nobody
+   * is home (to the primary, who may revoke it until the arrival).
+   */
+  'ticket.visit_consent_granted': {
+    priority: 'normal',
+    target: 'ticket',
+    params: { ticketNumber: {}, startsAt: {}, endsAt: {} },
+  },
   /** A dispatcher corrected the category of the technician's ticket. */
   'ticket.category_changed': {
     priority: 'normal',

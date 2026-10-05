@@ -1,11 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
   Post,
+  Put,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
@@ -22,7 +24,12 @@ import {
 } from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { ReasonCodeDto } from '../tickets/dto/tickets.dto';
-import { VisitRescheduleDto, VisitWindowDto } from './dto/visits.dto';
+import {
+  VisitReceiverDto,
+  VisitRescheduleDto,
+  VisitWindowDto,
+} from './dto/visits.dto';
+import { VisitConsentService } from './visit-consent.service';
 import {
   DispatchVisitView,
   ResidentVisitView,
@@ -48,6 +55,7 @@ import { VisitsService } from './visits.service';
 export class ResidentVisitsController {
   constructor(
     private readonly visits: VisitsService,
+    private readonly consent: VisitConsentService,
     private readonly ctx: RequestContext,
   ) {}
 
@@ -116,6 +124,59 @@ export class ResidentVisitsController {
     @Body() dto: ReasonCodeDto,
   ): Promise<void> {
     return this.visits.cancel(id, visitId, dto.reasonCode, 'resident');
+  }
+
+  /**
+   * The technician may enter while nobody is home, for this visit only: an
+   * adult who lives there, on a confirmed visit. Not implied by confirming.
+   */
+  @Post(':id/visits/:visitId/absence-consent')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  grantConsent(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+  ): Promise<void> {
+    return this.consent.grant(id, visitId);
+  }
+
+  /** Until the technician arrives. */
+  @Delete(':id/visits/:visitId/absence-consent')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  revokeConsent(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+  ): Promise<void> {
+    return this.consent.revoke(id, visitId);
+  }
+
+  /** Who lets the technician in, on a confirmed visit. */
+  @Put(':id/visits/:visitId/receiver')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  setReceiver(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+    @Body() dto: VisitReceiverDto,
+  ): Promise<void> {
+    return this.consent.setReceiver(
+      id,
+      visitId,
+      dto.accountId !== undefined
+        ? { accountId: dto.accountId }
+        : { engagementId: dto.engagementId! },
+    );
+  }
+
+  @Delete(':id/visits/:visitId/receiver')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  clearReceiver(
+    @Param('id', parseId()) id: string,
+    @Param('visitId', parseId('visitId')) visitId: string,
+  ): Promise<void> {
+    return this.consent.clearReceiver(id, visitId);
   }
 }
 

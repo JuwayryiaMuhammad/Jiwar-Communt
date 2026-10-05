@@ -2692,6 +2692,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tickets/{id}/visits/{visitId}/absence-consent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ResidentVisitsController_grantConsent"];
+        delete: operations["ResidentVisitsController_revokeConsent"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tickets/{id}/visits/{visitId}/cancel": {
         parameters: {
             query?: never;
@@ -2735,6 +2751,22 @@ export interface paths {
         put?: never;
         post: operations["ResidentVisitsController_counter"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{id}/visits/{visitId}/receiver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["ResidentVisitsController_setReceiver"];
+        post?: never;
+        delete: operations["ResidentVisitsController_clearReceiver"];
         options?: never;
         head?: never;
         patch?: never;
@@ -6093,6 +6125,18 @@ export interface components {
         VisitEventViewList: {
             data: components["schemas"]["VisitEventView"][];
             nextCursor: string | null;
+        };
+        VisitReceiverDto: {
+            /**
+             * Format: uuid
+             * @description An adult account of the unit’s household.
+             */
+            accountId?: string;
+            /**
+             * Format: uuid
+             * @description An active worker engagement of the unit.
+             */
+            engagementId?: string;
         };
         /** @enum {string} */
         VisitReceiverKind: "household" | "worker";
@@ -10588,6 +10632,46 @@ export interface operations {
             };
         };
     };
+    ResidentVisitsController_grantConsent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ResidentVisitsController_revokeConsent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     ResidentVisitsController_cancel: {
         parameters: {
             query?: never;
@@ -10655,6 +10739,50 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["VisitCreatedView"];
                 };
+            };
+        };
+    };
+    ResidentVisitsController_setReceiver: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitReceiverDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ResidentVisitsController_clearReceiver: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                visitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

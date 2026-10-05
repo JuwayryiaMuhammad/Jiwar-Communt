@@ -43,15 +43,23 @@ export class VisitAccess {
     private readonly community: CommunityMaintenancePort,
   ) {}
 
-  /** The ticket, for a write: locked, the rules checked, a unit's only. */
+  /**
+   * The ticket, for a write: locked, the rules checked, a unit's only.
+   * `accounts` are other accounts the write names (a receiver), shared-
+   * locked after the caller's own and **before** the ticket: accounts
+   * first, then tickets, everywhere (ADR 0034).
+   */
   async forWrite(
     tx: TenantTxClient,
     ticketId: string,
     audience: Audience,
+    accounts: readonly string[] = [],
   ): Promise<Ticket> {
     let ticket: Ticket;
     if (audience === 'resident') {
       await this.tickets.lockSelf(tx);
+      for (const id of [...new Set(accounts)].sort())
+        await tx.$queryRaw`SELECT id FROM accounts WHERE id = ${id}::uuid FOR SHARE`;
       await tx.$queryRaw`SELECT id FROM tickets WHERE id = ${ticketId}::uuid FOR UPDATE`;
       ticket = await this.resident(tx, ticketId, true);
     } else

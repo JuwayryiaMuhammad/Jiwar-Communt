@@ -179,6 +179,11 @@ export const ErrorCode = {
   VISIT_SAME_SIDE: 'VISIT_SAME_SIDE',
   /** No `visitConsent` on the unit (403). */
   VISITS_NOT_ALLOWED: 'VISITS_NOT_ALLOWED',
+  /**
+   * Only an adult who lives in the unit, with an active account, allows a
+   * technician in while nobody is home (403).
+   */
+  VISIT_CONSENT_NOT_ALLOWED: 'VISIT_CONSENT_NOT_ALLOWED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -230,6 +235,11 @@ export const FieldErrorCode = {
   /** A visit lasts at most four hours. */
   VISIT_TOO_LONG: 'VISIT_TOO_LONG',
   VISIT_ENDS_BEFORE_START: 'VISIT_ENDS_BEFORE_START',
+  /**
+   * A receiver is an adult who lives in the unit, or an active domestic
+   * worker of the unit.
+   */
+  RECEIVER_NOT_ELIGIBLE: 'RECEIVER_NOT_ELIGIBLE',
 } as const;
 
 export type FieldErrorCode =

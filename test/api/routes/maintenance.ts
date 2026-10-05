@@ -944,6 +944,24 @@ export const VISIT_ROUTES: Row[] = [
   visitAction('/tickets', 'cancel', CODE_INVALID, () => ({
     reasonCode: 'other',
   })),
+  visitAction('/tickets', 'absence-consent', 'none'),
+  {
+    ...visitAction('/tickets', 'absence-consent', 'none'),
+    method: 'DELETE',
+  },
+  {
+    ...visitAction(
+      '/tickets',
+      'receiver',
+      {
+        body: { accountId: 'x' },
+        fields: [{ field: 'accountId', code: 'INVALID_UUID' }],
+      },
+      () => ({ accountId: '00000000-0000-7000-8000-000000000000' }),
+    ),
+    method: 'PUT',
+  },
+  { ...visitAction('/tickets', 'receiver', 'none'), method: 'DELETE' },
   {
     method: 'GET',
     path: '/technician/tickets/{id}/visits',

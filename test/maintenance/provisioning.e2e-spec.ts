@@ -3,6 +3,7 @@ import {
   DEFAULT_CATEGORY_SPECIALTIES,
   DEFAULT_SPECIALTIES,
 } from '../../src/maintenance/specialties/default-specialties';
+import { DEFAULT_SLA_TARGETS } from '../../src/maintenance/sla/default-sla-targets';
 import { communityHelpers } from '../setup/community';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 
@@ -98,5 +99,33 @@ describe('Maintenance — a new compound', () => {
     expect(settings.multiplierNormal.toNumber()).toBe(1);
     expect(settings.multiplierUrgent.toNumber()).toBe(1.5);
     expect(settings.multiplierEmergency.toNumber()).toBe(3);
+  });
+
+  it('gets the SLA off and the default targets for every category (ADR 0034)', async () => {
+    const c = await x.compound();
+    const { settings, targets, categories } = await x.asManager(
+      c,
+      async () => ({
+        settings:
+          await x.prisma.tenant.maintenanceSlaSettings.findUniqueOrThrow({
+            where: { tenantId: c.tenantId },
+          }),
+        targets: await x.prisma.tenant.slaTarget.findMany({
+          include: { category: { select: { key: true } } },
+        }),
+        categories: await x.prisma.tenant.ticketCategory.count(),
+      }),
+    );
+    expect(settings.slaEnabled).toBe(false);
+    expect(settings.enabledAt).toBeNull();
+    expect(targets).toHaveLength(categories * 3);
+    for (const t of targets)
+      expect({
+        responseMinutes: t.responseMinutes,
+        resolutionMinutes: t.resolutionMinutes,
+      }).toEqual(DEFAULT_SLA_TARGETS[t.priority]);
+    expect(new Set(targets.map((t) => t.category.key)).size).toBe(
+      DEFAULT_CATEGORIES.length,
+    );
   });
 });

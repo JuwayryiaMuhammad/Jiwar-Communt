@@ -3,6 +3,7 @@ import { newId } from '../core/common/uuid';
 import type { TenantTxClient } from '../core/database/tenant-tx.service';
 import { TenantLifecycle } from '../core/tenant-settings/tenant-lifecycle';
 import { DEFAULT_CATEGORIES } from './categories/default-categories';
+import { defaultTargetRows } from './sla/default-sla-targets';
 import {
   DEFAULT_CATEGORY_SPECIALTIES,
   DEFAULT_SPECIALTIES,
@@ -13,8 +14,9 @@ import {
  * creation's transaction: the default categories, its settings row and its
  * ticket counter, the default specialties (each category handled by its
  * namesake) and the dispatch settings, with automatic dispatch off until
- * the manager has given technicians their specialties. Existing compounds
- * got the same from the migrations.
+ * the manager has given technicians their specialties; the SLA settings,
+ * off, and the default SLA targets of every category (ADR 0034). Existing
+ * compounds got the same from the migrations.
  */
 @Injectable()
 export class MaintenanceProvisioning implements OnModuleInit {
@@ -53,6 +55,10 @@ export class MaintenanceProvisioning implements OnModuleInit {
     });
     const categories = await tx.ticketCategory.findMany({
       select: { id: true, key: true },
+    });
+    await tx.maintenanceSlaSettings.create({ data: { tenantId } });
+    await tx.slaTarget.createMany({
+      data: categories.flatMap((c) => defaultTargetRows(tenantId, c.id)),
     });
     const categoryIds = new Map(categories.map((c) => [c.key, c.id]));
     await tx.categorySpecialty.createMany({

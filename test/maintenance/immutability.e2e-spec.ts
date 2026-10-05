@@ -3,8 +3,9 @@ import { newId } from '../../src/core/common/uuid';
 import { required } from '../setup/test-env';
 
 /**
- * ADR 0032, 0033: a ticket's status history and assignment trail, the
- * availability history and the dispatch attempts are append-only like
+ * ADR 0032, 0033, 0034: a ticket's status history and assignment trail,
+ * the availability history, the dispatch attempts, the visit history and
+ * the SLA events are append-only like
  * gate_entries (ADR 0028): rows can be inserted and read, never changed
  * or removed — not by the app, not by the table owner.
  */
@@ -44,6 +45,24 @@ describe.each([
        VALUES ('${id}', '${tenantId}', '${newId()}', 1, 'created', 'assigned',
          2, '${newId()}')`,
     update: 'SET candidate_count = 9',
+  },
+  {
+    table: 'ticket_visit_events',
+    insert: (id: string, tenantId: string) =>
+      `INSERT INTO ticket_visit_events (id, tenant_id, visit_id, ticket_id,
+         kind, actor_side, actor_account_id, at)
+       VALUES ('${id}', '${tenantId}', '${newId()}', '${newId()}',
+         'confirmed', 'resident', '${newId()}', now())`,
+    update: 'SET reason_code = $$other$$',
+  },
+  {
+    table: 'ticket_sla_events',
+    insert: (id: string, tenantId: string) =>
+      `INSERT INTO ticket_sla_events (id, tenant_id, ticket_id, cycle, clock,
+         seq, kind, at, target_minutes)
+       VALUES ('${id}', '${tenantId}', '${newId()}', 1, 'response', 1,
+         'started', now(), 60)`,
+    update: 'SET target_minutes = 1',
   },
 ])('$table is immutable', ({ table, insert, update: set }) => {
   let app: Client;

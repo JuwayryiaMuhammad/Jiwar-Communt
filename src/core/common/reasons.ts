@@ -178,4 +178,36 @@ export const REASON_CODES = {
     'account_erased',
     'permission_lost',
   ],
+  // Visits and the SLA (ADR 0034). A dispatcher correcting a ticket's
+  // category.
+  ticketCategory: ['misclassified', 'reassessed', 'other'],
+  // Either side cancelling or rescheduling a visit.
+  visitChange: [
+    'schedule_conflict',
+    'resident_request',
+    'technician_request',
+    'parts_unavailable',
+    'other',
+  ],
+  // Written by the system only: why a visit ended or its consent was voided.
+  visitSystem: [
+    'technician_changed',
+    'ticket_cancelled',
+    'ticket_closed',
+    'ticket_completed',
+    'granter_left',
+  ],
+  // Written by the system only: why an SLA clock paused, resumed, was
+  // retargeted or stopped.
+  slaEvent: [
+    'awaiting_resident',
+    'awaiting_parts',
+    'awaiting_confirmation',
+    'rejected',
+    'left_hold',
+    'priority_changed',
+    'category_changed',
+    'ticket_cancelled',
+    'sla_disabled',
+  ],
 } as const;

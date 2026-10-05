@@ -458,6 +458,7 @@ model Tenant {
   ticketCounter     TicketCounter?
   specialties       Specialty[]
   dispatchSettings  MaintenanceDispatchSettings?
+  slaSettings       MaintenanceSlaSettings?
 
   @@map("tenants")
 }
@@ -717,6 +718,8 @@ model Account {
   idempotencyKeys       IdempotencyKey[]          @relation("IdempotencyAccount")
   technicianSpecialties TechnicianSpecialty[]     @relation("TechnicianSpecialtyAccount")
   availability          TechnicianAvailability?   @relation("TechnicianAvailabilityAccount")
+  visitsAsTechnician    TicketVisit[]             @relation("VisitTechnician")
+  visitsAsReceiver      TicketVisit[]             @relation("VisitReceiver")
   guardShifts           GuardShift[]              @relation("ShiftGuard")
   hostedPasses          VisitorPass[]             @relation("PassHost")
   cancelledPasses       VisitorPass[]             @relation("PassCancelledBy")
@@ -1056,14 +1059,15 @@ model WorkerEngagement {
   createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt             DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  worker        DomesticWorker         @relation(fields: [tenantId, workerId], references: [tenantId, id], onUpdate: Restrict)
-  unit          Unit                   @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
-  requestedBy   Account                @relation("EngagementRequestedBy", fields: [tenantId, requestedById], references: [tenantId, id], onUpdate: Restrict)
-  reviewedBy    Account?               @relation("EngagementReviewedBy", fields: [tenantId, reviewedById], references: [tenantId, id], onUpdate: Restrict)
-  notices       WorkerNotice[]
-  obligations   WorkerWageObligation[]
-  cardIncidents WorkerCardIncident[]
-  gateRequests  GateApprovalRequest[]
+  worker          DomesticWorker         @relation(fields: [tenantId, workerId], references: [tenantId, id], onUpdate: Restrict)
+  unit            Unit                   @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
+  requestedBy     Account                @relation("EngagementRequestedBy", fields: [tenantId, requestedById], references: [tenantId, id], onUpdate: Restrict)
+  reviewedBy      Account?               @relation("EngagementReviewedBy", fields: [tenantId, reviewedById], references: [tenantId, id], onUpdate: Restrict)
+  notices         WorkerNotice[]
+  obligations     WorkerWageObligation[]
+  cardIncidents   WorkerCardIncident[]
+  gateRequests    GateApprovalRequest[]
+  visitReceptions TicketVisit[]
 
   @@unique([tenantId, id])
   @@index([tenantId, unitId])
@@ -1782,6 +1786,7 @@ model TicketCategory {
   tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   tickets     Ticket[]
   specialties CategorySpecialty[]
+  slaTargets  SlaTarget[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, key])
@@ -1850,6 +1855,8 @@ model Ticket {
   feedback    TicketFeedback[]
   messages    TicketMessage[]
   attachments TicketAttachment[]
+  visits      TicketVisit[]
+  slaClocks   TicketSlaClock[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, number])
@@ -2113,4 +2120,215 @@ model TicketDispatchAttempt {
 
   @@index([tenantId, ticketId, createdAt, id], map: "ticket_dispatch_attempts_ticket_idx")
   @@map("ticket_dispatch_attempts")
+}
+
+// ============================================================================
+// Phase 5.3 — visits and the SLA (ADR 0034)
+// ============================================================================
+
+enum VisitStatus {
+  proposed
+  confirmed
+  arrived
+  done
+  no_access
+  cancelled
+  rescheduled
+
+  @@map("visit_status")
+}
+
+/// Which side acted. A dispatcher acts on the technician's side.
+enum VisitSide {
+  technician
+  resident
+  system
+
+  @@map("visit_side")
+}
+
+enum VisitReceiverKind {
+  household
+  worker
+
+  @@map("visit_receiver_kind")
+}
+
+enum VisitEventKind {
+  proposed
+  countered
+  confirmed
+  rescheduled
+  cancelled
+  consent_granted
+  consent_revoked
+  consent_voided
+  receiver_set
+  receiver_cleared
+  arrived
+  done
+  no_access
+  late_notified
+
+  @@map("visit_event_kind")
+}
+
+enum SlaClock {
+  response
+  resolution
+
+  @@map("sla_clock")
+}
+
+enum SlaEventKind {
+  started
+  paused
+  resumed
+  met
+  breached
+  retargeted
+  stopped
+
+  @@map("sla_event_kind")
+}
+
+enum SlaClockState {
+  running
+  paused
+  met
+  breached
+  stopped
+
+  @@map("sla_clock_state")
+}
+
+/// A window in which the technician comes. Its window, consent and receiver
+/// tell when a home is empty: never in the audit trail, and notifications
+/// carry the window only.
+model TicketVisit {
+  id                   String             @id @db.Uuid
+  tenantId             String             @map("tenant_id") @db.Uuid
+  ticketId             String             @map("ticket_id") @db.Uuid
+  cycle                Int
+  technicianId         String             @map("technician_account_id") @db.Uuid
+  status               VisitStatus        @default(proposed)
+  startsAt             DateTime           @map("starts_at") @db.Timestamptz(3)
+  endsAt               DateTime           @map("ends_at") @db.Timestamptz(3)
+  proposedBySide       VisitSide          @map("proposed_by_side")
+  proposedById         String             @map("proposed_by_account_id") @db.Uuid
+  previousVisitId      String?            @map("previous_visit_id") @db.Uuid
+  confirmedAt          DateTime?          @map("confirmed_at") @db.Timestamptz(3)
+  confirmedById        String?            @map("confirmed_by_account_id") @db.Uuid
+  absenceEntryApproved Boolean            @default(false) @map("absence_entry_approved")
+  consentById          String?            @map("consent_by_account_id") @db.Uuid
+  consentAt            DateTime?          @map("consent_at") @db.Timestamptz(3)
+  receiverKind         VisitReceiverKind? @map("receiver_kind")
+  receiverAccountId    String?            @map("receiver_account_id") @db.Uuid
+  receiverEngagementId String?            @map("receiver_engagement_id") @db.Uuid
+  arrivedAt            DateTime?          @map("arrived_at") @db.Timestamptz(3)
+  finishedAt           DateTime?          @map("finished_at") @db.Timestamptz(3)
+  cancelledAt          DateTime?          @map("cancelled_at") @db.Timestamptz(3)
+  cancelReasonCode     String?            @map("cancel_reason_code")
+  cancelledBySide      VisitSide?         @map("cancelled_by_side")
+  cancelledById        String?            @map("cancelled_by_account_id") @db.Uuid
+  lateNotifiedAt       DateTime?          @map("late_notified_at") @db.Timestamptz(3)
+  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  ticket             Ticket            @relation(fields: [tenantId, ticketId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "ticket_visits_tenant_id_ticket_id_fkey")
+  technician         Account           @relation("VisitTechnician", fields: [tenantId, technicianId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "ticket_visits_tenant_id_technician_fkey")
+  receiverAccount    Account?          @relation("VisitReceiver", fields: [tenantId, receiverAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "ticket_visits_tenant_id_receiver_account_fkey")
+  receiverEngagement WorkerEngagement? @relation(fields: [tenantId, receiverEngagementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "ticket_visits_tenant_id_receiver_engagement_fkey")
+  previous           TicketVisit?      @relation("VisitPrevious", fields: [tenantId, previousVisitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "ticket_visits_tenant_id_previous_fkey")
+  next               TicketVisit[]     @relation("VisitPrevious")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, ticketId, createdAt, id], map: "ticket_visits_ticket_idx")
+  @@map("ticket_visits")
+}
+
+/// Append-only: what happened to a visit and who did it. No window times.
+model TicketVisitEvent {
+  id         String         @id @db.Uuid
+  tenantId   String         @map("tenant_id") @db.Uuid
+  visitId    String         @map("visit_id") @db.Uuid
+  ticketId   String         @map("ticket_id") @db.Uuid
+  kind       VisitEventKind
+  actorSide  VisitSide      @map("actor_side")
+  /// NULL for the system.
+  actorId    String?        @map("actor_account_id") @db.Uuid
+  reasonCode String?        @map("reason_code")
+  at         DateTime       @db.Timestamptz(3)
+  createdAt  DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([tenantId, ticketId, at, id], map: "ticket_visit_events_ticket_idx")
+  @@map("ticket_visit_events")
+}
+
+/// One row per compound. Off until the manager turns it on.
+model MaintenanceSlaSettings {
+  tenantId   String    @id @map("tenant_id") @db.Uuid
+  slaEnabled Boolean   @default(false) @map("sla_enabled")
+  /// The last activation: an older clock is stopped, never resumed.
+  enabledAt  DateTime? @map("enabled_at") @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("maintenance_sla_settings")
+}
+
+model SlaTarget {
+  tenantId          String         @map("tenant_id") @db.Uuid
+  categoryId        String         @map("category_id") @db.Uuid
+  priority          TicketPriority
+  responseMinutes   Int            @map("response_minutes")
+  resolutionMinutes Int            @map("resolution_minutes")
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  category TicketCategory @relation(fields: [tenantId, categoryId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "sla_targets_tenant_id_category_id_fkey")
+
+  @@id([tenantId, categoryId, priority])
+  @@map("sla_targets")
+}
+
+/// Append-only. `cycle` is the SLA's own (creation, reopen, activation).
+model TicketSlaEvent {
+  id            String       @id @db.Uuid
+  tenantId      String       @map("tenant_id") @db.Uuid
+  ticketId      String       @map("ticket_id") @db.Uuid
+  cycle         Int
+  clock         SlaClock
+  seq           Int
+  kind          SlaEventKind
+  at            DateTime     @db.Timestamptz(3)
+  targetMinutes Int          @map("target_minutes")
+  reasonCode    String?      @map("reason_code")
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, ticketId, cycle, clock, seq], map: "ticket_sla_events_seq_key")
+  @@map("ticket_sla_events")
+}
+
+/// The projection of ticket_sla_events: rebuildable from them alone.
+model TicketSlaClock {
+  tenantId      String        @map("tenant_id") @db.Uuid
+  ticketId      String        @map("ticket_id") @db.Uuid
+  cycle         Int
+  clock         SlaClock
+  state         SlaClockState
+  targetMinutes Int           @map("target_minutes")
+  startedAt     DateTime      @map("started_at") @db.Timestamptz(3)
+  dueAt         DateTime?     @map("due_at") @db.Timestamptz(3)
+  pausedAt      DateTime?     @map("paused_at") @db.Timestamptz(3)
+  endedAt       DateTime?     @map("ended_at") @db.Timestamptz(3)
+  lastSeq       Int           @map("last_seq")
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  ticket Ticket @relation(fields: [tenantId, ticketId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "ticket_sla_clocks_tenant_id_ticket_id_fkey")
+
+  @@id([tenantId, ticketId, cycle, clock])
+  @@map("ticket_sla_clocks")
 }

@@ -20,13 +20,15 @@ export default async function globalTeardown(): Promise<void> {
       `SELECT t.name,
               concat_ws(', ',
                 CASE WHEN ms.tenant_id IS NULL THEN 'maintenance_settings' END,
-                CASE WHEN ds.tenant_id IS NULL THEN 'maintenance_dispatch_settings' END
+                CASE WHEN ds.tenant_id IS NULL THEN 'maintenance_dispatch_settings' END,
+                CASE WHEN ss.tenant_id IS NULL THEN 'maintenance_sla_settings' END
               ) AS missing
          FROM tenants t
          LEFT JOIN maintenance_settings ms ON ms.tenant_id = t.id
          LEFT JOIN maintenance_dispatch_settings ds ON ds.tenant_id = t.id
+         LEFT JOIN maintenance_sla_settings ss ON ss.tenant_id = t.id
         WHERE t.status = 'active'
-          AND (ms.tenant_id IS NULL OR ds.tenant_id IS NULL)
+          AND (ms.tenant_id IS NULL OR ds.tenant_id IS NULL OR ss.tenant_id IS NULL)
         ORDER BY t.created_at`,
     );
     if (rows.length)

@@ -88,4 +88,14 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // The engine writes the notified row under the compound's dispatch lock
   // after checking for one; a violation is a race and names nothing.
   ticket_dispatch_attempts_one_notice_per_cycle: null,
+  // Visits and the SLA (ADR 0034). Server-generated ids.
+  ticket_visits_tenant_id_id_key: null,
+  // Checked under the ticket lock (VISIT_ALREADY_ACTIVE first); a
+  // violation is a race and names nothing.
+  ticket_visits_one_active_per_ticket: null,
+  // The recorder appends under the ticket lock after reading the clock's
+  // last event; a violation is a race and names nothing.
+  ticket_sla_events_seq_key: null,
+  ticket_sla_events_one_start: null,
+  ticket_sla_events_one_end: null,
 };

@@ -72,7 +72,7 @@ async function attachedFile(tx: TenantTxClient, tenantId: string) {
 }
 
 /**
- * Maintenance tenant tables (ADR 0032, 0033): isolated like every other tenant
+ * Maintenance tenant tables (ADR 0032, 0033, 0034): isolated like every other tenant
  * table, linked with composite keys. The RLS coverage test checks the
  * policies exist; this suite checks they hold, table by table.
  */
@@ -342,6 +342,134 @@ const TABLES: Table[] = [
         },
       });
       return id;
+    },
+  },
+  // Visits and the SLA (ADR 0034).
+  {
+    table: 'ticket_visits',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      const startsAt = new Date(Date.now() + 86_400_000);
+      await tx.ticketVisit.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          ticketId: link.ticketId,
+          cycle: 1,
+          technicianId: link.staffId,
+          startsAt,
+          endsAt: new Date(startsAt.getTime() + 3_600_000),
+          proposedBySide: 'technician',
+          proposedById: link.staffId,
+        },
+      });
+      return id;
+    },
+  },
+  {
+    table: 'ticket_visit_events',
+    linked: false,
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.ticketVisitEvent.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          visitId: newId(),
+          ticketId: link.ticketId,
+          kind: 'proposed',
+          actorSide: 'technician',
+          actorId: link.staffId,
+          at: new Date(),
+        },
+      });
+      return id;
+    },
+  },
+  {
+    table: 'maintenance_sla_settings',
+    key: 'tenant_id',
+    linked: false,
+    insert: async (tx, own) => {
+      await tx.maintenanceSlaSettings.upsert({
+        where: { tenantId: own.tenantId },
+        create: { tenantId: own.tenantId },
+        update: {},
+      });
+      return own.tenantId;
+    },
+  },
+  {
+    // Every category already has its three targets: the row's own is a
+    // new category; a link points at the other compound's seeded one.
+    table: 'sla_targets',
+    key: 'category_id',
+    insert: async (tx, own, link) => {
+      let categoryId = link.categoryId;
+      if (link.tenantId === own.tenantId) {
+        categoryId = newId();
+        await tx.ticketCategory.create({
+          data: {
+            id: categoryId,
+            tenantId: own.tenantId,
+            key: `sla_${categoryId.slice(-8)}`,
+            nameAr: 'فئة',
+            nameEn: 'Category',
+          },
+        });
+      }
+      await tx.slaTarget.create({
+        data: {
+          tenantId: own.tenantId,
+          categoryId,
+          priority: 'normal',
+          responseMinutes: 60,
+          resolutionMinutes: 600,
+        },
+      });
+      return categoryId;
+    },
+  },
+  {
+    table: 'ticket_sla_events',
+    linked: false,
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.ticketSlaEvent.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          ticketId: link.ticketId,
+          cycle: 1,
+          clock: 'response',
+          seq: 1,
+          kind: 'started',
+          at: new Date(),
+          targetMinutes: 60,
+        },
+      });
+      return id;
+    },
+  },
+  {
+    table: 'ticket_sla_clocks',
+    key: 'ticket_id',
+    insert: async (tx, own, link) => {
+      const now = new Date();
+      await tx.ticketSlaClock.create({
+        data: {
+          tenantId: own.tenantId,
+          ticketId: link.ticketId,
+          cycle: 1,
+          clock: 'response',
+          state: 'running',
+          targetMinutes: 60,
+          startedAt: now,
+          dueAt: new Date(now.getTime() + 3_600_000),
+          lastSeq: 1,
+        },
+      });
+      return link.ticketId;
     },
   },
 ];

@@ -223,6 +223,46 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'changed_by_account_id IS NOT NULL is tested in the same branch before ' +
       'it is compared with account_id, so a NULL actor never satisfies it',
   },
+  // Visits and the SLA (ADR 0034): no nullable column, or only under
+  // IS [NOT] NULL.
+  ticket_visits_cycle_positive: {},
+  ticket_visits_window: {},
+  ticket_visits_proposer_side: {},
+  ticket_visits_confirmed_shape: {},
+  ticket_visits_consent_shape: {},
+  ticket_visits_arrived_shape: {},
+  ticket_visits_finished_shape: {},
+  ticket_visits_late_shape: {},
+  ticket_visit_events_actor_shape: {},
+  maintenance_sla_settings_enabled_shape: {},
+  sla_targets_ranges: {},
+  ticket_sla_events_shape: {},
+  ticket_sla_clocks_shape: {},
+  // Visits and the SLA: compares nullable columns.
+  ticket_visits_receiver_shape: {
+    guarded:
+      'receiver_kind is compared with IS NOT DISTINCT FROM, which is never ' +
+      'NULL; the ids only under IS [NOT] NULL',
+  },
+  ticket_visits_cancelled_shape: {
+    guarded:
+      'cancelled_by_side is compared with IS [NOT] DISTINCT FROM, which is ' +
+      'never NULL, in branches that test it IS NULL / IS NOT NULL first',
+  },
+  ticket_visits_previous_not_self: {
+    guarded:
+      'previous_visit_id IS NULL is tested first, and the comparison is ' +
+      'IS DISTINCT FROM, which is never NULL',
+  },
+  ticket_visit_events_reason_shape: {
+    guarded:
+      'reason_code IS NULL is tested first; the match runs only on a value',
+  },
+  ticket_sla_events_reason_shape: {
+    guarded:
+      'reason_code is only tested IS NOT NULL in the first branch, and the ' +
+      'second tests IS NULL before it matches the value',
+  },
   household_members_minor_or_account: {
     guarded:
       'id_document_type and nationality are tested IS NOT NULL first, and ' +

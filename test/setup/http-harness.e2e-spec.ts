@@ -40,6 +40,11 @@ describe('Test harness — a compound', () => {
           where: { tenantId: id },
           select: { autoDispatchEnabled: true },
         }),
+        sla: await tx.maintenanceSlaSettings.findUnique({
+          where: { tenantId: id },
+          select: { slaEnabled: true },
+        }),
+        slaTargets: await tx.slaTarget.count(),
       }));
     });
     expect(rows).toEqual({
@@ -51,6 +56,8 @@ describe('Test harness — a compound', () => {
       specialties: DEFAULT_SPECIALTIES.length,
       categorySpecialties: DEFAULT_CATEGORY_SPECIALTIES.length,
       dispatch: { autoDispatchEnabled: false },
+      sla: { slaEnabled: false },
+      slaTargets: DEFAULT_CATEGORIES.length * 3,
     });
   });
 });

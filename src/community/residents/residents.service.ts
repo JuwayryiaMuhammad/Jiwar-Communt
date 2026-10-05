@@ -876,16 +876,14 @@ export class ResidentsService {
     unitId: string,
     key: (typeof COMMUNITY_NOTICES)[keyof typeof COMMUNITY_NOTICES],
   ) {
-    const [occupants, members] = await Promise.all([
-      tx.unitOccupancy.findMany({
-        where: { unitId, status: 'active', resides: true },
-        select: { accountId: true, tenantId: true },
-      }),
-      tx.householdMember.findMany({
-        where: { unitId, status: 'active', accountId: { not: null } },
-        select: { accountId: true },
-      }),
-    ]);
+    const occupants = await tx.unitOccupancy.findMany({
+      where: { unitId, status: 'active', resides: true },
+      select: { accountId: true, tenantId: true },
+    });
+    const members = await tx.householdMember.findMany({
+      where: { unitId, status: 'active', accountId: { not: null } },
+      select: { accountId: true },
+    });
     const tenantId = this.ctx.tenantId;
     await this.notifier.toAccounts(
       tx,
@@ -1255,14 +1253,12 @@ export class ResidentsService {
         createdAt: unit.createdAt,
       };
       if (this.ctx.accountType !== 'manager') return detail;
-      const [flags, occupants] = await Promise.all([
-        tx.unitReviewFlag.findMany({
-          where: { unitId, clearedAt: null },
-          select: { reason: true },
-          orderBy: { flaggedAt: 'asc' },
-        }),
-        this.unitOccupants(tx, unitId),
-      ]);
+      const flags = await tx.unitReviewFlag.findMany({
+        where: { unitId, clearedAt: null },
+        select: { reason: true },
+        orderBy: { flaggedAt: 'asc' },
+      });
+      const occupants = await this.unitOccupants(tx, unitId);
       return {
         ...detail,
         management: { reviewReasons: flags.map((f) => f.reason), occupants },

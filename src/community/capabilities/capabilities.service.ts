@@ -79,16 +79,14 @@ export class CapabilitiesService {
     unitId: string,
     flag: CapabilityFlag,
   ): Promise<string[]> {
-    const [occupants, members] = await Promise.all([
-      tx.unitOccupancy.findMany({
-        where: { unitId, status: 'active' },
-        select: { accountId: true },
-      }),
-      tx.householdMember.findMany({
-        where: { unitId, status: 'active', accountId: { not: null } },
-        select: { accountId: true },
-      }),
-    ]);
+    const occupants = await tx.unitOccupancy.findMany({
+      where: { unitId, status: 'active' },
+      select: { accountId: true },
+    });
+    const members = await tx.householdMember.findMany({
+      where: { unitId, status: 'active', accountId: { not: null } },
+      select: { accountId: true },
+    });
     const candidates = [
       ...new Set([
         ...occupants.map((o) => o.accountId),
@@ -114,16 +112,14 @@ export class CapabilitiesService {
     accountId: string,
     flag: CapabilityFlag,
   ): Promise<string[]> {
-    const [occupancies, memberships] = await Promise.all([
-      tx.unitOccupancy.findMany({
-        where: { accountId, status: 'active' },
-        select: { unitId: true },
-      }),
-      tx.householdMember.findMany({
-        where: { accountId, status: 'active' },
-        select: { unitId: true },
-      }),
-    ]);
+    const occupancies = await tx.unitOccupancy.findMany({
+      where: { accountId, status: 'active' },
+      select: { unitId: true },
+    });
+    const memberships = await tx.householdMember.findMany({
+      where: { accountId, status: 'active' },
+      select: { unitId: true },
+    });
     const units = [
       ...new Set([
         ...occupancies.map((o) => o.unitId),

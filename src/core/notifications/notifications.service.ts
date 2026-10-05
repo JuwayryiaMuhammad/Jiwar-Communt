@@ -92,12 +92,12 @@ export class NotificationsService implements OnModuleInit {
   async unreadCount(): Promise<{ unread: number; critical: number }> {
     const accountId = this.ctx.accountId;
     return this.tenantTx.withTenantTx(async (tx) => {
-      const [unread, critical] = await Promise.all([
-        tx.notification.count({ where: { accountId, readAt: null } }),
-        tx.notification.count({
-          where: { accountId, readAt: null, priority: 'critical' },
-        }),
-      ]);
+      const unread = await tx.notification.count({
+        where: { accountId, readAt: null },
+      });
+      const critical = await tx.notification.count({
+        where: { accountId, readAt: null, priority: 'critical' },
+      });
       return { unread, critical };
     });
   }

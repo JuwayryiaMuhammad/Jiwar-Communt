@@ -609,14 +609,12 @@ export class RegistrationService implements OnModuleInit {
     });
     if (!unit) conflicts.push('unit_not_found');
     else {
-      const [primary, residing] = await Promise.all([
-        tx.unitOccupancy.count({
-          where: { unitId: unit.id, status: 'active', isPrimary: true },
-        }),
-        tx.unitOccupancy.count({
-          where: { unitId: unit.id, status: 'active', resides: true },
-        }),
-      ]);
+      const primary = await tx.unitOccupancy.count({
+        where: { unitId: unit.id, status: 'active', isPrimary: true },
+      });
+      const residing = await tx.unitOccupancy.count({
+        where: { unitId: unit.id, status: 'active', resides: true },
+      });
       if (primary) conflicts.push('unit_has_primary');
       if (residing) conflicts.push('unit_has_residing_occupants');
     }

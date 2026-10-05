@@ -279,39 +279,31 @@ export class AccountDeletionService implements OnModuleInit {
       if (!request) throw requestNotFound();
       const accountId = request.accountId;
       const global = this.globalDb.in(tx);
-      const [
-        occupancies,
-        memberships,
-        engagements,
-        sessions,
-        messages,
-        invites,
-        audit,
-      ] = await Promise.all([
-        tx.unitOccupancy.count({ where: { accountId, status: 'active' } }),
-        tx.householdMember.count({
-          where: { accountId, status: { in: ['active', 'pending_approval'] } },
-        }),
-        tx.workerEngagement.count({
-          where: {
-            requestedById: accountId,
-            status: { in: ['pending_review', 'active', 'suspended'] },
-          },
-        }),
-        global.session.count({ where: { accountId } }),
-        global.outboxMessage.count({
-          where: {
-            recipientAccountId: accountId,
-            status: { in: ['pending', 'processing'] },
-          },
-        }),
-        tx.householdInvite.count({
-          where: { acceptedAccountId: accountId, strippedAt: null },
-        }),
-        tx.auditLog.count({
-          where: { OR: [{ actorId: accountId }, { targetId: accountId }] },
-        }),
-      ]);
+      const occupancies = await tx.unitOccupancy.count({
+        where: { accountId, status: 'active' },
+      });
+      const memberships = await tx.householdMember.count({
+        where: { accountId, status: { in: ['active', 'pending_approval'] } },
+      });
+      const engagements = await tx.workerEngagement.count({
+        where: {
+          requestedById: accountId,
+          status: { in: ['pending_review', 'active', 'suspended'] },
+        },
+      });
+      const sessions = await global.session.count({ where: { accountId } });
+      const messages = await global.outboxMessage.count({
+        where: {
+          recipientAccountId: accountId,
+          status: { in: ['pending', 'processing'] },
+        },
+      });
+      const invites = await tx.householdInvite.count({
+        where: { acceptedAccountId: accountId, strippedAt: null },
+      });
+      const audit = await tx.auditLog.count({
+        where: { OR: [{ actorId: accountId }, { targetId: accountId }] },
+      });
       return {
         requestId,
         accountId,

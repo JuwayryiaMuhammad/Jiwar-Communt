@@ -308,19 +308,18 @@ export class TicketsService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       const ticket = await this.access.load(tx, id, audience);
       const [read] = await this.reads(tx, [ticket]);
-      const [attachments, settings, feedback] = await Promise.all([
-        tx.ticketAttachment.findMany({
-          where: { ticketId: id },
-          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-        }),
-        this.settings.inTx(tx),
+      const attachments = await tx.ticketAttachment.findMany({
+        where: { ticketId: id },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      });
+      const settings = await this.settings.inTx(tx);
+      const feedback =
         audience === 'dispatch'
-          ? tx.ticketFeedback.findMany({
+          ? await tx.ticketFeedback.findMany({
               where: { ticketId: id },
               orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
             })
-          : Promise.resolve([]),
-      ]);
+          : [];
       const photos: PhotoRead[] = [];
       for (const a of attachments)
         photos.push({
@@ -412,16 +411,14 @@ export class TicketsService implements OnModuleInit {
 
   /** The category, unit code and people of each ticket, in two reads. */
   async reads(tx: TenantTxClient, tickets: Ticket[]): Promise<TicketRead[]> {
-    const [categories, codes] = await Promise.all([
-      tx.ticketCategory.findMany({
-        where: { id: { in: [...new Set(tickets.map((t) => t.categoryId))] } },
-        ...CATEGORY,
-      }),
-      this.community.unitCodes(
-        tx,
-        tickets.flatMap((t) => (t.unitId ? [t.unitId] : [])),
-      ),
-    ]);
+    const categories = await tx.ticketCategory.findMany({
+      where: { id: { in: [...new Set(tickets.map((t) => t.categoryId))] } },
+      ...CATEGORY,
+    });
+    const codes = await this.community.unitCodes(
+      tx,
+      tickets.flatMap((t) => (t.unitId ? [t.unitId] : [])),
+    );
     const people = new Map<string, Person>();
     await this.addPeople(
       tx,

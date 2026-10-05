@@ -762,20 +762,18 @@ export class HouseholdsService {
     tx: TenantTxClient,
     unitId: string,
   ): Promise<{ memberCount: number; pendingInvites: number }> {
-    const [memberCount, pendingInvites] = await Promise.all([
-      tx.householdMember.count({
-        where: { unitId, status: { in: ['active', 'pending_approval'] } },
-      }),
-      tx.householdInvite.count({
-        // A majority invite is for a member already counted.
-        where: {
-          unitId,
-          status: 'pending',
-          expiresAt: { gt: new Date() },
-          memberId: null,
-        },
-      }),
-    ]);
+    const memberCount = await tx.householdMember.count({
+      where: { unitId, status: { in: ['active', 'pending_approval'] } },
+    });
+    const pendingInvites = await tx.householdInvite.count({
+      // A majority invite is for a member already counted.
+      where: {
+        unitId,
+        status: 'pending',
+        expiresAt: { gt: new Date() },
+        memberId: null,
+      },
+    });
     return { memberCount, pendingInvites };
   }
 

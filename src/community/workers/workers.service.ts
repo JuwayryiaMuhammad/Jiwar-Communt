@@ -1652,21 +1652,19 @@ export class WorkersService {
     e: WorkerEngagement,
     code: NewCode,
   ): Promise<IssuedCode> {
-    const [worker, unit, tenant, settings] = await Promise.all([
-      tx.domesticWorker.findUniqueOrThrow({
-        where: { id: e.workerId },
-        select: { fullName: true, preferredLanguage: true, photoFileId: true },
-      }),
-      tx.unit.findUniqueOrThrow({
-        where: { id: e.unitId },
-        select: { code: true },
-      }),
-      this.globalDb.in(tx).tenant.findUniqueOrThrow({
-        where: { id: e.tenantId },
-        select: { name: true },
-      }),
-      this.settings.inTx(tx, e.tenantId),
-    ]);
+    const worker = await tx.domesticWorker.findUniqueOrThrow({
+      where: { id: e.workerId },
+      select: { fullName: true, preferredLanguage: true, photoFileId: true },
+    });
+    const unit = await tx.unit.findUniqueOrThrow({
+      where: { id: e.unitId },
+      select: { code: true },
+    });
+    const tenant = await this.globalDb.in(tx).tenant.findUniqueOrThrow({
+      where: { id: e.tenantId },
+      select: { name: true },
+    });
+    const settings = await this.settings.inTx(tx, e.tenantId);
     return {
       engagementId: e.id,
       accessCode: code.code,

@@ -248,24 +248,22 @@ export class EntryCredentialsService implements OnModuleInit {
     tenantId: string,
     sessionId: string | undefined,
   ): Promise<void> {
-    const [account, session] = await Promise.all([
-      tx.account.findUnique({
-        where: { id: accountId },
-        select: { status: true },
-      }),
-      sessionId
-        ? this.globalDb.in(tx).session.findFirst({
-            where: {
-              id: sessionId,
-              accountId,
-              tenantId,
-              revokedAt: null,
-              expiresAt: { gt: new Date() },
-            },
-            select: { id: true },
-          })
-        : null,
-    ]);
+    const account = await tx.account.findUnique({
+      where: { id: accountId },
+      select: { status: true },
+    });
+    const session = sessionId
+      ? await this.globalDb.in(tx).session.findFirst({
+          where: {
+            id: sessionId,
+            accountId,
+            tenantId,
+            revokedAt: null,
+            expiresAt: { gt: new Date() },
+          },
+          select: { id: true },
+        })
+      : null;
     if (account?.status !== 'active' || !session) {
       throw appError.unauthorized(
         ErrorCode.UNAUTHENTICATED,

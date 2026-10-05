@@ -1570,6 +1570,7 @@ enum FilePurpose {
   document
   resident_photo
   ticket_photo
+  parcel_photo
 
   @@map("file_purpose")
 }

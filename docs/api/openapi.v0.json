@@ -3175,7 +3175,8 @@
           "worker_photo",
           "document",
           "resident_photo",
-          "ticket_photo"
+          "ticket_photo",
+          "parcel_photo"
         ],
         "type": "string"
       },

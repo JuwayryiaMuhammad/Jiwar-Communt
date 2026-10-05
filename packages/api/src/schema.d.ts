@@ -4306,7 +4306,7 @@ export interface components {
             reasonCode: string | null;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo";
         FileReadView: {
             contentType: string;
             /** Format: date-time */

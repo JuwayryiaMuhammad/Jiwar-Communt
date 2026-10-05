@@ -8,9 +8,9 @@ const migration = readFileSync(
   join(__dirname, migrations, '20261005090000_files/migration.sql'),
   'utf8',
 );
-/** The size CHECK as it stands now (ADR 0032 recreated it). */
+/** The size CHECK as it stands now (ADR 0035 recreated it). */
 const sizeCheck = readFileSync(
-  join(__dirname, migrations, '20261007090100_maintenance/migration.sql'),
+  join(__dirname, migrations, '20261010090010_parcel_photo_size/migration.sql'),
   'utf8',
 );
 
@@ -26,6 +26,9 @@ describe('file purposes', () => {
     expect(sizeCheck).toContain(
       `WHEN 'ticket_photo' THEN ${FILE_PURPOSES.ticket_photo.maxBytes}`,
     );
+    expect(sizeCheck).toContain(
+      `WHEN 'parcel_photo' THEN ${FILE_PURPOSES.parcel_photo.maxBytes}`,
+    );
     expect(sizeCheck).toContain(`ELSE ${FILE_PURPOSES.document.maxBytes} END`);
     // files_content_type_for_purpose: images for every purpose, a PDF only
     // as a document.
@@ -38,6 +41,9 @@ describe('file purposes', () => {
       FILE_PURPOSES.worker_photo.types,
     );
     expect(FILE_PURPOSES.ticket_photo.types).toEqual(
+      FILE_PURPOSES.worker_photo.types,
+    );
+    expect(FILE_PURPOSES.parcel_photo.types).toEqual(
       FILE_PURPOSES.worker_photo.types,
     );
     expect(FILE_PURPOSES.document.types).toEqual(FILE_TYPES);

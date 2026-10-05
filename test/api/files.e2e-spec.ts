@@ -147,6 +147,34 @@ describe('API v0 — files (ADR 0029)', () => {
       size: 5 * MB,
     }).expect(201);
 
+    // A parcel's photo is the guard's (ADR 0035); 5 MB like the other photos.
+    await declare(w.a.tokens.guard, {
+      purpose: 'parcel_photo',
+      contentType: 'image/jpeg',
+      size: 5 * MB,
+    }).expect(201);
+    expect(
+      err(
+        await declare(w.a.tokens.guard, {
+          purpose: 'parcel_photo',
+          contentType: 'image/jpeg',
+          size: 5 * MB + 1,
+        }).expect(400),
+      ).fields,
+    ).toEqual([
+      { field: 'size', code: 'FILE_TOO_LARGE', params: { maxBytes: 5 * MB } },
+    ]);
+    for (const token of [owner, w.a.tokens.family, w.a.tokens.manager])
+      expect(
+        err(
+          await declare(token, {
+            purpose: 'parcel_photo',
+            contentType: 'image/jpeg',
+            size: 10,
+          }).expect(403),
+        ).code,
+      ).toBe('FORBIDDEN');
+
     // A document is management's.
     for (const token of [owner, w.a.tokens.family])
       expect(

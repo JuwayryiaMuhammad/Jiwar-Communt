@@ -311,6 +311,18 @@ export const NOTIFICATION_KINDS = {
     target: 'parcel',
     params: { carrier: {}, pieces: {}, unitCode: {}, method: {} },
   },
+  /** A parcel has waited for its residents (once, at the reminder days). */
+  'parcel.reminder': {
+    priority: 'normal',
+    target: 'parcel',
+    params: { carrier: {}, pieces: {}, days: {}, unitCode: {} },
+  },
+  /** A parcel has been held a long time (the managers, once). */
+  'parcel.held_long': {
+    priority: 'normal',
+    target: 'parcel',
+    params: { parcelNumber: {}, unitCode: {}, carrier: {}, days: {} },
+  },
   /** A resident said "not mine": the guards, to send it back (ADR 0035). */
   'parcel.rejected': {
     priority: 'normal',

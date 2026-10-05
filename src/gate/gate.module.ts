@@ -30,6 +30,7 @@ import {
   ManagerParcelsController,
   ParcelSettingsController,
 } from './parcels/manager-parcels.controller';
+import { ParcelSweeps } from './parcels/parcel-sweeps';
 import { ParcelSettingsService } from './parcels/parcel-settings.service';
 import { ParcelHandover } from './parcels/parcel-handover.service';
 import { ParcelCore } from './parcels/parcel-core';
@@ -92,6 +93,7 @@ import { VisitorsController } from './visitors/visitors.controller';
     ResidentParcels,
     ParcelHandover,
     ParcelSettingsService,
+    ParcelSweeps,
   ],
 })
 export class GateModule {}

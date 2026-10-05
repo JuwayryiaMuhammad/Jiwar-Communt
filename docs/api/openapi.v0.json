@@ -831,6 +831,24 @@
         ],
         "type": "object"
       },
+      "CategoryChangeDto": {
+        "properties": {
+          "categoryId": {
+            "description": "An active category of the compound; for a common area, one that allows it.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "From the closed list `ticketCategory`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "categoryId",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "CategoryOptionView": {
         "properties": {
           "commonAreaAllowed": {
@@ -12358,6 +12376,45 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/category": {
+      "post": {
+        "operationId": "DispatchTicketsController_category",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryChangeDto"
               }
             }
           },

@@ -633,6 +633,22 @@ export const WORK_ROUTES: Row[] = [
     },
   },
   {
+    method: 'POST',
+    path: '/maintenance/tickets/{id}/category',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      body: (w) => ({ categoryId: w.aCategoryId, reasonCode: 'misclassified' }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: {
+      body: { categoryId: 'x' },
+      fields: [{ field: 'categoryId', code: 'INVALID_UUID' }],
+    },
+  },
+  {
     method: 'GET',
     path: '/maintenance/technicians',
     auth: 'tenant',

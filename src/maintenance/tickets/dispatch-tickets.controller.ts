@@ -39,6 +39,7 @@ import { DispatchService, type TechnicianOption } from './dispatch.service';
 import { MessagesService } from './messages.service';
 import {
   AssignDto,
+  CategoryChangeDto,
   CreateTicketOnBehalfDto,
   DispatchTicketsQueryDto,
   PriorityDto,
@@ -185,6 +186,22 @@ export class DispatchTicketsController {
     @Body() dto: PriorityDto,
   ): Promise<void> {
     return this.dispatch.changePriority(id, dto.priority, dto.reasonCode);
+  }
+
+  /**
+   * A dispatcher's correction (ADR 0034): `reasonCode` from
+   * `ticketCategory`; audited. The technician keeps the ticket (the
+   * dispatcher may reassign it), the engine does not run, and the SLA's
+   * running clocks take the new category's targets.
+   */
+  @Post(':id/category')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  category(
+    @Param('id', parseId()) id: string,
+    @Body() dto: CategoryChangeDto,
+  ): Promise<void> {
+    return this.dispatch.changeCategory(id, dto.categoryId, dto.reasonCode);
   }
 
   /** Any time before it is closed; `reasonCode` from `ticketCancel`. */

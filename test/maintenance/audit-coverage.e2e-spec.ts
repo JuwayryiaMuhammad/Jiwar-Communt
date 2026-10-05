@@ -194,6 +194,42 @@ describe('Audit coverage — maintenance', () => {
   });
 
   describe('SLA settings and targets (ADR 0034)', () => {
+    it('ticket.category_changed — keys and the code, never the description', async () => {
+      const c = await x.compound();
+      const unit = await x.unit(c);
+      const reporter = await x.resident(c, [unit.id]);
+      const [general, plumbing] = await x.asManager(c, async () => [
+        await x.prisma.tenant.ticketCategory.findFirstOrThrow({
+          where: { key: 'general' },
+        }),
+        await x.prisma.tenant.ticketCategory.findFirstOrThrow({
+          where: { key: 'plumbing' },
+        }),
+      ]);
+      const ticket = await x.asManager(c, () =>
+        h.moduleRef.get(TicketsService).createOnBehalf({
+          unitId: unit.id,
+          categoryId: general.id,
+          description: 'AUDIT-DESCRIPTION dripping tap',
+          reporterAccountId: reporter.id,
+        }),
+      );
+      await x.asManager(c, () =>
+        h.moduleRef
+          .get(DispatchService)
+          .changeCategory(ticket.id, plumbing.id, 'misclassified'),
+      );
+      const row = await single(c, 'ticket.category_changed', ticket.id);
+      expect(row).toMatchObject({
+        actorType: 'account',
+        actorId: c.managerId,
+        targetType: 'ticket',
+        changes: { categoryKey: { from: 'general', to: 'plumbing' } },
+        metadata: { reasonCode: 'misclassified' },
+      });
+      expect(JSON.stringify(row)).not.toContain('AUDIT-');
+    });
+
     it('maintenance.sla_settings_changed — by the manager, the flag only', async () => {
       const c = await x.compound();
       const settings = h.moduleRef.get(SlaSettingsService);

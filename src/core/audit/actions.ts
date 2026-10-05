@@ -201,6 +201,8 @@ export const AUDIT_ACTIONS = {
   'ticket.created_on_behalf': { log: 'tenant', target: 'ticket' },
   // changes: priority; metadata: reasonCode.
   'ticket.priority_changed': { log: 'tenant', target: 'ticket' },
+  // ADR 0034. changes: categoryKey; metadata: reasonCode.
+  'ticket.category_changed': { log: 'tenant', target: 'ticket' },
   // metadata: reasonCode, by (reporter | dispatcher), fromStatus.
   'ticket.cancelled': { log: 'tenant', target: 'ticket' },
   // dispatch (ADR 0033). Codes and keys only, never a name.

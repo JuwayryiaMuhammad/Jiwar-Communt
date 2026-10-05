@@ -42,6 +42,7 @@ const EXPECTED: Record<TicketAction, TicketStatus[]> = {
   reopen: ['closed'],
   autoClose: ['completed'],
   changePriority: ['new', 'assigned', 'in_progress', 'on_hold', 'completed'],
+  changeCategory: ['new', 'assigned', 'in_progress', 'on_hold', 'completed'],
   message: ['new', 'assigned', 'in_progress', 'on_hold', 'completed'],
   reportPhoto: ['new', 'assigned', 'in_progress', 'on_hold'],
   workPhoto: ['in_progress', 'on_hold'],

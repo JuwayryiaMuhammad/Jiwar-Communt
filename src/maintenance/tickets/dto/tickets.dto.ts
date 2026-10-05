@@ -245,6 +245,25 @@ export class PriorityDto {
   reasonCode?: string;
 }
 
+export class CategoryChangeDto {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    description:
+      'An active category of the compound; for a common area, one that allows it.',
+  })
+  @IsUUID()
+  categoryId: string;
+
+  @ApiProperty({
+    type: String,
+    description: 'From the closed list `ticketCategory`.',
+  })
+  @IsOptional()
+  @IsString()
+  reasonCode?: string;
+}
+
 export class HoldDto {
   @ApiProperty({ enum: TicketHoldReason, enumName: 'TicketHoldReason' })
   @IsEnum(

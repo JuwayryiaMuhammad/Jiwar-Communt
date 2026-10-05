@@ -1172,6 +1172,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/tickets/{id}/category": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DispatchTicketsController_category"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/tickets/{id}/dispatch-attempts": {
         parameters: {
             query?: never;
@@ -3259,6 +3275,15 @@ export interface components {
         CaseCreatedView: {
             /** Format: uuid */
             caseId: string;
+        };
+        CategoryChangeDto: {
+            /**
+             * Format: uuid
+             * @description An active category of the compound; for a common area, one that allows it.
+             */
+            categoryId: string;
+            /** @description From the closed list `ticketCategory`. */
+            reasonCode: string;
         };
         CategoryOptionView: {
             commonAreaAllowed: boolean;
@@ -7501,6 +7526,29 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DispatchTicketsController_category: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoryChangeDto"];
             };
         };
         responses: {

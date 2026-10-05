@@ -218,6 +218,17 @@ export const NOTIFICATION_KINDS = {
       categoryKey: {},
     },
   },
+  // Visits and the SLA (ADR 0034).
+  /** A dispatcher corrected the category of the technician's ticket. */
+  'ticket.category_changed': {
+    priority: 'normal',
+    target: 'ticket',
+    params: {
+      ticketNumber: {},
+      unitCode: { optional: true },
+      categoryKey: {},
+    },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

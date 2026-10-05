@@ -11,6 +11,7 @@ import {
 } from '../dispatch/availability.service';
 import { DispatchBusyError } from '../dispatch/dispatch-busy';
 import { DispatchEngine } from '../dispatch/dispatch-engine';
+import { categoryNotFound } from '../categories/categories.service';
 import { DispatchSettingsService } from '../dispatch/dispatch-settings.service';
 import { points, workloads } from '../dispatch/workload';
 import { TicketAccess } from './ticket-access';
@@ -48,7 +49,8 @@ const sameAsCurrent = (field: string) =>
 
 /**
  * Manual dispatch (ADR 0032), for `tickets.dispatch`: assign a ticket from
- * the queue, reassign it with a reason, change its priority with a reason.
+ * the queue, reassign it with a reason, change its priority or (ADR 0034)
+ * its category with a reason.
  * The dispatch engine (ADR 0033) writes `automatic` assignments next to
  * these.
  *
@@ -287,6 +289,59 @@ export class DispatchService {
         'ticket.priority_changed',
         ticket,
         { priority },
+        me,
+      );
+    });
+  }
+
+  /**
+   * A dispatcher's correction of the category, with a reason (audited; ADR
+   * 0034). The technician keeps the ticket and is told; a dispatcher who
+   * thinks it needs someone else reassigns it. The dispatch engine does not
+   * run: the ticket is not in the queue because of its category. The
+   * reporter sees the new category on the ticket.
+   */
+  changeCategory(id: string, categoryId: string, reasonCode?: string) {
+    const code = requireReasonCodeOnly(reasonCode, REASON_CODES.ticketCategory);
+    const me = this.ctx.accountId;
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const ticket = await this.access.load(tx, id, 'dispatch', { lock: true });
+      assertCan(ticket, 'changeCategory');
+      if (ticket.categoryId === categoryId) throw sameAsCurrent('categoryId');
+      const category = await tx.ticketCategory.findFirst({
+        where: { id: categoryId, active: true },
+      });
+      if (!category) throw categoryNotFound();
+      if (ticket.commonArea !== null && !category.commonAreaAllowed)
+        throw appError.badRequest(
+          ErrorCode.VALIDATION_FAILED,
+          'Not for a common area',
+          {
+            fields: [
+              {
+                field: 'categoryId',
+                code: FieldErrorCode.CATEGORY_NOT_FOR_COMMON_AREA,
+              },
+            ],
+          },
+        );
+      const before = await tx.ticketCategory.findUniqueOrThrow({
+        where: { id: ticket.categoryId },
+        select: { key: true },
+      });
+      await tx.ticket.update({ where: { id }, data: { categoryId } });
+      await this.audit.record(tx, {
+        action: 'ticket.category_changed',
+        targetId: id,
+        changes: { categoryKey: { from: before.key, to: category.key } },
+        metadata: { reasonCode: code },
+      });
+      await this.notices.send(
+        tx,
+        [ticket.technicianId],
+        'ticket.category_changed',
+        ticket,
+        { categoryKey: category.key },
         me,
       );
     });

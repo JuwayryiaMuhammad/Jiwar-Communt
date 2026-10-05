@@ -286,12 +286,18 @@ describe('Gate — the resident entry QR (ADR 0031)', () => {
         'notifications',
         'entry_credentials',
       ];
-      const before = await Promise.all(watched.map(count));
+      // One query at a time: they share one connection.
+      const counts = async () => {
+        const rows: number[] = [];
+        for (const table of watched) rows.push(await count(table));
+        return rows;
+      };
+      const before = await counts();
       const rowBefore = JSON.stringify(await live(r.id));
       await inSafeWindow();
       for (const offset of [0, 0, 1, -1, 2]) await scan(c, offset);
       await verify({ qr: `JWR2.${c.id}.1.AAAAAAAAAAAAAAAAAAAAAA` }).expect(200);
-      expect(await Promise.all(watched.map(count))).toEqual(before);
+      expect(await counts()).toEqual(before);
       expect(JSON.stringify(await live(r.id))).toBe(rowBefore);
       // The table has no column that could say when it was last used.
       const columns = (

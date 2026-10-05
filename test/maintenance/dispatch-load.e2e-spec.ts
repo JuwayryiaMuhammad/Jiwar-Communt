@@ -5,6 +5,7 @@ import {
 } from '../../src/maintenance/dispatch/dispatch-sweep';
 import { dispatchHelpers } from '../setup/dispatch';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { samplePool } from '../setup/pool-sampler';
 
 /**
  * ADR 0033: a busy compound must never turn the dispatch lock into errors.
@@ -19,6 +20,7 @@ describe('Dispatch — a busy compound', () => {
   let h: HttpHarness;
   let d: ReturnType<typeof dispatchHelpers>;
   let problems: string[];
+  let pool: Awaited<ReturnType<typeof samplePool>> | undefined;
 
   beforeAll(async () => {
     h = await createHttpHarness();
@@ -37,8 +39,11 @@ describe('Dispatch — a busy compound', () => {
     jest.spyOn(Logger.prototype, 'warn').mockImplementation(note);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     jest.restoreAllMocks();
+    // The sampler's own connection must not outlive a test that failed early.
+    await pool?.stop();
+    pool = undefined;
   });
 
   it('30 creations, three queue walks, a decline and two sweeps at once: nothing fails, nothing times out, every ticket has one technician', async () => {
@@ -152,6 +157,7 @@ describe('Dispatch — a busy compound', () => {
     for (const t of s.techs) await d.setAvailability(s.c, t.id, 'available');
     problems = [];
 
+    pool = await samplePool(s.c.tenantId);
     const sweeping = h.moduleRef.get(DispatchSweep).run();
     // The sweep is under way when the residents arrive.
     await new Promise((r) => setTimeout(r, 300));
@@ -175,13 +181,27 @@ describe('Dispatch — a busy compound', () => {
       other,
     ]);
     const creationMs = Date.now() - started;
+    const seen = await pool.stop();
     process.stdout.write(
-      `busy compound: sweep assigned ${swept}; 40 creations took ${creationMs} ms in all; GET /me took ${me.ms} ms\n`,
+      `busy compound: sweep assigned ${swept}; 40 creations took ${creationMs} ms in all; GET /me took ${me.ms} ms; ` +
+        `most connections busy ${seen.maxBusy}, waiting on the dispatch lock ${seen.maxDispatchWaiters}, ` +
+        `waiting on any lock ${seen.maxLockWaiters} (${seen.waitedOn.join(', ')}; ${seen.samples} samples)\n`,
     );
 
     expect(responses.map((r) => r.status)).toEqual(Array(40).fill(201));
     expect(me.status).toBe(200);
-    expect(me.ms).toBeLessThan(2000);
+    // The dispatch lock never starves the pool (ADR 0033). The time GET /me
+    // took is only reported: it follows how loaded the machine is. What
+    // makes it fast is structural, and read from the database's side. The
+    // pool itself is full at times (40 requests at once, each wanting a
+    // connection, queue on the ticket counter's row too), so "a free
+    // connection" is not the property; this is: dispatch never ties up more
+    // than one of them. The limiter queues the compound's decisions in
+    // memory, holding no connection, so at most one connection of this
+    // process waits for the compound's dispatch lock.
+    expect(seen.samples).toBeGreaterThan(20);
+    expect(seen.maxBusy).toBeGreaterThan(0);
+    expect(seen.maxDispatchWaiters).toBeLessThanOrEqual(1);
     expect(problems).toEqual([]);
 
     await h.moduleRef.get(DispatchSweep).run();

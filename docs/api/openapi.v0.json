@@ -2207,6 +2207,16 @@
           "reporter": {
             "$ref": "#/components/schemas/AccountRefView"
           },
+          "sla": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DispatchTicketSlaView"
+              }
+            ],
+            "description": "Null while the compound does not measure an SLA.",
+            "nullable": true,
+            "type": "object"
+          },
           "status": {
             "allOf": [
               {
@@ -2259,7 +2269,52 @@
           "feedback",
           "completedAt",
           "closedAt",
-          "cancelledAt"
+          "cancelledAt",
+          "sla"
+        ],
+        "type": "object"
+      },
+      "DispatchTicketSlaView": {
+        "properties": {
+          "paused": {
+            "description": "A clock is paused: waiting for the resident, for parts, or for a confirmation.",
+            "type": "boolean"
+          },
+          "resolutionDueAt": {
+            "description": "While the resolution clock runs: when it is due.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "resolutionState": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SlaClockState"
+              }
+            ],
+            "nullable": true
+          },
+          "responseDueAt": {
+            "description": "While the response clock runs: when it is due.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "responseState": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SlaClockState"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "responseDueAt",
+          "resolutionDueAt",
+          "paused",
+          "responseState",
+          "resolutionState"
         ],
         "type": "object"
       },
@@ -6207,6 +6262,16 @@
           "reporter": {
             "$ref": "#/components/schemas/FirstNameRefView"
           },
+          "sla": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketSlaView"
+              }
+            ],
+            "description": "Null while the compound does not measure an SLA.",
+            "nullable": true,
+            "type": "object"
+          },
           "status": {
             "allOf": [
               {
@@ -6260,7 +6325,8 @@
           "completedAt",
           "closedAt",
           "autoCloseAt",
-          "reopenUntil"
+          "reopenUntil",
+          "sla"
         ],
         "type": "object"
       },
@@ -6984,6 +7050,102 @@
           "gateName",
           "startedAt",
           "endedAt"
+        ],
+        "type": "object"
+      },
+      "SlaClock": {
+        "enum": [
+          "response",
+          "resolution"
+        ],
+        "type": "string"
+      },
+      "SlaClockState": {
+        "enum": [
+          "running",
+          "paused",
+          "met",
+          "breached",
+          "stopped"
+        ],
+        "type": "string"
+      },
+      "SlaEventKind": {
+        "enum": [
+          "started",
+          "paused",
+          "resumed",
+          "met",
+          "breached",
+          "retargeted",
+          "stopped"
+        ],
+        "type": "string"
+      },
+      "SlaEventView": {
+        "properties": {
+          "at": {
+            "description": "A breach is at exactly its due time.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "clock": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SlaClock"
+              }
+            ]
+          },
+          "cycle": {
+            "description": "The SLA cycle: a new one at a reopen and when the SLA is turned on.",
+            "type": "number"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SlaEventKind"
+              }
+            ]
+          },
+          "reasonCode": {
+            "description": "From the closed list `slaEvent`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "seq": {
+            "type": "number"
+          },
+          "targetMinutes": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "clock",
+          "cycle",
+          "seq",
+          "kind",
+          "at",
+          "targetMinutes",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "SlaEventViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/SlaEventView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -7818,6 +7980,32 @@
           "emergency"
         ],
         "type": "string"
+      },
+      "TicketSlaView": {
+        "properties": {
+          "paused": {
+            "description": "A clock is paused: waiting for the resident, for parts, or for a confirmation.",
+            "type": "boolean"
+          },
+          "resolutionDueAt": {
+            "description": "While the resolution clock runs: when it is due.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "responseDueAt": {
+            "description": "While the response clock runs: when it is due.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "responseDueAt",
+          "resolutionDueAt",
+          "paused"
+        ],
+        "type": "object"
       },
       "TicketStatus": {
         "enum": [
@@ -12681,6 +12869,42 @@
         },
         "responses": {
           "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/sla-events": {
+      "get": {
+        "operationId": "DispatchTicketsController_slaEvents",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlaEventViewList"
+                }
+              }
+            },
             "description": ""
           }
         },

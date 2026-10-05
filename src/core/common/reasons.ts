@@ -209,5 +209,6 @@ export const REASON_CODES = {
     'category_changed',
     'ticket_cancelled',
     'sla_disabled',
+    'new_cycle',
   ],
 } as const;

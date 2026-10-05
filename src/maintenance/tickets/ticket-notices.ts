@@ -66,6 +66,47 @@ export class TicketNotices {
   }
 
   /**
+   * Like `send`, with exactly `params` besides the ticket number: never the
+   * unit code (ADR 0034). A visit's window with the unit's code would say
+   * which home is empty when; an SLA breach names the ticket and the clock.
+   */
+  async sendBare(
+    tx: TenantTxClient,
+    to: readonly (string | null)[],
+    kind: NotificationKind,
+    ticket: Pick<Ticket, 'id' | 'number'>,
+    params: Extra = {},
+    except: string | null = null,
+  ): Promise<void> {
+    const ids = [...new Set(to)].filter(
+      (id): id is string => id !== null && id !== except,
+    );
+    if (!ids.length) return;
+    const active = await tx.account.findMany({
+      where: { id: { in: ids }, status: 'active' },
+      select: { id: true },
+    });
+    if (!active.length) return;
+    await this.notifier.notify(
+      tx,
+      active.map((a) => a.id),
+      {
+        kind,
+        params: { ticketNumber: ticketNumber(ticket.number), ...params },
+        targetId: ticket.id,
+      },
+    );
+  }
+
+  /** Holders of `permission` now (managers hold maintenance.manage). */
+  async holding(
+    tx: TenantTxClient,
+    permission: 'tickets.dispatch' | 'maintenance.manage',
+  ): Promise<string[]> {
+    return (await this.staff.holding(tx, permission)).map((r) => r.id);
+  }
+
+  /**
    * A ticket is the technician's now (manual or automatic): its priority and
    * category code. Both assignment paths tell the technician the same way.
    */

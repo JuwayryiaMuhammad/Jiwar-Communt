@@ -391,6 +391,7 @@ describe('API v0 — PII leak scan', () => {
       '/maintenance/tickets/{id}/history': ticket.id,
       '/maintenance/tickets/{id}/assignments': ticket.id,
       '/maintenance/tickets/{id}/dispatch-attempts': queued.id,
+      '/maintenance/tickets/{id}/sla-events': ticket.id,
       '/files/{id}': photoId,
       '/units/{id}': unit.id,
       '/units/{id}/activation': unit.id,

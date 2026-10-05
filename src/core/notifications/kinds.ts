@@ -219,6 +219,20 @@ export const NOTIFICATION_KINDS = {
     },
   },
   // Visits and the SLA (ADR 0034).
+  // An SLA clock passed its target: dispatchers and managers. The number and
+  // the clock only. Two kinds because the priority belongs to the kind.
+  /** An SLA clock (response or resolution) passed its target. */
+  'ticket.sla_breached': {
+    priority: 'normal',
+    target: 'ticket',
+    params: { ticketNumber: {}, clock: {} },
+  },
+  /** The same, on an emergency. */
+  'ticket.sla_breached_emergency': {
+    priority: 'critical',
+    target: 'ticket',
+    params: { ticketNumber: {}, clock: {} },
+  },
   /** A dispatcher corrected the category of the technician's ticket. */
   'ticket.category_changed': {
     priority: 'normal',

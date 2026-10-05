@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Logger,
   Param,
   Patch,
   Put,
@@ -14,6 +15,7 @@ import { ApiArea } from '../../core/common/http/decorators';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { SlaTargetsDto, UpdateSlaSettingsDto } from './dto/sla.dto';
 import { SlaSettingsService } from './sla-settings.service';
+import { SlaSweep } from './sla-sweep';
 import { SlaTargetsService } from './sla-targets.service';
 import { SlaSettingsResponse } from './views/sla.views';
 
@@ -22,7 +24,12 @@ import { SlaSettingsResponse } from './views/sla.views';
 @RequirePermissions('maintenance.manage')
 @Controller('maintenance/sla-settings')
 export class SlaSettingsController {
-  constructor(private readonly settings: SlaSettingsService) {}
+  private readonly logger = new Logger(SlaSettingsController.name);
+
+  constructor(
+    private readonly settings: SlaSettingsService,
+    private readonly sweep: SlaSweep,
+  ) {}
 
   @Get()
   @ApiOkResponse({ type: SlaSettingsResponse })
@@ -35,7 +42,20 @@ export class SlaSettingsController {
   async update(
     @Body() dto: UpdateSlaSettingsDto,
   ): Promise<SlaSettingsResponse> {
-    return SlaSettingsResponse.from(await this.settings.update(dto));
+    const updated = await this.settings.update(dto);
+    // Turned on or off: the open tickets' clocks are started or stopped
+    // after the switch committed, ticket by ticket in bounded batches. The
+    // answer does not wait; the sweep finishes what the pass leaves, and a
+    // ticket written meanwhile starts its own clocks under its lock.
+    if (updated.turnedOn || updated.turnedOff)
+      this.sweep
+        .pass()
+        .catch((error: unknown) =>
+          this.logger.error(
+            `SLA pass failed (${error instanceof Error ? error.name : 'Error'})`,
+          ),
+        );
+    return SlaSettingsResponse.from(updated);
   }
 }
 

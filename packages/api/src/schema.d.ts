@@ -1268,6 +1268,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/tickets/{id}/sla-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DispatchTicketsController_slaEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -3699,11 +3715,29 @@ export interface components {
             priority: components["schemas"]["TicketPriority"];
             rejectionCount: number;
             reporter: components["schemas"]["AccountRefView"];
+            /** @description Null while the compound does not measure an SLA. */
+            sla: components["schemas"]["DispatchTicketSlaView"] | null;
             status: components["schemas"]["TicketStatus"];
             technician: components["schemas"]["AccountRefView"] | null;
             unit: components["schemas"]["TicketUnitView"] | null;
             /** Format: date-time */
             updatedAt: string;
+        };
+        DispatchTicketSlaView: {
+            /** @description A clock is paused: waiting for the resident, for parts, or for a confirmation. */
+            paused: boolean;
+            /**
+             * Format: date-time
+             * @description While the resolution clock runs: when it is due.
+             */
+            resolutionDueAt: string | null;
+            resolutionState: components["schemas"]["SlaClockState"] | null;
+            /**
+             * Format: date-time
+             * @description While the response clock runs: when it is due.
+             */
+            responseDueAt: string | null;
+            responseState: components["schemas"]["SlaClockState"] | null;
         };
         DispatchTicketView: {
             category: components["schemas"]["TicketCategoryRefView"];
@@ -4826,6 +4860,8 @@ export interface components {
             reopenUntil: string | null;
             reportedByMe: boolean;
             reporter: components["schemas"]["FirstNameRefView"];
+            /** @description Null while the compound does not measure an SLA. */
+            sla: components["schemas"]["TicketSlaView"] | null;
             status: components["schemas"]["TicketStatus"];
             technician: components["schemas"]["FirstNameRefView"] | null;
             unitCode: string | null;
@@ -5034,6 +5070,31 @@ export interface components {
             id: string;
             /** Format: date-time */
             startedAt: string;
+        };
+        /** @enum {string} */
+        SlaClock: "response" | "resolution";
+        /** @enum {string} */
+        SlaClockState: "running" | "paused" | "met" | "breached" | "stopped";
+        /** @enum {string} */
+        SlaEventKind: "started" | "paused" | "resumed" | "met" | "breached" | "retargeted" | "stopped";
+        SlaEventView: {
+            /**
+             * Format: date-time
+             * @description A breach is at exactly its due time.
+             */
+            at: string;
+            clock: components["schemas"]["SlaClock"];
+            /** @description The SLA cycle: a new one at a reopen and when the SLA is turned on. */
+            cycle: number;
+            kind: components["schemas"]["SlaEventKind"];
+            /** @description From the closed list `slaEvent`. */
+            reasonCode: string | null;
+            seq: number;
+            targetMinutes: number;
+        };
+        SlaEventViewList: {
+            data: components["schemas"]["SlaEventView"][];
+            nextCursor: string | null;
         };
         SlaSettingsResponse: {
             /**
@@ -5261,6 +5322,20 @@ export interface components {
         };
         /** @enum {string} */
         TicketPriority: "normal" | "urgent" | "emergency";
+        TicketSlaView: {
+            /** @description A clock is paused: waiting for the resident, for parts, or for a confirmation. */
+            paused: boolean;
+            /**
+             * Format: date-time
+             * @description While the resolution clock runs: when it is due.
+             */
+            resolutionDueAt: string | null;
+            /**
+             * Format: date-time
+             * @description While the response clock runs: when it is due.
+             */
+            responseDueAt: string | null;
+        };
         /** @enum {string} */
         TicketStatus: "new" | "assigned" | "in_progress" | "on_hold" | "completed" | "closed" | "cancelled";
         TicketUnitView: {
@@ -7698,6 +7773,27 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    DispatchTicketsController_slaEvents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SlaEventViewList"];
+                };
             };
         };
     };

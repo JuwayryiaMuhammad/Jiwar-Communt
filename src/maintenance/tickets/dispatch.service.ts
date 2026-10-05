@@ -13,6 +13,7 @@ import { DispatchBusyError } from '../dispatch/dispatch-busy';
 import { DispatchEngine } from '../dispatch/dispatch-engine';
 import { categoryNotFound } from '../categories/categories.service';
 import { DispatchSettingsService } from '../dispatch/dispatch-settings.service';
+import { SlaRecorder } from '../sla/sla-recorder';
 import { points, workloads } from '../dispatch/workload';
 import { TicketAccess } from './ticket-access';
 import { TicketLog } from './ticket-log';
@@ -71,6 +72,7 @@ export class DispatchService {
     private readonly availability: AvailabilityService,
     private readonly engine: DispatchEngine,
     private readonly dispatchSettings: DispatchSettingsService,
+    private readonly sla: SlaRecorder,
   ) {}
 
   /** Who can take tickets: active staff holding tickets.work. */
@@ -263,7 +265,11 @@ export class DispatchService {
       const ticket = await this.access.load(tx, id, 'dispatch', { lock: true });
       assertCan(ticket, 'changePriority');
       if (ticket.priority === priority) throw sameAsCurrent('priority');
-      await tx.ticket.update({ where: { id }, data: { priority } });
+      const updated = await tx.ticket.update({
+        where: { id },
+        data: { priority },
+      });
+      await this.sla.retarget(tx, updated, 'priority_changed');
       await this.audit.record(tx, {
         action: 'ticket.priority_changed',
         targetId: id,
@@ -329,7 +335,11 @@ export class DispatchService {
         where: { id: ticket.categoryId },
         select: { key: true },
       });
-      await tx.ticket.update({ where: { id }, data: { categoryId } });
+      const updated = await tx.ticket.update({
+        where: { id },
+        data: { categoryId },
+      });
+      await this.sla.retarget(tx, updated, 'category_changed');
       await this.audit.record(tx, {
         action: 'ticket.category_changed',
         targetId: id,

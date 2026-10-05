@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  SlaClockState,
   TicketAssignmentType,
   TicketAttachmentKind,
   TicketConfirmationStatus,
@@ -21,6 +22,7 @@ import {
   isErased,
 } from '../../../core/common/http/personal';
 import { TicketCategoryRefView } from '../../categories/views/category.views';
+import type { SlaSummary } from '../../sla/sla.service';
 import { ticketNumber } from '../ticket-rules';
 import type {
   HistoryRead,
@@ -39,6 +41,66 @@ import type {
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
+
+/** A ticket's SLA as a resident sees it (ADR 0034). */
+export class TicketSlaView {
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'While the response clock runs: when it is due.',
+  })
+  responseDueAt: Date | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'While the resolution clock runs: when it is due.',
+  })
+  resolutionDueAt: Date | null;
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'A clock is paused: waiting for the resident, for parts, or for a confirmation.',
+  })
+  paused: boolean;
+
+  static from(s: SlaSummary | null): TicketSlaView | null {
+    return s
+      ? {
+          responseDueAt: s.responseDueAt,
+          resolutionDueAt: s.resolutionDueAt,
+          paused: s.paused,
+        }
+      : null;
+  }
+}
+
+/** Dispatch also sees each clock's state. */
+export class DispatchTicketSlaView extends TicketSlaView {
+  @ApiProperty({
+    enum: SlaClockState,
+    enumName: 'SlaClockState',
+    nullable: true,
+  })
+  responseState: SlaClockState | null;
+  @ApiProperty({
+    enum: SlaClockState,
+    enumName: 'SlaClockState',
+    nullable: true,
+  })
+  resolutionState: SlaClockState | null;
+
+  static fromSummary(s: SlaSummary | null): DispatchTicketSlaView | null {
+    return s
+      ? {
+          ...TicketSlaView.from(s)!,
+          responseState: s.responseState,
+          resolutionState: s.resolutionState,
+        }
+      : null;
+  }
+}
 
 function person(r: TicketRead, id: string): Person {
   // A ticket's people always exist: accounts are never deleted (ADR 0023).
@@ -212,6 +274,12 @@ export class ResidentTicketDetailView extends ResidentTicketView {
     description: 'While closed: until when it may be reopened.',
   })
   reopenUntil: Date | null;
+  @ApiProperty({
+    type: TicketSlaView,
+    nullable: true,
+    description: 'Null while the compound does not measure an SLA.',
+  })
+  sla: TicketSlaView | null;
 
   static fromDetail(d: TicketDetail, me: string): ResidentTicketDetailView {
     const t = d.ticket;
@@ -233,6 +301,7 @@ export class ResidentTicketDetailView extends ResidentTicketView {
         t.status === 'closed' && t.closedAt
           ? new Date(t.closedAt.getTime() + d.settings.reopenDays * DAY)
           : null,
+      sla: TicketSlaView.from(d.sla),
     };
   }
 }
@@ -435,6 +504,12 @@ export class DispatchTicketDetailView extends DispatchTicketView {
   closedAt: Date | null;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   cancelledAt: Date | null;
+  @ApiProperty({
+    type: DispatchTicketSlaView,
+    nullable: true,
+    description: 'Null while the compound does not measure an SLA.',
+  })
+  sla: DispatchTicketSlaView | null;
 
   static fromDetail(d: TicketDetail): DispatchTicketDetailView {
     const t = d.ticket;
@@ -456,6 +531,7 @@ export class DispatchTicketDetailView extends DispatchTicketView {
       completedAt: t.completedAt,
       closedAt: t.closedAt,
       cancelledAt: t.cancelledAt,
+      sla: DispatchTicketSlaView.fromSummary(d.sla),
     };
   }
 }

@@ -47,6 +47,8 @@ import {
   ReassignDto,
   StaffMessageDto,
 } from './dto/tickets.dto';
+import { SlaService } from '../sla/sla.service';
+import { SlaEventView } from '../sla/views/sla.views';
 import { TicketsService } from './tickets.service';
 import {
   AssignmentView,
@@ -70,6 +72,7 @@ export class DispatchTicketsController {
     private readonly dispatch: DispatchService,
     private readonly confirmation: ConfirmationService,
     private readonly messages: MessagesService,
+    private readonly sla: SlaService,
   ) {}
 
   @Get()
@@ -164,6 +167,15 @@ export class DispatchTicketsController {
       DispatchAttemptView.list(await this.tickets.dispatchAttempts(id)),
       (r) => r,
     );
+  }
+
+  /** The ticket's SLA events, every cycle, oldest first (ADR 0034). */
+  @Get(':id/sla-events')
+  @ApiOkResponse({ type: ListOf(SlaEventView) })
+  async slaEvents(
+    @Param('id', parseId()) id: string,
+  ): Promise<ListResponse<SlaEventView>> {
+    return bounded(await this.sla.events(id), (e) => SlaEventView.from(e));
   }
 
   /** `reasonCode` from the closed list `ticketReassign`. */

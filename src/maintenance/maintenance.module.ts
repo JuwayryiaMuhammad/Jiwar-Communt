@@ -23,7 +23,10 @@ import {
   CategorySlaTargetsController,
   SlaSettingsController,
 } from './sla/sla-settings.controller';
+import { SlaRecorder } from './sla/sla-recorder';
+import { SlaService } from './sla/sla.service';
 import { SlaSettingsService } from './sla/sla-settings.service';
+import { SlaSweep } from './sla/sla-sweep';
 import { SlaTargetsService } from './sla/sla-targets.service';
 import {
   CategorySpecialtiesController,
@@ -95,6 +98,9 @@ import { TicketsService } from './tickets/tickets.service';
     ConfirmationService,
     SlaSettingsService,
     SlaTargetsService,
+    SlaRecorder,
+    SlaService,
+    SlaSweep,
   ],
 })
 export class MaintenanceModule {}

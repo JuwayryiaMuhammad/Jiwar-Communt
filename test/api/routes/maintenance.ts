@@ -633,6 +633,18 @@ export const WORK_ROUTES: Row[] = [
     },
   },
   {
+    method: 'GET',
+    path: '/maintenance/tickets/{id}/sla-events',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bTicketId }),
+      code: 'TICKET_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
     method: 'POST',
     path: '/maintenance/tickets/{id}/category',
     auth: 'tenant',

@@ -32,6 +32,17 @@ const BASE_PRISMA = {
     'The base Prisma client bypasses the tenant context. Use PrismaService.tenant, TenantTx or GlobalDbService.',
 };
 
+/**
+ * Nothing under src/ imports from test/: the test helpers include a time
+ * machine that rewrites append-only history as a superuser (ADR 0034), and
+ * must never be reachable from the app.
+ */
+const SRC_TO_TEST = {
+  group: ['**/test', '**/test/**'],
+  message:
+    'src/ must not import from test/ (test helpers bypass the database guards).',
+};
+
 const CORE_TO_DOMAIN = {
   group: DOMAINS.flatMap((d) => [`**/${d}`, `**/${d}/**`]),
   message:
@@ -65,19 +76,26 @@ const boundaryConfigs = [
     rules: { 'no-restricted-imports': rule([BASE_PRISMA]) },
   },
   {
+    files: ['src/**/*.ts'],
+    rules: { 'no-restricted-imports': rule([BASE_PRISMA, SRC_TO_TEST]) },
+  },
+  {
     files: ['src/core/**/*.ts'],
-    rules: { 'no-restricted-imports': rule([BASE_PRISMA, CORE_TO_DOMAIN]) },
+    rules: {
+      'no-restricted-imports': rule([BASE_PRISMA, CORE_TO_DOMAIN, SRC_TO_TEST]),
+    },
   },
   {
     // The one place allowed to build and hold the raw client.
     files: ['src/core/database/**/*.ts'],
-    rules: { 'no-restricted-imports': rule([CORE_TO_DOMAIN]) },
+    rules: { 'no-restricted-imports': rule([CORE_TO_DOMAIN, SRC_TO_TEST]) },
   },
   ...DOMAINS.map((domain) => ({
     files: [`src/${domain}/**/*.ts`],
     rules: {
       'no-restricted-imports': rule([
         BASE_PRISMA,
+        SRC_TO_TEST,
         ...otherDomainsInternals(domain),
       ]),
     },

@@ -32,6 +32,7 @@ import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { categoryNotFound } from '../categories/categories.service';
 import { DispatchEngine } from '../dispatch/dispatch-engine';
 import { MaintenanceSettingsService } from '../settings/maintenance-settings.service';
+import { SlaService, type SlaSummary } from '../sla/sla.service';
 import { ticketNotFound, TicketAccess, type Audience } from './ticket-access';
 import { COMMON_AREA_LENGTH, DESCRIPTION_LENGTH } from './ticket-limits';
 import { TicketLog } from './ticket-log';
@@ -83,6 +84,8 @@ export interface TicketDetail extends TicketRead {
   photos: PhotoRead[];
   settings: Pick<MaintenanceSettings, 'autoCloseHours' | 'reopenDays'>;
   feedback: TicketFeedback[];
+  /** Residents and dispatch only; null while the SLA is off (ADR 0034). */
+  sla: SlaSummary | null;
 }
 
 export interface HistoryRead<T> {
@@ -134,6 +137,7 @@ export class TicketsService implements OnModuleInit {
     private readonly idempotency: IdempotencyService,
     private readonly settings: MaintenanceSettingsService,
     private readonly engine: DispatchEngine,
+    private readonly sla: SlaService,
   ) {}
 
   onModuleInit(): void {
@@ -334,7 +338,9 @@ export class TicketsService implements OnModuleInit {
         read.people,
         feedback.map((f) => f.authorId),
       );
-      return { ...read, photos, settings, feedback };
+      const sla =
+        audience === 'technician' ? null : await this.sla.summary(tx, id);
+      return { ...read, photos, settings, feedback, sla };
     });
   }
 

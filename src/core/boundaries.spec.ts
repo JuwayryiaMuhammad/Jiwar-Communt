@@ -45,6 +45,27 @@ describe('import boundaries', () => {
     expect(found[0]).toContain('src/core must not import a domain');
   });
 
+  it.each([
+    ['src/main.ts', "import { rewind } from '../test/setup/sla';"],
+    [
+      'src/core/sweep/x.ts',
+      "import { rewind } from '../../../test/setup/sla';",
+    ],
+    [
+      'src/core/database/x.ts',
+      "import { A } from '../../../test/setup/db-module';",
+    ],
+    [
+      'src/maintenance/sla/x.ts',
+      "import { rewind } from '../../../test/setup/sla';",
+    ],
+    ['src/community/units/x.ts', "import { A } from '../../../test';"],
+  ])('src → test is rejected (%s)', async (file, source) => {
+    const found = await problems(file, source);
+    expect(found).toHaveLength(1);
+    expect(found[0]).toContain('src/ must not import from test/');
+  });
+
   it('the gate domain imports core, and community only through its index.ts', async () => {
     const gate = 'src/gate/visitors/x.ts';
     expect(

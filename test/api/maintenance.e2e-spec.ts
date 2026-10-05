@@ -76,6 +76,8 @@ const RESIDENT_DETAIL = [
   'reporter',
   'reporter.firstName',
   'reporter.id',
+  // ADR 0034: null while the compound does not measure an SLA.
+  'sla',
   'technician',
 ].sort();
 const DISPATCH = [
@@ -133,6 +135,7 @@ const DISPATCH_DETAIL = [
   'reporter',
   'reporter.fullName',
   'reporter.id',
+  'sla',
 ].sort();
 
 describe('API v0 — maintenance (ADR 0032)', () => {

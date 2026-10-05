@@ -656,6 +656,9 @@
           "unitView": {
             "type": "boolean"
           },
+          "visitConsent": {
+            "type": "boolean"
+          },
           "visitorsInvite": {
             "type": "boolean"
           },
@@ -679,6 +682,7 @@
           "tickets",
           "unitSecurity",
           "gateEntry",
+          "visitConsent",
           "financeView",
           "financePay",
           "financeCapPerOperation",

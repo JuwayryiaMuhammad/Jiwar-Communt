@@ -289,4 +289,39 @@ describe('capabilitiesFor', () => {
       expect(gate(occ({ resides: false }), state)).toBe(false);
     }
   });
+
+  it('visitConsent (ADR 0034): an adult who lives there — never a landlord, a minor or someone who left', () => {
+    const consent = (s: Subject, state: UnitState = OPEN) =>
+      capabilitiesFor(s, state).visitConsent;
+    // The primary, a residing owner, a residing tenant.
+    expect(consent(occ({ isPrimary: true }))).toBe(true);
+    expect(consent(occ())).toBe(true);
+    expect(consent(occ({ occupancyType: 'tenant' }))).toBe(true);
+    // Another adult of the household with an account, whatever their grants.
+    expect(consent(member())).toBe(true);
+    expect(
+      consent(
+        member({ grants: [{ permission: 'tickets', capPerOperation: null }] }),
+      ),
+    ).toBe(true);
+    // Never.
+    expect(consent(occ({ resides: false }))).toBe(false); // landlord
+    expect(consent(occ({ status: 'ended' }))).toBe(false);
+    expect(consent(member({ isMinor: true, hasAccount: false }))).toBe(false);
+    expect(consent(member({ status: 'pending_approval' }))).toBe(false);
+    expect(consent(member({ status: 'removed' }))).toBe(false);
+    expect(consent({ kind: 'registration', status: 'pending' })).toBe(false);
+    // No review takes it away from someone who lives there.
+    for (const reason of [
+      'primary_deceased',
+      'separation',
+      'primary_left',
+      'primary_frozen',
+    ] as const) {
+      const state: UnitState = { closed: false, reviewReasons: [reason] };
+      expect(consent(occ(), state)).toBe(true);
+      expect(consent(member(), state)).toBe(true);
+      expect(consent(occ({ resides: false }), state)).toBe(false);
+    }
+  });
 });

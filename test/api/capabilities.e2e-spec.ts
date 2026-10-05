@@ -133,6 +133,7 @@ describe('API v0 — capabilities drive access', () => {
       governanceVote: true,
       visitorsInvite: false,
       gateEntry: false,
+      visitConsent: false,
       tickets: false,
     });
   });
@@ -147,6 +148,7 @@ describe('API v0 — capabilities drive access', () => {
       governanceVote: false,
       visitorsInvite: true,
       gateEntry: true,
+      visitConsent: true,
       tickets: true,
     });
   });
@@ -161,6 +163,7 @@ describe('API v0 — capabilities drive access', () => {
       bookings: true,
       visitorsInvite: true,
       gateEntry: true,
+      visitConsent: true,
       tickets: true,
     });
   });
@@ -192,6 +195,7 @@ describe('API v0 — capabilities drive access', () => {
       // A death review takes nothing away from living at home (ADR 0031),
       // and maintenance goes on (ADR 0021).
       gateEntry: true,
+      visitConsent: true,
       tickets: true,
     });
     await check(

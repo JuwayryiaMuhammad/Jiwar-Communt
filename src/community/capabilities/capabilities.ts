@@ -71,6 +71,15 @@ export interface Capabilities {
    * review or a separation does not take it away: it is access to one's home.
    */
   gateEntry: boolean;
+  /**
+   * May let a maintenance technician enter while nobody is home, for one
+   * visit (ADR 0034): an adult who lives there — a residing occupant
+   * (owner or tenant) or an active adult member with an account. Never a
+   * landlord, a pending or removed member, a minor or an ended occupancy;
+   * the caller also requires an active account (frozen and erased ones are
+   * refused). Like gateEntry, no review takes it away.
+   */
+  visitConsent: boolean;
 
   financeView: boolean;
   financePay: boolean;
@@ -115,6 +124,7 @@ export const NONE: Capabilities = Object.freeze({
   tickets: false,
   unitSecurity: false,
   gateEntry: false,
+  visitConsent: false,
   financeView: false,
   financePay: false,
   financeCapPerOperation: null,
@@ -188,6 +198,7 @@ function occupancy(
     tickets: daily,
     unitSecurity: daily,
     gateEntry: daily,
+    visitConsent: daily,
     financeView: true,
     financePay: true,
     landlordTenantFinance: landlord,
@@ -224,6 +235,7 @@ function member(m: Extract<Subject, { kind: 'member' }>): Capabilities {
     tickets: has('tickets'),
     unitSecurity: has('unit_security'),
     gateEntry: true,
+    visitConsent: true,
     financeView: finance !== undefined,
     financePay: finance !== undefined,
     financeCapPerOperation: finance?.capPerOperation ?? null,

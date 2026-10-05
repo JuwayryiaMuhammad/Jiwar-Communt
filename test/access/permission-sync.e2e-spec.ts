@@ -355,7 +355,10 @@ describe('Permission sync', () => {
       'technician',
       'maintenance_supervisor',
     ]);
-    expect((await role(t, 'guard')).permissions).toEqual(['gate.operate']);
+    expect((await role(t, 'guard')).permissions).toEqual([
+      'gate.operate',
+      'parcels.handle',
+    ]);
     expect((await role(t, 'manager')).permissions).toEqual(
       expect.arrayContaining(['gate.manage', 'gate.read']),
     );
@@ -406,6 +409,52 @@ describe('Permission sync', () => {
     expect((await sync(base, t)).added).toEqual([]);
     expect((await role(t, 'resident')).permissions).not.toContain(
       'profile.photo',
+    );
+  });
+
+  it('Phase G1 reaches an existing compound: parcels.handle for the guard, parcels.manage for the manager (ADR 0035)', async () => {
+    const g1 = ['parcels.handle', 'parcels.manage'];
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !g1.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !g1.includes(p)),
+      })),
+    };
+    expect(catalogProblems(before)).toEqual([]);
+    const t = newId();
+    await h.globalDb.tenant.create({
+      data: { id: t, name: `Sync G1 compound ${t}` },
+    });
+    await h.asTenant(t, () =>
+      h.tenantTx.withTenantTx(async (tx) => {
+        await new RoleProvisioner(before).provision(tx, t);
+        await tx.tenantSettings.create({ data: { tenantId: t } });
+        // The domains' rows, as the migrations' backfills gave it.
+        await tenantLifecycle.tenantCreated(tx, t);
+      }),
+    );
+
+    const report = await sync(base, t);
+    expect([...report.added].sort()).toEqual([...g1].sort());
+    expect((await role(t, 'guard')).permissions).toEqual([
+      'gate.operate',
+      'parcels.handle',
+    ]);
+    expect((await role(t, 'manager')).permissions).toContain('parcels.manage');
+    // The other staff roles and the residents do not get them.
+    for (const key of ['resident', 'family_member', 'technician']) {
+      expect((await role(t, key)).permissions).not.toContain('parcels.handle');
+      expect((await role(t, key)).permissions).not.toContain('parcels.manage');
+    }
+    // A manager who dropped it by hand keeps it dropped.
+    await removeByHand(t, 'manager', 'parcels.manage');
+    expect((await sync(base, t)).added).toEqual([]);
+    expect((await role(t, 'manager')).permissions).not.toContain(
+      'parcels.manage',
     );
   });
 
@@ -461,7 +510,10 @@ describe('Permission sync', () => {
       expect((await role(t, key)).permissions).toContain('tickets.create');
       expect((await role(t, key)).permissions).not.toContain('tickets.work');
     }
-    expect((await role(t, 'guard')).permissions).toEqual(['gate.operate']);
+    expect((await role(t, 'guard')).permissions).toEqual([
+      'gate.operate',
+      'parcels.handle',
+    ]);
     expect(await sync(base, t)).toMatchObject({
       added: [],
       rolesCreated: [],

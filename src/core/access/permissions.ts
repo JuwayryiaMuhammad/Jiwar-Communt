@@ -64,6 +64,11 @@ export const PERMISSIONS = {
   'tickets.work': { kinds: ['staff'] },
   'tickets.dispatch': { kinds: ['staff', 'manager'] },
   'maintenance.manage': { kinds: ['manager'] },
+  // Parcels (ADR 0035). Guards receive and hand over inside a shift; the
+  // manager reads every parcel (no names) and sets the holding periods.
+  // Residents act through the capability `parcels`, with no permission.
+  'parcels.handle': { kinds: ['staff'] },
+  'parcels.manage': { kinds: ['manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

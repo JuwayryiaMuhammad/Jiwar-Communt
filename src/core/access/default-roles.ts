@@ -47,6 +47,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'gate.read',
       'tickets.dispatch',
       'maintenance.manage',
+      'parcels.manage',
     ],
   },
   {
@@ -78,11 +79,11 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
     ],
   },
   {
-    // Gate guards (ADR 0028): the gate only, inside a shift.
+    // Gate guards (ADR 0028): the gate and its parcels (ADR 0035), inside a shift.
     key: 'guard',
     kindDefault: true,
     kind: 'staff',
-    permissions: ['gate.operate'],
+    permissions: ['gate.operate', 'parcels.handle'],
   },
   {
     // Maintenance technicians (ADR 0032): the tickets assigned to them.

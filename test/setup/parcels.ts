@@ -57,6 +57,9 @@ export interface Household {
   member: { id: string; token: string; memberId: string };
 }
 
+/** A household with no member: cheaper, for what only the primary does. */
+export type SoloHousehold = Pick<Household, 'unitId' | 'unitCode' | 'owner'>;
+
 /** Parcel scenes on a world's compound A (ADR 0035). */
 export function parcelScenes(w: World) {
   const p = parcelHelpers(w.h);
@@ -81,6 +84,20 @@ export function parcelScenes(w: World) {
     };
   }
 
+  /** A fresh unit and its owner-resident alone. */
+  async function solo(): Promise<SoloHousehold> {
+    const unit = await w.helpers.unit(w.a);
+    const owner = await w.helpers.resident(w.a, [unit.id]);
+    return {
+      unitId: unit.id,
+      unitCode: unit.code,
+      owner: {
+        id: owner.id,
+        token: await w.tokenFor(w.a, owner.id, 'resident'),
+      },
+    };
+  }
+
   /** A parcel for the unit, received by A's guard on duty. */
   async function receive(unitCode: string, over: Record<string, unknown> = {}) {
     const res = await p.receive(w.a.tokens.guard, unitCode, over);
@@ -89,5 +106,5 @@ export function parcelScenes(w: World) {
     return res.body as { id: string; number: number };
   }
 
-  return { ...p, household, receive };
+  return { ...p, household, solo, receive };
 }

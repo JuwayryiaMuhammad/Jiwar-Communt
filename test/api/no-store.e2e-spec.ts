@@ -1,6 +1,7 @@
 import type { Response } from 'supertest';
 import { newId } from '../../src/core/common/uuid';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
+import { ParcelTokens } from '../../src/gate/parcels/parcel-tokens';
 import { hashPassword } from '../../src/core/platform/password';
 import { fileHelpers } from '../setup/files';
 import { parcelHelpers } from '../setup/parcels';
@@ -285,6 +286,28 @@ describe('API v0 — no-store', () => {
         token: w.a.tokens.guard,
         body: { code: '00000000' },
       }),
+    // A parcel's lookup names a delegate; its hand-over answers with the name too
+    // (ADR 0035).
+    'POST /gate/parcels/lookup': () =>
+      call(w, 'POST', '/gate/parcels/lookup', {
+        token: w.a.tokens.guard,
+        body: { code: '000000' },
+      }),
+    'POST /gate/parcels/{id}/handover': async () => {
+      const id = await aParcel();
+      const holder = await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.parcelCredential.findFirstOrThrow({
+          where: { parcelId: id, kind: 'holder' },
+        }),
+      );
+      const { code } = h.moduleRef
+        .get(ParcelTokens)
+        .secretOf(w.a.tenantId, holder.id, holder.attempt);
+      return call(w, 'POST', `/gate/parcels/${id}/handover`, {
+        token: w.a.tokens.guard,
+        body: { code },
+      });
+    },
     // Presigned URLs (ADR 0029): an upload target, a read URL.
     'POST /files/uploads': () =>
       call(w, 'POST', '/files/uploads', {

@@ -117,3 +117,61 @@ export class AuthorizeDelegateDto {
   )
   name: string;
 }
+
+const CODE_LENGTH = { min: 1, max: 32 };
+const QR_LENGTH = { min: 1, max: 256 };
+
+/** Exactly one of a typed code or a scanned parcel QR (ADR 0035). */
+export class ParcelCodeDto {
+  @ApiProperty({
+    type: String,
+    required: false,
+    description:
+      'The 6 digits of a parcel’s code or a delegate’s. Or send `qr`.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(CODE_LENGTH.min, CODE_LENGTH.max, withParams(CODE_LENGTH))
+  code?: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    example: 'JWP1.q3Jz…',
+    description:
+      'A scanned parcel QR (`JWP1.<token>`). Anything else answers like an unknown code.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(QR_LENGTH.min, QR_LENGTH.max, withParams(QR_LENGTH))
+  qr?: string;
+}
+
+/**
+ * Exactly one of `code`, `qr` or `residentQr` (the service says which is
+ * missing or extra), and an optional photo of the hand-over.
+ */
+export class HandOverParcelDto extends ParcelCodeDto {
+  @ApiProperty({
+    type: String,
+    required: false,
+    example: 'JWR2.…',
+    description:
+      'The rotating entry QR of an eligible occupant of the parcel’s unit (ADR 0031). It records who received the parcel on the parcel alone; no gate entry is written.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(QR_LENGTH.min, QR_LENGTH.max, withParams(QR_LENGTH))
+  residentQr?: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      "A finalized `parcel_photo` of the caller's; it moves to the parcel.",
+  })
+  @IsOptional()
+  @IsUUID()
+  photoFileId?: string;
+}

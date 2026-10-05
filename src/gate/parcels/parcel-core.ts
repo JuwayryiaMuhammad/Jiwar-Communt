@@ -199,6 +199,13 @@ export class ParcelCore {
       : null;
   }
 
+  /** The compound's holding periods (ADR 0035), read in the caller's tx. */
+  settings(tx: TenantTxClient) {
+    return tx.parcelSettings.findUniqueOrThrow({
+      where: { tenantId: this.ctx.txTenantId },
+    });
+  }
+
   async unitCodeOf(tx: TenantTxClient, unitId: string): Promise<string> {
     return this.community.unitCode(tx, unitId);
   }

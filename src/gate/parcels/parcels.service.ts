@@ -19,6 +19,7 @@ import {
   PARCEL_RESOURCE,
   ParcelCore,
   parcelNotFound,
+  stateConflict,
   type GateParcel,
   type GateParcelDetail,
 } from './parcel-core';
@@ -258,6 +259,59 @@ export class ParcelsService implements OnModuleInit {
       const parcel = await tx.parcel.findUnique({ where: { id } });
       if (!parcel) throw parcelNotFound();
       return this.core.gateParcelDetail(tx, parcel);
+    });
+  }
+
+  /**
+   * Sends a parcel back to the carrier (ADR 0035): one a resident rejected,
+   * or an unclaimed one after the compound's `parcelManagerDays`. The reason
+   * code follows from the state. `Idempotency-Key`.
+   */
+  markReturned(id: string): Promise<GateParcel> {
+    const guardId = this.ctx.accountId;
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.shifts.requireOpen(tx);
+      await this.idempotency.claim(tx, { type: PARCEL_RESOURCE, id });
+      const parcel = await this.core.lockedOrThrow(tx, id);
+      let reason: 'rejected' | 'unclaimed';
+      if (parcel.status === 'rejected') {
+        reason = 'rejected';
+      } else if (parcel.status === 'held') {
+        const { parcelManagerDays: days } = await this.core.settings(tx);
+        if (Date.now() < parcel.receivedAt.getTime() + days * 86_400_000)
+          throw appError.conflict(
+            ErrorCode.PARCEL_NOT_YET_RETURNABLE,
+            'An unclaimed parcel is returned only after the holding period',
+            { params: { days } },
+          );
+        reason = 'unclaimed';
+      } else {
+        throw stateConflict(parcel.status);
+      }
+      const now = new Date();
+      const returned = await tx.parcel.update({
+        where: { id },
+        data: {
+          status: 'returned',
+          returnedAt: now,
+          returnReason: reason,
+          closedAt: now,
+        },
+      });
+      await this.core.endCredentials(tx, id, 'returned');
+      await this.core.event(tx, {
+        parcelId: id,
+        kind: 'returned',
+        side: 'guard',
+        actorId: guardId,
+        reasonCode: reason,
+      });
+      await this.audit.record(tx, {
+        action: 'parcel.returned',
+        targetId: id,
+        metadata: { reasonCode: reason },
+      });
+      return this.core.gateParcelOf(tx, returned);
     });
   }
 

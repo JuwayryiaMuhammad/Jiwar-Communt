@@ -548,6 +548,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/parcels/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["GateParcelsController_lookup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/parcels/{id}": {
         parameters: {
             query?: never;
@@ -558,6 +574,38 @@ export interface paths {
         get: operations["GateParcelsController_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/parcels/{id}/handover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["GateParcelsController_handOver"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/parcels/{id}/return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["GateParcelsController_markReturned"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4607,6 +4655,46 @@ export interface components {
             status: components["schemas"]["GateRequestStatus"];
             unitCode: string;
         };
+        HandOverParcelDto: {
+            /** @description The 6 digits of a parcel’s code or a delegate’s. Or send `qr`. */
+            code?: string;
+            /**
+             * Format: uuid
+             * @description A finalized `parcel_photo` of the caller's; it moves to the parcel.
+             */
+            photoFileId?: string;
+            /**
+             * @description A scanned parcel QR (`JWP1.<token>`). Anything else answers like an unknown code.
+             * @example JWP1.q3Jz…
+             */
+            qr?: string;
+            /**
+             * @description The rotating entry QR of an eligible occupant of the parcel’s unit (ADR 0031). It records who received the parcel on the parcel alone; no gate entry is written.
+             * @example JWR2.…
+             */
+            residentQr?: string;
+        };
+        HandedOverParcelView: {
+            carrier: components["schemas"]["ParcelCarrier"];
+            delegateName: string | null;
+            /** Format: date-time */
+            handedOverAt: string | null;
+            /** @description False once the photo is deleted (30 days after it closed). */
+            hasPhoto: boolean;
+            /** Format: uuid */
+            id: string;
+            /** @description The compound’s running number. */
+            number: number;
+            pieces: number;
+            /** Format: date-time */
+            receivedAt: string;
+            /** Format: date-time */
+            rejectedAt: string | null;
+            /** Format: date-time */
+            returnedAt: string | null;
+            status: components["schemas"]["ParcelStatus"];
+            unitCode: string;
+        };
         HoldDto: {
             holdReason: components["schemas"]["TicketHoldReason"];
         };
@@ -5079,6 +5167,15 @@ export interface components {
         ParcelActorSide: "guard" | "resident" | "system";
         /** @enum {string} */
         ParcelCarrier: "aramex" | "dhl" | "fedex" | "ups" | "bosta" | "mylerz" | "egypt_post" | "amazon" | "noon" | "jumia" | "talabat" | "other";
+        ParcelCodeDto: {
+            /** @description The 6 digits of a parcel’s code or a delegate’s. Or send `qr`. */
+            code?: string;
+            /**
+             * @description A scanned parcel QR (`JWP1.<token>`). Anything else answers like an unknown code.
+             * @example JWP1.q3Jz…
+             */
+            qr?: string;
+        };
         ParcelDelegateView: {
             /** Format: date-time */
             authorizedAt: string;
@@ -5097,6 +5194,18 @@ export interface components {
             /** @description A hand-over only. */
             method: components["schemas"]["ParcelMethod"] | null;
             reasonCode: string | null;
+        };
+        ParcelLookupView: {
+            /** @description A delegate’s name, for a valid delegate code only: compare it with their ID. */
+            delegateName: string | null;
+            parcel: components["schemas"]["GateParcelView"] | null;
+            /**
+             * @description Whose code it is.
+             * @enum {string|null}
+             */
+            presentedBy: "holder" | "delegate" | null;
+            /** @enum {string} */
+            result: "valid" | "invalid";
         };
         /**
          * @description A hand-over only.
@@ -7428,6 +7537,29 @@ export interface operations {
             };
         };
     };
+    GateParcelsController_lookup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ParcelCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ParcelLookupView"];
+                };
+            };
+        };
+    };
     GateParcelsController_get: {
         parameters: {
             query?: never;
@@ -7445,6 +7577,58 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GateParcelDetailView"];
+                };
+            };
+        };
+    };
+    GateParcelsController_handOver: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HandOverParcelDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HandedOverParcelView"];
+                };
+            };
+        };
+    };
+    GateParcelsController_markReturned: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateParcelView"];
                 };
             };
         };

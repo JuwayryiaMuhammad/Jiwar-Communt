@@ -3862,6 +3862,104 @@
         ],
         "type": "object"
       },
+      "HandOverParcelDto": {
+        "properties": {
+          "code": {
+            "description": "The 6 digits of a parcel’s code or a delegate’s. Or send `qr`.",
+            "type": "string"
+          },
+          "photoFileId": {
+            "description": "A finalized `parcel_photo` of the caller's; it moves to the parcel.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "qr": {
+            "description": "A scanned parcel QR (`JWP1.<token>`). Anything else answers like an unknown code.",
+            "example": "JWP1.q3Jz…",
+            "type": "string"
+          },
+          "residentQr": {
+            "description": "The rotating entry QR of an eligible occupant of the parcel’s unit (ADR 0031). It records who received the parcel on the parcel alone; no gate entry is written.",
+            "example": "JWR2.…",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "HandedOverParcelView": {
+        "properties": {
+          "carrier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelCarrier"
+              }
+            ]
+          },
+          "delegateName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "handedOverAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "hasPhoto": {
+            "description": "False once the photo is deleted (30 days after it closed).",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "description": "The compound’s running number.",
+            "type": "number"
+          },
+          "pieces": {
+            "type": "number"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "rejectedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "returnedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitCode",
+          "carrier",
+          "pieces",
+          "status",
+          "receivedAt",
+          "handedOverAt",
+          "rejectedAt",
+          "returnedAt",
+          "hasPhoto",
+          "delegateName"
+        ],
+        "type": "object"
+      },
       "HoldDto": {
         "properties": {
           "holdReason": {
@@ -5490,6 +5588,20 @@
         ],
         "type": "string"
       },
+      "ParcelCodeDto": {
+        "properties": {
+          "code": {
+            "description": "The 6 digits of a parcel’s code or a delegate’s. Or send `qr`.",
+            "type": "string"
+          },
+          "qr": {
+            "description": "A scanned parcel QR (`JWP1.<token>`). Anything else answers like an unknown code.",
+            "example": "JWP1.q3Jz…",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ParcelDelegateView": {
         "properties": {
           "authorizedAt": {
@@ -5568,6 +5680,47 @@
           "method",
           "reasonCode",
           "at"
+        ],
+        "type": "object"
+      },
+      "ParcelLookupView": {
+        "properties": {
+          "delegateName": {
+            "description": "A delegate’s name, for a valid delegate code only: compare it with their ID.",
+            "nullable": true,
+            "type": "string"
+          },
+          "parcel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateParcelView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "presentedBy": {
+            "description": "Whose code it is.",
+            "enum": [
+              "holder",
+              "delegate"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "result": {
+            "enum": [
+              "valid",
+              "invalid"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "result",
+          "parcel",
+          "presentedBy",
+          "delegateName"
         ],
         "type": "object"
       },
@@ -12260,6 +12413,44 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/gate/parcels/lookup": {
+      "post": {
+        "operationId": "GateParcelsController_lookup",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParcelCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParcelLookupView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "parcels"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/gate/parcels/{id}": {
       "get": {
         "operationId": "GateParcelsController_get",
@@ -12294,6 +12485,107 @@
           "parcels"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/parcels/{id}/handover": {
+      "post": {
+        "operationId": "GateParcelsController_handOver",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HandOverParcelDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HandedOverParcelView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "parcels"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/parcels/{id}/return": {
+      "post": {
+        "operationId": "GateParcelsController_markReturned",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateParcelView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "parcels"
+        ],
         "x-stability": "draft"
       }
     },

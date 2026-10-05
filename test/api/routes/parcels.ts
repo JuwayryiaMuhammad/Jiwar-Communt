@@ -100,6 +100,66 @@ export const GATE_PARCELS_ROUTES: Row[] = [
   },
 ];
 
+/** The hand-over and the return, on the guard's own routes (ADR 0035). */
+export const HANDOVER_PARCELS_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/gate/parcels/lookup',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: 'none',
+    invalid: {
+      body: { code: '' },
+      fields: [
+        { field: 'code', code: 'INVALID_LENGTH', params: { min: 1, max: 32 } },
+      ],
+    },
+    // A delegate's name.
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/parcels/{id}/handover',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bParcelId }),
+      body: () => ({ code: '123456' }),
+      code: 'PARCEL_NOT_FOUND',
+    },
+    invalid: {
+      body: { code: '', qr: '', residentQr: '', photoFileId: 'not-a-uuid' },
+      // The class's own fields come before the ones it inherits.
+      fields: [
+        {
+          field: 'residentQr',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 256 },
+        },
+        { field: 'photoFileId', code: 'INVALID_UUID' },
+        { field: 'code', code: 'INVALID_LENGTH', params: { min: 1, max: 32 } },
+        { field: 'qr', code: 'INVALID_LENGTH', params: { min: 1, max: 256 } },
+      ],
+    },
+    // A delegate's name.
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/parcels/{id}/return',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bParcelId }),
+      code: 'PARCEL_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+];
+
 /** A resident's parcels (ADR 0035): the capability `parcels` decides, no permission. */
 export const RESIDENT_PARCELS_ROUTES: Row[] = [
   {

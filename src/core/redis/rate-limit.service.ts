@@ -17,6 +17,20 @@ export class RateLimitService {
     return count > limit;
   }
 
+  /**
+   * Counts a hit in a fixed window and never throws: the count so far. For a
+   * lockout that only failures feed (ADR 0035).
+   */
+  async hit(key: string, windowSeconds: number): Promise<number> {
+    const redisKey = `rl:${key}`;
+    const [[, count]] = (await this.redis
+      .multi()
+      .incr(redisKey)
+      .expire(redisKey, windowSeconds, 'NX')
+      .exec()) as [[Error | null, number], [Error | null, number]];
+    return count;
+  }
+
   /** Counts a hit and throws 429 once `limit` is exceeded within the window. */
   async consume(
     key: string,

@@ -230,10 +230,14 @@ export const AUDIT_ACTIONS = {
   // never a name (the label's, a delegate's), a code, a token or a file id.
   'parcel.received': { log: 'tenant', target: 'parcel' },
   // metadata: reasonCode (not_ours, not_expected, other).
+  // metadata: method (code, resident_qr, delegate); never who received it.
+  'parcel.handed_over': { log: 'tenant', target: 'parcel' },
   'parcel.rejected': { log: 'tenant', target: 'parcel' },
   'parcel.delegate_authorized': { log: 'tenant', target: 'parcel' },
   // metadata: reasonCode (revoked, authorizer_left).
   'parcel.delegate_revoked': { log: 'tenant', target: 'parcel' },
+  // metadata: reasonCode (rejected, unclaimed).
+  'parcel.returned': { log: 'tenant', target: 'parcel' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

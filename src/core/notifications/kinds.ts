@@ -302,6 +302,15 @@ export const NOTIFICATION_KINDS = {
     target: 'parcel',
     params: { carrier: {}, pieces: {}, receivedAt: {}, unitCode: {} },
   },
+  /**
+   * A parcel was handed over: the unit's other residents (ADR 0035). How it
+   * went (`method`: code, resident_qr, delegate), never to whom.
+   */
+  'parcel.collected': {
+    priority: 'normal',
+    target: 'parcel',
+    params: { carrier: {}, pieces: {}, unitCode: {}, method: {} },
+  },
   /** A resident said "not mine": the guards, to send it back (ADR 0035). */
   'parcel.rejected': {
     priority: 'normal',

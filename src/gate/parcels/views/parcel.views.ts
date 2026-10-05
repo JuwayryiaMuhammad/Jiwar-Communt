@@ -8,6 +8,10 @@ import {
 } from '@prisma/client';
 import { PresignedReadView } from '../../../core/files/views/file.views';
 import type {
+  ParcelHandedOver,
+  ParcelLookup,
+} from '../parcel-handover.service';
+import type {
   GateParcel,
   GateParcelDetail,
   ParcelEventItem,
@@ -107,5 +111,46 @@ export class GateParcelDetailView extends GateParcelView {
       handoverPhoto: PresignedReadView.from(p.handoverPhoto),
       events: p.events.map((e) => ParcelEventView.from(e)),
     };
+  }
+}
+
+/** The guard's answer to "what is this code?": invalid is always the same. */
+export class ParcelLookupView {
+  @ApiProperty({ type: String, enum: ['valid', 'invalid'] })
+  result: 'valid' | 'invalid';
+  @ApiProperty({ type: GateParcelView, nullable: true })
+  parcel: GateParcelView | null;
+  @ApiProperty({
+    type: String,
+    enum: ['holder', 'delegate'],
+    nullable: true,
+    description: 'Whose code it is.',
+  })
+  presentedBy: 'holder' | 'delegate' | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'A delegate’s name, for a valid delegate code only: compare it with their ID.',
+  })
+  delegateName: string | null;
+
+  static from(l: ParcelLookup): ParcelLookupView {
+    return {
+      result: l.result,
+      parcel: l.parcel ? GateParcelView.from(l.parcel) : null,
+      presentedBy: l.presentedBy,
+      delegateName: l.delegateName,
+    };
+  }
+}
+
+/** The parcel handed over, and the delegate's name when a delegate collected it. */
+export class HandedOverParcelView extends GateParcelView {
+  @ApiProperty({ type: String, nullable: true })
+  delegateName: string | null;
+
+  static from(p: ParcelHandedOver): HandedOverParcelView {
+    return { ...GateParcelView.from(p), delegateName: p.delegateName };
   }
 }

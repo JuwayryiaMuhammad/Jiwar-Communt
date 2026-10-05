@@ -23,7 +23,11 @@ import {
 import { ME_ROUTES } from './me';
 import { MEMBER_PERMISSIONS_ROUTES } from './member-permissions';
 import { NOTIFICATIONS_ROUTES } from './notifications';
-import { GATE_PARCELS_ROUTES, RESIDENT_PARCELS_ROUTES } from './parcels';
+import {
+  GATE_PARCELS_ROUTES,
+  HANDOVER_PARCELS_ROUTES,
+  RESIDENT_PARCELS_ROUTES,
+} from './parcels';
 import { PLATFORM_ROUTES } from './platform';
 import { PUBLIC_ROUTES } from './public';
 import { REGISTRATION_ROUTES } from './registration';
@@ -51,6 +55,7 @@ export const ROUTES: Row[] = [
   ...PUBLIC_ROUTES,
   ...ME_ROUTES,
   ...GATE_PARCELS_ROUTES,
+  ...HANDOVER_PARCELS_ROUTES,
   ...RESIDENT_PARCELS_ROUTES,
   ...NOTIFICATIONS_ROUTES,
   ...GATE_ROUTES,

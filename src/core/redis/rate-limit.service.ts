@@ -8,6 +8,15 @@ import { REDIS } from './redis.token';
 export class RateLimitService {
   constructor(@Inject(REDIS) private readonly redis: Redis) {}
 
+  /**
+   * Whether `key` has already had more than `limit` hits in its window,
+   * without counting one. For a lockout that only failures feed (ADR 0035).
+   */
+  async exceeded(key: string, limit: number): Promise<boolean> {
+    const count = Number((await this.redis.get(`rl:${key}`)) ?? 0);
+    return count > limit;
+  }
+
   /** Counts a hit and throws 429 once `limit` is exceeded within the window. */
   async consume(
     key: string,

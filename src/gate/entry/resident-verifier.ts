@@ -41,32 +41,12 @@ export class ResidentVerifier {
     qr: EntryQr,
     nowMs: number = Date.now(),
   ): Promise<VerifyResult | null> {
-    const expected = this.secrets.macFor(tenantId, qr.credentialId, qr.step);
-    if (!macsEqual(expected, qr.mac)) return null;
-    if (Math.abs(qr.step - entryStep(nowMs)) > ENTRY_SKEW_STEPS)
-      return refused('expired_qr');
+    const found = await this.resolve(tx, tenantId, qr, nowMs);
+    if (found.kind === 'unknown') return null;
+    if (found.kind === 'refused') return refused(found.reason);
 
-    const credential = await tx.entryCredential.findUnique({
-      where: { id: qr.credentialId },
-    });
-    // A genuine mac for a credential that does not exist cannot happen
-    // without the key: the unknown answer.
-    if (!credential) return null;
-    const account = await tx.account.findUnique({
-      where: { id: credential.accountId },
-      select: { status: true, fullName: true, photoFileId: true },
-    });
-    if (account?.status !== 'active') return refused('account_inactive');
-    if (credential.revokedAt) return refused('revoked');
-    const unitIds = await this.community.unitsWhere(
-      tx,
-      credential.accountId,
-      'gateEntry',
-    );
-    if (unitIds.length === 0) return refused('not_resident');
-
-    const codes = await this.community.unitCodes(tx, unitIds);
-    const photo = await this.files.readUrl(tx, account.photoFileId);
+    const codes = await this.community.unitCodes(tx, found.unitIds);
+    const photo = await this.files.readUrl(tx, found.photoFileId);
     return {
       result: 'valid',
       subject: 'resident',
@@ -81,10 +61,83 @@ export class ResidentVerifier {
         capacity: null,
         photo: null,
         // Only the first word of the name: never the full name.
-        firstName: firstNameOf(account.fullName),
+        firstName: firstNameOf(found.fullName),
         unitCodes: [...codes.values()].sort(),
         photoUrl: photo?.url ?? null,
       },
+    };
+  }
+
+  /**
+   * Who a scanned resident QR belongs to, and nothing else: no name, no
+   * photo, no unit list (ADR 0035: a parcel hand-over records the recipient
+   * on the parcel only). The same checks in the same order as `verify`, so
+   * a forged QR reveals nothing here either: `unknown` is the unknown-code
+   * answer, `refused` a genuine QR that no longer opens the door.
+   */
+  async identify(
+    tx: TenantTxClient,
+    tenantId: string,
+    qr: EntryQr,
+    nowMs: number = Date.now(),
+  ): Promise<
+    | { kind: 'ok'; accountId: string }
+    | { kind: 'unknown' }
+    | { kind: 'refused'; reason: Refusal }
+  > {
+    const found = await this.resolve(tx, tenantId, qr, nowMs);
+    return found.kind === 'ok'
+      ? { kind: 'ok', accountId: found.accountId }
+      : found;
+  }
+
+  private async resolve(
+    tx: TenantTxClient,
+    tenantId: string,
+    qr: EntryQr,
+    nowMs: number,
+  ): Promise<
+    | {
+        kind: 'ok';
+        accountId: string;
+        fullName: string | null;
+        photoFileId: string | null;
+        unitIds: string[];
+      }
+    | { kind: 'unknown' }
+    | { kind: 'refused'; reason: Refusal }
+  > {
+    const expected = this.secrets.macFor(tenantId, qr.credentialId, qr.step);
+    if (!macsEqual(expected, qr.mac)) return { kind: 'unknown' };
+    if (Math.abs(qr.step - entryStep(nowMs)) > ENTRY_SKEW_STEPS)
+      return { kind: 'refused', reason: 'expired_qr' };
+
+    const credential = await tx.entryCredential.findUnique({
+      where: { id: qr.credentialId },
+    });
+    // A genuine mac for a credential that does not exist cannot happen
+    // without the key: the unknown answer.
+    if (!credential) return { kind: 'unknown' };
+    const account = await tx.account.findUnique({
+      where: { id: credential.accountId },
+      select: { status: true, fullName: true, photoFileId: true },
+    });
+    if (account?.status !== 'active')
+      return { kind: 'refused', reason: 'account_inactive' };
+    if (credential.revokedAt) return { kind: 'refused', reason: 'revoked' };
+    const unitIds = await this.community.unitsWhere(
+      tx,
+      credential.accountId,
+      'gateEntry',
+    );
+    if (unitIds.length === 0)
+      return { kind: 'refused', reason: 'not_resident' };
+    return {
+      kind: 'ok',
+      accountId: credential.accountId,
+      fullName: account.fullName,
+      photoFileId: account.photoFileId,
+      unitIds,
     };
   }
 }

@@ -135,6 +135,7 @@ See `.env.example` for the full list with comments. The important ones:
 | `SWEEP_ENABLED`, `SWEEP_INTERVAL_MS` | The in-app sweep (ADR 0021): majority notices, registration expiry, overdue erasures. Default on, hourly. Every task is idempotent and safe on several instances; tests turn it off and call `SweepRunner.run(name, now)` |
 | `REGISTRATION_PENDING_DAYS` | A self-registration nobody decided expires and loses its personal data (default 30, ADR 0024) |
 | `DELETION_GRACE_DAYS`, `ERASURE_OVERDUE_DAYS` | Account deletion (ADR 0023): the holder can undo for 30 days; the erasure holders are told once when a request waits 7 days past that |
+| `PARCEL_CODE_RATE_LIMIT_PER_MINUTE` | Parcel code checks per guard per minute (default 30); five wrong ones in ten minutes lock the guard out of code hand-over (ADR 0035) |
 | `GATE_UNCONFIRMED_EXIT_HOURS`, `GATE_VERIFY_RATE_LIMIT_PER_MINUTE` | The gate (ADR 0028): someone recorded inside this long gets a system exit marked unconfirmed (default 12; live-in workers excepted); code checks per guard per minute (default 30) |
 | `NOTIFICATIONS_RETENTION_DAYS` | Read in-app notifications are deleted after this (default 90, ADR 0027); unread ones stay |
 | `SECURITY_EVENT_TIMEOUT_MS` | Database-side cap on each security event insert (default 500). A locked `security_events` table delays a login by at most this much; the event is dropped with an error log |
@@ -146,6 +147,7 @@ See `.env.example` for the full list with comments. The important ones:
 | `PLATFORM_LOGIN_*`, `PLATFORM_LOCKOUT_SECONDS` | Super admin rate limits and lockout |
 | `TRUST_PROXY` | `false` (default) or the **number** of reverse-proxy hops in front of the app. Behind one nginx on the VPS use `1` and bind the app to localhost. It decides `req.ip`, which feeds audit IPs and per-IP rate limits. Never "trust all": clients could forge `X-Forwarded-For` |
 | `TEST_SUPERUSER_DATABASE_URL` | Superuser on `jiwar_test`, used **only** by `test/` to clear the immutable audit tables between runs |
+| `PARCEL_TOKEN_KEY` | Derives the token behind every parcel code and QR (≥ 32 chars, must differ from `IDENTIFIER_PEPPER` and `ENTRY_CREDENTIAL_KEY`, different per environment). Rotating it strands the codes of the parcels held at the time (ADR 0035) |
 | `ENTRY_CREDENTIAL_KEY` | Derives every resident's entry secret (≥ 32 chars, must differ from `IDENTIFIER_PEPPER`). Leaking it forges resident QRs in every compound; rotating it invalidates every entry credential (ADR 0031) |
 | `IDENTIFIER_PEPPER` | HMAC key for login identifiers and OTP codes (≥ 32 chars). Rotating it invalidates every login identifier |
 | `OTP_*` | Code TTL, max attempts, rate limits |

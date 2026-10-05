@@ -44,6 +44,16 @@ resident QRs in every compound; changing it makes every entry credential stop
 verifying, so every phone must register again (the ADR has the rotation
 procedure).
 
+`app.env` must set `PARCEL_TOKEN_KEY` (ADR 0035; the app refuses to boot
+without it): the key the token behind every parcel code and QR is derived
+from. Generate it with `openssl rand -base64 48`. The rule: **different per
+environment, and never equal to `IDENTIFIER_PEPPER` or `ENTRY_CREDENTIAL_KEY`**
+(boot refuses an equal value). It lives in `app.env` only, never in the
+repository. Whoever holds it and a credential id can compute that credential's
+code; changing it strands the codes of the parcels held at that moment, which
+can then only be handed over by the resident's entry QR (the ADR has the
+details), so change it in a quiet hour.
+
 Staging stores files on its own MinIO (`minio.env`, the `/jiwar/` nginx
 location). `app.env` must set `S3_*` (ADR 0029; the app refuses to boot
 without them): `S3_ENDPOINT=http://191.218.163.45` (the public address the

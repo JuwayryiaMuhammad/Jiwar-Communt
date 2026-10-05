@@ -13,6 +13,7 @@ const base = {
   JWT_ACCESS_SECRET: 'a'.repeat(32),
   IDENTIFIER_PEPPER: 'b'.repeat(32),
   ENTRY_CREDENTIAL_KEY: 'd'.repeat(32),
+  PARCEL_TOKEN_KEY: 'e'.repeat(32),
   PLATFORM_JWT_SECRET: 'c'.repeat(32),
   PUBLIC_APP_URL: 'https://app.jiwar.test',
 };
@@ -115,6 +116,30 @@ describe('validateEnv', () => {
       ).toThrow(
         /must differ from IDENTIFIER_PEPPER[\s\S]*ENTRY_CREDENTIAL_KEY/,
       );
+    });
+  });
+
+  describe('parcel token key (ADR 0035)', () => {
+    it('is required, at least 32 characters', () => {
+      const { PARCEL_TOKEN_KEY: _omit, ...without } = base;
+      void _omit;
+      expect(() => validateEnv(without)).toThrow(/PARCEL_TOKEN_KEY/);
+      expect(() => validateEnv({ ...base, PARCEL_TOKEN_KEY: 'short' })).toThrow(
+        /PARCEL_TOKEN_KEY/,
+      );
+    });
+
+    it('must differ from the identifier pepper and from the entry credential key', () => {
+      expect(() =>
+        validateEnv({ ...base, PARCEL_TOKEN_KEY: base.IDENTIFIER_PEPPER }),
+      ).toThrow(/must differ from IDENTIFIER_PEPPER[\s\S]*PARCEL_TOKEN_KEY/);
+      expect(() =>
+        validateEnv({ ...base, PARCEL_TOKEN_KEY: base.ENTRY_CREDENTIAL_KEY }),
+      ).toThrow(/must differ from ENTRY_CREDENTIAL_KEY[\s\S]*PARCEL_TOKEN_KEY/);
+    });
+
+    it('limits code checks per guard per minute, 30 by default', () => {
+      expect(validateEnv(base).PARCEL_CODE_RATE_LIMIT_PER_MINUTE).toBe(30);
     });
   });
 

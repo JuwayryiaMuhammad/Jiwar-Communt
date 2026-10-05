@@ -107,6 +107,19 @@ export class IdentifierHasher {
     return this.hmac(`qr:${tenantId}:${token}`);
   }
 
+  /**
+   * A parcel's code (ADR 0035), bound to its compound, with a label of its
+   * own: a parcel code is never a visitor or a worker code.
+   */
+  hashParcelCode(tenantId: string, code: string): string {
+    return this.hmac(`parcel-code:${tenantId}:${code}`);
+  }
+
+  /** A parcel's QR token, bound to its compound and apart from `qr:` (ADR 0035). */
+  hashParcelQr(tenantId: string, token: string): string {
+    return this.hmac(`parcel-qr:${tenantId}:${token}`);
+  }
+
   /** A visitor's link, global: the public page knows no compound yet (ADR 0030). */
   hashVisitorLink(token: string): string {
     return this.hmac(`visitor-link:${token}`);

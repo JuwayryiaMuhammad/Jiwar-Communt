@@ -41,6 +41,9 @@ export function applyTestEnv(): void {
   process.env.VISITOR_PAGE_RATE_LIMIT_PER_IP = '100000';
   process.env.VISITOR_PAGE_RATE_LIMIT_PER_TOKEN = '20';
   process.env.PUBLIC_APP_URL = 'https://app.jiwar.test';
+  // The parcel key (ADR 0035): a test default, so a developer's .env from
+  // before parcels still boots. Different from the pepper and the entry key.
+  process.env.PARCEL_TOKEN_KEY ??= 'test-parcel-token-key-0123456789abcdef';
   process.env.PLATFORM_LOGIN_RATE_LIMIT_PER_EMAIL = '10';
   process.env.PLATFORM_LOGIN_MAX_FAILURES = '5';
   // Tests drain the outbox explicitly (processDue), so a poller of one suite

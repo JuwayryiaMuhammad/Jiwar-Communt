@@ -105,6 +105,9 @@ export const envSchema = z
     // exit; verify attempts per guard per minute.
     GATE_UNCONFIRMED_EXIT_HOURS: positiveInt.default(12),
     GATE_VERIFY_RATE_LIMIT_PER_MINUTE: positiveInt.default(30),
+    // Parcel code checks per guard per minute (ADR 0035): a budget of its
+    // own, so parcels and passes do not starve each other.
+    PARCEL_CODE_RATE_LIMIT_PER_MINUTE: positiveInt.default(30),
     /**
      * The web app visitors open (ADR 0030): a pass's link is
      * `<PUBLIC_APP_URL>/v#<token>`. https in production; no trailing slash.
@@ -131,6 +134,14 @@ export const envSchema = z
      * environment to environment.
      */
     ENTRY_CREDENTIAL_KEY: secret,
+    /**
+     * Derives the token behind every parcel code and QR (ADR 0035). Whoever
+     * holds it and a credential id can compute that credential's code;
+     * rotating it strands the codes of the parcels held at the time. Must
+     * differ from IDENTIFIER_PEPPER and ENTRY_CREDENTIAL_KEY, and from
+     * environment to environment.
+     */
+    PARCEL_TOKEN_KEY: secret,
     OTP_TTL_SECONDS: positiveInt.default(300),
     OTP_MAX_ATTEMPTS: positiveInt.default(5),
     LOGIN_TICKET_TTL_SECONDS: positiveInt.default(300),
@@ -171,6 +182,22 @@ export const envSchema = z
         code: 'custom',
         path: ['ENTRY_CREDENTIAL_KEY'],
         message: 'must differ from IDENTIFIER_PEPPER',
+      });
+    }
+    // The parcel key derives codes: it must not also be the pepper that
+    // hashes them, nor the key that forges resident QRs (ADR 0035).
+    if (env.PARCEL_TOKEN_KEY === env.IDENTIFIER_PEPPER) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['PARCEL_TOKEN_KEY'],
+        message: 'must differ from IDENTIFIER_PEPPER',
+      });
+    }
+    if (env.PARCEL_TOKEN_KEY === env.ENTRY_CREDENTIAL_KEY) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['PARCEL_TOKEN_KEY'],
+        message: 'must differ from ENTRY_CREDENTIAL_KEY',
       });
     }
     if (

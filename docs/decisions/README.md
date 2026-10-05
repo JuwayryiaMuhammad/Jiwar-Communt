@@ -35,3 +35,4 @@
 | [0031](0031-resident-entry-qr.md) | The resident's entry QR: derived secrets, 30-second steps, no movement log, the photo | Accepted |
 | [0032](0032-maintenance-tickets.md) | Maintenance tickets: statuses, history, manual dispatch, confirmation and reopen, messages, visibility | Accepted |
 | [0033](0033-dispatch-engine.md) | The dispatch engine: specialties, availability, weighted workload, candidate rules, serialization, triggers, no-candidate handling, the role hook | Accepted |
+| [0034](0034-visits-and-sla.md) | Visits and the SLA: windows, absence-entry consent, the receiver, event-sourced clocks, the lock order | Accepted |

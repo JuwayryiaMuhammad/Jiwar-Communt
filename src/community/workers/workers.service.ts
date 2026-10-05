@@ -543,6 +543,43 @@ export class WorkersService {
     });
   }
 
+  /**
+   * One engagement of the unit, as its residents see it (ADR 0037): the
+   * same as a list item, plus the last month paid. ENGAGEMENT_NOT_FOUND for
+   * another unit's, a rejected one, or an unknown id; the unit is checked
+   * first, like the list (a landlord sees the unit, never who works in it).
+   */
+  async engagementForUnit(
+    unitId: string,
+    engagementId: string,
+  ): Promise<EngagementView & { lastPaidPeriod: string | null }> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.authority.assertVisible(tx, unitId);
+      const e = await tx.workerEngagement.findFirst({
+        where: { id: engagementId, unitId, status: { not: 'rejected' } },
+        include: { worker: { select: { fullName: true } } },
+      });
+      if (!e) throw engagementNotFound();
+      const last = await tx.workerWagePayment.findFirst({
+        where: { engagementId: e.id },
+        orderBy: { period: 'desc' },
+        select: { period: true },
+      });
+      return {
+        id: e.id,
+        unitId: e.unitId,
+        workerName: e.worker.fullName,
+        capacity: e.capacity,
+        schedule: e.schedule as unknown as WorkerSchedule,
+        status: effectiveStatus(e),
+        validUntil: e.validUntil,
+        suspendedByManagement: e.suspendedByManagement,
+        monthlyWage: e.monthlyWage?.toFixed(2) ?? null,
+        lastPaidPeriod: last?.period.toISOString().slice(0, 7) ?? null,
+      };
+    });
+  }
+
   // --------------------------------------------------------------------------
   // Management review (`workers.review`)
   // --------------------------------------------------------------------------

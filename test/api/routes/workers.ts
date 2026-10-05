@@ -121,6 +121,19 @@ export const WORKERS_ROUTES: Row[] = [
       ],
     },
   },
+  // ADR 0037: one of the unit's workers, for its residents.
+  {
+    method: 'GET',
+    path: '/units/{unitId}/workers/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId, id: w.bEngagementId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
   {
     method: 'POST',
     path: '/units/{unitId}/workers',

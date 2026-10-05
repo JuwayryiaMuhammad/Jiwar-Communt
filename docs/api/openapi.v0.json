@@ -8009,6 +8009,66 @@
         ],
         "type": "object"
       },
+      "UnitEngagementView": {
+        "properties": {
+          "capacity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkerCapacity"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastPaidPeriod": {
+            "description": "The latest month with a recorded wage payment.",
+            "example": "2026-09",
+            "nullable": true,
+            "type": "string"
+          },
+          "monthlyWage": {
+            "description": "Per month; null until the household sets it.",
+            "example": "3200.00",
+            "nullable": true,
+            "type": "string"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/WorkerScheduleDto"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkerEngagementStatus"
+              }
+            ]
+          },
+          "suspendedByManagement": {
+            "type": "boolean"
+          },
+          "validUntil": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "workerName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workerName",
+          "capacity",
+          "schedule",
+          "status",
+          "validUntil",
+          "suspendedByManagement",
+          "monthlyWage",
+          "lastPaidPeriod"
+        ],
+        "type": "object"
+      },
       "UnitNeedingReviewView": {
         "properties": {
           "activeOccupants": {
@@ -16960,6 +17020,50 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RegisteredView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/workers/{id}": {
+      "get": {
+        "operationId": "WorkersController_one",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitEngagementView"
                 }
               }
             },

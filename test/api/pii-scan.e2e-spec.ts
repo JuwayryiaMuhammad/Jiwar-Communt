@@ -381,7 +381,8 @@ describe('API v0 — PII leak scan', () => {
       h.moduleRef.get(AvailabilityService).setMine('available'),
     );
 
-    const params: Record<string, string> = {
+    /** One id for every param of the path, or each param by name. */
+    const params: Record<string, string | Record<string, string>> = {
       '/tickets/{id}': ticket.id,
       '/technician/tickets/{id}': ticket.id,
       '/tickets/{id}/messages': ticket.id,
@@ -398,6 +399,11 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/household': unit.id,
       '/units/{unitId}/household/minors-ready': unit.id,
       '/units/{unitId}/workers': unit.id,
+      // ADR 0037.
+      '/units/{unitId}/workers/{id}': {
+        unitId: unit.id,
+        id: registered.engagementId,
+      },
       '/units/{unitId}/deferred-actions': unit.id,
       '/units/{unitId}/delegations': unit.id,
       '/units/{unitId}/visitor-passes': unit.id,
@@ -461,17 +467,19 @@ describe('API v0 — PII leak scan', () => {
       },
     };
 
+    const paramsOf = (path: string): Record<string, string> => {
+      const given = params[path];
+      return typeof given === 'string'
+        ? Object.fromEntries(paramNames(path).map((n) => [n, given]))
+        : given;
+    };
+
     const leaks: string[] = [];
     const seen = new Map<string, string>();
     for (const [name, persona] of Object.entries(personas)) {
       for (const r of gets) {
         const path = paramNames(r.path).length
-          ? fill(
-              r.path,
-              Object.fromEntries(
-                paramNames(r.path).map((n) => [n, params[r.path]]),
-              ),
-            )
+          ? fill(r.path, paramsOf(r.path))
           : r.path;
         const isPlatformRoute = r.auth === 'platform';
         if ((name === 'platform') !== isPlatformRoute && r.auth !== 'public')

@@ -35,6 +35,15 @@ The design's worker page shows "Monthly Wage · Pay Wage", a form with an amount
 - **Storage:** `worker_wage_payments` is append-only like `gate_entries` (ADR 0028): SELECT and INSERT for the app, triggers refusing UPDATE, DELETE and TRUNCATE, no foreign keys. A wrong payment is not edited; correcting it is an open question.
 - **Currency:** amounts are in the compound's currency (EGP). There is no currency column until finance adds one.
 
+### One of the unit's workers
+
+The design's worker page (allowed hours, last check-in, monthly wage, Pay Wage, Terminate) is one engagement; residents had only the unit's list.
+
+- `GET /units/:unitId/workers/:id` (`workers.manage`): the list item, plus `lastPaidPeriod` (the latest month with a recorded payment).
+- **The resident's own only:** the unit is checked first, exactly like the list (`UNIT_NOT_FOUND` for a unit the caller has no place in; a landlord sees the unit but never who works in it). Then the engagement must be that unit's and not rejected (`ENGAGEMENT_NOT_FOUND` otherwise, also for another unit's id through this path).
+- `GET /worker-engagements/:id` keeps `workers.review`: it is the manager's view, with the document and the birth date.
+- "Last check-in" stays `GET /worker-engagements/:id/attendance`, which residents already read (`workers.manage`): the community domain does not read the gate's entries (ADR 0015).
+
 ## Open questions
 
 - May a resident change a unit's type or area once the manager has set it, or only propose a correction?

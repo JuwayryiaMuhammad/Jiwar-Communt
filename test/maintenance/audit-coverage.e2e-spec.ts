@@ -2,6 +2,8 @@ import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { CategoriesService } from '../../src/maintenance/categories/categories.service';
 import { SpecialtiesService } from '../../src/maintenance/specialties/specialties.service';
 import { DispatchSettingsService } from '../../src/maintenance/dispatch/dispatch-settings.service';
+import { SlaSettingsService } from '../../src/maintenance/sla/sla-settings.service';
+import { SlaTargetsService } from '../../src/maintenance/sla/sla-targets.service';
 import { MaintenanceSettingsService } from '../../src/maintenance/settings/maintenance-settings.service';
 import { ConfirmationService } from '../../src/maintenance/tickets/confirmation.service';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
@@ -188,6 +190,55 @@ describe('Audit coverage — maintenance', () => {
       // A no-op edit writes nothing.
       await x.asManager(c, () => settings.update({ multiplierUrgent: 2.25 }));
       await single(c, 'maintenance.dispatch_settings_changed', c.tenantId);
+    });
+  });
+
+  describe('SLA settings and targets (ADR 0034)', () => {
+    it('maintenance.sla_settings_changed — by the manager, the flag only', async () => {
+      const c = await x.compound();
+      const settings = h.moduleRef.get(SlaSettingsService);
+      await x.asManager(c, () => settings.update({ slaEnabled: true }));
+      const row = await single(
+        c,
+        'maintenance.sla_settings_changed',
+        c.tenantId,
+      );
+      expect(row).toMatchObject({
+        actorType: 'account',
+        actorId: c.managerId,
+        targetType: 'tenant',
+        changes: { slaEnabled: { from: false, to: true } },
+      });
+      expect(Object.keys(row.changes as object)).toEqual(['slaEnabled']);
+      // A no-op writes nothing.
+      await x.asManager(c, () => settings.update({ slaEnabled: true }));
+      await single(c, 'maintenance.sla_settings_changed', c.tenantId);
+    });
+
+    it('ticket_category.sla_targets_changed — minutes per priority, what changed only', async () => {
+      const c = await x.compound();
+      const category = await x.asManager(c, () =>
+        x.prisma.tenant.ticketCategory.findFirstOrThrow({
+          where: { key: 'ac' },
+        }),
+      );
+      const targets = h.moduleRef.get(SlaTargetsService);
+      const set = {
+        emergency: { responseMinutes: 60, resolutionMinutes: 1440 },
+        urgent: { responseMinutes: 120, resolutionMinutes: 4320 },
+        normal: { responseMinutes: 1440, resolutionMinutes: 10080 },
+      };
+      await x.asManager(c, () => targets.replace(category.id, set));
+      expect(
+        await single(c, 'ticket_category.sla_targets_changed', category.id),
+      ).toMatchObject({
+        actorId: c.managerId,
+        targetType: 'ticket_category',
+        changes: { 'urgent.responseMinutes': { from: 240, to: 120 } },
+      });
+      // The same set again writes nothing.
+      await x.asManager(c, () => targets.replace(category.id, set));
+      await single(c, 'ticket_category.sla_targets_changed', category.id);
     });
   });
 

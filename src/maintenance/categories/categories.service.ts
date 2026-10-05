@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import type { TicketCategory, TicketPriority } from '@prisma/client';
+import type { SlaTarget, TicketCategory, TicketPriority } from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
 import { diffChanges } from '../../core/audit/diff';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { appError, ErrorCode } from '../../core/common/errors';
 import { newId } from '../../core/common/uuid';
 import { TenantTx } from '../../core/database/tenant-tx.service';
+import { defaultTargetRows } from '../sla/default-sla-targets';
 
 export interface CategoryInput {
   key: string;
@@ -22,15 +23,25 @@ export type CategoryUpdate = Partial<
   >
 >;
 
-/** A category with the specialties that can handle it (ADR 0033). */
+/**
+ * A category with the specialties that can handle it (ADR 0033) and its
+ * SLA targets per priority (ADR 0034).
+ */
 export type CategoryWithSpecialties = TicketCategory & {
   specialties: { specialtyId: string }[];
+  slaTargets: Pick<
+    SlaTarget,
+    'priority' | 'responseMinutes' | 'resolutionMinutes'
+  >[];
 };
 
 const WITH_SPECIALTIES = {
   specialties: {
     select: { specialtyId: true },
     orderBy: { specialtyId: 'asc' },
+  },
+  slaTargets: {
+    select: { priority: true, responseMinutes: true, resolutionMinutes: true },
   },
 } as const;
 
@@ -85,13 +96,18 @@ export class CategoriesService {
     );
   }
 
-  /** A duplicate key is DUPLICATE_RESOURCE on `key` (db-constraints). */
+  /**
+   * A duplicate key is DUPLICATE_RESOURCE on `key` (db-constraints). A new
+   * category starts with the default SLA targets (ADR 0034), in the same
+   * transaction.
+   */
   create(input: CategoryInput): Promise<CategoryWithSpecialties> {
     const tenantId = this.ctx.tenantId;
     return this.tenantTx.withTenantTx(async (tx) => {
-      const category = await tx.ticketCategory.create({
+      const id = newId();
+      await tx.ticketCategory.create({
         data: {
-          id: newId(),
+          id,
           tenantId,
           key: input.key,
           nameAr: input.nameAr.trim(),
@@ -99,6 +115,10 @@ export class CategoriesService {
           defaultPriority: input.defaultPriority,
           commonAreaAllowed: input.commonAreaAllowed,
         },
+      });
+      await tx.slaTarget.createMany({ data: defaultTargetRows(tenantId, id) });
+      const category = await tx.ticketCategory.findUniqueOrThrow({
+        where: { id },
         include: WITH_SPECIALTIES,
       });
       await this.audit.record(tx, {

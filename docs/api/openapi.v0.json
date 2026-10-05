@@ -922,6 +922,14 @@
             "description": "Written by the compound.",
             "type": "string"
           },
+          "slaTargets": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SlaTargetsView"
+              }
+            ],
+            "description": "Response and resolution targets per priority (ADR 0034)."
+          },
           "specialtyIds": {
             "description": "The specialties that can handle it; none means any technician (ADR 0033).",
             "items": {
@@ -944,6 +952,7 @@
           "commonAreaAllowed",
           "active",
           "specialtyIds",
+          "slaTargets",
           "createdAt",
           "updatedAt"
         ],
@@ -6960,6 +6969,104 @@
         ],
         "type": "object"
       },
+      "SlaSettingsResponse": {
+        "properties": {
+          "enabledAt": {
+            "description": "The last time it was turned on: no clock starts before it (nothing is backdated).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "slaEnabled": {
+            "description": "Off until the manager turns it on.",
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slaEnabled",
+          "enabledAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "SlaTargetDto": {
+        "properties": {
+          "resolutionMinutes": {
+            "description": "Minutes from opening until the technician reports the work done, without the time spent waiting for the resident or for parts. At least the response target.",
+            "maximum": 43200,
+            "minimum": 15,
+            "type": "number"
+          },
+          "responseMinutes": {
+            "description": "Minutes from opening to the first visit proposal or the start of the work.",
+            "maximum": 10080,
+            "minimum": 5,
+            "type": "number"
+          }
+        },
+        "required": [
+          "responseMinutes",
+          "resolutionMinutes"
+        ],
+        "type": "object"
+      },
+      "SlaTargetView": {
+        "properties": {
+          "resolutionMinutes": {
+            "type": "number"
+          },
+          "responseMinutes": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "responseMinutes",
+          "resolutionMinutes"
+        ],
+        "type": "object"
+      },
+      "SlaTargetsDto": {
+        "properties": {
+          "emergency": {
+            "$ref": "#/components/schemas/SlaTargetDto"
+          },
+          "normal": {
+            "$ref": "#/components/schemas/SlaTargetDto"
+          },
+          "urgent": {
+            "$ref": "#/components/schemas/SlaTargetDto"
+          }
+        },
+        "required": [
+          "emergency",
+          "urgent",
+          "normal"
+        ],
+        "type": "object"
+      },
+      "SlaTargetsView": {
+        "properties": {
+          "emergency": {
+            "$ref": "#/components/schemas/SlaTargetView"
+          },
+          "normal": {
+            "$ref": "#/components/schemas/SlaTargetView"
+          },
+          "urgent": {
+            "$ref": "#/components/schemas/SlaTargetView"
+          }
+        },
+        "required": [
+          "emergency",
+          "urgent",
+          "normal"
+        ],
+        "type": "object"
+      },
       "SpecialtyIdsDto": {
         "properties": {
           "specialtyIds": {
@@ -8302,6 +8409,15 @@
             "maxLength": 2000,
             "nullable": true,
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateSlaSettingsDto": {
+        "properties": {
+          "slaEnabled": {
+            "description": "Measure response and resolution times. Off until the manager turns it on; turning it on starts clocks for the open tickets from that moment, never earlier.",
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -11443,6 +11559,45 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/categories/{id}/sla-targets": {
+      "put": {
+        "operationId": "CategorySlaTargetsController_set",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SlaTargetsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/categories/{id}/specialties": {
       "put": {
         "operationId": "CategorySpecialtiesController_setForCategory",
@@ -11589,6 +11744,68 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MaintenanceSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/sla-settings": {
+      "get": {
+        "operationId": "SlaSettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlaSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "SlaSettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSlaSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlaSettingsResponse"
                 }
               }
             },

@@ -2,6 +2,13 @@ import type { Row } from '../registry';
 
 const PRIORITIES = ['normal', 'urgent', 'emergency'];
 
+/** A valid body for a category's SLA targets (ADR 0034). */
+const SLA_TARGETS = {
+  emergency: { responseMinutes: 60, resolutionMinutes: 1440 },
+  urgent: { responseMinutes: 240, resolutionMinutes: 4320 },
+  normal: { responseMinutes: 1440, resolutionMinutes: 10080 },
+};
+
 /** Maintenance: categories and settings (ADR 0032). */
 export const MAINTENANCE_ROUTES: Row[] = [
   {
@@ -67,6 +74,57 @@ export const MAINTENANCE_ROUTES: Row[] = [
     invalid: {
       body: { specialtyIds: 'x' },
       fields: [{ field: 'specialtyIds', code: 'INVALID_TYPE' }],
+    },
+  },
+  {
+    method: 'PUT',
+    path: '/maintenance/categories/{id}/sla-targets',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bCategoryId }),
+      body: () => SLA_TARGETS,
+      code: 'TICKET_CATEGORY_NOT_FOUND',
+    },
+    invalid: {
+      body: {
+        ...SLA_TARGETS,
+        urgent: { responseMinutes: 4, resolutionMinutes: 1.5 },
+      },
+      fields: [
+        {
+          field: 'urgent.responseMinutes',
+          code: 'INVALID_NUMBER',
+          params: { min: 5, max: 10080 },
+        },
+        {
+          field: 'urgent.resolutionMinutes',
+          code: 'INVALID_NUMBER',
+          params: { min: 15, max: 43200 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/sla-settings',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'PATCH',
+    path: '/maintenance/sla-settings',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: { slaEnabled: 'yes' },
+      fields: [{ field: 'slaEnabled', code: 'INVALID_TYPE' }],
     },
   },
   {

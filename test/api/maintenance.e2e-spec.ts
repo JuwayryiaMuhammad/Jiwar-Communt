@@ -27,6 +27,13 @@ const CATEGORY = [
   'createdAt',
   'specialtyIds',
   'updatedAt',
+  // ADR 0034: the targets per priority.
+  'slaTargets',
+  ...['emergency', 'urgent', 'normal'].flatMap((p) => [
+    `slaTargets.${p}`,
+    `slaTargets.${p}.responseMinutes`,
+    `slaTargets.${p}.resolutionMinutes`,
+  ]),
 ].sort();
 const SETTINGS = ['autoCloseHours', 'maxReportPhotos', 'reopenDays'];
 const CREATED = ['createdAt', 'id', 'number', 'priority', 'status'];

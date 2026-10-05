@@ -916,6 +916,22 @@ export interface paths {
         patch: operations["CategoriesController_update"];
         trace?: never;
     };
+    "/api/v1/maintenance/categories/{id}/sla-targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["CategorySlaTargetsController_set"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/categories/{id}/specialties": {
         parameters: {
             query?: never;
@@ -962,6 +978,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["MaintenanceSettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/sla-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["SlaSettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["SlaSettingsController_update"];
         trace?: never;
     };
     "/api/v1/maintenance/specialties": {
@@ -3256,6 +3288,8 @@ export interface components {
             nameAr: string;
             /** @description Written by the compound. */
             nameEn: string;
+            /** @description Response and resolution targets per priority (ADR 0034). */
+            slaTargets: components["schemas"]["SlaTargetsView"];
             /** @description The specialties that can handle it; none means any technician (ADR 0033). */
             specialtyIds: string[];
             /** Format: date-time */
@@ -4976,6 +5010,37 @@ export interface components {
             /** Format: date-time */
             startedAt: string;
         };
+        SlaSettingsResponse: {
+            /**
+             * Format: date-time
+             * @description The last time it was turned on: no clock starts before it (nothing is backdated).
+             */
+            enabledAt: string | null;
+            /** @description Off until the manager turns it on. */
+            slaEnabled: boolean;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        SlaTargetDto: {
+            /** @description Minutes from opening until the technician reports the work done, without the time spent waiting for the resident or for parts. At least the response target. */
+            resolutionMinutes: number;
+            /** @description Minutes from opening to the first visit proposal or the start of the work. */
+            responseMinutes: number;
+        };
+        SlaTargetView: {
+            resolutionMinutes: number;
+            responseMinutes: number;
+        };
+        SlaTargetsDto: {
+            emergency: components["schemas"]["SlaTargetDto"];
+            normal: components["schemas"]["SlaTargetDto"];
+            urgent: components["schemas"]["SlaTargetDto"];
+        };
+        SlaTargetsView: {
+            emergency: components["schemas"]["SlaTargetView"];
+            normal: components["schemas"]["SlaTargetView"];
+            urgent: components["schemas"]["SlaTargetView"];
+        };
         SpecialtyIdsDto: {
             /** @description The whole set, replacing the current one; empty clears it. Active specialties of the compound only. */
             specialtyIds: string[];
@@ -5352,6 +5417,10 @@ export interface components {
             timezone?: string;
             /** @description What the compound tells its visitors on the public pass page (ADR 0030). `null` clears it. */
             visitorDirections?: string | null;
+        };
+        UpdateSlaSettingsDto: {
+            /** @description Measure response and resolution times. Off until the manager turns it on; turning it on starts clocks for the open tickets from that moment, never earlier. */
+            slaEnabled?: boolean;
         };
         UpdateSpecialtyDto: {
             /** @description False retires it: it counts for no category and no technician. */
@@ -6972,6 +7041,29 @@ export interface operations {
             };
         };
     };
+    CategorySlaTargetsController_set: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SlaTargetsDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     CategorySpecialtiesController_setForCategory: {
         parameters: {
             query?: never;
@@ -7075,6 +7167,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MaintenanceSettingsResponse"];
+                };
+            };
+        };
+    };
+    SlaSettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SlaSettingsResponse"];
+                };
+            };
+        };
+    };
+    SlaSettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateSlaSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SlaSettingsResponse"];
                 };
             };
         };

@@ -20,6 +20,12 @@ import { DispatchSettingsController } from './dispatch/dispatch-settings.control
 import { DispatchSettingsService } from './dispatch/dispatch-settings.service';
 import { MaintenanceProvisioning } from './provisioning';
 import {
+  CategorySlaTargetsController,
+  SlaSettingsController,
+} from './sla/sla-settings.controller';
+import { SlaSettingsService } from './sla/sla-settings.service';
+import { SlaTargetsService } from './sla/sla-targets.service';
+import {
   CategorySpecialtiesController,
   SpecialtiesController,
 } from './specialties/specialties.controller';
@@ -63,6 +69,8 @@ import { TicketsService } from './tickets/tickets.service';
     TechnicianAvailabilityController,
     DispatchAvailabilityController,
     DispatchSettingsController,
+    SlaSettingsController,
+    CategorySlaTargetsController,
   ],
   providers: [
     MaintenanceProvisioning,
@@ -85,6 +93,8 @@ import { TicketsService } from './tickets/tickets.service';
     TechnicianRelease,
     MessagesService,
     ConfirmationService,
+    SlaSettingsService,
+    SlaTargetsService,
   ],
 })
 export class MaintenanceModule {}

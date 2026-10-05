@@ -215,6 +215,15 @@ export const AUDIT_ACTIONS = {
   'technician.specialties_changed': { log: 'tenant', target: 'account' },
   // changes: autoDispatchEnabled, the weights and the multipliers.
   'maintenance.dispatch_settings_changed': { log: 'tenant', target: 'tenant' },
+  // visits and the SLA (ADR 0034). Visits are never audited: their window,
+  // consent and receiver tell when a home is empty. Minutes and flags only.
+  // changes: slaEnabled.
+  'maintenance.sla_settings_changed': { log: 'tenant', target: 'tenant' },
+  // changes: `<priority>.responseMinutes` / `<priority>.resolutionMinutes`.
+  'ticket_category.sla_targets_changed': {
+    log: 'tenant',
+    target: 'ticket_category',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

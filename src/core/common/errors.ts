@@ -205,6 +205,9 @@ export const FieldErrorCode = {
   SPECIALTY_NOT_AVAILABLE: 'SPECIALTY_NOT_AVAILABLE',
   /** Unknown, or holds no `tickets` capability where the ticket is. */
   REPORTER_NOT_ELIGIBLE: 'REPORTER_NOT_ELIGIBLE',
+  // visits and the SLA (ADR 0034)
+  /** A response target longer than the resolution target of its priority. */
+  SLA_RESPONSE_AFTER_RESOLUTION: 'SLA_RESPONSE_AFTER_RESOLUTION',
 } as const;
 
 export type FieldErrorCode =

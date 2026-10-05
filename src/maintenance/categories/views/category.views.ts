@@ -1,5 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TicketPriority, type TicketCategory } from '@prisma/client';
+import {
+  TicketPriority,
+  type SlaTarget,
+  type TicketCategory,
+} from '@prisma/client';
+import { SlaTargetsView } from '../../sla/views/sla.views';
 
 /** A category as a ticket opener sees it: only active ones are offered. */
 export class CategoryOptionView {
@@ -39,18 +44,41 @@ export class CategoryView extends CategoryOptionView {
       'The specialties that can handle it; none means any technician (ADR 0033).',
   })
   specialtyIds: string[];
+  @ApiProperty({
+    type: SlaTargetsView,
+    description: 'Response and resolution targets per priority (ADR 0034).',
+  })
+  slaTargets: SlaTargetsView;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
   @ApiProperty({ type: String, format: 'date-time' })
   updatedAt: Date;
 
   static from(
-    c: TicketCategory & { specialties: { specialtyId: string }[] },
+    c: TicketCategory & {
+      specialties: { specialtyId: string }[];
+      slaTargets: Pick<
+        SlaTarget,
+        'priority' | 'responseMinutes' | 'resolutionMinutes'
+      >[];
+    },
   ): CategoryView {
+    const target = (p: TicketPriority) => {
+      const t = c.slaTargets.find((r) => r.priority === p);
+      return {
+        responseMinutes: t?.responseMinutes ?? 0,
+        resolutionMinutes: t?.resolutionMinutes ?? 0,
+      };
+    };
     return {
       ...CategoryOptionView.from(c),
       active: c.active,
       specialtyIds: c.specialties.map((s) => s.specialtyId),
+      slaTargets: {
+        emergency: target('emergency'),
+        urgent: target('urgent'),
+        normal: target('normal'),
+      },
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
     };

@@ -117,4 +117,7 @@ export const MAINTENANCE_COVERAGE: readonly string[] = [
   'ticket_category.specialties_changed',
   'technician.specialties_changed',
   'maintenance.dispatch_settings_changed',
+  // Visits and the SLA (ADR 0034).
+  'maintenance.sla_settings_changed',
+  'ticket_category.sla_targets_changed',
 ];

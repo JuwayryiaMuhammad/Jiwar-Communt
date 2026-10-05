@@ -1924,6 +1924,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/parcel-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ParcelSettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["ParcelSettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/parcels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ManagerParcelsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/parcels/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ManagerParcelsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/permissions": {
         parameters: {
             query?: never;
@@ -4876,6 +4924,65 @@ export interface components {
             email: string;
             phone: string;
         };
+        ManagerParcelDetailView: {
+            carrier: components["schemas"]["ParcelCarrier"];
+            events: components["schemas"]["ParcelEventView"][];
+            /** Format: date-time */
+            handedOverAt: string | null;
+            /** @description Whole days from receipt to now, or to the hand-over/return. */
+            heldDays: number;
+            /** @description The managers were told. */
+            heldLongNotified: boolean;
+            /** Format: uuid */
+            id: string;
+            number: number;
+            pieces: number;
+            /** Format: date-time */
+            receivedAt: string;
+            rejectReason: string | null;
+            /** Format: date-time */
+            rejectedAt: string | null;
+            /** @description The residents were reminded. */
+            reminded: boolean;
+            returnReason: string | null;
+            /** Format: date-time */
+            returnedAt: string | null;
+            status: components["schemas"]["ParcelStatus"];
+            /** @description Nobody could collect it when it arrived. */
+            unclaimable: boolean;
+            unitCode: string;
+        };
+        ManagerParcelView: {
+            carrier: components["schemas"]["ParcelCarrier"];
+            /** Format: date-time */
+            handedOverAt: string | null;
+            /** @description Whole days from receipt to now, or to the hand-over/return. */
+            heldDays: number;
+            /** @description The managers were told. */
+            heldLongNotified: boolean;
+            /** Format: uuid */
+            id: string;
+            number: number;
+            pieces: number;
+            /** Format: date-time */
+            receivedAt: string;
+            rejectReason: string | null;
+            /** Format: date-time */
+            rejectedAt: string | null;
+            /** @description The residents were reminded. */
+            reminded: boolean;
+            returnReason: string | null;
+            /** Format: date-time */
+            returnedAt: string | null;
+            status: components["schemas"]["ParcelStatus"];
+            /** @description Nobody could collect it when it arrived. */
+            unclaimable: boolean;
+            unitCode: string;
+        };
+        ManagerParcelViewList: {
+            data: components["schemas"]["ManagerParcelView"][];
+            nextCursor: string | null;
+        };
         ManagerView: {
             email?: string | null;
             /**
@@ -5217,6 +5324,12 @@ export interface components {
             code: string;
             /** @example JWP1.q3Jz… */
             qrPayload: string;
+        };
+        ParcelSettingsResponse: {
+            /** @description Days before the managers are told, once. */
+            parcelManagerDays: number;
+            /** @description Days before the residents are reminded, once. */
+            parcelReminderDays: number;
         };
         /** @enum {string} */
         ParcelStatus: "held" | "handed_over" | "rejected" | "returned";
@@ -6364,6 +6477,12 @@ export interface components {
             maxReportPhotos?: number;
             /** @description Days after closing during which the reporter may reopen. */
             reopenDays?: number;
+        };
+        UpdateParcelSettingsDto: {
+            /** @description Days before the managers are told, once, and an unclaimed parcel may be returned. Always more than the reminder. */
+            parcelManagerDays?: number;
+            /** @description Days a parcel is held before its residents are reminded, once. */
+            parcelReminderDays?: number;
         };
         UpdateSettingsDto: {
             /**
@@ -9709,6 +9828,96 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OccupancyResponse"];
+                };
+            };
+        };
+    };
+    ParcelSettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ParcelSettingsResponse"];
+                };
+            };
+        };
+    };
+    ParcelSettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateParcelSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ParcelSettingsResponse"];
+                };
+            };
+        };
+    };
+    ManagerParcelsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description Default: held and rejected. */
+                status?: components["schemas"]["ParcelStatus"];
+                unitCode?: string;
+                carrier?: components["schemas"]["ParcelCarrier"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagerParcelViewList"];
+                };
+            };
+        };
+    };
+    ManagerParcelsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagerParcelDetailView"];
                 };
             };
         };

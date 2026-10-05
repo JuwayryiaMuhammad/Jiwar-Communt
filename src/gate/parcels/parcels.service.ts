@@ -22,6 +22,8 @@ import {
   stateConflict,
   type GateParcel,
   type GateParcelDetail,
+  type ManagerParcel,
+  type ManagerParcelDetail,
 } from './parcel-core';
 import { ParcelTokens } from './parcel-tokens';
 
@@ -44,6 +46,10 @@ export interface ParcelFilters {
   unitCode?: string;
   cursor?: string;
   limit?: number;
+}
+
+export interface ManagerParcelFilters extends ParcelFilters {
+  carrier?: ParcelCarrier;
 }
 
 /**
@@ -248,6 +254,55 @@ export class ParcelsService implements OnModuleInit {
         items: page.items.map((p) =>
           this.core.gateParcel(p, codes.get(p.unitId) ?? ''),
         ),
+      };
+    });
+  }
+
+  /** Every parcel of the compound, for the managers: no names, no photos. */
+  async listForManager(f: ManagerParcelFilters): Promise<Page<ManagerParcel>> {
+    const limit = clampLimit(f.limit);
+    return this.tenantTx.withTenantTx(async (tx) => {
+      let unitId: string | undefined;
+      if (f.unitCode) {
+        const unit = await this.community.unitByCode(tx, f.unitCode);
+        if (!unit) return { items: [], nextCursor: null };
+        unitId = unit.id;
+      }
+      const rows = await tx.parcel.findMany({
+        where: {
+          AND: [
+            { status: f.status, carrier: f.carrier, unitId },
+            ...(PAGE.after(f.cursor) as Prisma.ParcelWhereInput[]),
+          ],
+        },
+        orderBy: PAGE.orderBy,
+        take: limit + 1,
+      });
+      const page = PAGE.toPage(rows, limit);
+      const codes = await this.core.unitCodes(
+        tx,
+        page.items.map((p) => p.unitId),
+      );
+      return {
+        nextCursor: page.nextCursor,
+        items: page.items.map((p) =>
+          this.core.managerParcel(p, codes.get(p.unitId) ?? ''),
+        ),
+      };
+    });
+  }
+
+  /** One parcel with its history, for the managers. */
+  getForManager(id: string): Promise<ManagerParcelDetail> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const parcel = await tx.parcel.findUnique({ where: { id } });
+      if (!parcel) throw parcelNotFound();
+      return {
+        ...this.core.managerParcel(
+          parcel,
+          await this.core.unitCodeOf(tx, parcel.unitId),
+        ),
+        events: await this.core.events(tx, id),
       };
     });
   }

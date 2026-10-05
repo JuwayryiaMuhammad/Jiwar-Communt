@@ -175,3 +175,49 @@ export class HandOverParcelDto extends ParcelCodeDto {
   @IsUUID()
   photoFileId?: string;
 }
+
+/** The managers' list: every parcel, filtered. */
+export class ManagerParcelsQueryDto extends GateParcelsQueryDto {
+  @ApiProperty({
+    enum: ParcelCarrier,
+    enumName: 'ParcelCarrier',
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(ParcelCarrier, withParams({ allowed: Object.values(ParcelCarrier) }))
+  carrier?: ParcelCarrier;
+}
+
+const REMINDER_DAYS = { min: 1, max: 30 };
+const MANAGER_DAYS = { min: 2, max: 90 };
+
+/** The compound's holding periods, in days (ADR 0035). */
+export class UpdateParcelSettingsDto {
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: REMINDER_DAYS.min,
+    maximum: REMINDER_DAYS.max,
+    description:
+      'Days a parcel is held before its residents are reminded, once.',
+  })
+  @IsOptional()
+  @IsInt(withParams(REMINDER_DAYS))
+  @Min(REMINDER_DAYS.min, withParams(REMINDER_DAYS))
+  @Max(REMINDER_DAYS.max, withParams(REMINDER_DAYS))
+  parcelReminderDays?: number;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: MANAGER_DAYS.min,
+    maximum: MANAGER_DAYS.max,
+    description:
+      'Days before the managers are told, once, and an unclaimed parcel may be returned. Always more than the reminder.',
+  })
+  @IsOptional()
+  @IsInt(withParams(MANAGER_DAYS))
+  @Min(MANAGER_DAYS.min, withParams(MANAGER_DAYS))
+  @Max(MANAGER_DAYS.max, withParams(MANAGER_DAYS))
+  parcelManagerDays?: number;
+}

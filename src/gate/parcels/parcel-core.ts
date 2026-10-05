@@ -62,6 +62,36 @@ export interface GateParcelDetail extends GateParcel {
   events: ParcelEventItem[];
 }
 
+/**
+ * What a manager sees (ADR 0035): the unit and the status, never the label's
+ * name, a delegate's name or a photo.
+ */
+export interface ManagerParcel {
+  id: string;
+  number: number;
+  unitCode: string;
+  carrier: ParcelCarrier;
+  pieces: number;
+  status: ParcelStatus;
+  receivedAt: Date;
+  handedOverAt: Date | null;
+  rejectedAt: Date | null;
+  rejectReason: string | null;
+  returnedAt: Date | null;
+  returnReason: string | null;
+  /** Whole days from receipt to now, or to the hand-over or the return. */
+  heldDays: number;
+  /** The residents were reminded (once), the managers were told (once). */
+  reminded: boolean;
+  heldLongNotified: boolean;
+  /** Nobody could collect it when it arrived. */
+  unclaimable: boolean;
+}
+
+export interface ManagerParcelDetail extends ManagerParcel {
+  events: ParcelEventItem[];
+}
+
 export interface NewEvent {
   parcelId: string;
   kind: ParcelEventKind;
@@ -245,6 +275,31 @@ export class ParcelCore {
       rejectedAt: parcel.rejectedAt,
       returnedAt: parcel.returnedAt,
       hasPhoto: parcel.photoFileId !== null,
+    };
+  }
+
+  managerParcel(parcel: Parcel, unitCode: string): ManagerParcel {
+    const end = parcel.closedAt ?? new Date();
+    return {
+      id: parcel.id,
+      number: parcel.number,
+      unitCode,
+      carrier: parcel.carrier,
+      pieces: parcel.pieces,
+      status: parcel.status,
+      receivedAt: parcel.receivedAt,
+      handedOverAt: parcel.handedOverAt,
+      rejectedAt: parcel.rejectedAt,
+      rejectReason: parcel.rejectReason,
+      returnedAt: parcel.returnedAt,
+      returnReason: parcel.returnReason,
+      heldDays: Math.max(
+        0,
+        Math.floor((end.getTime() - parcel.receivedAt.getTime()) / 86_400_000),
+      ),
+      reminded: parcel.remindedAt !== null,
+      heldLongNotified: parcel.heldLongAt !== null,
+      unclaimable: parcel.unclaimableAt !== null,
     };
   }
 

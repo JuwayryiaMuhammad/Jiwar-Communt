@@ -236,6 +236,8 @@ export const AUDIT_ACTIONS = {
   'parcel.delegate_authorized': { log: 'tenant', target: 'parcel' },
   // metadata: reasonCode (revoked, authorizer_left).
   'parcel.delegate_revoked': { log: 'tenant', target: 'parcel' },
+  // changes: parcelReminderDays, parcelManagerDays.
+  'parcel.settings_changed': { log: 'tenant', target: 'tenant' },
   // metadata: reasonCode (rejected, unclaimed).
   'parcel.returned': { log: 'tenant', target: 'parcel' },
 } as const satisfies Record<string, AuditActionDefinition>;

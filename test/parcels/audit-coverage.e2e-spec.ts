@@ -203,6 +203,44 @@ describe('Audit coverage — parcels', () => {
     });
   });
 
+  describe('the settings', () => {
+    it('parcel.settings_changed — by the manager, with the days; a no-op writes nothing', async () => {
+      const patch = (body: object) =>
+        call(w, 'PATCH', '/parcel-settings', {
+          token: w.a.tokens.manager,
+          body,
+        });
+      expect(
+        (await patch({ parcelReminderDays: 4, parcelManagerDays: 20 })).status,
+      ).toBe(200);
+      const rows = await read.tenant(w.a.tenantId, {
+        action: 'parcel.settings_changed',
+        targetId: w.a.tenantId,
+      });
+      covered.add('parcel.settings_changed');
+      const last = rows[rows.length - 1];
+      expect(last).toMatchObject({
+        actorType: 'account',
+        actorId: w.a.ids.manager,
+        targetType: 'tenant',
+        changes: {
+          parcelReminderDays: { from: 3, to: 4 },
+          parcelManagerDays: { from: 14, to: 20 },
+        },
+      });
+      // The same again changes nothing and writes nothing.
+      await patch({ parcelReminderDays: 4 });
+      expect(
+        await read.tenant(w.a.tenantId, {
+          action: 'parcel.settings_changed',
+          targetId: w.a.tenantId,
+        }),
+      ).toHaveLength(rows.length);
+      // Put back: the other suites in this file use the defaults.
+      await patch({ parcelManagerDays: 14, parcelReminderDays: 3 });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every parcels entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

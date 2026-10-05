@@ -472,6 +472,7 @@ describe('API v0 — PII leak scan', () => {
       '/gate/approval-requests/{id}': asked.id,
       '/gate/parcels/{id}': parcel.id,
       '/me/parcels/{id}': parcel.id,
+      '/parcels/{id}': parcel.id,
       '/me/units/{unitId}/capabilities': unit.id,
       '/me/units/{unitId}/permissions': unit.id,
       '/residents/{id}': primary.id,

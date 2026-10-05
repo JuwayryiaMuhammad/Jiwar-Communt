@@ -160,6 +160,93 @@ export const HANDOVER_PARCELS_ROUTES: Row[] = [
   },
 ];
 
+/** The managers' parcels and the holding periods (ADR 0035): `parcels.manage`. */
+export const MANAGER_PARCELS_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/parcels',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    // The class's own field is reported before the ones it inherits.
+    invalid: {
+      query: { status: 'lost', carrier: 'pigeon' },
+      fields: [
+        {
+          field: 'carrier',
+          code: 'INVALID_VALUE',
+          params: {
+            allowed: [
+              'aramex',
+              'dhl',
+              'fedex',
+              'ups',
+              'bosta',
+              'mylerz',
+              'egypt_post',
+              'amazon',
+              'noon',
+              'jumia',
+              'talabat',
+              'other',
+            ],
+          },
+        },
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: PARCEL_STATUSES },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/parcels/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bParcelId }),
+      code: 'PARCEL_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/parcel-settings',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'PATCH',
+    path: '/parcel-settings',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: { parcelReminderDays: 0, parcelManagerDays: 1.5 },
+      fields: [
+        {
+          field: 'parcelReminderDays',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 30 },
+        },
+        {
+          field: 'parcelManagerDays',
+          code: 'INVALID_NUMBER',
+          params: { min: 2, max: 90 },
+        },
+      ],
+    },
+  },
+];
+
 /** A resident's parcels (ADR 0035): the capability `parcels` decides, no permission. */
 export const RESIDENT_PARCELS_ROUTES: Row[] = [
   {

@@ -4588,6 +4588,218 @@
         ],
         "type": "object"
       },
+      "ManagerParcelDetailView": {
+        "properties": {
+          "carrier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelCarrier"
+              }
+            ]
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/ParcelEventView"
+            },
+            "type": "array"
+          },
+          "handedOverAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "heldDays": {
+            "description": "Whole days from receipt to now, or to the hand-over/return.",
+            "type": "number"
+          },
+          "heldLongNotified": {
+            "description": "The managers were told.",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "type": "number"
+          },
+          "pieces": {
+            "type": "number"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "rejectReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "rejectedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reminded": {
+            "description": "The residents were reminded.",
+            "type": "boolean"
+          },
+          "returnReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "returnedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelStatus"
+              }
+            ]
+          },
+          "unclaimable": {
+            "description": "Nobody could collect it when it arrived.",
+            "type": "boolean"
+          },
+          "unitCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitCode",
+          "carrier",
+          "pieces",
+          "status",
+          "receivedAt",
+          "handedOverAt",
+          "rejectedAt",
+          "rejectReason",
+          "returnedAt",
+          "returnReason",
+          "heldDays",
+          "reminded",
+          "heldLongNotified",
+          "unclaimable",
+          "events"
+        ],
+        "type": "object"
+      },
+      "ManagerParcelView": {
+        "properties": {
+          "carrier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelCarrier"
+              }
+            ]
+          },
+          "handedOverAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "heldDays": {
+            "description": "Whole days from receipt to now, or to the hand-over/return.",
+            "type": "number"
+          },
+          "heldLongNotified": {
+            "description": "The managers were told.",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "type": "number"
+          },
+          "pieces": {
+            "type": "number"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "rejectReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "rejectedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reminded": {
+            "description": "The residents were reminded.",
+            "type": "boolean"
+          },
+          "returnReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "returnedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelStatus"
+              }
+            ]
+          },
+          "unclaimable": {
+            "description": "Nobody could collect it when it arrived.",
+            "type": "boolean"
+          },
+          "unitCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitCode",
+          "carrier",
+          "pieces",
+          "status",
+          "receivedAt",
+          "handedOverAt",
+          "rejectedAt",
+          "rejectReason",
+          "returnedAt",
+          "returnReason",
+          "heldDays",
+          "reminded",
+          "heldLongNotified",
+          "unclaimable"
+        ],
+        "type": "object"
+      },
+      "ManagerParcelViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ManagerParcelView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ManagerView": {
         "properties": {
           "email": {
@@ -5747,6 +5959,23 @@
         "required": [
           "code",
           "qrPayload"
+        ],
+        "type": "object"
+      },
+      "ParcelSettingsResponse": {
+        "properties": {
+          "parcelManagerDays": {
+            "description": "Days before the managers are told, once.",
+            "type": "number"
+          },
+          "parcelReminderDays": {
+            "description": "Days before the residents are reminded, once.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "parcelReminderDays",
+          "parcelManagerDays"
         ],
         "type": "object"
       },
@@ -9893,6 +10122,23 @@
           "reopenDays": {
             "description": "Days after closing during which the reporter may reopen.",
             "maximum": 90,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateParcelSettingsDto": {
+        "properties": {
+          "parcelManagerDays": {
+            "description": "Days before the managers are told, once, and an unclaimed parcel may be returned. Always more than the reminder.",
+            "maximum": 90,
+            "minimum": 2,
+            "type": "number"
+          },
+          "parcelReminderDays": {
+            "description": "Days a parcel is held before its residents are reminded, once.",
+            "maximum": 30,
             "minimum": 1,
             "type": "number"
           }
@@ -16138,6 +16384,177 @@
         ],
         "tags": [
           "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/parcel-settings": {
+      "get": {
+        "operationId": "ParcelSettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParcelSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "parcels"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "ParcelSettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateParcelSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParcelSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "parcels"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/parcels": {
+      "get": {
+        "operationId": "ManagerParcelsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "Default: held and rejected.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ParcelStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitCode",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "carrier",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ParcelCarrier"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerParcelViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "parcels"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/parcels/{id}": {
+      "get": {
+        "operationId": "ManagerParcelsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerParcelDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "parcels"
         ],
         "x-stability": "draft"
       }

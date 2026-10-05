@@ -126,6 +126,7 @@ export const MAINTENANCE_COVERAGE: readonly string[] = [
 /** Parcels (ADR 0035), covered by test/parcels/audit-coverage.e2e-spec.ts. */
 export const PARCELS_COVERAGE: readonly string[] = [
   'parcel.received',
+  'parcel.settings_changed',
   'parcel.handed_over',
   'parcel.returned',
   'parcel.rejected',

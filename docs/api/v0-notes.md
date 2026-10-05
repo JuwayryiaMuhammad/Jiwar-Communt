@@ -69,3 +69,4 @@ API v0 is a draft (ADR 0025): it exposes every feature so it can be exercised en
     Never tell the person whether the link existed.
   - **Not indexed, not cached:** serve the pages with `Cache-Control: no-store`, `Referrer-Policy: no-referrer` and `X-Robots-Tag: noindex` (and `<meta name="robots" content="noindex">`); load no third-party script on them. The API answers both export calls with the same headers (`PublicPageHeaders`).
 - **Assisted:** the management screens use `/accounts/{id}/…` with a `reasonCode` on every write; the account is always told.
+- `GET /me/units` carries the unit's `unitType`, `areaSqm` (square metres, two decimals) and `status` (`active` or `closed`) for the unit card (ADR 0037). Residents never read `GET /units/:id`.

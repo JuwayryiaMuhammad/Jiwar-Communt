@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { DelegationScope } from '@prisma/client';
+import { DelegationScope, UnitType } from '@prisma/client';
 import { AccountRefView, accountRef } from '../../../core/common/http/personal';
 import type { MyDelegation } from '../../households/delegations.service';
 import type {
   MemberGrantView,
   MyPermissions,
 } from '../../households/member-permissions.service';
-import type { MyUnit } from '../residents.types';
+import type { MyUnit, MyUnitStatus } from '../residents.types';
 
 export class HouseholdSummaryView {
   @ApiProperty({ type: Number })
@@ -24,6 +24,20 @@ export class MyUnitView {
   building: string | null;
   @ApiProperty({ type: Number, nullable: true })
   floor: number | null;
+  @ApiProperty({ enum: UnitType, enumName: 'UnitType', nullable: true })
+  unitType: UnitType | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '120.50',
+    description: 'Square metres; the app converts for display.',
+  })
+  areaSqm: string | null;
+  @ApiProperty({
+    enum: ['active', 'closed'],
+    description: '`closed` while the unit is in closed-unit mode.',
+  })
+  status: MyUnitStatus;
   @ApiProperty({ enum: ['owner', 'tenant', 'member'] })
   capacity: 'owner' | 'tenant' | 'member';
   @ApiProperty({
@@ -46,6 +60,9 @@ export class MyUnitView {
       code: u.code,
       building: u.building,
       floor: u.floor,
+      unitType: u.unitType,
+      areaSqm: u.areaSqm,
+      status: u.status,
       capacity: u.capacity,
       resides: u.resides,
       isPrimary: u.isPrimary,

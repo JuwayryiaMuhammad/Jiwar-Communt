@@ -80,10 +80,17 @@ export interface MyUnit {
   code: string;
   building: string | null;
   floor: number | null;
+  unitType: UnitType | null;
+  /** Two decimals, as the column stores it. */
+  areaSqm: string | null;
+  /** `closed` while the unit is in closed-unit mode (ADR 0020). */
+  status: MyUnitStatus;
   /** Null for a household member. */
   occupancyType: OccupancyType | null;
   startedAt: Date;
 }
+
+export type MyUnitStatus = 'active' | 'closed';
 
 /** A unit whose household needs the manager's attention (ADR 0016). */
 export interface UnitNeedingReview {

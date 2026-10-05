@@ -34,3 +34,4 @@ API v0 is a draft (ADR 0025): it exposes every feature so it can be exercised en
 - A technician's availability history is readable nowhere in v0; `GET /maintenance/technicians` shows the current state and when it changed. `workload` is in points with two decimals (status weight × priority multiplier over assigned, in-progress and on-hold tickets).
 - `GET /maintenance/tickets/:id/dispatch-attempts` answers "why wasn't this assigned?"; the screen decides how much of it to show.
 - Specialties are read by dispatch (`tickets.dispatch`) and written by the manager (`maintenance.manage`); a supervisor who is not also a manager cannot change which specialties a category needs.
+- `GET /me/units` carries the unit's `unitType`, `areaSqm` (square metres, two decimals) and `status` (`active` or `closed`) for the unit card (ADR 0037). Residents never read `GET /units/:id`.

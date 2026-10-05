@@ -19,13 +19,16 @@ const ME = [
   'type',
 ];
 const MY_UNIT = [
+  'areaSqm',
   'building',
   'capacity',
   'code',
   'floor',
   'isPrimary',
   'resides',
+  'status',
   'unitId',
+  'unitType',
 ];
 
 describe('API v0 — me', () => {
@@ -218,5 +221,52 @@ describe('API v0 — me', () => {
     expect(keyPaths(got.body)).toEqual(DELETION);
 
     await call(w, 'POST', '/me/deletion-request/cancel', { token }).expect(204);
+  });
+
+  it('my units carry the type, the area and the status; only my own units', async () => {
+    await w.helpers.asManager(w.a, () =>
+      w.helpers.prisma.tenant.unit.update({
+        where: { id: w.a.homeUnitId },
+        data: { unitType: 'apartment', areaSqm: '125.5' },
+      }),
+    );
+    const mine = async (token: string) =>
+      (
+        (await call(w, 'GET', '/me/units', { token }).expect(200)).body as {
+          data: Record<string, unknown>[];
+        }
+      ).data;
+    for (const token of [w.a.tokens.owner, w.a.tokens.family])
+      expect(
+        (await mine(token)).find((u) => u.unitId === w.a.homeUnitId),
+      ).toMatchObject({
+        unitType: 'apartment',
+        areaSqm: '125.50',
+        status: 'active',
+      });
+
+    await call(w, 'POST', `/units/${w.a.homeUnitId}/closed-mode`, {
+      token: w.a.tokens.owner,
+      body: { closed: true },
+    }).expect(204);
+    try {
+      expect(
+        (await mine(w.a.tokens.family)).find(
+          (u) => u.unitId === w.a.homeUnitId,
+        ),
+      ).toMatchObject({ status: 'closed' });
+    } finally {
+      await call(w, 'POST', `/units/${w.a.homeUnitId}/closed-mode`, {
+        token: w.a.tokens.owner,
+        body: { closed: false },
+      }).expect(204);
+    }
+
+    // Someone else's unit never shows: the tenant lives elsewhere, and
+    // compound B's units are B's.
+    const tenant = await mine(w.a.tokens.tenant);
+    expect(tenant.map((u) => u.unitId)).not.toContain(w.a.homeUnitId);
+    const other = await mine(w.b.tokens.owner);
+    expect(other.map((u) => u.unitId)).not.toContain(w.a.homeUnitId);
   });
 });

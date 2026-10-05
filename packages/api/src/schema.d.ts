@@ -4216,6 +4216,11 @@ export interface components {
             fileId: string;
         };
         MyUnitView: {
+            /**
+             * @description Square metres; the app converts for display.
+             * @example 120.50
+             */
+            areaSqm: string | null;
             building: string | null;
             /** @enum {string} */
             capacity: "owner" | "tenant" | "member";
@@ -4226,8 +4231,14 @@ export interface components {
             isPrimary: boolean;
             /** @description False only for an owner-landlord. */
             resides: boolean;
+            /**
+             * @description `closed` while the unit is in closed-unit mode.
+             * @enum {string}
+             */
+            status: "active" | "closed";
             /** Format: uuid */
             unitId: string;
+            unitType: components["schemas"]["UnitType"] | null;
         };
         MyUnitViewList: {
             data: components["schemas"]["MyUnitView"][];

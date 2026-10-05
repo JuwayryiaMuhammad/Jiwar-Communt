@@ -1179,8 +1179,8 @@ export class ResidentsService {
   /**
    * The caller's active units: a resident's occupancies (with the occupancy
    * type and whether they are the primary; the primary also gets the
-   * household counts), then a family account's active memberships. Unit
-   * fields stay as they are until the design.
+   * household counts), then a family account's active memberships, each
+   * with the unit's type, area and status (the design's unit card).
    */
   async myUnits(): Promise<MyUnit[]> {
     return this.tenantTx.withTenantTx(async (tx) => {
@@ -1202,9 +1202,7 @@ export class ResidentsService {
             ? { household: await this.households.summary(tx, o.unitId) }
             : {}),
           unitId: o.unitId,
-          code: o.unit.code,
-          building: o.unit.building,
-          floor: o.unit.floor,
+          ...unitFacts(o.unit),
           occupancyType: o.occupancyType,
           startedAt: o.startedAt,
         });
@@ -1222,9 +1220,7 @@ export class ResidentsService {
           resides: true,
           isPrimary: false,
           unitId: m.unitId,
-          code: m.unit.code,
-          building: m.unit.building,
-          floor: m.unit.floor,
+          ...unitFacts(m.unit),
           occupancyType: null,
           startedAt: m.createdAt,
         });
@@ -1480,4 +1476,26 @@ function checkResides(
 
 function residentNotFound() {
   return appError.notFound(ErrorCode.ACCOUNT_NOT_FOUND, 'Resident not found');
+}
+
+/** What the resident's unit card shows of the unit itself. */
+function unitFacts(unit: {
+  code: string;
+  building: string | null;
+  floor: number | null;
+  unitType: UnitType | null;
+  areaSqm: Prisma.Decimal | null;
+  closedSince: Date | null;
+}): Pick<
+  MyUnit,
+  'code' | 'building' | 'floor' | 'unitType' | 'areaSqm' | 'status'
+> {
+  return {
+    code: unit.code,
+    building: unit.building,
+    floor: unit.floor,
+    unitType: unit.unitType,
+    areaSqm: unit.areaSqm?.toFixed(2) ?? null,
+    status: unit.closedSince ? 'closed' : 'active',
+  };
 }

@@ -4326,6 +4326,12 @@
       },
       "MyUnitView": {
         "properties": {
+          "areaSqm": {
+            "description": "Square metres; the app converts for display.",
+            "example": "120.50",
+            "nullable": true,
+            "type": "string"
+          },
           "building": {
             "nullable": true,
             "type": "string"
@@ -4360,9 +4366,25 @@
             "description": "False only for an owner-landlord.",
             "type": "boolean"
           },
+          "status": {
+            "description": "`closed` while the unit is in closed-unit mode.",
+            "enum": [
+              "active",
+              "closed"
+            ],
+            "type": "string"
+          },
           "unitId": {
             "format": "uuid",
             "type": "string"
+          },
+          "unitType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnitType"
+              }
+            ],
+            "nullable": true
           }
         },
         "required": [
@@ -4370,6 +4392,9 @@
           "code",
           "building",
           "floor",
+          "unitType",
+          "areaSqm",
+          "status",
           "capacity",
           "resides",
           "isPrimary"

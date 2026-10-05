@@ -73,3 +73,47 @@ export class GateParcelsQueryDto extends PageQueryDto {
   @Length(1, 64, withParams({ min: 1, max: 64 }))
   unitCode?: string;
 }
+
+/** The resident's list: their parcels, newest first. */
+export class ResidentParcelsQueryDto extends PageQueryDto {
+  @ApiProperty({
+    enum: ParcelStatus,
+    enumName: 'ParcelStatus',
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(ParcelStatus, withParams({ allowed: Object.values(ParcelStatus) }))
+  status?: ParcelStatus;
+}
+
+/** "Not mine": a reason from a closed list, never text. */
+export class RejectParcelDto {
+  @ApiProperty({
+    type: String,
+    description:
+      'From the closed list `parcelReject`: not_ours, not_expected, other.',
+  })
+  @IsOptional()
+  @IsString()
+  reasonCode?: string;
+}
+
+const DELEGATE_NAME_LENGTH = { min: 1, max: 80 };
+
+/** The one person who may collect a parcel in the resident's place. */
+export class AuthorizeDelegateDto {
+  @ApiProperty({
+    type: String,
+    minLength: DELEGATE_NAME_LENGTH.min,
+    maxLength: DELEGATE_NAME_LENGTH.max,
+    description:
+      'The delegate’s name, shown to the guard only after a valid delegate code. No phone.',
+  })
+  @IsString()
+  @Length(
+    DELEGATE_NAME_LENGTH.min,
+    DELEGATE_NAME_LENGTH.max,
+    withParams(DELEGATE_NAME_LENGTH),
+  )
+  name: string;
+}

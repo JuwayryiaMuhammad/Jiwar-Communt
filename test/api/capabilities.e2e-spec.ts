@@ -1,5 +1,6 @@
 import type { Response } from 'supertest';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { parcelHelpers } from '../setup/parcels';
 import { call, err } from './request';
 import { minorBody } from './routes/household';
 import { ticketBody } from './routes/maintenance';
@@ -31,6 +32,18 @@ describe('API v0 — capabilities drive access', () => {
   }, 120_000);
 
   afterAll(() => h.close());
+
+  /** A parcel received for the unit, once (the `parcels` probe reads it). */
+  const parcels = new Map<string, string>();
+  async function parcelOf(unitId: string): Promise<string> {
+    const known = parcels.get(unitId);
+    if (known) return known;
+    const code = (await w.helpers.unitRow(w.a, unitId)).code;
+    const res = await parcelHelpers(h).receive(w.a.tokens.guard, code);
+    const id = (res.body as { id: string }).id;
+    parcels.set(unitId, id);
+    return id;
+  }
 
   const PROBES: Probe[] = [
     {
@@ -82,6 +95,12 @@ describe('API v0 — capabilities drive access', () => {
         }
         return res;
       },
+    },
+    {
+      // Parcels (ADR 0035): reading a parcel of the unit is `parcels`.
+      flag: 'parcels',
+      run: async (token, u) =>
+        call(w, 'GET', `/me/parcels/${await parcelOf(u)}`, { token }),
     },
     {
       // Maintenance (ADR 0032): opening a ticket on the unit is `tickets`.

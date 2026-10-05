@@ -1,4 +1,5 @@
 import type { Response } from 'supertest';
+import type { World } from '../api/world';
 import type { Compound } from './community';
 import { fileHelpers } from './files';
 import { gateHelpers } from './gate';
@@ -46,4 +47,47 @@ export function parcelHelpers(h: HttpHarness) {
   }
 
   return { photo, receive, guardOnDuty };
+}
+
+/** A household of compound A: its unit, its primary and one family member. */
+export interface Household {
+  unitId: string;
+  unitCode: string;
+  owner: { id: string; token: string };
+  member: { id: string; token: string; memberId: string };
+}
+
+/** Parcel scenes on a world's compound A (ADR 0035). */
+export function parcelScenes(w: World) {
+  const p = parcelHelpers(w.h);
+
+  /** A fresh unit, its owner-resident (the primary) and, optionally, a member. */
+  async function household(): Promise<Household> {
+    const unit = await w.helpers.unit(w.a);
+    const owner = await w.helpers.resident(w.a, [unit.id]);
+    const family = await w.helpers.joinFamily(w.a, unit.id, owner);
+    return {
+      unitId: unit.id,
+      unitCode: unit.code,
+      owner: {
+        id: owner.id,
+        token: await w.tokenFor(w.a, owner.id, 'resident'),
+      },
+      member: {
+        id: family.id,
+        memberId: family.memberId,
+        token: await w.tokenFor(w.a, family.id, 'family'),
+      },
+    };
+  }
+
+  /** A parcel for the unit, received by A's guard on duty. */
+  async function receive(unitCode: string, over: Record<string, unknown> = {}) {
+    const res = await p.receive(w.a.tokens.guard, unitCode, over);
+    if (res.status !== 201)
+      throw new Error(`receive: ${res.status} ${res.text}`);
+    return res.body as { id: string; number: number };
+  }
+
+  return { ...p, household, receive };
 }

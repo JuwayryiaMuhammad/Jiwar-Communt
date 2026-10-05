@@ -24,6 +24,8 @@ import { GatesService } from './gates/gates.service';
 import { ShiftsController } from './shifts/shifts.controller';
 import { ShiftsService } from './shifts/shifts.service';
 import { GateParcelsController } from './parcels/gate-parcels.controller';
+import { ResidentParcelsController } from './parcels/resident-parcels.controller';
+import { ResidentParcels } from './parcels/resident-parcels.service';
 import { ParcelCore } from './parcels/parcel-core';
 import { ParcelsService } from './parcels/parcels.service';
 import { ParcelTokens } from './parcels/parcel-tokens';
@@ -58,6 +60,7 @@ import { VisitorsController } from './visitors/visitors.controller';
     AttendanceController,
     EntryCredentialsController,
     GateParcelsController,
+    ResidentParcelsController,
   ],
   providers: [
     GatesService,
@@ -78,6 +81,7 @@ import { VisitorsController } from './visitors/visitors.controller';
     ParcelTokens,
     ParcelCore,
     ParcelsService,
+    ResidentParcels,
   ],
 })
 export class GateModule {}

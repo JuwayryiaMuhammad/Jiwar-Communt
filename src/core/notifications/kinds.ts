@@ -302,6 +302,12 @@ export const NOTIFICATION_KINDS = {
     target: 'parcel',
     params: { carrier: {}, pieces: {}, receivedAt: {}, unitCode: {} },
   },
+  /** A resident said "not mine": the guards, to send it back (ADR 0035). */
+  'parcel.rejected': {
+    priority: 'normal',
+    target: 'parcel',
+    params: { parcelNumber: {}, carrier: {} },
+  },
   /** A parcel arrived for a unit nobody can collect for (the managers, once). */
   'parcel.unclaimable': {
     priority: 'normal',

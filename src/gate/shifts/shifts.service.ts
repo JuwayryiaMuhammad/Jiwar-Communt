@@ -28,6 +28,19 @@ export interface OpenShift {
 
 export const SHIFT_RESOURCE = 'guard_shift';
 
+/** What a start hook is told: the shift that just opened. */
+export interface StartedShift {
+  id: string;
+  gateId: string;
+  guardAccountId: string;
+}
+
+/** Runs in the start's transaction, after the shift row exists. */
+export type ShiftStartHandler = (
+  tx: TenantTxClient,
+  shift: StartedShift,
+) => Promise<void>;
+
 const noOpenShift = () =>
   appError.forbidden(
     ErrorCode.NO_OPEN_SHIFT,
@@ -43,6 +56,8 @@ const noOpenShift = () =>
  */
 @Injectable()
 export class ShiftsService implements OnModuleInit {
+  private readonly started: ShiftStartHandler[] = [];
+
   constructor(
     private readonly tenantTx: TenantTx,
     private readonly ctx: RequestContext,
@@ -76,6 +91,14 @@ export class ShiftsService implements OnModuleInit {
       await endOwn(tx, account, 'account_erased');
       return [];
     });
+  }
+
+  /**
+   * A domain that has something to tell a guard who starts a shift registers
+   * here (the parcels do, ADR 0035). Handlers run in the start's transaction.
+   */
+  onStarted(handler: ShiftStartHandler): void {
+    this.started.push(handler);
   }
 
   /** The caller's open shift, or 403 NO_OPEN_SHIFT. */
@@ -126,6 +149,8 @@ export class ShiftsService implements OnModuleInit {
         targetId: id,
         metadata: { gateId },
       });
+      for (const handler of this.started)
+        await handler(tx, { id, gateId, guardAccountId });
       return this.record(tx, id);
     });
   }

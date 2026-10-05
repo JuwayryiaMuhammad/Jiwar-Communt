@@ -532,6 +532,20 @@
         ],
         "type": "object"
       },
+      "AuthorizeDelegateDto": {
+        "properties": {
+          "name": {
+            "description": "The delegate’s name, shown to the guard only after a valid delegate code. No phone.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
       "AutoAssignmentView": {
         "properties": {
           "outcome": {
@@ -5476,6 +5490,33 @@
         ],
         "type": "string"
       },
+      "ParcelDelegateView": {
+        "properties": {
+          "authorizedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "code": {
+            "description": "While the delegate may collect: the code to share.",
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "qrPayload": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "authorizedAt",
+          "code",
+          "qrPayload"
+        ],
+        "type": "object"
+      },
       "ParcelEventKind": {
         "enum": [
           "received",
@@ -5538,6 +5579,23 @@
           "delegate"
         ],
         "type": "string"
+      },
+      "ParcelPickupView": {
+        "properties": {
+          "code": {
+            "description": "6 digits.",
+            "type": "string"
+          },
+          "qrPayload": {
+            "example": "JWP1.q3Jz…",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "qrPayload"
+        ],
+        "type": "object"
       },
       "ParcelStatus": {
         "enum": [
@@ -6533,6 +6591,18 @@
         ],
         "type": "object"
       },
+      "RejectParcelDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `parcelReject`: not_ours, not_expected, other.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "ReplacePermissionsDto": {
         "properties": {
           "permissions": {
@@ -6750,6 +6820,149 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/ResidentMessageView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ResidentParcelView": {
+        "properties": {
+          "carrier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelCarrier"
+              }
+            ]
+          },
+          "delegate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelDelegateView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "handedOverAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "handedOverMethod": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelMethod"
+              }
+            ],
+            "nullable": true
+          },
+          "handoverPhoto": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "labelName": {
+            "description": "The recipient as printed on the label; deleted 30 days after the hand-over or return.",
+            "nullable": true,
+            "type": "string"
+          },
+          "number": {
+            "type": "number"
+          },
+          "photo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "pickup": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelPickupView"
+              }
+            ],
+            "description": "Only while the parcel is held.",
+            "nullable": true,
+            "type": "object"
+          },
+          "pieces": {
+            "type": "number"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "rejectReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "rejectedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "returnedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParcelStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitCode",
+          "carrier",
+          "pieces",
+          "status",
+          "receivedAt",
+          "handedOverAt",
+          "handedOverMethod",
+          "rejectedAt",
+          "rejectReason",
+          "returnedAt",
+          "labelName",
+          "photo",
+          "handoverPhoto",
+          "pickup",
+          "delegate"
+        ],
+        "type": "object"
+      },
+      "ResidentParcelViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ResidentParcelView"
             },
             "type": "array"
           },
@@ -14958,6 +15171,241 @@
         "tags": [
           "notifications"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/parcels": {
+      "get": {
+        "operationId": "ResidentParcelsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ParcelStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentParcelViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "parcels"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/parcels/{id}": {
+      "get": {
+        "operationId": "ResidentParcelsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentParcelView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "parcels"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/parcels/{id}/delegate": {
+      "post": {
+        "operationId": "ResidentParcelsController_authorizeDelegate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorizeDelegateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentParcelView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "parcels"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/parcels/{id}/delegate/revoke": {
+      "post": {
+        "operationId": "ResidentParcelsController_revokeDelegate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "parcels"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/parcels/{id}/reject": {
+      "post": {
+        "operationId": "ResidentParcelsController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectParcelDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentParcelView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "parcels"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

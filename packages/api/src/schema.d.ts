@@ -1604,6 +1604,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/parcels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ResidentParcelsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/parcels/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ResidentParcelsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/parcels/{id}/delegate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ResidentParcelsController_authorizeDelegate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/parcels/{id}/delegate/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ResidentParcelsController_revokeDelegate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/parcels/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ResidentParcelsController_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/photo": {
         parameters: {
             query?: never;
@@ -3589,6 +3669,10 @@ export interface components {
             data: components["schemas"]["AuditEntryView"][];
             nextCursor: string | null;
         };
+        AuthorizeDelegateDto: {
+            /** @description The delegate’s name, shown to the guard only after a valid delegate code. No phone. */
+            name: string;
+        };
         AutoAssignmentView: {
             /** @enum {string} */
             outcome: "assigned" | "no_candidate";
@@ -4995,6 +5079,14 @@ export interface components {
         ParcelActorSide: "guard" | "resident" | "system";
         /** @enum {string} */
         ParcelCarrier: "aramex" | "dhl" | "fedex" | "ups" | "bosta" | "mylerz" | "egypt_post" | "amazon" | "noon" | "jumia" | "talabat" | "other";
+        ParcelDelegateView: {
+            /** Format: date-time */
+            authorizedAt: string;
+            /** @description While the delegate may collect: the code to share. */
+            code: string | null;
+            name: string;
+            qrPayload: string | null;
+        };
         /** @enum {string} */
         ParcelEventKind: "received" | "delegate_authorized" | "delegate_revoked" | "handed_over" | "rejected" | "returned";
         ParcelEventView: {
@@ -5011,6 +5103,12 @@ export interface components {
          * @enum {string}
          */
         ParcelMethod: "code" | "resident_qr" | "delegate";
+        ParcelPickupView: {
+            /** @description 6 digits. */
+            code: string;
+            /** @example JWP1.q3Jz… */
+            qrPayload: string;
+        };
         /** @enum {string} */
         ParcelStatus: "held" | "handed_over" | "rejected" | "returned";
         PassView: {
@@ -5301,6 +5399,10 @@ export interface components {
             /** @description From the closed list `cardReissue`. */
             reasonCode: string;
         };
+        RejectParcelDto: {
+            /** @description From the closed list `parcelReject`: not_ours, not_expected, other. */
+            reasonCode: string;
+        };
         ReplacePermissionsDto: {
             /** @description The whole set; keys from GET /permissions. The manager role keeps roles.manage and residents.manage. */
             permissions: string[];
@@ -5361,6 +5463,36 @@ export interface components {
         };
         ResidentMessageViewList: {
             data: components["schemas"]["ResidentMessageView"][];
+            nextCursor: string | null;
+        };
+        ResidentParcelView: {
+            carrier: components["schemas"]["ParcelCarrier"];
+            delegate: components["schemas"]["ParcelDelegateView"] | null;
+            /** Format: date-time */
+            handedOverAt: string | null;
+            handedOverMethod: components["schemas"]["ParcelMethod"] | null;
+            handoverPhoto: components["schemas"]["PresignedReadView"] | null;
+            /** Format: uuid */
+            id: string;
+            /** @description The recipient as printed on the label; deleted 30 days after the hand-over or return. */
+            labelName: string | null;
+            number: number;
+            photo: components["schemas"]["PresignedReadView"] | null;
+            /** @description Only while the parcel is held. */
+            pickup: components["schemas"]["ParcelPickupView"] | null;
+            pieces: number;
+            /** Format: date-time */
+            receivedAt: string;
+            rejectReason: string | null;
+            /** Format: date-time */
+            rejectedAt: string | null;
+            /** Format: date-time */
+            returnedAt: string | null;
+            status: components["schemas"]["ParcelStatus"];
+            unitCode: string;
+        };
+        ResidentParcelViewList: {
+            data: components["schemas"]["ResidentParcelView"][];
             nextCursor: string | null;
         };
         ResidentReceiverView: {
@@ -9001,6 +9133,126 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    ResidentParcelsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["ParcelStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentParcelViewList"];
+                };
+            };
+        };
+    };
+    ResidentParcelsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentParcelView"];
+                };
+            };
+        };
+    };
+    ResidentParcelsController_authorizeDelegate: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AuthorizeDelegateDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentParcelView"];
+                };
+            };
+        };
+    };
+    ResidentParcelsController_revokeDelegate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ResidentParcelsController_reject: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectParcelDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentParcelView"];
+                };
             };
         };
     };

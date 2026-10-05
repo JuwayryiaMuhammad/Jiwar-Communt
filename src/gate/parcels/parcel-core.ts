@@ -98,6 +98,26 @@ export class ParcelCore {
     await tx.$queryRaw`SELECT id FROM parcels WHERE id = ${id}::uuid FOR UPDATE`;
   }
 
+  /**
+   * The caller's own account row, shared: a resident's write takes it
+   * before the parcel (ADR 0034's order), so it queues behind a lifecycle
+   * hook that holds the row exclusively (a residence change, a freeze) and
+   * then sees its commit. The account must still be active under the lock.
+   */
+  async lockSelf(tx: TenantTxClient): Promise<void> {
+    const accountId = this.ctx.accountId;
+    await tx.$queryRaw`SELECT id FROM accounts WHERE id = ${accountId}::uuid FOR SHARE`;
+    const account = await tx.account.findUnique({
+      where: { id: accountId },
+      select: { status: true },
+    });
+    if (account?.status !== 'active')
+      throw appError.unauthorized(
+        ErrorCode.UNAUTHENTICATED,
+        'Authentication required',
+      );
+  }
+
   /** Locks the parcels in id order (hooks that touch several). */
   async lockMany(tx: TenantTxClient, ids: readonly string[]): Promise<void> {
     if (!ids.length) return;

@@ -229,6 +229,11 @@ export const AUDIT_ACTIONS = {
   // parcels (ADR 0035). Ids, carrier, pieces, a reason code or a method:
   // never a name (the label's, a delegate's), a code, a token or a file id.
   'parcel.received': { log: 'tenant', target: 'parcel' },
+  // metadata: reasonCode (not_ours, not_expected, other).
+  'parcel.rejected': { log: 'tenant', target: 'parcel' },
+  'parcel.delegate_authorized': { log: 'tenant', target: 'parcel' },
+  // metadata: reasonCode (revoked, authorizer_left).
+  'parcel.delegate_revoked': { log: 'tenant', target: 'parcel' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

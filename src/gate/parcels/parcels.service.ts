@@ -67,6 +67,9 @@ export class ParcelsService implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
+    this.shifts.onStarted((tx, shift) =>
+      this.announceRejected(tx, shift.gateId, shift.guardAccountId),
+    );
     // A replay of a write that answers with the parcel: the guard's view.
     this.idempotency.renderer(PARCEL_RESOURCE, (id) =>
       this.tenantTx.withTenantTx(async (tx) => {
@@ -75,6 +78,41 @@ export class ParcelsService implements OnModuleInit {
         return this.core.gateParcelOf(tx, parcel);
       }),
     );
+  }
+
+  /**
+   * A parcel a resident rejected waits for a guard to send it back: the one
+   * who starts a shift at its gate is told, once per parcel (ADR 0035). The
+   * guards already on shift were told when it was rejected.
+   */
+  private async announceRejected(
+    tx: TenantTxClient,
+    gateId: string,
+    guardId: string,
+  ): Promise<void> {
+    const waiting = await tx.parcel.findMany({
+      where: { gateId, status: 'rejected' },
+      orderBy: { id: 'asc' },
+      take: 100,
+    });
+    if (!waiting.length) return;
+    const told = await tx.notification.findMany({
+      where: {
+        accountId: guardId,
+        kind: 'parcel.rejected',
+        targetId: { in: waiting.map((p) => p.id) },
+      },
+      select: { targetId: true },
+    });
+    const known = new Set(told.map((n) => n.targetId));
+    for (const parcel of waiting) {
+      if (known.has(parcel.id)) continue;
+      await this.notifier.notify(tx, [guardId], {
+        kind: 'parcel.rejected',
+        targetId: parcel.id,
+        params: { parcelNumber: parcel.number, carrier: parcel.carrier },
+      });
+    }
   }
 
   /**

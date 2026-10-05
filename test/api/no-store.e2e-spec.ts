@@ -152,6 +152,25 @@ describe('API v0 — no-store', () => {
   }
 
   const CALLS: Record<string, () => Promise<Response>> = {
+    // A resident's parcels carry the label, the photos and the codes (ADR 0035).
+    'GET /me/parcels': async () => {
+      await aParcel();
+      return call(w, 'GET', '/me/parcels', { token: w.a.tokens.owner });
+    },
+    'GET /me/parcels/{id}': async () =>
+      call(w, 'GET', `/me/parcels/${await aParcel()}`, {
+        token: w.a.tokens.owner,
+      }),
+    'POST /me/parcels/{id}/reject': async () =>
+      call(w, 'POST', `/me/parcels/${await aParcel()}/reject`, {
+        token: w.a.tokens.owner,
+        body: { reasonCode: 'other' },
+      }),
+    'POST /me/parcels/{id}/delegate': async () =>
+      call(w, 'POST', `/me/parcels/${await aParcel()}/delegate`, {
+        token: w.a.tokens.owner,
+        body: { name: 'Karim' },
+      }),
     'POST /auth/otp/verify': async () => (await login()).verify,
     'POST /auth/select-account': async () => (await login()).select,
     'POST /auth/refresh': async () => (await login()).refresh,

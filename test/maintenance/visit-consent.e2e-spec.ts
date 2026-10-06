@@ -23,7 +23,8 @@ const MINUTE = 60_000;
  * account) grants it on a confirmed visit and any of them revokes it until
  * the arrival; it is never carried over. A landlord, someone who left, a
  * frozen or erased account never grants it. The primary is told when
- * someone else does.
+ * someone else does. The same people, and only they, read a unit's visits
+ * (`GET /me/units/{unitId}/visits`).
  */
 describe('Maintenance — visit consent and the receiver', () => {
   let h: HttpHarness;
@@ -424,7 +425,13 @@ describe('Maintenance — visit consent and the receiver', () => {
         await d
           .http('get', `/technician/tickets/${v.id}/visits`, tech().token)
           .expect(200)
-      ).body as { data: { id: string; receiver: unknown }[] }
+      ).body as {
+        data: {
+          id: string;
+          receiver: unknown;
+          absenceEntryApproved: boolean;
+        }[];
+      }
     ).data.find((x) => x.id === v.visitId)!;
 
   it('a household adult or an active worker receives the technician; the technician sees a first name and a kind', async () => {
@@ -529,5 +536,115 @@ describe('Maintenance — visit consent and the receiver', () => {
       receiverAccountId: null,
     });
     expect(await kinds(v.id)).toContainEqual(['receiver_cleared', null]);
+  });
+
+  it('a granter who stops residing (an owner turned landlord) takes the consent with them; the technician sees none', async () => {
+    const owner = await d.x.resident(s.c, [s.unit.id]);
+    const ownerWho = await d.who(s.c, owner.id, 'resident');
+    const v = await confirmedVisit();
+    await consent(ownerWho, v).expect(204);
+    expect((await technicianView(v)).absenceEntryApproved).toBe(true);
+    const occupancy = (await d.x.occupancies(s.c, s.unit.id)).find(
+      (o) => o.accountId === owner.id && o.status === 'active',
+    )!;
+    await d.x.asManager(s.c, () =>
+      h.moduleRef.get(ResidentsService).setResidence(occupancy.id, false),
+    );
+    expect(await visitRow(v.visitId)).toMatchObject({
+      absenceEntryApproved: false,
+      consentById: null,
+    });
+    expect(await kinds(v.id)).toContainEqual([
+      'consent_voided',
+      'granter_left',
+    ]);
+    expect((await technicianView(v)).absenceEntryApproved).toBe(false);
+    // A granter who still lives there is unaffected.
+    const kept = await confirmedVisit();
+    await consent(coOwner, kept).expect(204);
+    expect((await technicianView(kept)).absenceEntryApproved).toBe(true);
+  });
+
+  // --- who reads a unit's visits ---------------------------------------------
+
+  it('GET /me/units/{unitId}/visits: an adult who lives there; a landlord or someone who left is refused, a frozen or erased account is signed out', async () => {
+    const unitVisits = (token: string, unitId: string) =>
+      d.http('get', `/me/units/${unitId}/visits`, token);
+    const listed = (res: { body: unknown }) =>
+      (res.body as { data: { id: string }[] }).data.map((v) => v.id);
+    const code = (res: { body: unknown }) =>
+      (res.body as { code: string }).code;
+    // A visit on each unit, so a 200 would carry one.
+    const rented = await confirmedVisit(tenant, rentedUnitId);
+    const home = await confirmedVisit();
+
+    // The landlord, on the unit it rents out: it has a place there, without
+    // visitConsent. Its residing primary, on the same unit, reads it.
+    expect(
+      code(await unitVisits(landlord.token, rentedUnitId).expect(403)),
+    ).toBe('VISITS_NOT_ALLOWED');
+    expect(
+      listed(await unitVisits(tenant.token, rentedUnitId).expect(200)),
+    ).toContain(rented.visitId);
+    // The residing primary and an active adult member with an account.
+    for (const who of [s.owner, family])
+      expect(
+        listed(await unitVisits(who.token, s.unit.id).expect(200)),
+      ).toContain(home.visitId);
+
+    // Someone whose occupancy ended: the archive is still a place (so not
+    // 404), and it carries no visitConsent.
+    const leaver = await d.x.resident(s.c, [s.unit.id]);
+    const leaverWho = await d.who(s.c, leaver.id, 'resident');
+    await unitVisits(leaverWho.token, s.unit.id).expect(200);
+    const occupancy = (await d.x.occupancies(s.c, s.unit.id)).find(
+      (o) => o.accountId === leaver.id && o.status === 'active',
+    )!;
+    await d.x.asManager(s.c, () =>
+      h.moduleRef
+        .get(ResidentsService)
+        .endOccupancy(occupancy.id, { code: 'moved_out', text: 'Left' }),
+    );
+    expect(code(await unitVisits(leaverWho.token, s.unit.id).expect(403))).toBe(
+      'VISITS_NOT_ALLOWED',
+    );
+
+    // Frozen and erased: a session started after the change, so the 401 is
+    // the account's status, not the sessions the change revoked.
+    const fresh = (id: string) =>
+      h.tokenFor({ sub: id, tid: s.c.tenantId, typ: 'family' });
+    const frozen = await member(s.unit.id, s.owner);
+    await unitVisits(frozen.token, s.unit.id).expect(200);
+    await d.x.asManager(s.c, () =>
+      h.moduleRef.get(AccountsService).freeze(frozen.id, {
+        code: 'phone_reassigned',
+        text: 'Number reassigned',
+      }),
+    );
+    expect(
+      code(await unitVisits(await fresh(frozen.id), s.unit.id).expect(401)),
+    ).toBe('UNAUTHENTICATED');
+
+    const erased = await member(s.unit.id, s.owner);
+    await unitVisits(erased.token, s.unit.id).expect(200);
+    const deletion = h.moduleRef.get(AccountDeletionService);
+    const request = await d.x.as(s.c, { id: erased.id, type: 'family' }, () =>
+      deletion.requestDeletion('DELETE'),
+    );
+    await d.x.asManager(s.c, () =>
+      d.x.prisma.tenant.accountDeletionRequest.update({
+        where: { id: request.id },
+        data: {
+          requestedAt: new Date(Date.now() - 31 * 86_400_000),
+          effectiveAt: new Date(Date.now() - 86_400_000),
+        },
+      }),
+    );
+    await d.x.asManager(s.c, () =>
+      deletion.erase(request.id, scopePhrase(erased.id)),
+    );
+    expect(
+      code(await unitVisits(await fresh(erased.id), s.unit.id).expect(401)),
+    ).toBe('UNAUTHENTICATED');
   });
 });

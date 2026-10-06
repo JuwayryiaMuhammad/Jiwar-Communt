@@ -36,7 +36,7 @@ After 5.1 alone, maintenance works end to end with manual assignment. 5.2 and 5.
   - A resident is both.
   - A dispatcher may open a ticket on a resident's behalf. The reporter must be someone who could have opened it themselves (`REPORTER_NOT_ELIGIBLE`), it is audited, and the reporter is told.
 - **Priority:** normal, urgent or emergency. The category's default applies when none is chosen. A dispatcher may change it with a reason code (audited).
-  - An emergency, at creation or by a change, sends a **critical** notification to every `tickets.dispatch` holder.
+  - An emergency, at creation or by a change, sends a **critical** notification to every active `tickets.dispatch` holder except the account that performed the action.
 - **Number:** `MT-000123`. It comes from the compound's `ticket_counters` row through `INSERT … ON CONFLICT DO UPDATE … RETURNING` in the creating transaction. The row lock serializes creations, a rollback gives the number back, and a unique index backs it. Numbers are distinct and grow; gaps are tolerated, duplicates never.
 - **Two statuses**, tied together by CHECKs:
   - `status`: new → assigned → in_progress ⇄ on_hold → completed → closed, or cancelled;

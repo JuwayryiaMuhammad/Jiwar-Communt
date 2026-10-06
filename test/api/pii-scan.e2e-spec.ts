@@ -1,3 +1,4 @@
+import { DelegationsService } from '../../src/community/households/delegations.service';
 import { HouseholdsService } from '../../src/community/households/households.service';
 import { RegistrationService } from '../../src/community/residents/registration.service';
 import { WorkersService } from '../../src/community/workers/workers.service';
@@ -32,10 +33,15 @@ import { buildWorld, type World } from './world';
 const born = (y: number, m: number, d: number) =>
   new Date(Date.UTC(y, m - 1, d));
 const iso = (d: Date) => d.toISOString().slice(0, 10);
+/** A name's first word: what first-name views show. */
+const first = (fullName?: string) => fullName?.split(' ')[0] ?? '';
 
 interface Someone {
   id: string;
-  /** Checked for the guard, who sees no resident's name (ADR 0028). */
+  /**
+   * Checked for the guard, who sees no resident's name (ADR 0028), and for
+   * the landlord and the ender, who see no household's (ADR 0016, 0020).
+   */
   fullName?: string;
   phone: string;
   email: string;
@@ -71,7 +77,7 @@ describe('API v0 — PII leak scan', () => {
     const person = (y: number, m: number, d: number) => {
       const birth = born(y, m, d);
       return {
-        fullName: `Pii ${uniqueSuffix()}`,
+        fullName: `Pii${uniqueSuffix()} Person`,
         idDocumentType: 'national_id' as const,
         idDocumentNumber: nationalIdFor(birth),
         phone: uniquePhone(),
@@ -136,6 +142,86 @@ describe('API v0 — PII leak scan', () => {
       doc: fp.idDocumentNumber,
       birthDate: fp.birthDate,
     };
+    // The household of the unit the landlord rents out (ADR 0016, 0020):
+    // the tenant is its primary; a co-tenant, a family member, a minor and
+    // a domestic worker live there too, and the tenant delegates to the
+    // family member. The landlord sees none of them; nor does the ender,
+    // who lived there and left (below).
+    const asTenant = <T>(fn: () => Promise<T>) =>
+      c.as(a, { id: tenant.id, type: 'resident' }, fn);
+    const coTenant = await resident(person(1988, 4, 4), [
+      { unitId: rented.id, occupancyType: 'tenant' },
+    ]);
+    const rp = person(1986, 6, 6);
+    const rentedJoined = await c.joinFamily(
+      a,
+      rented.id,
+      { id: tenant.id },
+      {
+        fullName: rp.fullName,
+        idDocumentNumber: rp.idDocumentNumber,
+        phone: rp.phone,
+        email: rp.email,
+      },
+    );
+    const rentedFamily: Someone = {
+      id: rentedJoined.accountId,
+      fullName: rp.fullName,
+      phone: rp.phone,
+      email: rp.email,
+      doc: rp.idDocumentNumber,
+      birthDate: rp.birthDate,
+    };
+    const mp = person(2017, 3, 9);
+    const rentedMinor = await asTenant(() =>
+      h.moduleRef.get(HouseholdsService).addMinor(rented.id, {
+        fullName: mp.fullName,
+        idDocumentType: 'national_id',
+        idDocumentNumber: mp.idDocumentNumber,
+        relation: 'child',
+      }),
+    );
+    const minor: Someone = {
+      id: rentedMinor.id,
+      fullName: mp.fullName,
+      phone: '',
+      email: '',
+      doc: mp.idDocumentNumber,
+      birthDate: mp.birthDate,
+    };
+    const rwp = person(1984, 1, 21);
+    const rentedEngagement = await asTenant(() =>
+      h.moduleRef.get(WorkersService).register(rented.id, {
+        fullName: rwp.fullName,
+        idDocumentType: 'national_id',
+        idDocumentNumber: rwp.idDocumentNumber,
+        phone: rwp.phone,
+        capacity: 'live_in',
+      }),
+    );
+    await manager(() =>
+      h.moduleRef
+        .get(WorkersService)
+        .review(rentedEngagement.engagementId, 'approve'),
+    );
+    const rentedWorker: Someone = {
+      id: '',
+      fullName: rwp.fullName,
+      phone: rwp.phone,
+      email: '',
+      doc: rwp.idDocumentNumber,
+      birthDate: rwp.birthDate,
+    };
+    await asTenant(() =>
+      h.moduleRef
+        .get(DelegationsService)
+        .create(
+          rented.id,
+          rentedFamily.id,
+          ['workers'],
+          new Date(Date.now() + 30 * 86_400_000),
+        ),
+    );
     const leaving = await resident(person(1959, 8, 8), [
       { unitId: spare.id, occupancyType: 'owner' },
     ]);
@@ -200,10 +286,28 @@ describe('API v0 — PII leak scan', () => {
         text: 'PII-NOTE-hold',
       }),
     );
+    // The ender lived in the rented unit, opened a ticket there and left.
+    // The tenant wrote in its thread before the end (the ender still reads
+    // that, ADR 0032) and after it (the ender does not).
     const ender = await resident(person(1977, 3, 3), [
-      { unitId: spare.id, occupancyType: 'tenant' },
+      { unitId: rented.id, occupancyType: 'tenant' },
     ]);
-    const enderOccupancy = (await c.occupancies(a, spare.id)).find(
+    const oldTicket = await c.as(a, { id: ender.id, type: 'resident' }, () =>
+      h.moduleRef.get(TicketsService).create({
+        unitId: rented.id,
+        categoryId: w.aCategoryId,
+        description: 'PII-OLD-description',
+      }),
+    );
+    await manager(() =>
+      h.moduleRef.get(DispatchService).assign(oldTicket.id, a.ids.technician),
+    );
+    await asTenant(() =>
+      h.moduleRef
+        .get(MessagesService)
+        .post(oldTicket.id, 'resident', 'PII-THREAD-before'),
+    );
+    const enderOccupancy = (await c.occupancies(a, rented.id)).find(
       (o) => o.accountId === ender.id,
     )!;
     await manager(() =>
@@ -277,7 +381,27 @@ describe('API v0 — PII leak scan', () => {
     const parcelCode = h.moduleRef
       .get(ParcelTokens)
       .secretOf(a.tenantId, parcelHolder.id, parcelHolder.attempt).code;
-    const people = [primary, landlord, tenant, family, leaving, ender, worker];
+    /** Who lives in the landlord's rented unit now. */
+    const rentedHousehold = [
+      tenant,
+      coTenant,
+      rentedFamily,
+      minor,
+      rentedWorker,
+    ];
+    const people = [
+      primary,
+      landlord,
+      tenant,
+      family,
+      leaving,
+      ender,
+      worker,
+      coTenant,
+      rentedFamily,
+      minor,
+      rentedWorker,
+    ];
     // A resident's entry secret (ADR 0031): shown once, in no GET.
     const entry = (
       await call(w, 'POST', '/me/entry-credentials', {
@@ -442,6 +566,36 @@ describe('API v0 — PII leak scan', () => {
     const windowMarks = [visitStart.toISOString(), visitEnd.toISOString()];
     const otherTechnician = await gateHelpers(h).guard(a, 'technician');
 
+    // After the ender left: the tenant writes again, and the ender's old
+    // ticket gets a visit, confirmed, the co-tenant allowing entry while
+    // nobody is home and the worker receiving the technician. The ender is
+    // told none of it and reaches none of it (ADR 0032, 0034).
+    await asTenant(() =>
+      messages.post(oldTicket.id, 'resident', 'PII-THREAD-after'),
+    );
+    const oldStart = new Date(Date.now() + 3 * 86_400_000);
+    oldStart.setUTCMilliseconds(555);
+    const oldEnd = new Date(oldStart.getTime() + 60 * 60_000);
+    const oldVisit = await asTech(a.ids.technician, () =>
+      visitsService.propose(
+        oldTicket.id,
+        { startsAt: oldStart, endsAt: oldEnd },
+        'technician',
+      ),
+    );
+    await asTenant(() =>
+      visitsService.confirm(oldTicket.id, oldVisit.id, 'resident'),
+    );
+    await c.as(a, { id: coTenant.id, type: 'resident' }, () =>
+      consentService.grant(oldTicket.id, oldVisit.id),
+    );
+    await asTenant(() =>
+      consentService.setReceiver(oldTicket.id, oldVisit.id, {
+        engagementId: rentedEngagement.engagementId,
+      }),
+    );
+    windowMarks.push(oldStart.toISOString(), oldEnd.toISOString());
+
     const params: Record<string, string> = {
       '/tickets/{id}': ticket.id,
       '/technician/tickets/{id}': ticket.id,
@@ -485,6 +639,28 @@ describe('API v0 — PII leak scan', () => {
       '/worker-engagements/{id}/attendance': registered.engagementId,
       '/platform/tenants/{id}': a.tenantId,
     };
+    /**
+     * The landlord and the ender ask about their own unit: the one rented
+     * out, the one they left — its unit routes, the ender's old ticket, the
+     * household's member and worker.
+     */
+    const rentedParams: Record<string, string> = {
+      ...Object.fromEntries(
+        Object.keys(params)
+          .filter((path) => /\/units\/\{(id|unitId)\}/.test(path))
+          .map((path) => [path, rented.id]),
+      ),
+      '/tickets/{id}': oldTicket.id,
+      '/tickets/{id}/messages': oldTicket.id,
+      '/tickets/{id}/visits': oldTicket.id,
+      '/household/members/{id}/permissions': rentedJoined.memberId,
+      '/worker-engagements/{id}': rentedEngagement.engagementId,
+      '/worker-engagements/{id}/attendance': rentedEngagement.engagementId,
+    };
+    const paramsOf = (name: string) =>
+      name === 'landlord' || name === 'ender'
+        ? { ...params, ...rentedParams }
+        : params;
     /** Where a manager may see a birth date: one person's detail. */
     const managerDetails = new Set([
       '/residents/{id}',
@@ -550,7 +726,7 @@ describe('API v0 — PII leak scan', () => {
           ? fill(
               r.path,
               Object.fromEntries(
-                paramNames(r.path).map((n) => [n, params[r.path]]),
+                paramNames(r.path).map((n) => [n, paramsOf(name)[r.path]]),
               ),
             )
           : r.path;
@@ -594,6 +770,33 @@ describe('API v0 — PII leak scan', () => {
             w.bTicketId,
           ])
             if (found(s)) leaks.push(`${name} ${r.path}: ${s}`);
+        }
+        // The household (ADR 0016, 0020): a landlord never sees it, and the
+        // ender sees nothing of it after leaving (ADR 0021): no name, first
+        // name, phone or email of anyone who lives in the rented unit. The
+        // one exception is ADR 0032's: the ender's own old ticket's thread,
+        // up to the end, names its senders by first name.
+        if (name === 'landlord' || name === 'ender') {
+          const exempt =
+            name === 'ender' && r.path === '/tickets/{id}/messages'
+              ? first(tenant.fullName)
+              : '';
+          const theirs =
+            name === 'landlord' ? [...rentedHousehold, ender] : rentedHousehold;
+          for (const p of theirs)
+            for (const [what, v] of [
+              ['name', p.fullName ?? ''],
+              ['first name', first(p.fullName)],
+              ['phone', p.phone],
+              ['email', p.email],
+            ] as const)
+              if (v !== exempt && found(v))
+                leaks.push(`${name} ${r.path}: a household ${what}`);
+          // What the household wrote after the end, wherever it would show.
+          if (found('PII-THREAD-after'))
+            leaks.push(`${name} ${r.path}: a message after the end`);
+          if (name === 'landlord' && found('PII-THREAD-before'))
+            leaks.push(`${name} ${r.path}: the tenant's message`);
         }
         // Visits (ADR 0034): a window, a consent and a receiver tell when a
         // home is empty. Never a guard, a landlord (who does not live
@@ -648,6 +851,40 @@ describe('API v0 — PII leak scan', () => {
       }
     }
     expect(leaks).toEqual([]);
+
+    // The landlord and the ender, positively: they asked about their own
+    // unit and were refused or answered without the household; the ender
+    // reads its old thread up to the end, the tenant's first name included;
+    // and the household is really there for the tenant who lives with it.
+    expect(seen.get('landlord /units/{id}')).toContain(
+      `"code":"${rented.code}"`,
+    );
+    for (const name of ['landlord', 'ender'])
+      expect(seen.get(`${name} /me/units/{unitId}/visits`)).toContain(
+        'VISITS_NOT_ALLOWED',
+      );
+    expect(seen.get('ender /tickets/{id}/visits')).toContain(
+      'TICKETS_NOT_ALLOWED',
+    );
+    expect(seen.get('ender /tickets/{id}')).toContain('PII-OLD-description');
+    const enderThread = seen.get('ender /tickets/{id}/messages')!;
+    expect(enderThread).toContain('PII-THREAD-before');
+    expect(enderThread).toContain(`"firstName":"${first(tenant.fullName)}"`);
+    const tenantToken = await w.tokenFor(a, tenant.id, 'resident');
+    const asLiving = async (path: string) =>
+      (await call(w, 'GET', path, { token: tenantToken }).expect(200)).text;
+    const members = await asLiving(`/units/${rented.id}/household`);
+    for (const p of [rentedFamily, minor])
+      expect(members).toContain(p.fullName);
+    expect(await asLiving(`/units/${rented.id}/workers`)).toContain(
+      rentedWorker.fullName,
+    );
+    const livingVisits = await asLiving(`/tickets/${oldTicket.id}/visits`);
+    for (const p of [coTenant, rentedWorker])
+      expect(livingVisits).toContain(`"firstName":"${first(p.fullName)}"`);
+    expect(await asLiving(`/tickets/${oldTicket.id}/messages`)).toContain(
+      'PII-THREAD-after',
+    );
 
     // A file's read URL: its owner's own GET, nowhere else; a worker's
     // photo: the manager's engagement detail only (not residents' lists).

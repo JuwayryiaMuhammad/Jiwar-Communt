@@ -1,5 +1,6 @@
 import type { Row } from '../registry';
 import { APPROVALS_ROUTES } from './approvals';
+import { ASSIST_ROUTES } from './assist';
 import { ATTENDANCE_ROUTES } from './attendance';
 import { CONSENTS_ROUTES } from './consents';
 import { ACCOUNTS_ROUTES } from './accounts';
@@ -82,4 +83,5 @@ export const ROUTES: Row[] = [
   ...CONSENTS_ROUTES,
   ...SECURITY_ROUTES,
   ...EXPORTS_ROUTES,
+  ...ASSIST_ROUTES,
 ];

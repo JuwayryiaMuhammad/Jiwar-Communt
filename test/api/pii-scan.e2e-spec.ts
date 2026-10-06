@@ -667,6 +667,8 @@ describe('API v0 — PII leak scan', () => {
       '/platform/tenants/{id}': a.tenantId,
       // ADR 0036: nobody's ready export (the export suite reads a real one).
       '/me/data-exports/{id}/download': request.id,
+      '/accounts/{id}/notification-preferences': primary.id,
+      '/accounts/{id}/consents': primary.id,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

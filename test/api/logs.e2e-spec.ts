@@ -19,6 +19,8 @@ describe('API v0 — logs', () => {
     responseCode: '87654321',
     bearer: 'eyJ-SECRET-BEARER',
     cookie: 'session=SECRET-COOKIE',
+    // The app's install id identifies a device (ADR 0036).
+    installId: '0192a5f0-1c2b-7d3e-8f40-5ec4e7000001',
   };
 
   beforeAll(async () => {
@@ -62,6 +64,7 @@ describe('API v0 — logs', () => {
         'content-type': 'application/json',
         authorization: `Bearer ${SECRETS.bearer}`,
         cookie: SECRETS.cookie,
+        'x-jiwar-install-id': SECRETS.installId,
       },
       body: JSON.stringify({ token: SECRETS.requestToken, code: '123456' }),
     });

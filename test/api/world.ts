@@ -11,6 +11,7 @@ import { RegistrationService } from '../../src/community/residents/registration.
 import { WorkersService } from '../../src/community/workers/workers.service';
 import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
+import { LoginAlerts } from '../../src/core/auth/login-alerts';
 import { Notifier } from '../../src/core/notifications/notifier';
 import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
 import { ApprovalsService } from '../../src/gate/approvals/approvals.service';
@@ -123,6 +124,8 @@ export interface World {
   bUnitId: string;
   /** One of A's categories, for valid ticket bodies. */
   aCategoryId: string;
+  /** A device B's owner logged in from (ADR 0036). */
+  bDeviceId: string;
   /** One of B's specialties (seeded, ADR 0033). */
   bSpecialtyId: string;
   /** One of A's specialties, for valid bodies. */
@@ -443,6 +446,17 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       where: { key: 'plumbing' },
     }),
   );
+  await h.moduleRef
+    .get(LoginAlerts)
+    .recordLogin(
+      { accountId: b.ids.owner, tenantId: b.tenantId },
+      { userAgent: 'World/1.0 (Linux)' },
+    );
+  const bDevice = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.knownDevice.findFirstOrThrow({
+      where: { accountId: b.ids.owner },
+    }),
+  );
   const aSpecialty = await helpers.asManager(a, () =>
     helpers.prisma.tenant.specialty.findFirstOrThrow({
       where: { key: 'plumbing' },
@@ -450,6 +464,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
   );
   return {
     bSpecialtyId: bSpecialty.id,
+    bDeviceId: bDevice.id,
     aSpecialtyId: aSpecialty.id,
     bCategoryId: bCategory.id,
     bTicketId: bTicket.id,

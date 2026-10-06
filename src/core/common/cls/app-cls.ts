@@ -39,8 +39,9 @@ export interface AppClsStore extends ClsStore {
     claimed: boolean;
   };
   /**
-   * Explicit audit actor, set ONLY by trusted entry points (seed, CLIs) —
-   * never from request data.
+   * Explicit audit actor, set ONLY by trusted entry points (seed, CLIs, and
+   * a verified email action token, which acts as the account it was sent
+   * to; ADR 0036) — never from unverified request data.
    */
   auditActor?: {
     type: 'account' | 'platform_admin' | 'system';

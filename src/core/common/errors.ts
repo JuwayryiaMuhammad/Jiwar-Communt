@@ -203,6 +203,10 @@ export const ErrorCode = {
   STEP_UP_REQUIRED: 'STEP_UP_REQUIRED',
   /** A wrong, used or expired step-up code (403). */
   STEP_UP_CODE_INVALID: 'STEP_UP_CODE_INVALID',
+  /** Unknown, or another account's (ADR 0036). */
+  DEVICE_NOT_FOUND: 'DEVICE_NOT_FOUND',
+  /** An email link that is unknown, expired, used up or for something else (404). */
+  ACTION_TOKEN_INVALID: 'ACTION_TOKEN_INVALID',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

@@ -280,6 +280,10 @@ export const SECURITY_EVENTS = [
   'step_up.requested',
   'step_up.verified',
   'step_up.failed',
+  // A login from a device never seen on the account (ADR 0036).
+  'login.new_device',
+  // The account said "not me" about it: frozen, every session ended.
+  'account.not_me',
 ] as const;
 
 export type SecurityEventName = (typeof SECURITY_EVENTS)[number];

@@ -145,4 +145,6 @@ export const R1_COVERAGE: readonly string[] = [
   'step_up.requested',
   'step_up.verified',
   'step_up.failed',
+  'login.new_device',
+  'account.not_me',
 ];

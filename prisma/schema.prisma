@@ -201,6 +201,8 @@ enum OccupancyEndReason {
 
 enum AccountFreezeReason {
   phone_reassigned
+  /// "Not me" on an unusual login (ADR 0036): the phone stays.
+  login_not_me
 
   @@map("account_freeze_reason")
 }
@@ -459,6 +461,7 @@ model Tenant {
   settings          TenantSettings?
   registrationLinks RegistrationLink[]
   visitorPassLinks  VisitorPassLink[]
+  actionTokens      ActionToken[]
   ticketCategories  TicketCategory[]
   maintenance       MaintenanceSettings?
   ticketCounter     TicketCounter?
@@ -618,6 +621,41 @@ model VisitorPassLink {
   @@map("visitor_pass_links")
 }
 
+/// What an email action token is for (ADR 0036).
+enum ActionTokenPurpose {
+  /// "Not me" on an unusual-login alert: single use.
+  not_me
+  /// An assisted personal-data export's download link.
+  export_download
+
+  @@map("action_token_purpose")
+}
+
+/// Global pointer from a link in an email to what it acts on (ADR 0036),
+/// read before any compound is known — like `invite_tokens`. Stores NO
+/// secret and no hash of one: the token is `<id>.<mac>`, the mac derived
+/// from the id with IDENTIFIER_PEPPER, so only the server can make or check
+/// it. Ids only, no personal data.
+model ActionToken {
+  id         String             @id @db.Uuid
+  tenantId   String             @map("tenant_id") @db.Uuid
+  accountId  String             @map("account_id") @db.Uuid
+  purpose    ActionTokenPurpose
+  /// The device (not_me) or the export (export_download).
+  subjectId  String             @map("subject_id") @db.Uuid
+  expiresAt  DateTime           @map("expires_at") @db.Timestamptz(3)
+  consumedAt DateTime?          @map("consumed_at") @db.Timestamptz(3)
+  /// Successful uses (an export's link allows a few, ADR 0036).
+  uses       Int                @default(0)
+  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onUpdate: Restrict)
+
+  @@index([accountId])
+  @@index([expiresAt])
+  @@map("action_tokens")
+}
+
 /// Transactional outbox (ADR 0019): written in the transaction of the action
 /// that causes the message, delivered at least once by OutboxProcessor.
 /// Global, like security_events: tenant_id is a pointer. Sent rows are
@@ -732,6 +770,7 @@ model Account {
   notificationSettings  NotificationSettings?     @relation("NotificationSettingsAccount")
   channelPrefs          NotificationChannelPref[] @relation("ChannelPrefAccount")
   consents              AccountConsent[]          @relation("ConsentAccount")
+  knownDevices          KnownDevice[]             @relation("KnownDeviceAccount")
   idempotencyKeys       IdempotencyKey[]          @relation("IdempotencyAccount")
   technicianSpecialties TechnicianSpecialty[]     @relation("TechnicianSpecialtyAccount")
   availability          TechnicianAvailability?   @relation("TechnicianAvailabilityAccount")
@@ -1263,7 +1302,8 @@ model AccountFreeze {
   tenantId          String              @map("tenant_id") @db.Uuid
   accountId         String              @map("account_id") @db.Uuid
   reason            AccountFreezeReason
-  releasedPhoneHash String              @map("released_phone_hash") @db.Char(64)
+  /// The released number's HMAC; only when the phone went to someone else.
+  releasedPhoneHash String?             @map("released_phone_hash") @db.Char(64)
   note              String?
   frozenAt          DateTime            @default(now()) @map("frozen_at") @db.Timestamptz(3)
   frozenById        String?             @map("frozen_by") @db.Uuid
@@ -1487,6 +1527,39 @@ model AccountConsent {
 
   @@id([tenantId, accountId, code])
   @@map("account_consents")
+}
+
+/// Where an account logs in from (ADR 0036): a device never seen on the
+/// account raises an alert. Only a keyed hash and a coarse type: no user
+/// agent, no IP. The first device recorded is the baseline and raises none.
+enum KnownDeviceSource {
+  /// The app's install id (`X-Jiwar-Install-Id`).
+  app
+  /// A browser: family and OS from the user agent.
+  web
+
+  @@map("known_device_source")
+}
+
+model KnownDevice {
+  id          String            @id @db.Uuid
+  tenantId    String            @map("tenant_id") @db.Uuid
+  accountId   String            @map("account_id") @db.Uuid
+  /// IdentifierHasher.hashDevice: bound to the account.
+  deviceHash  String            @map("device_hash") @db.Char(64)
+  source      KnownDeviceSource
+  /// ios, android, desktop_web, mobile_web or unknown.
+  deviceType  String            @map("device_type")
+  firstSeenAt DateTime          @default(now()) @map("first_seen_at") @db.Timestamptz(3)
+  lastSeenAt  DateTime          @default(now()) @map("last_seen_at") @db.Timestamptz(3)
+  /// The account said "not me" about it.
+  disownedAt  DateTime?         @map("disowned_at") @db.Timestamptz(3)
+
+  account Account @relation("KnownDeviceAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
+
+  @@unique([tenantId, accountId, deviceHash])
+  @@unique([tenantId, id])
+  @@map("known_devices")
 }
 
 /// Idempotent writes (ADR 0028): claimed inside the action's transaction;

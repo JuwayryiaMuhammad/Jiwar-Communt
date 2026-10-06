@@ -5,7 +5,8 @@ import type { Options } from 'pino-http';
  * pino-http options for the app (and the test that proves them). Request
  * and response BODIES are never serialized, so a secret shown once (an
  * access code, an invite or link token, session tokens) never reaches a
- * log: they travel only in bodies. Credentials in headers are redacted.
+ * log: they travel only in bodies. Credentials in headers, and the app's
+ * install id, are redacted.
  */
 export function httpLogOptions(opts: { level: string; env: string }): Options {
   return {
@@ -19,7 +20,12 @@ export function httpLogOptions(opts: { level: string; env: string }): Options {
       res.setHeader('x-request-id', id);
       return id;
     },
-    redact: ['req.headers.authorization', 'req.headers.cookie'],
+    // The app's install id identifies a device (ADR 0036): never logged.
+    redact: [
+      'req.headers.authorization',
+      'req.headers.cookie',
+      'req.headers["x-jiwar-install-id"]',
+    ],
     autoLogging: opts.env !== 'test',
     transport:
       opts.env === 'development'

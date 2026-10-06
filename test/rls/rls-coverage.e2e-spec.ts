@@ -23,6 +23,9 @@ const GLOBAL_WITH_TENANT_ID = [
   'registration_links',
   // Resolves a visitor's link before the tenant is known (ADR 0030); no PII.
   'visitor_pass_links',
+  // Resolves an email's action link before the tenant is known (ADR 0036);
+  // ids only, no secret.
+  'action_tokens',
 ];
 
 const EXPECTED =

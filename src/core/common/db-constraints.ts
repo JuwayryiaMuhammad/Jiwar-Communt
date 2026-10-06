@@ -107,4 +107,8 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   parcel_credentials_one_holder: null,
   // Checked under the parcel's lock (PARCEL_DELEGATE_EXISTS first).
   parcel_credentials_one_live_delegate: null,
+  // Unusual logins (ADR 0036): recorded under the account's row lock, so a
+  // violation is a race; server-generated ids.
+  known_devices_tenant_id_account_id_device_hash_key: null,
+  known_devices_tenant_id_id_key: null,
 };

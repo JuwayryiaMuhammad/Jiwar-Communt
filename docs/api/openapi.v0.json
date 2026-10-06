@@ -236,6 +236,18 @@
         ],
         "type": "string"
       },
+      "ActionTokenDto": {
+        "properties": {
+          "token": {
+            "description": "The fragment of the link in the email. Anything that is not a live link answers 404 ACTION_TOKEN_INVALID.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
       "ActivationView": {
         "properties": {
           "missing": {
@@ -11915,7 +11927,25 @@
     "/api/v1/auth/select-account": {
       "post": {
         "operationId": "AuthController_selectAccount",
-        "parameters": [],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "user-agent",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The app sends the UUID it made at install: a login from a device never seen on the account raises an alert (ADR 0036). Browsers send none.",
+            "in": "header",
+            "name": "x-jiwar-install-id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -15811,6 +15841,35 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/me/devices/{id}/not-me": {
+      "post": {
+        "operationId": "MeDevicesController_notMeFromApp",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "security"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me/entry-credentials": {
       "get": {
         "operationId": "EntryCredentialsController_list",
@@ -17727,6 +17786,31 @@
         ],
         "tags": [
           "platform"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/not-me": {
+      "post": {
+        "operationId": "PublicNotMeController_notMeFromEmail",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActionTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "security"
         ],
         "x-stability": "draft"
       }

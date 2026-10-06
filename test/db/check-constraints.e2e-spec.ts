@@ -344,6 +344,11 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'false (false AND NULL is false); the system branch needs actor_type ' +
       'system, so an account event without an actor fails both',
   },
+  // Devices and action tokens (ADR 0036): nullable columns only under
+  // IS [NOT] NULL.
+  account_freezes_released_shape: {},
+  action_tokens_uses_nonnegative: {},
+  known_devices_device_type_known: {},
 };
 
 interface Check {

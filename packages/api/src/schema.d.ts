@@ -1572,6 +1572,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/devices/{id}/not-me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["MeDevicesController_notMeFromApp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/entry-credentials": {
         parameters: {
             query?: never;
@@ -2258,6 +2274,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["TenantsController_setStatus"];
+        trace?: never;
+    };
+    "/api/v1/public/not-me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PublicNotMeController_notMeFromEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/public/visitor-passes/lookup": {
@@ -3778,6 +3810,10 @@ export interface components {
         AccountStatus: "active" | "inactive" | "frozen" | "erased";
         /** @enum {string} */
         AccountType: "resident" | "staff" | "manager" | "family";
+        ActionTokenDto: {
+            /** @description The fragment of the link in the email. Anything that is not a live link answers 404 ACTION_TOKEN_INVALID. */
+            token: string;
+        };
         ActivationView: {
             missing: ("unitType" | "areaSqm" | "building")[];
         };
@@ -7297,7 +7333,11 @@ export interface operations {
     AuthController_selectAccount: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "user-agent": string;
+                /** @description The app sends the UUID it made at install: a login from a device never seen on the account raises an alert (ADR 0036). Browsers send none. */
+                "x-jiwar-install-id"?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -9506,6 +9546,25 @@ export interface operations {
             };
         };
     };
+    MeDevicesController_notMeFromApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     EntryCredentialsController_list: {
         parameters: {
             query?: never;
@@ -10573,6 +10632,27 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TenantView"];
                 };
+            };
+        };
+    };
+    PublicNotMeController_notMeFromEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionTokenDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

@@ -13,6 +13,7 @@ import {
  * work (a ticket assigned to me, a gate approval request and its reversal).
  */
 const CRITICAL_KINDS = [
+  'account.new_device_login',
   'entry_credential.issued',
   'gate.approval_requested',
   'gate.approval_reversed',

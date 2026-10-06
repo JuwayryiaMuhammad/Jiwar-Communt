@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type {
   Account,
+  AccountFreezeReason,
   AccountStatus,
   AccountType,
   IdentifierType,
@@ -334,24 +335,30 @@ export class AccountWriter {
     tx: TenantTxClient,
     accountId: string,
     reason: { code: string; text: string },
+    kind: AccountFreezeReason = 'phone_reassigned',
   ): Promise<FreezeResult | null> {
     const before = await tx.account.findUnique({ where: { id: accountId } });
     if (!before) return null;
     if (before.status === 'frozen') {
       throw appError.conflict(ErrorCode.ACCOUNT_FROZEN, 'Already frozen');
     }
-    const releasedPhoneHash = this.hasher.hashIdentifier({
-      type: 'phone',
-      value: before.phone!,
-    });
+    // "Not me" on an unusual login (ADR 0036) keeps the phone: it is the
+    // login that was not theirs, not the number.
+    const releasesPhone = kind === 'phone_reassigned';
+    const releasedPhoneHash = releasesPhone
+      ? this.hasher.hashIdentifier({ type: 'phone', value: before.phone! })
+      : null;
     const account = await tx.account.update({
       where: { id: accountId },
-      data: { status: 'frozen', phone: null },
+      data: releasesPhone
+        ? { status: 'frozen', phone: null }
+        : { status: 'frozen' },
     });
     const global = this.globalDb.in(tx);
-    await global.loginIdentifier.deleteMany({
-      where: { accountId, identifierType: 'phone' },
-    });
+    if (releasesPhone)
+      await global.loginIdentifier.deleteMany({
+        where: { accountId, identifierType: 'phone' },
+      });
     await global.loginIdentifier.updateMany({
       where: { accountId },
       data: { status: 'frozen' },
@@ -374,7 +381,7 @@ export class AccountWriter {
         id: freezeId,
         tenantId: account.tenantId,
         accountId,
-        reason: 'phone_reassigned',
+        reason: kind,
         releasedPhoneHash,
         note: reason.text,
         frozenById: this.ctx.accountIdOrNull(),
@@ -385,7 +392,7 @@ export class AccountWriter {
       targetId: accountId,
       changes: diffChanges(
         { status: before.status, phone: before.phone },
-        { status: 'frozen', phone: null },
+        { status: 'frozen', phone: account.phone },
         'account.frozen',
       ),
       metadata: {
@@ -399,7 +406,11 @@ export class AccountWriter {
       id: accountId,
       tenantId: account.tenantId,
     });
-    await this.tellHolder(tx, account, ACCOUNT_EMAILS.frozen);
+    await this.tellHolder(
+      tx,
+      account,
+      releasesPhone ? ACCOUNT_EMAILS.frozen : ACCOUNT_EMAILS.frozenNotMe,
+    );
     return { account, sessionsRevoked, freezeId, afterCommit };
   }
 

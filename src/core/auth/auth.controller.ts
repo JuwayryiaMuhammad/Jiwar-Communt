@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiAcceptedResponse,
+  ApiHeader,
   ApiNoContentResponse,
   ApiOkResponse,
 } from '@nestjs/swagger';
@@ -16,6 +17,7 @@ import { ApiArea, NoStore } from '../common/http/decorators';
 import { Public } from '../common/guards/public.decorator';
 import { resolveLocale } from '../common/i18n/locale';
 import { OTP_REQUESTED_MESSAGE, AuthService } from './auth.service';
+import { INSTALL_ID_HEADER } from './devices';
 import {
   OtpRequestedView,
   OtpVerifiedView,
@@ -69,8 +71,21 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @NoStore()
   @ApiOkResponse({ type: TokensView })
-  selectAccount(@Body() dto: SelectAccountDto): Promise<TokensView> {
-    return this.auth.selectAccount(dto.loginTicket, dto.accountId);
+  @ApiHeader({
+    name: INSTALL_ID_HEADER,
+    required: false,
+    description:
+      'The app sends the UUID it made at install: a login from a device never seen on the account raises an alert (ADR 0036). Browsers send none.',
+  })
+  selectAccount(
+    @Body() dto: SelectAccountDto,
+    @Headers('user-agent') userAgent?: string,
+    @Headers(INSTALL_ID_HEADER) installId?: string,
+  ): Promise<TokensView> {
+    return this.auth.selectAccount(dto.loginTicket, dto.accountId, {
+      userAgent,
+      installId,
+    });
   }
 
   @Post('refresh')

@@ -13,6 +13,7 @@ import { communityHelpers, type Compound } from '../setup/community';
 import { API, createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { waitForOtp } from '../setup/mailpit';
 import { sessionOf } from '../api/world';
+import { LoginAlerts } from '../../src/core/auth/login-alerts';
 
 /**
  * One scenario per ADR 0036 catalog entry: actor, target, changes and
@@ -136,6 +137,52 @@ describe('Audit coverage — preferences, consents, export, deletion', () => {
       });
       covered.add(event);
     }
+  });
+
+  it('login.new_device and account.not_me — security events, the device and how', async () => {
+    const c = await x.compound('Audit R1');
+    const unit = await x.unit(c);
+    await x.resident(c, [unit.id]);
+    const p = await x.resident(c, [unit.id], 'tenant');
+    const alerts = h.moduleRef.get(LoginAlerts);
+    const who = { accountId: p.id, tenantId: c.tenantId };
+    await alerts.recordLogin(who, { userAgent: 'Audit/1.0 (Linux)' });
+    await alerts.recordLogin(who, {
+      userAgent: 'Jiwar/1.0 (iPhone)',
+      installId: '0192a5f0-1c2b-7d3e-8f40-0000000000aa',
+    });
+    const [alert] = await read.security({
+      event: 'login.new_device',
+      accountId: p.id,
+    });
+    expect(alert).toMatchObject({
+      tenantId: c.tenantId,
+      ip: null,
+      metadata: { deviceType: 'ios' },
+    });
+    covered.add('login.new_device');
+    const deviceId = (alert.metadata as { deviceId: string }).deviceId;
+    const token = await h.tokenFor({
+      sub: p.id,
+      tid: c.tenantId,
+      typ: 'resident',
+    });
+    await h
+      .http()
+      .post(`${API}/me/devices/${deviceId}/not-me`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(204);
+    const rows = await read.security({
+      event: 'account.not_me',
+      accountId: p.id,
+    });
+    expect(rows).toHaveLength(1);
+    expect(rows[0].metadata).toEqual({
+      via: 'app',
+      deviceId,
+      sessionsRevoked: 1,
+    });
+    covered.add('account.not_me');
   });
 
   describe('catalog completeness', () => {

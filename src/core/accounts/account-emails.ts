@@ -1,6 +1,6 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type { Locale } from '../common/i18n/locale';
-import { EmailTemplates } from '../mail/email-templates';
+import { EmailTemplates, type EmailDelivery } from '../mail/email-templates';
 import {
   emailPage,
   escapeHtml,
@@ -20,6 +20,28 @@ export const ACCOUNT_EMAILS = {
 } as const;
 
 type Key = (typeof ACCOUNT_EMAILS)[keyof typeof ACCOUNT_EMAILS];
+
+const SOLE: EmailDelivery = {
+  category: 'account_security',
+  critical: false,
+  soleRecord: true,
+};
+
+/**
+ * How each account email is delivered (ADR 0036). A freeze is critical
+ * (the account has no session left to read an inbox), and so is the
+ * confirmation of a deletion request. The others are the only record of
+ * their notice.
+ */
+const DELIVERY: Record<Key, EmailDelivery> = {
+  'account.frozen': { ...SOLE, critical: true },
+  'account.reactivated': SOLE,
+  'account.deletion_requested': { ...SOLE, critical: true },
+  'account.deletion_cancelled': SOLE,
+  'account.legal_hold_placed': SOLE,
+  'account.erased': SOLE,
+  'account.erasure_overdue': SOLE,
+};
 type Params = Record<string, string> & { compoundName: string };
 
 const TEXTS: Record<
@@ -128,8 +150,10 @@ export class AccountEmailTemplates implements OnModuleInit {
 
   onModuleInit(): void {
     for (const key of Object.values(ACCOUNT_EMAILS)) {
-      this.templates.register(key, (locale, p) =>
-        renderAccountEmail(key, locale, p as Params),
+      this.templates.register(
+        key,
+        (locale, p) => renderAccountEmail(key, locale, p as Params),
+        DELIVERY[key],
       );
     }
   }

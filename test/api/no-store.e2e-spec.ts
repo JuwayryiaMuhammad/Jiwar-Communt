@@ -12,7 +12,9 @@ import {
   uniquePhone,
   type HttpHarness,
 } from '../setup/http-app';
-import { waitForOtp } from '../setup/mailpit';
+import { buildExports } from '../setup/exports';
+import { waitForMessage, waitForOtp } from '../setup/mailpit';
+import { drainOutbox } from '../setup/outbox';
 import { call } from './request';
 import { ROUTES } from './routes';
 import { inviteBody, minorBody } from './routes/household';
@@ -38,6 +40,43 @@ describe('API v0 — no-store', () => {
   afterAll(() => h.close());
 
   const body = <T>(res: Response) => res.body as T;
+
+  /**
+   * An assisted export of A's tenant (ADR 0036), built, and the link its
+   * email carries (once per suite).
+   */
+  let assisted: Promise<{ token: string; email: string }> | null = null;
+  const assistedLink = () =>
+    (assisted ??= (async () => {
+      const email = (
+        await w.helpers.asManager(w.a, () =>
+          w.helpers.prisma.tenant.account.findUniqueOrThrow({
+            where: { id: w.a.ids.tenant },
+          }),
+        )
+      ).email!;
+      const since = new Date();
+      await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.dataExport.create({
+          data: {
+            id: newId(),
+            tenantId: w.a.tenantId,
+            accountId: w.a.ids.tenant,
+            requestedByAccountId: w.a.ids.manager,
+            assisted: true,
+            assistReasonCode: 'in_person',
+            delivery: 'email',
+          },
+        }),
+      );
+      await buildExports(h);
+      await drainOutbox(h);
+      const message = await waitForMessage(email, since);
+      const token = /\/a\/export#([0-9a-f-]{36}\.[0-9a-f]{64})/.exec(
+        message.Text,
+      )![1];
+      return { token, email };
+    })());
 
   /** A ticket the owner opened on their home. */
   async function aTicket(): Promise<string> {
@@ -381,6 +420,39 @@ describe('API v0 — no-store', () => {
       call(w, 'GET', `/gate/parcels/${await aParcel()}`, {
         token: w.a.tokens.guard,
       }),
+    // Personal-data export (ADR 0036): the archive's presigned URL.
+    'GET /me/data-exports/{id}/download': async () => {
+      const id = newId();
+      await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.dataExport.create({
+          data: {
+            id,
+            tenantId: w.a.tenantId,
+            accountId: w.a.ids.owner,
+            requestedByAccountId: w.a.ids.owner,
+            delivery: 'in_app',
+          },
+        }),
+      );
+      await buildExports(h);
+      return call(w, 'GET', `/me/data-exports/${id}/download`, {
+        token: w.a.tokens.owner,
+      });
+    },
+    'POST /public/data-exports/code': async () =>
+      call(w, 'POST', '/public/data-exports/code', {
+        body: { token: (await assistedLink()).token },
+      }),
+    'POST /public/data-exports/download': async () => {
+      const { token, email } = await assistedLink();
+      const since = new Date();
+      await call(w, 'POST', '/public/data-exports/code', {
+        body: { token },
+      }).expect(202);
+      return call(w, 'POST', '/public/data-exports/download', {
+        body: { token, code: await waitForOtp(email, since) },
+      });
+    },
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

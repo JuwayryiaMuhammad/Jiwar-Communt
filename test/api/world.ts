@@ -126,6 +126,8 @@ export interface World {
   aCategoryId: string;
   /** A device B's owner logged in from (ADR 0036). */
   bDeviceId: string;
+  /** A personal-data export B's owner asked for (ADR 0036). */
+  bExportId: string;
   /** One of B's specialties (seeded, ADR 0033). */
   bSpecialtyId: string;
   /** One of A's specialties, for valid bodies. */
@@ -457,6 +459,18 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       where: { accountId: b.ids.owner },
     }),
   );
+  const bExportId = newId();
+  await helpers.asManager(b, () =>
+    helpers.prisma.tenant.dataExport.create({
+      data: {
+        id: bExportId,
+        tenantId: b.tenantId,
+        accountId: b.ids.owner,
+        requestedByAccountId: b.ids.owner,
+        delivery: 'in_app',
+      },
+    }),
+  );
   const aSpecialty = await helpers.asManager(a, () =>
     helpers.prisma.tenant.specialty.findFirstOrThrow({
       where: { key: 'plumbing' },
@@ -465,6 +479,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
   return {
     bSpecialtyId: bSpecialty.id,
     bDeviceId: bDevice.id,
+    bExportId,
     aSpecialtyId: aSpecialty.id,
     bCategoryId: bCategory.id,
     bTicketId: bTicket.id,

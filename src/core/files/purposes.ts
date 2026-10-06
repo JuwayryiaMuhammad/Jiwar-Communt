@@ -4,7 +4,11 @@ import type { Permission } from '../access/permissions';
 const MB = 1024 * 1024;
 
 export const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
-export const FILE_TYPES = [...IMAGE_TYPES, 'application/pdf'] as const;
+export const FILE_TYPES = [
+  ...IMAGE_TYPES,
+  'application/pdf',
+  'application/zip',
+] as const;
 export type FileContentType = (typeof FILE_TYPES)[number];
 
 export interface FilePurposeDefinition {
@@ -23,7 +27,8 @@ export interface FilePurposeDefinition {
  * manager, who may set or replace it later. A resident's own photo is
  * uploaded by the account itself (`profile.photo`, ADR 0031). A ticket's
  * photos come from whoever opens tickets or works them (ADR 0032). A
- * parcel's photos are the guard's (`parcels.handle`, ADR 0035).
+ * parcel's photos are the guard's (`parcels.handle`, ADR 0035). An
+ * export's archive is the server's alone (ADR 0036).
  */
 export const FILE_PURPOSES = {
   worker_photo: {
@@ -32,7 +37,7 @@ export const FILE_PURPOSES = {
     uploaders: ['workers.manage', 'workers.review'],
   },
   document: {
-    types: FILE_TYPES,
+    types: [...IMAGE_TYPES, 'application/pdf'],
     maxBytes: 10 * MB,
     uploaders: ['accounts.manage'],
   },
@@ -50,6 +55,13 @@ export const FILE_PURPOSES = {
     types: IMAGE_TYPES,
     maxBytes: 5 * MB,
     uploaders: ['parcels.handle'],
+  },
+  // A personal-data export (ADR 0036): built by the server and attached to
+  // its export record; nobody uploads one.
+  data_export: {
+    types: ['application/zip'],
+    maxBytes: 512 * MB,
+    uploaders: [],
   },
 } as const satisfies Record<FilePurpose, FilePurposeDefinition>;
 

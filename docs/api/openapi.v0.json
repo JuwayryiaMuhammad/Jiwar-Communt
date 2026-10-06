@@ -1973,6 +1973,78 @@
         ],
         "type": "object"
       },
+      "DataExportStatus": {
+        "enum": [
+          "pending",
+          "building",
+          "ready",
+          "expired",
+          "failed"
+        ],
+        "type": "string"
+      },
+      "DataExportView": {
+        "properties": {
+          "assisted": {
+            "description": "Filed by the management for the account; sent to its email.",
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "description": "Downloadable until then; then the file is deleted.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "readyAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DataExportStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "requestedAt",
+          "readyAt",
+          "expiresAt",
+          "assisted"
+        ],
+        "type": "object"
+      },
+      "DataExportViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/DataExportView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "DecideDto": {
         "properties": {
           "decision": {
@@ -2846,6 +2918,23 @@
         ],
         "type": "object"
       },
+      "DownloadView": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "url": {
+            "description": "A presigned GET of the archive, valid a few minutes.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
       "EngagementDetailView": {
         "properties": {
           "capacity": {
@@ -3252,6 +3341,36 @@
         ],
         "type": "object"
       },
+      "ExportDownloadDto": {
+        "properties": {
+          "code": {
+            "description": "The code sent to the account’s email for this link.",
+            "pattern": "^\\d{6}$",
+            "type": "string"
+          },
+          "token": {
+            "description": "Anything that is not a live link answers 404 ACTION_TOKEN_INVALID.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "code"
+        ],
+        "type": "object"
+      },
+      "ExportLinkDto": {
+        "properties": {
+          "token": {
+            "description": "Anything that is not a live link answers 404 ACTION_TOKEN_INVALID.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
       "FeedbackView": {
         "properties": {
           "author": {
@@ -3303,7 +3422,8 @@
           "document",
           "resident_photo",
           "ticket_photo",
-          "parcel_photo"
+          "parcel_photo",
+          "data_export"
         ],
         "type": "string"
       },
@@ -5551,7 +5671,8 @@
               "image/jpeg",
               "image/png",
               "image/webp",
-              "application/pdf"
+              "application/pdf",
+              "application/zip"
             ],
             "type": "string"
           },
@@ -15732,6 +15853,95 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/me/data-exports": {
+      "get": {
+        "operationId": "DataExportsController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataExportViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "data-exports"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "DataExportsController_request",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataExportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "data-exports"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/data-exports/{id}/download": {
+      "get": {
+        "operationId": "DataExportsController_download",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "data-exports"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me/delegations": {
       "get": {
         "operationId": "MeUnitsController_myDelegations",
@@ -17787,6 +17997,65 @@
         "tags": [
           "platform"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/data-exports/code": {
+      "post": {
+        "operationId": "PublicDataExportsController_code",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportLinkDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "data-exports"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/data-exports/download": {
+      "post": {
+        "operationId": "PublicDataExportsController_download",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportDownloadDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "data-exports"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

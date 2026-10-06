@@ -46,6 +46,12 @@ export const AUDIT_ACTIONS = {
   // a revocation by an erasure has reason `erasure`.
   'consent.granted': { log: 'tenant', target: 'account' },
   'consent.revoked': { log: 'tenant', target: 'account' },
+  // Personal-data export (ADR 0036): ids, codes and counts, never content.
+  'data_export.requested': { log: 'tenant', target: 'data_export' },
+  'data_export.ready': { log: 'tenant', target: 'data_export' },
+  'data_export.downloaded': { log: 'tenant', target: 'data_export' },
+  'data_export.expired': { log: 'tenant', target: 'data_export' },
+  'data_export.failed': { log: 'tenant', target: 'data_export' },
   'account.erasure_overdue': {
     log: 'tenant',
     target: 'account_deletion_request',

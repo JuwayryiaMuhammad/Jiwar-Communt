@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { MaintenanceExportSections } from './export/export-sections';
 import { CommunityMaintenancePortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
 import { FilesModule } from '../core/files/files.module';
@@ -121,6 +122,7 @@ import { VisitsService } from './visits/visits.service';
     VisitsService,
     VisitConsentService,
     VisitLifecycle,
+    MaintenanceExportSections,
   ],
 })
 export class MaintenanceModule {}

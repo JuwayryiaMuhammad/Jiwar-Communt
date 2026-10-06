@@ -125,6 +125,17 @@ export const NOTIFICATION_KINDS = {
     target: 'known_device',
     params: { deviceType: {}, at: {} },
   },
+  /**
+   * The account's personal-data export is ready (ADR 0036). No link: the
+   * app downloads it with the account's own session, until `expiresAt`.
+   */
+  'data_export.ready': {
+    priority: 'normal',
+    category: 'account_security',
+    critical: false,
+    target: 'data_export',
+    params: { expiresAt: {} },
+  },
   // --------------------------------------------------------------------------
   // Maintenance (ADR 0032). The ticket number and codes only: never the
   // description, a common-area label (free text, so a common-area ticket

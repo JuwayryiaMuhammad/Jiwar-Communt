@@ -15,6 +15,8 @@ const SIGNATURES: Record<FileContentType, (b: Buffer) => boolean> = {
   'image/webp': (b) =>
     startsWith(b, ascii('RIFF')) && startsWith(b, ascii('WEBP'), 8),
   'application/pdf': (b) => startsWith(b, ascii('%PDF-')),
+  // A zip's local file header (ADR 0036; written by the server).
+  'application/zip': (b) => startsWith(b, [0x50, 0x4b, 0x03, 0x04]),
 };
 
 /**

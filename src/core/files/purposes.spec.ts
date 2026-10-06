@@ -4,13 +4,9 @@ import { FILE_PURPOSES, FILE_TYPES } from './purposes';
 import { matchesSignature } from './signatures';
 
 const migrations = '../../../prisma/migrations';
-const migration = readFileSync(
-  join(__dirname, migrations, '20261005090000_files/migration.sql'),
-  'utf8',
-);
-/** The size CHECK as it stands now (ADR 0035 recreated it). */
+/** Both CHECKs as they stand now (ADR 0036 recreated them). */
 const sizeCheck = readFileSync(
-  join(__dirname, migrations, '20261010090010_parcel_photo_size/migration.sql'),
+  join(__dirname, migrations, '20261013090510_data_exports/migration.sql'),
   'utf8',
 );
 
@@ -29,6 +25,9 @@ describe('file purposes', () => {
     expect(sizeCheck).toContain(
       `WHEN 'parcel_photo' THEN ${FILE_PURPOSES.parcel_photo.maxBytes}`,
     );
+    expect(sizeCheck).toContain(
+      `WHEN 'data_export' THEN ${FILE_PURPOSES.data_export.maxBytes}`,
+    );
     expect(sizeCheck).toContain(`ELSE ${FILE_PURPOSES.document.maxBytes} END`);
     // files_content_type_for_purpose: images for every purpose, a PDF only
     // as a document.
@@ -46,22 +45,34 @@ describe('file purposes', () => {
     expect(FILE_PURPOSES.parcel_photo.types).toEqual(
       FILE_PURPOSES.worker_photo.types,
     );
-    expect(FILE_PURPOSES.document.types).toEqual(FILE_TYPES);
-    expect(migration).toContain(
-      `"content_type" IN ('image/jpeg', 'image/png', 'image/webp')`,
+    expect(FILE_PURPOSES.document.types).toEqual([
+      ...FILE_PURPOSES.worker_photo.types,
+      'application/pdf',
+    ]);
+    expect(FILE_PURPOSES.data_export.types).toEqual(['application/zip']);
+    expect(sizeCheck).toContain(
+      `("content_type" IN ('image/jpeg', 'image/png', 'image/webp') AND "purpose" <> 'data_export')`,
     );
-    expect(migration).toContain(
+    expect(sizeCheck).toContain(
       `("content_type" = 'application/pdf' AND "purpose" = 'document')`,
+    );
+    expect(sizeCheck).toContain(
+      `("content_type" = 'application/zip' AND "purpose" = 'data_export')`,
     );
   });
 
-  it('only the four types', () => {
+  it('only the five types', () => {
     expect([...FILE_TYPES]).toEqual([
       'image/jpeg',
       'image/png',
       'image/webp',
       'application/pdf',
+      'application/zip',
     ]);
+  });
+
+  it('nobody uploads an export', () => {
+    expect(FILE_PURPOSES.data_export.uploaders).toEqual([]);
   });
 });
 
@@ -74,11 +85,13 @@ describe('matchesSignature', () => {
     Buffer.from('WEBPVP8 '),
   ]);
   const pdf = Buffer.from('%PDF-1.4\n');
+  const zip = Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x14, 0]);
   const samples = {
     'image/png': png,
     'image/jpeg': jpeg,
     'image/webp': webp,
     'application/pdf': pdf,
+    'application/zip': zip,
   } as const;
 
   it('accepts each type only with its own bytes', () => {

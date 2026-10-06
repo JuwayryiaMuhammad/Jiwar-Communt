@@ -771,6 +771,7 @@ model Account {
   channelPrefs          NotificationChannelPref[] @relation("ChannelPrefAccount")
   consents              AccountConsent[]          @relation("ConsentAccount")
   knownDevices          KnownDevice[]             @relation("KnownDeviceAccount")
+  dataExports           DataExport[]              @relation("DataExportAccount")
   idempotencyKeys       IdempotencyKey[]          @relation("IdempotencyAccount")
   technicianSpecialties TechnicianSpecialty[]     @relation("TechnicianSpecialtyAccount")
   availability          TechnicianAvailability?   @relation("TechnicianAvailabilityAccount")
@@ -1562,6 +1563,61 @@ model KnownDevice {
   @@map("known_devices")
 }
 
+/// A personal-data export (ADR 0036).
+enum DataExportStatus {
+  pending
+  building
+  ready
+  expired
+  failed
+
+  @@map("data_export_status")
+}
+
+/// Where a ready export goes: the account's own app, or (assisted) only
+/// the account's own email.
+enum DataExportDelivery {
+  in_app
+  email
+
+  @@map("data_export_delivery")
+}
+
+/// A personal-data export (ADR 0036): built in the background into the
+/// private bucket, downloadable for 7 days, then deleted. One active
+/// (pending or building) per account; at most one request a day.
+model DataExport {
+  id                   String             @id @db.Uuid
+  tenantId             String             @map("tenant_id") @db.Uuid
+  accountId            String             @map("account_id") @db.Uuid
+  status               DataExportStatus   @default(pending)
+  requestedAt          DateTime           @default(now()) @map("requested_at") @db.Timestamptz(3)
+  /// The account itself, or the manager who filed it (assisted).
+  requestedByAccountId String             @map("requested_by") @db.Uuid
+  assisted             Boolean            @default(false)
+  assistReasonCode     String?            @map("assist_reason_code")
+  delivery             DataExportDelivery
+  attempts             Int                @default(0)
+  /// While building: the build's lease.
+  lockedUntil          DateTime?          @map("locked_until") @db.Timestamptz(3)
+  /// The object being built (`t/<tenant>/<object_id>`): named here until the
+  /// file row exists, so it never outlives what names it.
+  objectId             String?            @map("object_id") @db.Uuid
+  fileId               String?            @map("file_id") @db.Uuid
+  readyAt              DateTime?          @map("ready_at") @db.Timestamptz(3)
+  expiresAt            DateTime?          @map("expires_at") @db.Timestamptz(3)
+  endedAt              DateTime?          @map("ended_at") @db.Timestamptz(3)
+  failureCode          String?            @map("failure_code")
+
+  account Account     @relation("DataExportAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
+  file    StoredFile? @relation("DataExportFile", fields: [tenantId, fileId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, accountId, requestedAt])
+  @@index([tenantId, status])
+  @@map("data_exports")
+}
+
 /// Idempotent writes (ADR 0028): claimed inside the action's transaction;
 /// the body is stored after the response and re-rendered from the
 /// resource when lost. Purged after `expires_at` (24 h).
@@ -1774,6 +1830,8 @@ enum FilePurpose {
   resident_photo
   ticket_photo
   parcel_photo
+  /// A personal-data export's archive (ADR 0036): written by the server.
+  data_export
 
   @@map("file_purpose")
 }
@@ -1805,6 +1863,7 @@ model StoredFile {
 
   workers  DomesticWorker[]   @relation("WorkerPhoto")
   accounts Account[]          @relation("AccountPhoto")
+  exports  DataExport[]       @relation("DataExportFile")
   tickets  TicketAttachment[] @relation("AttachmentFile")
   parcelPhotos         Parcel[]           @relation("ParcelPhoto")
   parcelHandoverPhotos Parcel[]           @relation("ParcelHandoverPhoto")

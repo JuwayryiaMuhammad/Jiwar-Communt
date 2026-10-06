@@ -77,20 +77,29 @@ export class MessagesService implements OnModuleInit {
     });
   }
 
-  /** The thread as `audience` may read it: no internal message for residents. */
+  /**
+   * The thread as `audience` may read it: no internal message for
+   * residents, and for one who lost `tickets` on the unit, nothing written
+   * since (ADR 0032).
+   */
   list(
     ticketId: string,
     audience: Audience,
     q: { cursor?: string; limit?: number },
   ): Promise<Page<MessageRead>> {
     return this.tenantTx.withTenantTx(async (tx) => {
-      await this.access.load(tx, ticketId, audience);
+      const ticket = await this.access.load(tx, ticketId, audience);
+      const until =
+        audience === 'resident'
+          ? await this.access.seenUntil(tx, ticket)
+          : null;
       const limit = clampLimit(q.limit);
       const rows = await tx.ticketMessage.findMany({
         where: {
           AND: [
             { ticketId },
             audience === 'resident' ? { internal: false } : {},
+            until ? { createdAt: { lt: until } } : {},
             ...PAGE.after(q.cursor),
           ],
         },

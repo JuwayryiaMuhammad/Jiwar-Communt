@@ -93,7 +93,10 @@ After 5.1 alone, maintenance works end to end with manual assignment. 5.2 and 5.
 - **Cancel** needs a reason code and is audited.
   - The reporter or creator may cancel while the ticket is `new` or `assigned`.
   - A dispatcher may cancel any time before it is closed. A cancelled completion clears `pending`.
-- Resident writes (cancel, confirm, reject, reopen, messages, photos) need `tickets` on the ticket's unit **now**, or on any unit for a common area. Reads do not.
+- Resident writes (cancel, confirm, reject, reopen, messages, photos) need `tickets` on the ticket's unit **now**, or on any unit for a common area. Reads do not, but an account that lost `tickets` on the unit sees the thread and photos only up to that moment: a former member of the household never reads what it writes after they left (ADR 0021).
+  - "That moment" is the latest end recorded: the occupancy's `ended_at`, the membership's `removed_at`, or the `tickets` grant's `revoked_at`. When none is recorded (an owner who stopped residing), they see no message and no photo.
+  - The ticket's own fields stay readable. A common-area ticket has no unit to lose.
+  - The cutoff compares an end time written by the app's clock (`new Date()`) with message and photo creation times written by the database's clock. That is fine on a single host; skew between hosts would misplace only rows written within that skew of the moment.
 
 ### Messages
 - `ticket_messages`: sender, body, `internal`, `deleted_at`.

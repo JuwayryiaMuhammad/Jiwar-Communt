@@ -307,13 +307,20 @@ export class TicketsService implements OnModuleInit {
     );
   }
 
-  /** A ticket as `audience` may see it, with its photos (presigned). */
+  /**
+   * A ticket as `audience` may see it, with its photos (presigned): for a
+   * resident who lost `tickets` on the unit, only those added before.
+   */
   detail(id: string, audience: Audience): Promise<TicketDetail> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const ticket = await this.access.load(tx, id, audience);
       const [read] = await this.reads(tx, [ticket]);
+      const until =
+        audience === 'resident'
+          ? await this.access.seenUntil(tx, ticket)
+          : null;
       const attachments = await tx.ticketAttachment.findMany({
-        where: { ticketId: id },
+        where: { ticketId: id, ...(until ? { createdAt: { lt: until } } : {}) },
         orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
       });
       const settings = await this.settings.inTx(tx);

@@ -94,7 +94,7 @@ export class TicketAccess {
   /**
    * A resident acts on a ticket only while they may still open tickets
    * there: `tickets` on its unit, or on any unit for a common area. Reading
-   * does not need it.
+   * does not need it (but see `seenUntil`).
    */
   async requireTickets(
     tx: TenantTxClient,
@@ -106,6 +106,21 @@ export class TicketAccess {
         ErrorCode.TICKETS_NOT_ALLOWED,
         'Tickets are not allowed here',
       );
+  }
+
+  /**
+   * How far a resident reader sees the ticket's thread and photos (ADR
+   * 0032): all of it while they have `tickets` on its unit (null); else
+   * only what was there before they lost it — a former member of the
+   * household never reads what the household writes after they left. A
+   * common-area ticket has no unit to lose.
+   */
+  async seenUntil(
+    tx: TenantTxClient,
+    ticket: Pick<Ticket, 'unitId'>,
+  ): Promise<Date | null> {
+    if (ticket.unitId === null) return null;
+    return this.community.ticketsLostAt(tx, this.ctx.accountId, ticket.unitId);
   }
 
   /** `tickets` on the unit, or on any unit for a common area (null). */

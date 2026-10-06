@@ -13,7 +13,8 @@ export interface VisitWorker {
 /**
  * What the maintenance domain reads from the community domain (ADR 0015,
  * 0032, 0034), and nothing else: units, who may open tickets on a unit
- * (capabilitiesFor's `tickets`), who may let a technician in while nobody
+ * (capabilitiesFor's `tickets`) and since when someone no longer may, who
+ * may let a technician in while nobody
  * is home (`visitConsent`), a unit's active domestic workers, and the
  * unit's primary. Every method takes the maintenance transaction, so the
  * answer is consistent with its write.
@@ -29,6 +30,46 @@ export class CommunityMaintenancePort {
     unitId: string,
   ): Promise<Capabilities | null> {
     return this.capabilities.placeOf(tx, accountId, unitId);
+  }
+
+  /**
+   * When the account lost `tickets` on the unit (ADR 0032), or null while it
+   * has it: the latest end recorded here — an occupancy's `ended_at`, a
+   * membership's `removed_at`, a revoked `tickets` grant's `revoked_at`.
+   * None recorded (an owner who stopped residing leaves no time on the
+   * row): the epoch, so the caller shows nothing rather than too much. Each
+   * candidate is no later than the real moment, so neither is the answer.
+   */
+  async ticketsLostAt(
+    tx: TenantTxClient,
+    accountId: string,
+    unitId: string,
+  ): Promise<Date | null> {
+    if ((await this.capabilities.placeOf(tx, accountId, unitId))?.tickets)
+      return null;
+    const occupancy = await tx.unitOccupancy.findFirst({
+      where: { unitId, accountId, status: 'ended', endedAt: { not: null } },
+      orderBy: { endedAt: 'desc' },
+      select: { endedAt: true },
+    });
+    const membership = await tx.householdMember.findFirst({
+      where: { unitId, accountId, status: 'removed', removedAt: { not: null } },
+      orderBy: { removedAt: 'desc' },
+      select: { removedAt: true },
+    });
+    const grant = await tx.householdMemberGrant.findFirst({
+      where: {
+        permission: 'tickets',
+        revokedAt: { not: null },
+        member: { unitId, accountId },
+      },
+      orderBy: { revokedAt: 'desc' },
+      select: { revokedAt: true },
+    });
+    const ends = [occupancy?.endedAt, membership?.removedAt, grant?.revokedAt]
+      .filter((d): d is Date => d instanceof Date)
+      .map((d) => d.getTime());
+    return new Date(ends.length ? Math.max(...ends) : 0);
   }
 
   /** The units where the account may open tickets now. */

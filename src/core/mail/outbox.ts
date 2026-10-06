@@ -4,6 +4,11 @@ import type { Locale } from '../common/i18n/locale';
 import { newId } from '../common/uuid';
 import { GlobalDbService } from '../database/global-db.service';
 import type { TenantTxClient } from '../database/tenant-tx.service';
+import {
+  deliveryDecision,
+  type DeliveryPrefs,
+} from '../preferences/delivery-decision';
+import { DeliveryPreferences } from '../preferences/delivery-preferences';
 import { EmailTemplates } from './email-templates';
 
 export interface OutboxEmail {
@@ -32,16 +37,43 @@ export const NO_RECIPIENT = 'NO_RECIPIENT';
  *
  * Every non-OTP email goes through here. OTP codes are sent directly: the
  * user is waiting, and can ask for a new code.
+ *
+ * A message for an account follows that account's delivery preferences
+ * (ADR 0036), decided here with the template's delivery class: sent now,
+ * held until quiet hours or a pause end (`held_at`; a pause "until resumed"
+ * parks it as `held`), or not written at all when its category is switched
+ * off. Critical templates always go. Whenever the preferences change, the
+ * account's held messages are decided again (`redecideHeld`).
  */
 @Injectable()
 export class Outbox {
   constructor(
     private readonly globalDb: GlobalDbService,
     private readonly templates: EmailTemplates,
+    private readonly preferences: DeliveryPreferences,
   ) {}
 
-  async enqueue(tx: TenantTxClient, email: OutboxEmail): Promise<string> {
+  /** The message's id; null when the account's preferences skip it. */
+  async enqueue(
+    tx: TenantTxClient,
+    email: OutboxEmail,
+    now: Date = new Date(),
+  ): Promise<string | null> {
     this.assertTemplate(email.templateKey);
+    let hold: { status: 'pending' | 'held'; nextAttemptAt: Date } | null = null;
+    if (email.recipientAccountId) {
+      const decision = deliveryDecision(
+        await this.preferences.load(tx, email.recipientAccountId),
+        this.templates.delivery(email.templateKey),
+        'email',
+        now,
+      );
+      if (decision.action === 'skip') return null;
+      if (decision.action === 'hold')
+        hold = decision.until
+          ? { status: 'pending', nextAttemptAt: decision.until }
+          : { status: 'held', nextAttemptAt: now };
+    }
     const id = newId();
     await this.globalDb.in(tx).outboxMessage.create({
       data: {
@@ -53,9 +85,71 @@ export class Outbox {
         recipient: email.recipient,
         params: email.params as Prisma.InputJsonValue,
         recipientAccountId: email.recipientAccountId ?? null,
+        ...(hold
+          ? {
+              status: hold.status,
+              nextAttemptAt: hold.nextAttemptAt,
+              heldAt: now,
+            }
+          : {}),
       },
     });
     return id;
+  }
+
+  /**
+   * The account's preferences changed (in this transaction): every message
+   * they held and nobody has tried yet is decided again — released now,
+   * held until the new end, or deleted when its category is now off. A
+   * pause turned off therefore releases its mail at once.
+   */
+  async redecideHeld(
+    tx: TenantTxClient,
+    accountId: string,
+    prefs: DeliveryPrefs,
+    now: Date = new Date(),
+  ): Promise<number> {
+    const global = this.globalDb.in(tx);
+    const held = await global.outboxMessage.findMany({
+      where: {
+        recipientAccountId: accountId,
+        heldAt: { not: null },
+        status: { in: ['pending', 'held'] },
+        attempts: 0,
+      },
+      select: { id: true, templateKey: true },
+    });
+    let changed = 0;
+    for (const m of held) {
+      if (!this.templates.has(m.templateKey)) continue;
+      const decision = deliveryDecision(
+        prefs,
+        this.templates.delivery(m.templateKey),
+        'email',
+        now,
+      );
+      // Untouched by the processor since it was read: still never tried.
+      const untried = {
+        id: m.id,
+        status: { in: ['pending' as const, 'held' as const] },
+        attempts: 0,
+      };
+      if (decision.action === 'skip') {
+        changed += (await global.outboxMessage.deleteMany({ where: untried }))
+          .count;
+        continue;
+      }
+      const data =
+        decision.action === 'deliver'
+          ? { status: 'pending' as const, nextAttemptAt: now, heldAt: null }
+          : decision.until
+            ? { status: 'pending' as const, nextAttemptAt: decision.until }
+            : { status: 'held' as const };
+      changed += (
+        await global.outboxMessage.updateMany({ where: untried, data })
+      ).count;
+    }
+    return changed;
   }
 
   /**

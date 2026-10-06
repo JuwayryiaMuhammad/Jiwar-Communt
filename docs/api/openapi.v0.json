@@ -956,6 +956,51 @@
         ],
         "type": "object"
       },
+      "CategoryPreferenceView": {
+        "properties": {
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationCategory"
+              }
+            ]
+          },
+          "email": {
+            "type": "boolean"
+          },
+          "push": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "category",
+          "email",
+          "push"
+        ],
+        "type": "object"
+      },
+      "CategorySwitchDto": {
+        "properties": {
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationCategory"
+              }
+            ]
+          },
+          "email": {
+            "type": "boolean"
+          },
+          "push": {
+            "description": "Stored now; read once push delivery exists.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "category"
+        ],
+        "type": "object"
+      },
       "CategoryView": {
         "properties": {
           "active": {
@@ -5532,6 +5577,16 @@
         ],
         "type": "object"
       },
+      "NotificationCategory": {
+        "enum": [
+          "maintenance",
+          "gate_visitors",
+          "parcels",
+          "household",
+          "account_security"
+        ],
+        "type": "string"
+      },
       "NotificationView": {
         "properties": {
           "createdAt": {
@@ -6077,6 +6132,29 @@
         ],
         "type": "object"
       },
+      "PauseChoice": {
+        "description": "Pause everything that is not critical: held until the pause ends, never dropped. `null` ends a pause.",
+        "enum": [
+          "1h",
+          "8h",
+          "until_resumed"
+        ],
+        "type": "string"
+      },
+      "PauseView": {
+        "properties": {
+          "until": {
+            "description": "`null`: until turned back on.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "until"
+        ],
+        "type": "object"
+      },
       "PendingErasureView": {
         "properties": {
           "accountId": {
@@ -6579,6 +6657,46 @@
         ],
         "type": "object"
       },
+      "PreferencesView": {
+        "properties": {
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryPreferenceView"
+            },
+            "type": "array"
+          },
+          "pause": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PauseView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "quietHours": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuietHoursView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "timeZone": {
+            "description": "The compound’s time zone, which quiet hours are read in.",
+            "example": "Africa/Cairo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "categories",
+          "quietHours",
+          "pause",
+          "timeZone"
+        ],
+        "type": "object"
+      },
       "PresignedReadView": {
         "properties": {
           "expiresAt": {
@@ -6613,6 +6731,41 @@
         "required": [
           "priority",
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "QuietHoursDto": {
+        "properties": {
+          "end": {
+            "description": "Before `start`: the window runs past midnight.",
+            "example": "07:00",
+            "type": "string"
+          },
+          "start": {
+            "example": "22:00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "type": "object"
+      },
+      "QuietHoursView": {
+        "properties": {
+          "end": {
+            "example": "07:00",
+            "type": "string"
+          },
+          "start": {
+            "example": "22:00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "end"
         ],
         "type": "object"
       },
@@ -10141,6 +10294,37 @@
             "maximum": 30,
             "minimum": 1,
             "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "UpdatePreferencesDto": {
+        "properties": {
+          "categories": {
+            "description": "Each category at most once; absent switches keep their value.",
+            "items": {
+              "$ref": "#/components/schemas/CategorySwitchDto"
+            },
+            "type": "array"
+          },
+          "pause": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PauseChoice"
+              }
+            ],
+            "description": "Pause everything that is not critical: held until the pause ends, never dropped. `null` ends a pause.",
+            "nullable": true
+          },
+          "quietHours": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuietHoursDto"
+              }
+            ],
+            "description": "Local times in the compound's time zone. `null` removes quiet hours.",
+            "nullable": true,
+            "type": "object"
           }
         },
         "type": "object"
@@ -15565,6 +15749,68 @@
         ],
         "tags": [
           "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/notification-preferences": {
+      "get": {
+        "operationId": "PreferencesController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "preferences"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "PreferencesController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePreferencesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "preferences"
         ],
         "x-stability": "draft"
       }

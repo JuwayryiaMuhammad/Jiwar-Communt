@@ -56,14 +56,15 @@ describe('Email outbox', () => {
   /** A committed message to a fresh address; returns its id and recipient. */
   async function queued(label = 'outbox') {
     const recipient = uniqueEmail(label);
-    const id = await globalDb.transaction((tx) =>
+    // No account: no preferences apply, so it is always written.
+    const id = (await globalDb.transaction((tx) =>
       outbox.enqueue(tx, {
         templateKey: TEMPLATE,
         locale: 'en',
         recipient,
         params,
       }),
-    );
+    ))!;
     return { id, recipient };
   }
 
@@ -569,14 +570,14 @@ describe('Email outbox poller', () => {
     try {
       expect(processor.polling).toBe(true);
       const recipient = uniqueEmail('poller');
-      const id = await globalDb.transaction((tx) =>
+      const id = (await globalDb.transaction((tx) =>
         h.moduleRef.get(Outbox).enqueue(tx, {
           templateKey: TEMPLATE,
           locale: 'en',
           recipient,
           params: { compoundName: 'Poll', unitCode: 'P-1', reason: 'r' },
         }),
-      );
+      ))!;
       const deadline = Date.now() + 5000;
       let status = 'pending';
       while (status !== 'sent' && Date.now() < deadline) {
@@ -592,14 +593,14 @@ describe('Email outbox poller', () => {
     expect(processor.polling).toBe(false);
 
     // Stopped means stopped: a new message stays pending.
-    const idle = await globalDb.transaction((tx) =>
+    const idle = (await globalDb.transaction((tx) =>
       h.moduleRef.get(Outbox).enqueue(tx, {
         templateKey: TEMPLATE,
         locale: 'en',
         recipient: uniqueEmail('idle'),
         params: { compoundName: 'Poll', unitCode: 'P-1', reason: 'r' },
       }),
-    );
+    ))!;
     await new Promise((r) => setTimeout(r, 300));
     expect(
       (await globalDb.outboxMessage.findUniqueOrThrow({ where: { id: idle } }))

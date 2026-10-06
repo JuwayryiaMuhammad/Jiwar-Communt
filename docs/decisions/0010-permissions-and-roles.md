@@ -28,3 +28,6 @@ Custom roles, per-account overrides (possible later as overrides on top of the r
 ## Update (Phase 5.1, ADR 0032)
 - Two more staff system roles, `technician` (`tickets.work`) and `maintenance_supervisor` (`tickets.dispatch`), beside `guard`. "At most one default role per kind" became **exactly one `kindDefault` per kind**: a new account gets its kind's default unless it names another role of that kind (`roleKey`), and `guard` stays the staff default. `access:sync` creates missing system roles in existing compounds.
 - New permissions: `tickets.create` (resident, family), `tickets.work` (staff), `tickets.dispatch` (staff, manager; the manager has it by default) and `maintenance.manage` (manager).
+
+## Update (Phase R1, ADR 0036)
+- New permission `residents.assist` (manager kind, manager role by default): acting for a resident or family account that does not use the app.

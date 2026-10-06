@@ -38,3 +38,25 @@ API v0 is a draft (ADR 0025): it exposes every feature so it can be exercised en
 - A visit's window is checked against the database's clock: an app whose clock is off may see `VISIT_TOO_SOON` for a time that looks 15 minutes away.
 - A worker receiver is `{ engagementId }`; the app lists the unit's active workers from `GET /units/:unitId/workers`. A worker whose engagement ends stops showing as receiver at once.
 - The SLA (ADR 0034) is off in every compound until the manager turns it on in `PATCH /maintenance/sla-settings`; turning it on starts the open tickets' clocks over the next seconds (the screen re-reads), never backdated. Targets are per category and priority (`PUT /maintenance/categories/:id/sla-targets`, all three priorities at once). Residents see `sla` (due times, paused) on a ticket; dispatch also sees the states and `GET /maintenance/tickets/:id/sla-events`. The dispatch list has no SLA filter yet.
+
+- **Preferences** (ADR 0036): `GET/PATCH /me/notification-preferences` returns every category with both channels, quiet hours and the pause. `push` is stored but not read until push delivery exists. A PATCH changes only what it names; pause choices are `1h`, `8h` and `until_resumed`, and `null` ends one. The settings screen should say which notifications always arrive (critical).
+- **Consents:** `POST /me/consents/grant` takes the version of the text the app showed; a stale app gets `CONSENT_VERSION_MISMATCH` with `params.current` and should show the new text. The technician's `reporterPhone` may turn null between two reads (revoked, or the work done).
+- **Step-up:** `POST /me/step-up`, then `/verify` with the emailed code, then the sensitive action on the same session within 10 minutes. One code opens one action.
+- **Exports:** `POST /me/data-exports` answers `pending`. The archive is ready when the inbox says so (`data_export.ready`, no link), and `GET /me/data-exports/{id}/download` gives a short-lived URL to open at once. An assisted export's email link opens a web page that calls `POST /public/data-exports/code`, then `/download` with the emailed code, at most three times.
+- **Deletion:** `POST /me/deletion-request` may answer 409 `DELETION_BLOCKED` with `params.blockers`; the app should explain each and what clears it. A request can turn `queued` after its cooling-off; the managers' screen is `GET /erasures` with `POST /erasures/{id}/erase` or `/close`.
+- **Unusual login:** apps must send `X-Jiwar-Install-Id` (a UUID made once per install) on `POST /auth/select-account`, or every login looks like a browser. The alert's in-app action is `POST /me/devices/{targetId}/not-me`, and the email's is the web page below; both freeze the account and end every session, the caller's included.
+- **The email link pages (ADR 0036): a contract the web app must implement. Until it exists, the links in the unusual-login and assisted-export emails do not work.** The token is only in the fragment, and the page posts it in a body:
+  - **Routes:** `<PUBLIC_APP_URL>/a/not-me#<token>` and `<PUBLIC_APP_URL>/a/export#<token>`. The path says what the link is for; the fragment (`<uuid>.<64 hex>`) is the secret.
+  - **The fragment:** read it with `location.hash` and never send it in a URL — not as a path segment, not in a query string, not in analytics, error reports or logs. Remove it from the address bar (`history.replaceState`) once read, so it is not left in the history or shown on screen. Never put it in `localStorage`.
+  - **`not-me`:** show what will happen (the account is frozen, every session ends, the management reactivates it) and ask the person to confirm; only then `POST /api/v1/public/not-me {token}`. `204`: done; say so and that they should contact the management. The link works once.
+  - **`export`:** first `POST /api/v1/public/data-exports/code {token}` (`202`): a 6-digit code goes to the same email. Then ask for it and `POST /api/v1/public/data-exports/download {token, code}`. `200 {url, expiresAt}`: open `url` at once (it lasts minutes) and never store or share it. Each download needs a new code; the third success is the last.
+  - **Errors to handle, by `code`:**
+    - `ACTION_TOKEN_INVALID` (404), the same for an unknown, used, expired, spent or wrong-page link, and for an export that is no longer available: the link no longer works;
+    - `STEP_UP_CODE_INVALID` (403, download only): a wrong, used or expired code; offer to send a new one;
+    - `RATE_LIMITED` (429): wait and try again later;
+    - `VALIDATION_FAILED` (400): a malformed token or code;
+    - `STORAGE_UNAVAILABLE` (503, download only): try again later.
+
+    Never tell the person whether the link existed.
+  - **Not indexed, not cached:** serve the pages with `Cache-Control: no-store`, `Referrer-Policy: no-referrer` and `X-Robots-Tag: noindex` (and `<meta name="robots" content="noindex">`); load no third-party script on them. The API answers both export calls with the same headers (`PublicPageHeaders`).
+- **Assisted:** the management screens use `/accounts/{id}/…` with a `reasonCode` on every write; the account is always told.

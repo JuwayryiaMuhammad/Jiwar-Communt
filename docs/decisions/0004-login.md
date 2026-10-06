@@ -35,3 +35,7 @@ Login activity is written to `security_events` (ADR 0014): OTP requested / faile
 - **Sessions record origin:** user agent, IP and last use, at start and on every refresh. The account holder's session list never shows the IP.
 - **Access tokens carry `sid`.** `PermissionsGuard` checks that session on every request (it must be the token's account and compound, unrevoked and unexpired). Logout, "revoke this session" and "that wasn't me" therefore cut the access token immediately, not when it expires.
 - **Email is sent through one pooled SMTP transport** (`core/mail`).
+
+## Update (Phase R1, ADR 0036)
+- **`select-account` records the device first.** It is the app's `X-Jiwar-Install-Id`, or the browser family and OS, kept as a keyed hash. A device never seen on the account raises a critical alert with a "not me" action.
+- **Step-up codes** (purpose `step_up`) are bound to the session that asked, and open one sensitive action.

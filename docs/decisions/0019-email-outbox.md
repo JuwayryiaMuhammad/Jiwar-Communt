@@ -41,3 +41,11 @@ Worker notices (ADR 0017) and push/SMS will use this same outbox when those chan
 ## Known limits
 - Nothing yet shows dead messages to a person who could act on them; that belongs with the manager notifications.
 - A crashing message is retired only after `OUTBOX_MAX_ATTEMPTS` crashes, each one lease (60 s) after the last. The app restarts that many times before the poison is gone.
+
+## Update (Phase R1, ADR 0036)
+- A message to an account follows the account's delivery preferences at enqueue. It is either:
+  - sent now;
+  - held until quiet hours or a pause end (`held_at`, a later `next_attempt_at`, or status `held` for a pause "until resumed", never claimed);
+  - or not written, when its category is off and it has an inbox twin.
+- Every preference change decides the account's held messages again. Critical templates always go, and sole-record notices are never skipped.
+- The purge also deletes messages with an inbox twin that have been held more than 7 days.

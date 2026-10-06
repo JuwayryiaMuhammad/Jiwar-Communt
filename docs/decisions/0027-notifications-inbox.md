@@ -18,3 +18,7 @@ The gate needs to reach people inside a few minutes: a guard asking a household 
 ## Consequences
 - Push (FCM/APNs) and SMS become delivery workers over this table, with the same idempotent claim pattern as the email outbox (ADR 0019); the domains do not change.
 - Per-account preferences (mute a kind) come with the design; today every recipient the domain names gets the row.
+
+## Update (Phase R1, ADR 0036)
+- Every kind also declares a delivery `category` and `critical`. Per-account preferences now exist, per category × channel (email now, push stored for later), with quiet hours and a pause. They govern delivery only: the inbox still records every notification.
+- The email outbox applies them through `deliveryDecision`. Critical kinds ignore them.

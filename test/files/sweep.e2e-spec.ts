@@ -47,6 +47,19 @@ describe('Files — sweep and erasure', () => {
     return { id: r.id, token };
   }
 
+  /** Someone who may be erased: not a unit's primary (ADR 0036). */
+  async function erasable() {
+    const unit = await x.unit(c);
+    await x.resident(c, [unit.id]);
+    const r = await x.resident(c, [unit.id], 'tenant');
+    const token = await h.tokenFor({
+      sub: r.id,
+      tid: c.tenantId,
+      typ: 'resident',
+    });
+    return { id: r.id, token };
+  }
+
   const key = (id: string) => objectKey({ tenantId: c.tenantId, id });
   const row = (id: string) =>
     x.asManager(c, () =>
@@ -147,7 +160,7 @@ describe('Files — sweep and erasure', () => {
   });
 
   it("erasure takes the account's own files, ready and pending", async () => {
-    const me = await someone();
+    const me = await erasable();
     const ready = await f.ready(me.token);
     const pending = await f.uploaded(me.token);
     const other = await someone();
@@ -185,7 +198,7 @@ describe('Files — sweep and erasure', () => {
   });
 
   it('an erasure that rolls back deletes nothing', async () => {
-    const me = await someone();
+    const me = await erasable();
     const id = await f.ready(me.token);
     const deletion = h.moduleRef.get(AccountDeletionService);
     const request = await x.as(c, { id: me.id, type: 'resident' }, () =>

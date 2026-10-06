@@ -12,6 +12,7 @@ import { appError, ErrorCode } from '../common/errors';
 import {
   REASON_CODES,
   requireReasonCode,
+  requireReasonCodeOnly,
   type ReasonInput,
 } from '../common/reasons';
 import { newId } from '../common/uuid';
@@ -19,6 +20,7 @@ import type { Env } from '../config/env.schema';
 import { GlobalDbService } from '../database/global-db.service';
 import { TenantTx, type TenantTxClient } from '../database/tenant-tx.service';
 import { NO_RECIPIENT, Outbox } from '../mail/outbox';
+import { Notifier } from '../notifications/notifier';
 import { SweepRunner } from '../sweep/sweep-runner';
 import { ACCOUNT_EMAILS } from './account-emails';
 import {
@@ -27,20 +29,49 @@ import {
   type AfterCommit,
 } from './account-lifecycle';
 
-export const ERASURE_OVERDUE_SWEEP = 'accounts.erasure_overdue';
+/** Reminders two days before, then executions (ADR 0036). */
+export const DELETION_SWEEP = 'accounts.deletion';
 
-/** Most overdue first: the oldest end of grace. */
+/** The account is reminded this long before its erasure. */
+export const DELETION_REMINDER_MS = 2 * 86_400_000;
+
+/** Queued first, then the most overdue: the oldest end of grace. */
 const ERASURE_PAGE = keysetCursor('effectiveAt', 'asc');
 
 /** The words the holder types to confirm (02 §4), per language. */
 export const CONFIRMATION_WORDS = ['حذف', 'DELETE'] as const;
 
+/**
+ * What keeps an account from being erased (ADR 0036), checked when the
+ * deletion is asked for and again in the transaction that executes it:
+ * - `primary_resident`: the primary of a unit must hand it over (ADR 0021)
+ *   or end the occupancy first (the community domain);
+ * - `active_staff_role`: an active staff or manager account (roles never
+ *   cross account kinds, ADR 0010);
+ * - `legal_hold`: an obligation to keep the data (ADR 0023);
+ * - `open_worker_obligations`: a worker's wage not yet settled, which an
+ *   erasure would leave without its employer (ADR 0022; the community).
+ */
+export const DELETION_BLOCKERS = [
+  'primary_resident',
+  'active_staff_role',
+  'legal_hold',
+  'open_worker_obligations',
+] as const;
+
+type RequestStatus =
+  'pending' | 'cancelled' | 'completed' | 'queued' | 'closed';
+
 export interface DeletionRequestView {
   id: string;
-  status: 'pending' | 'cancelled' | 'completed';
+  status: RequestStatus;
   requestedAt: Date;
-  /** Undo is possible until then; erasure only after it. */
+  /** Undo is possible until then; the erasure runs after it. */
   effectiveAt: Date;
+  /** Filed by the management for the account (ADR 0036). */
+  assisted: boolean;
+  /** Queued: what blocked the erasure. */
+  blockers: string[];
 }
 
 export interface PendingErasure extends DeletionRequestView {
@@ -89,26 +120,33 @@ const PERSONAL_FIELDS = [
 ] as const;
 
 /**
- * Account deletion (ADR 0023; 02 §4, 09 §4–5).
+ * Account deletion (ADR 0023, amended by ADR 0036; 02 §4, 09 §4–5).
  *
- * - The holder asks with a confirmation word and can undo until the grace
- *   period ends (DELETION_GRACE_DAYS). The account stays usable meanwhile.
- * - After it, staff holding `accounts.erase` erase it in three steps:
- *   scope → legal hold check → typed scope. A legal hold blocks erasure.
+ * - The holder asks with a confirmation word, or a manager asks for it
+ *   (assisted). It is refused while something blocks the erasure
+ *   (DELETION_BLOCKERS, DELETION_BLOCKED). The account is told, and keeps
+ *   working normally through the cooling-off (DELETION_GRACE_DAYS, 14),
+ *   when it can still cancel.
+ * - The sweep (`accounts.deletion`) reminds the account two days before,
+ *   then, once the cooling-off is over, re-checks the blockers inside the
+ *   transaction that executes it, under the account's row lock: with none
+ *   it erases the account; with some it queues the request for the
+ *   managers with its blocker codes, and tells the account and the
+ *   `accounts.erase` holders.
+ * - Managers list pending and queued requests and act on queued ones:
+ *   execute (the three steps: scope → legal hold → typed scope, blockers
+ *   re-checked) once the blockers are cleared, or close with a reason code.
  * - Erasure makes a TOMBSTONE: the row stays with every personal field
  *   NULL, so audit and financial records keep their pointer and show a
  *   deleted user. Login identifiers and sessions are deleted, pending mail
  *   to that account is stripped, invites that brought them in lose their
  *   personal data, and the domains end what hangs off the account
  *   (AccountLifecycle.onErasing). The audit log is never touched.
- * - A request left pending ERASURE_OVERDUE_DAYS after its grace ends is
- *   reported to the erasure holders by the sweep (once).
  */
 @Injectable()
 export class AccountDeletionService implements OnModuleInit {
   private readonly logger = new Logger(AccountDeletionService.name);
   private readonly graceMs: number;
-  private readonly overdueMs: number;
 
   constructor(
     config: ConfigService<Env, true>,
@@ -118,27 +156,45 @@ export class AccountDeletionService implements OnModuleInit {
     private readonly cls: ClsService<AppClsStore>,
     private readonly audit: AuditService,
     private readonly outbox: Outbox,
+    private readonly notifier: Notifier,
     private readonly staff: StaffRecipients,
     private readonly lifecycle: AccountLifecycle,
     private readonly sweep: SweepRunner,
   ) {
     this.graceMs =
       config.get('DELETION_GRACE_DAYS', { infer: true }) * 86_400_000;
-    this.overdueMs =
-      config.get('ERASURE_OVERDUE_DAYS', { infer: true }) * 86_400_000;
   }
 
   onModuleInit(): void {
-    this.sweep.register(ERASURE_OVERDUE_SWEEP, (now) =>
-      this.reportOverdue(now),
-    );
+    this.sweep.register(DELETION_SWEEP, (now) => this.runDue(now));
+    // Core's own blockers; the domains register theirs.
+    this.lifecycle.onDeletionCheck(async (tx, account) => {
+      const codes: string[] = [];
+      const row = await tx.account.findUniqueOrThrow({
+        where: { id: account.id },
+        select: { type: true, status: true },
+      });
+      if (
+        (row.type === 'staff' || row.type === 'manager') &&
+        row.status === 'active'
+      )
+        codes.push('active_staff_role');
+      const holds = await tx.legalHold.count({
+        where: { accountId: account.id, releasedAt: null },
+      });
+      if (holds) codes.push('legal_hold');
+      return codes;
+    });
   }
 
   // --------------------------------------------------------------------------
   // The holder
   // --------------------------------------------------------------------------
 
-  async requestDeletion(confirmation: string): Promise<DeletionRequestView> {
+  async requestDeletion(
+    confirmation: string,
+    now: Date = new Date(),
+  ): Promise<DeletionRequestView> {
     const word = (confirmation ?? '').trim();
     if (
       !CONFIRMATION_WORDS.some((w) => w.toLowerCase() === word.toLowerCase())
@@ -149,71 +205,116 @@ export class AccountDeletionService implements OnModuleInit {
         { params: { expected: [...CONFIRMATION_WORDS] } },
       );
     }
-    const accountId = this.ctx.accountId;
-    return this.tenantTx.withTenantTx(async (tx) => {
-      await this.lockAccount(tx, accountId);
-      const open = await tx.accountDeletionRequest.count({
-        where: { accountId, status: 'pending' },
-      });
-      if (open) {
-        throw appError.conflict(
-          ErrorCode.DELETION_ALREADY_REQUESTED,
-          'A deletion is already pending',
-        );
-      }
-      const now = new Date();
-      const request = await tx.accountDeletionRequest.create({
-        data: {
-          id: newId(),
-          tenantId: this.ctx.tenantId,
-          accountId,
-          requestedAt: now,
-          effectiveAt: new Date(now.getTime() + this.graceMs),
-        },
-      });
-      await this.audit.record(tx, {
-        action: 'account.deletion_requested',
-        targetId: accountId,
-        metadata: { requestId: request.id, effectiveAt: request.effectiveAt },
-      });
-      await this.tell(tx, accountId, ACCOUNT_EMAILS.deletionRequested, {
-        effectiveDate: request.effectiveAt.toISOString().slice(0, 10),
-      });
-      return view(request);
-    });
+    return this.tenantTx.withTenantTx((tx) =>
+      this.fileRequest(tx, this.ctx.accountId, null, now),
+    );
   }
 
-  /** Undo, only within the grace period. */
-  async cancelDeletion(): Promise<void> {
-    const accountId = this.ctx.accountId;
-    await this.tenantTx.withTenantTx(async (tx) => {
-      await this.lockAccount(tx, accountId);
-      const request = await tx.accountDeletionRequest.findFirst({
-        where: { accountId, status: 'pending' },
-      });
-      if (!request) throw requestNotFound();
-      if (request.effectiveAt <= new Date()) {
-        throw appError.conflict(
-          ErrorCode.DELETION_GRACE_OVER,
-          'The grace period has ended',
-        );
-      }
-      await tx.accountDeletionRequest.update({
-        where: { id: request.id },
-        data: { status: 'cancelled', cancelledAt: new Date() },
-      });
-      await this.audit.record(tx, {
-        action: 'account.deletion_cancelled',
-        targetId: accountId,
-        changes: diffChanges(
-          { status: 'pending' },
-          { status: 'cancelled' },
-          'account.deletion_cancelled',
-        ),
-        metadata: { requestId: request.id },
-      });
-      await this.tell(tx, accountId, ACCOUNT_EMAILS.deletionCancelled, {});
+  /**
+   * Files a request in the caller's transaction, for the account itself or
+   * on its behalf (`assist`), under the account's row lock: refused while
+   * one is open, and while anything blocks the erasure.
+   */
+  async fileRequest(
+    tx: TenantTxClient,
+    accountId: string,
+    assist: { reasonCode: string } | null,
+    now: Date,
+  ): Promise<DeletionRequestView> {
+    const account = await this.lockAccount(tx, accountId);
+    if (account.status === 'erased') throw accountNotFound();
+    const open = await tx.accountDeletionRequest.count({
+      where: { accountId, status: { in: ['pending', 'queued'] } },
     });
+    if (open) {
+      throw appError.conflict(
+        ErrorCode.DELETION_ALREADY_REQUESTED,
+        'A deletion is already pending',
+      );
+    }
+    const blockers = await this.blockers(tx, account);
+    if (blockers.length) throw deletionBlocked(blockers);
+    const request = await tx.accountDeletionRequest.create({
+      data: {
+        id: newId(),
+        tenantId: account.tenantId,
+        accountId,
+        requestedAt: now,
+        effectiveAt: new Date(now.getTime() + this.graceMs),
+        requestedById: this.ctx.accountId,
+        assisted: !!assist,
+        assistReasonCode: assist?.reasonCode ?? null,
+      },
+    });
+    await this.audit.record(tx, {
+      action: 'account.deletion_requested',
+      targetId: accountId,
+      metadata: {
+        requestId: request.id,
+        effectiveAt: request.effectiveAt,
+        assisted: !!assist,
+        ...(assist ? { reasonCode: assist.reasonCode } : {}),
+      },
+    });
+    // Critical (ADR 0036): never muted or held.
+    await this.notifier.notify(tx, [accountId], {
+      kind: 'account.deletion_requested',
+      params: { effectiveAt: request.effectiveAt.toISOString() },
+      targetId: request.id,
+    });
+    await this.tell(tx, accountId, ACCOUNT_EMAILS.deletionRequested, {
+      effectiveDate: request.effectiveAt.toISOString().slice(0, 10),
+    });
+    return view(request);
+  }
+
+  /**
+   * Undo: while the cooling-off lasts, or once queued (it has not run).
+   * Under the account's row lock, like the execution, so the two never
+   * cross: whichever is second finds the other's result.
+   */
+  async cancelDeletion(now: Date = new Date()): Promise<void> {
+    await this.tenantTx.withTenantTx((tx) =>
+      this.cancelIn(tx, this.ctx.accountId, null, now),
+    );
+  }
+
+  async cancelIn(
+    tx: TenantTxClient,
+    accountId: string,
+    assist: { reasonCode: string } | null,
+    now: Date,
+  ): Promise<void> {
+    await this.lockAccount(tx, accountId);
+    const request = await tx.accountDeletionRequest.findFirst({
+      where: { accountId, status: { in: ['pending', 'queued'] } },
+    });
+    if (!request) throw requestNotFound();
+    if (request.status === 'pending' && request.effectiveAt <= now) {
+      throw appError.conflict(
+        ErrorCode.DELETION_GRACE_OVER,
+        'The grace period has ended',
+      );
+    }
+    await tx.accountDeletionRequest.update({
+      where: { id: request.id },
+      data: { status: 'cancelled', cancelledAt: now },
+    });
+    await this.audit.record(tx, {
+      action: 'account.deletion_cancelled',
+      targetId: accountId,
+      changes: diffChanges(
+        { status: request.status },
+        { status: 'cancelled' },
+        'account.deletion_cancelled',
+      ),
+      metadata: {
+        requestId: request.id,
+        assisted: !!assist,
+        ...(assist ? { reasonCode: assist.reasonCode } : {}),
+      },
+    });
+    await this.tell(tx, accountId, ACCOUNT_EMAILS.deletionCancelled, {});
   }
 
   async myDeletionRequest(): Promise<DeletionRequestView | null> {
@@ -226,13 +327,22 @@ export class AccountDeletionService implements OnModuleInit {
     });
   }
 
+  /** What blocks the account's erasure now (core and the domains). */
+  async blockers(
+    tx: TenantTxClient,
+    account: { id: string; tenantId: string },
+  ): Promise<string[]> {
+    const codes = new Set(await this.lifecycle.deletionBlockers(tx, account));
+    return DELETION_BLOCKERS.filter((c) => codes.has(c));
+  }
+
   // --------------------------------------------------------------------------
   // Staff (`accounts.erase`, `accounts.legal_hold`)
   // --------------------------------------------------------------------------
 
   /**
-   * Pending requests, most overdue first (oldest `effectiveAt`), a page at
-   * a time, with their age and hold.
+   * Open requests (pending and queued), most overdue first (oldest
+   * `effectiveAt`), a page at a time, with their age, blockers and hold.
    */
   async pendingErasures(
     q: { cursor?: string; limit?: number } = {},
@@ -243,7 +353,7 @@ export class AccountDeletionService implements OnModuleInit {
       const rows = await tx.accountDeletionRequest.findMany({
         where: {
           AND: [
-            { status: 'pending' },
+            { status: { in: ['pending', 'queued'] } },
             ...(ERASURE_PAGE.after(
               q.cursor,
             ) as Prisma.AccountDeletionRequestWhereInput[]),
@@ -274,7 +384,7 @@ export class AccountDeletionService implements OnModuleInit {
   async erasureScope(requestId: string): Promise<ErasureScope> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const request = await tx.accountDeletionRequest.findFirst({
-        where: { id: requestId, status: 'pending' },
+        where: { id: requestId, status: { in: ['pending', 'queued'] } },
       });
       if (!request) throw requestNotFound();
       const accountId = request.accountId;
@@ -420,61 +530,240 @@ export class AccountDeletionService implements OnModuleInit {
   }
 
   /**
-   * Step 3: erase. Refused before the grace period ends, while a legal hold
-   * is active, and unless the scope phrase is typed exactly. The account
-   * row is locked first — placing a hold takes the same lock, so a hold
-   * and an erasure can never cross.
+   * Step 3: erase a queued request (or a pending one past its cooling-off)
+   * once its blockers are cleared. Refused before the grace ends, while
+   * anything blocks it (a legal hold among them), and unless the scope
+   * phrase is typed exactly. The account row is locked first — placing a
+   * hold, becoming a primary and the sweep take the same lock, so none of
+   * them crosses an erasure.
    */
-  async erase(requestId: string, typedScope: string): Promise<void> {
+  async erase(
+    requestId: string,
+    typedScope: string,
+    now: Date = new Date(),
+  ): Promise<void> {
     const after: AfterCommit[] = [];
     await this.tenantTx.withTenantTx(async (tx) => {
       const found = await tx.accountDeletionRequest.findFirst({
-        where: { id: requestId, status: 'pending' },
+        where: { id: requestId, status: { in: ['pending', 'queued'] } },
         select: { accountId: true },
       });
       if (!found) throw requestNotFound();
       const account = await this.lockAccount(tx, found.accountId);
       const request = await tx.accountDeletionRequest.findFirst({
-        where: { id: requestId, status: 'pending' },
+        where: { id: requestId, status: { in: ['pending', 'queued'] } },
       });
       if (!request) throw requestNotFound();
-      if (request.effectiveAt > new Date()) {
+      if (request.status === 'pending' && request.effectiveAt > now) {
         throw appError.conflict(
           ErrorCode.DELETION_GRACE_NOT_OVER,
           'The holder can still undo: the grace period has not ended',
           { params: { effectiveAt: request.effectiveAt.toISOString() } },
         );
       }
-      const holds = await tx.legalHold.count({
-        where: { accountId: account.id, releasedAt: null },
-      });
-      if (holds) {
+      const blockers = await this.blockers(tx, account);
+      if (blockers.includes('legal_hold')) {
         throw appError.conflict(
           ErrorCode.LEGAL_HOLD_ACTIVE,
           'A legal hold blocks erasure',
         );
       }
+      if (blockers.length) throw deletionBlocked(blockers);
       if ((typedScope ?? '').trim() !== scopePhrase(account.id)) {
         throw appError.badRequest(
           ErrorCode.SCOPE_CONFIRMATION_MISMATCH,
           'Type the erasure scope exactly',
         );
       }
-      after.push(
-        ...(await this.eraseIn(tx, account.id, account.tenantId, request.id)),
-      );
+      after.push(...(await this.eraseIn(tx, account, request.id)));
     });
     await runAfterCommit(after, this.logger);
+  }
+
+  /** Closes a queued request without erasing (a reason code, ADR 0036). */
+  async closeQueued(
+    requestId: string,
+    reasonCode: string | undefined,
+  ): Promise<void> {
+    const code = requireReasonCodeOnly(reasonCode, REASON_CODES.deletionClose);
+    await this.tenantTx.withTenantTx(async (tx) => {
+      const found = await tx.accountDeletionRequest.findFirst({
+        where: { id: requestId, status: 'queued' },
+        select: { accountId: true },
+      });
+      if (!found) throw requestNotFound();
+      await this.lockAccount(tx, found.accountId);
+      const request = await tx.accountDeletionRequest.findFirst({
+        where: { id: requestId, status: 'queued' },
+      });
+      if (!request) throw requestNotFound();
+      await tx.accountDeletionRequest.update({
+        where: { id: requestId },
+        data: {
+          status: 'closed',
+          closedAt: new Date(),
+          closedById: this.ctx.accountId,
+          closeReasonCode: code,
+        },
+      });
+      await this.audit.record(tx, {
+        action: 'account.deletion_closed',
+        targetId: request.accountId,
+        changes: diffChanges(
+          { status: 'queued' },
+          { status: 'closed' },
+          'account.deletion_closed',
+        ),
+        metadata: { requestId, reasonCode: code },
+      });
+      await this.notifier.notify(tx, [request.accountId], {
+        kind: 'account.deletion_closed',
+        params: { reason: code },
+        targetId: requestId,
+      });
+      await this.tell(tx, request.accountId, ACCOUNT_EMAILS.deletionClosed, {});
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // The sweep
+  // --------------------------------------------------------------------------
+
+  /** Reminders two days before, then the executions that are due. */
+  async runDue(now: Date = new Date()): Promise<number> {
+    let done = await this.remind(now);
+    const due: { id: string; accountId: string; tenantId: string }[] = [];
+    await this.sweep.forEachTenant(async (tx, tenantId) => {
+      const rows = await tx.accountDeletionRequest.findMany({
+        where: { status: 'pending', effectiveAt: { lte: now } },
+        orderBy: { effectiveAt: 'asc' },
+        select: { id: true, accountId: true },
+        take: 100,
+      });
+      due.push(...rows.map((r) => ({ ...r, tenantId })));
+      return rows.length;
+    });
+    for (const d of due) {
+      try {
+        done += await this.executeOne(d, now);
+      } catch (error) {
+        this.logger.error(
+          `deletion ${d.id} failed (${error instanceof Error ? error.name : 'Error'})`,
+        );
+      }
+    }
+    return done;
+  }
+
+  /** Once per request, two days before its execution. */
+  private async remind(now: Date): Promise<number> {
+    return this.sweep.forEachTenant(async (tx) => {
+      const due = await tx.$queryRaw<
+        { id: string; account_id: string; effective_at: Date }[]
+      >`
+        UPDATE account_deletion_requests SET reminded_at = ${now}
+         WHERE status = 'pending' AND reminded_at IS NULL
+           AND effective_at > ${now}
+           AND effective_at <= ${new Date(now.getTime() + DELETION_REMINDER_MS)}
+        RETURNING id, account_id, effective_at`;
+      for (const r of due) {
+        await this.notifier.notify(tx, [r.account_id], {
+          kind: 'account.deletion_reminder',
+          params: { effectiveAt: r.effective_at.toISOString() },
+          targetId: r.id,
+        });
+        await this.tell(tx, r.account_id, ACCOUNT_EMAILS.deletionReminder, {
+          effectiveDate: r.effective_at.toISOString().slice(0, 10),
+        });
+      }
+      return due.length;
+    });
+  }
+
+  /**
+   * One due request, in a transaction of its own, as the system: the
+   * account's row is locked, the request read again (a cancel may have
+   * won), the blockers checked again — then the erasure, or the queue.
+   */
+  private async executeOne(
+    d: { id: string; accountId: string; tenantId: string },
+    now: Date,
+  ): Promise<number> {
+    return this.cls.run(async () => {
+      this.cls.set('tenantId', d.tenantId);
+      this.cls.set('auditActor', { type: 'system', id: null });
+      const after: AfterCommit[] = [];
+      const done = await this.tenantTx.withTenantTx(async (tx) => {
+        const account = await this.lockAccount(tx, d.accountId);
+        const request = await tx.accountDeletionRequest.findFirst({
+          where: { id: d.id, status: 'pending', effectiveAt: { lte: now } },
+        });
+        if (!request) return 0;
+        const blockers = await this.blockers(tx, account);
+        if (blockers.length) {
+          await this.queue(tx, request.id, account.id, blockers, now);
+          return 1;
+        }
+        after.push(...(await this.eraseIn(tx, account, request.id)));
+        return 1;
+      });
+      await runAfterCommit(after, this.logger);
+      return done;
+    });
+  }
+
+  /** Blocked at execution: the managers' queue, and everyone is told. */
+  private async queue(
+    tx: TenantTxClient,
+    requestId: string,
+    accountId: string,
+    blockers: string[],
+    now: Date,
+  ): Promise<void> {
+    await tx.accountDeletionRequest.update({
+      where: { id: requestId },
+      data: { status: 'queued', queuedAt: now, blockerCodes: blockers },
+    });
+    await this.audit.record(tx, {
+      action: 'account.deletion_queued',
+      targetId: accountId,
+      changes: diffChanges(
+        { status: 'pending' },
+        { status: 'queued' },
+        'account.deletion_queued',
+      ),
+      metadata: { requestId, blockers },
+    });
+    const codes = blockers.join(',');
+    await this.notifier.notify(tx, [accountId], {
+      kind: 'account.deletion_delayed',
+      params: { blockers: codes },
+      targetId: requestId,
+    });
+    await this.tell(tx, accountId, ACCOUNT_EMAILS.deletionDelayed, {
+      blockers: codes,
+    });
+    const holders = await this.staff.holding(tx, 'accounts.erase');
+    await this.notifier.notify(
+      tx,
+      holders.map((h) => h.id),
+      {
+        kind: 'account.deletion_queued',
+        params: { blockers: codes },
+        targetId: requestId,
+      },
+    );
   }
 
   // --------------------------------------------------------------------------
 
   private async eraseIn(
     tx: TenantTxClient,
-    accountId: string,
-    tenantId: string,
+    account: { id: string; tenantId: string; status: string },
     requestId: string,
   ): Promise<AfterCommit[]> {
+    const accountId = account.id;
+    const tenantId = account.tenantId;
     // 1. The domains end what hangs off the account (occupancies, household,
     //    workers they registered, delegations), with their own notices.
     const after = await this.lifecycle.erasing(tx, { id: accountId, tenantId });
@@ -549,7 +838,8 @@ export class AccountDeletionService implements OnModuleInit {
       data: {
         status: 'completed',
         completedAt: new Date(),
-        completedById: this.ctx.accountId,
+        // The sweep erases too (ADR 0036): no request account then.
+        completedById: this.ctx.accountIdOrNull(),
       },
     });
     await this.audit.record(tx, {
@@ -557,7 +847,7 @@ export class AccountDeletionService implements OnModuleInit {
       targetId: accountId,
       // Every personal field changed; none by value (ADR 0014).
       changes: {
-        status: { from: 'active', to: 'erased' },
+        status: { from: account.status, to: 'erased' },
         ...Object.fromEntries(
           PERSONAL_FIELDS.map((f) => [f, { changed: true as const }]),
         ),
@@ -571,71 +861,6 @@ export class AccountDeletionService implements OnModuleInit {
       },
     });
     return after;
-  }
-
-  /** The sweep: requests left pending too long after grace, once each. */
-  async reportOverdue(now: Date = new Date()): Promise<number> {
-    const before = new Date(now.getTime() - this.overdueMs);
-    const tenants = await this.globalDb.tenant.findMany({
-      where: { status: 'active' },
-      select: { id: true },
-      orderBy: { id: 'asc' },
-    });
-    let reported = 0;
-    for (const t of tenants) {
-      reported += await this.cls.run({ ifNested: 'inherit' }, () => {
-        this.cls.set('auditActor', { type: 'system', id: null });
-        return this.tenantTx.runInTenantUnsafe(t.id, async (tx) => {
-          const due = await tx.$queryRaw<{ id: string; effective_at: Date }[]>`
-            UPDATE account_deletion_requests SET overdue_notified_at = ${now}
-             WHERE status = 'pending' AND overdue_notified_at IS NULL
-               AND effective_at < ${before}
-            RETURNING id, effective_at`;
-          if (!due.length) return 0;
-          const holders = await this.staff.holding(tx, 'accounts.erase');
-          const tenant = await this.globalDb.in(tx).tenant.findUniqueOrThrow({
-            where: { id: t.id },
-            select: { name: true },
-          });
-          for (const r of due) {
-            const days = Math.floor(
-              (now.getTime() - r.effective_at.getTime()) / 86_400_000,
-            );
-            if (!holders.length) {
-              await this.outbox.recordUndeliverable(tx, {
-                tenantId: t.id,
-                templateKey: ACCOUNT_EMAILS.erasureOverdue,
-              });
-            }
-            for (const h of holders) {
-              await this.outbox.enqueue(tx, {
-                tenantId: t.id,
-                templateKey: ACCOUNT_EMAILS.erasureOverdue,
-                locale: h.preferredLocale,
-                recipient: h.email,
-                params: {
-                  compoundName: tenant.name,
-                  requestId: r.id,
-                  days: String(days),
-                },
-                recipientAccountId: h.id,
-              });
-            }
-            await this.audit.record(tx, {
-              action: 'account.erasure_overdue',
-              targetId: r.id,
-              metadata: {
-                requestId: r.id,
-                daysOverdue: days,
-                holdersTold: holders.length,
-              },
-            });
-          }
-          return due.length;
-        });
-      });
-    }
-    return reported;
   }
 
   /** The account row, locked for the rest of the transaction. */
@@ -681,16 +906,29 @@ export function scopePhrase(accountId: string): string {
 
 function view(r: {
   id: string;
-  status: 'pending' | 'cancelled' | 'completed';
+  status: RequestStatus;
   requestedAt: Date;
   effectiveAt: Date;
+  assisted: boolean;
+  blockerCodes: string[];
 }): DeletionRequestView {
   return {
     id: r.id,
     status: r.status,
     requestedAt: r.requestedAt,
     effectiveAt: r.effectiveAt,
+    assisted: r.assisted,
+    blockers: r.status === 'queued' ? [...r.blockerCodes] : [],
   };
+}
+
+/** Refused while something blocks the erasure (409, params.blockers). */
+function deletionBlocked(blockers: string[]) {
+  return appError.conflict(
+    ErrorCode.DELETION_BLOCKED,
+    'Something keeps this account from being deleted now',
+    { params: { blockers } },
+  );
 }
 
 function requestNotFound() {

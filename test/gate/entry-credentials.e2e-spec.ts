@@ -324,7 +324,18 @@ describe('Gate — entry credentials (ADR 0031)', () => {
       }).expect(200);
       expect(await reasons(inactive.id)).toEqual(['account_deactivated']);
 
-      const erased = await resident();
+      // A tenant beside the owner: a primary is not erased (ADR 0036).
+      const erasedUnit = await w.helpers.unit(w.a);
+      await w.helpers.resident(w.a, [erasedUnit.id]);
+      const erasedTenant = await w.helpers.resident(
+        w.a,
+        [erasedUnit.id],
+        'tenant',
+      );
+      const erased = {
+        id: erasedTenant.id,
+        token: await w.tokenFor(w.a, erasedTenant.id, 'resident'),
+      };
       await issue(erased.token, { deviceName: 'Gone soon' });
       const deletion = h.moduleRef.get(AccountDeletionService);
       const request = await w.helpers.as(

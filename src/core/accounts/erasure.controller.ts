@@ -22,7 +22,11 @@ import {
   toList,
   type ListResponse,
 } from '../common/http/list';
-import { ReasonDto, reasonOf } from '../common/http/reason.dto';
+import {
+  ReasonCodeOnlyDto,
+  ReasonDto,
+  reasonOf,
+} from '../common/http/reason.dto';
 import { parseId } from '../common/validation/parse-id.pipe';
 import { AccountDeletionService } from './account-deletion.service';
 import { EraseDto } from './dto/erasure.dto';
@@ -39,7 +43,7 @@ import {
 export class ErasureController {
   constructor(private readonly deletion: AccountDeletionService) {}
 
-  /** Pending requests, most overdue first. */
+  /** Open requests (pending, and queued with their blockers), most overdue first. */
   @RequirePermissions('accounts.erase')
   @Get('erasures')
   @ApiOkResponse({ type: ListOf(PendingErasureView) })
@@ -59,7 +63,11 @@ export class ErasureController {
     return ErasureScopeView.from(await this.deletion.erasureScope(id));
   }
 
-  /** Step 3: the tombstone. Refused while a legal hold is active. */
+  /**
+   * Step 3: the tombstone, for a queued request once its blockers are
+   * cleared (or a pending one past its cooling-off). Refused while a legal
+   * hold or any other blocker remains.
+   */
   @RequirePermissions('accounts.erase')
   @Post('erasures/:id/erase')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -69,6 +77,18 @@ export class ErasureController {
     @Body() dto: EraseDto,
   ): Promise<void> {
     await this.deletion.erase(id, dto.typedScope);
+  }
+
+  /** A queued request closed without erasing, with a reason code (ADR 0036). */
+  @RequirePermissions('accounts.erase')
+  @Post('erasures/:id/close')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  async close(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ReasonCodeOnlyDto,
+  ): Promise<void> {
+    await this.deletion.closeQueued(id, dto.reasonCode);
   }
 
   /** Step 2: any legal obligation to keep the data. */

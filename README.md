@@ -132,9 +132,9 @@ See `.env.example` for the full list with comments. The important ones:
 | `TEST_SMTP_HOST`, `TEST_SMTP_PORT`, `MAILPIT_API_URL` | e2e tests always send through Mailpit and read codes from its API, whatever `SMTP_*` points at |
 | `DB_POOL_MAX` | pg pool size |
 | `OUTBOX_ENABLED`, `OUTBOX_POLL_MS`, `OUTBOX_MAX_ATTEMPTS`, `OUTBOX_RETENTION_DAYS` | Email outbox (ADR 0019): the in-app poller (default on, every 5 s), attempts before a message is dead (8), and days before sent rows are deleted and dead rows stripped of recipient and params (30). Tests turn the poller off and drain explicitly |
-| `SWEEP_ENABLED`, `SWEEP_INTERVAL_MS` | The in-app sweep (ADR 0021): majority notices, registration expiry, overdue erasures. Default on, hourly. Every task is idempotent and safe on several instances; tests turn it off and call `SweepRunner.run(name, now)` |
+| `SWEEP_ENABLED`, `SWEEP_INTERVAL_MS` | The in-app sweep (ADR 0021): majority notices, registration expiry, account deletions and exports. Default on, hourly. Every task is idempotent and safe on several instances; tests turn it off and call `SweepRunner.run(name, now)` |
 | `REGISTRATION_PENDING_DAYS` | A self-registration nobody decided expires and loses its personal data (default 30, ADR 0024) |
-| `DELETION_GRACE_DAYS`, `ERASURE_OVERDUE_DAYS` | Account deletion (ADR 0023): the holder can undo for 30 days; the erasure holders are told once when a request waits 7 days past that |
+| `DELETION_GRACE_DAYS` | Account deletion (ADR 0023, 0036): the cooling-off (default 14 days), during which the holder can undo; then the sweep erases the account, or queues the request for the managers when something blocks it |
 | `PARCEL_CODE_RATE_LIMIT_PER_MINUTE` | Parcel code checks per guard per minute (default 30); five wrong ones in ten minutes lock the guard out of code hand-over (ADR 0035) |
 | `GATE_UNCONFIRMED_EXIT_HOURS`, `GATE_VERIFY_RATE_LIMIT_PER_MINUTE` | The gate (ADR 0028): someone recorded inside this long gets a system exit marked unconfirmed (default 12; live-in workers excepted); code checks per guard per minute (default 30) |
 | `NOTIFICATIONS_RETENTION_DAYS` | Read in-app notifications are deleted after this (default 90, ADR 0027); unread ones stay |

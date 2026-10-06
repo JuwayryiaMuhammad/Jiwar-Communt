@@ -2,6 +2,7 @@ import {
   AccountDeletionService,
   scopePhrase,
 } from '../../src/core/accounts/account-deletion.service';
+import { AccountsService } from '../../src/core/accounts/accounts.service';
 import { dispatchHelpers } from '../setup/dispatch';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 
@@ -558,6 +559,12 @@ describe('Dispatch engine — candidates, choice, no candidate', () => {
         id: tech.id,
         fullName: expect.any(String) as string,
       });
+      // An active staff role blocks a deletion (ADR 0036): ended first.
+      await d.x.asManager(s.c, () =>
+        h.moduleRef
+          .get(AccountsService)
+          .updateStatus(tech.id, { status: 'inactive' }),
+      );
       const deletion = h.moduleRef.get(AccountDeletionService);
       const request = await d.x.as(s.c, { id: tech.id, type: 'staff' }, () =>
         deletion.requestDeletion('DELETE'),

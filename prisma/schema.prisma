@@ -234,6 +234,10 @@ enum DeletionRequestStatus {
   pending
   cancelled
   completed
+  /// Past its cooling-off with blockers: a manager's to act on (ADR 0036).
+  queued
+  /// A manager closed a queued request (ADR 0036).
+  closed
 
   @@map("deletion_request_status")
 }
@@ -1355,8 +1359,9 @@ model ResidentRegistration {
   @@map("resident_registrations")
 }
 
-/// "Delete my account" (ADR 0023): undo until `effective_at`, erased by
-/// staff after it. One pending per account. Never deleted.
+/// "Delete my account" (ADR 0023, 0036): undo until `effective_at`; then
+/// the sweep erases it, or queues it for the managers when something blocks
+/// it. One open (pending or queued) per account. Never deleted.
 model AccountDeletionRequest {
   id                String                @id @db.Uuid
   tenantId          String                @map("tenant_id") @db.Uuid
@@ -1368,6 +1373,18 @@ model AccountDeletionRequest {
   completedAt       DateTime?             @map("completed_at") @db.Timestamptz(3)
   completedById     String?               @map("completed_by") @db.Uuid
   overdueNotifiedAt DateTime?             @map("overdue_notified_at") @db.Timestamptz(3)
+  /// The account itself, or the manager who filed it for it (ADR 0036).
+  requestedById     String                @map("requested_by") @db.Uuid
+  assisted          Boolean               @default(false)
+  assistReasonCode  String?               @map("assist_reason_code")
+  /// The account was told the execution is two days away.
+  remindedAt        DateTime?             @map("reminded_at") @db.Timestamptz(3)
+  /// Moved to the managers' queue, with what blocked it.
+  queuedAt          DateTime?             @map("queued_at") @db.Timestamptz(3)
+  blockerCodes      String[]              @default([]) @map("blocker_codes")
+  closedAt          DateTime?             @map("closed_at") @db.Timestamptz(3)
+  closedById        String?               @map("closed_by") @db.Uuid
+  closeReasonCode   String?               @map("close_reason_code")
 
   account     Account  @relation("DeletionAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
   completedBy Account? @relation("DeletionCompletedBy", fields: [tenantId, completedById], references: [tenantId, id], onUpdate: Restrict)

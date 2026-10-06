@@ -51,6 +51,7 @@ import { RateLimitService } from '../../core/redis/rate-limit.service';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { COMMUNITY_NOTICES } from '../notices/community-notices';
 import { lockUnits } from '../units/unit-lock';
+import { lockAccountShared } from './account-locks';
 import { ResidentsService } from './residents.service';
 
 export const REGISTRATION_EXPIRY_SWEEP = 'residents.registration_expiry';
@@ -401,11 +402,18 @@ export class RegistrationService implements OnModuleInit {
         ? await tx.unit.findUnique({ where: { id: options.unitId } })
         : await tx.unit.findFirst({ where: { code: reg.unitCode } });
       if (!unit) throw conflict(['unit_not_found']);
+      // The same person's existing account before the unit (ADR 0036): an
+      // erasure executing for it finishes first — the account then matches
+      // nothing and a new one is made — or waits for this approval.
+      const sameAs = () =>
+        tx.account.findFirst({
+          where: { type: 'resident', phone: reg.phone!, email: reg.email! },
+          select: { id: true },
+        });
+      const candidate = await sameAs();
+      if (candidate) await lockAccountShared(tx, candidate.id);
       await lockUnits(tx, [unit.id]);
-      const same = await tx.account.findFirst({
-        where: { type: 'resident', phone: reg.phone!, email: reg.email! },
-        select: { id: true },
-      });
+      const same = await sameAs();
       const clash = await tx.account.findMany({
         where: {
           type: 'resident',

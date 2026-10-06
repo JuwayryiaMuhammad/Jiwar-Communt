@@ -17,7 +17,6 @@ import { SweepRunner } from '../../src/core/sweep/sweep-runner';
 import { AccountsService } from '../../src/core/accounts/accounts.service';
 import {
   AccountDeletionService,
-  ERASURE_OVERDUE_SWEEP,
   scopePhrase,
 } from '../../src/core/accounts/account-deletion.service';
 import {
@@ -581,10 +580,12 @@ describe('Audit coverage — Phase 2.2', () => {
 
   // --------------------------------------------------------------------------
   describe('account deletion (ADR 0023)', () => {
-    it('requested, cancelled, hold placed and released, erased, overdue', async () => {
+    it('requested, cancelled, hold placed and released, erased', async () => {
       const c = await x.compound();
       const u = await x.unit(c);
-      const r = await x.resident(c, [u.id]);
+      // A tenant beside the owner: a primary may not ask (ADR 0036).
+      await x.resident(c, [u.id]);
+      const r = await x.resident(c, [u.id], 'tenant');
       const deletion = h.moduleRef.get(AccountDeletionService);
       const asR = <T>(fn: () => Promise<T>) =>
         x.as(c, { id: r.id, type: 'resident' }, fn);
@@ -632,14 +633,6 @@ describe('Audit coverage — Phase 2.2', () => {
           },
         }),
       );
-      await h.moduleRef.get(SweepRunner).run(ERASURE_OVERDUE_SWEEP);
-      expect(
-        await single(c, 'account.erasure_overdue', second.id),
-      ).toMatchObject({
-        actorType: 'system',
-        targetType: 'account_deletion_request',
-        metadata: { requestId: second.id, daysOverdue: 10 },
-      });
       await x.asManager(c, () => deletion.erase(second.id, scopePhrase(r.id)));
       expect(await single(c, 'account.erased', r.id)).toMatchObject({
         actorId: c.managerId,

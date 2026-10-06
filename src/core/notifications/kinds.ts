@@ -17,9 +17,9 @@ import type {
  * Every kind also declares its delivery category and whether it is critical
  * (ADR 0036). The inbox always records it; the preferences decide only the
  * delivery channels (email now, push later). Critical kinds: security
- * (a new device logged in, a new entry device), emergency tickets, and
- * staff work (a ticket assigned to me, a gate approval request and its
- * reversal).
+ * (a new device logged in, a new entry device), emergency tickets, staff
+ * work (a ticket assigned to me, a gate approval request and its reversal),
+ * and the deletion notices (confirmation, reminder, delay).
  */
 export type NotificationPriority = 'normal' | 'critical';
 
@@ -135,6 +135,60 @@ export const NOTIFICATION_KINDS = {
     critical: false,
     target: 'data_export',
     params: { expiresAt: {} },
+  },
+  /**
+   * A family member's account was deleted (ADR 0036), to the unit's
+   * primary: the unit's code only, never who or why.
+   */
+  'household.member_account_deleted': {
+    priority: 'normal',
+    category: 'household',
+    critical: false,
+    target: 'household_member',
+    params: { unitCode: {} },
+  },
+  // Account deletion (ADR 0036). The confirmation, the reminder and the
+  // delay are critical: pause and quiet hours never hold them.
+  /** The request was filed (by the account or for it): undo until `effectiveAt`. */
+  'account.deletion_requested': {
+    priority: 'critical',
+    category: 'account_security',
+    critical: true,
+    target: 'account_deletion_request',
+    params: { effectiveAt: {} },
+  },
+  /** Two days before the erasure. */
+  'account.deletion_reminder': {
+    priority: 'critical',
+    category: 'account_security',
+    critical: true,
+    target: 'account_deletion_request',
+    params: { effectiveAt: {} },
+  },
+  /** Not erased: something blocks it (blocker codes, comma-separated). */
+  'account.deletion_delayed': {
+    priority: 'critical',
+    category: 'account_security',
+    critical: true,
+    target: 'account_deletion_request',
+    params: { blockers: {} },
+  },
+  /** A blocked request waits in the queue (the `accounts.erase` holders). */
+  'account.deletion_queued': {
+    priority: 'normal',
+    category: 'account_security',
+    critical: false,
+    target: 'account_deletion_request',
+    params: { blockers: {} },
+  },
+  /** A manager closed the queued request without erasing. */
+  'account.deletion_closed': {
+    priority: 'normal',
+    category: 'account_security',
+    critical: false,
+    target: 'account_deletion_request',
+    // The close reason's code (a param named `…Code` reads as a secret).
+    params: { reason: {} },
   },
   // --------------------------------------------------------------------------
   // Maintenance (ADR 0032). The ticket number and codes only: never the

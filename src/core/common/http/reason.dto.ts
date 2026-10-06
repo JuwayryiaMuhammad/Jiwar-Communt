@@ -28,6 +28,21 @@ export class ReasonDto {
   reason?: string;
 }
 
+/**
+ * `{ reasonCode }` alone, where nobody is told a text (ADR 0036): the code
+ * is checked by the service against its closed list.
+ */
+export class ReasonCodeOnlyDto {
+  @ApiProperty({
+    type: String,
+    description:
+      'A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE.',
+  })
+  @IsOptional()
+  @IsString()
+  reasonCode?: string;
+}
+
 export function reasonOf(dto: {
   reasonCode?: string;
   reason?: string;

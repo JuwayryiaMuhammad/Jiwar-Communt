@@ -89,7 +89,7 @@ export const envSchema = z
     OUTBOX_RETENTION_DAYS: positiveInt.default(30),
 
     // The in-app sweep (Phase 2.2): majority notices, registration expiry,
-    // overdue erasures.
+    // account deletions (ADR 0036).
     SWEEP_ENABLED: z
       .enum(['true', 'false'])
       .default('true')
@@ -97,10 +97,9 @@ export const envSchema = z
     SWEEP_INTERVAL_MS: positiveInt.default(3_600_000),
     // A self-registration nobody decided expires after this (ADR 0024).
     REGISTRATION_PENDING_DAYS: positiveInt.default(30),
-    // Account deletion (ADR 0023): undo window, then how long an erasure
-    // may wait before the erasure holders are told.
-    DELETION_GRACE_DAYS: positiveInt.default(30),
-    ERASURE_OVERDUE_DAYS: positiveInt.default(7),
+    // Account deletion (ADR 0023, 0036): the cooling-off, after which the
+    // sweep erases the account (or queues the request when it is blocked).
+    DELETION_GRACE_DAYS: positiveInt.default(14),
     // The gate (ADR 0028): someone "inside" this long gets an unconfirmed
     // exit; verify attempts per guard per minute.
     GATE_UNCONFIRMED_EXIT_HOURS: positiveInt.default(12),

@@ -22,6 +22,32 @@ export class ErasureHooks implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
+    // What blocks an erasure (ADR 0036): a primary must hand the unit over
+    // (ADR 0021) or end the occupancy first; and an erasure would leave a
+    // worker's unsettled wage without its employer — open obligations, or an
+    // open engagement that had a code (ending it records one, ADR 0022).
+    this.lifecycle.onDeletionCheck(async (tx, account) => {
+      const codes: string[] = [];
+      const primary = await tx.unitOccupancy.count({
+        where: { accountId: account.id, status: 'active', isPrimary: true },
+      });
+      if (primary) codes.push('primary_resident');
+      const obligations = await tx.workerWageObligation.count({
+        where: {
+          settledAt: null,
+          engagement: { requestedById: account.id },
+        },
+      });
+      const coded = await tx.workerEngagement.count({
+        where: {
+          requestedById: account.id,
+          status: { in: ['pending_review', 'active', 'suspended'] },
+          codeIssuedAt: { not: null },
+        },
+      });
+      if (obligations || coded) codes.push('open_worker_obligations');
+      return codes;
+    });
     this.lifecycle.onErasing(async (tx, account) => {
       const after = [
         ...(await this.residents.endAllOccupanciesOf(tx, account.id)),

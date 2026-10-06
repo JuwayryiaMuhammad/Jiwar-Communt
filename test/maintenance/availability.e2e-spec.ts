@@ -246,6 +246,13 @@ describe('Maintenance — technician availability', () => {
         state: 'available',
       })
       .expect(200);
+    // An active staff role blocks a deletion (ADR 0036): the manager ends
+    // the account first, then it asks.
+    await d.x.asManager(s.c, () =>
+      h.moduleRef
+        .get(AccountsService)
+        .updateStatus(leaving.id, { status: 'inactive' }),
+    );
     const deletion = h.moduleRef.get(AccountDeletionService);
     const request = await d.x.as(s.c, { id: leaving.id, type: 'staff' }, () =>
       deletion.requestDeletion('DELETE'),

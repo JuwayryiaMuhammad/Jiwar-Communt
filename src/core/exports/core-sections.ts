@@ -173,7 +173,16 @@ export class CoreExportSections implements OnModuleInit {
     );
     yield {
       path: 'deletion-requests.json',
-      json: rows.map((r) => DeletionRequestResponse.from(r)),
+      json: rows.map((r) =>
+        DeletionRequestResponse.from({
+          id: r.id,
+          status: r.status,
+          requestedAt: r.requestedAt,
+          effectiveAt: r.effectiveAt,
+          assisted: r.assisted,
+          blockers: r.status === 'queued' ? r.blockerCodes : [],
+        }),
+      ),
     };
   }
 

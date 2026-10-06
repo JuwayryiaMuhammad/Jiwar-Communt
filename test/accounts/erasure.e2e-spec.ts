@@ -1,17 +1,19 @@
 import {
   AccountDeletionService,
-  ERASURE_OVERDUE_SWEEP,
   scopePhrase,
 } from '../../src/core/accounts/account-deletion.service';
 import { AccountsService } from '../../src/core/accounts/accounts.service';
-import { RolesService } from '../../src/core/access/roles.service';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { PlatformModule } from '../../src/core/platform/platform.module';
-import { SweepRunner } from '../../src/core/sweep/sweep-runner';
 import { WorkersService } from '../../src/community/workers/workers.service';
 import { auditReaders } from '../setup/audit';
 import { communityHelpers, type Compound } from '../setup/community';
-import { bornYearsAgo, codeOf, nationalIdFor } from '../setup/fixtures';
+import {
+  bornYearsAgo,
+  codeOf,
+  MOVED_OUT,
+  nationalIdFor,
+} from '../setup/fixtures';
 import {
   createHttpHarness,
   uniquePhone,
@@ -23,7 +25,11 @@ import { Client } from 'pg';
 
 const HOLD = { code: 'litigation', text: 'Case 12/2026 — keep everything' };
 
-/** Account deletion: grace, legal hold, erasure (ADR 0023; 02 §4, 09 §4–5). */
+/**
+ * Account deletion: cooling-off, legal hold, erasure (ADR 0023, 0036; 02 §4,
+ * 09 §4–5). The sweep's execution, the blockers and the queue are in
+ * deletion.e2e-spec.ts.
+ */
 describe('Account erasure', () => {
   let h: HttpHarness;
   let x: ReturnType<typeof communityHelpers>;
@@ -50,7 +56,7 @@ describe('Account erasure', () => {
       x.prisma.tenant.accountDeletionRequest.update({
         where: { id: requestId },
         data: {
-          requestedAt: new Date(Date.now() - (daysAgo + 30) * 86_400_000),
+          requestedAt: new Date(Date.now() - (daysAgo + 14) * 86_400_000),
           effectiveAt: new Date(Date.now() - daysAgo * 86_400_000),
         },
       }),
@@ -65,7 +71,9 @@ describe('Account erasure', () => {
   }
 
   it('the holder asks with the confirmation word, and can undo only within the grace period', async () => {
-    const { c, primary } = await household();
+    const { c, unitId } = await household();
+    // A tenant beside the owner: a primary may not ask (ADR 0036).
+    const primary = await x.resident(c, [unitId], 'tenant');
     expect(
       await codeOf(
         asResident(c, primary.id, () => deletion.requestDeletion('yes')),
@@ -75,7 +83,7 @@ describe('Account erasure', () => {
       deletion.requestDeletion('حذف'),
     );
     expect(req.effectiveAt.getTime() - req.requestedAt.getTime()).toBe(
-      30 * 86_400_000,
+      14 * 86_400_000,
     );
     expect(
       await codeOf(
@@ -280,7 +288,7 @@ describe('Account erasure', () => {
     }
   });
 
-  it('erasing a primary: the unit goes under review (no hand-over first), and their workers end with a notice and a wage obligation', async () => {
+  it('a primary is erased only after the hand-over: their workers end with a notice', async () => {
     const { c, unitId, primary } = await household();
     const workers = h.moduleRef.get(WorkersService);
     const reg = await asResident(c, primary.id, () =>
@@ -292,19 +300,27 @@ describe('Account erasure', () => {
         capacity: 'live_in',
       }),
     );
-    await x.asManager(c, () => workers.review(reg.engagementId, 'approve'));
+    // A primary may not ask (ADR 0036): hand over (ADR 0021) or leave first.
+    const refused = await asResident(c, primary.id, () =>
+      deletion.requestDeletion('DELETE'),
+    ).catch(
+      (e: { response?: { code?: string; params?: object } }) => e.response,
+    );
+    expect(refused).toMatchObject({
+      code: 'DELETION_BLOCKED',
+      params: { blockers: ['primary_resident'] },
+    });
+    const [occupancy] = await x.occupancies(c, unitId);
+    await x.asManager(c, () =>
+      x.residents.endOccupancy(occupancy.id, MOVED_OUT),
+    );
+    expect(await x.openReviews(c, unitId)).toEqual(['primary_left']);
     const req = await asResident(c, primary.id, () =>
       deletion.requestDeletion('DELETE'),
     );
     await pastGrace(c, req.id);
     await x.asManager(c, () => deletion.erase(req.id, scopePhrase(primary.id)));
 
-    const [occupancy] = await x.occupancies(c, unitId);
-    expect(occupancy).toMatchObject({
-      status: 'ended',
-      endReason: 'account_erased',
-    });
-    expect(await x.openReviews(c, unitId)).toEqual(['primary_left']);
     const [engagement, notices, obligations] = await x.asManager(c, () =>
       Promise.all([
         x.prisma.tenant.workerEngagement.findUniqueOrThrow({
@@ -323,7 +339,8 @@ describe('Account erasure', () => {
       statusReason: 'requester_erased',
     });
     expect(notices.map((n) => n.noticeKey)).toContain('engagement_ended');
-    expect(obligations.map((o) => o.kind)).toEqual(['settle_before_close']);
+    // It never had a code: nobody worked, nothing to settle.
+    expect(obligations).toEqual([]);
   });
 
   it('a hold and an erasure never cross: exactly one wins', async () => {
@@ -339,66 +356,6 @@ describe('Account erasure', () => {
       ),
     ]);
     expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
-  });
-
-  it('an overdue erasure is reported once to the erasure holders — or on file when nobody holds it', async () => {
-    const { c, primary } = await household();
-    const req = await asResident(c, primary.id, () =>
-      deletion.requestDeletion('DELETE'),
-    );
-    await pastGrace(c, req.id, 8);
-    const sweep = h.moduleRef.get(SweepRunner);
-    expect(await sweep.run(ERASURE_OVERDUE_SWEEP)).toBeGreaterThanOrEqual(1);
-    const [told] = await globalDb.outboxMessage.findMany({
-      where: { tenantId: c.tenantId, templateKey: 'account.erasure_overdue' },
-    });
-    expect(told).toMatchObject({
-      recipientAccountId: c.managerId,
-      params: expect.objectContaining({
-        requestId: req.id,
-        days: '8',
-      }) as object,
-    });
-    const [entry] = await auditReaders(h).tenant(c.tenantId, {
-      action: 'account.erasure_overdue',
-      targetId: req.id,
-    });
-    expect(entry).toMatchObject({
-      actorType: 'system',
-      metadata: { daysOverdue: 8, holdersTold: 1 },
-    });
-    await sweep.run(ERASURE_OVERDUE_SWEEP);
-    expect(
-      await globalDb.outboxMessage.count({
-        where: { tenantId: c.tenantId, templateKey: 'account.erasure_overdue' },
-      }),
-    ).toBe(1);
-
-    // Nobody holds accounts.erase: the notice is recorded as undeliverable.
-    const other = await household();
-    const roles = h.moduleRef.get(RolesService);
-    await x.asManager(other.c, async () => {
-      const manager = (await roles.list()).find((r) => r.key === 'manager')!;
-      await roles.replacePermissions(
-        manager.id,
-        manager.permissions.filter((p) => p !== 'accounts.erase'),
-      );
-    });
-    const req2 = await asResident(other.c, other.primary.id, () =>
-      deletion.requestDeletion('DELETE'),
-    );
-    await pastGrace(other.c, req2.id, 9);
-    await sweep.run(ERASURE_OVERDUE_SWEEP);
-    const [dead] = await globalDb.outboxMessage.findMany({
-      where: {
-        tenantId: other.c.tenantId,
-        templateKey: 'account.erasure_overdue',
-      },
-    });
-    expect(dead).toMatchObject({
-      status: 'dead',
-      lastErrorCode: 'NO_RECIPIENT',
-    });
   });
 
   it('the database holds the tombstone shape: all personal fields NULL, or none (a frozen account may lack only its phone)', async () => {
@@ -451,7 +408,7 @@ describe('Account erasure', () => {
   it("tenant B can't see, hold or erase A's accounts", async () => {
     const a = await household();
     const b = await x.compound();
-    const req = await asResident(a.c, a.primary.id, () =>
+    const req = await asFamily(a.c, a.family.accountId, () =>
       deletion.requestDeletion('DELETE'),
     );
     await pastGrace(a.c, req.id);
@@ -463,7 +420,9 @@ describe('Account erasure', () => {
     ).toBe('DELETION_REQUEST_NOT_FOUND');
     expect(
       await codeOf(
-        x.asManager(b, () => deletion.erase(req.id, scopePhrase(a.primary.id))),
+        x.asManager(b, () =>
+          deletion.erase(req.id, scopePhrase(a.family.accountId)),
+        ),
       ),
     ).toBe('DELETION_REQUEST_NOT_FOUND');
     expect(
@@ -478,7 +437,8 @@ describe('Account erasure', () => {
 
   it('pending erasures page most overdue first', async () => {
     const a = await household();
-    const first = await asResident(a.c, a.primary.id, () =>
+    const tenant = await x.resident(a.c, [a.unitId], 'tenant');
+    const first = await asResident(a.c, tenant.id, () =>
       deletion.requestDeletion('DELETE'),
     );
     const second = await asFamily(a.c, a.family.accountId, () =>

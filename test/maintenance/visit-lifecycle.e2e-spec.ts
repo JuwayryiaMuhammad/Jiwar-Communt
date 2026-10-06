@@ -185,6 +185,13 @@ describe('Maintenance — visits end with the assignment; late visits', () => {
   it('an erasure of the technician ends the visit', async () => {
     const tech = await technician();
     const v = await withVisit(tech);
+    // An active staff role blocks a deletion (ADR 0036): the account is
+    // ended first, which already ends the visit; the erasure finds it so.
+    await d.x.asManager(s.c, () =>
+      h.moduleRef
+        .get(AccountsService)
+        .updateStatus(tech.id, { status: 'inactive' }),
+    );
     const deletion = h.moduleRef.get(AccountDeletionService);
     const request = await d.x.as(s.c, { id: tech.id, type: 'staff' }, () =>
       deletion.requestDeletion('DELETE'),

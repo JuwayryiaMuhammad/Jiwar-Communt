@@ -51,6 +51,7 @@ import {
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
 import { Outbox } from '../../core/mail/outbox';
+import { Notifier } from '../../core/notifications/notifier';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { ReviewFlags } from '../units/review-flags';
 import { lockUnits } from '../units/unit-lock';
@@ -107,6 +108,7 @@ export class HouseholdsService {
     private readonly delegations: DelegationsService,
     private readonly flags: ReviewFlags,
     private readonly lifecycle: AccountLifecycle,
+    private readonly notifier: Notifier,
   ) {}
 
   // --------------------------------------------------------------------------
@@ -629,12 +631,57 @@ export class HouseholdsService {
           action: 'household.member_removed',
           kind: 'removed',
           reason: 'account_erased',
-          byAccountId: this.ctx.accountId,
+          // The sweep executes erasures too (ADR 0036): no request account.
+          byAccountId: this.ctx.accountIdOrNull(),
           metadata: { accountErased: true },
         })),
       );
+      if (member.status === 'active')
+        await this.tellPrimaryMemberDeleted(tx, member);
     }
     return after;
+  }
+
+  /**
+   * A family member's account was deleted (ADR 0036): the unit's primary is
+   * told, in the inbox and by email, with the unit's code and nothing else
+   * — never a reason, never a name.
+   */
+  private async tellPrimaryMemberDeleted(
+    tx: TenantTxClient,
+    member: HouseholdMember,
+  ): Promise<void> {
+    const primary = await tx.unitOccupancy.findFirst({
+      where: { unitId: member.unitId, status: 'active', isPrimary: true },
+      select: { accountId: true },
+    });
+    if (!primary || primary.accountId === member.accountId) return;
+    const unit = await tx.unit.findUniqueOrThrow({
+      where: { id: member.unitId },
+      select: { code: true },
+    });
+    await this.notifier.notify(tx, [primary.accountId], {
+      kind: 'household.member_account_deleted',
+      params: { unitCode: unit.code },
+      targetId: member.id,
+    });
+    const account = await tx.account.findUniqueOrThrow({
+      where: { id: primary.accountId },
+      select: { email: true, preferredLocale: true },
+    });
+    if (!account.email) return;
+    const tenant = await this.globalDb.in(tx).tenant.findUniqueOrThrow({
+      where: { id: member.tenantId },
+      select: { name: true },
+    });
+    await this.outbox.enqueue(tx, {
+      tenantId: member.tenantId,
+      templateKey: HOUSEHOLD_EMAILS.memberAccountDeleted,
+      locale: account.preferredLocale,
+      recipient: account.email,
+      params: { compoundName: tenant.name, unitCode: unit.code },
+      recipientAccountId: primary.accountId,
+    });
   }
 
   /**
@@ -812,7 +859,7 @@ export class HouseholdsService {
       action: 'household.member_removed' | 'household.member_rejected';
       kind: 'removed' | 'rejected';
       reason: string;
-      byAccountId: string;
+      byAccountId: string | null;
       metadata: Record<string, unknown>;
     },
   ): Promise<AfterCommit[]> {

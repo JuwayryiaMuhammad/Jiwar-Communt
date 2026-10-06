@@ -5,14 +5,28 @@ import type {
   PendingErasure,
 } from '../account-deletion.service';
 
-/** A pending deletion request, for the erasure staff: ids and dates only. */
+/**
+ * An open deletion request (pending, or queued with its blockers), for the
+ * erasure staff: ids, dates and codes only.
+ */
 export class PendingErasureView {
   @ApiProperty({ type: String, format: 'uuid' })
   id: string;
   @ApiProperty({ type: String, format: 'uuid' })
   accountId: string;
-  @ApiProperty({ enum: ['pending', 'cancelled', 'completed'] })
-  status: 'pending' | 'cancelled' | 'completed';
+  @ApiProperty({
+    enum: ['pending', 'cancelled', 'completed', 'queued', 'closed'],
+    enumName: 'DeletionRequestStatus',
+  })
+  status: PendingErasure['status'];
+  @ApiProperty({
+    type: [String],
+    description:
+      'Queued: what blocked the erasure (primary_resident, active_staff_role, legal_hold, open_worker_obligations).',
+  })
+  blockers: string[];
+  @ApiProperty({ type: Boolean, description: 'Filed by the management.' })
+  assisted: boolean;
   @ApiProperty({ type: String, format: 'date-time' })
   requestedAt: Date;
   @ApiProperty({ type: String, format: 'date-time' })
@@ -30,6 +44,8 @@ export class PendingErasureView {
       id: p.id,
       accountId: p.accountId,
       status: p.status,
+      blockers: [...p.blockers],
+      assisted: p.assisted,
       requestedAt: p.requestedAt,
       effectiveAt: p.effectiveAt,
       daysOverdue: p.daysOverdue,

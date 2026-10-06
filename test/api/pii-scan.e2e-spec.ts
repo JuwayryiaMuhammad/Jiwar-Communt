@@ -223,6 +223,11 @@ describe('API v0 — PII leak scan', () => {
           new Date(Date.now() + 30 * 86_400_000),
         ),
     );
+    // The spare unit's own primary: `leaving` lives there beside them,
+    // since a primary may not ask to be deleted (ADR 0036).
+    await resident(person(1950, 1, 1), [
+      { unitId: spare.id, occupancyType: 'owner' },
+    ]);
     const leaving = await resident(person(1959, 8, 8), [
       { unitId: spare.id, occupancyType: 'owner' },
     ]);

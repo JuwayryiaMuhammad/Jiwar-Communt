@@ -40,6 +40,8 @@ describe('API v0 — erasure', () => {
     expect(keyPaths(list.body)).toEqual(
       listKeys([
         'accountId',
+        'assisted',
+        'blockers',
         'daysOverdue',
         'effectiveAt',
         'id',

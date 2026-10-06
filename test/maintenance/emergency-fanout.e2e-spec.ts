@@ -55,6 +55,12 @@ describe('Maintenance — emergency fan-out', () => {
       }),
     );
     erased = (await d.g.guard(s.c, 'maintenance_supervisor')).id;
+    // An active staff role blocks a deletion (ADR 0036): ended first.
+    await d.x.asManager(s.c, () =>
+      h.moduleRef
+        .get(AccountsService)
+        .updateStatus(erased, { status: 'inactive' }),
+    );
     const deletion = h.moduleRef.get(AccountDeletionService);
     const request = await d.x.as(s.c, { id: erased, type: 'staff' }, () =>
       deletion.requestDeletion('DELETE'),

@@ -52,10 +52,10 @@ export const AUDIT_ACTIONS = {
   'data_export.downloaded': { log: 'tenant', target: 'data_export' },
   'data_export.expired': { log: 'tenant', target: 'data_export' },
   'data_export.failed': { log: 'tenant', target: 'data_export' },
-  'account.erasure_overdue': {
-    log: 'tenant',
-    target: 'account_deletion_request',
-  },
+  // ADR 0036: blocked at execution, to the managers' queue (system), and
+  // closed there by a manager with a reason code.
+  'account.deletion_queued': { log: 'tenant', target: 'account' },
+  'account.deletion_closed': { log: 'tenant', target: 'account' },
   'role.permissions_replaced': { log: 'tenant', target: 'role' },
   'role.permissions_synced': { log: 'tenant', target: 'role' },
   'occupancy.created': { log: 'tenant', target: 'occupancy' },

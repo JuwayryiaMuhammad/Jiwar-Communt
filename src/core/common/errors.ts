@@ -217,6 +217,12 @@ export const ErrorCode = {
   ACCOUNT_NOT_ELIGIBLE: 'ACCOUNT_NOT_ELIGIBLE',
   /** An assisted export goes only to the account's own email (409). */
   ACCOUNT_HAS_NO_EMAIL: 'ACCOUNT_HAS_NO_EMAIL',
+  /**
+   * Something keeps the account from being deleted now (409,
+   * params.blockers: primary_resident, active_staff_role, legal_hold,
+   * open_worker_obligations).
+   */
+  DELETION_BLOCKED: 'DELETION_BLOCKED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

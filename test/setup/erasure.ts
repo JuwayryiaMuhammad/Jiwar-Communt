@@ -24,6 +24,7 @@ export async function eraseNow(
         id,
         tenantId: c.tenantId,
         accountId,
+        requestedById: accountId,
         requestedAt: new Date(Date.now() - 31 * 86_400_000),
         effectiveAt: new Date(Date.now() - 86_400_000),
       },

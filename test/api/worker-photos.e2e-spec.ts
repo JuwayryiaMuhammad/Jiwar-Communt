@@ -297,7 +297,15 @@ describe('API v0 — worker photos', () => {
   });
 
   it("the uploader's erasure leaves the worker's photo", async () => {
-    const hh = await household();
+    // A tenant beside the owner: a primary is not erased (ADR 0036).
+    const unit = await w.helpers.unit(w.a);
+    await w.helpers.resident(w.a, [unit.id]);
+    const tenant = await w.helpers.resident(w.a, [unit.id], 'tenant');
+    const hh = {
+      id: tenant.id,
+      unitId: unit.id,
+      token: await w.tokenFor(w.a, tenant.id, 'resident'),
+    };
     const photo = await f.ready(hh.token);
     const engagementId = await register(hh, liveIn({ photoFileId: photo }));
     const deletion = h.moduleRef.get(AccountDeletionService);

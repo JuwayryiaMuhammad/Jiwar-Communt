@@ -351,6 +351,9 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   known_devices_device_type_known: {},
   // Data exports (ADR 0036): nullable columns only under IS [NOT] NULL.
   data_exports_shape: {},
+  // The deletion queue (ADR 0036): nullable columns only under
+  // IS [NOT] NULL.
+  account_deletion_requests_r1_shape: {},
 };
 
 interface Check {

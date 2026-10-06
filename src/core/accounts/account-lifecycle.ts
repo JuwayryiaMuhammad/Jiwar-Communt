@@ -16,6 +16,16 @@ export type AccountHandler = (
 ) => Promise<void>;
 
 /**
+ * What keeps an account from being erased now (ADR 0036), as blocker codes;
+ * read under the account's row lock, when a deletion is asked for and again
+ * in the transaction that executes it.
+ */
+export type DeletionBlockerCheck = (
+  tx: TenantTxClient,
+  account: { id: string; tenantId: string },
+) => Promise<string[]>;
+
+/**
  * A freeze handler may also hand back work to run after the freeze commits
  * (maintenance retries the tickets it released, ADR 0033).
  */
@@ -38,6 +48,22 @@ export class AccountLifecycle {
   private readonly erasure: DeactivationHandler[] = [];
   private readonly sessionsRevokedAll: AccountHandler[] = [];
   private readonly residence: AccountHandler[] = [];
+  private readonly blockerChecks: DeletionBlockerCheck[] = [];
+
+  /** A domain's reasons an account cannot be erased yet (ADR 0036). */
+  onDeletionCheck(check: DeletionBlockerCheck): void {
+    this.blockerChecks.push(check);
+  }
+
+  async deletionBlockers(
+    tx: TenantTxClient,
+    account: { id: string; tenantId: string },
+  ): Promise<string[]> {
+    const codes: string[] = [];
+    for (const check of this.blockerChecks)
+      codes.push(...(await check(tx, account)));
+    return codes;
+  }
 
   /**
    * "That wasn't me" (ADR 0031): every session of the account just ended.

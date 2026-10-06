@@ -9,10 +9,14 @@ import {
 } from './kinds';
 
 /**
- * Security (a new device, a new entry device), emergency tickets, and staff
- * work (a ticket assigned to me, a gate approval request and its reversal).
+ * Security (a new device, a new entry device), emergency tickets, staff
+ * work (a ticket assigned to me, a gate approval request and its reversal),
+ * and the deletion notices (its confirmation, reminder and delay).
  */
 const CRITICAL_KINDS = [
+  'account.deletion_delayed',
+  'account.deletion_reminder',
+  'account.deletion_requested',
   'account.new_device_login',
   'entry_credential.issued',
   'gate.approval_requested',

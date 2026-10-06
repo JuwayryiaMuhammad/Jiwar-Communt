@@ -100,16 +100,30 @@ export class RevokedView {
 export class DeletionRequestResponse {
   @ApiProperty({ type: String, format: 'uuid' })
   id: string;
-  @ApiProperty({ enum: ['pending', 'cancelled', 'completed'] })
-  status: 'pending' | 'cancelled' | 'completed';
+  @ApiProperty({
+    enum: ['pending', 'cancelled', 'completed', 'queued', 'closed'],
+    enumName: 'DeletionRequestStatus',
+  })
+  status: DeletionRequestView['status'];
   @ApiProperty({ type: String, format: 'date-time' })
   requestedAt: Date;
   @ApiProperty({
     type: String,
     format: 'date-time',
-    description: 'Undo is possible until then.',
+    description:
+      'Undo is possible until then; the account is erased after it, unless something blocks it (then `queued`).',
   })
   effectiveAt: Date;
+  @ApiProperty({
+    type: Boolean,
+    description: 'Filed by the management for the account (ADR 0036).',
+  })
+  assisted: boolean;
+  @ApiProperty({
+    type: [String],
+    description: 'Queued: what blocks the erasure.',
+  })
+  blockers: string[];
 
   static from(r: DeletionRequestView): DeletionRequestResponse {
     return {
@@ -117,6 +131,8 @@ export class DeletionRequestResponse {
       status: r.status,
       requestedAt: r.requestedAt,
       effectiveAt: r.effectiveAt,
+      assisted: r.assisted,
+      blockers: [...r.blockers],
     };
   }
 }

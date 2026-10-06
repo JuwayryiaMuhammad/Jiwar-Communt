@@ -210,7 +210,14 @@ describe('API v0 — me', () => {
       token,
       body: { confirmation: 'DELETE' },
     }).expect(201);
-    const DELETION = ['effectiveAt', 'id', 'requestedAt', 'status'];
+    const DELETION = [
+      'assisted',
+      'blockers',
+      'effectiveAt',
+      'id',
+      'requestedAt',
+      'status',
+    ];
     expect(keyPaths(made.body)).toEqual(DELETION);
     const got = await call(w, 'GET', '/me/deletion-request', { token }).expect(
       200,

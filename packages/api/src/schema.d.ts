@@ -340,6 +340,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/erasures/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ErasureController_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/erasures/{id}/erase": {
         parameters: {
             query?: never;
@@ -4456,18 +4472,23 @@ export interface components {
             confirmation: string;
         };
         DeletionRequestResponse: {
+            /** @description Filed by the management for the account (ADR 0036). */
+            assisted: boolean;
+            /** @description Queued: what blocks the erasure. */
+            blockers: string[];
             /**
              * Format: date-time
-             * @description Undo is possible until then.
+             * @description Undo is possible until then; the account is erased after it, unless something blocks it (then `queued`).
              */
             effectiveAt: string;
             /** Format: uuid */
             id: string;
             /** Format: date-time */
             requestedAt: string;
-            /** @enum {string} */
-            status: "pending" | "cancelled" | "completed";
+            status: components["schemas"]["DeletionRequestStatus"];
         };
+        /** @enum {string} */
+        DeletionRequestStatus: "pending" | "cancelled" | "completed" | "queued" | "closed";
         /** @enum {string} */
         DeliveryInstruction: "ask" | "allow" | "leave_at_gate" | "deny";
         DispatchAbsenceEntryView: {
@@ -5638,6 +5659,10 @@ export interface components {
         PendingErasureView: {
             /** Format: uuid */
             accountId: string;
+            /** @description Filed by the management. */
+            assisted: boolean;
+            /** @description Queued: what blocked the erasure (primary_resident, active_staff_role, legal_hold, open_worker_obligations). */
+            blockers: string[];
             /** @description Days since the grace period ended; negative while in grace. */
             daysOverdue: number;
             /** Format: date-time */
@@ -5647,8 +5672,7 @@ export interface components {
             onLegalHold: boolean;
             /** Format: date-time */
             requestedAt: string;
-            /** @enum {string} */
-            status: "pending" | "cancelled" | "completed";
+            status: components["schemas"]["DeletionRequestStatus"];
         };
         PendingErasureViewList: {
             data: components["schemas"]["PendingErasureView"][];
@@ -5813,6 +5837,10 @@ export interface components {
             read: number;
         };
         ReasonCodeDto: {
+            /** @description A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. */
+            reasonCode: string;
+        };
+        ReasonCodeOnlyDto: {
             /** @description A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. */
             reasonCode: string;
         };
@@ -7611,6 +7639,29 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PendingErasureViewList"];
                 };
+            };
+        };
+    };
+    ErasureController_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

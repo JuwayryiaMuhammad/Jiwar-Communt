@@ -199,7 +199,14 @@ describe('API v0 — my photo', () => {
   });
 
   it("the account's erasure drops its photo: pointer, file and object", async () => {
-    const r = await resident();
+    // Not a primary: a primary is not erased (ADR 0036).
+    const unit = await w.helpers.unit(w.a);
+    await w.helpers.resident(w.a, [unit.id]);
+    const tenant = await w.helpers.resident(w.a, [unit.id], 'tenant');
+    const r = {
+      id: tenant.id,
+      token: await w.tokenFor(w.a, tenant.id, 'resident'),
+    };
     const photo = await f.ready(r.token, 'resident_photo');
     await set(r.token, photo).expect(204);
     const deletion = h.moduleRef.get(AccountDeletionService);

@@ -2159,8 +2159,19 @@
       },
       "DeletionRequestResponse": {
         "properties": {
+          "assisted": {
+            "description": "Filed by the management for the account (ADR 0036).",
+            "type": "boolean"
+          },
+          "blockers": {
+            "description": "Queued: what blocks the erasure.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "effectiveAt": {
-            "description": "Undo is possible until then.",
+            "description": "Undo is possible until then; the account is erased after it, unless something blocks it (then `queued`).",
             "format": "date-time",
             "type": "string"
           },
@@ -2173,21 +2184,32 @@
             "type": "string"
           },
           "status": {
-            "enum": [
-              "pending",
-              "cancelled",
-              "completed"
-            ],
-            "type": "string"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeletionRequestStatus"
+              }
+            ]
           }
         },
         "required": [
           "id",
           "status",
           "requestedAt",
-          "effectiveAt"
+          "effectiveAt",
+          "assisted",
+          "blockers"
         ],
         "type": "object"
+      },
+      "DeletionRequestStatus": {
+        "enum": [
+          "pending",
+          "cancelled",
+          "completed",
+          "queued",
+          "closed"
+        ],
+        "type": "string"
       },
       "DeliveryInstruction": {
         "enum": [
@@ -6371,6 +6393,17 @@
             "format": "uuid",
             "type": "string"
           },
+          "assisted": {
+            "description": "Filed by the management.",
+            "type": "boolean"
+          },
+          "blockers": {
+            "description": "Queued: what blocked the erasure (primary_resident, active_staff_role, legal_hold, open_worker_obligations).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "daysOverdue": {
             "description": "Days since the grace period ended; negative while in grace.",
             "type": "number"
@@ -6391,18 +6424,19 @@
             "type": "string"
           },
           "status": {
-            "enum": [
-              "pending",
-              "cancelled",
-              "completed"
-            ],
-            "type": "string"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeletionRequestStatus"
+              }
+            ]
           }
         },
         "required": [
           "id",
           "accountId",
           "status",
+          "blockers",
+          "assisted",
           "requestedAt",
           "effectiveAt",
           "daysOverdue",
@@ -6991,6 +7025,18 @@
         "type": "object"
       },
       "ReasonCodeDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "ReasonCodeOnlyDto": {
         "properties": {
           "reasonCode": {
             "description": "A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE.",
@@ -12386,6 +12432,45 @@
                 }
               }
             },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "erasure"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/erasures/{id}/close": {
+      "post": {
+        "operationId": "ErasureController_close",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
             "description": ""
           }
         },

@@ -43,7 +43,9 @@ describe('API v0 — erased accounts everywhere', () => {
 
   it('in account and resident lists and details, the worker review, and the platform', async () => {
     const unit = await w.helpers.unit(w.a);
-    const resident = await w.helpers.resident(w.a, [unit.id]);
+    // Beside the owner: a primary is not erased (ADR 0036).
+    await w.helpers.resident(w.a, [unit.id]);
+    const resident = await w.helpers.resident(w.a, [unit.id], 'tenant');
     const residentToken = await w.tokenFor(w.a, resident.id, 'resident');
     const registered = await call(w, 'POST', `/units/${unit.id}/workers`, {
       token: residentToken,
@@ -63,6 +65,11 @@ describe('API v0 — erased accounts everywhere', () => {
     const managerId = (manager.body as { id: string }).id;
 
     await erase(resident.id, 'resident');
+    // An active staff role blocks a deletion (ADR 0036): ended first.
+    await call(w, 'PATCH', `/accounts/${managerId}/status`, {
+      token: w.a.tokens.manager,
+      body: { status: 'inactive' },
+    }).expect(200);
     await erase(managerId, 'manager');
 
     const token = w.a.tokens.manager;

@@ -174,8 +174,12 @@ export class AccountWriter {
     accountId: string,
     status: AccountStatus,
   ): Promise<StatusChange | null> {
+    // Locked before it is read (ADR 0036): an erasure executing for it holds
+    // the row, and a status read before it committed would write `active`
+    // over a tombstone.
+    await lockRow(tx, accountId);
     const before = await tx.account.findUnique({ where: { id: accountId } });
-    if (!before) return null;
+    if (!before || before.status === 'erased') return null;
     if (before.status === status)
       return { account: before, sessionsRevoked: 0, afterCommit: [] };
     if (before.status === 'frozen' && status === 'active') {
@@ -422,6 +426,7 @@ export class AccountWriter {
     tx: TenantTxClient,
     accountId: string,
   ): Promise<Account | null> {
+    await lockRow(tx, accountId);
     const before = await tx.account.findUnique({ where: { id: accountId } });
     if (!before) return null;
     if (before.status !== 'frozen') {
@@ -495,6 +500,11 @@ export class AccountWriter {
       recipientAccountId: account.id,
     });
   }
+}
+
+/** The account's row, locked for the rest of the transaction. */
+async function lockRow(tx: TenantTxClient, accountId: string): Promise<void> {
+  await tx.$queryRaw`SELECT id FROM accounts WHERE id = ${accountId}::uuid FOR UPDATE`;
 }
 
 function normalizeContact(input: { email: string; phone: string }) {

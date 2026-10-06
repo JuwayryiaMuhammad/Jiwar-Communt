@@ -17,7 +17,11 @@ export const ACCOUNT_EMAILS = {
   deletionCancelled: 'account.deletion_cancelled',
   legalHoldPlaced: 'account.legal_hold_placed',
   erased: 'account.erased',
+  /** Retired with the overdue report (ADR 0036); kept for queued rows. */
   erasureOverdue: 'account.erasure_overdue',
+  deletionReminder: 'account.deletion_reminder',
+  deletionDelayed: 'account.deletion_delayed',
+  deletionClosed: 'account.deletion_closed',
 } as const;
 
 type Key = (typeof ACCOUNT_EMAILS)[keyof typeof ACCOUNT_EMAILS];
@@ -38,11 +42,16 @@ const DELIVERY: Record<Key, EmailDelivery> = {
   'account.frozen': { ...SOLE, critical: true },
   'account.frozen_not_me': { ...SOLE, critical: true },
   'account.reactivated': SOLE,
-  'account.deletion_requested': { ...SOLE, critical: true },
+  'account.deletion_requested': { ...SOLE, critical: true, soleRecord: false },
   'account.deletion_cancelled': SOLE,
   'account.legal_hold_placed': SOLE,
   'account.erased': SOLE,
   'account.erasure_overdue': SOLE,
+  // Deletion notices are critical (ADR 0036): pause and quiet hours never
+  // delay them. Each has an inbox twin.
+  'account.deletion_reminder': { ...SOLE, critical: true, soleRecord: false },
+  'account.deletion_delayed': { ...SOLE, critical: true, soleRecord: false },
+  'account.deletion_closed': { ...SOLE, soleRecord: false },
 };
 type Params = Record<string, string> & { compoundName: string };
 
@@ -90,11 +99,11 @@ const TEXTS: Record<
   'account.deletion_requested': {
     ar: (p) => ({
       subject: 'طلب حذف حسابك على جوار',
-      lead: `استلمنا طلب حذف حسابك في ${p.compoundName}. يمكنك التراجع حتى ${p.effectiveDate}، وبعدها تُحذف بياناتك الشخصية وتبقى السجلات المالية والتدقيقية دون هويتك.`,
+      lead: `استلمنا طلب حذف حسابك في ${p.compoundName}. يبقى حسابك يعمل ويمكنك التراجع حتى ${p.effectiveDate}، وبعدها تُحذف بياناتك الشخصية وتبقى السجلات المالية والتدقيقية دون هويتك.`,
     }),
     en: (p) => ({
       subject: 'Your Jiwar account deletion request',
-      lead: `We received your request to delete your account in ${p.compoundName}. You can undo it until ${p.effectiveDate}; after that your personal data is erased, and financial and audit records stay without your identity.`,
+      lead: `We received your request to delete your account in ${p.compoundName}. The account keeps working and you can undo it until ${p.effectiveDate}; after that your personal data is erased, and financial and audit records stay without your identity.`,
     }),
   },
   'account.deletion_cancelled': {
@@ -105,6 +114,36 @@ const TEXTS: Record<
     en: (p) => ({
       subject: 'Your Jiwar account deletion was cancelled',
       lead: `You cancelled the deletion of your account in ${p.compoundName}. Your account stays as it is.`,
+    }),
+  },
+  'account.deletion_reminder': {
+    ar: (p) => ({
+      subject: 'سيُحذف حسابك على جوار بعد يومين',
+      lead: `سيُحذف حسابك في ${p.compoundName} في ${p.effectiveDate}، ويمكنك التراجع حتى ذلك الحين.`,
+    }),
+    en: (p) => ({
+      subject: 'Your Jiwar account will be deleted in two days',
+      lead: `Your account in ${p.compoundName} will be deleted on ${p.effectiveDate}; you can still undo it until then.`,
+    }),
+  },
+  'account.deletion_delayed': {
+    ar: (p) => ({
+      subject: 'تأخّر حذف حسابك على جوار',
+      lead: `لم يُحذف حسابك في ${p.compoundName} بعد: ما زال هناك ما يمنع ذلك (${p.blockers}). ستراجع الإدارة الطلب.`,
+    }),
+    en: (p) => ({
+      subject: 'The deletion of your Jiwar account is delayed',
+      lead: `Your account in ${p.compoundName} was not deleted yet: something still prevents it (${p.blockers}). The management will review the request.`,
+    }),
+  },
+  'account.deletion_closed': {
+    ar: (p) => ({
+      subject: 'أُغلق طلب حذف حسابك على جوار',
+      lead: `أغلقت إدارة ${p.compoundName} طلب حذف حسابك دون حذفه. يبقى حسابك كما هو، ويمكنك أن تطلب الحذف من جديد.`,
+    }),
+    en: (p) => ({
+      subject: 'Your Jiwar account deletion request was closed',
+      lead: `The management of ${p.compoundName} closed your deletion request without deleting the account. It stays as it is; you can ask again.`,
     }),
   },
   'account.legal_hold_placed': {

@@ -240,7 +240,10 @@ describe('API v0 — notifications inbox (ADR 0027)', () => {
   });
 
   it('an erased account keeps no notification', async () => {
-    const me = await freshResident();
+    // Not a primary: a primary is not erased (ADR 0036).
+    const unit = await w.helpers.unit(w.a);
+    await w.helpers.resident(w.a, [unit.id]);
+    const me = await w.helpers.resident(w.a, [unit.id], 'tenant');
     await notify([me.id], entered(w.bEngagementId));
     const deletion = h.moduleRef.get(AccountDeletionService);
     const type: AccountType = 'resident';

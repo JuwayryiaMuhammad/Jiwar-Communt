@@ -21,6 +21,10 @@ import {
   EXPORT_TTL_MS,
 } from '../../src/core/exports/data-exports.service';
 import { SweepRunner } from '../../src/core/sweep/sweep-runner';
+import {
+  AccountDeletionService,
+  DELETION_SWEEP,
+} from '../../src/core/accounts/account-deletion.service';
 import { buildExports, stepUp } from '../setup/exports';
 
 /**
@@ -263,6 +267,45 @@ describe('Audit coverage — preferences, consents, export, deletion', () => {
     const failed = await single(c, 'data_export.failed', failedId);
     expect(failed).toMatchObject({ actorType: 'system', actorId: null });
     expect(failed.metadata).toEqual({ reasonCode: 'account_not_eligible' });
+  });
+
+  it('account.deletion_queued (system) and account.deletion_closed (a manager), codes only', async () => {
+    const c = await x.compound('Audit R1');
+    const unit = await x.unit(c);
+    await x.resident(c, [unit.id]);
+    const t = await x.resident(c, [unit.id], 'tenant');
+    const deletion = h.moduleRef.get(AccountDeletionService);
+    const req = await x.as(c, { id: t.id, type: 'resident' }, () =>
+      deletion.requestDeletion('DELETE'),
+    );
+    await x.asManager(c, () =>
+      deletion.placeLegalHold(t.id, { code: 'litigation', text: 'Keep' }),
+    );
+    await h.moduleRef
+      .get(SweepRunner)
+      .run(DELETION_SWEEP, new Date(Date.now() + 15 * 86_400_000));
+    const queued = await single(c, 'account.deletion_queued', t.id);
+    expect(queued).toMatchObject({
+      actorType: 'system',
+      actorId: null,
+      targetType: 'account',
+      changes: { status: { from: 'pending', to: 'queued' } },
+    });
+    expect(queued.metadata).toEqual({
+      requestId: req.id,
+      blockers: ['legal_hold'],
+    });
+    await x.asManager(c, () => deletion.closeQueued(req.id, 'withdrawn'));
+    const closed = await single(c, 'account.deletion_closed', t.id);
+    expect(closed).toMatchObject({
+      actorType: 'account',
+      actorId: c.managerId,
+      changes: { status: { from: 'queued', to: 'closed' } },
+    });
+    expect(closed.metadata).toEqual({
+      requestId: req.id,
+      reasonCode: 'withdrawn',
+    });
   });
 
   describe('catalog completeness', () => {

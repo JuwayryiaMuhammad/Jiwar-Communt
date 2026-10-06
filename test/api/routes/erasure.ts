@@ -53,6 +53,23 @@ export const ERASURE_ROUTES: Row[] = [
       ],
     },
   },
+  // ADR 0036: a queued request closed without erasing.
+  {
+    method: 'POST',
+    path: '/erasures/{id}/close',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bDeletionRequestId }),
+      body: () => ({ reasonCode: 'withdrawn' }),
+      code: 'DELETION_REQUEST_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: 5 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+  },
   {
     method: 'GET',
     path: '/accounts/{id}/legal-holds',

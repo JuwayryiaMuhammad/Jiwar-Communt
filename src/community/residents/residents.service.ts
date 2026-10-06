@@ -36,6 +36,7 @@ import { CommunityNotifier } from '../notices/community-notifier';
 import { ReviewFlags } from '../units/review-flags';
 import { lockUnits } from '../units/unit-lock';
 import { WorkersService } from '../workers/workers.service';
+import { lockAccountShared, lockAccountsForUpdate } from './account-locks';
 import type {
   MyUnit,
   NewResident,
@@ -196,11 +197,13 @@ export class ResidentsService {
     const tenantId = this.ctx.tenantId;
     const createdById = this.ctx.accountId;
     return this.tenantTx.withTenantTx(async (tx) => {
+      // The account's row before the unit's (ADR 0036): see setPrimary.
+      const status = await lockAccountShared(tx, accountId);
       const account = await tx.account.findFirst({
         where: { id: accountId, type: 'resident' },
         select: { id: true },
       });
-      if (!account) throw residentNotFound();
+      if (!account || status === 'erased') throw residentNotFound();
       await lockUnits(tx, [input.unitId]);
       const active = await tx.unitOccupancy.findFirst({
         where: { accountId, unitId: input.unitId, status: 'active' },
@@ -350,6 +353,12 @@ export class ResidentsService {
   async setPrimary(unitId: string, accountId: string): Promise<OccupancyView> {
     const after: AfterCommit[] = [];
     const view = await this.tenantTx.withTenantTx(async (tx) => {
+      // Before the unit (ADR 0036): an erasure executing for this account
+      // holds its row and then locks units; it finishes first, and this
+      // then finds the occupancy ended — or this commits first and the
+      // erasure finds a primary and queues instead.
+      if ((await lockAccountShared(tx, accountId)) === 'erased')
+        throw occupancyNotFound();
       await lockUnits(tx, [unitId]);
       const target = await tx.unitOccupancy.findFirst({
         where: { unitId, accountId, status: 'active' },
@@ -678,6 +687,15 @@ export class ResidentsService {
     const resides = input.resides ?? true;
     const after: AfterCommit[] = [];
     const view = await this.tenantTx.withTenantTx(async (tx) => {
+      // Accounts before the unit (ADR 0036): the buyer, and every account
+      // the transfer ends or deactivates — the unit's occupants and its
+      // household's members — in id order. An erasure executing for any of
+      // them finishes first (the buyer is then not found), or waits for
+      // this one (and then finds a primary, and queues).
+      await lockAccountsForUpdate(tx, [
+        input.toAccountId,
+        ...(await this.accountsOfUnit(tx, unitId)),
+      ]);
       await lockUnits(tx, [unitId]);
       const buyer = await tx.account.findFirst({
         where: { id: input.toAccountId, type: 'resident', status: 'active' },
@@ -753,6 +771,34 @@ export class ResidentsService {
     });
     await runAfterCommit(after, this.logger);
     return view;
+  }
+
+  /**
+   * Every account that has a place on the unit now: its active occupants
+   * and its household's members with an account. Read before the unit's
+   * lock, to lock them first (ADR 0036); one joining in between is locked
+   * after the unit, as before.
+   */
+  private async accountsOfUnit(
+    tx: TenantTxClient,
+    unitId: string,
+  ): Promise<string[]> {
+    const occupants = await tx.unitOccupancy.findMany({
+      where: { unitId, status: 'active' },
+      select: { accountId: true },
+    });
+    const members = await tx.householdMember.findMany({
+      where: {
+        unitId,
+        status: { in: ['active', 'pending_approval'] },
+        accountId: { not: null },
+      },
+      select: { accountId: true },
+    });
+    return [
+      ...occupants.map((o) => o.accountId),
+      ...members.flatMap((m) => (m.accountId ? [m.accountId] : [])),
+    ];
   }
 
   /**
@@ -922,6 +968,12 @@ export class ResidentsService {
       );
     }
     return this.tenantTx.withTenantTx(async (tx) => {
+      // The account's row before the unit's (ADR 0036): see setPrimary.
+      const of = await tx.unitOccupancy.findUnique({
+        where: { id: occupancyId },
+        select: { accountId: true },
+      });
+      if (of) await lockAccountShared(tx, of.accountId);
       const old = await this.lockedActive(tx, occupancyId);
       if (old.occupancyType !== 'tenant') {
         throw appError.conflict(

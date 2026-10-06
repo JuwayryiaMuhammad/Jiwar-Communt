@@ -31,7 +31,8 @@ export class TicketNotices {
 
   /**
    * Tells the active accounts among `to`, never `except` (the one who
-   * acted). The unit code rides along when the kind takes it.
+   * acted), and never a reporter who lost `tickets` on the ticket's unit
+   * (ADR 0032). The unit code rides along when the kind takes it.
    */
   async send(
     tx: TenantTxClient,
@@ -41,8 +42,9 @@ export class TicketNotices {
     extra: Extra = {},
     except: string | null = null,
   ): Promise<void> {
+    const gone = await this.formerReporter(tx, ticket.id);
     const ids = [...new Set(to)].filter(
-      (id): id is string => id !== null && id !== except,
+      (id): id is string => id !== null && id !== except && id !== gone,
     );
     if (!ids.length) return;
     const active = await tx.account.findMany({
@@ -96,6 +98,24 @@ export class TicketNotices {
         targetId: ticket.id,
       },
     );
+  }
+
+  /**
+   * The ticket's reporter, if they no longer have `tickets` on its unit:
+   * they left, or lost the permission. Read in the transaction that writes
+   * the notice. A common-area ticket has no unit to lose.
+   */
+  private async formerReporter(
+    tx: TenantTxClient,
+    ticketId: string,
+  ): Promise<string | null> {
+    const t = await tx.ticket.findUnique({
+      where: { id: ticketId },
+      select: { reporterId: true, unitId: true },
+    });
+    if (!t?.unitId) return null;
+    const place = await this.community.placeIn(tx, t.reporterId, t.unitId);
+    return place?.tickets ? null : t.reporterId;
   }
 
   /** Holders of `permission` now (managers hold maintenance.manage). */

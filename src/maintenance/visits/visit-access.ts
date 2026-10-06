@@ -61,7 +61,7 @@ export class VisitAccess {
       for (const id of [...new Set(accounts)].sort())
         await tx.$queryRaw`SELECT id FROM accounts WHERE id = ${id}::uuid FOR SHARE`;
       await tx.$queryRaw`SELECT id FROM tickets WHERE id = ${ticketId}::uuid FOR UPDATE`;
-      ticket = await this.resident(tx, ticketId, true);
+      ticket = await this.resident(tx, ticketId);
     } else
       ticket = await this.tickets.load(tx, ticketId, audience, { lock: true });
     if (ticket.unitId === null)
@@ -80,7 +80,7 @@ export class VisitAccess {
     audience: Audience,
   ): Promise<Ticket> {
     return audience === 'resident'
-      ? this.resident(tx, ticketId, false)
+      ? this.resident(tx, ticketId)
       : this.tickets.load(tx, ticketId, audience);
   }
 
@@ -106,14 +106,15 @@ export class VisitAccess {
   }
 
   /**
-   * A resident's way to a ticket's visits: they see it (and, to write, may
-   * still act on it), or they live in its unit. TICKET_NOT_FOUND for anyone
-   * else; TICKETS_NOT_ALLOWED for one who sees it but may no longer act.
+   * A resident's way to a ticket's visits, to read or to write: they see it
+   * and may still act on it, or they live in its unit. TICKET_NOT_FOUND for
+   * anyone else; TICKETS_NOT_ALLOWED for one who sees it but may no longer
+   * act — a reporter who left reads the ticket (ADR 0032), never when its
+   * home is empty (ADR 0034).
    */
   private async resident(
     tx: TenantTxClient,
     ticketId: string,
-    write: boolean,
   ): Promise<Ticket> {
     const me = this.ctx.accountId;
     const ticket = await tx.ticket.findUnique({ where: { id: ticketId } });
@@ -125,7 +126,7 @@ export class VisitAccess {
       return ticket;
     if (!(await this.tickets.sees(tx, ticket, 'resident')))
       throw ticketNotFound();
-    if (write) await this.tickets.requireTickets(tx, ticket);
+    await this.tickets.requireTickets(tx, ticket);
     return ticket;
   }
 }

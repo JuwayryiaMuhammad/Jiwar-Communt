@@ -132,6 +132,8 @@ The ticket number, the unit code (never for a common area: the label is free tex
 - `ticket.auto_closed`;
 - `ticket.opened_on_behalf`.
 
+A reporter who no longer has `tickets` on the ticket's unit (they left, or lost the permission) gets **no** `ticket.*` notice as its reporter. Visit notices still reach them only while they live there, as any adult of the unit does (ADR 0034). It is checked in the transaction that writes the notice. A common-area ticket has no unit to lose.
+
 ### Idempotency
 Ticket creation (both routes) and message posts honour `Idempotency-Key` (ADR 0028). Their responses carry no description and no body, so no free text is stored with the key.
 

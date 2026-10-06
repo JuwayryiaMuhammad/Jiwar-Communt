@@ -482,17 +482,24 @@ export class VisitsService {
     });
   }
 
-  /** Everyone on the residents' side: those who live there, and the reporter. */
+  /**
+   * Everyone on the residents' side: those who live there, and the reporter
+   * while they still have `tickets` on the unit. A notice carries the
+   * window, so a reporter who left is never told (ADR 0034); checked here,
+   * in the transaction that writes it.
+   */
   async residents(
     tx: TenantTxClient,
     ticket: Pick<Ticket, 'unitId' | 'reporterId'>,
   ): Promise<string[]> {
-    return [
-      ...(ticket.unitId
-        ? await this.community.consenters(tx, ticket.unitId)
-        : []),
-      ticket.reporterId,
-    ];
+    if (!ticket.unitId) return [ticket.reporterId];
+    const out = await this.community.consenters(tx, ticket.unitId);
+    if (
+      (await this.community.placeIn(tx, ticket.reporterId, ticket.unitId))
+        ?.tickets
+    )
+      out.push(ticket.reporterId);
+    return out;
   }
 
   /** A visit notice: the ticket number and the window, nothing else. */

@@ -55,11 +55,11 @@ The SLA recorder and the visits' lifecycle register there. No path can forget th
 
 | Audience | Routes | Reach |
 |---|---|---|
-| Residents | `/tickets/:id/visits…`, `/me/units/:unitId/visits` | Those who see the ticket (ADR 0032) and may still act on it (`tickets` now), **or any adult who lives in its unit** (`visitConsent`, an active account). The second group reaches the visits **without the ticket**: its description, photos, messages and feedback stay as ADR 0032 decides. `GET /me/units/:unitId/visits` lists a unit's active and upcoming visits with the ticket number, category and status; anyone else gets `UNIT_NOT_FOUND` or 403 `VISITS_NOT_ALLOWED`. |
+| Residents | `/tickets/:id/visits…`, `/me/units/:unitId/visits` | Those who see the ticket (ADR 0032) and may still act on it (`tickets` now, to read as well as to write), **or any adult who lives in its unit** (`visitConsent`, an active account). One who sees the ticket but has neither gets 403 `TICKETS_NOT_ALLOWED`: a reporter who left still reads the ticket (ADR 0032), never its visits. The second group reaches the visits **without the ticket**: its description, photos, messages and feedback stay as ADR 0032 decides. `GET /me/units/:unitId/visits` lists a unit's active and upcoming visits with the ticket number, category and status; anyone else gets `UNIT_NOT_FOUND` or 403 `VISITS_NOT_ALLOWED`. |
 | The technician | `/technician/tickets/:id/visits…` | The ticket's technician now, and only their own visits. |
 | Dispatch | `/maintenance/tickets/:id/visits…` | Every visit, and the history (`/visit-events`). |
 
-Guards, other technicians, landlords and anyone whose occupancy ended reach nothing. Visit notices go to the residents' side: **every adult who lives in the unit, plus the reporter**.
+Guards, other technicians, landlords and anyone whose occupancy ended reach nothing. Visit notices go to the residents' side: **every adult who lives in the unit, plus the reporter while they still have `tickets` on the unit**, checked in the transaction that writes the notice. A reporter who left is told nothing: "never to anyone who left" (§Privacy) wins.
 
 ### Absence-entry consent
 
@@ -201,7 +201,7 @@ The order everywhere is **account rows (in id order), then ticket rows (in id or
 
 ### Privacy
 
-- A visit's window, consent and receiver go to the assigned technician (their own visits), dispatch, and the residents who reach the visits (above). Never to guards, other technicians, landlords, or anyone who left.
+- A visit's window, consent and receiver go to the assigned technician (their own visits), dispatch, and the residents who reach the visits (above). Never to guards, other technicians, landlords, or anyone who left — not even the ticket's reporter.
 - Never in the audit log; never in the visit's own history (window); never in a notification beyond the window.
 - **Visit notices carry the ticket number and the window only: no unit code** (unlike other ticket notices; a window with the unit says which home is empty when). No consent or absence wording in their params.
 - SLA notices carry the ticket number and the clock.

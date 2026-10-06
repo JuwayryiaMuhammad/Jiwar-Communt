@@ -93,6 +93,9 @@ After 5.1 alone, maintenance works end to end with manual assignment. 5.2 and 5.
 - **Cancel** needs a reason code and is audited.
   - The reporter or creator may cancel while the ticket is `new` or `assigned`.
   - A dispatcher may cancel any time before it is closed. A cancelled completion clears `pending`.
+  - The unit's primary who neither reported nor created the ticket sees it but may not cancel it (403 `TICKET_ACTION_NOT_ALLOWED`). Anyone who does not see it gets `TICKET_NOT_FOUND`.
+  - The reason code is validated first, before the ticket is looked up: a missing or unknown code is 400 whatever the ticket, so it tells nothing about it.
+  - The technician and the reporter are told (`ticket.status_changed`), never the one who cancelled; dispatchers are not. An active visit ends with the ticket (`ticket_cancelled`, ADR 0034).
 - Resident writes (cancel, confirm, reject, reopen, messages, photos) need `tickets` on the ticket's unit **now**, or on any unit for a common area. Reads do not, but an account that lost `tickets` on the unit sees the thread and photos only up to that moment: a former member of the household never reads what it writes after they left (ADR 0021).
   - "That moment" is the latest end recorded: the occupancy's `ended_at`, the membership's `removed_at`, or the `tickets` grant's `revoked_at`. When none is recorded (an owner who stopped residing), they see no message and no photo.
   - The ticket's own fields stay readable. A common-area ticket has no unit to lose.

@@ -140,6 +140,8 @@ export const REASON_CODES = {
   ],
   legalHold: ['litigation', 'regulator_request', 'financial_audit', 'other'],
   legalHoldRelease: ['resolved', 'other'],
+  // A manager acting for an account (ADR 0036): how the person asked.
+  assist: ['in_person', 'phone_call', 'written_request'],
   // A manager closing a queued deletion without erasing (ADR 0036).
   deletionClose: ['blockers_unresolved', 'withdrawn', 'other'],
   cardReissue: ['lost', 'compromised', 'other'],

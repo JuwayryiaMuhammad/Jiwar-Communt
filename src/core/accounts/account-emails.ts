@@ -22,6 +22,8 @@ export const ACCOUNT_EMAILS = {
   deletionReminder: 'account.deletion_reminder',
   deletionDelayed: 'account.deletion_delayed',
   deletionClosed: 'account.deletion_closed',
+  /** A manager acted for the account (ADR 0036). */
+  assistedAction: 'account.assisted_action',
 } as const;
 
 type Key = (typeof ACCOUNT_EMAILS)[keyof typeof ACCOUNT_EMAILS];
@@ -52,6 +54,39 @@ const DELIVERY: Record<Key, EmailDelivery> = {
   'account.deletion_reminder': { ...SOLE, critical: true, soleRecord: false },
   'account.deletion_delayed': { ...SOLE, critical: true, soleRecord: false },
   'account.deletion_closed': { ...SOLE, soleRecord: false },
+  'account.assisted_action': { ...SOLE, soleRecord: false },
+};
+
+/** What a manager did for the account, as the account is told it. */
+const ASSISTED: Record<'ar' | 'en', Record<string, string>> = {
+  ar: {
+    notification_preferences: 'غيّرت تفضيلات الإشعارات',
+    consent_granted: 'سجّلت موافقتك',
+    consent_revoked: 'سحبت موافقتك',
+    data_export: 'طلبت نسخة من بياناتك، تصلك على هذا البريد',
+    deletion_requested: 'طلبت حذف حسابك',
+    deletion_cancelled: 'ألغت طلب حذف حسابك',
+  },
+  en: {
+    notification_preferences: 'changed your notification preferences',
+    consent_granted: 'recorded your consent',
+    consent_revoked: 'withdrew your consent',
+    data_export: 'asked for a copy of your data, sent to this email',
+    deletion_requested: 'asked to delete your account',
+    deletion_cancelled: 'cancelled the deletion of your account',
+  },
+};
+const HOW: Record<'ar' | 'en', Record<string, string>> = {
+  ar: {
+    in_person: 'بحضورك',
+    phone_call: 'بمكالمة منك',
+    written_request: 'بطلب مكتوب منك',
+  },
+  en: {
+    in_person: 'in person',
+    phone_call: 'on your phone call',
+    written_request: 'on your written request',
+  },
 };
 type Params = Record<string, string> & { compoundName: string };
 
@@ -144,6 +179,18 @@ const TEXTS: Record<
     en: (p) => ({
       subject: 'Your Jiwar account deletion request was closed',
       lead: `The management of ${p.compoundName} closed your deletion request without deleting the account. It stays as it is; you can ask again.`,
+    }),
+  },
+  'account.assisted_action': {
+    ar: (p) => ({
+      subject: 'تصرّفت الإدارة نيابةً عنك على جوار',
+      lead: `إدارة ${p.compoundName} ${ASSISTED.ar[p.action] ?? p.action} ${HOW.ar[p.reason] ?? ''}.`,
+      help: 'إذا لم تطلب ذلك، تواصل مع إدارة المجمع.',
+    }),
+    en: (p) => ({
+      subject: 'The management acted for you on Jiwar',
+      lead: `The management of ${p.compoundName} ${ASSISTED.en[p.action] ?? p.action} ${HOW.en[p.reason] ?? ''}.`,
+      help: 'If you did not ask for it, contact the compound management.',
     }),
   },
   'account.legal_hold_placed': {

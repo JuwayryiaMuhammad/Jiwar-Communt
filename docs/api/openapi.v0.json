@@ -389,6 +389,102 @@
         ],
         "type": "object"
       },
+      "AssistGrantDto": {
+        "properties": {
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConsentCode"
+              }
+            ]
+          },
+          "reasonCode": {
+            "description": "How the person asked: `in_person`, `phone_call` or `written_request` (INVALID_REASON_CODE otherwise).",
+            "type": "string"
+          },
+          "version": {
+            "description": "The version of the text the account agreed to: it must be the current one (CONSENT_VERSION_MISMATCH).",
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "code",
+          "version",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "AssistPreferencesDto": {
+        "properties": {
+          "categories": {
+            "description": "Each category at most once; absent switches keep their value.",
+            "items": {
+              "$ref": "#/components/schemas/CategorySwitchDto"
+            },
+            "type": "array"
+          },
+          "pause": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PauseChoice"
+              }
+            ],
+            "description": "Pause everything that is not critical: held until the pause ends, never dropped. `null` ends a pause.",
+            "nullable": true
+          },
+          "quietHours": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuietHoursDto"
+              }
+            ],
+            "description": "Local times in the compound's time zone. `null` removes quiet hours.",
+            "nullable": true,
+            "type": "object"
+          },
+          "reasonCode": {
+            "description": "How the person asked: `in_person`, `phone_call` or `written_request` (INVALID_REASON_CODE otherwise).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "AssistReasonDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "How the person asked: `in_person`, `phone_call` or `written_request` (INVALID_REASON_CODE otherwise).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "AssistRevokeDto": {
+        "properties": {
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConsentCode"
+              }
+            ]
+          },
+          "reasonCode": {
+            "description": "How the person asked: `in_person`, `phone_call` or `written_request` (INVALID_REASON_CODE otherwise).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "AttendanceDayView": {
         "properties": {
           "date": {
@@ -11602,6 +11698,134 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/accounts/{id}/consents": {
+      "get": {
+        "operationId": "AssistController_consents",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "assist"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/accounts/{id}/consents/grant": {
+      "post": {
+        "operationId": "AssistController_grant",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistGrantDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "assist"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/accounts/{id}/consents/revoke": {
+      "post": {
+        "operationId": "AssistController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistRevokeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "assist"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/accounts/{id}/contact": {
       "patch": {
         "operationId": "AccountsController_updateContact",
@@ -11644,6 +11868,137 @@
         ],
         "tags": [
           "accounts"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/accounts/{id}/data-exports": {
+      "post": {
+        "operationId": "AssistController_requestExport",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataExportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "assist"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/accounts/{id}/deletion-request": {
+      "post": {
+        "operationId": "AssistController_requestDeletion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionRequestResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "assist"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/accounts/{id}/deletion-request/cancel": {
+      "post": {
+        "operationId": "AssistController_cancelDeletion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "assist"
         ],
         "x-stability": "draft"
       }
@@ -11770,6 +12125,86 @@
         ],
         "tags": [
           "erasure"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/accounts/{id}/notification-preferences": {
+      "get": {
+        "operationId": "AssistController_preferences",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "assist"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "AssistController_updatePreferences",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistPreferencesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "assist"
         ],
         "x-stability": "draft"
       }

@@ -26,6 +26,10 @@ export const PERMISSIONS = {
   'accounts.legal_hold': { kinds: ['manager'] },
   'residents.read': { kinds: ['manager'] },
   'residents.manage': { kinds: ['manager'] },
+  // Acting for an account that does not use the app (ADR 0036): its
+  // delivery preferences, consents, an export or a deletion request, each
+  // with a reason code, marked assisted, the account told.
+  'residents.assist': { kinds: ['manager'] },
   'roles.read': { kinds: ['manager'] },
   'roles.manage': { kinds: ['manager'] },
   'audit.read': { kinds: ['manager'] },

@@ -34,6 +34,11 @@ import { AccountsService } from './accounts.service';
     AccountDeletionService,
     NotMeService,
   ],
-  exports: [AccountWriter, AccountLifecycle, AccountSelfService],
+  exports: [
+    AccountWriter,
+    AccountLifecycle,
+    AccountSelfService,
+    AccountDeletionService,
+  ],
 })
 export class AccountsModule {}

@@ -52,6 +52,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/accounts/{id}/consents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AssistController_consents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{id}/consents/grant": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AssistController_grant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{id}/consents/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AssistController_revoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/accounts/{id}/contact": {
         parameters: {
             query?: never;
@@ -66,6 +114,54 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["AccountsController_updateContact"];
+        trace?: never;
+    };
+    "/api/v1/accounts/{id}/data-exports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AssistController_requestExport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{id}/deletion-request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AssistController_requestDeletion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{id}/deletion-request/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AssistController_cancelDeletion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/accounts/{id}/freeze": {
@@ -98,6 +194,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{id}/notification-preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AssistController_preferences"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["AssistController_updatePreferences"];
         trace?: never;
     };
     "/api/v1/accounts/{id}/reactivate": {
@@ -3931,6 +4043,32 @@ export interface components {
             data: components["schemas"]["AssignmentView"][];
             nextCursor: string | null;
         };
+        AssistGrantDto: {
+            code: components["schemas"]["ConsentCode"];
+            /** @description How the person asked: `in_person`, `phone_call` or `written_request` (INVALID_REASON_CODE otherwise). */
+            reasonCode: string;
+            /** @description The version of the text the account agreed to: it must be the current one (CONSENT_VERSION_MISMATCH). */
+            version: number;
+        };
+        AssistPreferencesDto: {
+            /** @description Each category at most once; absent switches keep their value. */
+            categories?: components["schemas"]["CategorySwitchDto"][];
+            /** @description Pause everything that is not critical: held until the pause ends, never dropped. `null` ends a pause. */
+            pause?: components["schemas"]["PauseChoice"] | null;
+            /** @description Local times in the compound's time zone. `null` removes quiet hours. */
+            quietHours?: components["schemas"]["QuietHoursDto"] | null;
+            /** @description How the person asked: `in_person`, `phone_call` or `written_request` (INVALID_REASON_CODE otherwise). */
+            reasonCode: string;
+        };
+        AssistReasonDto: {
+            /** @description How the person asked: `in_person`, `phone_call` or `written_request` (INVALID_REASON_CODE otherwise). */
+            reasonCode: string;
+        };
+        AssistRevokeDto: {
+            code: components["schemas"]["ConsentCode"];
+            /** @description How the person asked: `in_person`, `phone_call` or `written_request` (INVALID_REASON_CODE otherwise). */
+            reasonCode: string;
+        };
         AttendanceDayView: {
             /** Format: date */
             date: string;
@@ -7194,6 +7332,77 @@ export interface operations {
             };
         };
     };
+    AssistController_consents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentViewList"];
+                };
+            };
+        };
+    };
+    AssistController_grant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssistGrantDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentView"];
+                };
+            };
+        };
+    };
+    AssistController_revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssistRevokeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentView"];
+                };
+            };
+        };
+    };
     AccountsController_updateContact: {
         parameters: {
             query?: never;
@@ -7216,6 +7425,79 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["AccountDetailView"];
                 };
+            };
+        };
+    };
+    AssistController_requestExport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssistReasonDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataExportView"];
+                };
+            };
+        };
+    };
+    AssistController_requestDeletion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssistReasonDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeletionRequestResponse"];
+                };
+            };
+        };
+    };
+    AssistController_cancelDeletion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssistReasonDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -7286,6 +7568,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IdView"];
+                };
+            };
+        };
+    };
+    AssistController_preferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreferencesView"];
+                };
+            };
+        };
+    };
+    AssistController_updatePreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssistPreferencesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreferencesView"];
                 };
             };
         };

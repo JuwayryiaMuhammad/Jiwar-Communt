@@ -299,7 +299,7 @@ export class DataExportsService implements OnModuleInit {
     ip: string,
     now: Date = new Date(),
   ): Promise<void> {
-    await this.limit(ip, token);
+    await this.limit('code', ip, token);
     const target = await this.tokens.inTokenTenant(
       token,
       'export_download',
@@ -342,7 +342,7 @@ export class DataExportsService implements OnModuleInit {
     ip: string,
     now: Date = new Date(),
   ): Promise<PresignedRead> {
-    await this.limit(ip, token);
+    await this.limit('download', ip, token);
     return this.tokens.inTokenTenant(
       token,
       'export_download',
@@ -723,17 +723,21 @@ export class DataExportsService implements OnModuleInit {
     });
   }
 
-  private async limit(ip: string, token: string): Promise<void> {
+  private async limit(
+    step: 'code' | 'download',
+    ip: string,
+    token: string,
+  ): Promise<void> {
     const window = this.config.get('OTP_RATE_LIMIT_WINDOW_SECONDS', {
       infer: true,
     });
     await this.rateLimit.consume(
-      `export-link:ip:${ip}`,
+      `export-link:${step}:ip:${ip}`,
       this.config.get('OTP_RATE_LIMIT_PER_IP', { infer: true }),
       window,
     );
     await this.rateLimit.consume(
-      `export-link:token:${(token ?? '').slice(0, 36)}`,
+      `export-link:${step}:token:${(token ?? '').slice(0, 36)}`,
       this.config.get('OTP_RATE_LIMIT_PER_IDENTIFIER', { infer: true }),
       window,
     );

@@ -20,6 +20,7 @@ import { PermissionsGuard } from './core/access/permissions.guard';
 import { AccountsModule } from './core/accounts/accounts.module';
 import { AppController } from './app.controller';
 import { AuditModule } from './core/audit/audit.module';
+import { AssistModule } from './core/assist/assist.module';
 import { AuthModule } from './core/auth/auth.module';
 import { ConsentsModule } from './core/consents/consents.module';
 import { RequestContextModule } from './core/common/cls/request-context.module';
@@ -103,6 +104,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     TenantSettingsModule,
     FilesModule,
     ExportsModule,
+    AssistModule,
     HealthModule,
     AuthModule,
     AccountsModule,

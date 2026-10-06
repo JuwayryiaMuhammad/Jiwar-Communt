@@ -33,6 +33,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'accounts.legal_hold',
       'residents.read',
       'residents.manage',
+      'residents.assist',
       'roles.read',
       'roles.manage',
       'audit.read',

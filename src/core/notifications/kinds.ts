@@ -190,6 +190,17 @@ export const NOTIFICATION_KINDS = {
     // The close reason's code (a param named `…Code` reads as a secret).
     params: { reason: {} },
   },
+  /**
+   * A manager acted for the account (ADR 0036): what (`action`) and how the
+   * person asked (`reason`, a code). Never who.
+   */
+  'account.assisted_action': {
+    priority: 'normal',
+    category: 'account_security',
+    critical: false,
+    target: 'account',
+    params: { action: {}, reason: {} },
+  },
   // --------------------------------------------------------------------------
   // Maintenance (ADR 0032). The ticket number and codes only: never the
   // description, a common-area label (free text, so a common-area ticket

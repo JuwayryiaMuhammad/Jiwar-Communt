@@ -19,6 +19,12 @@ const BATCH_SIZE = 20;
 export const LEASE_MS = 60_000;
 const PURGE_EVERY_MS = 60 * 60_000;
 const MINUTE = 60_000;
+/**
+ * A message held this long by a pause, with an inbox twin, is deleted: the
+ * inbox stays its record (ADR 0036). A sole-record email is never held that
+ * long (a pause "until resumed" does not hold it).
+ */
+export const HELD_RETENTION_MS = 7 * 24 * 60 * MINUTE;
 /** After attempt n fails, the next one waits BACKOFF[n - 1] (the last repeats). */
 export const BACKOFF_MS = [
   1 * MINUTE,
@@ -50,7 +56,8 @@ export interface OutboxRun {
  *    code — never the recipient or the body.
  * At most hourly it deletes sent rows past OUTBOX_RETENTION_DAYS and
  * strips the personal data of dead ones (they stay, as evidence that a
- * notice never arrived).
+ * notice never arrived). It also deletes messages a pause has held for more
+ * than 7 days when they have an inbox twin (ADR 0036).
  */
 @Injectable()
 export class OutboxProcessor
@@ -238,10 +245,12 @@ export class OutboxProcessor
    * Retention (ADR 0019): sent rows older than OUTBOX_RETENTION_DAYS are
    * deleted; dead rows that old keep their evidence (template, tenant,
    * timestamps, attempts, error code) but lose the recipient and params.
+   * Messages held more than 7 days whose notice also sits in the inbox are
+   * deleted (ADR 0036); a sole-record email is never dropped this way.
    */
   async purge(
     now: Date = new Date(),
-  ): Promise<{ deleted: number; stripped: number }> {
+  ): Promise<{ deleted: number; stripped: number; heldDropped: number }> {
     const before = new Date(now.getTime() - this.retentionMs);
     const deleted = await this.globalDb.outboxMessage.deleteMany({
       where: { status: 'sent', sentAt: { lt: before } },
@@ -250,7 +259,38 @@ export class OutboxProcessor
       where: { status: 'dead', strippedAt: null, createdAt: { lt: before } },
       data: { recipient: null, params: Prisma.DbNull, strippedAt: now },
     });
-    return { deleted: deleted.count, stripped: stripped.count };
+    return {
+      deleted: deleted.count,
+      stripped: stripped.count,
+      heldDropped: await this.dropLongHeld(now),
+    };
+  }
+
+  private async dropLongHeld(now: Date): Promise<number> {
+    const held = await this.globalDb.outboxMessage.findMany({
+      where: {
+        heldAt: { lt: new Date(now.getTime() - HELD_RETENTION_MS) },
+        status: { in: ['pending', 'held'] },
+        attempts: 0,
+      },
+      select: { id: true, templateKey: true },
+    });
+    const ids = held
+      .filter(
+        (m) =>
+          this.templates.has(m.templateKey) &&
+          !this.templates.delivery(m.templateKey).soleRecord,
+      )
+      .map((m) => m.id);
+    if (!ids.length) return 0;
+    const { count } = await this.globalDb.outboxMessage.deleteMany({
+      where: {
+        id: { in: ids },
+        status: { in: ['pending', 'held'] },
+        attempts: 0,
+      },
+    });
+    return count;
   }
 }
 

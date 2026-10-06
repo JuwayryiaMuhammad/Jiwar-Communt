@@ -30,6 +30,7 @@ import {
   RESIDENT_PARCELS_ROUTES,
 } from './parcels';
 import { PLATFORM_ROUTES } from './platform';
+import { PREFERENCES_ROUTES } from './preferences';
 import { PUBLIC_ROUTES } from './public';
 import { REGISTRATION_ROUTES } from './registration';
 import { RESIDENTS_ROUTES } from './residents';
@@ -74,4 +75,5 @@ export const ROUTES: Row[] = [
   ...CONFIRMATION_ROUTES,
   ...MESSAGE_ROUTES,
   ...VISIT_ROUTES,
+  ...PREFERENCES_ROUTES,
 ];

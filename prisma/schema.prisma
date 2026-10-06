@@ -263,6 +263,9 @@ enum OutboxStatus {
   processing
   sent
   dead
+  /// Held by a pause "until resumed" (ADR 0036): never claimed until the
+  /// account's preferences change.
+  held
 
   @@map("outbox_status")
 }
@@ -635,6 +638,9 @@ model OutboxMessage {
   /// The account a message is for (a pointer, no FK): erasure strips that
   /// account's pending messages without touching others sharing the address.
   recipientAccountId String?       @map("recipient_account_id") @db.Uuid
+  /// When the account's preferences held it (quiet hours, a pause; ADR 0036).
+  /// A held message is re-decided whenever those preferences change.
+  heldAt             DateTime?     @map("held_at") @db.Timestamptz(3)
 
   @@index([status, nextAttemptAt])
   @@index([status, sentAt])
@@ -717,6 +723,8 @@ model Account {
   holdsPlaced           LegalHold[]               @relation("HoldPlacedBy")
   holdsReleased         LegalHold[]               @relation("HoldReleasedBy")
   notifications         Notification[]            @relation("NotificationAccount")
+  notificationSettings  NotificationSettings?     @relation("NotificationSettingsAccount")
+  channelPrefs          NotificationChannelPref[] @relation("ChannelPrefAccount")
   idempotencyKeys       IdempotencyKey[]          @relation("IdempotencyAccount")
   technicianSpecialties TechnicianSpecialty[]     @relation("TechnicianSpecialtyAccount")
   availability          TechnicianAvailability?   @relation("TechnicianAvailabilityAccount")
@@ -1360,6 +1368,61 @@ model Notification {
   @@index([tenantId, accountId, createdAt(sort: Desc), id(sort: Desc)])
   @@index([tenantId, targetId])
   @@map("notifications")
+}
+
+/// Delivery preference categories (ADR 0036).
+enum NotificationCategory {
+  maintenance
+  gate_visitors
+  parcels
+  household
+  account_security
+
+  @@map("notification_category")
+}
+
+/// `push` is stored now and read once push delivery exists (ADR 0036).
+enum DeliveryChannel {
+  email
+  push
+
+  @@map("delivery_channel")
+}
+
+/// An account's quiet hours and pause (ADR 0036). No row: the defaults (no
+/// quiet hours, no pause). Locked by every preference change.
+model NotificationSettings {
+  tenantId           String    @map("tenant_id") @db.Uuid
+  accountId          String    @map("account_id") @db.Uuid
+  /// Minutes after local midnight in the compound's time zone; both or neither.
+  quietStartMinute   Int?      @map("quiet_start_minute") @db.SmallInt
+  quietEndMinute     Int?      @map("quiet_end_minute") @db.SmallInt
+  /// A timed pause (1 h, 8 h) ends at this instant.
+  pausedUntil        DateTime? @map("paused_until") @db.Timestamptz(3)
+  /// A pause "until turned back on".
+  pausedIndefinitely Boolean   @default(false) @map("paused_indefinitely")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  account Account @relation("NotificationSettingsAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
+
+  @@id([tenantId, accountId])
+  @@map("notification_settings")
+}
+
+/// One category × channel switch (ADR 0036). No row: on.
+model NotificationChannelPref {
+  tenantId  String               @map("tenant_id") @db.Uuid
+  accountId String               @map("account_id") @db.Uuid
+  category  NotificationCategory
+  channel   DeliveryChannel
+  enabled   Boolean
+  updatedAt DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  account Account @relation("ChannelPrefAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
+
+  @@id([tenantId, accountId, category, channel])
+  @@map("notification_channel_prefs")
 }
 
 /// Idempotent writes (ADR 0028): claimed inside the action's transaction;

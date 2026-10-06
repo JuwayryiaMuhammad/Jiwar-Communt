@@ -29,6 +29,7 @@ import {
   PHASE_4_COVERAGE,
   MAINTENANCE_COVERAGE,
   PARCELS_COVERAGE,
+  R1_COVERAGE,
 } from '../setup/audit-coverage-split';
 import { loginViaOtp } from '../setup/login';
 import { waitForOtp } from '../setup/mailpit';
@@ -827,6 +828,7 @@ describe('Audit coverage', () => {
         ...FILES_COVERAGE,
         ...MAINTENANCE_COVERAGE,
         ...PARCELS_COVERAGE,
+        ...R1_COVERAGE,
       ];
       for (const key of elsewhere) expect(all).toContain(key);
       const mine = all.filter((k) => !elsewhere.includes(k)).sort();

@@ -295,7 +295,7 @@ export class AccountDeletionService implements OnModuleInit {
       const messages = await global.outboxMessage.count({
         where: {
           recipientAccountId: accountId,
-          status: { in: ['pending', 'processing'] },
+          status: { in: ['pending', 'processing', 'held'] },
         },
       });
       const invites = await tx.householdInvite.count({
@@ -498,7 +498,7 @@ export class AccountDeletionService implements OnModuleInit {
     const { count: messagesStripped } = await global.outboxMessage.updateMany({
       where: {
         recipientAccountId: accountId,
-        status: { in: ['pending', 'processing'] },
+        status: { in: ['pending', 'processing', 'held'] },
       },
       data: {
         status: 'dead',

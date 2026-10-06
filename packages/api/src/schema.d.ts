@@ -1588,6 +1588,22 @@ export interface paths {
         patch: operations["MeController_locale"];
         trace?: never;
     };
+    "/api/v1/me/notification-preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PreferencesController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["PreferencesController_update"];
+        trace?: never;
+    };
     "/api/v1/me/notifications": {
         parameters: {
             query?: never;
@@ -3889,6 +3905,17 @@ export interface components {
             data: components["schemas"]["CategoryOptionView"][];
             nextCursor: string | null;
         };
+        CategoryPreferenceView: {
+            category: components["schemas"]["NotificationCategory"];
+            email: boolean;
+            push: boolean;
+        };
+        CategorySwitchDto: {
+            category: components["schemas"]["NotificationCategory"];
+            email?: boolean;
+            /** @description Stored now; read once push delivery exists. */
+            push?: boolean;
+        };
         CategoryView: {
             active: boolean;
             commonAreaAllowed: boolean;
@@ -5201,6 +5228,8 @@ export interface components {
              */
             validUntil?: string;
         };
+        /** @enum {string} */
+        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security";
         NotificationView: {
             /** Format: date-time */
             createdAt: string;
@@ -5356,6 +5385,18 @@ export interface components {
             data: components["schemas"]["PassView"][];
             nextCursor: string | null;
         };
+        /**
+         * @description Pause everything that is not critical: held until the pause ends, never dropped. `null` ends a pause.
+         * @enum {string}
+         */
+        PauseChoice: "1h" | "8h" | "until_resumed";
+        PauseView: {
+            /**
+             * Format: date-time
+             * @description `null`: until turned back on.
+             */
+            until: string | null;
+        };
         PendingErasureView: {
             /** Format: uuid */
             accountId: string;
@@ -5494,6 +5535,16 @@ export interface components {
              */
             scope: "full" | "password_change";
         };
+        PreferencesView: {
+            categories: components["schemas"]["CategoryPreferenceView"][];
+            pause: components["schemas"]["PauseView"] | null;
+            quietHours: components["schemas"]["QuietHoursView"] | null;
+            /**
+             * @description The compound’s time zone, which quiet hours are read in.
+             * @example Africa/Cairo
+             */
+            timeZone: string;
+        };
         PresignedReadView: {
             /** Format: date-time */
             expiresAt: string;
@@ -5504,6 +5555,21 @@ export interface components {
             priority: components["schemas"]["TicketPriority"];
             /** @description From the closed list `ticketPriority`. */
             reasonCode: string;
+        };
+        QuietHoursDto: {
+            /**
+             * @description Before `start`: the window runs past midnight.
+             * @example 07:00
+             */
+            end: string;
+            /** @example 22:00 */
+            start: string;
+        };
+        QuietHoursView: {
+            /** @example 07:00 */
+            end: string;
+            /** @example 22:00 */
+            start: string;
         };
         ReadAllView: {
             read: number;
@@ -6483,6 +6549,14 @@ export interface components {
             parcelManagerDays?: number;
             /** @description Days a parcel is held before its residents are reminded, once. */
             parcelReminderDays?: number;
+        };
+        UpdatePreferencesDto: {
+            /** @description Each category at most once; absent switches keep their value. */
+            categories?: components["schemas"]["CategorySwitchDto"][];
+            /** @description Pause everything that is not critical: held until the pause ends, never dropped. `null` ends a pause. */
+            pause?: components["schemas"]["PauseChoice"] | null;
+            /** @description Local times in the compound's time zone. `null` removes quiet hours. */
+            quietHours?: components["schemas"]["QuietHoursDto"] | null;
         };
         UpdateSettingsDto: {
             /**
@@ -9354,6 +9428,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LocaleView"];
+                };
+            };
+        };
+    };
+    PreferencesController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreferencesView"];
+                };
+            };
+        };
+    };
+    PreferencesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePreferencesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreferencesView"];
                 };
             };
         };

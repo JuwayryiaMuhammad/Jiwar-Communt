@@ -1,0 +1,94 @@
+import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
+import { auditReaders } from '../setup/audit';
+import {
+  COMMUNITY_COVERAGE,
+  FILES_COVERAGE,
+  MAINTENANCE_COVERAGE,
+  PARCELS_COVERAGE,
+  PHASE_2_2_COVERAGE,
+  PHASE_4_COVERAGE,
+  R1_COVERAGE,
+} from '../setup/audit-coverage-split';
+import { communityHelpers, type Compound } from '../setup/community';
+import { API, createHttpHarness, type HttpHarness } from '../setup/http-app';
+
+/**
+ * One scenario per ADR 0036 catalog entry: actor, target, changes and
+ * metadata — codes, times and ids, never a name, a phone or content.
+ */
+const covered = new Set<string>();
+
+describe('Audit coverage — preferences, consents, export, deletion', () => {
+  let h: HttpHarness;
+  let x: ReturnType<typeof communityHelpers>;
+  let read: ReturnType<typeof auditReaders>;
+
+  beforeAll(async () => {
+    h = await createHttpHarness();
+    x = communityHelpers(h);
+    read = auditReaders(h);
+  });
+
+  afterAll(() => h.close());
+
+  async function single(c: Compound, action: string, targetId: string) {
+    const rows = await read.tenant(c.tenantId, { action, targetId });
+    expect(rows).toHaveLength(1);
+    covered.add(action);
+    return rows[0];
+  }
+
+  async function resident(c: Compound) {
+    const unit = await x.unit(c);
+    const p = await x.resident(c, [unit.id]);
+    const token = await h.tokenFor({
+      sub: p.id,
+      tid: c.tenantId,
+      typ: 'resident',
+    });
+    return { ...p, unitId: unit.id, token };
+  }
+
+  it('notification_preferences.changed — by the account', async () => {
+    const c = await x.compound('Audit R1');
+    const p = await resident(c);
+    await h
+      .http()
+      .patch(`${API}/me/notification-preferences`)
+      .set('Authorization', `Bearer ${p.token}`)
+      .send({
+        categories: [{ category: 'maintenance', push: false }],
+        quietHours: { start: '23:00', end: '06:30' },
+      })
+      .expect(200);
+    const row = await single(c, 'notification_preferences.changed', p.id);
+    expect(row).toMatchObject({
+      actorType: 'account',
+      actorId: p.id,
+      targetType: 'account',
+      metadata: { assisted: false },
+    });
+    expect(row.changes).toEqual({
+      'maintenance.push': { from: true, to: false },
+      quietHours: { from: null, to: '23:00-06:30' },
+    });
+  });
+
+  describe('catalog completeness', () => {
+    it('every ADR 0036 entry has a scenario above, and no other suite claims it', () => {
+      const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];
+      for (const key of R1_COVERAGE) {
+        expect(all).toContain(key);
+        expect([
+          ...COMMUNITY_COVERAGE,
+          ...PHASE_2_2_COVERAGE,
+          ...PHASE_4_COVERAGE,
+          ...FILES_COVERAGE,
+          ...MAINTENANCE_COVERAGE,
+          ...PARCELS_COVERAGE,
+        ]).not.toContain(key);
+      }
+      expect([...covered].sort()).toEqual([...R1_COVERAGE].sort());
+    });
+  });
+});

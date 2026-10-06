@@ -133,3 +133,11 @@ export const PARCELS_COVERAGE: readonly string[] = [
   'parcel.delegate_authorized',
   'parcel.delegate_revoked',
 ];
+
+/**
+ * Preferences, consents, data export and account deletion (ADR 0036),
+ * covered by test/privacy/audit-coverage.e2e-spec.ts.
+ */
+export const R1_COVERAGE: readonly string[] = [
+  'notification_preferences.changed',
+];

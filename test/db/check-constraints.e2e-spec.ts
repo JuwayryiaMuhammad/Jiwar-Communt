@@ -316,6 +316,17 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'the comparison is wrapped in COALESCE(…, false). Rows with each ' +
       'NULL are rejected in identity-and-outbox-schema.e2e-spec.ts',
   },
+  // Preferences (ADR 0036): nullable columns only under IS [NOT] NULL.
+  notification_settings_pause_shape: {},
+  outbox_messages_held_shape: {},
+  // Preferences: compares nullable columns.
+  notification_settings_quiet_shape: {
+    guarded:
+      'the first conjunct pins quiet_end_minute to be NULL exactly when ' +
+      'quiet_start_minute is; the ranges and <> run only under ' +
+      'quiet_start_minute IS NULL OR …, where both are values. One NULL ' +
+      'fails the first conjunct, and false AND NULL is false',
+  },
 };
 
 interface Check {

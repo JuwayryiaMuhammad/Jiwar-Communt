@@ -88,6 +88,27 @@ export class IdentifierHasher {
     return this.hmac(`step-up:${scope}:${id}`);
   }
 
+  /**
+   * A device an account logged in from (ADR 0036): bound to the account, so
+   * the same install can never be linked across accounts.
+   */
+  hashDevice(
+    accountId: string,
+    source: 'app' | 'web',
+    material: string,
+  ): string {
+    return this.hmac(`device:v1:${accountId}:${source}:${material}`);
+  }
+
+  /**
+   * The mac of an email action token (ADR 0036). The token is
+   * `<id>.<mac>`: derived from the row's id and purpose with the pepper, so
+   * nothing secret is ever stored and only the server can make one.
+   */
+  actionTokenMac(purpose: string, id: string): string {
+    return this.hmac(`action-token:v1:${purpose}:${id}`);
+  }
+
   /** A worker's national ID, to find the same person again (ADR 0017). */
   hashWorkerNationalId(nationalId: string): string {
     return this.hmac(`worker-national-id:${nationalId}`);

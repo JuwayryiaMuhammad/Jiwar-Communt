@@ -129,6 +129,8 @@ export const REASON_CODES = {
   complianceReport: ['document_review', 'report_received', 'other'],
   complianceClose: ['resolved', 'unfounded', 'other'],
   accountFreeze: ['phone_reassigned'],
+  /** The freeze an account asks for itself on an unusual login (ADR 0036). */
+  accountFreezeSelf: ['login_not_me'],
   registrationReject: [
     'not_a_resident',
     'unit_mismatch',

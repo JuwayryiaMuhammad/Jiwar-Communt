@@ -16,13 +16,14 @@ type GlobalTables = Pick<
   | 'outboxMessage'
   | 'registrationLink'
   | 'visitorPassLink'
+  | 'actionToken'
 >;
 
 /**
  * The only path to the global (non-RLS) tables: tenants, login_identifiers,
  * otp_challenges, sessions, platform_admins, platform_sessions, the audit
- * tables, invite_tokens, registration_links, visitor_pass_links and
- * outbox_messages. Tenant tables are deliberately not exposed here.
+ * tables, invite_tokens, registration_links, visitor_pass_links,
+ * action_tokens and outbox_messages. Tenant tables are deliberately not exposed here.
  */
 @Injectable()
 export class GlobalDbService implements GlobalTables {
@@ -74,6 +75,10 @@ export class GlobalDbService implements GlobalTables {
 
   get visitorPassLink() {
     return this.base.client.visitorPassLink;
+  }
+
+  get actionToken() {
+    return this.base.client.actionToken;
   }
 
   /**
@@ -200,6 +205,7 @@ export class GlobalDbService implements GlobalTables {
       outboxMessage: tx.outboxMessage,
       registrationLink: tx.registrationLink,
       visitorPassLink: tx.visitorPassLink,
+      actionToken: tx.actionToken,
     };
   }
 

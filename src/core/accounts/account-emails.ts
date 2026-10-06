@@ -11,6 +11,7 @@ import {
 /** Outbox template keys owned by core accounts (ADR 0019, 0023). */
 export const ACCOUNT_EMAILS = {
   frozen: 'account.frozen',
+  frozenNotMe: 'account.frozen_not_me',
   reactivated: 'account.reactivated',
   deletionRequested: 'account.deletion_requested',
   deletionCancelled: 'account.deletion_cancelled',
@@ -35,6 +36,7 @@ const SOLE: EmailDelivery = {
  */
 const DELIVERY: Record<Key, EmailDelivery> = {
   'account.frozen': { ...SOLE, critical: true },
+  'account.frozen_not_me': { ...SOLE, critical: true },
   'account.reactivated': SOLE,
   'account.deletion_requested': { ...SOLE, critical: true },
   'account.deletion_cancelled': SOLE,
@@ -61,6 +63,18 @@ const TEXTS: Record<
       subject: 'Your Jiwar account was frozen',
       lead: `Your account in ${p.compoundName} was frozen because its phone number is no longer yours. The number was removed and every session ended. The account is never opened for the number's new holder.`,
       help: 'Contact the compound management to register a new number and reactivate your account.',
+    }),
+  },
+  'account.frozen_not_me': {
+    ar: (p) => ({
+      subject: 'أُوقف حسابك على جوار',
+      lead: `أُوقف حسابك في ${p.compoundName} بعد أن أبلغت أن تسجيل الدخول الأخير لم يكن أنت، وانتهت كل الجلسات.`,
+      help: 'تواصل مع إدارة المجمع لإعادة تفعيل حسابك.',
+    }),
+    en: (p) => ({
+      subject: 'Your Jiwar account was frozen',
+      lead: `Your account in ${p.compoundName} was frozen because you said the last login was not you, and every session ended.`,
+      help: 'Contact the compound management to reactivate your account.',
     }),
   },
   'account.reactivated': {

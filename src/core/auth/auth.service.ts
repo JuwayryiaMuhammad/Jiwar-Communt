@@ -15,6 +15,7 @@ import { TenantTx } from '../database/tenant-tx.service';
 import { REDIS } from '../redis/redis.module';
 import type { OtpVerifiedView, TokensView } from './dto/auth.dto';
 import { IdentifierHasher, parseIdentifier } from './identifier';
+import { LoginAlerts } from './login-alerts';
 import { OtpService, type UnlockedAccount } from './otp.service';
 import { RateLimitService } from '../redis/rate-limit.service';
 import {
@@ -42,6 +43,7 @@ export class AuthService {
     private readonly tenantTx: TenantTx,
     @Inject(REDIS) private readonly redis: Redis,
     private readonly securityEvents: SecurityEventsService,
+    private readonly loginAlerts: LoginAlerts,
   ) {}
 
   /**
@@ -132,10 +134,16 @@ export class AuthService {
     };
   }
 
-  /** Step 3. Consumes the ticket and starts a session for one account. */
+  /**
+   * Step 3. Consumes the ticket and starts a session for one account. The
+   * device is recorded first (ADR 0036): one never seen on the account
+   * raises the unusual-login alert, and a login that cannot record it does
+   * not start.
+   */
   async selectAccount(
     loginTicket: string,
     accountId: string,
+    origin: { userAgent?: string | null; installId?: string | null } = {},
   ): Promise<TokensView> {
     const raw = await this.redis.getdel(ticketKey(loginTicket));
     const chosen = raw
@@ -149,6 +157,7 @@ export class AuthService {
         'Invalid or expired login ticket',
       );
     }
+    await this.loginAlerts.recordLogin(chosen, origin);
     const tokens = await this.sessions.start(chosen);
     await this.securityEvents.record('login.succeeded', {
       accountId: chosen.accountId,

@@ -113,6 +113,18 @@ export const NOTIFICATION_KINDS = {
     target: 'entry_credential',
     params: {},
   },
+  /**
+   * Someone logged in to the account from a device never seen on it
+   * (ADR 0036). The coarse device type and the time, never an IP or a
+   * place. Its "not me" acts on the device (`POST /me/devices/{id}/not-me`).
+   */
+  'account.new_device_login': {
+    priority: 'critical',
+    category: 'account_security',
+    critical: true,
+    target: 'known_device',
+    params: { deviceType: {}, at: {} },
+  },
   // --------------------------------------------------------------------------
   // Maintenance (ADR 0032). The ticket number and codes only: never the
   // description, a common-area label (free text, so a common-area ticket

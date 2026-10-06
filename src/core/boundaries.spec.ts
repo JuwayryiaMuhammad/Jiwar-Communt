@@ -140,6 +140,46 @@ describe('import boundaries', () => {
     expect(fromCore[0]).toContain('src/core must not import a domain');
   });
 
+  it('other domains reach maintenance only through its index.ts; maintenance never the base client, the port file or the gate index (ADR 0032)', async () => {
+    for (const from of [
+      'src/community/residents/x.ts',
+      'src/gate/entries/x.ts',
+    ]) {
+      expect(
+        await problems(from, "import { A } from '../../maintenance';"),
+      ).toEqual([]);
+      const deep = await problems(
+        from,
+        "import { A } from '../../maintenance/tickets/tickets.service';",
+      );
+      expect(deep).toHaveLength(1);
+      expect(deep[0]).toContain(
+        'Import maintenance only through its public index.ts',
+      );
+    }
+    const maintenance = 'src/maintenance/visits/x.ts';
+    expect(
+      await problems(
+        maintenance,
+        "import { B } from '../../core/database/base-prisma';",
+      ),
+    ).toHaveLength(1);
+    const port = await problems(
+      maintenance,
+      "import { A } from '../../community/maintenance-port';",
+    );
+    expect(port).toHaveLength(1);
+    expect(port[0]).toContain(
+      'Import community only through its public index.ts',
+    );
+    const gate = await problems(
+      maintenance,
+      "import { A } from '../../gate/index';",
+    );
+    expect(gate).toHaveLength(1);
+    expect(gate[0]).toContain('maintenance must not import gate at all');
+  });
+
   it('a domain may import core', async () => {
     expect(
       await problems(

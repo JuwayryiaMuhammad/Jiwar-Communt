@@ -9002,6 +9002,31 @@
         ],
         "type": "object"
       },
+      "StepUpCodeDto": {
+        "properties": {
+          "code": {
+            "pattern": "^\\d{6}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
+      "StepUpView": {
+        "properties": {
+          "expiresAt": {
+            "description": "Until then, this session's next sensitive action may run.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expiresAt"
+        ],
+        "type": "object"
+      },
       "TechnicianAvailabilityState": {
         "description": "A technician who never set it is `unavailable`.",
         "enum": [
@@ -16519,6 +16544,63 @@
         ],
         "tags": [
           "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/step-up": {
+      "post": {
+        "operationId": "StepUpController_request",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "security"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/step-up/verify": {
+      "post": {
+        "operationId": "StepUpController_verify",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StepUpCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StepUpView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "security"
         ],
         "x-stability": "draft"
       }

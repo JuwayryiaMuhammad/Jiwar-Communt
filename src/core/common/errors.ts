@@ -199,6 +199,10 @@ export const ErrorCode = {
   // preferences, consents, export, deletion (ADR 0036)
   /** A grant must answer the consent's current version (409, params.current). */
   CONSENT_VERSION_MISMATCH: 'CONSENT_VERSION_MISMATCH',
+  /** The action needs a fresh step-up code on this session (403). */
+  STEP_UP_REQUIRED: 'STEP_UP_REQUIRED',
+  /** A wrong, used or expired step-up code (403). */
+  STEP_UP_CODE_INVALID: 'STEP_UP_CODE_INVALID',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

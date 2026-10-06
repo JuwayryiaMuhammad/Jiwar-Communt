@@ -38,6 +38,12 @@ const EN = {
     intro: 'Your code to confirm your registration request on Jiwar is',
     ignore: 'If you did not ask to register, ignore this email.',
   },
+  step_up: {
+    subject: 'Your Jiwar confirmation code',
+    intro: 'Your code to confirm this request on Jiwar is',
+    ignore:
+      'If you did not ask for it, ignore this email and tell the compound management.',
+  },
 } satisfies Record<OtpPurpose, Record<string, string>>;
 
 const AR = {
@@ -55,6 +61,11 @@ const AR = {
     subject: 'رمز تأكيد التسجيل في جوار',
     intro: 'رمز تأكيد طلب تسجيلك في جوار هو',
     ignore: 'إذا لم تطلب التسجيل، تجاهل هذه الرسالة.',
+  },
+  step_up: {
+    subject: 'رمز التأكيد من جوار',
+    intro: 'رمز تأكيد طلبك على جوار هو',
+    ignore: 'إذا لم تطلبه، تجاهل هذه الرسالة وأبلغ إدارة المجمع.',
   },
 } satisfies Record<OtpPurpose, Record<string, string>>;
 

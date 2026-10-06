@@ -79,6 +79,15 @@ export class IdentifierHasher {
     return this.hmac(`register:${linkHash}:${email}:${digest}`);
   }
 
+  /**
+   * The key of a step-up code (ADR 0036): what the code unlocks — one
+   * session, or one email action token — so a code issued for one can never
+   * be used for another.
+   */
+  stepUpKey(scope: 'session' | 'action-token', id: string): string {
+    return this.hmac(`step-up:${scope}:${id}`);
+  }
+
   /** A worker's national ID, to find the same person again (ADR 0017). */
   hashWorkerNationalId(nationalId: string): string {
     return this.hmac(`worker-national-id:${nationalId}`);

@@ -276,6 +276,10 @@ export const SECURITY_EVENTS = [
   'account.phone_reassigned',
   // A registration completed with an unknown or revoked link (ADR 0024).
   'registration.link_invalid',
+  // Step-up (ADR 0036): a fresh code before a sensitive action.
+  'step_up.requested',
+  'step_up.verified',
+  'step_up.failed',
 ] as const;
 
 export type SecurityEventName = (typeof SECURITY_EVENTS)[number];

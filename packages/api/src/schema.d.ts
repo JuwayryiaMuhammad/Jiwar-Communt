@@ -1860,6 +1860,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/step-up": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["StepUpController_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/step-up/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["StepUpController_verify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/units": {
         parameters: {
             query?: never;
@@ -6241,6 +6273,16 @@ export interface components {
             data: components["schemas"]["StatusHistoryView"][];
             nextCursor: string | null;
         };
+        StepUpCodeDto: {
+            code: string;
+        };
+        StepUpView: {
+            /**
+             * Format: date-time
+             * @description Until then, this session's next sensitive action may run.
+             */
+            expiresAt: string;
+        };
         /**
          * @description A technician who never set it is `unavailable`.
          * @enum {string}
@@ -9905,6 +9947,46 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    StepUpController_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StepUpController_verify: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StepUpCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StepUpView"];
+                };
             };
         };
     };

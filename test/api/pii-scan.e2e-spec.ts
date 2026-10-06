@@ -510,6 +510,15 @@ describe('API v0 — PII leak scan', () => {
         description: 'PII-QUEUED-description',
       }),
     );
+    // A common-area ticket: its label is free text (ADR 0032), the
+    // reporter's and dispatch's only while nobody is assigned.
+    await asPrimary(() =>
+      h.moduleRef.get(TicketsService).create({
+        commonArea: 'PII-AREA-text',
+        categoryId: w.aCategoryId,
+        description: 'PII-AREA-description',
+      }),
+    );
 
     // Dispatch (ADR 0033). The engine finds nobody for the queued ticket (an
     // attempt row, an unassignable notice for the dispatchers); then the
@@ -798,6 +807,35 @@ describe('API v0 — PII leak scan', () => {
           if (name === 'landlord' && found('PII-THREAD-before'))
             leaks.push(`${name} ${r.path}: the tenant's message`);
         }
+        // Ticket text (ADR 0032): descriptions, the common-area label, the
+        // thread, internal notes and feedback are for those who see the
+        // ticket: never a guard, a landlord, someone who left, another
+        // technician or the platform. Nobody but the reporter and dispatch
+        // sees the common-area ticket.
+        if (
+          [
+            'guard',
+            'landlord',
+            'ender',
+            'otherTechnician',
+            'platform',
+          ].includes(name)
+        )
+          for (const s of [
+            'PII-TICKET-description',
+            'PII-QUEUED-description',
+            'PII-VISIT-description',
+            'PII-AREA-description',
+            'PII-AREA-text',
+            'PII-MESSAGE-family',
+            'PII-MESSAGE-technician',
+            'PII-INTERNAL-note',
+            'PII-FEEDBACK-comment',
+          ])
+            if (found(s)) leaks.push(`${name} ${r.path}: ${s}`);
+        if (name === 'family' || name === 'technician')
+          for (const s of ['PII-AREA-description', 'PII-AREA-text'])
+            if (found(s)) leaks.push(`${name} ${r.path}: ${s}`);
         // Visits (ADR 0034): a window, a consent and a receiver tell when a
         // home is empty. Never a guard, a landlord (who does not live
         // there), another technician or someone who left.
@@ -1019,6 +1057,10 @@ describe('API v0 — PII leak scan', () => {
     const auditText = JSON.stringify(auditRows);
     for (const s of [...windowMarks, homeVisit.id, 'absence', 'receiver'])
       expect(auditText).not.toContain(s);
+
+    // The common-area ticket: its reporter's list, and dispatch's.
+    expect(seen.get('resident /tickets')).toContain('PII-AREA-text');
+    expect(seen.get('manager /maintenance/tickets')).toContain('PII-AREA-text');
 
     // The technician reads their ticket: the work, the reporter's first
     // name, the thread with its internal note — and nothing of dispatch's.

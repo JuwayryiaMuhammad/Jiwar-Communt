@@ -1337,6 +1337,62 @@
         ],
         "type": "object"
       },
+      "ConsentCode": {
+        "enum": [
+          "ticket_phone_share"
+        ],
+        "type": "string"
+      },
+      "ConsentView": {
+        "properties": {
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConsentCode"
+              }
+            ]
+          },
+          "granted": {
+            "description": "Granted at the current version.",
+            "type": "boolean"
+          },
+          "grantedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "version": {
+            "description": "The current version of the text; a grant answers it.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "code",
+          "version",
+          "granted",
+          "grantedAt"
+        ],
+        "type": "object"
+      },
+      "ConsentViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ConsentView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ConsenterView": {
         "properties": {
           "erased": {
@@ -3755,6 +3811,27 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GrantConsentDto": {
+        "properties": {
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConsentCode"
+              }
+            ]
+          },
+          "version": {
+            "description": "The version of the text the account agreed to: it must be the current one (CONSENT_VERSION_MISMATCH).",
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "code",
+          "version"
         ],
         "type": "object"
       },
@@ -8164,6 +8241,21 @@
         ],
         "type": "object"
       },
+      "RevokeConsentDto": {
+        "properties": {
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConsentCode"
+              }
+            ]
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
       "RevokeDto": {
         "properties": {
           "permission": {
@@ -9134,6 +9226,11 @@
             "nullable": true,
             "type": "string"
           },
+          "reporterPhone": {
+            "description": "The reporter's phone, only while the reporter allows it (consent `ticket_phone_share`), still has the ticket's unit, and the work is open (ADR 0036). Otherwise null.",
+            "nullable": true,
+            "type": "string"
+          },
           "status": {
             "allOf": [
               {
@@ -9162,6 +9259,7 @@
           "rejectionCount",
           "confirmationStatus",
           "reporterFirstName",
+          "reporterPhone",
           "photos"
         ],
         "type": "object"
@@ -15475,6 +15573,107 @@
           "me"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/consents": {
+      "get": {
+        "operationId": "ConsentsController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "consents"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/consents/grant": {
+      "post": {
+        "operationId": "ConsentsController_grant",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantConsentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "consents"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/consents/revoke": {
+      "post": {
+        "operationId": "ConsentsController_revoke",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeConsentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "consents"
+        ],
         "x-stability": "draft"
       }
     },

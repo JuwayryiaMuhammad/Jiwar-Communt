@@ -94,6 +94,7 @@ const AUDIT_TABLES = [
   'ticket_sla_events',
   // And the parcels' events (ADR 0035).
   'parcel_events',
+  'consent_events',
 ];
 
 /**

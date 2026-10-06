@@ -13,6 +13,7 @@ import {
 } from '@prisma/client';
 import { CommunityMaintenancePort } from '../../community';
 import { AuditService } from '../../core/audit/audit.service';
+import { ConsentsService } from '../../core/consents/consents.service';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { clampLimit, keysetCursor, type Page } from '../../core/common/cursor';
 import {
@@ -86,7 +87,19 @@ export interface TicketDetail extends TicketRead {
   feedback: TicketFeedback[];
   /** Residents and dispatch only; null while the SLA is off (ADR 0034). */
   sla: SlaSummary | null;
+  /**
+   * The technician only, and only under `phoneShareAllowed` (ADR 0036);
+   * null for everyone else.
+   */
+  reporterPhone: string | null;
 }
+
+/** The statuses in which the work is open: the technician has it in hand. */
+export const PHONE_SHARE_STATUSES: readonly TicketStatus[] = [
+  'assigned',
+  'in_progress',
+  'on_hold',
+];
 
 export interface HistoryRead<T> {
   rows: T[];
@@ -138,6 +151,7 @@ export class TicketsService implements OnModuleInit {
     private readonly settings: MaintenanceSettingsService,
     private readonly engine: DispatchEngine,
     private readonly sla: SlaService,
+    private readonly consents: ConsentsService,
   ) {}
 
   onModuleInit(): void {
@@ -347,8 +361,56 @@ export class TicketsService implements OnModuleInit {
       );
       const sla =
         audience === 'technician' ? null : await this.sla.summary(tx, id);
-      return { ...read, photos, settings, feedback, sla };
+      const reporterPhone =
+        audience === 'technician'
+          ? await this.sharedPhone(tx, ticket, this.ctx.accountId)
+          : null;
+      return { ...read, photos, settings, feedback, sla, reporterPhone };
     });
+  }
+
+  /**
+   * The reporter's phone for `technicianId`, decided at read time
+   * (ADR 0036), or null. All of these must hold now:
+   * - `technicianId` is the ticket's technician;
+   * - the work is open (assigned, in progress or on hold);
+   * - the reporter's account is active (never frozen or erased) and has a
+   *   phone;
+   * - the reporter still holds `tickets` on the ticket's unit (any unit for
+   *   a common area): someone who left never has their phone shown;
+   * - the reporter has granted `ticket_phone_share` at its current version.
+   * Dispatch and residents never get it.
+   */
+  async sharedPhone(
+    tx: TenantTxClient,
+    ticket: Ticket,
+    technicianId: string,
+  ): Promise<string | null> {
+    if (ticket.technicianId !== technicianId) return null;
+    if (!PHONE_SHARE_STATUSES.includes(ticket.status)) return null;
+    const reporter = await tx.account.findUnique({
+      where: { id: ticket.reporterId },
+      select: { status: true, phone: true },
+    });
+    if (reporter?.status !== 'active' || !reporter.phone) return null;
+    // The same "still has tickets" as a reader's cutoff (`ticketsLostAt`):
+    // null while the reporter has it on the unit. A common area has no unit
+    // to lose; there it is `tickets` on any unit, as for a resident's writes.
+    const stillThere = ticket.unitId
+      ? (await this.community.ticketsLostAt(
+          tx,
+          ticket.reporterId,
+          ticket.unitId,
+        )) === null
+      : (await this.community.ticketUnits(tx, ticket.reporterId)).length > 0;
+    if (!stillThere) return null;
+    return (await this.consents.isGranted(
+      tx,
+      ticket.reporterId,
+      'ticket_phone_share',
+    ))
+      ? reporter.phone
+      : null;
   }
 
   /** Dispatch: the status history, oldest first (a ticket has a handful). */

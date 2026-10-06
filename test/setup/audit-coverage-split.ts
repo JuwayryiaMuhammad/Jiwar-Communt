@@ -140,4 +140,6 @@ export const PARCELS_COVERAGE: readonly string[] = [
  */
 export const R1_COVERAGE: readonly string[] = [
   'notification_preferences.changed',
+  'consent.granted',
+  'consent.revoked',
 ];

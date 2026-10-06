@@ -120,6 +120,8 @@ const TECHNICIAN_DETAIL = [
   'photos',
   'rejectionCount',
   'reporterFirstName',
+  // ADR 0036: null unless the reporter shares their phone.
+  'reporterPhone',
 ].sort();
 const DISPATCH_DETAIL = [
   ...DISPATCH,
@@ -593,6 +595,7 @@ describe('API v0 — maintenance (ADR 0032)', () => {
       expect(detail.body).toMatchObject({
         status: 'assigned',
         reporterFirstName: firstName,
+        reporterPhone: null,
         unitCode: expect.any(String) as string,
       });
 

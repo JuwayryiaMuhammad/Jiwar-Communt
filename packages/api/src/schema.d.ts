@@ -1476,6 +1476,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/consents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsentsController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/consents/grant": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsentsController_grant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/consents/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsentsController_revoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/delegations": {
         parameters: {
             query?: never;
@@ -4012,6 +4060,21 @@ export interface components {
             comment?: string;
             rating: number;
         };
+        /** @enum {string} */
+        ConsentCode: "ticket_phone_share";
+        ConsentView: {
+            code: components["schemas"]["ConsentCode"];
+            /** @description Granted at the current version. */
+            granted: boolean;
+            /** Format: date-time */
+            grantedAt: string | null;
+            /** @description The current version of the text; a grant answers it. */
+            version: number;
+        };
+        ConsentViewList: {
+            data: components["schemas"]["ConsentView"][];
+            nextCursor: string | null;
+        };
         ConsenterView: {
             /**
              * @description Present (true) only on an erased account.
@@ -4692,6 +4755,11 @@ export interface components {
         GateViewList: {
             data: components["schemas"]["GateView"][];
             nextCursor: string | null;
+        };
+        GrantConsentDto: {
+            code: components["schemas"]["ConsentCode"];
+            /** @description The version of the text the account agreed to: it must be the current one (CONSENT_VERSION_MISMATCH). */
+            version: number;
         };
         GrantDto: {
             /**
@@ -5958,6 +6026,9 @@ export interface components {
             /** @description A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. */
             reasonCode: string;
         };
+        RevokeConsentDto: {
+            code: components["schemas"]["ConsentCode"];
+        };
         RevokeDto: {
             permission: components["schemas"]["MemberPermission"];
             /** @description What the person is told (at most 1000 characters). Never stored in the audit trail. */
@@ -6235,6 +6306,8 @@ export interface components {
             rejectionCount: number;
             /** @description The reporter's first name, and nothing else about them: coordination goes through messages. */
             reporterFirstName: string | null;
+            /** @description The reporter's phone, only while the reporter allows it (consent `ticket_phone_share`), still has the ticket's unit, and the work is open (ADR 0036). Otherwise null. */
+            reporterPhone: string | null;
             status: components["schemas"]["TicketStatus"];
             unitCode: string | null;
         };
@@ -9244,6 +9317,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeView"];
+                };
+            };
+        };
+    };
+    ConsentsController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentViewList"];
+                };
+            };
+        };
+    };
+    ConsentsController_grant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GrantConsentDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentView"];
+                };
+            };
+        };
+    };
+    ConsentsController_revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevokeConsentDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentView"];
                 };
             };
         };

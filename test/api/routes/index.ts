@@ -1,6 +1,7 @@
 import type { Row } from '../registry';
 import { APPROVALS_ROUTES } from './approvals';
 import { ATTENDANCE_ROUTES } from './attendance';
+import { CONSENTS_ROUTES } from './consents';
 import { ACCOUNTS_ROUTES } from './accounts';
 import { ADMIN_ROUTES } from './admin';
 import { DELEGATIONS_ROUTES } from './delegations';
@@ -76,4 +77,5 @@ export const ROUTES: Row[] = [
   ...MESSAGE_ROUTES,
   ...VISIT_ROUTES,
   ...PREFERENCES_ROUTES,
+  ...CONSENTS_ROUTES,
 ];

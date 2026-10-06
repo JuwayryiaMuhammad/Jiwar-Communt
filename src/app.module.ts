@@ -21,6 +21,7 @@ import { AccountsModule } from './core/accounts/accounts.module';
 import { AppController } from './app.controller';
 import { AuditModule } from './core/audit/audit.module';
 import { AuthModule } from './core/auth/auth.module';
+import { ConsentsModule } from './core/consents/consents.module';
 import { RequestContextModule } from './core/common/cls/request-context.module';
 import { AllExceptionsFilter } from './core/common/filters/all-exceptions.filter';
 import { httpLogOptions } from './core/common/logging/http-log-options';
@@ -96,6 +97,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     AuditModule,
     MailModule,
     PreferencesModule,
+    ConsentsModule,
     SweepModule,
     TenantSettingsModule,
     FilesModule,

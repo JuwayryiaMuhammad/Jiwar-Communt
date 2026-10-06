@@ -74,6 +74,36 @@ describe('Audit coverage — preferences, consents, export, deletion', () => {
     });
   });
 
+  it('consent.granted and consent.revoked — by the account, code and version only', async () => {
+    const c = await x.compound('Audit R1');
+    const p = await resident(c);
+    for (const path of ['grant', 'revoke'])
+      await h
+        .http()
+        .post(`${API}/me/consents/${path}`)
+        .set('Authorization', `Bearer ${p.token}`)
+        .send(
+          path === 'grant'
+            ? { code: 'ticket_phone_share', version: 1 }
+            : { code: 'ticket_phone_share' },
+        )
+        .expect(200);
+    for (const action of ['consent.granted', 'consent.revoked']) {
+      const row = await single(c, action, p.id);
+      expect(row).toMatchObject({
+        actorType: 'account',
+        actorId: p.id,
+        targetType: 'account',
+        changes: null,
+      });
+      expect(row.metadata).toEqual({
+        code: 'ticket_phone_share',
+        version: 1,
+        assisted: false,
+      });
+    }
+  });
+
   describe('catalog completeness', () => {
     it('every ADR 0036 entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

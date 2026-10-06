@@ -54,3 +54,10 @@
 - `account.erased`: every personal field as `{ changed: true }`, counts only.
 - `account.erasure_overdue` (system).
 - The audit log is never touched by an erasure (ADR 0014 update).
+
+## Update (Phase R1, ADR 0036)
+- **Deletion runs by itself.** A request is refused while something blocks it: `primary_resident`, `active_staff_role`, `legal_hold`, `open_worker_obligations`. After a 14-day cooling-off (`DELETION_GRACE_DAYS` now defaults to 14), the `accounts.deletion` sweep checks the blockers again in the executing transaction. With none, it erases the account as the system; with some, the request goes to the managers' queue (`queued`). A reminder goes out two days before.
+- Managers erase a queued request once it is clear (the three steps above), or close it with a reason code. The overdue report, its sweep and `ERASURE_OVERDUE_DAYS` are retired.
+- **A manager may file a deletion, and its undo, for the account** (`residents.assist`, a reason code, marked assisted).
+- **A second freeze reason, `login_not_me`** ("not me" on an unusual-login alert): the account is frozen with every session and code ended, like a reassigned phone, but **the phone stays**. `released_phone_hash` is only for `phone_reassigned`, and reactivation needs no new phone.
+- Erasure also removes the account's delivery preferences, known devices and email action tokens, revokes its consents (as the system) and ends its exports. When a family member's erasure ends their membership, the unit's primary is told, with the unit's code only.

@@ -153,3 +153,11 @@ Neither changes these tables.
 - Every dispatcher is told of every message on every ticket; per-account notification preferences come with the design (ADR 0027).
 - Dispatch never sees a reporter's phone. Whether an emergency should show it is a design decision (`docs/api/v0-notes.md`).
 - A technician whose role loses `tickets.work` keeps the tickets assigned to them until a dispatcher reassigns them; only deactivation, freezing and erasure release them automatically. *(Superseded by ADR 0033: losing `tickets.work` now releases them too.)*
+
+## Update (Phase R1, ADR 0036)
+- The technician's detail carries `reporterPhone`, decided at read time:
+  - the reporter consented (`ticket_phone_share`, at its current version);
+  - the reader is the ticket's technician now and the work is open;
+  - the reporter is active and still holds `tickets` on the ticket's unit.
+
+  Otherwise it is null. Dispatch still never sees a phone.

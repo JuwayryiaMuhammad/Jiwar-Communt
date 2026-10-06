@@ -70,3 +70,7 @@ A ticket's photos (ADR 0032) are claimed the same way and move to the ticket (`t
 - No object exists without its row: the upload URL is returned only after the row commits, and a deleted row stays until its object is gone. A crash between a delete's commit and its object delete leaves work for the sweep, not an orphan.
 - A browser upload to R2 needs a CORS rule on the bucket (deploy/README.md).
 - A production bucket is provisioned outside the app, with its own token, encryption and lifecycle rules.
+
+## Update (Phase R1, ADR 0036)
+- A fifth purpose, **`data_export`**: a zip of at most 512 MiB that the server writes itself. It is streamed into a multipart upload (`ObjectStorage.putStream`) and attached to its export request, and nobody uploads one.
+- It is read through a presigned GET with a download name, in no-store responses, and deleted after 7 days by the export sweep and the files sweep.

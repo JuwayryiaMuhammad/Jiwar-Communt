@@ -725,6 +725,7 @@ model Account {
   notifications         Notification[]            @relation("NotificationAccount")
   notificationSettings  NotificationSettings?     @relation("NotificationSettingsAccount")
   channelPrefs          NotificationChannelPref[] @relation("ChannelPrefAccount")
+  consents              AccountConsent[]          @relation("ConsentAccount")
   idempotencyKeys       IdempotencyKey[]          @relation("IdempotencyAccount")
   technicianSpecialties TechnicianSpecialty[]     @relation("TechnicianSpecialtyAccount")
   availability          TechnicianAvailability?   @relation("TechnicianAvailabilityAccount")
@@ -1423,6 +1424,63 @@ model NotificationChannelPref {
 
   @@id([tenantId, accountId, category, channel])
   @@map("notification_channel_prefs")
+}
+
+/// Consents (ADR 0036): a grant or a revocation.
+enum ConsentAction {
+  grant
+  revoke
+
+  @@map("consent_action")
+}
+
+/// Who wrote a consent event: the account, a manager for it (`assisted`),
+/// or the system (an erasure revokes what was granted).
+enum ConsentActorType {
+  account
+  system
+
+  @@map("consent_actor_type")
+}
+
+/// Append-only (ADR 0036): every grant and revocation, with the version of
+/// the text it answered. SELECT and INSERT only; triggers refuse UPDATE,
+/// DELETE and TRUNCATE for every role. No foreign keys, like the histories.
+model ConsentEvent {
+  id               String           @id @db.Uuid
+  tenantId         String           @map("tenant_id") @db.Uuid
+  accountId        String           @map("account_id") @db.Uuid
+  /// CONSENT_CATALOG in src/core/consents/consent-catalog.ts.
+  code             String
+  version          Int
+  action           ConsentAction
+  actorType        ConsentActorType @map("actor_type")
+  actorAccountId   String?          @map("actor_account_id") @db.Uuid
+  /// A manager acted for the account (`residents.assist`), for this reason.
+  assisted         Boolean          @default(false)
+  assistReasonCode String?          @map("assist_reason_code")
+  occurredAt       DateTime         @default(now()) @map("occurred_at") @db.Timestamptz(3)
+
+  @@index([tenantId, accountId, occurredAt, id])
+  @@map("consent_events")
+}
+
+/// The current state of each consent (ADR 0036), written with every event
+/// and rebuildable from them. Counts only while `granted_version` is the
+/// catalog's current version.
+model AccountConsent {
+  tenantId       String    @map("tenant_id") @db.Uuid
+  accountId      String    @map("account_id") @db.Uuid
+  code           String
+  grantedVersion Int?      @map("granted_version")
+  grantedAt      DateTime? @map("granted_at") @db.Timestamptz(3)
+  lastEventId    String?   @map("last_event_id") @db.Uuid
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  account Account @relation("ConsentAccount", fields: [tenantId, accountId], references: [tenantId, id], onUpdate: Restrict)
+
+  @@id([tenantId, accountId, code])
+  @@map("account_consents")
 }
 
 /// Idempotent writes (ADR 0028): claimed inside the action's transaction;

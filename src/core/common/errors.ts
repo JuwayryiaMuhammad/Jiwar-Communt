@@ -196,6 +196,9 @@ export const ErrorCode = {
    * technician in while nobody is home (403).
    */
   VISIT_CONSENT_NOT_ALLOWED: 'VISIT_CONSENT_NOT_ALLOWED',
+  // preferences, consents, export, deletion (ADR 0036)
+  /** A grant must answer the consent's current version (409, params.current). */
+  CONSENT_VERSION_MISMATCH: 'CONSENT_VERSION_MISMATCH',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

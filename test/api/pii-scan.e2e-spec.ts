@@ -5,6 +5,7 @@ import { WorkersService } from '../../src/community/workers/workers.service';
 import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
 import { ParcelTokens } from '../../src/gate/parcels/parcel-tokens';
+import { ConsentsService } from '../../src/core/consents/consents.service';
 import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
 import { ApprovalsService } from '../../src/gate/approvals/approvals.service';
 import { AvailabilityService } from '../../src/maintenance/dispatch/availability.service';
@@ -307,6 +308,12 @@ describe('API v0 — PII leak scan', () => {
         .get(MessagesService)
         .post(oldTicket.id, 'resident', 'PII-THREAD-before'),
     );
+    // The ender also allowed the technician their phone (ADR 0036): once
+    // they have no place in the unit, the technician never sees it.
+    const consents = h.moduleRef.get(ConsentsService);
+    await c.as(a, { id: ender.id, type: 'resident' }, () =>
+      consents.grant('ticket_phone_share', 1),
+    );
     const enderOccupancy = (await c.occupancies(a, rented.id)).find(
       (o) => o.accountId === ender.id,
     )!;
@@ -573,6 +580,12 @@ describe('API v0 — PII leak scan', () => {
       }),
     );
     const windowMarks = [visitStart.toISOString(), visitEnd.toISOString()];
+    // ADR 0036: the primary and the family member allow the technician
+    // their phone. The family member's ticket is closed, so it never shows;
+    // the primary's visit ticket is open and assigned, so the technician's
+    // own detail of it — and nothing else — shows the primary's phone.
+    await asPrimary(() => consents.grant('ticket_phone_share', 1));
+    await asFamily(() => consents.grant('ticket_phone_share', 1));
     const otherTechnician = await gateHelpers(h).guard(a, 'technician');
 
     // After the ender left: the tenant writes again, and the ender's old
@@ -848,10 +861,14 @@ describe('API v0 — PII leak scan', () => {
           for (const s of ['"grantedBy"', '"consentBy', family.id])
             if (res.status < 300 && found(s))
               leaks.push(`${name} ${r.path}: ${s}`);
-        // Never in the audit trail, whoever reads it.
-        if (r.path.includes('audit'))
+        // Never in the audit trail, whoever reads it. (The account consents
+        // of ADR 0036 are audited by name, `consent.granted` and
+        // `consent.revoked`: they say nothing about a visit.)
+        if (r.path.includes('audit')) {
+          const trail = text.replace(/"consent\.(granted|revoked)"/g, '');
           for (const s of [...windowMarks, 'absence', 'receiver', 'consent'])
-            if (found(s)) leaks.push(`${name} ${r.path}: audit ${s}`);
+            if (trail.includes(s)) leaks.push(`${name} ${r.path}: audit ${s}`);
+        }
         if (['resident', 'landlord', 'family', 'guard'].includes(name)) {
           // Internal messages and ratings are staff's (ADR 0032).
           for (const s of ['PII-INTERNAL-note', 'PII-FEEDBACK-comment'])
@@ -922,6 +939,45 @@ describe('API v0 — PII leak scan', () => {
       expect(livingVisits).toContain(`"firstName":"${first(p.fullName)}"`);
     expect(await asLiving(`/tickets/${oldTicket.id}/messages`)).toContain(
       'PII-THREAD-after',
+    );
+
+    // The reporter's phone under consent (ADR 0036): every persona reads
+    // the three ticket audiences of each ticket. Exactly one read may carry
+    // a reporter's phone: the assigned technician's detail of the primary's
+    // open ticket. Not the family member's closed ticket, not the ticket of
+    // someone who left, not dispatch, not residents, not another technician.
+    const phoneReads: string[] = [];
+    const tickets = {
+      open: visitTicket.id,
+      closed: ticket.id,
+      left: oldTicket.id,
+    };
+    const reporterPhones = [primary.phone, family.phone, ender.phone];
+    for (const [name, persona] of Object.entries(personas)) {
+      if (name === 'platform') continue;
+      for (const [which, id] of Object.entries(tickets))
+        for (const path of [
+          `/technician/tickets/${id}`,
+          `/maintenance/tickets/${id}`,
+          `/tickets/${id}`,
+        ]) {
+          const res = await call(w, 'GET', path, { token: persona.token });
+          for (const phone of reporterPhones)
+            if ((res.text ?? '').includes(phone))
+              phoneReads.push(`${name} ${which} ${path.split('/')[1]}`);
+        }
+    }
+    expect(phoneReads).toEqual(['technician open technician']);
+    const openDetail = await call(
+      w,
+      'GET',
+      `/technician/tickets/${visitTicket.id}`,
+      {
+        token: a.tokens.technician,
+      },
+    ).expect(200);
+    expect((openDetail.body as { reporterPhone: string }).reporterPhone).toBe(
+      primary.phone,
     );
 
     // A file's read URL: its owner's own GET, nowhere else; a worker's

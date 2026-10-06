@@ -42,6 +42,10 @@ export const AUDIT_ACTIONS = {
   // Delivery preferences (ADR 0036): switches, quiet hours and a pause, as
   // codes and times; `metadata.assisted` when a manager acted for them.
   'notification_preferences.changed': { log: 'tenant', target: 'account' },
+  // Consents (ADR 0036): the code and version, `assisted` and its reason;
+  // a revocation by an erasure has reason `erasure`.
+  'consent.granted': { log: 'tenant', target: 'account' },
+  'consent.revoked': { log: 'tenant', target: 'account' },
   'account.erasure_overdue': {
     log: 'tenant',
     target: 'account_deletion_request',

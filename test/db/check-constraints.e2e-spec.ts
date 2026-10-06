@@ -327,6 +327,23 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'quiet_start_minute IS NULL OR …, where both are values. One NULL ' +
       'fails the first conjunct, and false AND NULL is false',
   },
+  // Consents (ADR 0036): no nullable column, or only under IS [NOT] NULL.
+  account_consents_code_known: {},
+  consent_events_code_known: {},
+  consent_events_version_positive: {},
+  // Consents: compare nullable columns.
+  account_consents_granted_shape: {
+    guarded:
+      'granted_version >= 1 runs only under granted_version IS NULL OR …, ' +
+      'so a NULL version is the true branch; granted_at only under IS NULL',
+  },
+  consent_events_actor_shape: {
+    guarded:
+      'actor_account_id <> account_id is in the same AND branch as ' +
+      'actor_account_id IS NOT NULL, so a NULL actor makes that branch ' +
+      'false (false AND NULL is false); the system branch needs actor_type ' +
+      'system, so an account event without an actor fails both',
+  },
 };
 
 interface Check {

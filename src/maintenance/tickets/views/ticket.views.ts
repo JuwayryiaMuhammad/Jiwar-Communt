@@ -35,7 +35,8 @@ import type {
 // ============================================================================
 // One view per audience (ADR 0032). Residents and the technician see people
 // by their first name only; dispatch sees full names. Nobody sees a phone,
-// an email or a document here. Photos are presigned URLs, in no-store
+// an email or a document here, except the technician's view of a reporter
+// who consented to share their phone (ADR 0036). Photos are presigned URLs, in no-store
 // details only.
 // ============================================================================
 
@@ -374,6 +375,13 @@ export class TechnicianTicketDetailView extends TechnicianTicketView {
       "The reporter's first name, and nothing else about them: coordination goes through messages.",
   })
   reporterFirstName: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      "The reporter's phone, only while the reporter allows it (consent `ticket_phone_share`), still has the ticket's unit, and the work is open (ADR 0036). Otherwise null.",
+  })
+  reporterPhone: string | null;
   @ApiProperty({ type: [PhotoView] })
   photos: PhotoView[];
 
@@ -389,6 +397,7 @@ export class TechnicianTicketDetailView extends TechnicianTicketView {
       reporterFirstName: isErased(reporter)
         ? null
         : firstNameOf(reporter.fullName),
+      reporterPhone: d.reporterPhone,
       photos: d.photos.map((p) => PhotoView.from(p)),
     };
   }

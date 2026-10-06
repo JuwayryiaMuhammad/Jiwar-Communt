@@ -1,11 +1,26 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { NOTIFICATION_CATEGORIES } from '../preferences/categories';
 import {
   checkNotification,
   NOTIFICATION_KINDS,
   PERSONAL_PARAMS,
   type KindSpec,
 } from './kinds';
+
+/**
+ * Security (a new device, a new entry device), emergency tickets, and staff
+ * work (a ticket assigned to me, a gate approval request and its reversal).
+ */
+const CRITICAL_KINDS = [
+  'entry_credential.issued',
+  'gate.approval_requested',
+  'gate.approval_reversed',
+  'ticket.assigned',
+  'ticket.emergency',
+  'ticket.sla_breached_emergency',
+  'ticket.unassignable_emergency',
+].sort();
 
 describe('notification catalog', () => {
   const kinds = NOTIFICATION_KINDS as Record<string, KindSpec>;
@@ -26,6 +41,24 @@ describe('notification catalog', () => {
       expect(['normal', 'critical']).toContain(spec.priority);
       expect(spec.target).toMatch(/^[a-z_]+$/);
     }
+  });
+
+  it('every kind declares its delivery category and whether it is critical', () => {
+    for (const [kind, spec] of Object.entries(kinds)) {
+      expect([kind, NOTIFICATION_CATEGORIES.includes(spec.category)]).toEqual([
+        kind,
+        true,
+      ]);
+      expect([kind, typeof spec.critical]).toEqual([kind, 'boolean']);
+    }
+  });
+
+  it('the critical kinds are exactly the approved list (ADR 0036)', () => {
+    const critical = Object.entries(kinds)
+      .filter(([, spec]) => spec.critical)
+      .map(([kind]) => kind)
+      .sort();
+    expect(critical).toEqual(CRITICAL_KINDS);
   });
 
   it('personal params are the visitor and worker names', () => {

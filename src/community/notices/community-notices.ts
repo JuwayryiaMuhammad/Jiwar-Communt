@@ -1,6 +1,9 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type { Locale } from '../../core/common/i18n/locale';
-import { EmailTemplates } from '../../core/mail/email-templates';
+import {
+  EmailTemplates,
+  type EmailDelivery,
+} from '../../core/mail/email-templates';
 import {
   emailPage,
   escapeHtml,
@@ -326,6 +329,23 @@ export function renderCommunityNotice(
   };
 }
 
+/**
+ * How a community notice is delivered (ADR 0036). None has an inbox twin,
+ * so each is its notice's only record: never skipped. A registration's
+ * notices are about the account itself; the rest about the household.
+ */
+export function communityNoticeDelivery(
+  key: CommunityNoticeKey,
+): EmailDelivery {
+  return {
+    category: key.startsWith('community.registration_')
+      ? 'account_security'
+      : 'household',
+    critical: false,
+    soleRecord: true,
+  };
+}
+
 /** Registers every Phase 2.2 community notice with the core outbox. */
 @Injectable()
 export class CommunityNoticeTemplates implements OnModuleInit {
@@ -333,8 +353,10 @@ export class CommunityNoticeTemplates implements OnModuleInit {
 
   onModuleInit(): void {
     for (const key of Object.values(COMMUNITY_NOTICES)) {
-      this.templates.register(key, (locale, p) =>
-        renderCommunityNotice(key, locale, p as NoticeParams),
+      this.templates.register(
+        key,
+        (locale, p) => renderCommunityNotice(key, locale, p as NoticeParams),
+        communityNoticeDelivery(key),
       );
     }
   }

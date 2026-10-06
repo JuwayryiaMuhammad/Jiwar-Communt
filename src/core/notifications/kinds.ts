@@ -1,3 +1,8 @@
+import type {
+  DeliveryClass,
+  NotificationCategory,
+} from '../preferences/categories';
+
 /**
  * The notification catalog (ADR 0027), like the audit catalog: every kind a
  * domain may write is declared here with its priority, what it points at
@@ -8,6 +13,13 @@
  * account (a visitor, a worker). Personal params are scrubbed when the data
  * they came from expires, and never hold a document, phone or code (a unit
  * test checks the names).
+ *
+ * Every kind also declares its delivery category and whether it is critical
+ * (ADR 0036). The inbox always records it; the preferences decide only the
+ * delivery channels (email now, push later). Critical kinds: security
+ * (a new device logged in, a new entry device), emergency tickets, and
+ * staff work (a ticket assigned to me, a gate approval request and its
+ * reversal).
  */
 export type NotificationPriority = 'normal' | 'critical';
 
@@ -17,7 +29,16 @@ export interface ParamSpec {
 }
 
 export interface KindSpec {
+  /** How the inbox shows it (the critical-unread badge). */
   priority: NotificationPriority;
+  /** Which preference switch governs its delivery (ADR 0036). */
+  category: NotificationCategory;
+  /**
+   * Delivered on every channel whatever the preferences say: never muted,
+   * never held by quiet hours or a pause (ADR 0036). A unit test fails if a
+   * kind does not say.
+   */
+  critical: boolean;
   /** What `targetId` refers to; the apps open it. */
   target: string;
   params: Record<string, ParamSpec>;
@@ -27,6 +48,8 @@ export const NOTIFICATION_KINDS = {
   /** A guard asks the household whether to let someone in (ADR 0028). */
   'gate.approval_requested': {
     priority: 'critical',
+    category: 'gate_visitors',
+    critical: true,
     target: 'gate_approval_request',
     params: {
       unitCode: {},
@@ -40,11 +63,15 @@ export const NOTIFICATION_KINDS = {
   /** A household reversed an approval before the entry: stop them. */
   'gate.approval_reversed': {
     priority: 'critical',
+    category: 'gate_visitors',
+    critical: true,
     target: 'gate_approval_request',
     params: { unitCode: {}, requestKind: {} },
   },
   'worker.entered': {
     priority: 'normal',
+    category: 'gate_visitors',
+    critical: false,
     target: 'worker_engagement',
     params: {
       unitCode: {},
@@ -54,6 +81,8 @@ export const NOTIFICATION_KINDS = {
   },
   'worker.exited': {
     priority: 'normal',
+    category: 'gate_visitors',
+    critical: false,
     target: 'worker_engagement',
     params: {
       unitCode: {},
@@ -67,6 +96,8 @@ export const NOTIFICATION_KINDS = {
    */
   'visitor_pass.not_me': {
     priority: 'normal',
+    category: 'gate_visitors',
+    critical: false,
     target: 'visitor_pass',
     params: { unitCode: {} },
   },
@@ -77,6 +108,8 @@ export const NOTIFICATION_KINDS = {
    */
   'entry_credential.issued': {
     priority: 'normal',
+    category: 'account_security',
+    critical: true,
     target: 'entry_credential',
     params: {},
   },
@@ -88,6 +121,8 @@ export const NOTIFICATION_KINDS = {
   /** Opened at emergency priority (or raised to it): every dispatcher, now. */
   'ticket.emergency': {
     priority: 'critical',
+    category: 'maintenance',
+    critical: true,
     target: 'ticket',
     params: {
       ticketNumber: {},
@@ -98,6 +133,8 @@ export const NOTIFICATION_KINDS = {
   /** A ticket is yours now (the technician). */
   'ticket.assigned': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: true,
     target: 'ticket',
     params: {
       ticketNumber: {},
@@ -109,12 +146,16 @@ export const NOTIFICATION_KINDS = {
   /** Reassigned to someone else: the old technician no longer sees it. */
   'ticket.unassigned': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: { ticketNumber: {}, unitCode: { optional: true } },
   },
   /** The reporter's ticket moved (assigned, started, on hold, resumed…). */
   'ticket.status_changed': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: {
       ticketNumber: {},
@@ -126,30 +167,40 @@ export const NOTIFICATION_KINDS = {
   /** The work is done: please confirm, or reject (the reporter). */
   'ticket.completed': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: { ticketNumber: {}, unitCode: { optional: true } },
   },
   /** A technician declined it: it is back in the queue (dispatchers). */
   'ticket.declined': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: { ticketNumber: {}, unitCode: { optional: true } },
   },
   /** Its technician can no longer work: back in the queue (dispatchers). */
   'ticket.technician_unavailable': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: { ticketNumber: {}, unitCode: { optional: true } },
   },
   /** A dispatcher changed the priority of the technician's ticket. */
   'ticket.priority_changed': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: { ticketNumber: {}, unitCode: { optional: true }, priority: {} },
   },
   /** The reporter rejected the work (dispatchers, and the technician it returns to). */
   'ticket.rejected': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: {
       ticketNumber: {},
@@ -160,6 +211,8 @@ export const NOTIFICATION_KINDS = {
   /** The reporter reopened a closed ticket (as a rejection). */
   'ticket.reopened': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: {
       ticketNumber: {},
@@ -170,6 +223,8 @@ export const NOTIFICATION_KINDS = {
   /** Rejected or reopened again: back in the queue, to look at (dispatchers). */
   'ticket.escalated': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: {
       ticketNumber: {},
@@ -180,18 +235,24 @@ export const NOTIFICATION_KINDS = {
   /** Nobody confirmed in time: closed (the reporter may still reopen). */
   'ticket.auto_closed': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: { ticketNumber: {}, unitCode: { optional: true } },
   },
   /** A new message on a ticket the reader may see; never its body. */
   'ticket.message': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: { ticketNumber: {}, unitCode: { optional: true } },
   },
   /** Dispatch opened a ticket in the reporter's name. */
   'ticket.opened_on_behalf': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: { ticketNumber: {}, unitCode: { optional: true } },
   },
@@ -201,6 +262,8 @@ export const NOTIFICATION_KINDS = {
   /** The queued ticket has no technician who can take it (dispatchers). */
   'ticket.unassignable': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: {
       ticketNumber: {},
@@ -211,6 +274,8 @@ export const NOTIFICATION_KINDS = {
   /** The same, for an emergency. */
   'ticket.unassignable_emergency': {
     priority: 'critical',
+    category: 'maintenance',
+    critical: true,
     target: 'ticket',
     params: {
       ticketNumber: {},
@@ -224,12 +289,16 @@ export const NOTIFICATION_KINDS = {
   /** An SLA clock (response or resolution) passed its target. */
   'ticket.sla_breached': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: { ticketNumber: {}, clock: {} },
   },
   /** The same, on an emergency. */
   'ticket.sla_breached_emergency': {
     priority: 'critical',
+    category: 'maintenance',
+    critical: true,
     target: 'ticket',
     params: { ticketNumber: {}, clock: {} },
   },
@@ -239,36 +308,48 @@ export const NOTIFICATION_KINDS = {
   /** A window is proposed (to the other side). */
   'ticket.visit_proposed': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: { ticketNumber: {}, startsAt: {}, endsAt: {} },
   },
   /** The other side confirmed the window. */
   'ticket.visit_confirmed': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: { ticketNumber: {}, startsAt: {}, endsAt: {} },
   },
   /** The visit was cancelled (by a side or by the system). */
   'ticket.visit_cancelled': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: { ticketNumber: {}, startsAt: {}, endsAt: {} },
   },
   /** The technician is at the door (the residents). */
   'ticket.visit_arrived': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: { ticketNumber: {}, startsAt: {}, endsAt: {} },
   },
   /** Nobody let the technician in: choose a new time (the residents). */
   'ticket.visit_no_access': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: { ticketNumber: {}, startsAt: {}, endsAt: {} },
   },
   /** Confirmed, and not arrived 15 minutes after the start (residents, dispatch). */
   'ticket.visit_late': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: { ticketNumber: {}, startsAt: {}, endsAt: {} },
   },
@@ -278,12 +359,16 @@ export const NOTIFICATION_KINDS = {
    */
   'ticket.visit_consent_granted': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: { ticketNumber: {}, startsAt: {}, endsAt: {} },
   },
   /** A dispatcher corrected the category of the technician's ticket. */
   'ticket.category_changed': {
     priority: 'normal',
+    category: 'maintenance',
+    critical: false,
     target: 'ticket',
     params: {
       ticketNumber: {},
@@ -299,6 +384,8 @@ export const NOTIFICATION_KINDS = {
   /** A parcel is at the gate for your unit (every eligible occupant). */
   'parcel.arrived': {
     priority: 'normal',
+    category: 'parcels',
+    critical: false,
     target: 'parcel',
     params: { carrier: {}, pieces: {}, receivedAt: {}, unitCode: {} },
   },
@@ -308,30 +395,40 @@ export const NOTIFICATION_KINDS = {
    */
   'parcel.collected': {
     priority: 'normal',
+    category: 'parcels',
+    critical: false,
     target: 'parcel',
     params: { carrier: {}, pieces: {}, unitCode: {}, method: {} },
   },
   /** A parcel has waited for its residents (once, at the reminder days). */
   'parcel.reminder': {
     priority: 'normal',
+    category: 'parcels',
+    critical: false,
     target: 'parcel',
     params: { carrier: {}, pieces: {}, days: {}, unitCode: {} },
   },
   /** A parcel has been held a long time (the managers, once). */
   'parcel.held_long': {
     priority: 'normal',
+    category: 'parcels',
+    critical: false,
     target: 'parcel',
     params: { parcelNumber: {}, unitCode: {}, carrier: {}, days: {} },
   },
   /** A resident said "not mine": the guards, to send it back (ADR 0035). */
   'parcel.rejected': {
     priority: 'normal',
+    category: 'parcels',
+    critical: false,
     target: 'parcel',
     params: { parcelNumber: {}, carrier: {} },
   },
   /** A parcel arrived for a unit nobody can collect for (the managers, once). */
   'parcel.unclaimable': {
     priority: 'normal',
+    category: 'parcels',
+    critical: false,
     target: 'parcel',
     params: { parcelNumber: {}, unitCode: {}, carrier: {} },
   },
@@ -370,4 +467,10 @@ export function checkNotification(
       throw new Error(`Notification ${kind} needs param ${name}`);
   }
   return spec;
+}
+
+/** The delivery class of a kind, for deliveryDecision. */
+export function kindDelivery(kind: NotificationKind): DeliveryClass {
+  const spec = (NOTIFICATION_KINDS as Record<string, KindSpec>)[kind];
+  return { category: spec.category, critical: spec.critical };
 }

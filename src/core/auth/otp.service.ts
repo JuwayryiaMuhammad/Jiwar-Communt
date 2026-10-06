@@ -222,6 +222,54 @@ export class OtpService implements OnModuleInit {
     });
   }
 
+  /**
+   * A step-up code (ADR 0036), keyed by what it unlocks — a session, or an
+   * email action token — and sent to the account's own email. Older live
+   * codes for the same key are invalidated. It can never log anyone in.
+   */
+  async issueForStepUp(
+    key: string,
+    accountId: string,
+    email: string,
+    locale: Locale,
+  ): Promise<void> {
+    const id = newId();
+    const code =
+      this.fixedCode ?? randomInt(0, 1_000_000).toString().padStart(6, '0');
+    await this.globalDb.otpChallenge.create({
+      data: {
+        id,
+        purpose: 'step_up',
+        identifierHash: key,
+        accountIds: [accountId],
+        codeHash: this.hasher.hashOtp(id, code),
+        expiresAt: new Date(Date.now() + this.ttlSeconds * 1000),
+      },
+    });
+    await this.globalDb.otpChallenge.updateMany({
+      where: {
+        purpose: 'step_up',
+        identifierHash: key,
+        id: { lt: id },
+        consumedAt: null,
+        invalidatedAt: null,
+      },
+      data: { invalidatedAt: new Date() },
+    });
+    await this.channel.send({
+      to: email,
+      code,
+      ttlSeconds: this.ttlSeconds,
+      locale,
+      purpose: 'step_up',
+    });
+  }
+
+  /** True when the code matches a live step-up challenge, which it consumes. */
+  async verifyStepUp(key: string, code: string): Promise<boolean> {
+    return (await this.consume('step_up', key, code)) !== null;
+  }
+
   /** True when the code matches a live registration challenge, which it consumes. */
   async verifyRegistration(key: string, code: string): Promise<boolean> {
     return (await this.consume('registration', key, code)) !== null;

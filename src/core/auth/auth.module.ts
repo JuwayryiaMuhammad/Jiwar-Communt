@@ -7,17 +7,20 @@ import { IdentifierHasher } from './identifier';
 import { OTP_CHANNEL } from './otp-channel';
 import { OtpService } from './otp.service';
 import { SessionService } from './session.service';
+import { StepUpController } from './step-up.controller';
+import { StepUpService } from './step-up.service';
 
 @Module({
-  controllers: [AuthController],
+  controllers: [AuthController, StepUpController],
   providers: [
     AuthService,
     OtpService,
     SessionService,
     IdentifierHasher,
     AccessTokens,
+    StepUpService,
     { provide: OTP_CHANNEL, useClass: EmailOtpChannel },
   ],
-  exports: [IdentifierHasher, AccessTokens, OtpService],
+  exports: [IdentifierHasher, AccessTokens, OtpService, StepUpService],
 })
 export class AuthModule {}

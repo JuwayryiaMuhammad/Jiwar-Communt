@@ -142,4 +142,7 @@ export const R1_COVERAGE: readonly string[] = [
   'notification_preferences.changed',
   'consent.granted',
   'consent.revoked',
+  'step_up.requested',
+  'step_up.verified',
+  'step_up.failed',
 ];

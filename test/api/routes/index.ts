@@ -35,6 +35,7 @@ import { PREFERENCES_ROUTES } from './preferences';
 import { PUBLIC_ROUTES } from './public';
 import { REGISTRATION_ROUTES } from './registration';
 import { RESIDENTS_ROUTES } from './residents';
+import { SECURITY_ROUTES } from './security';
 import { UNIT_STATES_ROUTES } from './unit-states';
 import { UNITS_ROUTES } from './units';
 import { VISITORS_ROUTES } from './visitors';
@@ -78,4 +79,5 @@ export const ROUTES: Row[] = [
   ...VISIT_ROUTES,
   ...PREFERENCES_ROUTES,
   ...CONSENTS_ROUTES,
+  ...SECURITY_ROUTES,
 ];

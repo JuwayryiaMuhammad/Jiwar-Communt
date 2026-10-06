@@ -39,6 +39,13 @@ export class RequestContext {
     );
   }
 
+  /** The session behind the request's access token (`sid`), or null. */
+  sessionIdOrNull(): string | null {
+    return (
+      (this.cls.isActive() ? this.cls.get('sessionId') : undefined) ?? null
+    );
+  }
+
   get accountType(): AccountType {
     const type = this.cls.isActive() ? this.cls.get('accountType') : undefined;
     if (!type) throw new TenantContextMissingError();

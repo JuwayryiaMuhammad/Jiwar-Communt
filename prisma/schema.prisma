@@ -276,6 +276,9 @@ enum OtpPurpose {
   login
   invite_accept
   registration
+  /// A fresh code for a sensitive action (ADR 0036): bound to a session, or
+  /// to an email action token.
+  step_up
 
   @@map("otp_purpose")
 }
@@ -521,6 +524,9 @@ model Session {
   /// to the account holder (the session list omits the IP).
   userAgent        String?   @map("user_agent")
   ip               String?   @db.Inet
+  /// A step-up code was verified on this session (ADR 0036): the next
+  /// sensitive action may run until then, and consumes it.
+  stepUpUntil      DateTime? @map("step_up_until") @db.Timestamptz(3)
 
   @@index([accountId])
   @@map("sessions")

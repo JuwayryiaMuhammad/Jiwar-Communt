@@ -11,6 +11,8 @@ import {
 } from '../setup/audit-coverage-split';
 import { communityHelpers, type Compound } from '../setup/community';
 import { API, createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { waitForOtp } from '../setup/mailpit';
+import { sessionOf } from '../api/world';
 
 /**
  * One scenario per ADR 0036 catalog entry: actor, target, changes and
@@ -101,6 +103,38 @@ describe('Audit coverage — preferences, consents, export, deletion', () => {
         version: 1,
         assisted: false,
       });
+    }
+  });
+
+  it('step_up.requested, step_up.failed and step_up.verified — security events of the session', async () => {
+    const c = await x.compound('Audit R1');
+    const p = await resident(c);
+    const since = new Date();
+    const post = (path: string, body: object = {}) =>
+      h
+        .http()
+        .post(`${API}/me/step-up${path}`)
+        .set('Authorization', `Bearer ${p.token}`)
+        .send(body);
+    await post('').expect(202);
+    const code = await waitForOtp(p.email, since);
+    await post('/verify', {
+      code: code === '000000' ? '111111' : '000000',
+    }).expect(403);
+    await post('/verify', { code }).expect(200);
+    for (const event of [
+      'step_up.requested',
+      'step_up.failed',
+      'step_up.verified',
+    ]) {
+      const rows = await read.security({ event, accountId: p.id });
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        tenantId: c.tenantId,
+        identifierHash: null,
+        metadata: { sessionId: sessionOf(p.token) },
+      });
+      covered.add(event);
     }
   });
 

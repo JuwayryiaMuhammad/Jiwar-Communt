@@ -8,6 +8,7 @@ import { DELEGATIONS_ROUTES } from './delegations';
 import { ENTRIES_ROUTES } from './entries';
 import { ENTRY_CREDENTIALS_ROUTES } from './entry-credentials';
 import { ERASURE_ROUTES } from './erasure';
+import { EXPORTS_ROUTES } from './exports';
 import { FILES_ROUTES } from './files';
 import { GATE_ROUTES } from './gate';
 import { EXISTING_ROUTES } from './existing';
@@ -80,4 +81,5 @@ export const ROUTES: Row[] = [
   ...PREFERENCES_ROUTES,
   ...CONSENTS_ROUTES,
   ...SECURITY_ROUTES,
+  ...EXPORTS_ROUTES,
 ];

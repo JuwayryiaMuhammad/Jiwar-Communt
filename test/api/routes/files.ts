@@ -29,6 +29,7 @@ export const FILES_ROUTES: Row[] = [
               'resident_photo',
               'ticket_photo',
               'parcel_photo',
+              'data_export',
             ],
           },
         },

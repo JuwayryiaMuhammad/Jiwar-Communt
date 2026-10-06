@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { GateExportSections } from './export/export-sections';
 import { CommunityGatePortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
 import { FilesModule } from '../core/files/files.module';
@@ -94,6 +95,7 @@ import { VisitorsController } from './visitors/visitors.controller';
     ParcelHandover,
     ParcelSettingsService,
     ParcelSweeps,
+    GateExportSections,
   ],
 })
 export class GateModule {}

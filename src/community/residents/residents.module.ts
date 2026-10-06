@@ -4,6 +4,7 @@ import { HouseholdsModule } from '../households/households.module';
 import { NoticesModule } from '../notices/notices.module';
 import { WorkersModule } from '../workers/workers.module';
 import { ErasureHooks } from './erasure-hooks';
+import { CommunityExportSections } from './export-sections';
 import { FreezeHooks } from './freeze-hooks';
 import { CapabilitiesModule } from '../capabilities/capabilities.module';
 import { MeUnitsController } from './me-units.controller';
@@ -36,7 +37,13 @@ import { ResidentsService } from './residents.service';
     NoticesModule,
     WorkersModule,
   ],
-  providers: [ResidentsService, FreezeHooks, ErasureHooks, RegistrationService],
+  providers: [
+    ResidentsService,
+    FreezeHooks,
+    ErasureHooks,
+    RegistrationService,
+    CommunityExportSections,
+  ],
   exports: [ResidentsService, RegistrationService],
 })
 export class ResidentsModule {}

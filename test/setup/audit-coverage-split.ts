@@ -147,4 +147,9 @@ export const R1_COVERAGE: readonly string[] = [
   'step_up.failed',
   'login.new_device',
   'account.not_me',
+  'data_export.requested',
+  'data_export.ready',
+  'data_export.downloaded',
+  'data_export.expired',
+  'data_export.failed',
 ];

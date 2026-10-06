@@ -7,7 +7,9 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import type { Readable } from 'node:stream';
 import { Injectable, Logger, type OnApplicationShutdown } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { appError, ErrorCode } from '../common/errors';
@@ -101,17 +103,67 @@ export class ObjectStorage implements OnApplicationShutdown {
     };
   }
 
-  /** A read URL for one object, valid for S3_URL_TTL_SECONDS. */
-  async presignGet(key: string): Promise<PresignedRead> {
+  /**
+   * A read URL for one object, valid for S3_URL_TTL_SECONDS. With
+   * `downloadName`, the store answers it as an attachment of that name.
+   */
+  async presignGet(
+    key: string,
+    options: { downloadName?: string } = {},
+  ): Promise<PresignedRead> {
     const expiresAt = this.expiry();
     const url = await this.call('presign', () =>
       getSignedUrl(
         this.client,
-        new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+        new GetObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          ...(options.downloadName
+            ? {
+                ResponseContentDisposition: `attachment; filename="${options.downloadName}"`,
+              }
+            : {}),
+        }),
         { expiresIn: this.ttlSeconds },
       ),
     );
     return { url, expiresAt };
+  }
+
+  /**
+   * Writes an object from a stream, in parts (a multipart upload of 5 MB
+   * parts, one at a time), so the server never holds the whole object: a
+   * personal-data export (ADR 0036). Only the server writes these; keys
+   * still come from the row. A failed upload leaves no parts behind.
+   */
+  async putStream(
+    key: string,
+    contentType: string,
+    body: Readable,
+  ): Promise<void> {
+    const upload = new Upload({
+      client: this.client,
+      params: {
+        Bucket: this.bucket,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+      },
+      queueSize: 1,
+      partSize: 5 * 1024 * 1024,
+      leavePartsOnError: false,
+    });
+    await this.call('upload', () => upload.done());
+  }
+
+  /** An object's bytes as a stream (copied into an export, ADR 0036). */
+  async readStream(key: string): Promise<Readable> {
+    return this.call('read', async () => {
+      const res = await this.client.send(
+        new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+      );
+      return res.Body as Readable;
+    });
   }
 
   /** Size and type of a stored object; null when there is none. */

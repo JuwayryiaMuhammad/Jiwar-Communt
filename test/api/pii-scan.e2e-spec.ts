@@ -660,6 +660,8 @@ describe('API v0 — PII leak scan', () => {
       '/worker-engagements/{id}': registered.engagementId,
       '/worker-engagements/{id}/attendance': registered.engagementId,
       '/platform/tenants/{id}': a.tenantId,
+      // ADR 0036: nobody's ready export (the export suite reads a real one).
+      '/me/data-exports/{id}/download': request.id,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

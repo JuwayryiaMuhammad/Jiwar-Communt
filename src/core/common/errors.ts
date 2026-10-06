@@ -207,6 +207,16 @@ export const ErrorCode = {
   DEVICE_NOT_FOUND: 'DEVICE_NOT_FOUND',
   /** An email link that is unknown, expired, used up or for something else (404). */
   ACTION_TOKEN_INVALID: 'ACTION_TOKEN_INVALID',
+  /** Unknown, another account's, not ready or expired (ADR 0036). */
+  DATA_EXPORT_NOT_FOUND: 'DATA_EXPORT_NOT_FOUND',
+  /** An export is already pending or being built (409). */
+  DATA_EXPORT_ACTIVE: 'DATA_EXPORT_ACTIVE',
+  /** One request a day (429, params.retryAfter). */
+  DATA_EXPORT_RATE_LIMITED: 'DATA_EXPORT_RATE_LIMITED',
+  /** A frozen or erased account (409). */
+  ACCOUNT_NOT_ELIGIBLE: 'ACCOUNT_NOT_ELIGIBLE',
+  /** An assisted export goes only to the account's own email (409). */
+  ACCOUNT_HAS_NO_EMAIL: 'ACCOUNT_HAS_NO_EMAIL',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

@@ -1524,6 +1524,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/data-exports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DataExportsController_mine"];
+        put?: never;
+        post: operations["DataExportsController_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/data-exports/{id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DataExportsController_download"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/delegations": {
         parameters: {
             query?: never;
@@ -2274,6 +2306,38 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["TenantsController_setStatus"];
+        trace?: never;
+    };
+    "/api/v1/public/data-exports/code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PublicDataExportsController_code"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/data-exports/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PublicDataExportsController_download"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/public/not-me": {
@@ -4340,6 +4404,28 @@ export interface components {
             /** @description Shown once; only its hash is stored. */
             token: string;
         };
+        /** @enum {string} */
+        DataExportStatus: "pending" | "building" | "ready" | "expired" | "failed";
+        DataExportView: {
+            /** @description Filed by the management for the account; sent to its email. */
+            assisted: boolean;
+            /**
+             * Format: date-time
+             * @description Downloadable until then; then the file is deleted.
+             */
+            expiresAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            readyAt: string | null;
+            /** Format: date-time */
+            requestedAt: string;
+            status: components["schemas"]["DataExportStatus"];
+        };
+        DataExportViewList: {
+            data: components["schemas"]["DataExportView"][];
+            nextCursor: string | null;
+        };
         DecideDto: {
             /** @enum {string} */
             decision: "approve" | "deny";
@@ -4557,6 +4643,12 @@ export interface components {
             data: components["schemas"]["DispatchVisitView"][];
             nextCursor: string | null;
         };
+        DownloadView: {
+            /** Format: date-time */
+            expiresAt: string;
+            /** @description A presigned GET of the archive, valid a few minutes. */
+            url: string;
+        };
         EngagementDetailView: {
             capacity: components["schemas"]["WorkerCapacity"];
             /** Format: date-time */
@@ -4663,6 +4755,16 @@ export interface components {
             /** @description Step 3 types exactly this. */
             scopePhrase: string;
         };
+        ExportDownloadDto: {
+            /** @description The code sent to the account’s email for this link. */
+            code: string;
+            /** @description Anything that is not a live link answers 404 ACTION_TOKEN_INVALID. */
+            token: string;
+        };
+        ExportLinkDto: {
+            /** @description Anything that is not a live link answers 404 ACTION_TOKEN_INVALID. */
+            token: string;
+        };
         FeedbackView: {
             author: components["schemas"]["AccountRefView"];
             /** @description The confirmation's comment; null once its author is erased. */
@@ -4676,7 +4778,7 @@ export interface components {
             reasonCode: string | null;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -5322,7 +5424,7 @@ export interface components {
              * @description Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED).
              * @enum {string}
              */
-            contentType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf";
+            contentType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf" | "application/zip";
             purpose: components["schemas"]["FilePurpose"];
             /** @description Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). */
             size: number;
@@ -9468,6 +9570,65 @@ export interface operations {
             };
         };
     };
+    DataExportsController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataExportViewList"];
+                };
+            };
+        };
+    };
+    DataExportsController_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataExportView"];
+                };
+            };
+        };
+    };
+    DataExportsController_download: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DownloadView"];
+                };
+            };
+        };
+    };
     MeUnitsController_myDelegations: {
         parameters: {
             query?: never;
@@ -10631,6 +10792,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TenantView"];
+                };
+            };
+        };
+    };
+    PublicDataExportsController_code: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExportLinkDto"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PublicDataExportsController_download: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExportDownloadDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DownloadView"];
                 };
             };
         };

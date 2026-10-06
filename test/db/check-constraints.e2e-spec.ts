@@ -349,6 +349,8 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   account_freezes_released_shape: {},
   action_tokens_uses_nonnegative: {},
   known_devices_device_type_known: {},
+  // Data exports (ADR 0036): nullable columns only under IS [NOT] NULL.
+  data_exports_shape: {},
 };
 
 interface Check {

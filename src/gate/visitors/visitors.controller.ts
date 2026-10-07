@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Get,
-  Headers,
   HttpCode,
   HttpStatus,
   Param,
@@ -16,7 +15,11 @@ import {
   ApiOkResponse,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
-import { ApiArea, NoStore } from '../../core/common/http/decorators';
+import {
+  ApiArea,
+  NoStore,
+  RequestHeader,
+} from '../../core/common/http/decorators';
 import {
   ListOf,
   PageQueryDto,
@@ -24,7 +27,10 @@ import {
   type ListResponse,
 } from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
-import { parseIdempotencyKey } from '../../core/idempotency/idempotency-key';
+import {
+  IDEMPOTENCY_HEADER,
+  parseIdempotencyKey,
+} from '../../core/idempotency/idempotency-key';
 import {
   Idempotent,
   IdempotencyHeader,
@@ -60,7 +66,7 @@ export class VisitorsController {
   async create(
     @Param('unitId', parseId('unitId')) unitId: string,
     @Body() dto: CreateVisitorPassDto,
-    @Headers('idempotency-key') key?: string,
+    @RequestHeader(IDEMPOTENCY_HEADER) key?: string,
   ): Promise<IssuedPassView> {
     return IssuedPassView.from(
       await this.passes.create(unitId, dto, parseIdempotencyKey(key)),

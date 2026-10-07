@@ -1,14 +1,13 @@
 import {
   Body,
   Controller,
-  Headers,
   HttpCode,
   HttpStatus,
   Ip,
   Post,
 } from '@nestjs/common';
 import { ApiAcceptedResponse, ApiOkResponse } from '@nestjs/swagger';
-import { ApiArea } from '../../core/common/http/decorators';
+import { ApiArea, RequestHeader } from '../../core/common/http/decorators';
 import { Public } from '../../core/common/guards/public.decorator';
 import { resolveLocale } from '../../core/common/i18n/locale';
 import { CompleteInviteDto, InviteTokenDto } from './dto/invite-acceptance.dto';
@@ -37,7 +36,7 @@ export class InviteAcceptanceController {
   async start(
     @Body() dto: InviteTokenDto,
     @Ip() ip: string,
-    @Headers('accept-language') acceptLanguage?: string,
+    @RequestHeader('accept-language') acceptLanguage?: string,
   ): Promise<InviteCodeRequestedView> {
     await this.acceptance.startAcceptance(
       dto.token,

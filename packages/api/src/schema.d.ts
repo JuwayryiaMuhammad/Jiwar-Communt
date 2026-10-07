@@ -7720,9 +7720,7 @@ export interface operations {
     AuthController_requestOtp: {
         parameters: {
             query?: never;
-            header: {
-                "accept-language": string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -7791,8 +7789,7 @@ export interface operations {
     AuthController_selectAccount: {
         parameters: {
             query?: never;
-            header: {
-                "user-agent": string;
+            header?: {
                 /** @description The app sends the UUID it made at install: a login from a device never seen on the account raises an alert (ADR 0036). Browsers send none. */
                 "x-jiwar-install-id"?: string;
             };
@@ -8934,9 +8931,7 @@ export interface operations {
     InviteAcceptanceController_start: {
         parameters: {
             query?: never;
-            header: {
-                "accept-language": string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -11394,9 +11389,7 @@ export interface operations {
     RegistrationPublicController_start: {
         parameters: {
             query?: never;
-            header: {
-                "accept-language": string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -13204,8 +13197,7 @@ export interface operations {
     VisitorsController_create: {
         parameters: {
             query?: never;
-            header: {
-                "idempotency-key": string;
+            header?: {
                 /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
                 "Idempotency-Key"?: string;
             };

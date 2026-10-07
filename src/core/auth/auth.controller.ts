@@ -13,7 +13,7 @@ import {
   ApiNoContentResponse,
   ApiOkResponse,
 } from '@nestjs/swagger';
-import { ApiArea, NoStore } from '../common/http/decorators';
+import { ApiArea, NoStore, RequestHeader } from '../common/http/decorators';
 import { Public } from '../common/guards/public.decorator';
 import { resolveLocale } from '../common/i18n/locale';
 import { OTP_REQUESTED_MESSAGE, AuthService } from './auth.service';
@@ -44,7 +44,7 @@ export class AuthController {
   async requestOtp(
     @Body() dto: RequestOtpDto,
     @Ip() ip: string,
-    @Headers('accept-language') acceptLanguage?: string,
+    @RequestHeader('accept-language') acceptLanguage?: string,
   ): Promise<OtpRequestedView> {
     // The account is not proven yet, so its stored locale is not used: the
     // email goes out in the language the requester's client asks for.
@@ -79,7 +79,7 @@ export class AuthController {
   })
   selectAccount(
     @Body() dto: SelectAccountDto,
-    @Headers('user-agent') userAgent?: string,
+    @RequestHeader('user-agent') userAgent?: string,
     @Headers(INSTALL_ID_HEADER) installId?: string,
   ): Promise<TokensView> {
     return this.auth.selectAccount(dto.loginTicket, dto.accountId, {

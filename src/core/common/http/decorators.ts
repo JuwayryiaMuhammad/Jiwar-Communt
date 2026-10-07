@@ -1,5 +1,6 @@
 import {
   applyDecorators,
+  createParamDecorator,
   Header,
   Injectable,
   UseInterceptors,
@@ -7,7 +8,7 @@ import {
   type ExecutionContext,
   type NestInterceptor,
 } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import type { Observable } from 'rxjs';
 import { ApiBearerAuth, ApiExtension, ApiTags } from '@nestjs/swagger';
 
@@ -26,6 +27,21 @@ export function ApiArea(
     ...(auth === 'tenant' ? [ApiBearerAuth()] : []),
   );
 }
+
+/**
+ * A header the server reads off the request without declaring it in the
+ * OpenAPI document, as `@Headers(name)` would (as a required parameter).
+ * For what a client sends anyway (`user-agent`, `accept-language`), or what
+ * `@ApiHeader` already documents.
+ */
+export const RequestHeader = createParamDecorator(
+  (name: string, context: ExecutionContext): string | undefined => {
+    const value = context.switchToHttp().getRequest<Request>().headers[
+      name.toLowerCase()
+    ];
+    return Array.isArray(value) ? value[0] : value;
+  },
+);
 
 /**
  * A response that carries a secret shown once (an access code, an invite

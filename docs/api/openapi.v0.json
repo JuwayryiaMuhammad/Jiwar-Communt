@@ -12422,16 +12422,7 @@
     "/api/v1/auth/otp/request": {
       "post": {
         "operationId": "AuthController_requestOtp",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "accept-language",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "requestBody": {
           "content": {
             "application/json": {
@@ -12530,14 +12521,6 @@
       "post": {
         "operationId": "AuthController_selectAccount",
         "parameters": [
-          {
-            "in": "header",
-            "name": "user-agent",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
           {
             "description": "The app sends the UUID it made at install: a login from a device never seen on the account raises an alert (ADR 0036). Browsers send none.",
             "in": "header",
@@ -14596,16 +14579,7 @@
     "/api/v1/invites/accept/start": {
       "post": {
         "operationId": "InviteAcceptanceController_start",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "accept-language",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "requestBody": {
           "content": {
             "application/json": {
@@ -18849,16 +18823,7 @@
     "/api/v1/registrations/start": {
       "post": {
         "operationId": "RegistrationPublicController_start",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "accept-language",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "requestBody": {
           "content": {
             "application/json": {
@@ -22136,14 +22101,6 @@
           {
             "in": "path",
             "name": "unitId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "idempotency-key",
             "required": true,
             "schema": {
               "type": "string"

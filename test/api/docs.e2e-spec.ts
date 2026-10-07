@@ -5,8 +5,15 @@ import { stableJson } from '../../src/core/common/http/stable-json';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { ROUTES } from './routes';
 
+interface Parameter {
+  in: string;
+  name: string;
+  required?: boolean;
+}
+
 interface Operation {
   tags?: string[];
+  parameters?: Parameter[];
   security?: Record<string, unknown>[];
   'x-stability'?: string;
   'x-no-store'?: boolean;
@@ -17,6 +24,8 @@ interface OpenApi {
 }
 
 const PREFIX = '/api/v1';
+/** The only headers of the contract, both optional. */
+const HEADERS = ['Idempotency-Key', 'x-jiwar-install-id'];
 
 /** Swagger is the contract of API v0 (ADR 0025). */
 describe('API docs', () => {
@@ -85,6 +94,21 @@ describe('API docs', () => {
         noStore: byKey.get(key)?.noStore === true,
       });
     }
+  });
+
+  it('declares no header outside the allowlist, and none required', () => {
+    // `@Headers('user-agent')` once made Swagger demand a header no browser
+    // can set: a header the server only reads is `@RequestHeader`.
+    const offending = operations().flatMap(({ key, op }) =>
+      (op.parameters ?? [])
+        .filter(
+          (p) =>
+            p.in === 'header' &&
+            (!HEADERS.includes(p.name) || p.required === true),
+        )
+        .map((p) => `${key} ${p.name}${p.required ? ' (required)' : ''}`),
+    );
+    expect(offending).toEqual([]);
   });
 
   it('matches the committed docs/api/openapi.v0.json (run `pnpm openapi:export`)', () => {

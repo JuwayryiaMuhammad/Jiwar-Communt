@@ -480,10 +480,26 @@ describe('Dispatch engine — triggers', () => {
       ).toEqual(['created']);
     });
 
+    /**
+     * The registration itself, not a run: `runAll` goes through every
+     * sweep of every domain over every compound the earlier suites left in
+     * the database, so its cost grows with the whole test run (it timed
+     * out once the run was long enough). The runner's registry says the
+     * task is there; a stand-in for the sweep says the registered task is
+     * this sweep, without touching a compound.
+     */
     it('is registered with the sweep runner', async () => {
-      const done = await h.moduleRef.get(SweepRunner).runAll();
-      expect(done[DISPATCH_SWEEP]).toEqual(expect.any(Number));
-      expect(done[DISPATCH_SWEEP]).toBeGreaterThanOrEqual(0);
+      const runner = h.moduleRef.get(SweepRunner);
+      expect(() => runner.intervalOf(DISPATCH_SWEEP)).not.toThrow();
+      const run = jest
+        .spyOn(h.moduleRef.get(DispatchSweep), 'run')
+        .mockResolvedValue(7);
+      try {
+        expect(await runner.run(DISPATCH_SWEEP)).toBe(7);
+        expect(run).toHaveBeenCalledTimes(1);
+      } finally {
+        run.mockRestore();
+      }
     });
   });
 

@@ -390,6 +390,24 @@ export const NOTIFICATION_KINDS = {
     target: 'ticket',
     params: { ticketNumber: {}, clock: {} },
   },
+  // ADR 0038: a resident asked for attention on an overdue ticket. The
+  // ticket number only, like a breach.
+  /** A resident escalated an overdue ticket (the dispatchers and managers). */
+  'ticket.resident_escalated': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { ticketNumber: {} },
+  },
+  /** The same, on an emergency. */
+  'ticket.resident_escalated_emergency': {
+    priority: 'critical',
+    category: 'maintenance',
+    critical: true,
+    target: 'ticket',
+    params: { ticketNumber: {} },
+  },
   // A visit (ADR 0034): the ticket number and the window, nothing else —
   // never the unit's code (a window and a unit say which home is empty
   // when), never consent or a receiver.

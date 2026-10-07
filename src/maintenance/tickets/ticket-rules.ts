@@ -28,6 +28,7 @@ export type TicketAction =
   | 'changePriority'
   | 'changeCategory'
   | 'visit'
+  | 'escalate'
   | 'message'
   | 'reportPhoto'
   | 'workPhoto';
@@ -74,6 +75,8 @@ export const ALLOWED_FROM: Record<TicketAction, readonly TicketStatus[]> = {
   // ADR 0034: a visit is arranged, changed and made while a technician
   // holds the ticket.
   visit: IN_HAND,
+  // ADR 0038: while someone still owes the residents the work.
+  escalate: OPEN,
   message: [...OPEN, 'completed'],
   reportPhoto: OPEN,
   workPhoto: ['in_progress', 'on_hold'],

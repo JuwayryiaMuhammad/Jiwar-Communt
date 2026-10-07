@@ -491,11 +491,14 @@ describe('Maintenance — the SLA clocks', () => {
       .expect(200);
     const sla = (mine.body as { sla: Record<string, unknown> }).sla;
     expect(Object.keys(sla).sort()).toEqual([
+      // ADR 0038.
+      'overdue',
       'paused',
       'resolutionDueAt',
       'responseDueAt',
     ]);
     expect(sla.paused).toBe(false);
+    expect(sla.overdue).toBe(false);
     const dispatch = await d
       .http('get', `/maintenance/tickets/${id}`, s.supervisor.token)
       .expect(200);

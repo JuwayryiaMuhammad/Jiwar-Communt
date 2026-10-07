@@ -1,4 +1,4 @@
-# 0038 — The resident's ticket screens: arrival confirmation, the technician on the way, visit slots, two ratings, where in the unit
+# 0038 — The resident's ticket screens: arrival confirmation, the technician on the way, visit slots, two ratings, where in the unit, overdue and escalation
 
 **Status:** Accepted · Resident journey (Figma, "الساكن")
 
@@ -83,10 +83,45 @@ Nothing expires a `proposed` visit, and until now `confirm` did not look at the 
 - There is still no expiry sweep. A stale proposal stays the ticket's active visit until one side answers it.
 - **This narrows 5.3:** a request that was accepted is now a 409. It is a fix, and the only place this ADR refuses something that used to work.
 
+### Overdue, and the residents' escalation
+
+The design's list of reports shows "3h left of the promised response time", an "Overdue" badge, and "Request escalation →" on an overdue report. ADR 0034 deferred resident escalation.
+
+**Overdue, defined once** (`sla-overdue.ts`, a pure function the views and the endpoint share):
+
+- A commitment of the ticket's **current SLA cycle** is overdue when it is **late and still unmet**.
+  - Late: its clock is `breached`, or it is `running` and its due time has passed **by the database's clock**. The read does not wait for the breach sweep, and writes nothing.
+  - Unmet: the response, until the ticket is responded to (`en_route`, `in_progress`, or a visit proposed by the technician's side, since it was opened or last reopened); the resolution, until the work is reported done.
+- So a late response that was then given is no longer overdue, and a ticket that is `completed`, `closed` or `cancelled` never is.
+- A paused clock is never past due (it has no due time). One that breached before the pause stays late.
+
+**What the residents see**, on the list and on the detail:
+
+- `sla`, now on the list rows too, with a new `overdue` beside `responseDueAt`, `resolutionDueAt` and `paused`;
+- `escalatedAt`: this SLA cycle's escalation, or null;
+- `canEscalate`: what the endpoint would answer the caller now. The app does not rebuild the rules, and could not: one of them is whether the caller may still act on the unit.
+- A page costs a fixed number of queries whatever its size (the clocks, the responded tickets and this cycle's escalations in one query each; the caller's `tickets` once per distinct unit). A test counts them.
+
+**The escalation:** `POST /tickets/:id/escalate` (`tickets.create`, no body, `Idempotency-Key` honoured).
+
+- **Who:** anyone who sees the ticket (ADR 0032) and has `tickets` on its unit now, like every resident write. Not seeing it is `TICKET_NOT_FOUND`; seeing it without `tickets` is 403 `TICKETS_NOT_ALLOWED`.
+- **Under the ticket's lock, in this order:**
+  1. the ticket's running clocks already past due are breached **at their due time** (`SlaRecorder.settle`, the same `breach` the sweep and every writer use): time decides, not who writes first (ADR 0034);
+  2. the ticket is open: `new`, `assigned`, `en_route`, `in_progress`, or `on_hold` **unless it waits for the residents** (`awaiting_resident`: the next move is theirs). Otherwise 409 `TICKET_INVALID_TRANSITION`;
+  3. it is overdue, else 409 `TICKET_NOT_OVERDUE` (also while the SLA is off, or the ticket has no clocks);
+  4. it was not escalated in this SLA cycle, else 409 `TICKET_ALREADY_ESCALATED`.
+- **Once per SLA cycle.** `ticket_escalations` (the ticket, the SLA's cycle, the account, the time) is append-only like the other ticket histories: SELECT and INSERT for the app, the immutability triggers, no foreign keys. A unique index on the ticket and the cycle backs the rule. A reopen starts a new SLA cycle, so a reopened ticket may be escalated again.
+- **What it does:** the dispatchers and managers (holders of `tickets.dispatch` and of `maintenance.manage`, as for a breach) get `ticket.resident_escalated`, with the ticket number only. It is audited (`ticket.escalated_by_resident`: the SLA cycle and which clocks were overdue). **Nothing else changes:** not the priority, the technician, the status or the clocks.
+- **An emergency** sends `ticket.resident_escalated_emergency` instead, which is **critical**. This is a one-line amendment to ADR 0036's list of critical kinds: it joins `ticket.sla_breached_emergency` there, and `kinds.spec.ts` pins the list.
+- **Two notices at once, on purpose.** When step 1 breaches a clock, the same people get `ticket.sla_breached` and `ticket.resident_escalated` together. The breach is a fact of its due time that the sweep would have announced within the minute; hiding it would make the notices depend on who wrote first.
+- **A retry:** with the same `Idempotency-Key`, the 204 is replayed and nothing is written twice. Without a key, `TICKET_ALREADY_ESCALATED` after a lost answer means it went through.
+- **Dispatch** reads `escalations` on the ticket's detail: the SLA cycle, who, and when.
+
 ## Consequences
 
-- This **amends ADR 0034**: a visit gains a resident-side action at the door, and two columns (`ticket_visits` was a 5.3 table). The SLA's response is also met by `en_route`. A proposal is confirmed only before its start.
+- This **amends ADR 0034**: a visit gains a resident-side action at the door, and two columns (`ticket_visits` was a 5.3 table). The SLA's response is also met by `en_route`. A proposal is confirmed only before its start. Resident escalation, which ADR 0034 deferred, is here; the residents' `sla` gains `overdue` and is on the list.
 - This **amends ADR 0032**: the status list gains `en_route`, and one CHECK is replaced to include it. Clients that switch over `status` must handle the new value; it only appears once a technician app sends the new action.
 - This **amends ADR 0033**: `en_route` is open work and weighs like `in_progress`.
 - `GET`/`PATCH /maintenance/settings` gain the three visiting-hours fields.
+- This **amends ADR 0036**: `ticket.resident_escalated_emergency` is a critical kind.
 - **Migrations:** this branch's are `20261014090000` onwards, after `main`'s `20261013…`. `resident-account` (ADR 0037) is not merged yet; when it is rebased, its migrations must be renumbered after this branch's last one.

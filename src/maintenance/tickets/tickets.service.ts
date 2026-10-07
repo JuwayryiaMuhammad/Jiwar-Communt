@@ -5,6 +5,7 @@ import {
   type Ticket,
   type TicketAssignment,
   type TicketDispatchAttempt,
+  type TicketEscalation,
   type TicketAttachmentKind,
   type TicketFeedback,
   type TicketPriority,
@@ -35,6 +36,7 @@ import { categoryNotFound } from '../categories/categories.service';
 import { DispatchEngine } from '../dispatch/dispatch-engine';
 import { MaintenanceSettingsService } from '../settings/maintenance-settings.service';
 import { SlaService, type SlaSummary } from '../sla/sla.service';
+import { EscalationService, type EscalationState } from './escalation.service';
 import { ticketNotFound, TicketAccess, type Audience } from './ticket-access';
 import { COMMON_AREA_LENGTH, DESCRIPTION_LENGTH } from './ticket-limits';
 import { TicketLog } from './ticket-log';
@@ -90,12 +92,23 @@ export interface TicketRead {
   people: Map<string, Person>;
 }
 
+/** A resident's row: with its SLA and what they may do about it (ADR 0038). */
+export interface ResidentTicketRead extends TicketRead {
+  /** Null while the SLA is off or the ticket has no clocks. */
+  sla: SlaSummary | null;
+  escalation: EscalationState;
+}
+
 export interface TicketDetail extends TicketRead {
   photos: PhotoRead[];
   settings: Pick<MaintenanceSettings, 'autoCloseHours' | 'reopenDays'>;
   feedback: TicketFeedback[];
   /** Residents and dispatch only; null while the SLA is off (ADR 0034). */
   sla: SlaSummary | null;
+  /** Residents only (ADR 0038); null for the others. */
+  escalation: EscalationState | null;
+  /** Dispatch only (ADR 0038): every escalation, oldest first. */
+  escalations: TicketEscalation[];
   /**
    * The technician only, and only under `phoneShareAllowed` (ADR 0036);
    * null for everyone else.
@@ -160,6 +173,7 @@ export class TicketsService implements OnModuleInit {
     private readonly settings: MaintenanceSettingsService,
     private readonly engine: DispatchEngine,
     private readonly sla: SlaService,
+    private readonly escalation: EscalationService,
     private readonly consents: ConsentsService,
   ) {}
 
@@ -284,11 +298,11 @@ export class TicketsService implements OnModuleInit {
   }
 
   /** The resident's tickets: created, reported, or of a unit they are primary of. */
-  listForResident(q: ResidentQuery): Promise<Page<TicketRead>> {
+  listForResident(q: ResidentQuery): Promise<Page<ResidentTicketRead>> {
     const me = this.ctx.accountId;
     return this.tenantTx.withTenantTx(async (tx) => {
       const primaryOf = await this.community.primaryUnits(tx, me);
-      return this.page(tx, q, {
+      const page = await this.page(tx, q, {
         AND: [
           {
             OR: [
@@ -301,6 +315,18 @@ export class TicketsService implements OnModuleInit {
           q.unitId ? { unitId: q.unitId } : {},
         ],
       });
+      // The SLA and the escalation of the whole page, never per row.
+      const tickets = page.items.map((r) => r.ticket);
+      const slas = await this.sla.summaries(tx, tickets);
+      const states = await this.escalation.states(tx, tickets, slas);
+      return {
+        items: page.items.map((r) => ({
+          ...r,
+          sla: slas.get(r.ticket.id) ?? null,
+          escalation: states.get(r.ticket.id)!,
+        })),
+        nextCursor: page.nextCursor,
+      };
     });
   }
 
@@ -363,17 +389,35 @@ export class TicketsService implements OnModuleInit {
           read: await this.files.readUrl(tx, a.fileId),
           createdAt: a.createdAt,
         });
+      const sla =
+        audience === 'technician' ? null : await this.sla.summary(tx, ticket);
+      const escalation =
+        audience === 'resident'
+          ? (
+              await this.escalation.states(tx, [ticket], new Map([[id, sla]]))
+            ).get(id)!
+          : null;
+      const escalations =
+        audience === 'dispatch' ? await this.escalation.list(tx, id) : [];
       await this.addPeople(tx, read.people, [
         ...feedback.map((f) => f.authorId),
         ...feedback.map((f) => f.ratedTechnicianId),
+        ...escalations.map((e) => e.accountId),
       ]);
-      const sla =
-        audience === 'technician' ? null : await this.sla.summary(tx, id);
       const reporterPhone =
         audience === 'technician'
           ? await this.sharedPhone(tx, ticket, this.ctx.accountId)
           : null;
-      return { ...read, photos, settings, feedback, sla, reporterPhone };
+      return {
+        ...read,
+        photos,
+        settings,
+        feedback,
+        sla,
+        escalation,
+        escalations,
+        reporterPhone,
+      };
     });
   }
 

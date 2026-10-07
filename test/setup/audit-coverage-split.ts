@@ -120,6 +120,8 @@ export const MAINTENANCE_COVERAGE: readonly string[] = [
   'maintenance.sla_settings_changed',
   'ticket_category.sla_targets_changed',
   'ticket.category_changed',
+  // The residents' escalation and the preventive services (ADR 0038).
+  'ticket.escalated_by_resident',
 ];
 
 /** Parcels (ADR 0035), covered by test/parcels/audit-coverage.e2e-spec.ts. */

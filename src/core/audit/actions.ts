@@ -218,6 +218,8 @@ export const AUDIT_ACTIONS = {
   'ticket.category_changed': { log: 'tenant', target: 'ticket' },
   // metadata: reasonCode, by (reporter | dispatcher), fromStatus.
   'ticket.cancelled': { log: 'tenant', target: 'ticket' },
+  // ADR 0038. metadata: slaCycle, clocks (the overdue ones).
+  'ticket.escalated_by_resident': { log: 'tenant', target: 'ticket' },
   // dispatch (ADR 0033). Codes and keys only, never a name.
   'specialty.created': { log: 'tenant', target: 'specialty' },
   'specialty.updated': { log: 'tenant', target: 'specialty' },

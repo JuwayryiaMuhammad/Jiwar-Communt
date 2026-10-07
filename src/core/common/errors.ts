@@ -176,6 +176,10 @@ export const ErrorCode = {
   TICKET_PHOTO_LIMIT_REACHED: 'TICKET_PHOTO_LIMIT_REACHED',
   /** Closed longer ago than the compound's reopen window (409). */
   TICKET_REOPEN_WINDOW_PASSED: 'TICKET_REOPEN_WINDOW_PASSED',
+  /** No SLA commitment of the ticket is late and unmet (409, ADR 0038). */
+  TICKET_NOT_OVERDUE: 'TICKET_NOT_OVERDUE',
+  /** Escalated already in this SLA cycle (409, ADR 0038). */
+  TICKET_ALREADY_ESCALATED: 'TICKET_ALREADY_ESCALATED',
   // visits (ADR 0034)
   /** Unknown, another ticket's, or not the caller's to see. */
   VISIT_NOT_FOUND: 'VISIT_NOT_FOUND',

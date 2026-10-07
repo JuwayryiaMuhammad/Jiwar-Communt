@@ -3156,6 +3156,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tickets/{id}/escalate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ResidentTicketsController_escalate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tickets/{id}/messages": {
         parameters: {
             query?: never;
@@ -4761,6 +4777,8 @@ export interface components {
             createdBy: components["schemas"]["AccountRefView"];
             cycle: number;
             description: string;
+            /** @description ADR 0038: the residents' escalations, oldest first. */
+            escalations: components["schemas"]["EscalationView"][];
             feedback: components["schemas"]["FeedbackView"][];
             holdReason: components["schemas"]["TicketHoldReason"] | null;
             /** Format: uuid */
@@ -4782,6 +4800,8 @@ export interface components {
             updatedAt: string;
         };
         DispatchTicketSlaView: {
+            /** @description ADR 0038: a commitment of this SLA cycle is late (breached, or past its due time now) and still unmet: the response until the ticket is responded to, the resolution until the work is reported done. */
+            overdue: boolean;
             /** @description A clock is paused: waiting for the resident, for parts, or for a confirmation. */
             paused: boolean;
             /**
@@ -4975,6 +4995,13 @@ export interface components {
             requestId: string;
             /** @description Step 3 types exactly this. */
             scopePhrase: string;
+        };
+        EscalationView: {
+            /** Format: date-time */
+            at: string;
+            by: components["schemas"]["AccountRefView"];
+            /** @description The SLA's cycle (ADR 0034). */
+            slaCycle: number;
         };
         ExportDownloadDto: {
             /** @description The code sent to the account’s email for this link. */
@@ -6274,6 +6301,8 @@ export interface components {
              * @description While completed: when it closes by itself if nobody confirms or rejects.
              */
             autoCloseAt: string | null;
+            /** @description ADR 0038: `POST /tickets/{id}/escalate` would be accepted from the caller now. */
+            canEscalate: boolean;
             category: components["schemas"]["TicketCategoryRefView"];
             /** Format: date-time */
             closedAt: string | null;
@@ -6285,6 +6314,11 @@ export interface components {
             createdAt: string;
             cycle: number;
             description: string;
+            /**
+             * Format: date-time
+             * @description ADR 0038: when a resident escalated the ticket in this SLA cycle.
+             */
+            escalatedAt: string | null;
             holdReason: components["schemas"]["TicketHoldReason"] | null;
             /** Format: uuid */
             id: string;
@@ -6314,11 +6348,18 @@ export interface components {
             updatedAt: string;
         };
         ResidentTicketView: {
+            /** @description ADR 0038: `POST /tickets/{id}/escalate` would be accepted from the caller now. */
+            canEscalate: boolean;
             category: components["schemas"]["TicketCategoryRefView"];
             commonArea: string | null;
             confirmationStatus: components["schemas"]["TicketConfirmationStatus"] | null;
             /** Format: date-time */
             createdAt: string;
+            /**
+             * Format: date-time
+             * @description ADR 0038: when a resident escalated the ticket in this SLA cycle.
+             */
+            escalatedAt: string | null;
             holdReason: components["schemas"]["TicketHoldReason"] | null;
             /** Format: uuid */
             id: string;
@@ -6326,6 +6367,8 @@ export interface components {
             number: string;
             priority: components["schemas"]["TicketPriority"];
             reportedByMe: boolean;
+            /** @description Null while the compound does not measure an SLA. */
+            sla: components["schemas"]["TicketSlaView"] | null;
             status: components["schemas"]["TicketStatus"];
             unitCode: string | null;
             /** Format: uuid */
@@ -6856,6 +6899,8 @@ export interface components {
         /** @enum {string} */
         TicketPriority: "normal" | "urgent" | "emergency";
         TicketSlaView: {
+            /** @description ADR 0038: a commitment of this SLA cycle is late (breached, or past its due time now) and still unmet: the response until the ticket is responded to, the resolution until the work is reported done. */
+            overdue: boolean;
             /** @description A clock is paused: waiting for the resident, for parts, or for a confirmation. */
             paused: boolean;
             /**
@@ -12441,6 +12486,28 @@ export interface operations {
                 "application/json": components["schemas"]["ConfirmDto"];
             };
         };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ResidentTicketsController_escalate: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             204: {
                 headers: {

@@ -28,6 +28,7 @@ import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import { AttachmentsService } from './attachments.service';
 import { MessagesService } from './messages.service';
 import { ConfirmationService } from './confirmation.service';
+import { EscalationService } from './escalation.service';
 import {
   ConfirmDto,
   CreateTicketDto,
@@ -57,6 +58,7 @@ export class ResidentTicketsController {
     private readonly tickets: TicketsService,
     private readonly attachments: AttachmentsService,
     private readonly confirmation: ConfirmationService,
+    private readonly escalation: EscalationService,
     private readonly messages: MessagesService,
     private readonly ctx: RequestContext,
   ) {}
@@ -152,6 +154,18 @@ export class ResidentTicketsController {
     @Body() dto: ReasonDto,
   ): Promise<void> {
     return this.confirmation.reopen(id, reasonOf(dto));
+  }
+
+  /**
+   * Asks for attention on an overdue ticket (ADR 0038): once per SLA
+   * cycle, while `canEscalate`.
+   */
+  @Post(':id/escalate')
+  @Idempotent()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  escalate(@Param('id', parseId()) id: string): Promise<void> {
+    return this.escalation.escalate(id);
   }
 
   /** The thread, oldest first; never an internal message. */

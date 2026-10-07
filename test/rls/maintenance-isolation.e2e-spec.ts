@@ -451,6 +451,24 @@ const TABLES: Table[] = [
       return id;
     },
   },
+  // ADR 0038.
+  {
+    table: 'ticket_escalations',
+    linked: false,
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.ticketEscalation.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          ticketId: link.ticketId,
+          slaCycle: 1,
+          accountId: own.accountId,
+        },
+      });
+      return id;
+    },
+  },
   {
     table: 'ticket_sla_clocks',
     key: 'ticket_id',

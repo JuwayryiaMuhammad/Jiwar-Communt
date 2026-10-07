@@ -64,6 +64,15 @@ describe.each([
          'started', now(), 60)`,
     update: 'SET target_minutes = 1',
   },
+  // ADR 0038.
+  {
+    table: 'ticket_escalations',
+    insert: (id: string, tenantId: string) =>
+      `INSERT INTO ticket_escalations (id, tenant_id, ticket_id, sla_cycle,
+         account_id)
+       VALUES ('${id}', '${tenantId}', '${newId()}', 1, '${newId()}')`,
+    update: 'SET sla_cycle = 2',
+  },
 ])('$table is immutable', ({ table, insert, update: set }) => {
   let app: Client;
   let migrator: Client;

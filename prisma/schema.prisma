@@ -2189,6 +2189,21 @@ model TicketStatusHistory {
   @@map("ticket_status_history")
 }
 
+/// A resident asked for attention on an overdue ticket (ADR 0038): once per
+/// SLA cycle. Append-only, like the status history; no foreign keys.
+model TicketEscalation {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  ticketId  String   @map("ticket_id") @db.Uuid
+  /// The SLA's cycle (ADR 0034), not the ticket's.
+  slaCycle  Int      @map("sla_cycle")
+  accountId String   @map("account_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, ticketId, slaCycle], map: "ticket_escalations_once_per_cycle")
+  @@map("ticket_escalations")
+}
+
 /// Append-only, like the status history. A decline or a release has no `to`.
 model TicketAssignment {
   id             String               @id @db.Uuid

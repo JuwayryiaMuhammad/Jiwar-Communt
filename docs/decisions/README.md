@@ -38,4 +38,4 @@
 | [0034](0034-visits-and-sla.md) | Visits and the SLA: windows, absence-entry consent, the receiver, event-sourced clocks, the lock order | Accepted |
 | [0035](0035-parcels.md) | Parcels: received at the gate, told to the unit, handed over against a derived code, a resident QR or a delegate | Accepted |
 | [0036](0036-preferences-consents-export-deletion.md) | Preferences, consents, data export and account deletion | Accepted |
-| [0038](0038-resident-ticket-gaps.md) | The resident's ticket screens: arrival confirmation, the technician on the way, visit slots, two ratings, where in the unit | Accepted |
+| [0038](0038-resident-ticket-gaps.md) | The resident's ticket screens: arrival confirmation, the technician on the way, visit slots, two ratings, where in the unit, overdue and escalation | Accepted |

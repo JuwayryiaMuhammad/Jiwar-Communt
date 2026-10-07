@@ -29,6 +29,7 @@ import type {
   HistoryRead,
   Person,
   PhotoRead,
+  ResidentTicketRead,
   TicketDetail,
   TicketRead,
 } from '../tickets.service';
@@ -66,6 +67,12 @@ export class TicketSlaView {
       'A clock is paused: waiting for the resident, for parts, or for a confirmation.',
   })
   paused: boolean;
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'ADR 0038: a commitment of this SLA cycle is late (breached, or past its due time now) and still unmet: the response until the ticket is responded to, the resolution until the work is reported done.',
+  })
+  overdue: boolean;
 
   static from(s: SlaSummary | null): TicketSlaView | null {
     return s
@@ -73,6 +80,7 @@ export class TicketSlaView {
           responseDueAt: s.responseDueAt,
           resolutionDueAt: s.resolutionDueAt,
           paused: s.paused,
+          overdue: s.overdue,
         }
       : null;
   }
@@ -223,12 +231,32 @@ export class ResidentTicketView {
   confirmationStatus: TicketConfirmationStatus | null;
   @ApiProperty({ type: Boolean })
   reportedByMe: boolean;
+  @ApiProperty({
+    type: TicketSlaView,
+    nullable: true,
+    description: 'Null while the compound does not measure an SLA.',
+  })
+  sla: TicketSlaView | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'ADR 0038: when a resident escalated the ticket in this SLA cycle.',
+  })
+  escalatedAt: Date | null;
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'ADR 0038: `POST /tickets/{id}/escalate` would be accepted from the caller now.',
+  })
+  canEscalate: boolean;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
   @ApiProperty({ type: String, format: 'date-time' })
   updatedAt: Date;
 
-  static from(r: TicketRead, me: string): ResidentTicketView {
+  static from(r: ResidentTicketRead, me: string): ResidentTicketView {
     const t = r.ticket;
     return {
       id: t.id,
@@ -243,6 +271,9 @@ export class ResidentTicketView {
       holdReason: t.holdReason,
       confirmationStatus: t.confirmationStatus,
       reportedByMe: t.reporterId === me,
+      sla: TicketSlaView.from(r.sla),
+      escalatedAt: r.escalation.escalatedAt,
+      canEscalate: r.escalation.canEscalate,
       createdAt: t.createdAt,
       updatedAt: t.updatedAt,
     };
@@ -284,17 +315,12 @@ export class ResidentTicketDetailView extends ResidentTicketView {
     description: 'While closed: until when it may be reopened.',
   })
   reopenUntil: Date | null;
-  @ApiProperty({
-    type: TicketSlaView,
-    nullable: true,
-    description: 'Null while the compound does not measure an SLA.',
-  })
-  sla: TicketSlaView | null;
 
   static fromDetail(d: TicketDetail, me: string): ResidentTicketDetailView {
     const t = d.ticket;
     return {
-      ...ResidentTicketView.from(d, me),
+      // A resident's detail always carries its escalation state.
+      ...ResidentTicketView.from({ ...d, escalation: d.escalation! }, me),
       description: t.description,
       cycle: t.cycle,
       reporter: first(d, t.reporterId),
@@ -311,7 +337,6 @@ export class ResidentTicketDetailView extends ResidentTicketView {
         t.status === 'closed' && t.closedAt
           ? new Date(t.closedAt.getTime() + d.settings.reopenDays * DAY)
           : null,
-      sla: TicketSlaView.from(d.sla),
     };
   }
 }
@@ -533,6 +558,16 @@ export class FeedbackView {
   createdAt: Date;
 }
 
+/** ADR 0038: a resident asked for attention on an overdue ticket. */
+export class EscalationView {
+  @ApiProperty({ type: Number, description: "The SLA's cycle (ADR 0034)." })
+  slaCycle: number;
+  @ApiProperty({ type: AccountRefView })
+  by: AccountRefView;
+  @ApiProperty({ type: String, format: 'date-time' })
+  at: Date;
+}
+
 export class DispatchTicketDetailView extends DispatchTicketView {
   @ApiProperty({ type: String })
   description: string;
@@ -556,6 +591,11 @@ export class DispatchTicketDetailView extends DispatchTicketView {
     description: 'Null while the compound does not measure an SLA.',
   })
   sla: DispatchTicketSlaView | null;
+  @ApiProperty({
+    type: [EscalationView],
+    description: "ADR 0038: the residents' escalations, oldest first.",
+  })
+  escalations: EscalationView[];
 
   static fromDetail(d: TicketDetail): DispatchTicketDetailView {
     const t = d.ticket;
@@ -582,6 +622,11 @@ export class DispatchTicketDetailView extends DispatchTicketView {
       closedAt: t.closedAt,
       cancelledAt: t.cancelledAt,
       sla: DispatchTicketSlaView.fromSummary(d.sla),
+      escalations: d.escalations.map((e) => ({
+        slaCycle: e.slaCycle,
+        by: full(d, e.accountId),
+        at: e.createdAt,
+      })),
     };
   }
 }

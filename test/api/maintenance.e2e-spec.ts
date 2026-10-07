@@ -78,6 +78,11 @@ const RESIDENT = [
   'unitCode',
   'unitId',
   'updatedAt',
+  // ADR 0038: on the list too. `sla` is null while the compound measures
+  // no SLA (ADR 0034).
+  'canEscalate',
+  'escalatedAt',
+  'sla',
 ].sort();
 const RESIDENT_DETAIL = [
   ...RESIDENT,
@@ -92,8 +97,6 @@ const RESIDENT_DETAIL = [
   'reporter',
   'reporter.firstName',
   'reporter.id',
-  // ADR 0034: null while the compound does not measure an SLA.
-  'sla',
   'technician',
 ].sort();
 const DISPATCH = [
@@ -152,6 +155,8 @@ const DISPATCH_DETAIL = [
   'createdBy.fullName',
   'createdBy.id',
   'description',
+  // ADR 0038.
+  'escalations',
   'feedback',
   'photos',
   'reporter',

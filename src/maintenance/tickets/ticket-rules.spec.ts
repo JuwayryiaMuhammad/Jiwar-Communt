@@ -49,6 +49,8 @@ const EXPECTED: Record<TicketAction, TicketStatus[]> = {
   changePriority: [...OPEN, 'completed'],
   changeCategory: [...OPEN, 'completed'],
   visit: IN_HAND,
+  // ADR 0038.
+  escalate: OPEN,
   message: [...OPEN, 'completed'],
   reportPhoto: OPEN,
   workPhoto: ['in_progress', 'on_hold'],

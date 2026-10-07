@@ -23,6 +23,8 @@ const CRITICAL_KINDS = [
   'gate.approval_reversed',
   'ticket.assigned',
   'ticket.emergency',
+  // ADR 0038.
+  'ticket.resident_escalated_emergency',
   'ticket.sla_breached_emergency',
   'ticket.unassignable_emergency',
 ].sort();

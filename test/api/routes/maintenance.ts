@@ -790,6 +790,8 @@ export const CONFIRMATION_ROUTES: Row[] = [
       ],
     },
   ),
+  // ADR 0038: no body.
+  residentAction('escalate', {}, 'none'),
   residentAction(
     'reject',
     { reasonCode: 'not_fixed', reason: 'Still leaking' },

@@ -42,6 +42,7 @@ import {
   TechniciansController,
 } from './tickets/dispatch-tickets.controller';
 import { ConfirmationService } from './tickets/confirmation.service';
+import { EscalationService } from './tickets/escalation.service';
 import { DispatchService } from './tickets/dispatch.service';
 import { MessagesService } from './tickets/messages.service';
 import { TechnicianRelease } from './tickets/technician-release';
@@ -112,6 +113,7 @@ import { VisitsService } from './visits/visits.service';
     TechnicianRelease,
     MessagesService,
     ConfirmationService,
+    EscalationService,
     SlaSettingsService,
     SlaTargetsService,
     SlaRecorder,

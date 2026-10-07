@@ -93,6 +93,9 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // Checked under the ticket lock (VISIT_ALREADY_ACTIVE first); a
   // violation is a race and names nothing.
   ticket_visits_one_active_per_ticket: null,
+  // ADR 0038. Checked under the ticket lock (TICKET_ALREADY_ESCALATED
+  // first); a violation is a race and names nothing.
+  ticket_escalations_once_per_cycle: null,
   // The recorder appends under the ticket lock after reading the clock's
   // last event; a violation is a race and names nothing.
   ticket_sla_events_seq_key: null,

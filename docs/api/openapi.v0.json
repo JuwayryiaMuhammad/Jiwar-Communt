@@ -2623,6 +2623,13 @@
           "description": {
             "type": "string"
           },
+          "escalations": {
+            "description": "ADR 0038: the residents' escalations, oldest first.",
+            "items": {
+              "$ref": "#/components/schemas/EscalationView"
+            },
+            "type": "array"
+          },
           "feedback": {
             "items": {
               "$ref": "#/components/schemas/FeedbackView"
@@ -2737,12 +2744,17 @@
           "completedAt",
           "closedAt",
           "cancelledAt",
-          "sla"
+          "sla",
+          "escalations"
         ],
         "type": "object"
       },
       "DispatchTicketSlaView": {
         "properties": {
+          "overdue": {
+            "description": "ADR 0038: a commitment of this SLA cycle is late (breached, or past its due time now) and still unmet: the response until the ticket is responded to, the resolution until the work is reported done.",
+            "type": "boolean"
+          },
           "paused": {
             "description": "A clock is paused: waiting for the resident, for parts, or for a confirmation.",
             "type": "boolean"
@@ -2780,6 +2792,7 @@
           "responseDueAt",
           "resolutionDueAt",
           "paused",
+          "overdue",
           "responseState",
           "resolutionState"
         ],
@@ -3515,6 +3528,27 @@
           "scopePhrase",
           "erased",
           "kept"
+        ],
+        "type": "object"
+      },
+      "EscalationView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "by": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "slaCycle": {
+            "description": "The SLA's cycle (ADR 0034).",
+            "type": "number"
+          }
+        },
+        "required": [
+          "slaCycle",
+          "by",
+          "at"
         ],
         "type": "object"
       },
@@ -7989,6 +8023,10 @@
             "nullable": true,
             "type": "string"
           },
+          "canEscalate": {
+            "description": "ADR 0038: `POST /tickets/{id}/escalate` would be accepted from the caller now.",
+            "type": "boolean"
+          },
           "category": {
             "$ref": "#/components/schemas/TicketCategoryRefView"
           },
@@ -8022,6 +8060,12 @@
             "type": "number"
           },
           "description": {
+            "type": "string"
+          },
+          "escalatedAt": {
+            "description": "ADR 0038: when a resident escalated the ticket in this SLA cycle.",
+            "format": "date-time",
+            "nullable": true,
             "type": "string"
           },
           "holdReason": {
@@ -8131,6 +8175,9 @@
           "holdReason",
           "confirmationStatus",
           "reportedByMe",
+          "sla",
+          "escalatedAt",
+          "canEscalate",
           "createdAt",
           "updatedAt",
           "description",
@@ -8142,13 +8189,16 @@
           "completedAt",
           "closedAt",
           "autoCloseAt",
-          "reopenUntil",
-          "sla"
+          "reopenUntil"
         ],
         "type": "object"
       },
       "ResidentTicketView": {
         "properties": {
+          "canEscalate": {
+            "description": "ADR 0038: `POST /tickets/{id}/escalate` would be accepted from the caller now.",
+            "type": "boolean"
+          },
           "category": {
             "$ref": "#/components/schemas/TicketCategoryRefView"
           },
@@ -8166,6 +8216,12 @@
           },
           "createdAt": {
             "format": "date-time",
+            "type": "string"
+          },
+          "escalatedAt": {
+            "description": "ADR 0038: when a resident escalated the ticket in this SLA cycle.",
+            "format": "date-time",
+            "nullable": true,
             "type": "string"
           },
           "holdReason": {
@@ -8193,6 +8249,16 @@
           },
           "reportedByMe": {
             "type": "boolean"
+          },
+          "sla": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketSlaView"
+              }
+            ],
+            "description": "Null while the compound does not measure an SLA.",
+            "nullable": true,
+            "type": "object"
           },
           "status": {
             "allOf": [
@@ -8237,6 +8303,9 @@
           "holdReason",
           "confirmationStatus",
           "reportedByMe",
+          "sla",
+          "escalatedAt",
+          "canEscalate",
           "createdAt",
           "updatedAt"
         ],
@@ -10143,6 +10212,10 @@
       },
       "TicketSlaView": {
         "properties": {
+          "overdue": {
+            "description": "ADR 0038: a commitment of this SLA cycle is late (breached, or past its due time now) and still unmet: the response until the ticket is responded to, the resolution until the work is reported done.",
+            "type": "boolean"
+          },
           "paused": {
             "description": "A clock is paused: waiting for the resident, for parts, or for a confirmation.",
             "type": "boolean"
@@ -10163,7 +10236,8 @@
         "required": [
           "responseDueAt",
           "resolutionDueAt",
-          "paused"
+          "paused",
+          "overdue"
         ],
         "type": "object"
       },
@@ -20730,6 +20804,44 @@
           },
           "required": true
         },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/tickets/{id}/escalate": {
+      "post": {
+        "operationId": "ResidentTicketsController_escalate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "204": {
             "description": ""

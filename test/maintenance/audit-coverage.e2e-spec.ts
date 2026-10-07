@@ -6,6 +6,7 @@ import { SlaSettingsService } from '../../src/maintenance/sla/sla-settings.servi
 import { SlaTargetsService } from '../../src/maintenance/sla/sla-targets.service';
 import { MaintenanceSettingsService } from '../../src/maintenance/settings/maintenance-settings.service';
 import { ConfirmationService } from '../../src/maintenance/tickets/confirmation.service';
+import { EscalationService } from '../../src/maintenance/tickets/escalation.service';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
 import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
 import { auditReaders } from '../setup/audit';
@@ -19,6 +20,7 @@ import {
 import { communityHelpers, type Compound } from '../setup/community';
 import { gateHelpers } from '../setup/gate';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { rewind } from '../setup/sla';
 
 /**
  * One scenario per maintenance catalog entry (ADR 0014, 0032): actor,
@@ -392,6 +394,56 @@ describe('Audit coverage — maintenance', () => {
         },
       });
       expect(JSON.stringify(row)).not.toContain('AUDIT-');
+    });
+  });
+
+  describe('escalation', () => {
+    it('ticket.escalated_by_resident — by the resident, the SLA cycle and the overdue clocks only', async () => {
+      const c = await x.compound();
+      const unit = await x.unit(c);
+      const reporter = await x.resident(c, [unit.id]);
+      const category = await x.asManager(c, () =>
+        x.prisma.tenant.ticketCategory.findFirstOrThrow({
+          where: { key: 'plumbing' },
+        }),
+      );
+      await x.asManager(c, () =>
+        h.moduleRef.get(SlaSettingsService).update({ slaEnabled: true }),
+      );
+      const asReporter = <T>(fn: () => Promise<T>) =>
+        x.as(c, { id: reporter.id, type: 'resident' }, fn);
+      const ticket = await asReporter(() =>
+        h.moduleRef.get(TicketsService).create({
+          unitId: unit.id,
+          categoryId: category.id,
+          description: 'AUDIT-DESCRIPTION dripping',
+        }),
+      );
+      // A normal ticket's response is due after a day.
+      await rewind(ticket.id, 24 * 60 + 1);
+      await asReporter(() =>
+        h.moduleRef.get(EscalationService).escalate(ticket.id),
+      );
+      const row = await single(c, 'ticket.escalated_by_resident', ticket.id);
+      expect(row).toMatchObject({
+        actorType: 'account',
+        actorId: reporter.id,
+        targetType: 'ticket',
+        metadata: { slaCycle: 1, clocks: ['response'] },
+      });
+      expect(Object.keys(row.metadata as object).sort()).toEqual([
+        'clocks',
+        'slaCycle',
+      ]);
+      expect(row.changes).toBeNull();
+      expect(JSON.stringify(row)).not.toMatch(/AUDIT-|dripping/);
+      // A second one is refused, and writes nothing.
+      await expect(
+        asReporter(() =>
+          h.moduleRef.get(EscalationService).escalate(ticket.id),
+        ),
+      ).rejects.toMatchObject({ code: 'TICKET_ALREADY_ESCALATED' });
+      await single(c, 'ticket.escalated_by_resident', ticket.id);
     });
   });
 

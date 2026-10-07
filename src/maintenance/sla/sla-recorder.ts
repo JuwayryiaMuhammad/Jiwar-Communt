@@ -211,6 +211,23 @@ export class SlaRecorder implements OnModuleInit {
     }
   }
 
+  /**
+   * Time decides, not the sweep (ADR 0038): the ticket's running clocks
+   * already past due are breached now, at their due time, for a caller
+   * that is about to judge whether the ticket is overdue. Under the
+   * ticket's lock. It starts nothing and stops nothing.
+   */
+  async settle(tx: TenantTxClient, ticket: SlaTicket): Promise<void> {
+    const since = await this.activation(tx);
+    if (!since) return;
+    const now = await dbNow(tx);
+    const current = await this.current(tx, ticket.id, since);
+    if (!current) return;
+    for (const c of current.values())
+      if (c.state === 'running' && c.dueAt && c.dueAt <= now)
+        await this.breach(tx, ticket, c, c.dueAt);
+  }
+
   // --- the sweep, activation and deactivation ------------------------------
 
   /**
@@ -495,29 +512,43 @@ export class SlaRecorder implements OnModuleInit {
     });
   }
 
-  /**
-   * Whether the ticket was responded to since it was opened or last
-   * reopened: it went `en_route` or `in_progress`, or a visit was proposed.
-   */
   private async hasResponded(
     tx: TenantTxClient,
     ticketId: string,
   ): Promise<boolean> {
-    const [{ responded }] = await tx.$queryRaw<{ responded: boolean }[]>`
+    return (await this.respondedAmong(tx, [ticketId])).has(ticketId);
+  }
+
+  /**
+   * Which of these tickets were responded to since they were opened or
+   * last reopened: they went `en_route` or `in_progress`, or a visit was
+   * proposed by the technician's side. One query for all of them.
+   */
+  async respondedAmong(
+    tx: TenantTxClient,
+    ticketIds: readonly string[],
+  ): Promise<Set<string>> {
+    if (!ticketIds.length) return new Set();
+    const rows = await tx.$queryRaw<{ id: string }[]>`
       WITH since AS (
-        SELECT COALESCE(max(created_at), '-infinity'::timestamptz) AS at
-          FROM ticket_status_history
-         WHERE ticket_id = ${ticketId}::uuid AND from_status = 'closed')
-      SELECT EXISTS (
-               SELECT 1 FROM ticket_status_history h, since
-                WHERE h.ticket_id = ${ticketId}::uuid
+        SELECT t.id,
+               COALESCE((SELECT max(h.created_at)
+                           FROM ticket_status_history h
+                          WHERE h.ticket_id = t.id
+                            AND h.from_status = 'closed'),
+                        '-infinity'::timestamptz) AS at
+          FROM unnest(${[...ticketIds]}::uuid[]) AS t(id))
+      SELECT s.id FROM since s
+       WHERE EXISTS (
+               SELECT 1 FROM ticket_status_history h
+                WHERE h.ticket_id = s.id
                   AND h.to_status IN ('en_route', 'in_progress')
-                  AND h.created_at >= since.at)
+                  AND h.created_at >= s.at)
           OR EXISTS (
-               SELECT 1 FROM ticket_visits v, since
-                WHERE v.ticket_id = ${ticketId}::uuid
+               SELECT 1 FROM ticket_visits v
+                WHERE v.ticket_id = s.id
                   AND v.proposed_by_side = 'technician'
-                  AND v.created_at >= since.at) AS responded`;
-    return responded;
+                  AND v.created_at >= s.at)`;
+    return new Set(rows.map((r) => r.id));
   }
 }

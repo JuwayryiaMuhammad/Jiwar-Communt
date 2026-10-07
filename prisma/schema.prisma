@@ -2199,17 +2199,20 @@ model TicketAssignment {
 /// The reporter's verdict on a cycle: a confirmation (rating, comment), a
 /// rejection or a reopen (a reason code; the note is a message).
 model TicketFeedback {
-  id         String             @id @db.Uuid
-  tenantId   String             @map("tenant_id") @db.Uuid
-  ticketId   String             @map("ticket_id") @db.Uuid
-  cycle      Int
-  kind       TicketFeedbackKind
-  authorId   String             @map("author_account_id") @db.Uuid
-  rating     Int?
-  reasonCode String?            @map("reason_code")
+  id                String             @id @db.Uuid
+  tenantId          String             @map("tenant_id") @db.Uuid
+  ticketId          String             @map("ticket_id") @db.Uuid
+  cycle             Int
+  kind              TicketFeedbackKind
+  authorId          String             @map("author_account_id") @db.Uuid
+  rating            Int?
+  reasonCode        String?            @map("reason_code")
   /// Content: erased with its author, never audited.
-  comment    String?
-  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  comment           String?
+  /// ADR 0038: the technician who did the work, rated on its own; optional.
+  technicianRating  Int?               @map("technician_rating")
+  ratedTechnicianId String?            @map("rated_technician_account_id") @db.Uuid
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
 
   ticket Ticket  @relation(fields: [tenantId, ticketId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   author Account @relation("FeedbackAuthor", fields: [tenantId, authorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "ticket_feedback_tenant_id_author_fkey")

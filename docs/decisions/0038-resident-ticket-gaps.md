@@ -1,4 +1,4 @@
-# 0038 — The resident's ticket screens: arrival confirmation, the technician on the way, visit slots
+# 0038 — The resident's ticket screens: arrival confirmation, the technician on the way, visit slots, two ratings
 
 **Status:** Accepted · Resident journey (Figma, "الساكن")
 
@@ -53,6 +53,16 @@ The design's "Change visit time" shows days and "Available times" (08:00, 09:00,
 - **A read, not a reservation.** `counter` and `reschedule` take any valid window as before and check it under the ticket's lock. A slot taken in between is not refused: the technician answers the proposal like any other.
 - **Privacy:** a missing slot says nothing about why. The list carries no other ticket, unit or visit, so nobody learns from it when another home is empty.
 - Days off, technician working hours and travel time are not modelled: every day has the same hours.
+
+### Two ratings at confirmation
+
+The design's "Rate the service" asks for two ratings: the service and "The technician — Ahmed".
+
+- `POST /tickets/:id/confirm` keeps `rating` (now described as the service's) and takes an optional `technicianRating` (a whole number, 1 to 5). The 5.1 payload is unchanged and still valid; without it, `technician_rating` stays null.
+- `ticket_feedback` gains `technician_rating` and `rated_technician_account_id`: the technician who did the work, named on the row, so a later reopen, reassignment or erasure never moves a rating to someone else. A CHECK ties the two together and allows them on a confirmation only.
+- **Who sees it:**
+  - dispatchers and managers (`tickets.dispatch`), per ticket, in the ticket's `feedback` (`technicianRating`, `ratedTechnician`), like `rating`;
+  - the technician never sees a rating on a ticket, a comment, or who rated (ADR 0032). The most a technician may ever be shown is **their own average and count**. No endpoint computes them yet, so today the technician sees nothing.
 
 ## Consequences
 

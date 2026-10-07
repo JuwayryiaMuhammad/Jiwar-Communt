@@ -4392,7 +4392,10 @@ export interface components {
         ConfirmDto: {
             /** @description For the maintenance team. Never in the audit trail. */
             comment?: string;
+            /** @description The service. */
             rating: number;
+            /** @description The technician who did the work (ADR 0038); optional. Dispatch only. */
+            technicianRating?: number;
         };
         /** @enum {string} */
         ConsentCode: "ticket_phone_share";
@@ -4983,9 +4986,13 @@ export interface components {
             createdAt: string;
             cycle: number;
             kind: components["schemas"]["TicketFeedbackKind"];
+            /** @description Who `technicianRating` rates. */
+            ratedTechnician: components["schemas"]["AccountRefView"] | null;
             /** @description 1–5, confirmed only. */
             rating: number | null;
             reasonCode: string | null;
+            /** @description 1–5, the technician who did the work (ADR 0038); optional. */
+            technicianRating: number | null;
         };
         /** @enum {string} */
         FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export";

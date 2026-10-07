@@ -753,9 +753,15 @@ export const CONFIRMATION_ROUTES: Row[] = [
     'confirm',
     { rating: 5 },
     {
-      body: { rating: 6, comment: '' },
+      body: { rating: 6, technicianRating: 0, comment: '' },
       fields: [
         { field: 'rating', code: 'INVALID_NUMBER', params: { min: 1, max: 5 } },
+        // ADR 0038.
+        {
+          field: 'technicianRating',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 5 },
+        },
         {
           field: 'comment',
           code: 'INVALID_LENGTH',

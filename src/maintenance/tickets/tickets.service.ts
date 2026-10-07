@@ -354,11 +354,10 @@ export class TicketsService implements OnModuleInit {
           read: await this.files.readUrl(tx, a.fileId),
           createdAt: a.createdAt,
         });
-      await this.addPeople(
-        tx,
-        read.people,
-        feedback.map((f) => f.authorId),
-      );
+      await this.addPeople(tx, read.people, [
+        ...feedback.map((f) => f.authorId),
+        ...feedback.map((f) => f.ratedTechnicianId),
+      ]);
       const sla =
         audience === 'technician' ? null : await this.sla.summary(tx, id);
       const reporterPhone =

@@ -283,6 +283,11 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   // ADR 0038.
   ticket_visits_arrival_confirmed_shape: {},
   maintenance_settings_visit_hours: {},
+  ticket_feedback_technician_rating_shape: {
+    guarded:
+      'technician_rating IS NULL is tested first; the range runs only on a ' +
+      'value, and kind is NOT NULL',
+  },
   ticket_visit_events_actor_shape: {},
   maintenance_sla_settings_enabled_shape: {},
   sla_targets_ranges: {},

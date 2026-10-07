@@ -1435,6 +1435,13 @@
             "type": "string"
           },
           "rating": {
+            "description": "The service.",
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          },
+          "technicianRating": {
+            "description": "The technician who did the work (ADR 0038); optional. Dispatch only.",
             "maximum": 5,
             "minimum": 1,
             "type": "number"
@@ -3529,6 +3536,16 @@
               }
             ]
           },
+          "ratedTechnician": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Who `technicianRating` rates.",
+            "nullable": true,
+            "type": "object"
+          },
           "rating": {
             "description": "1–5, confirmed only.",
             "nullable": true,
@@ -3537,12 +3554,19 @@
           "reasonCode": {
             "nullable": true,
             "type": "string"
+          },
+          "technicianRating": {
+            "description": "1–5, the technician who did the work (ADR 0038); optional.",
+            "nullable": true,
+            "type": "number"
           }
         },
         "required": [
           "cycle",
           "kind",
           "rating",
+          "technicianRating",
+          "ratedTechnician",
           "reasonCode",
           "comment",
           "author",

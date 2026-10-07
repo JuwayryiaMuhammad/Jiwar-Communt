@@ -121,7 +121,12 @@ export class ResidentTicketsController {
     @Param('id', parseId()) id: string,
     @Body() dto: ConfirmDto,
   ): Promise<void> {
-    return this.confirmation.confirm(id, dto.rating, dto.comment);
+    return this.confirmation.confirm(
+      id,
+      dto.rating,
+      dto.comment,
+      dto.technicianRating,
+    );
   }
 
   /**

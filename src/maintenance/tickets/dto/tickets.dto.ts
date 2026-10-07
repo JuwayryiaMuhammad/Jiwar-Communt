@@ -274,11 +274,30 @@ export class HoldDto {
 }
 
 export class ConfirmDto {
-  @ApiProperty({ type: Number, minimum: 1, maximum: 5 })
+  @ApiProperty({
+    type: Number,
+    minimum: 1,
+    maximum: 5,
+    description: 'The service.',
+  })
   @IsInt(withParams({ min: 1, max: 5 }))
   @Min(1, withParams({ min: 1, max: 5 }))
   @Max(5, withParams({ min: 1, max: 5 }))
   rating: number;
+
+  @ApiProperty({
+    type: Number,
+    minimum: 1,
+    maximum: 5,
+    required: false,
+    description:
+      'The technician who did the work (ADR 0038); optional. Dispatch only.',
+  })
+  @IsOptional()
+  @IsInt(withParams({ min: 1, max: 5 }))
+  @Min(1, withParams({ min: 1, max: 5 }))
+  @Max(5, withParams({ min: 1, max: 5 }))
+  technicianRating?: number;
 
   @ApiProperty({
     type: String,

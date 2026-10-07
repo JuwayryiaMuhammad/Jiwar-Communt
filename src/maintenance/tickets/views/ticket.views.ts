@@ -482,6 +482,18 @@ export class FeedbackView {
     description: '1–5, confirmed only.',
   })
   rating: number | null;
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: '1–5, the technician who did the work (ADR 0038); optional.',
+  })
+  technicianRating: number | null;
+  @ApiProperty({
+    type: AccountRefView,
+    nullable: true,
+    description: 'Who `technicianRating` rates.',
+  })
+  ratedTechnician: AccountRefView | null;
   @ApiProperty({ type: String, nullable: true })
   reasonCode: string | null;
   @ApiProperty({
@@ -532,6 +544,10 @@ export class DispatchTicketDetailView extends DispatchTicketView {
         cycle: f.cycle,
         kind: f.kind,
         rating: f.rating,
+        technicianRating: f.technicianRating,
+        ratedTechnician: f.ratedTechnicianId
+          ? full(d, f.ratedTechnicianId)
+          : null,
         reasonCode: f.reasonCode,
         comment: f.comment,
         author: full(d, f.authorId),

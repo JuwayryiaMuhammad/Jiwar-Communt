@@ -82,8 +82,16 @@ export class ConfirmationService implements OnModuleInit {
     });
   }
 
-  /** Done well: closed, with a rating and an optional comment. */
-  confirm(id: string, rating: number, comment?: string): Promise<void> {
+  /**
+   * Done well: closed, with the service's rating, an optional comment and
+   * an optional rating of the technician who did the work (ADR 0038).
+   */
+  confirm(
+    id: string,
+    rating: number,
+    comment?: string,
+    technicianRating?: number,
+  ): Promise<void> {
     const me = this.ctx.accountId;
     return this.tenantTx.withTenantTx(async (tx) => {
       const ticket = await this.resident(tx, id);
@@ -106,6 +114,10 @@ export class ConfirmationService implements OnModuleInit {
           authorId: me,
           rating,
           comment: comment?.trim() || null,
+          // A completed ticket always has its technician (a CHECK).
+          ...(technicianRating !== undefined
+            ? { technicianRating, ratedTechnicianId: ticket.technicianId }
+            : {}),
         },
       });
       await this.log.status(tx, ticket, {

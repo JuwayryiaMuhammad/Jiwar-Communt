@@ -8,6 +8,7 @@ import {
   TicketHoldReason,
   TicketPriority,
   TicketStatus,
+  TicketUnitLocation,
   type Ticket,
   type TicketAssignment,
   type TicketStatusHistory,
@@ -195,6 +196,13 @@ export class ResidentTicketView {
   unitCode: string | null;
   @ApiProperty({ type: String, nullable: true })
   commonArea: string | null;
+  @ApiProperty({
+    enum: TicketUnitLocation,
+    enumName: 'TicketUnitLocation',
+    nullable: true,
+    description: 'The room (ADR 0038); null when not given.',
+  })
+  unitLocation: TicketUnitLocation | null;
   @ApiProperty({ type: TicketCategoryRefView })
   category: TicketCategoryRefView;
   @ApiProperty({ enum: TicketPriority, enumName: 'TicketPriority' })
@@ -228,6 +236,7 @@ export class ResidentTicketView {
       unitId: t.unitId,
       unitCode: r.unitCode,
       commonArea: t.commonArea,
+      unitLocation: t.unitLocation,
       category: TicketCategoryRefView.from(r.category),
       priority: t.priority,
       status: t.status,
@@ -318,6 +327,13 @@ export class TechnicianTicketView {
   unitCode: string | null;
   @ApiProperty({ type: String, nullable: true })
   commonArea: string | null;
+  @ApiProperty({
+    enum: TicketUnitLocation,
+    enumName: 'TicketUnitLocation',
+    nullable: true,
+    description: 'The room (ADR 0038); null when not given.',
+  })
+  unitLocation: TicketUnitLocation | null;
   @ApiProperty({ type: TicketCategoryRefView })
   category: TicketCategoryRefView;
   @ApiProperty({ enum: TicketPriority, enumName: 'TicketPriority' })
@@ -342,6 +358,7 @@ export class TechnicianTicketView {
       number: ticketNumber(t.number),
       unitCode: r.unitCode,
       commonArea: t.commonArea,
+      unitLocation: t.unitLocation,
       category: TicketCategoryRefView.from(r.category),
       priority: t.priority,
       status: t.status,
@@ -421,6 +438,13 @@ export class DispatchTicketView {
   unit: TicketUnitView | null;
   @ApiProperty({ type: String, nullable: true })
   commonArea: string | null;
+  @ApiProperty({
+    enum: TicketUnitLocation,
+    enumName: 'TicketUnitLocation',
+    nullable: true,
+    description: 'The room (ADR 0038); null when not given.',
+  })
+  unitLocation: TicketUnitLocation | null;
   @ApiProperty({ type: TicketCategoryRefView })
   category: TicketCategoryRefView;
   @ApiProperty({ enum: TicketPriority, enumName: 'TicketPriority' })
@@ -457,6 +481,7 @@ export class DispatchTicketView {
       number: ticketNumber(t.number),
       unit: t.unitId ? { id: t.unitId, code: r.unitCode ?? '' } : null,
       commonArea: t.commonArea,
+      unitLocation: t.unitLocation,
       category: TicketCategoryRefView.from(r.category),
       priority: t.priority,
       status: t.status,

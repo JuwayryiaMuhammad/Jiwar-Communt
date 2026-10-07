@@ -1,4 +1,4 @@
-# 0038 — The resident's ticket screens: arrival confirmation, the technician on the way, visit slots, two ratings
+# 0038 — The resident's ticket screens: arrival confirmation, the technician on the way, visit slots, two ratings, where in the unit
 
 **Status:** Accepted · Resident journey (Figma, "الساكن")
 
@@ -64,9 +64,20 @@ The design's "Rate the service" asks for two ratings: the service and "The techn
   - dispatchers and managers (`tickets.dispatch`), per ticket, in the ticket's `feedback` (`technicianRating`, `ratedTechnician`), like `rating`;
   - the technician never sees a rating on a ticket, a comment, or who rated (ADR 0032). The most a technician may ever be shown is **their own average and count**. No endpoint computes them yet, so today the technician sees nothing.
 
+### Where in the unit
+
+The design's "New report" asks for "Location in unit": kitchen, bathroom, living room, bedroom, balcony, other. The list and the detail show it.
+
+- `tickets.unit_location` (enum `ticket_unit_location`: `kitchen`, `bathroom`, `living_room`, `bedroom`, `balcony`, `other`), nullable. A CHECK allows it on a unit's ticket only: a common area has no rooms.
+- **Optional** `unitLocation` on `POST /tickets` and on dispatch's `POST /maintenance/tickets`. With `commonArea` it is 400 `FIELD_NOT_ALLOWED` on `unitLocation`. A ticket without it is the 5.1 one (null).
+- **Every view of the ticket carries it:** the residents', the technician's (who needs it most) and dispatch's, list and detail.
+- It is not free text and names nobody. It is still not added to any notification or audit row: nothing there needs it.
+- No route changes it afterwards. A wrong room is said in a message.
+
 ## Consequences
 
 - This **amends ADR 0034**: a visit gains a resident-side action at the door, and two columns (`ticket_visits` was a 5.3 table). The SLA's response is also met by `en_route`.
 - This **amends ADR 0032**: the status list gains `en_route`, and one CHECK is replaced to include it. Clients that switch over `status` must handle the new value; it only appears once a technician app sends the new action.
 - This **amends ADR 0033**: `en_route` is open work and weighs like `in_progress`.
 - `GET`/`PATCH /maintenance/settings` gain the three visiting-hours fields.
+- **Migrations:** this branch's are `20261014090000` onwards, after `main`'s `20261013…`. `resident-account` (ADR 0037) is not merged yet; when it is rebased, its migrations must be renumbered after this branch's last one.

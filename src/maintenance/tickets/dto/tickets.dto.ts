@@ -4,6 +4,7 @@ import {
   TicketHoldReason,
   TicketPriority,
   TicketStatus,
+  TicketUnitLocation,
 } from '@prisma/client';
 import {
   ArrayMaxSize,
@@ -30,6 +31,9 @@ import {
 
 const PRIORITIES = withParams({ allowed: Object.values(TicketPriority) });
 const STATUSES = withParams({ allowed: Object.values(TicketStatus) });
+const UNIT_LOCATIONS = withParams({
+  allowed: Object.values(TicketUnitLocation),
+});
 const BOOL = ['true', 'false'] as const;
 
 /** Where and what: a unit or a common area, never both (ADR 0032). */
@@ -60,6 +64,16 @@ class TicketBodyDto {
     withParams(COMMON_AREA_LENGTH),
   )
   commonArea?: string;
+
+  @ApiProperty({
+    enum: TicketUnitLocation,
+    enumName: 'TicketUnitLocation',
+    required: false,
+    description: 'The room (ADR 0038); with `unitId` only.',
+  })
+  @IsOptional()
+  @IsEnum(TicketUnitLocation, UNIT_LOCATIONS)
+  unitLocation?: TicketUnitLocation;
 
   @ApiProperty({ type: String, format: 'uuid' })
   @IsUUID()

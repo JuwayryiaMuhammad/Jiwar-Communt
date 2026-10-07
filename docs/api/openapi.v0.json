@@ -1874,6 +1874,14 @@
             "description": "The unit; or `commonArea` instead.",
             "format": "uuid",
             "type": "string"
+          },
+          "unitLocation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketUnitLocation"
+              }
+            ],
+            "description": "The room (ADR 0038); with `unitId` only."
           }
         },
         "required": [
@@ -1916,6 +1924,14 @@
             "description": "The unit; or `commonArea` instead.",
             "format": "uuid",
             "type": "string"
+          },
+          "unitLocation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketUnitLocation"
+              }
+            ],
+            "description": "The room (ADR 0038); with `unitId` only."
           }
         },
         "required": [
@@ -2683,6 +2699,15 @@
             "nullable": true,
             "type": "object"
           },
+          "unitLocation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketUnitLocation"
+              }
+            ],
+            "description": "The room (ADR 0038); null when not given.",
+            "nullable": true
+          },
           "updatedAt": {
             "format": "date-time",
             "type": "string"
@@ -2693,6 +2718,7 @@
           "number",
           "unit",
           "commonArea",
+          "unitLocation",
           "category",
           "priority",
           "status",
@@ -2834,6 +2860,15 @@
             "nullable": true,
             "type": "object"
           },
+          "unitLocation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketUnitLocation"
+              }
+            ],
+            "description": "The room (ADR 0038); null when not given.",
+            "nullable": true
+          },
           "updatedAt": {
             "format": "date-time",
             "type": "string"
@@ -2844,6 +2879,7 @@
           "number",
           "unit",
           "commonArea",
+          "unitLocation",
           "category",
           "priority",
           "status",
@@ -8068,6 +8104,15 @@
             "nullable": true,
             "type": "string"
           },
+          "unitLocation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketUnitLocation"
+              }
+            ],
+            "description": "The room (ADR 0038); null when not given.",
+            "nullable": true
+          },
           "updatedAt": {
             "format": "date-time",
             "type": "string"
@@ -8079,6 +8124,7 @@
           "unitId",
           "unitCode",
           "commonArea",
+          "unitLocation",
           "category",
           "priority",
           "status",
@@ -8164,6 +8210,15 @@
             "nullable": true,
             "type": "string"
           },
+          "unitLocation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketUnitLocation"
+              }
+            ],
+            "description": "The room (ADR 0038); null when not given.",
+            "nullable": true
+          },
           "updatedAt": {
             "format": "date-time",
             "type": "string"
@@ -8175,6 +8230,7 @@
           "unitId",
           "unitCode",
           "commonArea",
+          "unitLocation",
           "category",
           "priority",
           "status",
@@ -9613,6 +9669,15 @@
           "unitCode": {
             "nullable": true,
             "type": "string"
+          },
+          "unitLocation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketUnitLocation"
+              }
+            ],
+            "description": "The room (ADR 0038); null when not given.",
+            "nullable": true
           }
         },
         "required": [
@@ -9620,6 +9685,7 @@
           "number",
           "unitCode",
           "commonArea",
+          "unitLocation",
           "category",
           "priority",
           "status",
@@ -9687,6 +9753,15 @@
           "unitCode": {
             "nullable": true,
             "type": "string"
+          },
+          "unitLocation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketUnitLocation"
+              }
+            ],
+            "description": "The room (ADR 0038); null when not given.",
+            "nullable": true
           }
         },
         "required": [
@@ -9694,6 +9769,7 @@
           "number",
           "unitCode",
           "commonArea",
+          "unitLocation",
           "category",
           "priority",
           "status",
@@ -10101,6 +10177,18 @@
           "completed",
           "closed",
           "cancelled"
+        ],
+        "type": "string"
+      },
+      "TicketUnitLocation": {
+        "description": "The room (ADR 0038); with `unitId` only.",
+        "enum": [
+          "kitchen",
+          "bathroom",
+          "living_room",
+          "bedroom",
+          "balcony",
+          "other"
         ],
         "type": "string"
       },

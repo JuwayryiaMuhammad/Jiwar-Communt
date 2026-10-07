@@ -2045,6 +2045,18 @@ enum TicketAttachmentKind {
   @@map("ticket_attachment_kind")
 }
 
+/// Where in the unit (ADR 0038): the room, for whoever comes to fix it.
+enum TicketUnitLocation {
+  kitchen
+  bathroom
+  living_room
+  bedroom
+  balcony
+  other
+
+  @@map("ticket_unit_location")
+}
+
 enum TicketFeedbackKind {
   confirmed
   rejected
@@ -2116,6 +2128,8 @@ model Ticket {
   /// A short label until common areas have a table. Free text: never in
   /// the audit trail or a notification.
   commonArea         String?                   @map("common_area")
+  /// The room (ADR 0038); a unit's ticket only, optional.
+  unitLocation       TicketUnitLocation?       @map("unit_location")
   categoryId         String                    @map("category_id") @db.Uuid
   createdById        String                    @map("created_by_account_id") @db.Uuid
   reporterId         String                    @map("reporter_account_id") @db.Uuid

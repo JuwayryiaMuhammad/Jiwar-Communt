@@ -10,6 +10,7 @@ import {
   type TicketPriority,
   type TicketStatus,
   type TicketStatusHistory,
+  type TicketUnitLocation,
 } from '@prisma/client';
 import { CommunityMaintenancePort } from '../../community';
 import { AuditService } from '../../core/audit/audit.service';
@@ -46,10 +47,18 @@ export const TICKET_RESOURCE = 'ticket';
 export interface NewTicket {
   unitId?: string;
   commonArea?: string;
+  unitLocation?: TicketUnitLocation;
   categoryId: string;
   priority?: TicketPriority;
   description: string;
   photoFileIds?: string[];
+}
+
+/** Where a ticket is: a unit (and maybe a room there) or a common area. */
+interface TicketPlace {
+  unitId: string | null;
+  commonArea: string | null;
+  unitLocation: TicketUnitLocation | null;
 }
 
 export interface Person {
@@ -526,11 +535,13 @@ export class TicketsService implements OnModuleInit {
     };
   }
 
-  /** A unit or a common area, never both, never neither. */
-  private location(input: Pick<NewTicket, 'unitId' | 'commonArea'>): {
-    unitId: string | null;
-    commonArea: string | null;
-  } {
+  /**
+   * A unit or a common area, never both, never neither; the room (ADR
+   * 0038) only with a unit.
+   */
+  private location(
+    input: Pick<NewTicket, 'unitId' | 'commonArea' | 'unitLocation'>,
+  ): TicketPlace {
     const area = input.commonArea?.trim();
     if (input.unitId && input.commonArea !== undefined)
       throw invalid([
@@ -546,7 +557,15 @@ export class TicketsService implements OnModuleInit {
           params: { ...COMMON_AREA_LENGTH },
         },
       ]);
-    return { unitId: input.unitId ?? null, commonArea: area ?? null };
+    if (!input.unitId && input.unitLocation !== undefined)
+      throw invalid([
+        { field: 'unitLocation', code: FieldErrorCode.FIELD_NOT_ALLOWED },
+      ]);
+    return {
+      unitId: input.unitId ?? null,
+      commonArea: area ?? null,
+      unitLocation: input.unitLocation ?? null,
+    };
   }
 
   /** An active category, one that allows a common area when it is one. */
@@ -578,7 +597,7 @@ export class TicketsService implements OnModuleInit {
     tx: TenantTxClient,
     id: string,
     input: Pick<NewTicket, 'priority' | 'description'>,
-    where: { unitId: string | null; commonArea: string | null },
+    where: TicketPlace,
     category: CategoryRef & { defaultPriority: TicketPriority },
     reporterId: string,
   ): Promise<Ticket> {
@@ -605,6 +624,7 @@ export class TicketsService implements OnModuleInit {
         number,
         unitId: where.unitId,
         commonArea: where.commonArea,
+        unitLocation: where.unitLocation,
         categoryId: category.id,
         createdById: this.ctx.accountId,
         reporterId,

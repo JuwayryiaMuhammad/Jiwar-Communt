@@ -4539,6 +4539,8 @@ export interface components {
              * @description The unit; or `commonArea` instead.
              */
             unitId?: string;
+            /** @description The room (ADR 0038); with `unitId` only. */
+            unitLocation?: components["schemas"]["TicketUnitLocation"];
         };
         CreateTicketOnBehalfDto: {
             /** Format: uuid */
@@ -4558,6 +4560,8 @@ export interface components {
              * @description The unit; or `commonArea` instead.
              */
             unitId?: string;
+            /** @description The room (ADR 0038); with `unitId` only. */
+            unitLocation?: components["schemas"]["TicketUnitLocation"];
         };
         CreateUnitDto: {
             building?: string;
@@ -4772,6 +4776,8 @@ export interface components {
             status: components["schemas"]["TicketStatus"];
             technician: components["schemas"]["AccountRefView"] | null;
             unit: components["schemas"]["TicketUnitView"] | null;
+            /** @description The room (ADR 0038); null when not given. */
+            unitLocation: components["schemas"]["TicketUnitLocation"] | null;
             /** Format: date-time */
             updatedAt: string;
         };
@@ -4808,6 +4814,8 @@ export interface components {
             status: components["schemas"]["TicketStatus"];
             technician: components["schemas"]["AccountRefView"] | null;
             unit: components["schemas"]["TicketUnitView"] | null;
+            /** @description The room (ADR 0038); null when not given. */
+            unitLocation: components["schemas"]["TicketUnitLocation"] | null;
             /** Format: date-time */
             updatedAt: string;
         };
@@ -6300,6 +6308,8 @@ export interface components {
             unitCode: string | null;
             /** Format: uuid */
             unitId: string | null;
+            /** @description The room (ADR 0038); null when not given. */
+            unitLocation: components["schemas"]["TicketUnitLocation"] | null;
             /** Format: date-time */
             updatedAt: string;
         };
@@ -6320,6 +6330,8 @@ export interface components {
             unitCode: string | null;
             /** Format: uuid */
             unitId: string | null;
+            /** @description The room (ADR 0038); null when not given. */
+            unitLocation: components["schemas"]["TicketUnitLocation"] | null;
             /** Format: date-time */
             updatedAt: string;
         };
@@ -6726,6 +6738,8 @@ export interface components {
             reporterPhone: string | null;
             status: components["schemas"]["TicketStatus"];
             unitCode: string | null;
+            /** @description The room (ADR 0038); null when not given. */
+            unitLocation: components["schemas"]["TicketUnitLocation"] | null;
         };
         TechnicianTicketView: {
             /** Format: date-time */
@@ -6742,6 +6756,8 @@ export interface components {
             priority: components["schemas"]["TicketPriority"];
             status: components["schemas"]["TicketStatus"];
             unitCode: string | null;
+            /** @description The room (ADR 0038); null when not given. */
+            unitLocation: components["schemas"]["TicketUnitLocation"] | null;
         };
         TechnicianTicketViewList: {
             data: components["schemas"]["TechnicianTicketView"][];
@@ -6855,6 +6871,11 @@ export interface components {
         };
         /** @enum {string} */
         TicketStatus: "new" | "assigned" | "en_route" | "in_progress" | "on_hold" | "completed" | "closed" | "cancelled";
+        /**
+         * @description The room (ADR 0038); with `unitId` only.
+         * @enum {string}
+         */
+        TicketUnitLocation: "kitchen" | "bathroom" | "living_room" | "bedroom" | "balcony" | "other";
         TicketUnitView: {
             code: string;
             /** Format: uuid */

@@ -1,6 +1,15 @@
 import type { Row } from '../registry';
 
 const PRIORITIES = ['normal', 'urgent', 'emergency'];
+/** ADR 0038: the rooms of a unit's ticket. */
+const UNIT_LOCATIONS = [
+  'kitchen',
+  'bathroom',
+  'living_room',
+  'bedroom',
+  'balcony',
+  'other',
+];
 
 /** A valid body for a category's SLA targets (ADR 0034). */
 const SLA_TARGETS = {
@@ -300,8 +309,19 @@ export const TICKET_ROUTES: Row[] = [
       code: 'UNIT_NOT_FOUND',
     },
     invalid: {
-      body: { categoryId: 'x', priority: 'high', description: '' },
+      body: {
+        categoryId: 'x',
+        priority: 'high',
+        description: '',
+        unitLocation: 'garage',
+      },
       fields: [
+        // ADR 0038.
+        {
+          field: 'unitLocation',
+          code: 'INVALID_VALUE',
+          params: { allowed: UNIT_LOCATIONS },
+        },
         { field: 'categoryId', code: 'INVALID_UUID' },
         {
           field: 'priority',

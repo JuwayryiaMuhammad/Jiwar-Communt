@@ -65,6 +65,8 @@ const RESIDENT = [
   'category',
   ...CATEGORY_REF,
   'commonArea',
+  // ADR 0038.
+  'unitLocation',
   'confirmationStatus',
   'createdAt',
   'holdReason',
@@ -98,6 +100,8 @@ const DISPATCH = [
   'category',
   ...CATEGORY_REF,
   'commonArea',
+  // ADR 0038.
+  'unitLocation',
   'confirmationStatus',
   'createdAt',
   'cycle',
@@ -118,6 +122,8 @@ const TECHNICIAN = [
   'category',
   ...CATEGORY_REF,
   'commonArea',
+  // ADR 0038.
+  'unitLocation',
   'createdAt',
   'holdReason',
   'id',

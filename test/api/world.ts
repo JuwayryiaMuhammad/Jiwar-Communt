@@ -124,6 +124,10 @@ export interface World {
   bUnitId: string;
   /** One of A's categories, for valid ticket bodies. */
   aCategoryId: string;
+  /** One of B's preventive services (seeded, ADR 0038). */
+  bPreventiveServiceId: string;
+  /** One of A's, for valid preventive requests. */
+  aPreventiveServiceId: string;
   /** A device B's owner logged in from (ADR 0036). */
   bDeviceId: string;
   /** A personal-data export B's owner asked for (ADR 0036). */
@@ -476,7 +480,17 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       where: { key: 'plumbing' },
     }),
   );
+  const service = (c: typeof a) =>
+    helpers.asManager(c, () =>
+      helpers.prisma.tenant.preventiveService.findFirstOrThrow({
+        where: { key: 'plumbing_check' },
+      }),
+    );
+  const bPreventiveService = await service(b);
+  const aPreventiveService = await service(a);
   return {
+    bPreventiveServiceId: bPreventiveService.id,
+    aPreventiveServiceId: aPreventiveService.id,
     bSpecialtyId: bSpecialty.id,
     bDeviceId: bDevice.id,
     bExportId,

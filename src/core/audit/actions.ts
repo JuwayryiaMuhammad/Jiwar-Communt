@@ -218,6 +218,18 @@ export const AUDIT_ACTIONS = {
   'ticket.category_changed': { log: 'tenant', target: 'ticket' },
   // metadata: reasonCode, by (reporter | dispatcher), fromStatus.
   'ticket.cancelled': { log: 'tenant', target: 'ticket' },
+  // ADR 0038. changes: key, categoryKey, position, active by value; the
+  // names as `{ changed: true }` only (codes and ids, never free text).
+  'preventive_service.created': {
+    log: 'tenant',
+    target: 'preventive_service',
+    sensitive: ['nameAr', 'nameEn'],
+  },
+  'preventive_service.updated': {
+    log: 'tenant',
+    target: 'preventive_service',
+    sensitive: ['nameAr', 'nameEn'],
+  },
   // ADR 0038. metadata: slaCycle, clocks (the overdue ones).
   'ticket.escalated_by_resident': { log: 'tenant', target: 'ticket' },
   // dispatch (ADR 0033). Codes and keys only, never a name.

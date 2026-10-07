@@ -69,6 +69,72 @@ export const MAINTENANCE_ROUTES: Row[] = [
       fields: [{ field: 'active', code: 'INVALID_TYPE' }],
     },
   },
+  // Preventive services (ADR 0038).
+  {
+    method: 'GET',
+    path: '/maintenance/preventive-services',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/preventive-services',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: {
+        key: 'Boiler!',
+        nameAr: '',
+        nameEn: 'Boiler',
+        categoryId: 'x',
+        position: 1001,
+      },
+      fields: [
+        { field: 'key', code: 'INVALID_FORMAT' },
+        {
+          field: 'nameAr',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 80 },
+        },
+        { field: 'categoryId', code: 'INVALID_UUID' },
+        {
+          field: 'position',
+          code: 'INVALID_NUMBER',
+          params: { min: 0, max: 1000 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'PATCH',
+    path: '/maintenance/preventive-services/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'family',
+    foreign: {
+      params: (w) => ({ id: w.bPreventiveServiceId }),
+      body: () => ({ active: false }),
+      code: 'PREVENTIVE_SERVICE_NOT_FOUND',
+    },
+    invalid: {
+      body: { active: 'no' },
+      fields: [{ field: 'active', code: 'INVALID_TYPE' }],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/preventive-services',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: 'none',
+  },
   {
     method: 'PUT',
     path: '/maintenance/categories/{id}/specialties',

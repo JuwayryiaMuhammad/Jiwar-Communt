@@ -94,6 +94,24 @@ const TABLES: Table[] = [
       return id;
     },
   },
+  // ADR 0038: a service points at a category of its own compound.
+  {
+    table: 'preventive_services',
+    insert: async (tx, own, link) => {
+      const id = newId();
+      await tx.preventiveService.create({
+        data: {
+          id,
+          tenantId: own.tenantId,
+          key: `s_${id.slice(-8)}`,
+          nameAr: 'خدمة',
+          nameEn: 'Service',
+          categoryId: link.categoryId,
+        },
+      });
+      return id;
+    },
+  },
   {
     // One row per compound, already there: an upsert that RLS must refuse
     // for another compound.

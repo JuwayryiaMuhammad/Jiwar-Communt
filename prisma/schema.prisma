@@ -467,6 +467,7 @@ model Tenant {
   visitorPassLinks  VisitorPassLink[]
   actionTokens      ActionToken[]
   ticketCategories  TicketCategory[]
+  preventiveServices PreventiveService[]
   maintenance       MaintenanceSettings?
   ticketCounter     TicketCounter?
   parcelSettings    ParcelSettings?
@@ -2083,10 +2084,35 @@ model TicketCategory {
   tickets     Ticket[]
   specialties CategorySpecialty[]
   slaTargets  SlaTarget[]
+  preventiveServices PreventiveService[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, key])
   @@map("ticket_categories")
+}
+
+/// What a resident may book a check-up for (ADR 0038): the compound's own
+/// list, seeded with four defaults. Never deleted: preventive tickets point
+/// at them; `active = false` retires one. The category says who can do it.
+model PreventiveService {
+  id         String   @id @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  key        String
+  nameAr     String   @map("name_ar")
+  nameEn     String   @map("name_en")
+  categoryId String   @map("category_id") @db.Uuid
+  /// The order the residents see; ties by key.
+  position   Int      @default(0)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant   Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  category TicketCategory @relation(fields: [tenantId, categoryId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "preventive_services_tenant_id_category_id_fkey")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, key])
+  @@map("preventive_services")
 }
 
 /// One row per compound, created with it.

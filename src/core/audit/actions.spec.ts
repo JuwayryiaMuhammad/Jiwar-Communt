@@ -59,6 +59,7 @@ describe('audit catalog', () => {
         'file',
         'entry_credential',
         'ticket_category',
+        'preventive_service',
         'ticket',
         'specialty',
         'parcel',

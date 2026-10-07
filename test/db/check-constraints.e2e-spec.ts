@@ -285,6 +285,9 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   maintenance_settings_visit_hours: {},
   tickets_unit_location_unit_only: {},
   ticket_escalations_cycle_positive: {},
+  preventive_services_key_shape: {},
+  preventive_services_names_length: {},
+  preventive_services_position_range: {},
   ticket_feedback_technician_rating_shape: {
     guarded:
       'technician_rating IS NULL is tested first; the range runs only on a ' +

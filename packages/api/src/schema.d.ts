@@ -1172,6 +1172,38 @@ export interface paths {
         patch: operations["DispatchSettingsController_update"];
         trace?: never;
     };
+    "/api/v1/maintenance/preventive-services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PreventiveServicesController_list"];
+        put?: never;
+        post: operations["PreventiveServicesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/preventive-services/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["PreventiveServicesController_update"];
+        trace?: never;
+    };
     "/api/v1/maintenance/settings": {
         parameters: {
             query?: never;
@@ -2434,6 +2466,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["TenantsController_setStatus"];
+        trace?: never;
+    };
+    "/api/v1/preventive-services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PreventiveServiceOptionsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/public/data-exports/code": {
@@ -4511,6 +4559,19 @@ export interface components {
             /** @description As the visitor gives it; shown to the household only. */
             visitorName?: string;
         };
+        CreatePreventiveServiceDto: {
+            /**
+             * Format: uuid
+             * @description An active category: its technicians do the check-up.
+             */
+            categoryId: string;
+            /** @description Stable code, lowercase (e.g. `water_heater`). Never changes once created. */
+            key: string;
+            nameAr: string;
+            nameEn: string;
+            /** @description The order the residents see, lowest first; after the others when absent. */
+            position?: number;
+        };
         CreateResidentDto: {
             /**
              * Format: date
@@ -6050,6 +6111,43 @@ export interface components {
             /** @description A presigned GET. */
             url: string;
         };
+        PreventiveServiceOptionView: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+        };
+        PreventiveServiceOptionViewList: {
+            data: components["schemas"]["PreventiveServiceOptionView"][];
+            nextCursor: string | null;
+        };
+        PreventiveServiceView: {
+            active: boolean;
+            /**
+             * Format: uuid
+             * @description The category whose technicians do it.
+             */
+            categoryId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+            position: number;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        PreventiveServiceViewList: {
+            data: components["schemas"]["PreventiveServiceView"][];
+            nextCursor: string | null;
+        };
         PriorityDto: {
             priority: components["schemas"]["TicketPriority"];
             /** @description From the closed list `ticketPriority`. */
@@ -7129,6 +7227,15 @@ export interface components {
             pause?: components["schemas"]["PauseChoice"] | null;
             /** @description Local times in the compound's time zone. `null` removes quiet hours. */
             quietHours?: components["schemas"]["QuietHoursDto"] | null;
+        };
+        UpdatePreventiveServiceDto: {
+            /** @description False retires it: no new request for it. */
+            active?: boolean;
+            /** Format: uuid */
+            categoryId?: string;
+            nameAr?: string;
+            nameEn?: string;
+            position?: number;
         };
         UpdateSettingsDto: {
             /**
@@ -9292,6 +9399,73 @@ export interface operations {
             };
         };
     };
+    PreventiveServicesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreventiveServiceViewList"];
+                };
+            };
+        };
+    };
+    PreventiveServicesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePreventiveServiceDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreventiveServiceView"];
+                };
+            };
+        };
+    };
+    PreventiveServicesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePreventiveServiceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreventiveServiceView"];
+                };
+            };
+        };
+    };
     MaintenanceSettingsController_get: {
         parameters: {
             query?: never;
@@ -11329,6 +11503,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TenantView"];
+                };
+            };
+        };
+    };
+    PreventiveServiceOptionsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreventiveServiceOptionViewList"];
                 };
             };
         };

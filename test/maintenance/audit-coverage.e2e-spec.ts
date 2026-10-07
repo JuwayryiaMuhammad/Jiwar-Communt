@@ -1,5 +1,6 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { CategoriesService } from '../../src/maintenance/categories/categories.service';
+import { PreventiveServicesService } from '../../src/maintenance/preventive/preventive-services.service';
 import { SpecialtiesService } from '../../src/maintenance/specialties/specialties.service';
 import { DispatchSettingsService } from '../../src/maintenance/dispatch/dispatch-settings.service';
 import { SlaSettingsService } from '../../src/maintenance/sla/sla-settings.service';
@@ -394,6 +395,72 @@ describe('Audit coverage — maintenance', () => {
         },
       });
       expect(JSON.stringify(row)).not.toContain('AUDIT-');
+    });
+  });
+
+  describe('preventive services', () => {
+    it('preventive_service.created and preventive_service.updated — by the manager, keys and codes; a name only as changed', async () => {
+      const c = await x.compound();
+      const services = h.moduleRef.get(PreventiveServicesService);
+      const category = (key: string) =>
+        x.asManager(c, () =>
+          x.prisma.tenant.ticketCategory.findFirstOrThrow({ where: { key } }),
+        );
+      const general = await category('general');
+      const plumbing = await category('plumbing');
+      const created = await x.asManager(c, () =>
+        services.create({
+          key: 'boiler_check',
+          nameAr: 'AUDIT-NAME فحص الغلاية',
+          nameEn: 'AUDIT-NAME Boiler check',
+          categoryId: general.id,
+        }),
+      );
+      const made = await single(c, 'preventive_service.created', created.id);
+      expect(made).toMatchObject({
+        actorType: 'account',
+        actorId: c.managerId,
+        targetType: 'preventive_service',
+        changes: {
+          key: { from: null, to: 'boiler_check' },
+          categoryKey: { from: null, to: 'general' },
+          position: { from: null, to: 5 },
+          active: { from: null, to: true },
+          nameAr: { changed: true },
+          nameEn: { changed: true },
+        },
+      });
+      await x.asManager(c, () =>
+        services.update(created.id, {
+          nameEn: 'AUDIT-NAME Boiler safety check',
+          categoryId: plumbing.id,
+          active: false,
+        }),
+      );
+      const edited = await single(c, 'preventive_service.updated', created.id);
+      expect(edited).toMatchObject({
+        actorId: c.managerId,
+        targetType: 'preventive_service',
+        changes: {
+          nameEn: { changed: true },
+          categoryKey: { from: 'general', to: 'plumbing' },
+          active: { from: true, to: false },
+        },
+      });
+      expect(Object.keys(edited.changes as object).sort()).toEqual([
+        'active',
+        'categoryKey',
+        'nameEn',
+      ]);
+      // Codes and ids only: never the words, never a category's id.
+      for (const row of [made, edited]) {
+        expect(JSON.stringify(row)).not.toMatch(/AUDIT-NAME|Boiler|الغلاية/);
+        expect(JSON.stringify(row)).not.toContain(general.id);
+        expect(JSON.stringify(row)).not.toContain(plumbing.id);
+      }
+      // A no-op edit writes nothing.
+      await x.asManager(c, () => services.update(created.id, {}));
+      await single(c, 'preventive_service.updated', created.id);
     });
   });
 

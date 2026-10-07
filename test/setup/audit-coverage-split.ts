@@ -122,6 +122,8 @@ export const MAINTENANCE_COVERAGE: readonly string[] = [
   'ticket.category_changed',
   // The residents' escalation and the preventive services (ADR 0038).
   'ticket.escalated_by_resident',
+  'preventive_service.created',
+  'preventive_service.updated',
 ];
 
 /** Parcels (ADR 0035), covered by test/parcels/audit-coverage.e2e-spec.ts. */

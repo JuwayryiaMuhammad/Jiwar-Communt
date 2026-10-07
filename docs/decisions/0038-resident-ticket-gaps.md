@@ -1,4 +1,4 @@
-# 0038 — The resident's ticket screens: arrival confirmation, the technician on the way, visit slots, two ratings, where in the unit, overdue and escalation
+# 0038 — The resident's ticket screens: arrival confirmation, the technician on the way, visit slots, two ratings, where in the unit, overdue and escalation, preventive maintenance
 
 **Status:** Accepted · Resident journey (Figma, "الساكن")
 
@@ -116,6 +116,31 @@ The design's list of reports shows "3h left of the promised response time", an "
 - **Two notices at once, on purpose.** When step 1 breaches a clock, the same people get `ticket.sla_breached` and `ticket.resident_escalated` together. The breach is a fact of its due time that the sweep would have announced within the minute; hiding it would make the notices depend on who wrote first.
 - **A retry:** with the same `Idempotency-Key`, the 204 is replayed and nothing is written twice. Without a key, `TICKET_ALREADY_ESCALATED` after a lost answer means it went through.
 - **Dispatch** reads `escalations` on the ticket's detail: the SLA cycle, who, and when.
+
+### Preventive services
+
+The design's "Request preventive maintenance" starts with "What": AC service, Water heater, Plumbing check, Electrical check.
+
+- **`preventive_services`** is the compound's own list, like its ticket categories: a key, two names, a position, `active`, and **the category** whose technicians do the check-up (so the dispatch engine needs nothing new). Never deleted, because preventive tickets will point at them; `active = false` retires one.
+- **The key is the manager's**, with the categories' pattern, and never changes. A duplicate is 409 `DUPLICATE_RESOURCE` on `key`.
+- **The order is `position`, then the key.** The four defaults are 1 to 4, in the design's order. A new one goes after the others unless the manager gives a position (0 to 1000).
+
+  A column, because creation order cannot carry it: a seed's rows share one timestamp, and ids do not sort within it.
+- **Defaults** (`default-preventive-services.ts`), in the creation of a compound:
+
+  | key | category |
+  |---|---|
+  | `ac_service` | `ac` |
+  | `water_heater` | `plumbing` |
+  | `plumbing_check` | `plumbing` |
+  | `electrical_check` | `electrical` |
+
+- **Existing compounds** get the same four from the migration: an `INSERT … SELECT` joined to the compound's categories by key, `ON CONFLICT DO NOTHING`.
+  - Running it again, or after a compound was provisioned, changes nothing.
+  - A compound without that category key gets no such service, quietly. That cannot happen today (categories are never deleted and their keys never change), and failing a deploy over a default would be worse.
+  - A unit test keeps the list and the migration in step, and an e2e test runs the backfill again and over a compound missing a category.
+- **The manager** (`maintenance.manage`): `GET`, `POST /maintenance/preventive-services`, `PATCH /maintenance/preventive-services/:id` (names, category, position, `active`). A new category must be an active one of the compound (400 `CATEGORY_NOT_AVAILABLE`). Audited as `preventive_service.created` / `.updated`, with keys and codes only: the key, the category's key, the position and `active` by value; a name only as "changed", never the words.
+- **The residents** (`tickets.create`): `GET /preventive-services` lists the active services whose category is active too, with their id, key and names.
 
 ## Consequences
 

@@ -1735,6 +1735,43 @@
         ],
         "type": "object"
       },
+      "CreatePreventiveServiceDto": {
+        "properties": {
+          "categoryId": {
+            "description": "An active category: its technicians do the check-up.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "description": "Stable code, lowercase (e.g. `water_heater`). Never changes once created.",
+            "pattern": "^[a-z][a-z0-9_]{1,39}$",
+            "type": "string"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "position": {
+            "description": "The order the residents see, lowest first; after the others when absent.",
+            "maximum": 1000,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "key",
+          "nameAr",
+          "nameEn",
+          "categoryId"
+        ],
+        "type": "object"
+      },
       "CreateResidentDto": {
         "properties": {
           "birthDate": {
@@ -7179,6 +7216,120 @@
         ],
         "type": "object"
       },
+      "PreventiveServiceOptionView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn"
+        ],
+        "type": "object"
+      },
+      "PreventiveServiceOptionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PreventiveServiceOptionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "PreventiveServiceView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "categoryId": {
+            "description": "The category whose technicians do it.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn",
+          "categoryId",
+          "position",
+          "active",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "PreventiveServiceViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PreventiveServiceView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "PriorityDto": {
         "properties": {
           "priority": {
@@ -11000,6 +11151,34 @@
             "description": "Local times in the compound's time zone. `null` removes quiet hours.",
             "nullable": true,
             "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "UpdatePreventiveServiceDto": {
+        "properties": {
+          "active": {
+            "description": "False retires it: no new request for it.",
+            "type": "boolean"
+          },
+          "categoryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "position": {
+            "maximum": 1000,
+            "minimum": 0,
+            "type": "number"
           }
         },
         "type": "object"
@@ -15209,6 +15388,114 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/preventive-services": {
+      "get": {
+        "operationId": "PreventiveServicesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreventiveServiceViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "PreventiveServicesController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePreventiveServiceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreventiveServiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/preventive-services/{id}": {
+      "patch": {
+        "operationId": "PreventiveServicesController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePreventiveServiceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreventiveServiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/settings": {
       "get": {
         "operationId": "MaintenanceSettingsController_get",
@@ -18804,6 +19091,33 @@
         ],
         "tags": [
           "platform"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/preventive-services": {
+      "get": {
+        "operationId": "PreventiveServiceOptionsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreventiveServiceOptionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
         ],
         "x-stability": "draft"
       }

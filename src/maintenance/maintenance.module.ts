@@ -8,6 +8,11 @@ import {
   CategoryOptionsController,
 } from './categories/categories.controller';
 import { CategoriesService } from './categories/categories.service';
+import {
+  PreventiveServiceOptionsController,
+  PreventiveServicesController,
+} from './preventive/preventive-services.controller';
+import { PreventiveServicesService } from './preventive/preventive-services.service';
 import { AvailabilityService } from './dispatch/availability.service';
 import {
   DispatchAvailabilityController,
@@ -75,6 +80,8 @@ import { VisitsService } from './visits/visits.service';
   controllers: [
     CategoriesController,
     CategoryOptionsController,
+    PreventiveServicesController,
+    PreventiveServiceOptionsController,
     SpecialtiesController,
     CategorySpecialtiesController,
     MaintenanceSettingsController,
@@ -95,6 +102,7 @@ import { VisitsService } from './visits/visits.service';
   providers: [
     MaintenanceProvisioning,
     CategoriesService,
+    PreventiveServicesService,
     SpecialtiesService,
     AvailabilityService,
     DispatchSettingsService,

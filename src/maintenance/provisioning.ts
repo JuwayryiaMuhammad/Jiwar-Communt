@@ -3,6 +3,7 @@ import { newId } from '../core/common/uuid';
 import type { TenantTxClient } from '../core/database/tenant-tx.service';
 import { TenantLifecycle } from '../core/tenant-settings/tenant-lifecycle';
 import { DEFAULT_CATEGORIES } from './categories/default-categories';
+import { DEFAULT_PREVENTIVE_SERVICES } from './preventive/default-preventive-services';
 import { defaultTargetRows } from './sla/default-sla-targets';
 import {
   DEFAULT_CATEGORY_SPECIALTIES,
@@ -15,7 +16,8 @@ import {
  * ticket counter, the default specialties (each category handled by its
  * namesake) and the dispatch settings, with automatic dispatch off until
  * the manager has given technicians their specialties; the SLA settings,
- * off, and the default SLA targets of every category (ADR 0034). Existing
+ * off, and the default SLA targets of every category (ADR 0034); the
+ * default preventive services (ADR 0038). Existing
  * compounds got the same from the migrations.
  */
 @Injectable()
@@ -66,6 +68,17 @@ export class MaintenanceProvisioning implements OnModuleInit {
         tenantId,
         categoryId: categoryIds.get(l.categoryKey)!,
         specialtyId: specialties.get(l.specialtyKey)!,
+      })),
+    });
+    await tx.preventiveService.createMany({
+      data: DEFAULT_PREVENTIVE_SERVICES.map((s) => ({
+        id: newId(),
+        tenantId,
+        key: s.key,
+        nameAr: s.nameAr,
+        nameEn: s.nameEn,
+        categoryId: categoryIds.get(s.categoryKey)!,
+        position: s.position,
       })),
     });
   }

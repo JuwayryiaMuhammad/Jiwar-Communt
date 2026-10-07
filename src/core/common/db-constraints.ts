@@ -75,6 +75,9 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // Maintenance (ADR 0032). A category's key is chosen by the manager.
   ticket_categories_tenant_id_key_key: ['key'],
   ticket_categories_tenant_id_id_key: null,
+  // ADR 0038. A preventive service's key is chosen by the manager.
+  preventive_services_tenant_id_key_key: ['key'],
+  preventive_services_tenant_id_id_key: null,
   tickets_tenant_id_id_key: null,
   // Taken from the counter under its row lock; a violation is a race.
   tickets_tenant_id_number_key: null,

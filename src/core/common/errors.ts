@@ -191,6 +191,8 @@ export const ErrorCode = {
   VISIT_SAME_SIDE: 'VISIT_SAME_SIDE',
   /** The residents' side already confirmed this arrival (409, ADR 0038). */
   VISIT_ARRIVAL_ALREADY_CONFIRMED: 'VISIT_ARRIVAL_ALREADY_CONFIRMED',
+  /** The proposal's start has passed: counter or cancel it (409, ADR 0038). */
+  VISIT_WINDOW_PASSED: 'VISIT_WINDOW_PASSED',
   /** No `visitConsent` on the unit (403). */
   VISITS_NOT_ALLOWED: 'VISITS_NOT_ALLOWED',
   /**

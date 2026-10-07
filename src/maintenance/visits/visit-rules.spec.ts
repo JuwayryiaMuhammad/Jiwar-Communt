@@ -1,6 +1,7 @@
 import type { VisitStatus } from '@prisma/client';
 import { AppException } from '../../core/common/errors';
 import {
+  assertNotStarted,
   assertOtherSide,
   assertVisit,
   canVisit,
@@ -89,6 +90,21 @@ describe('visit rules', () => {
         assertOtherSide({ proposedBySide: 'technician' }, 'resident'),
       ),
     ).toBeNull();
+  });
+
+  it('a proposal is confirmed before its start, never at or after it', () => {
+    const now = new Date('2026-10-11T10:00:00.000Z');
+    const codeAt = (ms: number) => {
+      try {
+        assertNotStarted({ startsAt: new Date(now.getTime() + ms) }, now);
+      } catch (e) {
+        return (e as AppException).code;
+      }
+      return null;
+    };
+    expect(codeAt(1)).toBeNull();
+    for (const ms of [0, -1, -3_600_000])
+      expect(codeAt(ms)).toBe('VISIT_WINDOW_PASSED');
   });
 
   describe('a window', () => {

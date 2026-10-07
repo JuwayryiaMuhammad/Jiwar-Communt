@@ -99,6 +99,19 @@ export function assertOtherSide(
     );
 }
 
+/**
+ * A proposal is confirmed before it starts (ADR 0038): VISIT_WINDOW_PASSED
+ * (409) once its start has passed, by the database's `now`. Nothing expires
+ * a proposal by itself; the way on is a counter-proposal or a cancellation.
+ */
+export function assertNotStarted(visit: { startsAt: Date }, now: Date): void {
+  if (visit.startsAt.getTime() <= now.getTime())
+    throw appError.conflict(
+      ErrorCode.VISIT_WINDOW_PASSED,
+      'The proposed window has already started',
+    );
+}
+
 /** The field errors of a window, as of the database's `now` (none: valid). */
 export function windowErrors(
   startsAt: Date,

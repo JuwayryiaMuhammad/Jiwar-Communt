@@ -74,9 +74,18 @@ The design's "New report" asks for "Location in unit": kitchen, bathroom, living
 - It is not free text and names nobody. It is still not added to any notification or audit row: nothing there needs it.
 - No route changes it afterwards. A wrong room is said in a message.
 
+### A proposal whose start has passed cannot be confirmed
+
+Nothing expires a `proposed` visit, and until now `confirm` did not look at the time: a proposal nobody answered could be confirmed after its start, and the late sweep fired on it at once.
+
+- `confirm` (all three routes) reads the database's clock after the ticket's lock and refuses a proposal whose start is not in the future: 409 `VISIT_WINDOW_PASSED`, nothing written.
+- The way on is `counter` (a new window) or `cancel`; both still work on a stale proposal.
+- There is still no expiry sweep. A stale proposal stays the ticket's active visit until one side answers it.
+- **This narrows 5.3:** a request that was accepted is now a 409. It is a fix, and the only place this ADR refuses something that used to work.
+
 ## Consequences
 
-- This **amends ADR 0034**: a visit gains a resident-side action at the door, and two columns (`ticket_visits` was a 5.3 table). The SLA's response is also met by `en_route`.
+- This **amends ADR 0034**: a visit gains a resident-side action at the door, and two columns (`ticket_visits` was a 5.3 table). The SLA's response is also met by `en_route`. A proposal is confirmed only before its start.
 - This **amends ADR 0032**: the status list gains `en_route`, and one CHECK is replaced to include it. Clients that switch over `status` must handle the new value; it only appears once a technician app sends the new action.
 - This **amends ADR 0033**: `en_route` is open work and weighs like `in_progress`.
 - `GET`/`PATCH /maintenance/settings` gain the three visiting-hours fields.

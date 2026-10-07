@@ -219,6 +219,34 @@ describe('Maintenance — visits', () => {
     ).toContain(s.owner.id);
   });
 
+  it('a proposal whose start has passed cannot be confirmed; a counter-proposal still answers it', async () => {
+    const id = await assigned();
+    const res = await propose(id, window(20)).expect(201);
+    const visitId = (res.body as { id: string }).id;
+    // Nobody answered, and the start went by.
+    await shift(visitId, -21);
+    const late = await asResident(s.owner, id, visitId, 'confirm').expect(409);
+    expect((late.body as { code: string }).code).toBe('VISIT_WINDOW_PASSED');
+    expect(await visitRow(visitId)).toMatchObject({
+      status: 'proposed',
+      confirmedAt: null,
+    });
+    expect(await events(id)).toEqual([['proposed', 'technician', null]]);
+    expect(await notes(id, 'ticket.visit_confirmed')).toHaveLength(0);
+    // The way on: another window.
+    const counter = await asResident(
+      s.owner,
+      id,
+      visitId,
+      'counter',
+      window(60),
+    ).expect(201);
+    expect((await visitRow(visitId)).status).toBe('rescheduled');
+    await asTech(id, (counter.body as { id: string }).id, 'confirm').expect(
+      204,
+    );
+  });
+
   it('a confirmed visit that moves is a new proposal; the old one ends rescheduled, with the code', async () => {
     const { id, visitId } = await confirmedVisit(60);
     const res = await asTech(id, visitId, 'reschedule', {

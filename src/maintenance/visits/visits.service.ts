@@ -29,6 +29,7 @@ import { sideOf, VisitAccess } from './visit-access';
 import { VisitLog } from './visit-log';
 import {
   ACTIVE,
+  assertNotStarted,
   assertOtherSide,
   assertVisit,
   assertWindow,
@@ -162,6 +163,7 @@ export class VisitsService {
       assertVisit(visit, 'confirm');
       assertOtherSide(visit, side);
       const now = await dbNow(tx);
+      assertNotStarted(visit, now);
       const confirmed = await tx.ticketVisit.update({
         where: { id: visit.id },
         data: { status: 'confirmed', confirmedAt: now, confirmedById: me },

@@ -1735,6 +1735,49 @@
         ],
         "type": "object"
       },
+      "CreatePreventiveRequestDto": {
+        "properties": {
+          "endsAt": {
+            "description": "After `startsAt`, at most four hours later.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "note": {
+            "description": "Optional; it becomes the ticket’s `description`.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "serviceId": {
+            "description": "From `GET /preventive-services`.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "startsAt": {
+            "description": "At least 15 minutes from now, within 30 days.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitLocation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketUnitLocation"
+              }
+            ]
+          }
+        },
+        "required": [
+          "startsAt",
+          "endsAt",
+          "unitId",
+          "serviceId"
+        ],
+        "type": "object"
+      },
       "CreatePreventiveServiceDto": {
         "properties": {
           "categoryId": {
@@ -2658,6 +2701,7 @@
             "type": "number"
           },
           "description": {
+            "description": "Empty only for a preventive ticket without a note (ADR 0038).",
             "type": "string"
           },
           "escalations": {
@@ -2685,6 +2729,14 @@
             "format": "uuid",
             "type": "string"
           },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketKind"
+              }
+            ],
+            "description": "ADR 0038: `preventive` is a booked check-up."
+          },
           "number": {
             "example": "MT-000123",
             "type": "string"
@@ -2694,6 +2746,16 @@
               "$ref": "#/components/schemas/PhotoView"
             },
             "type": "array"
+          },
+          "preventiveService": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreventiveServiceRefView"
+              }
+            ],
+            "description": "A preventive ticket’s service; null for a repair.",
+            "nullable": true,
+            "type": "object"
           },
           "priority": {
             "allOf": [
@@ -2707,6 +2769,17 @@
           },
           "reporter": {
             "$ref": "#/components/schemas/AccountRefView"
+          },
+          "requestedEndsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "requestedStartsAt": {
+            "description": "A preventive ticket: the window the resident asked for; null for a repair.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
           },
           "sla": {
             "allOf": [
@@ -2764,6 +2837,10 @@
           "commonArea",
           "unitLocation",
           "category",
+          "kind",
+          "preventiveService",
+          "requestedStartsAt",
+          "requestedEndsAt",
           "priority",
           "status",
           "holdReason",
@@ -2871,9 +2948,27 @@
             "format": "uuid",
             "type": "string"
           },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketKind"
+              }
+            ],
+            "description": "ADR 0038: `preventive` is a booked check-up."
+          },
           "number": {
             "example": "MT-000123",
             "type": "string"
+          },
+          "preventiveService": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreventiveServiceRefView"
+              }
+            ],
+            "description": "A preventive ticket’s service; null for a repair.",
+            "nullable": true,
+            "type": "object"
           },
           "priority": {
             "allOf": [
@@ -2884,6 +2979,17 @@
           },
           "rejectionCount": {
             "type": "number"
+          },
+          "requestedEndsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "requestedStartsAt": {
+            "description": "A preventive ticket: the window the resident asked for; null for a repair.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
           },
           "status": {
             "allOf": [
@@ -2931,6 +3037,10 @@
           "commonArea",
           "unitLocation",
           "category",
+          "kind",
+          "preventiveService",
+          "requestedStartsAt",
+          "requestedEndsAt",
           "priority",
           "status",
           "holdReason",
@@ -7261,6 +7371,30 @@
         ],
         "type": "object"
       },
+      "PreventiveServiceRefView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn"
+        ],
+        "type": "object"
+      },
       "PreventiveServiceView": {
         "properties": {
           "active": {
@@ -8211,6 +8345,7 @@
             "type": "number"
           },
           "description": {
+            "description": "Empty only for a preventive ticket without a note (ADR 0038).",
             "type": "string"
           },
           "escalatedAt": {
@@ -8231,6 +8366,14 @@
             "format": "uuid",
             "type": "string"
           },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketKind"
+              }
+            ],
+            "description": "ADR 0038: `preventive` is a booked check-up."
+          },
           "number": {
             "example": "MT-000123",
             "type": "string"
@@ -8244,6 +8387,16 @@
               "$ref": "#/components/schemas/PhotoView"
             },
             "type": "array"
+          },
+          "preventiveService": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreventiveServiceRefView"
+              }
+            ],
+            "description": "A preventive ticket’s service; null for a repair.",
+            "nullable": true,
+            "type": "object"
           },
           "priority": {
             "allOf": [
@@ -8263,6 +8416,17 @@
           },
           "reporter": {
             "$ref": "#/components/schemas/FirstNameRefView"
+          },
+          "requestedEndsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "requestedStartsAt": {
+            "description": "A preventive ticket: the window the resident asked for; null for a repair.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
           },
           "sla": {
             "allOf": [
@@ -8321,6 +8485,10 @@
           "commonArea",
           "unitLocation",
           "category",
+          "kind",
+          "preventiveService",
+          "requestedStartsAt",
+          "requestedEndsAt",
           "priority",
           "status",
           "holdReason",
@@ -8387,9 +8555,27 @@
             "format": "uuid",
             "type": "string"
           },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketKind"
+              }
+            ],
+            "description": "ADR 0038: `preventive` is a booked check-up."
+          },
           "number": {
             "example": "MT-000123",
             "type": "string"
+          },
+          "preventiveService": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreventiveServiceRefView"
+              }
+            ],
+            "description": "A preventive ticket’s service; null for a repair.",
+            "nullable": true,
+            "type": "object"
           },
           "priority": {
             "allOf": [
@@ -8400,6 +8586,17 @@
           },
           "reportedByMe": {
             "type": "boolean"
+          },
+          "requestedEndsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "requestedStartsAt": {
+            "description": "A preventive ticket: the window the resident asked for; null for a repair.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
           },
           "sla": {
             "allOf": [
@@ -8449,6 +8646,10 @@
           "commonArea",
           "unitLocation",
           "category",
+          "kind",
+          "preventiveService",
+          "requestedStartsAt",
+          "requestedEndsAt",
           "priority",
           "status",
           "holdReason",
@@ -9834,6 +10035,7 @@
             "type": "number"
           },
           "description": {
+            "description": "Empty only for a preventive ticket without a note (ADR 0038).",
             "type": "string"
           },
           "holdReason": {
@@ -9848,6 +10050,14 @@
             "format": "uuid",
             "type": "string"
           },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketKind"
+              }
+            ],
+            "description": "ADR 0038: `preventive` is a booked check-up."
+          },
           "number": {
             "example": "MT-000123",
             "type": "string"
@@ -9857,6 +10067,16 @@
               "$ref": "#/components/schemas/PhotoView"
             },
             "type": "array"
+          },
+          "preventiveService": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreventiveServiceRefView"
+              }
+            ],
+            "description": "A preventive ticket’s service; null for a repair.",
+            "nullable": true,
+            "type": "object"
           },
           "priority": {
             "allOf": [
@@ -9876,6 +10096,17 @@
           },
           "reporterPhone": {
             "description": "The reporter's phone, only while the reporter allows it (consent `ticket_phone_share`), still has the ticket's unit, and the work is open (ADR 0036). Otherwise null.",
+            "nullable": true,
+            "type": "string"
+          },
+          "requestedEndsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "requestedStartsAt": {
+            "description": "A preventive ticket: the window the resident asked for; null for a repair.",
+            "format": "date-time",
             "nullable": true,
             "type": "string"
           },
@@ -9907,6 +10138,10 @@
           "commonArea",
           "unitLocation",
           "category",
+          "kind",
+          "preventiveService",
+          "requestedStartsAt",
+          "requestedEndsAt",
           "priority",
           "status",
           "holdReason",
@@ -9952,9 +10187,27 @@
             "format": "uuid",
             "type": "string"
           },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketKind"
+              }
+            ],
+            "description": "ADR 0038: `preventive` is a booked check-up."
+          },
           "number": {
             "example": "MT-000123",
             "type": "string"
+          },
+          "preventiveService": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreventiveServiceRefView"
+              }
+            ],
+            "description": "A preventive ticket’s service; null for a repair.",
+            "nullable": true,
+            "type": "object"
           },
           "priority": {
             "allOf": [
@@ -9962,6 +10215,17 @@
                 "$ref": "#/components/schemas/TicketPriority"
               }
             ]
+          },
+          "requestedEndsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "requestedStartsAt": {
+            "description": "A preventive ticket: the window the resident asked for; null for a repair.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
           },
           "status": {
             "allOf": [
@@ -9991,6 +10255,10 @@
           "commonArea",
           "unitLocation",
           "category",
+          "kind",
+          "preventiveService",
+          "requestedStartsAt",
+          "requestedEndsAt",
           "priority",
           "status",
           "holdReason",
@@ -10340,6 +10608,14 @@
         ],
         "type": "string"
       },
+      "TicketKind": {
+        "description": "ADR 0038: `preventive` is a booked check-up.",
+        "enum": [
+          "repair",
+          "preventive"
+        ],
+        "type": "string"
+      },
       "TicketPhotoDto": {
         "properties": {
           "fileId": {
@@ -10406,7 +10682,6 @@
         "type": "string"
       },
       "TicketUnitLocation": {
-        "description": "The room (ADR 0038); with `unitId` only.",
         "enum": [
           "kitchen",
           "bathroom",
@@ -19122,6 +19397,65 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/preventive-slots": {
+      "get": {
+        "operationId": "PreventiveRequestsController_slots",
+        "parameters": [
+          {
+            "description": "The first day, `YYYY-MM-DD` in the compound’s time zone; today by default.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-10-11",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 14,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisitSlotViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/public/data-exports/code": {
       "post": {
         "operationId": "PublicDataExportsController_code",
@@ -20991,6 +21325,53 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CreateTicketDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "tickets"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/tickets/preventive": {
+      "post": {
+        "operationId": "PreventiveRequestsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePreventiveRequestDto"
               }
             }
           },

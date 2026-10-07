@@ -4,7 +4,7 @@
 
 ## Context
 
-The resident journey in Figma shows ticket and visit steps that ADR 0032 and ADR 0034 do not have. This ADR adds them one at a time, on top of 5.3. Each section below is one change. None of them takes anything away from an existing route or view.
+The resident journey in Figma shows ticket and visit steps that ADR 0032 and ADR 0034 do not have. This ADR adds them one at a time, on top of 5.3. Each section below is one change. None of them takes anything away from an existing route or view, with one exception that is a fix: a visit proposal whose start has passed can no longer be confirmed.
 
 ## Decisions
 
@@ -142,11 +142,45 @@ The design's "Request preventive maintenance" starts with "What": AC service, Wa
 - **The manager** (`maintenance.manage`): `GET`, `POST /maintenance/preventive-services`, `PATCH /maintenance/preventive-services/:id` (names, category, position, `active`). A new category must be an active one of the compound (400 `CATEGORY_NOT_AVAILABLE`). Audited as `preventive_service.created` / `.updated`, with keys and codes only: the key, the category's key, the position and `active` by value; a name only as "changed", never the words.
 - **The residents** (`tickets.create`): `GET /preventive-services` lists the active services whose category is active too, with their id, key and names.
 
+### Preventive requests
+
+The rest of "Request preventive maintenance": a day, one of the "Available times", an optional note, "Request".
+
+**The request**
+
+- `POST /tickets/preventive` (`tickets.create`, `Idempotency-Key` honoured) takes `unitId`, `serviceId`, `startsAt`, `endsAt`, and optionally `note` and `unitLocation`. The answer is `TicketCreatedView`, with no note.
+  - The unit reach is `POST /tickets`'s.
+  - The service must be active, and so must its category; otherwise `PREVENTIVE_SERVICE_NOT_FOUND`.
+- **The window** follows the visit rules by the database's clock (15 minutes to 30 days ahead, at most four hours), **and must lie inside the compound's visiting hours, on one local day** (400 `VISIT_OUTSIDE_HOURS` on `startsAt`). A counter-proposal is not held to the hours, because the other side reads it before agreeing. Nobody reads this one before it is proposed.
+- **It is a ticket like any other:** kind `preventive`, the service's category, priority `normal`. Dispatch, messages, cancellation, completion, confirmation and ratings are unchanged. The dispatch lists are ordered by creation, so a ticket without clocks sorts like any other.
+- **`tickets` gains** `kind` (`repair` by default, and for every existing ticket), `preventive_service_id`, `requested_starts_at` and `requested_ends_at`.
+  - CHECKs: a preventive ticket has its service and both times, a repair has none of them; a preventive ticket is always a unit's; the window ends after it starts, at most four hours later.
+  - **A trigger refuses any later change** to the four, for every role. No route changes them, and none may.
+- **The note is the description.** A request may come without one, so `tickets.description` is nullable **for preventive tickets only** (a CHECK). **No view changes type:** `description` stays a string, and is `''` for a preventive ticket without a note.
+- **Booking slots before any ticket exists:** `GET /preventive-slots?unitId=…&from=…&days=…` (`tickets.create`, the same unit reach, no-store) cuts the visiting hours into slots, 15 minutes to 30 days ahead. No technician holds the ticket yet, so nothing is busy. `days` is 1 to 14 per call, like `visit-slots`; the app pages with `from`. A read, not a reservation.
+
+**The automatic proposal**
+
+- When a technician takes a preventive ticket (any assignment with a technician: manual, automatic, a reassignment), the window asked for is proposed to them **from the residents' side**, while **the request still stands**:
+  - every visit the ticket ever had was this automatic proposal, never confirmed, ended because the technician changed. A resident who withdrew it, a technician who cancelled or countered it, a confirmation, any other visit: the request is history, and the two sides arrange the visit as for any ticket;
+  - it still starts at least 15 minutes from now;
+  - the reporter may still act on the ticket (an active account with `tickets` on the unit): nobody proposes in the name of someone who left.
+- **Who did it:** the visit stands on the residents' side and names the reporter as its proposer, so the technician confirms or counters it like any resident proposal. But nobody acted at that moment, so **its history row is the system's**: actor side `system`, no account, reason `preventive_request` (the new system-only list `visitProposal`). The reporter is never recorded as the actor of something they did not do then. Visits are never in the audit log (ADR 0034), so there is no audit row to attribute.
+- **One handler, in order.** It runs inside `VisitLifecycle`'s assignment handler, after the old technician's visit ends, in the assignment's transaction and under its ticket lock. Not as a second handler: the order in which modules register handlers is not something to rely on. A rolled-back assignment takes the proposal with it.
+- **Two notices to the technician, on purpose:** `ticket.assigned`, then `ticket.visit_proposed` (the number and the window, never the unit). They ask for different things.
+- A proposal the technician never answers stays active after its start. It cannot be confirmed any more (above); the technician counters or cancels it.
+
+**The SLA measures repairs only.** A check-up booked for next week is not late after a day. A preventive ticket never has a clock: `SlaRecorder` starts none, the activation pass does not look for one, and so it is never breached, never overdue and never escalated.
+
+**Views:** `kind`, `preventiveService` (id, key, names; read whatever its `active`, so a retired service keeps its name), `requestedStartsAt` and `requestedEndsAt` on every ticket view: the residents', the technician's and dispatch's. Never in a notification or the audit trail: a window says when someone is home (ADR 0034).
+
 ## Consequences
 
 - This **amends ADR 0034**: a visit gains a resident-side action at the door, and two columns (`ticket_visits` was a 5.3 table). The SLA's response is also met by `en_route`. A proposal is confirmed only before its start. Resident escalation, which ADR 0034 deferred, is here; the residents' `sla` gains `overdue` and is on the list.
 - This **amends ADR 0032**: the status list gains `en_route`, and one CHECK is replaced to include it. Clients that switch over `status` must handle the new value; it only appears once a technician app sends the new action.
 - This **amends ADR 0033**: `en_route` is open work and weighs like `in_progress`.
 - `GET`/`PATCH /maintenance/settings` gain the three visiting-hours fields.
+- This **amends ADR 0032**: a ticket has a `kind`; a preventive one may have no description (read as `''`), and what its request asked for never changes.
+- This **amends ADR 0034** again: a visit may be proposed by the system for the residents' side, and the SLA measures repairs only.
 - This **amends ADR 0036**: `ticket.resident_escalated_emergency` is a critical kind.
 - **Migrations:** this branch's are `20261014090000` onwards, after `main`'s `20261013…`. `resident-account` (ADR 0037) is not merged yet; when it is rebased, its migrations must be renumbered after this branch's last one.

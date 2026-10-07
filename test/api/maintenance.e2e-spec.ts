@@ -67,6 +67,10 @@ const RESIDENT = [
   'commonArea',
   // ADR 0038.
   'unitLocation',
+  'kind',
+  'preventiveService',
+  'requestedEndsAt',
+  'requestedStartsAt',
   'confirmationStatus',
   'createdAt',
   'holdReason',
@@ -105,6 +109,10 @@ const DISPATCH = [
   'commonArea',
   // ADR 0038.
   'unitLocation',
+  'kind',
+  'preventiveService',
+  'requestedEndsAt',
+  'requestedStartsAt',
   'confirmationStatus',
   'createdAt',
   'cycle',
@@ -127,6 +135,10 @@ const TECHNICIAN = [
   'commonArea',
   // ADR 0038.
   'unitLocation',
+  'kind',
+  'preventiveService',
+  'requestedEndsAt',
+  'requestedStartsAt',
   'createdAt',
   'holdReason',
   'id',

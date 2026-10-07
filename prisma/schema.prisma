@@ -2046,6 +2046,15 @@ enum TicketAttachmentKind {
   @@map("ticket_attachment_kind")
 }
 
+/// What a ticket is for (ADR 0038): something broke, or a check-up booked
+/// before something does.
+enum TicketKind {
+  repair
+  preventive
+
+  @@map("ticket_kind")
+}
+
 /// Where in the unit (ADR 0038): the room, for whoever comes to fix it.
 enum TicketUnitLocation {
   kitchen
@@ -2109,6 +2118,7 @@ model PreventiveService {
 
   tenant   Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   category TicketCategory @relation(fields: [tenantId, categoryId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "preventive_services_tenant_id_category_id_fkey")
+  tickets  Ticket[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, key])
@@ -2167,7 +2177,14 @@ model Ticket {
   cycle              Int                       @default(1)
   rejectionCount     Int                       @default(0) @map("rejection_count")
   /// Free text, may name people: never in the audit trail or a notification.
-  description        String
+  /// Null only for a preventive ticket without a note (ADR 0038).
+  description        String?
+  /// ADR 0038. A preventive ticket names its service and the window the
+  /// resident asked for; a trigger refuses any later change to the four.
+  kind               TicketKind                @default(repair)
+  preventiveServiceId String?                  @map("preventive_service_id") @db.Uuid
+  requestedStartsAt  DateTime?                 @map("requested_starts_at") @db.Timestamptz(3)
+  requestedEndsAt    DateTime?                 @map("requested_ends_at") @db.Timestamptz(3)
   createdAt          DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(3)
   assignedAt         DateTime?                 @map("assigned_at") @db.Timestamptz(3)
@@ -2180,6 +2197,7 @@ model Ticket {
   createdBy   Account            @relation("TicketCreatedBy", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "tickets_tenant_id_created_by_fkey")
   reporter    Account            @relation("TicketReporter", fields: [tenantId, reporterId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "tickets_tenant_id_reporter_fkey")
   technician  Account?           @relation("TicketTechnician", fields: [tenantId, technicianId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "tickets_tenant_id_technician_fkey")
+  preventiveService PreventiveService? @relation(fields: [tenantId, preventiveServiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "tickets_tenant_id_preventive_service_id_fkey")
   feedback    TicketFeedback[]
   messages    TicketMessage[]
   attachments TicketAttachment[]

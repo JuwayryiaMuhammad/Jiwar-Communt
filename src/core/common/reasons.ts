@@ -203,6 +203,9 @@ export const REASON_CODES = {
     'ticket_completed',
     'granter_left',
   ],
+  // Written by the system only (ADR 0038): a visit proposed for the
+  // residents, from the window their preventive request asked for.
+  visitProposal: ['preventive_request'],
   // Written by the system only: why an SLA clock paused, resumed, was
   // retargeted or stopped.
   slaEvent: [

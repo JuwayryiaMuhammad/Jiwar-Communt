@@ -101,8 +101,9 @@ export class SlaSweep implements OnModuleInit {
   }
 
   /**
-   * The tickets out of line with the switch: on, measured tickets without a
-   * clock of this activation; off, tickets with a clock still running or
+   * The tickets out of line with the switch: on, measured tickets (repairs
+   * only: a preventive ticket has no clocks, ADR 0038) without a clock of
+   * this activation; off, tickets with a clock still running or
    * paused.
    */
   private async misaligned(
@@ -114,6 +115,7 @@ export class SlaSweep implements OnModuleInit {
       ? await tx.$queryRaw<{ id: string }[]>`
           SELECT t.id FROM tickets t
            WHERE t.status::text = ANY(${[...MEASURED]}::text[])
+             AND t.kind = 'repair'
              AND NOT EXISTS (
                SELECT 1 FROM ticket_sla_clocks c
                 WHERE c.tenant_id = t.tenant_id AND c.ticket_id = t.id

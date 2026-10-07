@@ -1,4 +1,10 @@
-import { addDays, freeSlots, localDate, zonedInstant } from './visit-slots';
+import {
+  addDays,
+  freeSlots,
+  localDate,
+  withinVisitingHours,
+  zonedInstant,
+} from './visit-slots';
 
 const iso = (d: Date | null) => d?.toISOString() ?? null;
 
@@ -43,6 +49,49 @@ describe('visit slots', () => {
     expect(localDate(new Date('2030-01-15T23:30:00Z'), 'Asia/Kolkata')).toBe(
       '2030-01-16',
     );
+  });
+
+  describe('withinVisitingHours (ADR 0038)', () => {
+    const hours = { startMinute: 8 * 60, endMinute: 18 * 60 };
+    const within = (from: string, to: string, timeZone = 'Africa/Cairo') =>
+      withinVisitingHours(
+        { startsAt: new Date(from), endsAt: new Date(to) },
+        hours,
+        timeZone,
+      );
+
+    it('reads the window in the compound’s time zone, not in UTC', () => {
+      // Cairo is UTC+2 in January: 08:00–09:00 local.
+      expect(within('2030-01-15T06:00:00Z', '2030-01-15T07:00:00Z')).toBe(true);
+      // 08:00–09:00 UTC is fine in UTC, and in Cairo too (10:00–11:00)…
+      expect(within('2030-01-15T08:00:00Z', '2030-01-15T09:00:00Z')).toBe(true);
+      // …but 05:00 UTC is 07:00 in Cairo: before the hours.
+      expect(within('2030-01-15T05:00:00Z', '2030-01-15T06:00:00Z')).toBe(
+        false,
+      );
+      expect(
+        within('2030-01-15T08:00:00Z', '2030-01-15T09:00:00Z', 'UTC'),
+      ).toBe(true);
+    });
+
+    it('may end exactly when the hours end, never after', () => {
+      expect(within('2030-01-15T15:00:00Z', '2030-01-15T16:00:00Z')).toBe(true);
+      expect(within('2030-01-15T15:00:00Z', '2030-01-15T16:01:00Z')).toBe(
+        false,
+      );
+    });
+
+    it('stays on one local day', () => {
+      const allDay = { startMinute: 0, endMinute: 24 * 60 };
+      const over = (from: string, to: string) =>
+        withinVisitingHours(
+          { startsAt: new Date(from), endsAt: new Date(to) },
+          allDay,
+          'UTC',
+        );
+      expect(over('2030-01-15T22:00:00Z', '2030-01-16T00:00:00Z')).toBe(true);
+      expect(over('2030-01-15T23:00:00Z', '2030-01-16T01:00:00Z')).toBe(false);
+    });
   });
 
   describe('freeSlots', () => {

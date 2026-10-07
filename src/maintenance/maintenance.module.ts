@@ -12,6 +12,7 @@ import {
   PreventiveServiceOptionsController,
   PreventiveServicesController,
 } from './preventive/preventive-services.controller';
+import { PreventiveRequestsController } from './preventive/preventive-requests.controller';
 import { PreventiveServicesService } from './preventive/preventive-services.service';
 import { AvailabilityService } from './dispatch/availability.service';
 import {
@@ -82,6 +83,7 @@ import { VisitsService } from './visits/visits.service';
     CategoryOptionsController,
     PreventiveServicesController,
     PreventiveServiceOptionsController,
+    PreventiveRequestsController,
     SpecialtiesController,
     CategorySpecialtiesController,
     MaintenanceSettingsController,

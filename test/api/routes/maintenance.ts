@@ -1020,6 +1020,75 @@ const rescheduleBody = () => ({
   reasonCode: 'schedule_conflict',
 });
 
+/** Preventive requests (ADR 0038): a booked check-up, and its slots. */
+export const PREVENTIVE_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/tickets/preventive',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: () => ({}),
+      // The unit is looked up before the window is judged.
+      body: (w) => ({
+        unitId: w.b.homeUnitId,
+        serviceId: w.aPreventiveServiceId,
+        ...visitWindow(),
+      }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      body: {
+        unitId: 'x',
+        serviceId: 'y',
+        startsAt: 'tomorrow',
+        note: '',
+        unitLocation: 'garage',
+      },
+      // The subclass's own fields first (class-validator's order).
+      fields: [
+        { field: 'unitId', code: 'INVALID_UUID' },
+        { field: 'serviceId', code: 'INVALID_UUID' },
+        {
+          field: 'note',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 2000 },
+        },
+        {
+          field: 'unitLocation',
+          code: 'INVALID_VALUE',
+          params: { allowed: UNIT_LOCATIONS },
+        },
+        { field: 'startsAt', code: 'INVALID_FORMAT' },
+        { field: 'endsAt', code: 'FIELD_REQUIRED' },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/preventive-slots',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    // The unit is in the query; the suite itself tries another compound's.
+    foreign: 'none',
+    invalid: {
+      query: { unitId: 'x', days: '15', from: '11/10/2026' },
+      fields: [
+        { field: 'unitId', code: 'INVALID_UUID' },
+        {
+          field: 'from',
+          code: 'INVALID_FORMAT',
+          params: { format: 'YYYY-MM-DD' },
+        },
+        { field: 'days', code: 'INVALID_NUMBER', params: { min: 1, max: 14 } },
+      ],
+    },
+    noStore: true,
+  },
+];
+
 /** Visits: the residents', the technician's and dispatch's routes. */
 export const VISIT_ROUTES: Row[] = [
   // ADR 0038.

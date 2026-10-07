@@ -288,6 +288,8 @@ export const FieldErrorCode = {
   /** A visit lasts at most four hours. */
   VISIT_TOO_LONG: 'VISIT_TOO_LONG',
   VISIT_ENDS_BEFORE_START: 'VISIT_ENDS_BEFORE_START',
+  /** Not inside the compound's visiting hours, on one day (ADR 0038). */
+  VISIT_OUTSIDE_HOURS: 'VISIT_OUTSIDE_HOURS',
   /**
    * A receiver is an adult who lives in the unit, or an active domestic
    * worker of the unit.

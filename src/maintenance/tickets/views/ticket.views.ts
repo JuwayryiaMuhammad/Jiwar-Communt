@@ -6,6 +6,7 @@ import {
   TicketConfirmationStatus,
   TicketFeedbackKind,
   TicketHoldReason,
+  TicketKind,
   TicketPriority,
   TicketStatus,
   TicketUnitLocation,
@@ -120,6 +121,18 @@ function person(r: TicketRead, id: string): Person {
 const first = (r: TicketRead, id: string) => firstNameRef(person(r, id));
 const full = (r: TicketRead, id: string) => accountRef(person(r, id));
 
+/** A preventive ticket's service (ADR 0038): the compound's own names. */
+export class PreventiveServiceRefView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String })
+  key: string;
+  @ApiProperty({ type: String })
+  nameAr: string;
+  @ApiProperty({ type: String })
+  nameEn: string;
+}
+
 export class TicketCreatedView {
   @ApiProperty({ type: String, format: 'uuid' })
   id: string;
@@ -213,6 +226,28 @@ export class ResidentTicketView {
   unitLocation: TicketUnitLocation | null;
   @ApiProperty({ type: TicketCategoryRefView })
   category: TicketCategoryRefView;
+  @ApiProperty({
+    enum: TicketKind,
+    enumName: 'TicketKind',
+    description: 'ADR 0038: `preventive` is a booked check-up.',
+  })
+  kind: TicketKind;
+  @ApiProperty({
+    type: PreventiveServiceRefView,
+    nullable: true,
+    description: 'A preventive ticket’s service; null for a repair.',
+  })
+  preventiveService: PreventiveServiceRefView | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'A preventive ticket: the window the resident asked for; null for a repair.',
+  })
+  requestedStartsAt: Date | null;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  requestedEndsAt: Date | null;
   @ApiProperty({ enum: TicketPriority, enumName: 'TicketPriority' })
   priority: TicketPriority;
   @ApiProperty({ enum: TicketStatus, enumName: 'TicketStatus' })
@@ -266,6 +301,10 @@ export class ResidentTicketView {
       commonArea: t.commonArea,
       unitLocation: t.unitLocation,
       category: TicketCategoryRefView.from(r.category),
+      kind: t.kind,
+      preventiveService: r.preventiveService,
+      requestedStartsAt: t.requestedStartsAt,
+      requestedEndsAt: t.requestedEndsAt,
       priority: t.priority,
       status: t.status,
       holdReason: t.holdReason,
@@ -281,7 +320,11 @@ export class ResidentTicketView {
 }
 
 export class ResidentTicketDetailView extends ResidentTicketView {
-  @ApiProperty({ type: String })
+  @ApiProperty({
+    type: String,
+    description:
+      'Empty only for a preventive ticket without a note (ADR 0038).',
+  })
   description: string;
   @ApiProperty({ type: Number })
   cycle: number;
@@ -321,7 +364,7 @@ export class ResidentTicketDetailView extends ResidentTicketView {
     return {
       // A resident's detail always carries its escalation state.
       ...ResidentTicketView.from({ ...d, escalation: d.escalation! }, me),
-      description: t.description,
+      description: t.description ?? '',
       cycle: t.cycle,
       reporter: first(d, t.reporterId),
       onBehalf: t.createdById !== t.reporterId,
@@ -361,6 +404,28 @@ export class TechnicianTicketView {
   unitLocation: TicketUnitLocation | null;
   @ApiProperty({ type: TicketCategoryRefView })
   category: TicketCategoryRefView;
+  @ApiProperty({
+    enum: TicketKind,
+    enumName: 'TicketKind',
+    description: 'ADR 0038: `preventive` is a booked check-up.',
+  })
+  kind: TicketKind;
+  @ApiProperty({
+    type: PreventiveServiceRefView,
+    nullable: true,
+    description: 'A preventive ticket’s service; null for a repair.',
+  })
+  preventiveService: PreventiveServiceRefView | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'A preventive ticket: the window the resident asked for; null for a repair.',
+  })
+  requestedStartsAt: Date | null;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  requestedEndsAt: Date | null;
   @ApiProperty({ enum: TicketPriority, enumName: 'TicketPriority' })
   priority: TicketPriority;
   @ApiProperty({ enum: TicketStatus, enumName: 'TicketStatus' })
@@ -385,6 +450,10 @@ export class TechnicianTicketView {
       commonArea: t.commonArea,
       unitLocation: t.unitLocation,
       category: TicketCategoryRefView.from(r.category),
+      kind: t.kind,
+      preventiveService: r.preventiveService,
+      requestedStartsAt: t.requestedStartsAt,
+      requestedEndsAt: t.requestedEndsAt,
       priority: t.priority,
       status: t.status,
       holdReason: t.holdReason,
@@ -395,7 +464,11 @@ export class TechnicianTicketView {
 }
 
 export class TechnicianTicketDetailView extends TechnicianTicketView {
-  @ApiProperty({ type: String })
+  @ApiProperty({
+    type: String,
+    description:
+      'Empty only for a preventive ticket without a note (ADR 0038).',
+  })
   description: string;
   @ApiProperty({ type: Number })
   cycle: number;
@@ -432,7 +505,7 @@ export class TechnicianTicketDetailView extends TechnicianTicketView {
     const reporter = person(d, t.reporterId);
     return {
       ...TechnicianTicketView.from(d),
-      description: t.description,
+      description: t.description ?? '',
       cycle: t.cycle,
       rejectionCount: t.rejectionCount,
       confirmationStatus: t.confirmationStatus,
@@ -472,6 +545,28 @@ export class DispatchTicketView {
   unitLocation: TicketUnitLocation | null;
   @ApiProperty({ type: TicketCategoryRefView })
   category: TicketCategoryRefView;
+  @ApiProperty({
+    enum: TicketKind,
+    enumName: 'TicketKind',
+    description: 'ADR 0038: `preventive` is a booked check-up.',
+  })
+  kind: TicketKind;
+  @ApiProperty({
+    type: PreventiveServiceRefView,
+    nullable: true,
+    description: 'A preventive ticket’s service; null for a repair.',
+  })
+  preventiveService: PreventiveServiceRefView | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'A preventive ticket: the window the resident asked for; null for a repair.',
+  })
+  requestedStartsAt: Date | null;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  requestedEndsAt: Date | null;
   @ApiProperty({ enum: TicketPriority, enumName: 'TicketPriority' })
   priority: TicketPriority;
   @ApiProperty({ enum: TicketStatus, enumName: 'TicketStatus' })
@@ -508,6 +603,10 @@ export class DispatchTicketView {
       commonArea: t.commonArea,
       unitLocation: t.unitLocation,
       category: TicketCategoryRefView.from(r.category),
+      kind: t.kind,
+      preventiveService: r.preventiveService,
+      requestedStartsAt: t.requestedStartsAt,
+      requestedEndsAt: t.requestedEndsAt,
       priority: t.priority,
       status: t.status,
       holdReason: t.holdReason,
@@ -569,7 +668,11 @@ export class EscalationView {
 }
 
 export class DispatchTicketDetailView extends DispatchTicketView {
-  @ApiProperty({ type: String })
+  @ApiProperty({
+    type: String,
+    description:
+      'Empty only for a preventive ticket without a note (ADR 0038).',
+  })
   description: string;
   @ApiProperty({ type: AccountRefView })
   reporter: AccountRefView;
@@ -601,7 +704,7 @@ export class DispatchTicketDetailView extends DispatchTicketView {
     const t = d.ticket;
     return {
       ...DispatchTicketView.from(d),
-      description: t.description,
+      description: t.description ?? '',
       reporter: full(d, t.reporterId),
       createdBy: full(d, t.createdById),
       photos: d.photos.map((p) => PhotoView.from(p)),

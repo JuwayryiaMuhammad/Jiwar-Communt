@@ -97,6 +97,26 @@ export function localDate(instant: Date, timeZone: string): LocalDate {
 }
 
 /**
+ * Whether a window lies inside the visiting hours, on one local day of
+ * `timeZone` (ADR 0038): what a preventive request must ask for, because
+ * nobody looks at its window before it is proposed.
+ */
+export function withinVisitingHours(
+  window: Slot,
+  hours: Pick<VisitingHours, 'startMinute' | 'endMinute'>,
+  timeZone: string,
+): boolean {
+  const start = localParts(window.startsAt, timeZone);
+  // The last instant of the window: an end at midnight is still that day.
+  const end = localParts(new Date(window.endsAt.getTime() - 1), timeZone);
+  return (
+    start.date === end.date &&
+    start.minute >= hours.startMinute &&
+    end.minute < hours.endMinute
+  );
+}
+
+/**
  * The free slots of `days` local days from `from`: each day's visiting
  * hours cut into `slotMinutes`, kept only when a proposal there would be
  * accepted (at least 15 minutes and at most 30 days ahead of `now`, ADR

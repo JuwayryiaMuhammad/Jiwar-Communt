@@ -157,7 +157,12 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   ticket_counters_last_number_non_negative: {},
   tickets_number_positive: {},
   tickets_location: {},
-  tickets_description_length: {},
+  tickets_description_length: {
+    guarded:
+      'description is NULL only on a preventive ticket ' +
+      '(tickets_description_unless_preventive, ADR 0038), where no length ' +
+      'is asked of it; any description there is has 1 to 2000 characters',
+  },
   tickets_technician_matches_status: {},
   tickets_assigned_at_matches_technician: {},
   tickets_hold_reason_matches_status: {},
@@ -285,6 +290,14 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   maintenance_settings_visit_hours: {},
   tickets_unit_location_unit_only: {},
   ticket_escalations_cycle_positive: {},
+  // ADR 0038. kind is NOT NULL: every `=` compares two real booleans.
+  tickets_preventive_shape: {},
+  tickets_description_unless_preventive: {},
+  tickets_requested_window: {
+    guarded:
+      'both times are NULL together, on a repair only ' +
+      '(tickets_preventive_shape); a preventive ticket has both',
+  },
   preventive_services_key_shape: {},
   preventive_services_names_length: {},
   preventive_services_position_range: {},

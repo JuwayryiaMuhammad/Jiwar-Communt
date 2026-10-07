@@ -32,7 +32,12 @@ import {
 import type { PresignedRead } from '../../core/files/object-storage';
 import { FilesService } from '../../core/files/files.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
+import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { categoryNotFound } from '../categories/categories.service';
+import { dbNow } from '../db-clock';
+import { preventiveServiceNotFound } from '../preventive/preventive-services.service';
+import { assertWindow } from '../visits/visit-rules';
+import { withinVisitingHours } from '../visits/visit-slots';
 import { DispatchEngine } from '../dispatch/dispatch-engine';
 import { MaintenanceSettingsService } from '../settings/maintenance-settings.service';
 import { SlaService, type SlaSummary } from '../sla/sla.service';
@@ -63,6 +68,30 @@ interface TicketPlace {
   unitLocation: TicketUnitLocation | null;
 }
 
+/** A resident books a check-up (ADR 0038). */
+export interface NewPreventiveRequest {
+  unitId: string;
+  serviceId: string;
+  startsAt: Date;
+  endsAt: Date;
+  note?: string;
+  unitLocation?: TicketUnitLocation;
+}
+
+/** What makes a ticket a preventive one, written once at its creation. */
+interface PreventiveRequest {
+  serviceId: string;
+  startsAt: Date;
+  endsAt: Date;
+}
+
+export interface PreventiveServiceRef {
+  id: string;
+  key: string;
+  nameAr: string;
+  nameEn: string;
+}
+
 export interface Person {
   id: string;
   fullName: string | null;
@@ -89,6 +118,8 @@ export interface TicketRead {
   ticket: Ticket;
   category: CategoryRef;
   unitCode: string | null;
+  /** A preventive ticket's service, whatever its `active` now (ADR 0038). */
+  preventiveService: PreventiveServiceRef | null;
   people: Map<string, Person>;
 }
 
@@ -174,6 +205,7 @@ export class TicketsService implements OnModuleInit {
     private readonly engine: DispatchEngine,
     private readonly sla: SlaService,
     private readonly escalation: EscalationService,
+    private readonly tenantSettings: TenantSettingsService,
     private readonly consents: ConsentsService,
   ) {}
 
@@ -217,6 +249,75 @@ export class TicketsService implements OnModuleInit {
       for (const [i, fileId] of photos.entries())
         await this.attach(tx, ticket, fileId, 'report', `photoFileIds.${i}`);
       return ticket;
+    });
+    return this.dispatched(ticket);
+  }
+
+  /**
+   * A resident books a check-up (ADR 0038): a ticket of kind `preventive`
+   * under the service's category, with the window they asked for. The unit
+   * reach is `create`'s. The window follows the visit rules by the
+   * database's clock, and lies inside the compound's visiting hours:
+   * nobody looks at it before it is proposed to the technician.
+   */
+  async createPreventive(input: NewPreventiveRequest): Promise<Ticket> {
+    const me = this.ctx.accountId;
+    const ticket = await this.tenantTx.withTenantTx(async (tx) => {
+      const id = newId();
+      await this.idempotency.claim(tx, { type: TICKET_RESOURCE, id });
+      const place = await this.community.placeIn(tx, me, input.unitId);
+      if (!place)
+        throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
+      if (!(await this.access.mayOpen(tx, input.unitId, me)))
+        throw appError.forbidden(
+          ErrorCode.TICKETS_NOT_ALLOWED,
+          'Tickets are not allowed here',
+        );
+      const service = await tx.preventiveService.findFirst({
+        where: { id: input.serviceId, active: true },
+      });
+      if (!service) throw preventiveServiceNotFound();
+      // A service whose category was retired is not offered either.
+      const category = await tx.ticketCategory.findFirst({
+        where: { id: service.categoryId, active: true },
+      });
+      if (!category) throw preventiveServiceNotFound();
+      const settings = await this.settings.inTx(tx);
+      const { timezone } = await this.tenantSettings.inTx(
+        tx,
+        this.ctx.tenantId,
+      );
+      assertWindow(input.startsAt, input.endsAt, await dbNow(tx));
+      if (
+        !withinVisitingHours(
+          input,
+          {
+            startMinute: settings.visitHoursStart,
+            endMinute: settings.visitHoursEnd,
+          },
+          timezone,
+        )
+      )
+        throw invalid([
+          { field: 'startsAt', code: FieldErrorCode.VISIT_OUTSIDE_HOURS },
+        ]);
+      return this.insert(
+        tx,
+        id,
+        { priority: 'normal', description: input.note },
+        {
+          unitId: input.unitId,
+          commonArea: null,
+          unitLocation: input.unitLocation ?? null,
+        },
+        category,
+        me,
+        {
+          serviceId: service.id,
+          startsAt: input.startsAt,
+          endsAt: input.endsAt,
+        },
+      );
     });
     return this.dispatched(ticket);
   }
@@ -552,11 +653,29 @@ export class TicketsService implements OnModuleInit {
       people,
       tickets.flatMap((t) => [t.reporterId, t.createdById, t.technicianId]),
     );
+    const serviceIds = [
+      ...new Set(
+        tickets.flatMap((t) =>
+          t.preventiveServiceId ? [t.preventiveServiceId] : [],
+        ),
+      ),
+    ];
+    // Read by id whatever its `active`: a retired service keeps its name.
+    const services = serviceIds.length
+      ? await tx.preventiveService.findMany({
+          where: { id: { in: serviceIds } },
+          select: { id: true, key: true, nameAr: true, nameEn: true },
+        })
+      : [];
     const byId = new Map(categories.map((c) => [c.id, c]));
+    const serviceById = new Map(services.map((s) => [s.id, s]));
     return tickets.map((ticket) => ({
       ticket,
       category: byId.get(ticket.categoryId)!,
       unitCode: ticket.unitId ? (codes.get(ticket.unitId) ?? null) : null,
+      preventiveService: ticket.preventiveServiceId
+        ? (serviceById.get(ticket.preventiveServiceId) ?? null)
+        : null,
       people,
     }));
   }
@@ -640,13 +759,15 @@ export class TicketsService implements OnModuleInit {
   private async insert(
     tx: TenantTxClient,
     id: string,
-    input: Pick<NewTicket, 'priority' | 'description'>,
+    input: { priority?: TicketPriority; description?: string },
     where: TicketPlace,
     category: CategoryRef & { defaultPriority: TicketPriority },
     reporterId: string,
+    preventive: PreventiveRequest | null = null,
   ): Promise<Ticket> {
-    const description = input.description.trim();
-    if (!description)
+    // Only a preventive request may come without words (its note).
+    const description = input.description?.trim() || null;
+    if (!description && !preventive)
       throw invalid([
         {
           field: 'description',
@@ -674,6 +795,14 @@ export class TicketsService implements OnModuleInit {
         reporterId,
         priority: input.priority ?? category.defaultPriority,
         description,
+        ...(preventive
+          ? {
+              kind: 'preventive' as const,
+              preventiveServiceId: preventive.serviceId,
+              requestedStartsAt: preventive.startsAt,
+              requestedEndsAt: preventive.endsAt,
+            }
+          : {}),
       },
     });
     await this.log.status(tx, ticket, {

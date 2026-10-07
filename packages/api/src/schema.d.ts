@@ -2484,6 +2484,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/preventive-slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PreventiveRequestsController_slots"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/public/data-exports/code": {
         parameters: {
             query?: never;
@@ -3150,6 +3166,22 @@ export interface paths {
         get: operations["ResidentTicketsController_list"];
         put?: never;
         post: operations["ResidentTicketsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/preventive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PreventiveRequestsController_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4559,6 +4591,28 @@ export interface components {
             /** @description As the visitor gives it; shown to the household only. */
             visitorName?: string;
         };
+        CreatePreventiveRequestDto: {
+            /**
+             * Format: date-time
+             * @description After `startsAt`, at most four hours later.
+             */
+            endsAt: string;
+            /** @description Optional; it becomes the ticket’s `description`. */
+            note?: string;
+            /**
+             * Format: uuid
+             * @description From `GET /preventive-services`.
+             */
+            serviceId: string;
+            /**
+             * Format: date-time
+             * @description At least 15 minutes from now, within 30 days.
+             */
+            startsAt: string;
+            /** Format: uuid */
+            unitId: string;
+            unitLocation?: components["schemas"]["TicketUnitLocation"];
+        };
         CreatePreventiveServiceDto: {
             /**
              * Format: uuid
@@ -4837,6 +4891,7 @@ export interface components {
             createdAt: string;
             createdBy: components["schemas"]["AccountRefView"];
             cycle: number;
+            /** @description Empty only for a preventive ticket without a note (ADR 0038). */
             description: string;
             /** @description ADR 0038: the residents' escalations, oldest first. */
             escalations: components["schemas"]["EscalationView"][];
@@ -4844,12 +4899,23 @@ export interface components {
             holdReason: components["schemas"]["TicketHoldReason"] | null;
             /** Format: uuid */
             id: string;
+            /** @description ADR 0038: `preventive` is a booked check-up. */
+            kind: components["schemas"]["TicketKind"];
             /** @example MT-000123 */
             number: string;
             photos: components["schemas"]["PhotoView"][];
+            /** @description A preventive ticket’s service; null for a repair. */
+            preventiveService: components["schemas"]["PreventiveServiceRefView"] | null;
             priority: components["schemas"]["TicketPriority"];
             rejectionCount: number;
             reporter: components["schemas"]["AccountRefView"];
+            /** Format: date-time */
+            requestedEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description A preventive ticket: the window the resident asked for; null for a repair.
+             */
+            requestedStartsAt: string | null;
             /** @description Null while the compound does not measure an SLA. */
             sla: components["schemas"]["DispatchTicketSlaView"] | null;
             status: components["schemas"]["TicketStatus"];
@@ -4888,10 +4954,21 @@ export interface components {
             holdReason: components["schemas"]["TicketHoldReason"] | null;
             /** Format: uuid */
             id: string;
+            /** @description ADR 0038: `preventive` is a booked check-up. */
+            kind: components["schemas"]["TicketKind"];
             /** @example MT-000123 */
             number: string;
+            /** @description A preventive ticket’s service; null for a repair. */
+            preventiveService: components["schemas"]["PreventiveServiceRefView"] | null;
             priority: components["schemas"]["TicketPriority"];
             rejectionCount: number;
+            /** Format: date-time */
+            requestedEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description A preventive ticket: the window the resident asked for; null for a repair.
+             */
+            requestedStartsAt: string | null;
             status: components["schemas"]["TicketStatus"];
             technician: components["schemas"]["AccountRefView"] | null;
             unit: components["schemas"]["TicketUnitView"] | null;
@@ -6124,6 +6201,13 @@ export interface components {
             data: components["schemas"]["PreventiveServiceOptionView"][];
             nextCursor: string | null;
         };
+        PreventiveServiceRefView: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            nameAr: string;
+            nameEn: string;
+        };
         PreventiveServiceView: {
             active: boolean;
             /**
@@ -6411,6 +6495,7 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
             cycle: number;
+            /** @description Empty only for a preventive ticket without a note (ADR 0038). */
             description: string;
             /**
              * Format: date-time
@@ -6420,11 +6505,15 @@ export interface components {
             holdReason: components["schemas"]["TicketHoldReason"] | null;
             /** Format: uuid */
             id: string;
+            /** @description ADR 0038: `preventive` is a booked check-up. */
+            kind: components["schemas"]["TicketKind"];
             /** @example MT-000123 */
             number: string;
             /** @description Opened by management for the reporter; never who. */
             onBehalf: boolean;
             photos: components["schemas"]["PhotoView"][];
+            /** @description A preventive ticket’s service; null for a repair. */
+            preventiveService: components["schemas"]["PreventiveServiceRefView"] | null;
             priority: components["schemas"]["TicketPriority"];
             /**
              * Format: date-time
@@ -6433,6 +6522,13 @@ export interface components {
             reopenUntil: string | null;
             reportedByMe: boolean;
             reporter: components["schemas"]["FirstNameRefView"];
+            /** Format: date-time */
+            requestedEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description A preventive ticket: the window the resident asked for; null for a repair.
+             */
+            requestedStartsAt: string | null;
             /** @description Null while the compound does not measure an SLA. */
             sla: components["schemas"]["TicketSlaView"] | null;
             status: components["schemas"]["TicketStatus"];
@@ -6461,10 +6557,21 @@ export interface components {
             holdReason: components["schemas"]["TicketHoldReason"] | null;
             /** Format: uuid */
             id: string;
+            /** @description ADR 0038: `preventive` is a booked check-up. */
+            kind: components["schemas"]["TicketKind"];
             /** @example MT-000123 */
             number: string;
+            /** @description A preventive ticket’s service; null for a repair. */
+            preventiveService: components["schemas"]["PreventiveServiceRefView"] | null;
             priority: components["schemas"]["TicketPriority"];
             reportedByMe: boolean;
+            /** Format: date-time */
+            requestedEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description A preventive ticket: the window the resident asked for; null for a repair.
+             */
+            requestedStartsAt: string | null;
             /** @description Null while the compound does not measure an SLA. */
             sla: components["schemas"]["TicketSlaView"] | null;
             status: components["schemas"]["TicketStatus"];
@@ -6863,13 +6970,18 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
             cycle: number;
+            /** @description Empty only for a preventive ticket without a note (ADR 0038). */
             description: string;
             holdReason: components["schemas"]["TicketHoldReason"] | null;
             /** Format: uuid */
             id: string;
+            /** @description ADR 0038: `preventive` is a booked check-up. */
+            kind: components["schemas"]["TicketKind"];
             /** @example MT-000123 */
             number: string;
             photos: components["schemas"]["PhotoView"][];
+            /** @description A preventive ticket’s service; null for a repair. */
+            preventiveService: components["schemas"]["PreventiveServiceRefView"] | null;
             priority: components["schemas"]["TicketPriority"];
             /** @description Rejections and reopens so far. */
             rejectionCount: number;
@@ -6877,6 +6989,13 @@ export interface components {
             reporterFirstName: string | null;
             /** @description The reporter's phone, only while the reporter allows it (consent `ticket_phone_share`), still has the ticket's unit, and the work is open (ADR 0036). Otherwise null. */
             reporterPhone: string | null;
+            /** Format: date-time */
+            requestedEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description A preventive ticket: the window the resident asked for; null for a repair.
+             */
+            requestedStartsAt: string | null;
             status: components["schemas"]["TicketStatus"];
             unitCode: string | null;
             /** @description The room (ADR 0038); null when not given. */
@@ -6892,9 +7011,20 @@ export interface components {
             holdReason: components["schemas"]["TicketHoldReason"] | null;
             /** Format: uuid */
             id: string;
+            /** @description ADR 0038: `preventive` is a booked check-up. */
+            kind: components["schemas"]["TicketKind"];
             /** @example MT-000123 */
             number: string;
+            /** @description A preventive ticket’s service; null for a repair. */
+            preventiveService: components["schemas"]["PreventiveServiceRefView"] | null;
             priority: components["schemas"]["TicketPriority"];
+            /** Format: date-time */
+            requestedEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description A preventive ticket: the window the resident asked for; null for a repair.
+             */
+            requestedStartsAt: string | null;
             status: components["schemas"]["TicketStatus"];
             unitCode: string | null;
             /** @description The room (ADR 0038); null when not given. */
@@ -6987,6 +7117,11 @@ export interface components {
         TicketFeedbackKind: "confirmed" | "rejected" | "reopened";
         /** @enum {string} */
         TicketHoldReason: "awaiting_resident" | "awaiting_parts" | "other";
+        /**
+         * @description ADR 0038: `preventive` is a booked check-up.
+         * @enum {string}
+         */
+        TicketKind: "repair" | "preventive";
         TicketPhotoDto: {
             /**
              * Format: uuid
@@ -7014,10 +7149,7 @@ export interface components {
         };
         /** @enum {string} */
         TicketStatus: "new" | "assigned" | "en_route" | "in_progress" | "on_hold" | "completed" | "closed" | "cancelled";
-        /**
-         * @description The room (ADR 0038); with `unitId` only.
-         * @enum {string}
-         */
+        /** @enum {string} */
         TicketUnitLocation: "kitchen" | "bathroom" | "living_room" | "bedroom" | "balcony" | "other";
         TicketUnitView: {
             code: string;
@@ -11526,6 +11658,30 @@ export interface operations {
             };
         };
     };
+    PreventiveRequestsController_slots: {
+        parameters: {
+            query: {
+                /** @description The first day, `YYYY-MM-DD` in the compound’s time zone; today by default. */
+                from?: string;
+                days?: number;
+                unitId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitSlotViewList"];
+                };
+            };
+        };
+    };
     PublicDataExportsController_code: {
         parameters: {
             query?: never;
@@ -12608,6 +12764,32 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["CreateTicketDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketCreatedView"];
+                };
+            };
+        };
+    };
+    PreventiveRequestsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePreventiveRequestDto"];
             };
         };
         responses: {

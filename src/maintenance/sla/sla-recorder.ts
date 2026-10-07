@@ -47,11 +47,20 @@ type SlaTicket = Pick<
   | 'id'
   | 'tenantId'
   | 'number'
+  | 'kind'
   | 'status'
   | 'holdReason'
   | 'priority'
   | 'categoryId'
 >;
+
+/**
+ * The SLA measures repairs (ADR 0038): a check-up booked for next week is
+ * not late after a day. A preventive ticket never has a clock, so it is
+ * never breached, never overdue and never escalated.
+ */
+export const measures = (ticket: Pick<Ticket, 'kind'>): boolean =>
+  ticket.kind !== 'preventive';
 
 /**
  * Writes the SLA (ADR 0034): append-only events and, in the same
@@ -73,6 +82,7 @@ type SlaTicket = Pick<
  *   whoever writes next: the sweep, or a request that would have met it.
  *   `met` and `breached` are never both written (the projection says which
  *   came first, and a unique index backs it).
+ * - Repairs only: a preventive ticket has no clocks (ADR 0038).
  */
 @Injectable()
 export class SlaRecorder implements OnModuleInit {
@@ -102,6 +112,7 @@ export class SlaRecorder implements OnModuleInit {
     ticket: Ticket,
     change: StatusChange,
   ): Promise<void> {
+    if (!measures(ticket)) return;
     const since = await this.activation(tx);
     if (!since) return;
     const now = await dbNow(tx);
@@ -290,7 +301,7 @@ export class SlaRecorder implements OnModuleInit {
   ): Promise<Map<SlaClock, TicketSlaClock> | null> {
     const current = await this.current(tx, ticket.id, since);
     if (current) return current;
-    if (!MEASURED.includes(ticket.status)) return null;
+    if (!MEASURED.includes(ticket.status) || !measures(ticket)) return null;
     return this.startCycle(
       tx,
       ticket,

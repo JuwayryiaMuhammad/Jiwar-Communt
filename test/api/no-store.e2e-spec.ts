@@ -380,6 +380,11 @@ describe('API v0 — no-store', () => {
         token: w.a.tokens.manager,
       }),
     // ADR 0038.
+    'GET /preventive-slots': async () =>
+      await call(w, 'GET', '/preventive-slots', {
+        token: w.a.tokens.owner,
+        query: { unitId: w.a.homeUnitId, days: '1' },
+      }),
     'GET /tickets/{id}/visit-slots': async () =>
       call(w, 'GET', `/tickets/${(await aVisit()).ticketId}/visit-slots`, {
         token: w.a.tokens.owner,

@@ -399,17 +399,7 @@ export class VisitsService {
     ticketId: string,
     q: { from?: LocalDate; days?: number },
   ): Promise<Slot[]> {
-    // The DTO checked the shape; this is a real day (not 2030-02-31).
-    if (q.from !== undefined && addDays(q.from, 0) !== q.from)
-      throw appError.badRequest(ErrorCode.VALIDATION_FAILED, 'Invalid day', {
-        fields: [
-          {
-            field: 'from',
-            code: FieldErrorCode.INVALID_FORMAT,
-            params: { format: 'YYYY-MM-DD' },
-          },
-        ],
-      });
+    assertRealDay(q.from);
     return this.tenantTx.withTenantTx(async (tx) => {
       const ticket = await this.access.forRead(tx, ticketId, 'resident');
       if (ticket.unitId === null)
@@ -448,6 +438,48 @@ export class VisitsService {
         timeZone: timezone,
         now,
         busy,
+      });
+    });
+  }
+
+  /**
+   * The windows a preventive request may ask for (ADR 0038), before any
+   * ticket exists: the compound's visiting hours cut into slots, for
+   * someone who may open tickets on the unit. No technician yet, so
+   * nothing is busy. A read, not a reservation.
+   */
+  requestSlots(
+    unitId: string,
+    q: { from?: LocalDate; days?: number },
+  ): Promise<Slot[]> {
+    assertRealDay(q.from);
+    const me = this.ctx.accountId;
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const place = await this.community.placeIn(tx, me, unitId);
+      if (!place)
+        throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
+      if (!place.tickets)
+        throw appError.forbidden(
+          ErrorCode.TICKETS_NOT_ALLOWED,
+          'Tickets are not allowed here',
+        );
+      const settings = await this.maintenanceSettings.inTx(tx);
+      const { timezone } = await this.tenantSettings.inTx(
+        tx,
+        this.ctx.tenantId,
+      );
+      const now = await dbNow(tx);
+      return freeSlots({
+        from: q.from ?? localDate(now, timezone),
+        days: q.days ?? DEFAULT_SLOT_DAYS,
+        hours: {
+          startMinute: settings.visitHoursStart,
+          endMinute: settings.visitHoursEnd,
+          slotMinutes: settings.visitSlotMinutes,
+        },
+        timeZone: timezone,
+        now,
+        busy: [],
       });
     });
   }
@@ -703,6 +735,48 @@ export class VisitsService {
     return null;
   }
 
+  /**
+   * The window a preventive request asked for, proposed to the technician
+   * who just took the ticket (ADR 0038). Under the ticket's lock (the
+   * assignment's).
+   *
+   * It stands on the residents' side, in the reporter's name: the
+   * technician confirms or counters it like any resident proposal. But
+   * nobody did this now, so its history row says so: the **system**, with
+   * the reason `preventive_request`, never the reporter as the actor.
+   */
+  async proposeRequested(
+    tx: TenantTxClient,
+    ticket: Ticket,
+    window: Window,
+    now: Date,
+  ): Promise<TicketVisit> {
+    const visit = await tx.ticketVisit.create({
+      data: {
+        id: newId(),
+        tenantId: ticket.tenantId,
+        ticketId: ticket.id,
+        cycle: ticket.cycle,
+        technicianId: ticket.technicianId!,
+        startsAt: window.startsAt,
+        endsAt: window.endsAt,
+        proposedBySide: 'resident',
+        proposedById: ticket.reporterId,
+      },
+    });
+    await this.log.write(tx, visit, {
+      kind: 'proposed',
+      side: 'system',
+      actorId: null,
+      reasonCode: 'preventive_request',
+      at: now,
+    });
+    await this.tell(tx, ticket, visit, 'ticket.visit_proposed', [
+      visit.technicianId,
+    ]);
+    return visit;
+  }
+
   /** A new proposal; a technician-side one is a response (ADR 0034). */
   private async create(
     tx: TenantTxClient,
@@ -749,4 +823,18 @@ export class VisitsService {
     );
     return visit;
   }
+}
+
+/** The DTO checked the shape; this is a real day (not 2030-02-31). */
+function assertRealDay(from: LocalDate | undefined): void {
+  if (from !== undefined && addDays(from, 0) !== from)
+    throw appError.badRequest(ErrorCode.VALIDATION_FAILED, 'Invalid day', {
+      fields: [
+        {
+          field: 'from',
+          code: FieldErrorCode.INVALID_FORMAT,
+          params: { format: 'YYYY-MM-DD' },
+        },
+      ],
+    });
 }

@@ -5,13 +5,13 @@ Two Next.js 16 dashboards for this backend, in the same pnpm workspace (`pnpm-wo
 | App | Port | Who | Sign-in |
 |---|---|---|---|
 | `apps/admin` | 3001 | Platform super admin | Email + password (`/platform/auth/*`), forced password change on first sign-in |
-| `apps/manager` | 3002 | Compound manager | Email or phone → 6-digit code by email → pick the compound (manager accounts only) |
+| `apps/manager` | 3002 | Compound manager, maintenance supervisor | Email or phone → 6-digit code by email → pick the account. Admitted: managers, and any role holding `tickets.dispatch` or `maintenance.manage` (read from `GET /me` at sign-in); anyone else is signed out at once and shown "No access" |
 
 Both follow the design system in `docs/decisions/DESIGN.md`. The tokens live in `packages/ui/src/styles.css`.
 
 ```
 apps/admin        super admin: compounds, managers, security events, platform audit, account
-apps/manager      manager: overview, requests, units, residents, workers, gate, staff, roles, settings, audit
+apps/manager      manager: overview, requests, units, residents, workers, maintenance, gate, staff, roles, settings, audit
 apps/Dockerfile   one image per app (--build-arg APP=admin|manager), Next.js standalone output
 packages/ui       design tokens + components (shell, cards, tables, dialogs, forms, toasts)
 packages/api      types generated from docs/api/openapi.v0.json, typed client, error texts, React data hooks
@@ -52,7 +52,14 @@ The browser never holds a token and never calls the API. Each app has a backend-
 
 Because of the BFF, the API needs no `CORS_ORIGINS` for the dashboards.
 
+## Permissions
+
+`GET /me` returns the role's permissions. The shell shows a section only to a role that may read it, and asks for a queue's count only then (`lib/permissions.tsx`: `usePermissions`, `Can`). This is for showing and hiding; the API decides every call, and a 403 renders as "No access" where it lands.
+
 ## Known limits (API v0)
+
+- A ticket opened for a resident takes its reporter from the unit's occupants, or for a common area from the first 100 residents: household members with a login are not listed anywhere a manager can pick them from.
+- The ticket list filters one status at a time, so the "Open" view hides finished tickets on the pages loaded so far.
 
 - No count endpoints: overview numbers come from one page of up to 100 rows and show `100+` beyond that.
 - No unit search: the unit picker lists the first 100 units by code.
@@ -65,6 +72,6 @@ Because of the BFF, the API needs no `CORS_ORIGINS` for the dashboards.
 
 ```bash
 pnpm dashboards:typecheck
-pnpm dashboards:test     # single-flight refresh
+pnpm dashboards:test     # BFF (refresh, same-origin, user agent) and the manager's access rule
 pnpm dashboards:build
 ```

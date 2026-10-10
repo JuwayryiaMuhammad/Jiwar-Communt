@@ -2704,6 +2704,12 @@
             "description": "Empty only for a preventive ticket without a note (ADR 0038).",
             "type": "string"
           },
+          "escalatedAt": {
+            "description": "ADR 0038: when a resident escalated the ticket in this SLA cycle.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "escalations": {
             "description": "ADR 0038: the residents' escalations, oldest first.",
             "items": {
@@ -2787,7 +2793,7 @@
                 "$ref": "#/components/schemas/DispatchTicketSlaView"
               }
             ],
-            "description": "Null while the compound does not measure an SLA.",
+            "description": "Null while the compound does not measure an SLA, or the ticket has no clocks.",
             "nullable": true,
             "type": "object"
           },
@@ -2850,6 +2856,8 @@
           "rejectionCount",
           "createdAt",
           "updatedAt",
+          "sla",
+          "escalatedAt",
           "description",
           "reporter",
           "createdBy",
@@ -2858,7 +2866,6 @@
           "completedAt",
           "closedAt",
           "cancelledAt",
-          "sla",
           "escalations"
         ],
         "type": "object"
@@ -2936,6 +2943,12 @@
           "cycle": {
             "type": "number"
           },
+          "escalatedAt": {
+            "description": "ADR 0038: when a resident escalated the ticket in this SLA cycle.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "holdReason": {
             "allOf": [
               {
@@ -2990,6 +3003,16 @@
             "format": "date-time",
             "nullable": true,
             "type": "string"
+          },
+          "sla": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DispatchTicketSlaView"
+              }
+            ],
+            "description": "Null while the compound does not measure an SLA, or the ticket has no clocks.",
+            "nullable": true,
+            "type": "object"
           },
           "status": {
             "allOf": [
@@ -3049,7 +3072,9 @@
           "cycle",
           "rejectionCount",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "sla",
+          "escalatedAt"
         ],
         "type": "object"
       },
@@ -16226,6 +16251,32 @@
             "required": false,
             "schema": {
               "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "`true`: only tickets whose `sla.overdue` is true (ADR 0034). None while the SLA is off.",
+            "in": "query",
+            "name": "overdue",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "`true`: only tickets with an `escalatedAt` (ADR 0038). None while the SLA is off.",
+            "in": "query",
+            "name": "escalated",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
               "type": "string"
             }
           }

@@ -457,10 +457,20 @@ export const TICKET_ROUTES: Row[] = [
     denied: 'technician',
     foreign: 'none',
     invalid: {
-      query: { unassigned: 'yes' },
+      query: { unassigned: 'yes', overdue: '1', escalated: 'TRUE' },
       fields: [
         {
           field: 'unassigned',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['true', 'false'] },
+        },
+        {
+          field: 'overdue',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['true', 'false'] },
+        },
+        {
+          field: 'escalated',
           code: 'INVALID_VALUE',
           params: { allowed: ['true', 'false'] },
         },

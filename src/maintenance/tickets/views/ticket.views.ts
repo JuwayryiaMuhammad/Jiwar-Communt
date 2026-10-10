@@ -30,6 +30,7 @@ import type {
   HistoryRead,
   Person,
   PhotoRead,
+  DispatchTicketRead,
   ResidentTicketRead,
   TicketDetail,
   TicketRead,
@@ -593,8 +594,23 @@ export class DispatchTicketView {
   createdAt: Date;
   @ApiProperty({ type: String, format: 'date-time' })
   updatedAt: Date;
+  @ApiProperty({
+    type: DispatchTicketSlaView,
+    nullable: true,
+    description:
+      'Null while the compound does not measure an SLA, or the ticket has no clocks.',
+  })
+  sla: DispatchTicketSlaView | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'ADR 0038: when a resident escalated the ticket in this SLA cycle.',
+  })
+  escalatedAt: Date | null;
 
-  static from(r: TicketRead): DispatchTicketView {
+  static from(r: DispatchTicketRead): DispatchTicketView {
     const t = r.ticket;
     return {
       id: t.id,
@@ -616,6 +632,8 @@ export class DispatchTicketView {
       rejectionCount: t.rejectionCount,
       createdAt: t.createdAt,
       updatedAt: t.updatedAt,
+      sla: DispatchTicketSlaView.fromSummary(r.sla),
+      escalatedAt: r.escalatedAt,
     };
   }
 }
@@ -689,12 +707,6 @@ export class DispatchTicketDetailView extends DispatchTicketView {
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   cancelledAt: Date | null;
   @ApiProperty({
-    type: DispatchTicketSlaView,
-    nullable: true,
-    description: 'Null while the compound does not measure an SLA.',
-  })
-  sla: DispatchTicketSlaView | null;
-  @ApiProperty({
     type: [EscalationView],
     description: "ADR 0038: the residents' escalations, oldest first.",
   })
@@ -724,7 +736,6 @@ export class DispatchTicketDetailView extends DispatchTicketView {
       completedAt: t.completedAt,
       closedAt: t.closedAt,
       cancelledAt: t.cancelledAt,
-      sla: DispatchTicketSlaView.fromSummary(d.sla),
       escalations: d.escalations.map((e) => ({
         slaCycle: e.slaCycle,
         by: full(d, e.accountId),

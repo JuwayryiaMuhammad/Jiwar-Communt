@@ -116,11 +116,14 @@ const DISPATCH = [
   'confirmationStatus',
   'createdAt',
   'cycle',
+  // ADR 0034: the list carries each row's SLA and this cycle's escalation.
+  'escalatedAt',
   'holdReason',
   'id',
   'number',
   'priority',
   'rejectionCount',
+  'sla',
   'status',
   'technician',
   'unit',
@@ -174,7 +177,6 @@ const DISPATCH_DETAIL = [
   'reporter',
   'reporter.fullName',
   'reporter.id',
-  'sla',
 ].sort();
 
 describe('API v0 — maintenance (ADR 0032)', () => {

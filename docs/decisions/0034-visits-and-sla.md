@@ -156,6 +156,7 @@ A rerun, another instance or a retry tells nobody twice.
 - **Who sees it.**
   - Residents see `sla` on their ticket view: `responseDueAt` and `resolutionDueAt` while running, and `paused`. It is null while the SLA is off.
   - Dispatch also sees each clock's state, and the events (`GET /maintenance/tickets/:id/sla-events`).
+  - The dispatch list (`GET /maintenance/tickets`) carries the same `sla` and the cycle's `escalatedAt` on every row, read for the whole page in a fixed number of queries, and filters by `overdue=true` and `escalated=true`. The filters are decided in SQL with the list's own keyset, from the facts the rows are built from and one reading of the database's clock, so a filtered page is full and agrees with its rows. Both are empty while the SLA is off.
   - The technician's view has no SLA.
 
 ### Changing a ticket's category

@@ -84,6 +84,8 @@ export class DispatchTicketsController {
       await this.tickets.listForDispatch({
         ...q,
         unassigned: q.unassigned === 'true',
+        overdue: q.overdue === 'true',
+        escalated: q.escalated === 'true',
       }),
       (r) => DispatchTicketView.from(r),
     );

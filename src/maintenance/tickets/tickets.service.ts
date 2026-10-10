@@ -130,6 +130,14 @@ export interface ResidentTicketRead extends TicketRead {
   escalation: EscalationState;
 }
 
+/** A dispatcher's row: with its SLA and this cycle's escalation (ADR 0034). */
+export interface DispatchTicketRead extends TicketRead {
+  /** Null while the SLA is off or the ticket has no clocks. */
+  sla: SlaSummary | null;
+  /** When a resident escalated it in this SLA cycle (ADR 0038), or null. */
+  escalatedAt: Date | null;
+}
+
 export interface TicketDetail extends TicketRead {
   photos: PhotoRead[];
   settings: Pick<MaintenanceSettings, 'autoCloseHours' | 'reopenDays'>;
@@ -140,6 +148,8 @@ export interface TicketDetail extends TicketRead {
   escalation: EscalationState | null;
   /** Dispatch only (ADR 0038): every escalation, oldest first. */
   escalations: TicketEscalation[];
+  /** Dispatch only: this SLA cycle's escalation, as the list says it. */
+  escalatedAt: Date | null;
   /**
    * The technician only, and only under `phoneShareAllowed` (ADR 0036);
    * null for everyone else.
@@ -171,6 +181,10 @@ export interface DispatchQuery extends ResidentQuery {
   unassigned?: boolean;
   technicianId?: string;
   categoryId?: string;
+  /** Only tickets whose SLA row says `overdue` (ADR 0034). */
+  overdue?: boolean;
+  /** Only tickets escalated in their current SLA cycle. */
+  escalated?: boolean;
 }
 
 const PAGE = keysetCursor('createdAt');
@@ -441,20 +455,86 @@ export class TicketsService implements OnModuleInit {
     );
   }
 
-  /** Every ticket of the compound; `unassigned` is the dispatch queue. */
-  listForDispatch(q: DispatchQuery): Promise<Page<TicketRead>> {
-    return this.tenantTx.withTenantTx((tx) =>
-      this.page(tx, q, {
-        AND: [
-          q.status ? { status: q.status } : {},
-          q.priority ? { priority: q.priority } : {},
-          q.unassigned ? { technicianId: null } : {},
-          q.technicianId ? { technicianId: q.technicianId } : {},
-          q.unitId ? { unitId: q.unitId } : {},
-          q.categoryId ? { categoryId: q.categoryId } : {},
-        ],
-      }),
-    );
+  /**
+   * Every ticket of the compound; `unassigned` is the dispatch queue. Each
+   * row carries its SLA and this cycle's escalation, read for the whole page
+   * in a fixed number of queries (ADR 0034). One reading of the database's
+   * clock decides the `overdue` filter and every row's `overdue`.
+   */
+  listForDispatch(q: DispatchQuery): Promise<Page<DispatchTicketRead>> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const now = await dbNow(tx);
+      const page =
+        q.overdue || q.escalated
+          ? await this.flagged(tx, q, now)
+          : await this.rows(tx, q, {
+              AND: [
+                q.status ? { status: q.status } : {},
+                q.priority ? { priority: q.priority } : {},
+                q.unassigned ? { technicianId: null } : {},
+                q.technicianId ? { technicianId: q.technicianId } : {},
+                q.unitId ? { unitId: q.unitId } : {},
+                q.categoryId ? { categoryId: q.categoryId } : {},
+              ],
+            });
+      const slas = await this.sla.summaries(tx, page.items, now);
+      const escalated = await this.escalation.escalatedAt(tx, page.items, slas);
+      return {
+        items: (await this.reads(tx, page.items)).map((r) => ({
+          ...r,
+          sla: slas.get(r.ticket.id) ?? null,
+          escalatedAt: escalated.get(r.ticket.id) ?? null,
+        })),
+        nextCursor: page.nextCursor,
+      };
+    });
+  }
+
+  /**
+   * A page of the dispatch list under `overdue` or `escalated`: the ids are
+   * chosen by the database, with the other filters and the keyset, so a
+   * page is full and the next cursor true. An empty list while the SLA is
+   * off.
+   */
+  private async flagged(
+    tx: TenantTxClient,
+    q: DispatchQuery,
+    now: Date,
+  ): Promise<Page<Ticket>> {
+    const limit = clampLimit(q.limit);
+    const after = q.cursor ? PAGE.decode(q.cursor) : null;
+    const flags = await this.sla.conditions(tx, q, now);
+    if (!flags) return { items: [], nextCursor: null };
+    const where: Prisma.Sql[] = [
+      ...flags,
+      ...(q.status ? [Prisma.sql`t.status = ${q.status}::ticket_status`] : []),
+      ...(q.priority
+        ? [Prisma.sql`t.priority = ${q.priority}::ticket_priority`]
+        : []),
+      ...(q.unassigned ? [Prisma.sql`t.technician_account_id IS NULL`] : []),
+      ...(q.technicianId
+        ? [Prisma.sql`t.technician_account_id = ${q.technicianId}::uuid`]
+        : []),
+      ...(q.unitId ? [Prisma.sql`t.unit_id = ${q.unitId}::uuid`] : []),
+      ...(q.categoryId
+        ? [Prisma.sql`t.category_id = ${q.categoryId}::uuid`]
+        : []),
+      ...(after
+        ? [
+            Prisma.sql`(t.created_at, t.id) < (${after.at}::timestamptz, ${after.id}::uuid)`,
+          ]
+        : []),
+    ];
+    const ids = await tx.$queryRaw<{ id: string }[]>`
+      SELECT t.id FROM tickets t
+       WHERE ${Prisma.join(where, ' AND ')}
+       ORDER BY t.created_at DESC, t.id DESC
+       LIMIT ${limit + 1}`;
+    const rows = await tx.ticket.findMany({
+      where: { id: { in: ids.map((r) => r.id) } },
+      orderBy: PAGE.orderBy,
+    });
+    return PAGE.toPage(rows, limit);
   }
 
   /**
@@ -500,6 +580,9 @@ export class TicketsService implements OnModuleInit {
           : null;
       const escalations =
         audience === 'dispatch' ? await this.escalation.list(tx, id) : [];
+      const escalatedAt =
+        escalations.find((e) => sla && e.slaCycle === sla.cycle)?.createdAt ??
+        null;
       await this.addPeople(tx, read.people, [
         ...feedback.map((f) => f.authorId),
         ...feedback.map((f) => f.ratedTechnicianId),
@@ -517,6 +600,7 @@ export class TicketsService implements OnModuleInit {
         sla,
         escalation,
         escalations,
+        escalatedAt,
         reporterPhone,
       };
     });
@@ -685,17 +769,25 @@ export class TicketsService implements OnModuleInit {
     q: { cursor?: string; limit?: number },
     where: Prisma.TicketWhereInput,
   ): Promise<Page<TicketRead>> {
+    const page = await this.rows(tx, q, where);
+    return {
+      items: await this.reads(tx, page.items),
+      nextCursor: page.nextCursor,
+    };
+  }
+
+  private async rows(
+    tx: TenantTxClient,
+    q: { cursor?: string; limit?: number },
+    where: Prisma.TicketWhereInput,
+  ): Promise<Page<Ticket>> {
     const limit = clampLimit(q.limit);
     const rows = await tx.ticket.findMany({
       where: { AND: [where, ...PAGE.after(q.cursor)] },
       orderBy: PAGE.orderBy,
       take: limit + 1,
     });
-    const page = PAGE.toPage(rows, limit);
-    return {
-      items: await this.reads(tx, page.items),
-      nextCursor: page.nextCursor,
-    };
+    return PAGE.toPage(rows, limit);
   }
 
   /**

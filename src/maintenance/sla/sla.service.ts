@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import type {
-  SlaClock,
-  SlaClockState,
-  Ticket,
-  TicketSlaEvent,
-  TicketSlaClock,
+import {
+  Prisma,
+  type SlaClock,
+  type SlaClockState,
+  type Ticket,
+  type TicketSlaEvent,
+  type TicketSlaClock,
 } from '@prisma/client';
 import {
   TenantTx,
@@ -12,8 +13,8 @@ import {
 } from '../../core/database/tenant-tx.service';
 import { dbNow } from '../db-clock';
 import { TicketAccess } from '../tickets/ticket-access';
-import { overdueClocks } from './sla-overdue';
-import { SlaRecorder } from './sla-recorder';
+import { AWAITED, overdueClocks } from './sla-overdue';
+import { respondedSql, SlaRecorder } from './sla-recorder';
 
 /** What a ticket's view shows of its SLA (ADR 0034). */
 export interface SlaSummary {
@@ -58,11 +59,13 @@ export class SlaService {
    * The same for a page of tickets, in a fixed number of queries whatever
    * its size (ADR 0038): the switch, the clocks, who was responded to, and
    * the database's clock for "overdue". A ticket without current clocks
-   * has no entry.
+   * has no entry. A caller that already filtered by `conditions` passes
+   * the same `now`, so its rows say what its filter said.
    */
   async summaries(
     tx: TenantTxClient,
     tickets: readonly SlaTicket[],
+    at?: Date,
   ): Promise<Map<string, SlaSummary>> {
     const out = new Map<string, SlaSummary>();
     if (!tickets.length) return out;
@@ -84,7 +87,7 @@ export class SlaService {
     const responded = await this.recorder.respondedAmong(tx, [
       ...current.keys(),
     ]);
-    const now = await dbNow(tx);
+    const now = at ?? (await dbNow(tx));
     const due = (c: TicketSlaClock | undefined) =>
       c?.state === 'running' ? c.dueAt : null;
     for (const t of tickets) {
@@ -109,6 +112,50 @@ export class SlaService {
         overdue: overdue.length > 0,
       });
     }
+    return out;
+  }
+
+  /**
+   * The dispatch list's `overdue` and `escalated` filters (ADR 0034), as SQL
+   * conditions on `tickets t`: the same facts `summaries` reads, decided by
+   * the database so a filtered list still pages by keyset. Null while the
+   * SLA is off: no ticket is overdue or escalated then.
+   *
+   * - current clocks: the ticket's latest SLA cycle, if this activation's;
+   * - overdue: `overdueClocks`, in SQL (a test holds the two together);
+   * - escalated: an escalation of that same cycle.
+   */
+  async conditions(
+    tx: TenantTxClient,
+    want: { overdue?: boolean; escalated?: boolean },
+    now: Date,
+  ): Promise<Prisma.Sql[] | null> {
+    const since = await this.recorder.activation(tx);
+    if (!since) return null;
+    const current = Prisma.sql`
+      c.cycle = (SELECT max(m.cycle) FROM ticket_sla_clocks m
+                  WHERE m.ticket_id = t.id)
+      AND c.started_at >= ${since}::timestamptz`;
+    const out: Prisma.Sql[] = [];
+    if (want.overdue)
+      out.push(Prisma.sql`
+        t.status::text IN (${Prisma.join([...AWAITED])})
+        AND EXISTS (
+          SELECT 1 FROM ticket_sla_clocks c
+           WHERE c.ticket_id = t.id
+             AND ${current}
+             AND (c.state = 'breached'
+                  OR (c.state = 'running' AND c.due_at <= ${now}::timestamptz))
+             AND (c.clock = 'resolution'
+                  OR NOT ${respondedSql(Prisma.sql`t.id`)}))`);
+    if (want.escalated)
+      out.push(Prisma.sql`
+        EXISTS (
+          SELECT 1 FROM ticket_escalations e
+            JOIN ticket_sla_clocks c
+              ON c.ticket_id = e.ticket_id AND c.cycle = e.sla_cycle
+           WHERE e.ticket_id = t.id
+             AND ${current})`);
     return out;
   }
 

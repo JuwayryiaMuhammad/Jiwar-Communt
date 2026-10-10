@@ -1,10 +1,11 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
-import type {
-  SlaClock,
-  SlaEventKind,
-  Ticket,
-  TicketSlaClock,
-  TicketStatus,
+import {
+  Prisma,
+  type SlaClock,
+  type SlaEventKind,
+  type Ticket,
+  type TicketSlaClock,
+  type TicketStatus,
 } from '@prisma/client';
 import { newId } from '../../core/common/uuid';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
@@ -541,25 +542,33 @@ export class SlaRecorder implements OnModuleInit {
   ): Promise<Set<string>> {
     if (!ticketIds.length) return new Set();
     const rows = await tx.$queryRaw<{ id: string }[]>`
-      WITH since AS (
-        SELECT t.id,
-               COALESCE((SELECT max(h.created_at)
-                           FROM ticket_status_history h
-                          WHERE h.ticket_id = t.id
-                            AND h.from_status = 'closed'),
-                        '-infinity'::timestamptz) AS at
-          FROM unnest(${[...ticketIds]}::uuid[]) AS t(id))
-      SELECT s.id FROM since s
-       WHERE EXISTS (
-               SELECT 1 FROM ticket_status_history h
-                WHERE h.ticket_id = s.id
-                  AND h.to_status IN ('en_route', 'in_progress')
-                  AND h.created_at >= s.at)
-          OR EXISTS (
-               SELECT 1 FROM ticket_visits v
-                WHERE v.ticket_id = s.id
-                  AND v.proposed_by_side = 'technician'
-                  AND v.created_at >= s.at)`;
+      SELECT t.id FROM unnest(${[...ticketIds]}::uuid[]) AS t(id)
+       WHERE ${respondedSql(Prisma.sql`t.id`)}`;
     return new Set(rows.map((r) => r.id));
   }
+}
+
+/**
+ * "Responded to since it was opened or last reopened", as a SQL condition on
+ * the ticket whose id is `id`. The one definition: `respondedAmong` and the
+ * dispatch list's `overdue` filter both read it, so they cannot disagree.
+ */
+export function respondedSql(id: Prisma.Sql): Prisma.Sql {
+  const since = Prisma.sql`
+    COALESCE((SELECT max(r.created_at)
+                FROM ticket_status_history r
+               WHERE r.ticket_id = ${id}
+                 AND r.from_status = 'closed'),
+             '-infinity'::timestamptz)`;
+  return Prisma.sql`(
+    EXISTS (
+      SELECT 1 FROM ticket_status_history h
+       WHERE h.ticket_id = ${id}
+         AND h.to_status IN ('en_route', 'in_progress')
+         AND h.created_at >= ${since})
+    OR EXISTS (
+      SELECT 1 FROM ticket_visits v
+       WHERE v.ticket_id = ${id}
+         AND v.proposed_by_side = 'technician'
+         AND v.created_at >= ${since}))`;
 }

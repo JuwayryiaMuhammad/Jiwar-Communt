@@ -198,6 +198,26 @@ export class DispatchTicketsQueryDto extends PageQueryDto {
   @IsOptional()
   @IsUUID()
   categoryId?: string;
+
+  @ApiProperty({
+    required: false,
+    enum: BOOL,
+    description:
+      '`true`: only tickets whose `sla.overdue` is true (ADR 0034). None while the SLA is off.',
+  })
+  @IsOptional()
+  @IsIn(BOOL, withParams({ allowed: [...BOOL] }))
+  overdue?: (typeof BOOL)[number];
+
+  @ApiProperty({
+    required: false,
+    enum: BOOL,
+    description:
+      '`true`: only tickets with an `escalatedAt` (ADR 0038). None while the SLA is off.',
+  })
+  @IsOptional()
+  @IsIn(BOOL, withParams({ allowed: [...BOOL] }))
+  escalated?: (typeof BOOL)[number];
 }
 
 export class TicketPhotoDto {

@@ -4893,6 +4893,11 @@ export interface components {
             cycle: number;
             /** @description Empty only for a preventive ticket without a note (ADR 0038). */
             description: string;
+            /**
+             * Format: date-time
+             * @description ADR 0038: when a resident escalated the ticket in this SLA cycle.
+             */
+            escalatedAt: string | null;
             /** @description ADR 0038: the residents' escalations, oldest first. */
             escalations: components["schemas"]["EscalationView"][];
             feedback: components["schemas"]["FeedbackView"][];
@@ -4916,7 +4921,7 @@ export interface components {
              * @description A preventive ticket: the window the resident asked for; null for a repair.
              */
             requestedStartsAt: string | null;
-            /** @description Null while the compound does not measure an SLA. */
+            /** @description Null while the compound does not measure an SLA, or the ticket has no clocks. */
             sla: components["schemas"]["DispatchTicketSlaView"] | null;
             status: components["schemas"]["TicketStatus"];
             technician: components["schemas"]["AccountRefView"] | null;
@@ -4951,6 +4956,11 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
             cycle: number;
+            /**
+             * Format: date-time
+             * @description ADR 0038: when a resident escalated the ticket in this SLA cycle.
+             */
+            escalatedAt: string | null;
             holdReason: components["schemas"]["TicketHoldReason"] | null;
             /** Format: uuid */
             id: string;
@@ -4969,6 +4979,8 @@ export interface components {
              * @description A preventive ticket: the window the resident asked for; null for a repair.
              */
             requestedStartsAt: string | null;
+            /** @description Null while the compound does not measure an SLA, or the ticket has no clocks. */
+            sla: components["schemas"]["DispatchTicketSlaView"] | null;
             status: components["schemas"]["TicketStatus"];
             technician: components["schemas"]["AccountRefView"] | null;
             unit: components["schemas"]["TicketUnitView"] | null;
@@ -9839,6 +9851,10 @@ export interface operations {
                 technicianId?: string;
                 unitId?: string;
                 categoryId?: string;
+                /** @description `true`: only tickets whose `sla.overdue` is true (ADR 0034). None while the SLA is off. */
+                overdue?: "true" | "false";
+                /** @description `true`: only tickets with an `escalatedAt` (ADR 0038). None while the SLA is off. */
+                escalated?: "true" | "false";
             };
             header?: never;
             path?: never;

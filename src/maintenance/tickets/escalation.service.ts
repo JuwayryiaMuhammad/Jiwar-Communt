@@ -124,6 +124,28 @@ export class EscalationService implements OnModuleInit {
     );
   }
 
+  /**
+   * Dispatch: when each ticket was escalated in its current SLA cycle, in
+   * one query for the page. A ticket that was not has no entry.
+   */
+  async escalatedAt(
+    tx: TenantTxClient,
+    tickets: readonly Pick<Ticket, 'id'>[],
+    slas: ReadonlyMap<string, SlaSummary | null>,
+  ): Promise<Map<string, Date>> {
+    const measured = tickets.filter((t) => slas.get(t.id));
+    if (!measured.length) return new Map();
+    const rows = await tx.ticketEscalation.findMany({
+      where: { ticketId: { in: measured.map((t) => t.id) } },
+      select: { ticketId: true, slaCycle: true, createdAt: true },
+    });
+    return new Map(
+      rows
+        .filter((r) => r.slaCycle === slas.get(r.ticketId)?.cycle)
+        .map((r) => [r.ticketId, r.createdAt]),
+    );
+  }
+
   /** Dispatch: every escalation of the ticket, oldest first. */
   list(tx: TenantTxClient, ticketId: string): Promise<TicketEscalation[]> {
     return tx.ticketEscalation.findMany({

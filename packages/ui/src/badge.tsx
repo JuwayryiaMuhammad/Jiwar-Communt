@@ -37,6 +37,20 @@ const STATUS_TONE: Record<string, Tone> = {
   rejected: 'error',
   erased: 'dark',
   revoked: 'beige',
+  // Maintenance tickets and visits (ADR 0032, 0034).
+  new: 'terracotta',
+  assigned: 'beige',
+  en_route: 'green',
+  in_progress: 'green',
+  on_hold: 'terracotta',
+  proposed: 'terracotta',
+  confirmed: 'green',
+  arrived: 'green',
+  done: 'beige',
+  no_access: 'error',
+  rescheduled: 'beige',
+  available: 'green',
+  unavailable: 'beige',
 };
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {

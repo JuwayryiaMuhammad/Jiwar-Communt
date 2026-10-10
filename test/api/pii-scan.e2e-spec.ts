@@ -671,6 +671,9 @@ describe('API v0 — PII leak scan', () => {
       '/me/data-exports/{id}/download': request.id,
       '/accounts/{id}/notification-preferences': primary.id,
       '/accounts/{id}/consents': primary.id,
+      // Where an assisted export and a deletion request stand: no link.
+      '/accounts/{id}/data-exports': primary.id,
+      '/accounts/{id}/deletion-request': leaving.id,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

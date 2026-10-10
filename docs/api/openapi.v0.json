@@ -12700,6 +12700,40 @@
       }
     },
     "/api/v1/accounts/{id}/data-exports": {
+      "get": {
+        "operationId": "AssistController_exports",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataExportViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "assist"
+        ],
+        "x-stability": "draft"
+      },
       "post": {
         "operationId": "AssistController_requestExport",
         "parameters": [
@@ -12746,6 +12780,40 @@
       }
     },
     "/api/v1/accounts/{id}/deletion-request": {
+      "get": {
+        "operationId": "AssistController_deletionRequest",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionRequestResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "assist"
+        ],
+        "x-stability": "draft"
+      },
       "post": {
         "operationId": "AssistController_requestDeletion",
         "parameters": [

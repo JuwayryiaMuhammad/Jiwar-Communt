@@ -123,7 +123,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["AssistController_exports"];
         put?: never;
         post: operations["AssistController_requestExport"];
         delete?: never;
@@ -139,7 +139,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["AssistController_deletionRequest"];
         put?: never;
         post: operations["AssistController_requestDeletion"];
         delete?: never;
@@ -7852,6 +7852,27 @@ export interface operations {
             };
         };
     };
+    AssistController_exports: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataExportViewList"];
+                };
+            };
+        };
+    };
     AssistController_requestExport: {
         parameters: {
             query?: never;
@@ -7873,6 +7894,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DataExportView"];
+                };
+            };
+        };
+    };
+    AssistController_deletionRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeletionRequestResponse"];
                 };
             };
         };

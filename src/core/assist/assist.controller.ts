@@ -15,6 +15,7 @@ import {
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../access/require-permissions.decorator';
 import { DeletionRequestResponse } from '../accounts/views/me.views';
+import { appError, ErrorCode } from '../common/errors';
 import { ApiArea } from '../common/http/decorators';
 import { bounded, ListOf, type ListResponse } from '../common/http/list';
 import { parseId } from '../common/validation/parse-id.pipe';
@@ -95,6 +96,17 @@ export class AssistController {
     );
   }
 
+  /** Status and dates of the account's latest exports; never a link. */
+  @Get('data-exports')
+  @ApiOkResponse({ type: ListOf(DataExportView) })
+  async exports(
+    @Param('id', parseId()) id: string,
+  ): Promise<ListResponse<DataExportView>> {
+    return bounded(await this.assist.exportsOf(id), (r) =>
+      DataExportView.from(r),
+    );
+  }
+
   /** Delivered only to the account's own email; never a link here. */
   @Post('data-exports')
   @ApiCreatedResponse({ type: DataExportView })
@@ -105,6 +117,22 @@ export class AssistController {
     return DataExportView.from(
       await this.assist.requestExport(id, dto.reasonCode),
     );
+  }
+
+  /** The account's latest deletion request (DELETION_REQUEST_NOT_FOUND: none). */
+  @Get('deletion-request')
+  @ApiOkResponse({ type: DeletionRequestResponse })
+  async deletionRequest(
+    @Param('id', parseId()) id: string,
+  ): Promise<DeletionRequestResponse> {
+    const request = await this.assist.deletionRequestOf(id);
+    if (!request) {
+      throw appError.notFound(
+        ErrorCode.DELETION_REQUEST_NOT_FOUND,
+        'No deletion request',
+      );
+    }
+    return DeletionRequestResponse.from(request);
   }
 
   @Post('deletion-request')

@@ -256,15 +256,23 @@ export class DataExportsService implements OnModuleInit {
 
   /** The account's latest requests, newest first. */
   async mine(): Promise<DataExportRead[]> {
-    return this.tenantTx.withTenantTx(async (tx) =>
-      (
-        await tx.dataExport.findMany({
-          where: { accountId: this.ctx.accountId },
-          orderBy: { requestedAt: 'desc' },
-          take: 10,
-        })
-      ).map(read),
+    return this.tenantTx.withTenantTx((tx) =>
+      this.latest(tx, this.ctx.accountId),
     );
+  }
+
+  /** An account's latest requests, newest first: never a file or a link. */
+  async latest(
+    tx: TenantTxClient,
+    accountId: string,
+  ): Promise<DataExportRead[]> {
+    return (
+      await tx.dataExport.findMany({
+        where: { accountId },
+        orderBy: { requestedAt: 'desc' },
+        take: 10,
+      })
+    ).map(read);
   }
 
   /** A download URL for the account's own ready export (no-store). */

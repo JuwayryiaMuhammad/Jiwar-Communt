@@ -186,6 +186,102 @@ describe('Assisted path', () => {
     expect(mails).toBe(3);
   });
 
+  it('reads where an export and a deletion request stand: status and dates, never a link, and it writes nothing', async () => {
+    const p = await someone();
+    const get = (path: string) =>
+      h.http().get(`${API}/accounts/${p.id}${path}`).set(bearer(managerToken));
+
+    // Nothing was ever asked.
+    expect((await get('/data-exports').expect(200)).body).toEqual({
+      data: [],
+      nextCursor: null,
+    });
+    const none = await get('/deletion-request').expect(404);
+    expect((none.body as { code: string }).code).toBe(
+      'DELETION_REQUEST_NOT_FOUND',
+    );
+
+    const filed = await post(`/accounts/${p.id}/data-exports`, {
+      reasonCode: 'in_person',
+    }).expect(201);
+    const asked = await post(`/accounts/${p.id}/deletion-request`, {
+      reasonCode: 'phone_call',
+    }).expect(201);
+    const exports = await get('/data-exports').expect(200);
+    expect(exports.body).toEqual({
+      data: [
+        {
+          id: (filed.body as { id: string }).id,
+          status: 'pending',
+          requestedAt: expect.any(String) as string,
+          readyAt: null,
+          expiresAt: null,
+          assisted: true,
+        },
+      ],
+      nextCursor: null,
+    });
+    const deletion = await get('/deletion-request').expect(200);
+    expect(deletion.body).toEqual(asked.body);
+    expect(deletion.body).toMatchObject({ status: 'pending', assisted: true });
+    expect(Object.keys(deletion.body as object).sort()).toEqual([
+      'assisted',
+      'blockers',
+      'effectiveAt',
+      'id',
+      'requestedAt',
+      'status',
+    ]);
+
+    // A built export is still only a status here: the file is the account's.
+    await buildExports(h);
+    const built = await get('/data-exports').expect(200);
+    expect(built.body).toMatchObject({
+      data: [{ status: 'ready', assisted: true }],
+    });
+    expect(
+      Object.keys((built.body as { data: object[] }).data[0]).sort(),
+    ).toEqual([
+      'assisted',
+      'expiresAt',
+      'id',
+      'readyAt',
+      'requestedAt',
+      'status',
+    ]);
+    expect(JSON.stringify(built.body)).not.toMatch(/https?:|url|token/i);
+
+    // The undo shows as the latest request's status.
+    await post(`/accounts/${p.id}/deletion-request/cancel`, {
+      reasonCode: 'phone_call',
+    }).expect(204);
+    expect((await get('/deletion-request').expect(200)).body).toMatchObject({
+      id: (asked.body as { id: string }).id,
+      status: 'cancelled',
+    });
+
+    // Reading tells nobody and audits nothing.
+    const written = async () => ({
+      told: (await told(p.id)).length,
+      audit: (await auditReaders(h).tenant(c.tenantId)).length,
+    });
+    const before = await written();
+    await get('/data-exports').expect(200);
+    await get('/deletion-request').expect(200);
+    expect(await written()).toEqual(before);
+
+    // Only for a resident or family account, like every assisted action.
+    const guard = await gateHelpers(h).guard(c);
+    for (const path of ['/data-exports', '/deletion-request']) {
+      const res = await h
+        .http()
+        .get(`${API}/accounts/${guard.id}${path}`)
+        .set(bearer(managerToken))
+        .expect(404);
+      expect((res.body as { code: string }).code).toBe('ACCOUNT_NOT_FOUND');
+    }
+  });
+
   it('a deletion request, and its undo, for the account', async () => {
     const p = await someone();
     const res = await post(`/accounts/${p.id}/deletion-request`, {

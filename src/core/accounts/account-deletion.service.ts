@@ -318,13 +318,21 @@ export class AccountDeletionService implements OnModuleInit {
   }
 
   async myDeletionRequest(): Promise<DeletionRequestView | null> {
-    return this.tenantTx.withTenantTx(async (tx) => {
-      const request = await tx.accountDeletionRequest.findFirst({
-        where: { accountId: this.ctx.accountId },
-        orderBy: { requestedAt: 'desc' },
-      });
-      return request ? view(request) : null;
+    return this.tenantTx.withTenantTx((tx) =>
+      this.latestRequest(tx, this.ctx.accountId),
+    );
+  }
+
+  /** The account's latest request, whatever its status, or null. */
+  async latestRequest(
+    tx: TenantTxClient,
+    accountId: string,
+  ): Promise<DeletionRequestView | null> {
+    const request = await tx.accountDeletionRequest.findFirst({
+      where: { accountId },
+      orderBy: { requestedAt: 'desc' },
     });
+    return request ? view(request) : null;
   }
 
   /** What blocks the account's erasure now (core and the domains). */

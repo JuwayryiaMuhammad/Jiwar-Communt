@@ -191,6 +191,7 @@ They are checked on request (409 `DELETION_BLOCKED`, `params.blockers`) and agai
   - tells the account (`account.assisted_action`, inbox and email: what was done and how it was asked, never who).
 - **An assisted export goes only to the account's own email**: the manager's response carries no link, and the manager can never download it. An account without an email would be refused (`ACCOUNT_HAS_NO_EMAIL`). Today that cannot happen, because every account that may export has an email (`accounts_erased_shape`), so a unit test proves the guard.
 - **Cancel** is allowed too, so a request filed by mistake can be undone without the person logging in.
+- **Where things stand:** `GET /accounts/{id}/deletion-request` (the latest request, `DELETION_REQUEST_NOT_FOUND` when there is none) and `GET /accounts/{id}/data-exports` (the latest ten) return status, dates and `assisted`, so the manager can answer the person. Never a link or a token. Reading tells nobody and is not audited.
 
 ## Secrets in emails
 - **The token.** Emails carrying a "not me" action or a download link carry an action token. `action_tokens` is a global pointer, like `invite_tokens`, on the RLS allowlist. It holds ids, purpose, subject, account, expiry and use count, and no secret or hash of one.

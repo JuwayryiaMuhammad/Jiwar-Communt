@@ -141,6 +141,27 @@ export class AssistService {
     });
   }
 
+  /**
+   * Where the account's exports stand: status and dates, so the manager can
+   * tell the person. Never a link: the archive is the account's alone.
+   */
+  async exportsOf(accountId: string): Promise<DataExportRead[]> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.target(tx, accountId);
+      return this.exports.latest(tx, accountId);
+    });
+  }
+
+  /** The account's latest deletion request, or null when it never asked. */
+  async deletionRequestOf(
+    accountId: string,
+  ): Promise<DeletionRequestView | null> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.target(tx, accountId);
+      return this.deletion.latestRequest(tx, accountId);
+    });
+  }
+
   /** The archive goes only to the account's own email (ACCOUNT_HAS_NO_EMAIL). */
   async requestExport(
     accountId: string,

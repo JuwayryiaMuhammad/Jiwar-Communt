@@ -28,6 +28,7 @@ import {
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { api } from '@/lib/api';
 import { fetchers, keys, type Account } from '@/lib/queries';
@@ -187,7 +188,9 @@ export default function StaffPage() {
                     <span className="t-secondary">Erased account</span>
                   ) : (
                     <span className="table__primary">
-                      {a.fullName}
+                      <Link className="table__link" href={`/accounts/${a.id}`}>
+                        {a.fullName}
+                      </Link>
                       {a.id === me.data?.id ? <span className="t-secondary"> (you)</span> : null}
                     </span>
                   ),

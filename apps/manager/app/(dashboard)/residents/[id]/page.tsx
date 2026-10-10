@@ -24,6 +24,7 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { emptyOccupancy, OccupancyRow } from '@/components/occupancy-row';
 import { api } from '@/lib/api';
+import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ResidentDetail } from '@/lib/queries';
 
 type Occupancy = Schema<'OccupancyResponse'>;
@@ -128,6 +129,7 @@ function AddUnitDialog({ residentId, open, onClose }: { residentId: string; open
 }
 
 export default function ResidentPage() {
+  const { can } = usePermissions();
   const { id } = useParams<{ id: string }>();
   const toast = useToast();
   const [editing, setEditing] = useState(false);
@@ -174,6 +176,7 @@ export default function ResidentPage() {
         actions={
           r && !r.erased ? (
             <>
+              {can('accounts.read') ? <ButtonLink href={`/accounts/${r.id}`}>Account</ButtonLink> : null}
               <Button icon={<Pencil aria-hidden />} onClick={() => setEditing(true)}>
                 Contact
               </Button>

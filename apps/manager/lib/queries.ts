@@ -39,6 +39,14 @@ export type PreventiveService = Schema<'PreventiveServiceView'>;
 export type MaintenanceSettings = Schema<'MaintenanceSettingsResponse'>;
 export type DispatchSettings = Schema<'DispatchSettingsResponse'>;
 export type SlaSettings = Schema<'SlaSettingsResponse'>;
+export type AccountDetail = Schema<'AccountDetailView'>;
+export type Erasure = Schema<'PendingErasureView'>;
+export type ErasureScope = Schema<'ErasureScopeView'>;
+export type LegalHold = Schema<'LegalHoldResponse'>;
+export type Preferences = Schema<'PreferencesView'>;
+export type Consent = Schema<'ConsentView'>;
+export type DataExport = Schema<'DataExportView'>;
+export type DeletionRequest = Schema<'DeletionRequestResponse'>;
 
 export interface TicketFilters {
   status?: TicketStatus | '';
@@ -86,6 +94,9 @@ export const keys = {
   maintenanceSettings: ['maintenance-settings'] as const,
   dispatchSettings: ['dispatch-settings'] as const,
   slaSettings: ['sla-settings'] as const,
+  account: (id: string) => ['accounts', 'detail', id] as const,
+  accountPart: (id: string, part: string) => ['accounts', 'detail', id, part] as const,
+  erasures: ['erasures'] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -138,6 +149,9 @@ export const fetchers = {
   maintenanceSettings: () => unwrap(api.GET('/api/v1/maintenance/settings')),
   dispatchSettings: () => unwrap(api.GET('/api/v1/maintenance/dispatch-settings')),
   slaSettings: () => unwrap(api.GET('/api/v1/maintenance/sla-settings')),
+  account: (id: string) => unwrap(api.GET('/api/v1/accounts/{id}', { params: { path: { id } } })),
+  erasures: (cursor?: string, limit = 50) => unwrap(api.GET('/api/v1/erasures', { params: { query: { cursor, limit } } })),
+  legalHolds: (id: string) => unwrap(api.GET('/api/v1/accounts/{id}/legal-holds', { params: { path: { id } } })),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

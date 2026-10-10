@@ -26,6 +26,7 @@ export function ReasonDialog({
   error,
   onConfirm,
   textLabel = 'Message to the person',
+  textHint = 'Kept on the record and in the notice, never in the audit trail.',
   children,
 }: {
   open: boolean;
@@ -39,6 +40,8 @@ export function ReasonDialog({
   error?: ReactNode;
   onConfirm: (reason: { reasonCode: string; reason: string }) => void;
   textLabel?: string;
+  /** Where the text goes: not every reason reaches the person. */
+  textHint?: string;
   children?: ReactNode;
 }) {
   const [code, setCode] = useState('');
@@ -88,7 +91,7 @@ export function ReasonDialog({
         </Field>
         <Field
           label={textLabel}
-          hint="Kept on the record and in the notice, never in the audit trail."
+          hint={textHint}
           error={touched && !text.trim() ? 'Required.' : undefined}
         >
           {(p) => <Textarea {...p} maxLength={1000} value={text} onChange={(e) => setText(e.target.value)} />}
@@ -115,6 +118,7 @@ export function ReasonCodeDialog({
   pending,
   error,
   ready = true,
+  codeLabel = 'Reason',
   onConfirm,
   children,
 }: {
@@ -128,6 +132,8 @@ export function ReasonCodeDialog({
   pending?: boolean;
   error?: ReactNode;
   ready?: boolean;
+  /** What the code answers, when it is not a reason (e.g. how someone asked). */
+  codeLabel?: string;
   onConfirm: (reasonCode: string) => void;
   children?: ReactNode;
 }) {
@@ -161,7 +167,7 @@ export function ReasonCodeDialog({
     >
       <div className="form">
         {children}
-        <Field label="Reason" error={touched && !code ? 'Pick a reason.' : undefined}>
+        <Field label={codeLabel} error={touched && !code ? 'Pick one.' : undefined}>
           {(p) => (
             <Select {...p} value={code} onChange={(e) => setCode(e.target.value)}>
               <option value="">Select…</option>

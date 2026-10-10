@@ -20,6 +20,13 @@ export const REASON_CODES = {
     'documents_missing',
     'other',
   ],
+  // Accounts (ADR 0023, 0036).
+  legalHold: ['litigation', 'regulator_request', 'financial_audit', 'other'],
+  legalHoldRelease: ['resolved', 'other'],
+  // How the person asked the manager to act for them: a code only.
+  assist: ['in_person', 'phone_call', 'written_request'],
+  // A queued deletion closed without erasing: a code only.
+  deletionClose: ['blockers_unresolved', 'withdrawn', 'other'],
   // Maintenance (ADR 0032-0034): codes only, never text.
   ticketReassign: ['technician_unavailable', 'workload', 'specialty', 'other'],
   ticketPriority: ['reassessed', 'safety_risk', 'reporter_request', 'other'],

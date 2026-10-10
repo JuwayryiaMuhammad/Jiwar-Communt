@@ -33,6 +33,12 @@ export type Specialty = Schema<'SpecialtyView'>;
 export type CategoryOption = Schema<'CategoryOptionView'>;
 export type Visit = Schema<'DispatchVisitView'>;
 export type TicketMessage = Schema<'DispatchMessageView'>;
+export type Category = Schema<'CategoryView'>;
+export type SlaTargets = Schema<'SlaTargetsView'>;
+export type PreventiveService = Schema<'PreventiveServiceView'>;
+export type MaintenanceSettings = Schema<'MaintenanceSettingsResponse'>;
+export type DispatchSettings = Schema<'DispatchSettingsResponse'>;
+export type SlaSettings = Schema<'SlaSettingsResponse'>;
 
 export interface TicketFilters {
   status?: TicketStatus | '';
@@ -75,6 +81,11 @@ export const keys = {
   technicians: ['technicians'] as const,
   specialties: ['specialties'] as const,
   ticketCategories: ['ticket-categories'] as const,
+  categories: ['maintenance-categories'] as const,
+  preventiveServices: ['preventive-services'] as const,
+  maintenanceSettings: ['maintenance-settings'] as const,
+  dispatchSettings: ['dispatch-settings'] as const,
+  slaSettings: ['sla-settings'] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -122,6 +133,11 @@ export const fetchers = {
   technicians: () => unwrap(api.GET('/api/v1/maintenance/technicians')),
   specialties: () => unwrap(api.GET('/api/v1/maintenance/specialties')),
   ticketCategories: () => unwrap(api.GET('/api/v1/ticket-categories')),
+  categories: () => unwrap(api.GET('/api/v1/maintenance/categories')),
+  preventiveServices: () => unwrap(api.GET('/api/v1/maintenance/preventive-services')),
+  maintenanceSettings: () => unwrap(api.GET('/api/v1/maintenance/settings')),
+  dispatchSettings: () => unwrap(api.GET('/api/v1/maintenance/dispatch-settings')),
+  slaSettings: () => unwrap(api.GET('/api/v1/maintenance/sla-settings')),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

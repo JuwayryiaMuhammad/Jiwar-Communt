@@ -13,6 +13,7 @@ import {
   ScrollText,
   Settings,
   ShieldCheck,
+  SlidersHorizontal,
   UserCog,
   Users,
   Wrench,
@@ -108,6 +109,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       items: [
         { href: '/roles', label: 'Roles', icon: <ShieldCheck aria-hidden />, show: can('roles.read') },
         { href: '/settings', label: 'Settings', icon: <Settings aria-hidden />, show: can('settings.manage') },
+        {
+          href: '/maintenance-setup',
+          label: 'Maintenance setup',
+          icon: <SlidersHorizontal aria-hidden />,
+          show: can('maintenance.manage'),
+        },
         { href: '/audit', label: 'Audit log', icon: <ScrollText aria-hidden />, show: can('audit.read') },
       ],
     },

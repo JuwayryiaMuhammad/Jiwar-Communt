@@ -121,6 +121,7 @@ const ERROR_TEXT: Record<string, string> = {
   VISIT_NOT_FOR_COMMON_AREA: 'Visits are for tickets in a unit.',
   VISIT_WINDOW_PASSED: 'That visit window has already passed.',
   VISITS_NOT_ALLOWED: 'Visits are not allowed on this ticket.',
+  PREVENTIVE_SERVICE_NOT_FOUND: 'Preventive service not found.',
 };
 
 const FIELD_TEXT: Record<string, string> = {
@@ -151,6 +152,8 @@ const FIELD_TEXT: Record<string, string> = {
   VISIT_TOO_LONG: 'Too long: a visit window is at most 4 hours.',
   VISIT_ENDS_BEFORE_START: 'The end must be after the start.',
   VISIT_OUTSIDE_HOURS: "Outside the compound's visiting hours.",
+  VISIT_HOURS_TOO_SHORT: 'The visiting hours must hold at least one slot.',
+  SLA_RESPONSE_AFTER_RESOLUTION: 'The response target cannot be longer than the resolution target.',
 };
 
 export function errorText(error: unknown): string {
@@ -167,6 +170,12 @@ export function fieldText(code: string, params?: Record<string, unknown>): strin
     if (min !== undefined && max !== undefined) return `Between ${min} and ${max} characters.`;
     if (max !== undefined) return `At most ${max} characters.`;
     if (min !== undefined) return `At least ${min} characters.`;
+  }
+  if (code === 'INVALID_NUMBER' && params) {
+    const { min, max } = params as { min?: number; max?: number };
+    if (min !== undefined && max !== undefined) return `A number from ${min} to ${max}.`;
+    if (max !== undefined) return `At most ${max}.`;
+    if (min !== undefined) return `At least ${min}.`;
   }
   return base;
 }

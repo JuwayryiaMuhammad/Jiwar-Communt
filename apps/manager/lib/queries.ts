@@ -23,6 +23,28 @@ export type Role = Schema<'RoleView'>;
 export type Permission = Schema<'PermissionView'>;
 export type Settings = Schema<'SettingsView'>;
 export type AuditEntry = Schema<'AuditEntryView'>;
+export type Ticket = Schema<'DispatchTicketView'>;
+export type TicketDetail = Schema<'DispatchTicketDetailView'>;
+export type TicketSla = Schema<'DispatchTicketSlaView'>;
+export type TicketStatus = Schema<'TicketStatus'>;
+export type TicketPriority = Schema<'TicketPriority'>;
+export type Technician = Schema<'TechnicianOptionView'>;
+export type Specialty = Schema<'SpecialtyView'>;
+export type CategoryOption = Schema<'CategoryOptionView'>;
+export type Visit = Schema<'DispatchVisitView'>;
+export type TicketMessage = Schema<'DispatchMessageView'>;
+
+export interface TicketFilters {
+  status?: TicketStatus | '';
+  priority?: TicketPriority | '';
+  unassigned?: 'true' | '';
+  overdue?: 'true' | '';
+  escalated?: 'true' | '';
+  technicianId?: string;
+  categoryId?: string;
+}
+/** The same without the empty choices: what reaches the API. */
+type TicketQuery = { [K in keyof TicketFilters]?: Exclude<TicketFilters[K], ''> };
 
 /** Query keys: a prefix invalidates everything under it. */
 export const keys = {
@@ -46,6 +68,13 @@ export const keys = {
   permissions: ['permissions'] as const,
   settings: ['settings'] as const,
   audit: (filters: object) => ['audit', filters] as const,
+  ticketsAll: ['tickets'] as const,
+  tickets: (filters: object) => ['tickets', 'list', filters] as const,
+  ticket: (id: string) => ['tickets', 'detail', id] as const,
+  ticketPart: (id: string, part: string) => ['tickets', 'detail', id, part] as const,
+  technicians: ['technicians'] as const,
+  specialties: ['specialties'] as const,
+  ticketCategories: ['ticket-categories'] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -87,6 +116,12 @@ export const fetchers = {
   settings: () => unwrap(api.GET('/api/v1/settings')),
   audit: (filters: { action?: string; targetType?: string; from?: string; to?: string }, cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/audit', { params: { query: { ...clean(filters), cursor, limit } } })),
+  tickets: (filters: TicketFilters, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/maintenance/tickets', { params: { query: { ...(clean(filters) as TicketQuery), cursor, limit } } })),
+  ticket: (id: string) => unwrap(api.GET('/api/v1/maintenance/tickets/{id}', { params: { path: { id } } })),
+  technicians: () => unwrap(api.GET('/api/v1/maintenance/technicians')),
+  specialties: () => unwrap(api.GET('/api/v1/maintenance/specialties')),
+  ticketCategories: () => unwrap(api.GET('/api/v1/ticket-categories')),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

@@ -7,17 +7,101 @@ none of them: its own containers, nothing listening outside 127.0.0.1.
 ## Flow
 
 1. A push to `main` runs CI (`.github/workflows/ci.yml`).
-2. When CI passes, `.github/workflows/deploy.yml` builds the image and pushes
-   `ghcr.io/juwayryiamuhammad/jiwar-communt:<sha>`. It can also be run by
-   hand (Actions → Deploy → Run workflow), on `main` only.
+2. When CI passes, `.github/workflows/deploy.yml` builds three images and
+   pushes them to `ghcr.io/juwayryiamuhammad/jiwar-communt`: the API as
+   `<sha>`, the dashboards (`apps/Dockerfile`) as `<sha>-admin` and
+   `<sha>-manager`. It can also be run by hand (Actions → Deploy → Run
+   workflow), on `main` only.
 3. It connects as `jiwar-deploy` and runs `deploy <sha>`, the job's token on
    stdin. That key is bound to `/usr/local/bin/jiwar-community-deploy`
    (`deploy/deploy.sh`) with `command=…,restrict`: no shell, no forwarding.
-4. The script pulls the image, takes `compose.yml` from it, then runs the
-   README's deploy order: `prisma migrate deploy` as `jiwar_migrator`,
-   `access:sync`, the bucket, and only then the app, waiting for its health
-   check. If the new app is not healthy, the previous image goes back up.
-   Migrations are not undone.
+4. The script pulls the images, takes `compose.yml` from the API's, then
+   runs the README's deploy order: `prisma migrate deploy` as
+   `jiwar_migrator`, `access:sync`, the bucket, and only then the app and
+   both dashboards, waiting for their health checks. If one is not healthy,
+   the previous release goes back up. Migrations are not undone.
+
+## Dashboards
+
+`admin` and `manager` are services of the same stack (`deploy/compose.yml`),
+so they ship, roll back and are pruned with the API:
+
+| Service | Container | Listens on | Image | Environment |
+|---|---|---|---|---|
+| `admin` | `jiwar-community-admin-1` | `127.0.0.1:3001` | `<sha>-admin` | `PORT=3001`, `JIWAR_API_URL=http://app:3100` |
+| `manager` | `jiwar-community-manager-1` | `127.0.0.1:3002` | `<sha>-manager` | `PORT=3002`, `JIWAR_API_URL=http://app:3100` |
+
+`NODE_ENV=production` and `HOSTNAME=0.0.0.0` come from the image
+(`apps/Dockerfile`). They need no env file: they hold no secret. Each has a
+health check (its `/login` page answers) and a 256 MB memory limit; a deploy
+waits for both to be healthy, and puts the previous release back if one is
+not.
+
+The names, ports and environment are the ones the hand-built containers
+already use (compose project `jiwar-community`, built from `31e2fe8`), so the
+first deploy replaces those two containers in place.
+
+### nginx and HTTPS: on the server, not in this repository
+
+The two names are served by nginx server blocks that certbot manages on the
+server. **Nothing in this repository installs or replaces them**, and
+`deploy/nginx.conf` (the API's default server on port 80) does not mention
+them. For reference, what is live:
+
+| Name | Listens | Certificate | Proxies to |
+|---|---|---|---|
+| `community-admin.escanestate.com` | 443 (TLS) | certbot, one certificate for both names, valid to 2027-01-02, renewed by certbot | `http://127.0.0.1:3001` |
+| `community-manager.escanestate.com` | 443 (TLS) | the same certificate | `http://127.0.0.1:3002` |
+
+Both pass `Host $host` and the `X-Forwarded-*` headers. HTTPS is required,
+not optional: the dashboards' session cookies are `Secure`, and the BFF
+compares a request's `Origin` with the `Host` it receives, so `Host` must
+stay the public name.
+
+### Putting this change on the server
+
+One step, by hand, as root: install the new deploy script. No nginx step, no
+env file, no manual container work.
+
+```bash
+scp deploy/deploy.sh root@191.218.163.45:/tmp/jiwar-community-deploy
+ssh root@191.218.163.45 'install -o root -g root -m 755 /tmp/jiwar-community-deploy /usr/local/bin/jiwar-community-deploy && rm /tmp/jiwar-community-deploy'
+```
+
+Either order works; before the merge is the simpler one.
+
+- **Script installed before the merge.** Nothing changes until the merge's
+  own deploy. That deploy pulls three images, migrates, starts the API, then
+  replaces the two hand-built dashboard containers with the released ones
+  and waits for all three to be healthy. Until then, do not deploy a commit
+  from before this change with the new script: it would look for dashboard
+  images that were never built and stop before touching anything. A
+  `rollback` is unaffected (it pulls nothing).
+- **Script installed after the merge.** The merge's deploy runs with the old
+  script: the API is released as usual and the dashboards are left exactly
+  as they are (the hand-built containers keep running; the old script starts
+  `app` only). Then install the script and run the workflow again by hand
+  (Actions → Deploy → Run workflow): it pulls the two dashboard images and
+  replaces the containers.
+
+Check afterwards:
+
+```bash
+ssh root@191.218.163.45 'sudo -u jiwar-deploy jiwar-community-deploy status'   # app, admin, manager: healthy
+curl -sI https://community-manager.escanestate.com/login | head -1
+curl -sI https://community-admin.escanestate.com/login | head -1
+```
+
+If the first deploy fails with a container name conflict, the hand-built
+containers were not created by compose. Remove them and run the workflow
+again (a minute without the dashboards; the API is unaffected):
+
+```bash
+ssh root@191.218.163.45 'docker rm -f jiwar-community-admin-1 jiwar-community-manager-1'
+```
+
+Rolling back to a release from before this change brings back that API and
+leaves the dashboards as they are: that release has none of its own.
 
 ## Server layout
 
@@ -61,7 +145,8 @@ presigned URLs are signed for), `S3_REGION=us-east-1`, `S3_BUCKET=jiwar`,
 `S3_FORCE_PATH_STYLE=true` and MinIO credentials.
 
 `deploy.sh` and `nginx.conf` are installed by hand: a change to either is
-copied to the server, it does not ship with the image.
+copied to the server, it does not ship with the image. The dashboards' HTTPS
+server blocks are not in `nginx.conf` at all (Dashboards, above).
 
 ## Production object storage: Cloudflare R2
 
@@ -95,7 +180,7 @@ bucket: point `S3_*` in a local `.env` at it, then
 
 ```bash
 ssh root@191.218.163.45 'sudo -u jiwar-deploy jiwar-community-deploy status'
-ssh root@191.218.163.45 'sudo -u jiwar-deploy jiwar-community-deploy rollback'   # app only
+ssh root@191.218.163.45 'sudo -u jiwar-deploy jiwar-community-deploy rollback'   # app and dashboards, no migrate
 ssh root@191.218.163.45 'cd /srv/jiwar-community && docker compose -p jiwar-community logs -f app'
 ssh -L 8025:127.0.0.1:8125 root@191.218.163.45   # Mailpit (OTP codes): http://localhost:8025
 ```

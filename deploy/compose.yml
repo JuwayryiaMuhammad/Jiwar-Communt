@@ -93,6 +93,48 @@ services:
     mem_limit: 768m
     logging: *logging
 
+  # The dashboards (apps/): the same release as the app, tagged `<sha>-admin`
+  # and `<sha>-manager`. They hold no secret: each reaches the API over the
+  # compose network and keeps its users' tokens in their cookies.
+  admin:
+    image: ${APP_IMAGE:?set by the deploy script}-admin
+    restart: unless-stopped
+    environment:
+      PORT: '3001'
+      JIWAR_API_URL: http://app:3100
+    ports:
+      - '127.0.0.1:3001:3001'
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck: &dashboard-health
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:'+process.env.PORT+'/login').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    mem_limit: 256m
+    logging: *logging
+
+  manager:
+    image: ${APP_IMAGE:?set by the deploy script}-manager
+    restart: unless-stopped
+    environment:
+      PORT: '3002'
+      JIWAR_API_URL: http://app:3100
+    ports:
+      - '127.0.0.1:3002:3002'
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck: *dashboard-health
+    mem_limit: 256m
+    logging: *logging
+
   # One-off: `prisma migrate deploy` as the table owner. Only this service
   # sees MIGRATOR_DATABASE_URL; the app never does.
   migrate:

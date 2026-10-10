@@ -9,6 +9,8 @@
 #   ssh jiwar-deploy@host "status"
 #
 # The README's deploy order: migrate, access:sync, and only then the server.
+# A release is three images under one SHA: the API (`<sha>`) and the two
+# dashboards (`<sha>-admin`, `<sha>-manager`).
 set -Eeuo pipefail
 
 APP_DIR=/srv/jiwar-community
@@ -36,17 +38,36 @@ use_release() {
 
 # The token lives for this call only, in a throwaway config directory.
 pull() {
-  local image="$IMAGE_REPO:$1" token cfg rc=0
-  if docker image inspect "$image" >/dev/null 2>&1; then return 0; fi
+  local image token cfg rc=0 missing=()
+  for image in "$IMAGE_REPO:$1" "$IMAGE_REPO:$1-admin" "$IMAGE_REPO:$1-manager"; do
+    docker image inspect "$image" >/dev/null 2>&1 || missing+=("$image")
+  done
+  ((${#missing[@]})) || return 0
   IFS= read -r token || true
-  [[ -n "$token" ]] || die "$image is not on this host and no registry token came on stdin"
+  [[ -n "$token" ]] || die "${missing[*]}: not on this host and no registry token came on stdin"
   cfg=$(mktemp -d)
-  {
-    DOCKER_CONFIG="$cfg" docker login "$REGISTRY" -u x-access-token --password-stdin <<<"$token" >/dev/null &&
-      DOCKER_CONFIG="$cfg" docker pull -q "$image" >/dev/null
-  } || rc=$?
+  if DOCKER_CONFIG="$cfg" docker login "$REGISTRY" -u x-access-token --password-stdin <<<"$token" >/dev/null; then
+    for image in "${missing[@]}"; do
+      DOCKER_CONFIG="$cfg" docker pull -q "$image" >/dev/null || { rc=$?; break; }
+    done
+  else
+    rc=$?
+  fi
   rm -rf "$cfg"
   return "$rc"
+}
+
+# The app and the dashboards this release's compose.yml has: a release from
+# before the dashboards shipped has none, and rolls back as the app alone.
+servers() {
+  echo app
+  compose config --services | grep -x -e admin -e manager || true
+}
+
+start() {
+  local services
+  mapfile -t services < <(servers)
+  compose up -d "${WAIT[@]}" --no-deps "${services[@]}"
 }
 
 release() {
@@ -58,15 +79,17 @@ release() {
   compose run --rm --no-deps app node dist/core/platform/access-sync.cli.js
   compose run --rm --no-deps app node deploy/ensure-bucket.js
   log "start $1"
-  compose up -d "${WAIT[@]}" --no-deps app
+  start
 }
 
 # Keep the running and the previous image; drop older releases.
 prune() {
   local keep_a=$1 keep_b=${2:-$1}
-  local tag
+  local tag sha
   for tag in $(docker image ls "$IMAGE_REPO" --format '{{.Tag}}'); do
-    [[ "$tag" == "$keep_a" || "$tag" == "$keep_b" ]] && continue
+    sha=${tag%-admin}
+    sha=${sha%-manager}
+    [[ "$sha" == "$keep_a" || "$sha" == "$keep_b" ]] && continue
     docker image rm "$IMAGE_REPO:$tag" >/dev/null || true
   done
 }
@@ -96,7 +119,7 @@ deploy() {
     # Migrations are not undone: the previous code runs on the new schema.
     log "back to $prev"
     use_release "$prev"
-    compose up -d "${WAIT[@]}" --no-deps app || log "the previous release did not come back healthy either"
+    start || log "the previous release did not come back healthy either"
   fi
   exit 1
 }
@@ -108,7 +131,7 @@ rollback() {
   [[ -n "$prev" ]] || die "no previous release"
   log "rollback $cur -> $prev (no migrate, no access:sync)"
   use_release "$prev"
-  compose up -d "${WAIT[@]}" --no-deps app
+  start
   echo "$prev" >current
   echo "$cur" >previous
   log "live: $prev"

@@ -7,6 +7,7 @@ import { AccountsService } from '../../src/core/accounts/accounts.service';
 import { newId } from '../../src/core/common/uuid';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { SweepRunner } from '../../src/core/sweep/sweep-runner';
+import { WorkerWagesService } from '../../src/community/workers/worker-wages.service';
 import { WorkersService } from '../../src/community/workers/workers.service';
 import { auditReaders } from '../setup/audit';
 import { communityHelpers, type Compound } from '../setup/community';
@@ -144,6 +145,22 @@ describe('Account deletion', () => {
         workers.end(reg.engagementId, {
           code: 'work_finished',
           text: 'Done',
+        }),
+      );
+      expect(await refusal(ask(tenant.id))).toMatchObject({
+        params: { blockers: ['open_worker_obligations'] },
+      });
+      // The household's own record of a payment settles nothing (ADR 0037).
+      await asResident(tenant.id, () =>
+        h.moduleRef.get(WorkerWagesService).pay(reg.engagementId, {
+          period: new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Africa/Cairo',
+            year: 'numeric',
+            month: '2-digit',
+          })
+            .format(new Date())
+            .slice(0, 7),
+          amount: 1500,
         }),
       );
       expect(await refusal(ask(tenant.id))).toMatchObject({

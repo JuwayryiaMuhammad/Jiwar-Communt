@@ -97,6 +97,8 @@ const AUDIT_TABLES = [
   // And the parcels' events (ADR 0035).
   'parcel_events',
   'consent_events',
+  // And the wage payments (ADR 0037).
+  'worker_wage_payments',
 ];
 
 /**

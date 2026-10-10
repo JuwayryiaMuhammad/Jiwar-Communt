@@ -159,6 +159,11 @@ export interface EngagementView {
   status: WorkerEngagementStatus;
   validUntil: Date | null;
   suspendedByManagement: boolean;
+  /**
+   * Two decimals; null until the household sets it (ADR 0037). Absent for
+   * a reader who is not on the employer side.
+   */
+  monthlyWage?: string | null;
 }
 
 /** An engagement in the manager's review list; never a birth date or a document number. */
@@ -170,6 +175,8 @@ export interface ReviewEngagement {
   workerName: string;
   capacity: WorkerCapacity;
   status: WorkerEngagementStatus;
+  /** Two decimals; null until the household sets it (ADR 0037). */
+  monthlyWage: string | null;
   idDocumentType: IdDocumentType;
   /** Passport workers: the birth date was attested (ADR 0018). */
   birthDateVerified: boolean;
@@ -185,6 +192,8 @@ export interface EngagementDetail {
   schedule: WorkerSchedule;
   validUntil: Date | null;
   status: WorkerEngagementStatus;
+  /** Two decimals; null until the household sets it (ADR 0037). */
+  monthlyWage: string | null;
   requestedBy: { id: string; fullName: string | null; status: AccountStatus };
   createdAt: Date;
   worker: {
@@ -208,7 +217,9 @@ type NoticeKey =
   | 'engagement_suspended'
   | 'engagement_suspended_by_management'
   | 'engagement_resumed'
-  | 'engagement_ended';
+  | 'engagement_ended'
+  // ADR 0037; written by WorkerWagesService.
+  | 'wage_paid';
 
 const OPEN: WorkerEngagementStatus[] = [
   'pending_review',
@@ -508,6 +519,7 @@ export class WorkersService {
     const limit = clampLimit(q.limit);
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.authority.assertVisible(tx, unitId);
+      const readsWage = await this.authority.wageReader(tx, unitId);
       const rows = await tx.workerEngagement.findMany({
         where: {
           AND: [
@@ -532,6 +544,9 @@ export class WorkersService {
           status: effectiveStatus(e),
           validUntil: e.validUntil,
           suspendedByManagement: e.suspendedByManagement,
+          ...(readsWage(e)
+            ? { monthlyWage: e.monthlyWage?.toFixed(2) ?? null }
+            : {}),
         })),
         nextCursor: page.nextCursor,
       };
@@ -588,6 +603,7 @@ export class WorkersService {
           workerName: e.worker.fullName,
           capacity: e.capacity,
           status: effectiveStatus(e),
+          monthlyWage: e.monthlyWage?.toFixed(2) ?? null,
           idDocumentType: e.worker.idDocumentType,
           birthDateVerified: e.worker.birthDateVerifiedAt !== null,
           createdAt: e.createdAt,
@@ -617,6 +633,7 @@ export class WorkersService {
         schedule: e.schedule as unknown as WorkerSchedule,
         validUntil: e.validUntil,
         status: effectiveStatus(e),
+        monthlyWage: e.monthlyWage?.toFixed(2) ?? null,
         requestedBy: e.requestedBy,
         createdAt: e.createdAt,
         worker: {
@@ -1470,11 +1487,11 @@ export class WorkersService {
     return result.value;
   }
 
-  /** Temporary work past its end: ended, code destroyed, notice, audit as system. */
-  private async expireIfDue(
-    tx: TenantTxClient,
-    e: WorkerEngagement,
-  ): Promise<boolean> {
+  /**
+   * Temporary work past its end: ended, code destroyed, notice, audit as
+   * system. Also the wages' (ADR 0037): a payment on it goes on.
+   */
+  async expireIfDue(tx: TenantTxClient, e: WorkerEngagement): Promise<boolean> {
     if (!OPEN.includes(e.status) || !isPast(e.validUntil)) return false;
     await this.close(tx, e, 'expired');
     await this.cls.run({ ifNested: 'inherit' }, async () => {

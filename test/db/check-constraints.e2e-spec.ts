@@ -380,6 +380,13 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   // The deletion queue (ADR 0036): nullable columns only under
   // IS [NOT] NULL.
   account_deletion_requests_r1_shape: {},
+  // Wages (ADR 0037).
+  worker_wage_payments_period_is_month: {},
+  worker_wage_payments_amount_range: {},
+  worker_engagements_monthly_wage_range: {
+    guarded:
+      'monthly_wage IS NULL is tested first; the range runs only on a value',
+  },
 };
 
 interface Check {

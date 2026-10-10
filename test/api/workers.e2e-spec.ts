@@ -74,6 +74,7 @@ describe('API v0 — workers', () => {
         [
           'capacity',
           'id',
+          'monthlyWage',
           ...SCHEDULE,
           'status',
           'suspendedByManagement',
@@ -95,6 +96,7 @@ describe('API v0 — workers', () => {
         'createdAt',
         'id',
         'idDocumentType',
+        'monthlyWage',
         'status',
         'unitCode',
         'unitId',
@@ -112,6 +114,7 @@ describe('API v0 — workers', () => {
         'capacity',
         'createdAt',
         'id',
+        'monthlyWage',
         'requestedBy',
         'requestedBy.fullName',
         'requestedBy.id',

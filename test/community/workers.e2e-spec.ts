@@ -286,6 +286,8 @@ describe('Domestic workers', () => {
           workerName: 'Nanny Worker',
           capacity: 'live_in',
           status: 'pending_review',
+          // The managers who review workers read the wage (ADR 0037).
+          monthlyWage: null,
           idDocumentType: 'national_id',
           birthDateVerified: false,
           createdAt: expect.any(Date) as Date,
@@ -528,6 +530,7 @@ describe('Domestic workers', () => {
           status: 'suspended',
           validUntil: null,
           suspendedByManagement: true,
+          monthlyWage: null,
         },
       ]);
       expect(JSON.stringify(seen)).not.toContain('Secret reason');

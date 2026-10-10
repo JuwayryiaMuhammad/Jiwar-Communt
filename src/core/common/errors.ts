@@ -99,6 +99,10 @@ export const ErrorCode = {
   WORKER_SCHEDULE_CONFLICT: 'WORKER_SCHEDULE_CONFLICT',
   WORKER_NOT_FOUND: 'WORKER_NOT_FOUND',
   ENGAGEMENT_NOT_FOUND: 'ENGAGEMENT_NOT_FOUND',
+  /** Pending or rejected: nobody worked, nothing to pay (409, ADR 0037). */
+  WAGE_NOT_PAYABLE: 'WAGE_NOT_PAYABLE',
+  /** That month already has a payment (409, params.period). */
+  WAGE_PERIOD_ALREADY_PAID: 'WAGE_PERIOD_ALREADY_PAID',
   /** A passport worker's birth date needs a manager's attestation (ADR 0018). */
   BIRTH_DATE_CONFIRMATION_REQUIRED: 'BIRTH_DATE_CONFIRMATION_REQUIRED',
   // compliance and card incidents (ADR 0022)
@@ -295,6 +299,11 @@ export const FieldErrorCode = {
    * worker of the unit.
    */
   RECEIVER_NOT_ELIGIBLE: 'RECEIVER_NOT_ELIGIBLE',
+  // wages (ADR 0037)
+  /** A month after the compound's current one. */
+  WAGE_PERIOD_IN_FUTURE: 'WAGE_PERIOD_IN_FUTURE',
+  /** A month before the engagement's first; params.first. */
+  WAGE_PERIOD_BEFORE_ENGAGEMENT: 'WAGE_PERIOD_BEFORE_ENGAGEMENT',
 } as const;
 
 export type FieldErrorCode =

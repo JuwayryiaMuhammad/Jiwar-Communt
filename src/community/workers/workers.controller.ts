@@ -37,6 +37,9 @@ import {
   ReviewDto,
   WorkerPhotoDto,
 } from './dto/workers.dto';
+import { PayWageDto, SetWageDto } from './dto/wages.dto';
+import { WagePaymentView, WageView } from './views/wage.views';
+import { WorkerWagesService } from './worker-wages.service';
 import {
   AccessCodeView,
   CardIncidentCreatedView,
@@ -55,7 +58,10 @@ import { WorkersService } from './workers.service';
 @ApiArea('workers')
 @Controller()
 export class WorkersController {
-  constructor(private readonly workers: WorkersService) {}
+  constructor(
+    private readonly workers: WorkersService,
+    private readonly wages: WorkerWagesService,
+  ) {}
 
   // Residents and delegates ----------------------------------------------
 
@@ -114,6 +120,47 @@ export class WorkersController {
     @Body() dto: ReasonDto,
   ): Promise<void> {
     await this.workers.end(id, reasonOf(dto));
+  }
+
+  // Wages (ADR 0037): recorded, never processed --------------------------
+
+  /** While the engagement is open; null clears it. */
+  @RequirePermissions('workers.manage')
+  @Put('worker-engagements/:id/wage')
+  @ApiOkResponse({ type: WageView })
+  async setWage(
+    @Param('id', parseId()) id: string,
+    @Body() dto: SetWageDto,
+  ): Promise<WageView> {
+    return { monthlyWage: await this.wages.setWage(id, dto.monthlyWage) };
+  }
+
+  /**
+   * One month, once: the worker gets a notice, the payer and the unit's
+   * primary a receipt by email. After the engagement ended, it settles the
+   * wage obligation (ADR 0022).
+   */
+  @RequirePermissions('workers.manage')
+  @Post('worker-engagements/:id/wage-payments')
+  @ApiCreatedResponse({ type: WagePaymentView })
+  async pay(
+    @Param('id', parseId()) id: string,
+    @Body() dto: PayWageDto,
+  ): Promise<WagePaymentView> {
+    return WagePaymentView.from(await this.wages.pay(id, dto));
+  }
+
+  /** The household's payments; managers read them for payroll. */
+  @RequireAnyPermission('workers.manage', 'workers.review')
+  @Get('worker-engagements/:id/wage-payments')
+  @ApiOkResponse({ type: ListOf(WagePaymentView) })
+  async payments(
+    @Param('id', parseId()) id: string,
+    @Query() q: PageQueryDto,
+  ): Promise<ListResponse<WagePaymentView>> {
+    return toList(await this.wages.payments(id, q), (p) =>
+      WagePaymentView.from(p),
+    );
   }
 
   /** The old code is dead at once. */

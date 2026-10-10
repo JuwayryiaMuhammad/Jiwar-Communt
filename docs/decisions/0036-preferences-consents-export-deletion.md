@@ -98,7 +98,8 @@ Held deliveries are never dropped on their own; the 7-day retention below is the
     - `units.json` (`GET /me/units`);
     - `permissions/<unitCode>.json` (a member's own permissions);
     - `delegations.json`;
-    - `workers.json`: the domestic workers the account registered, with exactly `engagementId`, `unitCode`, `workerName` (the name on the worker's record), `capacity`, `schedule`, `validUntil`, `status`, `createdAt`, `updatedAt`. Never the worker's ID number, birth date, phone, document or photo.
+    - `workers.json`: the domestic workers the account registered, with exactly `engagementId`, `unitCode`, `workerName` (the name on the worker's record), `capacity`, `schedule`, `validUntil`, `status`, `createdAt`, `updatedAt`, and `monthlyWage` (ADR 0037). Never the worker's ID number, birth date, phone, document or photo.
+    - `wage-payments.json` (ADR 0037): the wage payments the account recorded, with exactly `paymentId`, `engagementId`, `unitCode`, `workerName`, `period`, `amount`, `paidAt`.
   - **gate:**
     - `visitor-passes.json`: the passes it issued, with exactly `id`, `unitCode`, `kind`, `partySize`, `validFrom`, `validUntil`, `schedule`, `status`, `usedAt`, `cancelledAt`, `cancelReasonCode`, `createdAt` and `visitorName` (the name the account typed, while the pass's visitor details exist, ADR 0028). Never a code, a QR or the visitor's phone;
     - `entry-credentials.json` (`id`, `deviceName` while live, `createdAt`, `revokedAt`, `revokeReason`).

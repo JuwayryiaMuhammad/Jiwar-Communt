@@ -59,6 +59,35 @@ export class WorkersAuthority {
     return this.viaDelegation(tx, e.unitId);
   }
 
+  /**
+   * Who reads a wage in this unit (ADR 0037): the employer side only. The
+   * unit's primary and a live `workers` delegate, for every engagement; its
+   * requester, for their own (as in `forEngagement`). The rest of the
+   * household sees the worker without it.
+   */
+  async wageReader(
+    tx: TenantTxClient,
+    unitId: string,
+  ): Promise<(e: Pick<WorkerEngagement, 'requestedById'>) => boolean> {
+    const accountId = this.ctx.accountId;
+    const type = this.ctx.accountType;
+    if (type !== 'resident' && type !== 'family') return () => false;
+    try {
+      await this.household.require(tx, unitId, 'workers');
+      return () => true;
+    } catch (error) {
+      if (
+        !(error instanceof AppException) ||
+        (error.code !== ErrorCode.NOT_PRIMARY_RESIDENT &&
+          error.code !== ErrorCode.DELEGATION_EXPIRED)
+      )
+        throw error;
+    }
+    const mayOwn =
+      type !== 'resident' || (await this.occupies(tx, unitId, accountId));
+    return (e) => mayOwn && e.requestedById === accountId;
+  }
+
   /** The primary, or a live `workers` delegate — anyone else is refused. */
   private async viaDelegation(
     tx: TenantTxClient,

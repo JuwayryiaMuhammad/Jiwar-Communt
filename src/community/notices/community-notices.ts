@@ -36,6 +36,7 @@ export const COMMUNITY_NOTICES = {
   registrationApproved: 'community.registration_approved',
   registrationRejected: 'community.registration_rejected',
   registrationExpired: 'community.registration_expired',
+  wagePaid: 'community.wage_paid',
 } as const;
 
 export type CommunityNoticeKey =
@@ -301,6 +302,19 @@ const CATALOG: Catalog = {
       lead: `Your registration request for unit ${p.unitCode} in ${p.compoundName} expired without a decision, and your details were removed from it. You can register again or contact the management.`,
     }),
   },
+  // ADR 0037: the household's receipt; the worker gets their own notice.
+  'community.wage_paid': {
+    ar: (p) => ({
+      subject: 'إيصال أجر عامل على جوار',
+      lead: `سُجّل دفع أجر شهر ${p.period} لـ${p.workerName} في الوحدة ${p.unitCode} في ${p.compoundName}، بمبلغ ${p.amount}. أُبلغ العامل بالدفع.`,
+      help: 'جوار يسجّل الدفع فقط ولا يحوّل الأموال.',
+    }),
+    en: (p) => ({
+      subject: 'A worker’s wage receipt on Jiwar',
+      lead: `A wage payment for ${p.period} to ${p.workerName} for unit ${p.unitCode} in ${p.compoundName} was recorded: ${p.amount}. The worker was told.`,
+      help: 'Jiwar records the payment only; it does not move money.',
+    }),
+  },
 };
 
 export function renderCommunityNotice(
@@ -332,11 +346,16 @@ export function renderCommunityNotice(
 /**
  * How a community notice is delivered (ADR 0036). None has an inbox twin,
  * so each is its notice's only record: never skipped. A registration's
- * notices are about the account itself; the rest about the household.
+ * notices are about the account itself; the rest about the household. The
+ * wage receipt (ADR 0037) is classed by name, not by the default: it is the
+ * household's only record of a payment, so it is never skipped, and it is
+ * not critical (quiet hours and a pause hold it).
  */
 export function communityNoticeDelivery(
   key: CommunityNoticeKey,
 ): EmailDelivery {
+  if (key === COMMUNITY_NOTICES.wagePaid)
+    return { category: 'household', critical: false, soleRecord: true };
   return {
     category: key.startsWith('community.registration_')
       ? 'account_security'

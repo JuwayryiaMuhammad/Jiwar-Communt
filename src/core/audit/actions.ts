@@ -111,6 +111,11 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'worker_engagement',
   },
+  // ADR 0037: set or cleared, never the amount.
+  'worker.wage_changed': {
+    log: 'tenant',
+    target: 'worker_engagement',
+  },
   // What the compound tells visitors (ADR 0030): changed, never the text.
   'tenant.settings_changed': {
     log: 'tenant',

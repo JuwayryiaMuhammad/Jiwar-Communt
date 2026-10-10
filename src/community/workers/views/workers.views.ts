@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IdDocumentType,
   WorkerCapacity,
@@ -47,6 +47,14 @@ export class EngagementResponse {
   validUntil: Date | null;
   @ApiProperty({ type: Boolean })
   suspendedByManagement: boolean;
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: '3200.00',
+    description:
+      'Per month; null until set. Only for the employer side (the primary, a `workers` delegate, the engagement’s requester): absent for anyone else.',
+  })
+  monthlyWage?: string | null;
 
   static from(e: EngagementView): EngagementResponse {
     return {
@@ -57,6 +65,7 @@ export class EngagementResponse {
       status: e.status,
       validUntil: e.validUntil,
       suspendedByManagement: e.suspendedByManagement,
+      ...(e.monthlyWage !== undefined ? { monthlyWage: e.monthlyWage } : {}),
     };
   }
 }
@@ -184,6 +193,14 @@ export class ReviewEngagementView {
     enumName: 'WorkerEngagementStatus',
   })
   status: WorkerEngagementStatus;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '3200.00',
+    description:
+      'Per month, as the household set it; null until then. For the managers who review workers (ADR 0037).',
+  })
+  monthlyWage: string | null;
   @ApiProperty({ enum: IdDocumentType, enumName: 'IdDocumentType' })
   idDocumentType: IdDocumentType;
   @ApiProperty({
@@ -203,6 +220,7 @@ export class ReviewEngagementView {
       workerName: e.workerName,
       capacity: e.capacity,
       status: e.status,
+      monthlyWage: e.monthlyWage,
       idDocumentType: e.idDocumentType,
       birthDateVerified: e.birthDateVerified,
       createdAt: e.createdAt,
@@ -256,6 +274,14 @@ export class EngagementDetailView {
     enumName: 'WorkerEngagementStatus',
   })
   status: WorkerEngagementStatus;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '3200.00',
+    description:
+      'Per month, as the household set it; null until then. For the managers who review workers (ADR 0037).',
+  })
+  monthlyWage: string | null;
   @ApiProperty({ type: AccountRefView })
   requestedBy: AccountRefView;
   @ApiProperty({ type: String, format: 'date-time' })
@@ -272,6 +298,7 @@ export class EngagementDetailView {
       schedule: schedule(e.schedule),
       validUntil: e.validUntil,
       status: e.status,
+      monthlyWage: e.monthlyWage,
       requestedBy: accountRef(e.requestedBy),
       createdAt: e.createdAt,
       worker: {

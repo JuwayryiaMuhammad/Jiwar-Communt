@@ -24,8 +24,13 @@ import {
  * - `workers.json`: the domestic workers the account registered, with
  *   exactly `engagementId`, `unitCode`, `workerName` (the name on the
  *   worker's record), `capacity`, `schedule`, `validUntil`, `status`,
- *   `createdAt` and `updatedAt` — never the worker's ID number, birth
- *   date, phone, document or photo.
+ *   `createdAt`, `updatedAt` and `monthlyWage` (ADR 0037: the wage the
+ *   account set as the employer) — never the worker's ID number, birth
+ *   date, phone, document or photo;
+ * - `wage-payments.json`: the wage payments the account recorded itself
+ *   (ADR 0037), with exactly `paymentId`, `engagementId`, `unitCode`,
+ *   `workerName`, `period` (`YYYY-MM`), `amount` and `paidAt`. A payment
+ *   someone else recorded for the same worker is theirs, not here.
  */
 @Injectable()
 export class CommunityExportSections implements OnModuleInit {
@@ -41,6 +46,7 @@ export class CommunityExportSections implements OnModuleInit {
     this.sections.register('units', () => this.units());
     this.sections.register('delegations', () => this.myDelegations());
     this.sections.register('workers', (s) => this.workers(s));
+    this.sections.register('wage-payments', (s) => this.wagePayments(s));
   }
 
   private async *units(): AsyncIterable<ExportEntry> {
@@ -79,6 +85,7 @@ export class CommunityExportSections implements OnModuleInit {
           status: true,
           createdAt: true,
           updatedAt: true,
+          monthlyWage: true,
           unit: { select: { code: true } },
           worker: { select: { fullName: true } },
         },
@@ -96,7 +103,41 @@ export class CommunityExportSections implements OnModuleInit {
         status: e.status,
         createdAt: e.createdAt,
         updatedAt: e.updatedAt,
+        monthlyWage: e.monthlyWage?.toFixed(2) ?? null,
       })),
     };
+  }
+
+  /** Payments keep ids only (append-only, no foreign keys): joined here. */
+  private async *wagePayments(s: ExportSubject): AsyncIterable<ExportEntry> {
+    const rows = await this.tenantTx.withTenantTx(async (tx) => {
+      const payments = await tx.workerWagePayment.findMany({
+        where: { paidById: s.accountId },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      });
+      const engagements = await tx.workerEngagement.findMany({
+        where: {
+          id: { in: [...new Set(payments.map((p) => p.engagementId))] },
+        },
+        select: {
+          id: true,
+          unit: { select: { code: true } },
+          worker: { select: { fullName: true } },
+        },
+      });
+      return payments.map((p) => {
+        const e = engagements.find((x) => x.id === p.engagementId);
+        return {
+          paymentId: p.id,
+          engagementId: p.engagementId,
+          unitCode: e?.unit.code ?? null,
+          workerName: e?.worker.fullName ?? null,
+          period: p.period.toISOString().slice(0, 7),
+          amount: p.amount.toFixed(2),
+          paidAt: p.createdAt,
+        };
+      });
+    });
+    yield { path: 'wage-payments.json', json: rows };
   }
 }

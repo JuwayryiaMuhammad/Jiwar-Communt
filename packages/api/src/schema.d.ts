@@ -3988,6 +3988,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/worker-engagements/{id}/wage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["WorkersController_setWage"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/worker-engagements/{id}/wage-payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["WorkersController_payments"];
+        put?: never;
+        post: operations["WorkersController_pay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workers/{id}/ban": {
         parameters: {
             query?: never;
@@ -5046,6 +5078,11 @@ export interface components {
             createdAt: string;
             /** Format: uuid */
             id: string;
+            /**
+             * @description Per month, as the household set it; null until then. For the managers who review workers (ADR 0037).
+             * @example 3200.00
+             */
+            monthlyWage: string | null;
             requestedBy: components["schemas"]["AccountRefView"];
             schedule: components["schemas"]["WorkerScheduleDto"];
             status: components["schemas"]["WorkerEngagementStatus"];
@@ -5060,6 +5097,11 @@ export interface components {
             capacity: components["schemas"]["WorkerCapacity"];
             /** Format: uuid */
             id: string;
+            /**
+             * @description Per month; null until set. Only for the employer side (the primary, a `workers` delegate, the engagement’s requester): absent for anyone else.
+             * @example 3200.00
+             */
+            monthlyWage?: string | null;
             schedule: components["schemas"]["WorkerScheduleDto"];
             status: components["schemas"]["WorkerEngagementStatus"];
             suspendedByManagement: boolean;
@@ -6064,6 +6106,18 @@ export interface components {
              */
             until: string | null;
         };
+        PayWageDto: {
+            /**
+             * @description In the compound’s currency, at most two decimals. Need not equal the monthly wage.
+             * @example 3200.00
+             */
+            amount: string | number;
+            /**
+             * @description `YYYY-MM`
+             * @example 2026-09
+             */
+            period: string;
+        };
         PendingErasureView: {
             /** Format: uuid */
             accountId: string;
@@ -6685,6 +6739,11 @@ export interface components {
             /** Format: uuid */
             id: string;
             idDocumentType: components["schemas"]["IdDocumentType"];
+            /**
+             * @description Per month, as the household set it; null until then. For the managers who review workers (ADR 0037).
+             * @example 3200.00
+             */
+            monthlyWage: string | null;
             status: components["schemas"]["WorkerEngagementStatus"];
             unitCode: string;
             /** Format: uuid */
@@ -6809,6 +6868,13 @@ export interface components {
             /** @description From the closed list `availabilityChange`. */
             reasonCode: string;
             state: components["schemas"]["TechnicianAvailabilityState"];
+        };
+        SetWageDto: {
+            /**
+             * @description Per month, in the compound’s currency, at most two decimals; null clears it.
+             * @example 3200.00
+             */
+            monthlyWage: (string | number) | null;
         };
         SettingsView: {
             /** @description E.164; on the visitor page and the worker card. */
@@ -7625,6 +7691,27 @@ export interface components {
         VisitorTokenDto: {
             /** @description The fragment of the visitor link. Anything that is not a live link answers 404 VISITOR_PASS_NOT_FOUND. */
             token: string;
+        };
+        WagePaymentView: {
+            /** @example 3200.00 */
+            amount: string;
+            /** Format: uuid */
+            engagementId: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            paidAt: string;
+            paidBy: components["schemas"]["AccountRefView"];
+            /** @example 2026-09 */
+            period: string;
+        };
+        WagePaymentViewList: {
+            data: components["schemas"]["WagePaymentView"][];
+            nextCursor: string | null;
+        };
+        WageView: {
+            /** @example 3200.00 */
+            monthlyWage: string | null;
         };
         WarningView: {
             /** @enum {string} */
@@ -14241,6 +14328,81 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    WorkersController_setWage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetWageDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WageView"];
+                };
+            };
+        };
+    };
+    WorkersController_payments: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WagePaymentViewList"];
+                };
+            };
+        };
+    };
+    WorkersController_pay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayWageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WagePaymentView"];
+                };
             };
         };
     };

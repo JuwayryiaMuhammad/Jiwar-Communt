@@ -1,6 +1,7 @@
 import { DelegationsService } from '../../src/community/households/delegations.service';
 import { HouseholdsService } from '../../src/community/households/households.service';
 import { RegistrationService } from '../../src/community/residents/registration.service';
+import { WorkerWagesService } from '../../src/community/workers/worker-wages.service';
 import { WorkersService } from '../../src/community/workers/workers.service';
 import { RolesService } from '../../src/core/access/roles.service';
 import { AccountDeletionService } from '../../src/core/accounts/account-deletion.service';
@@ -269,6 +270,37 @@ describe('API v0 — PII leak scan', () => {
     const firstCode = (await manager(() =>
       workers.review(registered.engagementId, 'approve'),
     ))!.accessCode;
+    // Wages (ADR 0037): a wage and a recorded payment in both homes, in
+    // amounts nothing else in the scan produces. Only the employer side
+    // and the managers who review workers ever read them.
+    const wages = h.moduleRef.get(WorkerWagesService);
+    const wageMonth = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Africa/Cairo',
+      year: 'numeric',
+      month: '2-digit',
+    })
+      .format(new Date())
+      .slice(0, 7);
+    const WAGE = { home: '7313.37', rented: '6424.46' };
+    const PAID = { home: '5151.51', rented: '4242.42' };
+    await asPrimary(() => wages.setWage(registered.engagementId, WAGE.home));
+    await asPrimary(() =>
+      wages.pay(registered.engagementId, {
+        period: wageMonth,
+        amount: PAID.home,
+      }),
+    );
+    await asTenant(() =>
+      wages.setWage(rentedEngagement.engagementId, WAGE.rented),
+    );
+    await asTenant(() =>
+      wages.pay(rentedEngagement.engagementId, {
+        period: wageMonth,
+        amount: PAID.rented,
+      }),
+    );
+    // A member of the home with no `workers` delegation and no permission.
+    const plainMember = await c.joinFamily(a, unit.id, { id: primary.id });
     const incident = await asPrimary(() =>
       workers.reportCardIncident(
         registered.engagementId,
@@ -666,6 +698,7 @@ describe('API v0 — PII leak scan', () => {
       '/erasures/{id}/scope': request.id,
       '/worker-engagements/{id}': registered.engagementId,
       '/worker-engagements/{id}/attendance': registered.engagementId,
+      '/worker-engagements/{id}/wage-payments': registered.engagementId,
       '/platform/tenants/{id}': a.tenantId,
       // ADR 0036: nobody's ready export (the export suite reads a real one).
       '/me/data-exports/{id}/download': request.id,
@@ -692,6 +725,7 @@ describe('API v0 — PII leak scan', () => {
       '/household/members/{id}/permissions': rentedJoined.memberId,
       '/worker-engagements/{id}': rentedEngagement.engagementId,
       '/worker-engagements/{id}/attendance': rentedEngagement.engagementId,
+      '/worker-engagements/{id}/wage-payments': rentedEngagement.engagementId,
     };
     const paramsOf = (name: string) =>
       name === 'landlord' || name === 'ender'
@@ -750,6 +784,12 @@ describe('API v0 — PII leak scan', () => {
       ender: {
         token: await w.tokenFor(a, ender.id, 'resident'),
         self: ender.id,
+        isManager: false,
+      },
+      // ADR 0037: lives in the home, sees its workers, never a wage.
+      plainMember: {
+        token: await w.tokenFor(a, plainMember.accountId, 'family'),
+        self: plainMember.accountId,
         isManager: false,
       },
     };
@@ -875,6 +915,27 @@ describe('API v0 — PII leak scan', () => {
           for (const s of ['"grantedBy"', '"consentBy', family.id])
             if (res.status < 300 && found(s))
               leaks.push(`${name} ${r.path}: ${s}`);
+        // Wages (ADR 0037): the employer side's and payroll's only. Never
+        // a landlord, a guard, a technician, someone who left, or a member
+        // of the household who does not manage its workers.
+        if (
+          [
+            'landlord',
+            'guard',
+            'technician',
+            'otherTechnician',
+            'ender',
+            'family',
+            'plainMember',
+          ].includes(name)
+        )
+          for (const s of [
+            '"monthlyWage"',
+            '"lastPaidPeriod"',
+            ...Object.values(WAGE),
+            ...Object.values(PAID),
+          ])
+            if (found(s)) leaks.push(`${name} ${r.path}: wage ${s}`);
         // Never in the audit trail, whoever reads it. (The account consents
         // of ADR 0036 are audited by name, `consent.granted` and
         // `consent.revoked`: they say nothing about a visit.)
@@ -920,6 +981,25 @@ describe('API v0 — PII leak scan', () => {
       }
     }
     expect(leaks).toEqual([]);
+
+    // Wages, positively: the plain member reads the home's worker without
+    // the wage, while the primary and the manager read what was hidden.
+    expect(seen.get('plainMember /units/{unitId}/workers')).toContain(
+      registered.engagementId,
+    );
+    expect(seen.get('resident /units/{unitId}/workers')).toContain(
+      `"monthlyWage":"${WAGE.home}"`,
+    );
+    for (const name of ['resident', 'manager'])
+      expect(
+        seen.get(`${name} /worker-engagements/{id}/wage-payments`),
+      ).toContain(`"amount":"${PAID.home}"`);
+    // The managers who review workers read the wage in their own views,
+    // the list and the detail; nobody else reaches either.
+    for (const path of ['/worker-engagements', '/worker-engagements/{id}'])
+      expect(seen.get(`manager ${path}`)).toContain(
+        `"monthlyWage":"${WAGE.home}"`,
+      );
 
     // The landlord and the ender, positively: they asked about their own
     // unit and were refused or answered without the household; the ender
@@ -1024,6 +1104,8 @@ describe('API v0 — PII leak scan', () => {
         'resident /me/parcels',
         'family /me/parcels/{id}',
         'family /me/parcels',
+        'plainMember /me/parcels/{id}',
+        'plainMember /me/parcels',
       ]),
     ]);
     for (const [fileKey, views] of fileViews) {
@@ -1053,6 +1135,9 @@ describe('API v0 — PII leak scan', () => {
       'resident /me/parcels/{id}',
       'family /me/parcels',
       'family /me/parcels/{id}',
+      // The plain member lives in the unit too (ADR 0037's persona).
+      'plainMember /me/parcels',
+      'plainMember /me/parcels/{id}',
     ]);
     for (const [key, text] of seen) {
       if (parcelViews.has(key)) continue;
@@ -1077,6 +1162,9 @@ describe('API v0 — PII leak scan', () => {
       'family /me/gate-requests',
       'resident /me/notifications',
       'family /me/notifications',
+      // The plain member is an adult of the household too.
+      'plainMember /me/gate-requests',
+      'plainMember /me/notifications',
     ]);
     for (const [key, text] of seen) {
       if (!household.has(key) && text.includes('PII-ASKED-name'))

@@ -9,6 +9,7 @@ import {
 import { FILES_SWEEP } from '../../src/core/files/files.service';
 import { ObjectStorage, objectKey } from '../../src/core/files/object-storage';
 import { SweepRunner } from '../../src/core/sweep/sweep-runner';
+import { WorkerWagesService } from '../../src/community/workers/worker-wages.service';
 import { WorkersService } from '../../src/community/workers/workers.service';
 import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
 import { MessagesService } from '../../src/maintenance/tickets/messages.service';
@@ -207,14 +208,29 @@ describe('Personal-data export', () => {
     await asF(() => passes.create(p.unitId, pass('EXPORT-F-VISITOR')));
     const workerDoc = nationalIdFor();
     const workerPhone = uniquePhone();
-    await asP(() =>
-      h.moduleRef.get(WorkersService).register(p.unitId, {
+    const workers = h.moduleRef.get(WorkersService);
+    const engaged = await asP(() =>
+      workers.register(p.unitId, {
         fullName: 'EXPORT-P-WORKER',
         idDocumentType: 'national_id',
         idDocumentNumber: workerDoc,
         phone: workerPhone,
         capacity: 'live_in',
       }),
+    );
+    // ADR 0037: the wage the account set and the payment it recorded.
+    await x.asManager(c, () => workers.review(engaged.engagementId, 'approve'));
+    const wages = h.moduleRef.get(WorkerWagesService);
+    await asP(() => wages.setWage(engaged.engagementId, '4321.07'));
+    const paidMonth = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Africa/Cairo',
+      year: 'numeric',
+      month: '2-digit',
+    })
+      .format(new Date())
+      .slice(0, 7);
+    const paid = await asP(() =>
+      wages.pay(engaged.engagementId, { period: paidMonth, amount: '987.65' }),
     );
     void familyToken;
 
@@ -240,6 +256,7 @@ describe('Personal-data export', () => {
         'units.json',
         'delegations.json',
         'workers.json',
+        'wage-payments.json',
         'visitor-passes.json',
         'entry-credentials.json',
         'files/photo.png',
@@ -261,6 +278,45 @@ describe('Personal-data export', () => {
     expect(archive.bytes('files/photo.png').equals(SAMPLE['image/png'])).toBe(
       true,
     );
+    const exportedWorkers = JSON.parse(archive.text('workers.json')) as Record<
+      string,
+      unknown
+    >[];
+    expect(exportedWorkers).toHaveLength(1);
+    expect(Object.keys(exportedWorkers[0]).sort()).toEqual([
+      'capacity',
+      'createdAt',
+      'engagementId',
+      'monthlyWage',
+      'schedule',
+      'status',
+      'unitCode',
+      'updatedAt',
+      'validUntil',
+      'workerName',
+    ]);
+    expect(exportedWorkers[0].monthlyWage).toBe('4321.07');
+    const payments = JSON.parse(archive.text('wage-payments.json')) as Record<
+      string,
+      unknown
+    >[];
+    expect(payments).toHaveLength(1);
+    expect(Object.keys(payments[0]).sort()).toEqual([
+      'amount',
+      'engagementId',
+      'paidAt',
+      'paymentId',
+      'period',
+      'unitCode',
+      'workerName',
+    ]);
+    expect(payments[0]).toMatchObject({
+      paymentId: paid.id,
+      engagementId: engaged.engagementId,
+      workerName: 'EXPORT-P-WORKER',
+      period: paidMonth,
+      amount: '987.65',
+    });
     for (const mine of [
       'EXPORT-P-TICKET',
       'EXPORT-P-MESSAGE',

@@ -120,3 +120,9 @@ jobs:
           git diff --exit-code packages/api/src/schema.d.ts
       - name: Dashboards type-check and tests
         run: pnpm dashboards:typecheck && pnpm dashboards:test
+      # A production build catches what tsc does not: server/client boundaries,
+      # route exports, and pages that fail to prerender.
+      - name: Build the admin dashboard
+        run: pnpm --filter @jiwar/admin build
+      - name: Build the manager dashboard
+        run: pnpm --filter @jiwar/manager build

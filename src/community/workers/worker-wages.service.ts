@@ -13,6 +13,7 @@ import {
   FieldErrorCode,
   type FieldError,
 } from '../../core/common/errors';
+import { REASON_CODES, requireReasonCodeOnly } from '../../core/common/reasons';
 import { newId } from '../../core/common/uuid';
 import {
   TenantTx,
@@ -61,7 +62,8 @@ export interface WagePaymentRead {
  * are serialized and the second is refused.
  *
  * A payment settles nothing: the wage obligation of an ended engagement
- * (ADR 0022) stays open until a manager closes it.
+ * (ADR 0022) stays open until a manager closes it (`settleObligation`),
+ * with a reason code.
  */
 @Injectable()
 export class WorkerWagesService {
@@ -207,6 +209,73 @@ export class WorkerWagesService {
         ),
         nextCursor: page.nextCursor,
       };
+    });
+  }
+
+  /**
+   * A manager closes the engagement's open `settle_before_close` obligation
+   * (ADR 0022): the worker's file may close, and the employer's account
+   * deletion is no longer blocked by it. The underage `pay_in_full`
+   * obligation is a compliance matter and is not closed here.
+   *
+   * Under the unit's lock, like every engagement change: of two managers
+   * at once, one settles and the other finds nothing open.
+   */
+  async settleObligation(
+    engagementId: string,
+    reasonCode: string | undefined,
+  ): Promise<void> {
+    if (this.ctx.accountType !== 'manager')
+      throw appError.forbidden(
+        ErrorCode.FORBIDDEN,
+        'Only the management settles a wage obligation',
+      );
+    const reason = requireReasonCodeOnly(
+      reasonCode,
+      REASON_CODES.wageObligationSettle,
+    );
+    await this.tenantTx.withTenantTx(async (tx) => {
+      const found = await tx.workerEngagement.findUnique({
+        where: { id: engagementId },
+        select: { unitId: true },
+      });
+      if (!found) throw engagementNotFound();
+      await lockUnits(tx, [found.unitId]);
+      const e = await tx.workerEngagement.findUniqueOrThrow({
+        where: { id: engagementId },
+      });
+      const open = await tx.workerWageObligation.findFirst({
+        where: {
+          engagementId: e.id,
+          kind: 'settle_before_close',
+          settledAt: null,
+        },
+        select: { id: true, kind: true },
+      });
+      if (!open)
+        throw appError.conflict(
+          ErrorCode.WAGE_OBLIGATION_NOT_OPEN,
+          'This engagement has no open wage obligation',
+        );
+      await tx.workerWageObligation.update({
+        where: { id: open.id },
+        data: {
+          settledAt: new Date(),
+          settledById: this.ctx.accountId,
+          settleReasonCode: reason,
+        },
+      });
+      await this.audit.record(tx, {
+        action: 'worker.wage_obligation_settled',
+        targetId: e.id,
+        metadata: {
+          obligationId: open.id,
+          kind: open.kind,
+          reasonCode: reason,
+          workerId: e.workerId,
+          unitId: e.unitId,
+        },
+      });
     });
   }
 

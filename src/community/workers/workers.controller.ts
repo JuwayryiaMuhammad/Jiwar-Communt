@@ -25,7 +25,11 @@ import {
   toList,
   type ListResponse,
 } from '../../core/common/http/list';
-import { ReasonDto, reasonOf } from '../../core/common/http/reason.dto';
+import {
+  ReasonCodeOnlyDto,
+  ReasonDto,
+  reasonOf,
+} from '../../core/common/http/reason.dto';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import {
   BirthDateDto,
@@ -179,6 +183,21 @@ export class WorkersController {
     return toList(await this.wages.payments(id, q), (p) =>
       WagePaymentView.from(p),
     );
+  }
+
+  /**
+   * A manager closes the engagement's open wage obligation (ADR 0022,
+   * 0037), with a reason code: a recorded payment never does.
+   */
+  @RequirePermissions('workers.review')
+  @Post('worker-engagements/:id/wage-obligation/settle')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  async settleWageObligation(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ReasonCodeOnlyDto,
+  ): Promise<void> {
+    await this.wages.settleObligation(id, dto.reasonCode);
   }
 
   /** The old code is dead at once. */

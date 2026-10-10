@@ -34,11 +34,22 @@ The design's worker page shows "Monthly Wage · Pay Wage", a form with an amount
 - **Receipts, "to both parties":** the worker gets a `wage_paid` worker notice (period and amount; a future SMS channel delivers worker notices, ADR 0017). The payer and the unit's primary get an email (`community.wage_paid`, Arabic or English, through the outbox).
 - **Where the amount goes:** the payment views, the worker's notice and those two emails. Nowhere else: no other notification carries it, a payment writes nothing to the audit trail, and `worker.wage_changed` never holds it.
 - **How the receipt is delivered (ADR 0036):** `community.wage_paid` is classed by name: category `household`, not critical (quiet hours and a pause hold it), and the sole record of what it says (a held receipt is never dropped).
-- **A payment settles nothing (ADR 0022).** The household's own record does not close the wage obligation of an ended engagement, of either kind; that stays open, and keeps blocking the employer's account deletion (`open_worker_obligations`, ADR 0036), until management closes it.
+- **A payment settles nothing (ADR 0022).** The household's own record does not close the wage obligation of an ended engagement, of either kind; that stays open, and keeps blocking the employer's account deletion (`open_worker_obligations`, ADR 0036), until management closes it (below).
 - **Reading:** `GET /worker-engagements/:id/wage-payments` (`workers.manage` or `workers.review`), newest first, a page at a time: the employer side, and the managers who review workers (payroll). Those managers also read `monthlyWage` in their own views, `GET /worker-engagements` and `GET /worker-engagements/:id` (`workers.review`), always present there (null until set).
 - **Export (ADR 0036):** `workers.json` gains `monthlyWage` for the engagements the account registered, and `wage-payments.json` lists the payments the account recorded itself (`paymentId`, `engagementId`, `unitCode`, `workerName`, `period`, `amount`, `paidAt`).
 - **Storage:** `worker_wage_payments` is append-only like `gate_entries` (ADR 0028): SELECT and INSERT for the app, triggers refusing UPDATE, DELETE and TRUNCATE, no foreign keys. A wrong payment is not edited; correcting it is an open question.
 - **Currency:** amounts are in the compound's currency (EGP). There is no currency column until finance adds one.
+
+### A manager closes the wage obligation
+
+Nothing closed a wage obligation before (ADR 0022 only records it), and a household's own record must not.
+
+- `POST /worker-engagements/:id/wage-obligation/settle` (`workers.review`, and a manager account by type) with `reasonCode`, from a new closed list (`REASON_CODES.wageObligationSettle`): `household_payment_confirmed` (the manager checked the household's recorded payments), `worker_confirmed` (the worker says they were paid), `nothing_owed`. A code only, never text.
+- It closes the engagement's open `settle_before_close` obligation: `settled_at`, `settled_by` and the new `settle_reason_code` are written together, and a CHECK keeps them all set or all null. No open one: 409 `WAGE_OBLIGATION_NOT_OPEN`. It takes the unit's lock, so two managers at once settle it once.
+- Audited as `worker.wage_obligation_settled` (obligation id, kind, reason code; no amount, no name).
+- The underage `pay_in_full` obligation is a compliance matter (ADR 0022) and is not closed by this route.
+- The manager's `GET /worker-engagements/:id` gains `openWageObligations` (the kinds still open), so the screen knows when to offer it.
+- From then on the deletion blocker (`open_worker_obligations`, ADR 0036) no longer counts it.
 
 ### One of the unit's workers
 

@@ -4020,6 +4020,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/worker-engagements/{id}/wage-obligation/settle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["WorkersController_settleWageObligation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/worker-engagements/{id}/wage-payments": {
         parameters: {
             query?: never;
@@ -5099,6 +5115,8 @@ export interface components {
              * @example 3200.00
              */
             monthlyWage: string | null;
+            /** @description The wage obligations still open on it. `settle_before_close` is closed with `POST /worker-engagements/{id}/wage-obligation/settle`. */
+            openWageObligations: components["schemas"]["WageObligationKind"][];
             requestedBy: components["schemas"]["AccountRefView"];
             schedule: components["schemas"]["WorkerScheduleDto"];
             status: components["schemas"]["WorkerEngagementStatus"];
@@ -7729,6 +7747,11 @@ export interface components {
             /** @description The fragment of the visitor link. Anything that is not a live link answers 404 VISITOR_PASS_NOT_FOUND. */
             token: string;
         };
+        /**
+         * @description The wage obligations still open on it. `settle_before_close` is closed with `POST /worker-engagements/{id}/wage-obligation/settle`.
+         * @enum {string}
+         */
+        WageObligationKind: "pay_in_full" | "settle_before_close";
         WagePaymentView: {
             /** @example 3200.00 */
             amount: string;
@@ -14412,6 +14435,29 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["WageView"];
                 };
+            };
+        };
+    };
+    WorkersController_settleWageObligation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

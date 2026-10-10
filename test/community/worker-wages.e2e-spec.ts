@@ -210,6 +210,37 @@ describe('Worker wages — the employer side', () => {
     expect(read.items.map((p) => p.amount)).toEqual(['2000.00']);
   });
 
+  it('only a manager settles a wage obligation', async () => {
+    const unit = await x.unit(c);
+    const owner = await x.resident(c, [unit.id]);
+    const asOwner = <T>(fn: () => Promise<T>) =>
+      x.as(c, { id: owner.id, type: 'resident' }, fn);
+    const id = await engaged(unit.id, asOwner);
+    await asOwner(() =>
+      workers.end(id, { code: 'work_finished', text: 'Done' }),
+    );
+    const guard = await gateHelpers(h).guard(c);
+    expect(
+      await code(asOwner(() => wages.settleObligation(id, 'nothing_owed'))),
+    ).toBe('FORBIDDEN');
+    expect(
+      await code(
+        x.as(c, { id: guard.id, type: 'staff' }, () =>
+          wages.settleObligation(id, 'nothing_owed'),
+        ),
+      ),
+    ).toBe('FORBIDDEN');
+    const open = () =>
+      x.asManager(c, () =>
+        x.prisma.tenant.workerWageObligation.count({
+          where: { engagementId: id, settledAt: null },
+        }),
+      );
+    expect(await open()).toBe(1);
+    await x.asManager(c, () => wages.settleObligation(id, 'nothing_owed'));
+    expect(await open()).toBe(0);
+  });
+
   it('a staff account never records a payment or sets a wage', async () => {
     const unit = await x.unit(c);
     const owner = await x.resident(c, [unit.id]);

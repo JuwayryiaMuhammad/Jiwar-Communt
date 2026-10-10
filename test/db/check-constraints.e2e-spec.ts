@@ -387,6 +387,9 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'monthly_wage IS NULL is tested first; the range runs only on a value',
   },
+  // Settled by a manager (ADR 0037): nullable columns only under
+  // IS [NOT] NULL.
+  worker_wage_obligations_settled_shape: {},
 };
 
 interface Check {

@@ -115,6 +115,7 @@ describe('API v0 — workers', () => {
         'createdAt',
         'id',
         'monthlyWage',
+        'openWageObligations',
         'requestedBy',
         'requestedBy.fullName',
         'requestedBy.id',

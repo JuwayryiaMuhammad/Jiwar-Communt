@@ -166,12 +166,11 @@ describe('Account deletion', () => {
       expect(await refusal(ask(tenant.id))).toMatchObject({
         params: { blockers: ['open_worker_obligations'] },
       });
-      // Settled by payroll: no longer.
+      // Settled by the management, with a reason code: no longer.
       await x.asManager(c, () =>
-        x.prisma.tenant.workerWageObligation.updateMany({
-          where: { engagementId: reg.engagementId },
-          data: { settledAt: new Date(), settledById: c.managerId },
-        }),
+        h.moduleRef
+          .get(WorkerWagesService)
+          .settleObligation(reg.engagementId, 'household_payment_confirmed'),
       );
       expect(await refusal(ask(tenant.id))).toBeNull();
     });

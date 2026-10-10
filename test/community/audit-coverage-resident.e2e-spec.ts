@@ -75,6 +75,26 @@ describe('Audit coverage — the resident’s screens (ADR 0037)', () => {
       expect(JSON.stringify(entry)).not.toContain('4100');
     });
 
+    it('worker.wage_obligation_settled — by a manager, with the reason code', async () => {
+      const { c, u, as, id, workers } = await engaged();
+      await as(() => workers.end(id, { code: 'work_finished', text: 'Done' }));
+      const wages = h.moduleRef.get(WorkerWagesService);
+      await x.asManager(c, () =>
+        wages.settleObligation(id, 'household_payment_confirmed'),
+      );
+      const entry = await single(c, 'worker.wage_obligation_settled', id);
+      expect(entry).toMatchObject({
+        actorType: 'account',
+        actorId: c.managerId,
+        targetType: 'worker_engagement',
+        metadata: {
+          kind: 'settle_before_close',
+          reasonCode: 'household_payment_confirmed',
+          unitId: u.id,
+        },
+      });
+    });
+
     it('a payment writes nothing to the trail', async () => {
       const { c, as, id } = await engaged();
       const wages = h.moduleRef.get(WorkerWagesService);

@@ -1193,6 +1193,8 @@ model WorkerWageObligation {
   createdAt    DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
   settledAt    DateTime?          @map("settled_at") @db.Timestamptz(3)
   settledById  String?            @map("settled_by") @db.Uuid
+  /// Why a manager closed it (ADR 0037); set with the two above, or none.
+  settleReasonCode String?        @map("settle_reason_code")
 
   engagement WorkerEngagement @relation(fields: [tenantId, engagementId], references: [tenantId, id], onUpdate: Restrict)
   worker     DomesticWorker   @relation(fields: [tenantId, workerId], references: [tenantId, id], onUpdate: Restrict)

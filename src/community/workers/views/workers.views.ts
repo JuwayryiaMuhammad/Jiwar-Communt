@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IdDocumentType,
+  WageObligationKind,
   WorkerCapacity,
   WorkerEngagementStatus,
 } from '@prisma/client';
@@ -309,6 +310,14 @@ export class EngagementDetailView {
   requestedBy: AccountRefView;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
+  @ApiProperty({
+    enum: WageObligationKind,
+    enumName: 'WageObligationKind',
+    isArray: true,
+    description:
+      'The wage obligations still open on it. `settle_before_close` is closed with `POST /worker-engagements/{id}/wage-obligation/settle`.',
+  })
+  openWageObligations: WageObligationKind[];
   @ApiProperty({ type: ReviewWorkerView })
   worker: ReviewWorkerView;
 
@@ -324,6 +333,7 @@ export class EngagementDetailView {
       monthlyWage: e.monthlyWage,
       requestedBy: accountRef(e.requestedBy),
       createdAt: e.createdAt,
+      openWageObligations: e.openWageObligations,
       worker: {
         id: e.worker.id,
         fullName: e.worker.fullName,

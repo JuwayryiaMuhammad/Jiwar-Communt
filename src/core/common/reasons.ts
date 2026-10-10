@@ -128,6 +128,12 @@ export const REASON_CODES = {
   deferredActionDecline: ['not_needed', 'too_expensive', 'other'],
   complianceReport: ['document_review', 'report_received', 'other'],
   complianceClose: ['resolved', 'unfounded', 'other'],
+  // A manager closing a wage obligation (ADR 0037). A code only, never text.
+  wageObligationSettle: [
+    'household_payment_confirmed',
+    'worker_confirmed',
+    'nothing_owed',
+  ],
   accountFreeze: ['phone_reassigned'],
   /** The freeze an account asks for itself on an unusual login (ADR 0036). */
   accountFreezeSelf: ['login_not_me'],

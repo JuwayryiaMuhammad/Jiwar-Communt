@@ -103,6 +103,8 @@ export const ErrorCode = {
   WAGE_NOT_PAYABLE: 'WAGE_NOT_PAYABLE',
   /** That month already has a payment (409, params.period). */
   WAGE_PERIOD_ALREADY_PAID: 'WAGE_PERIOD_ALREADY_PAID',
+  /** No open wage obligation to settle on this engagement (409, ADR 0037). */
+  WAGE_OBLIGATION_NOT_OPEN: 'WAGE_OBLIGATION_NOT_OPEN',
   /** A passport worker's birth date needs a manager's attestation (ADR 0018). */
   BIRTH_DATE_CONFIRMATION_REQUIRED: 'BIRTH_DATE_CONFIRMATION_REQUIRED',
   // compliance and card incidents (ADR 0022)

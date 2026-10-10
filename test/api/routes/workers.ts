@@ -81,6 +81,35 @@ export const WORKERS_ROUTES: Row[] = [
       ],
     },
   },
+  // A manager closes the wage obligation (ADR 0037); a payment never does.
+  {
+    method: 'POST',
+    path: '/worker-engagements/{id}/wage-obligation/settle',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: engagement,
+      body: () => ({ reasonCode: 'worker_confirmed' }),
+      code: 'ENGAGEMENT_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: 'paid' },
+      fields: [
+        {
+          field: 'reasonCode',
+          code: 'INVALID_REASON_CODE',
+          params: {
+            allowed: [
+              'household_payment_confirmed',
+              'worker_confirmed',
+              'nothing_owed',
+            ],
+          },
+        },
+      ],
+    },
+  },
   {
     method: 'GET',
     path: '/worker-engagements/{id}/wage-payments',

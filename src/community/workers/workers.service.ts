@@ -196,6 +196,8 @@ export interface EngagementDetail {
   monthlyWage: string | null;
   requestedBy: { id: string; fullName: string | null; status: AccountStatus };
   createdAt: Date;
+  /** The kinds of wage obligation still open on it (ADR 0022, 0037). */
+  openWageObligations: WageObligationKind[];
   worker: {
     id: string;
     fullName: string;
@@ -670,6 +672,11 @@ export class WorkersService {
         },
       });
       if (!e) throw engagementNotFound();
+      const open = await tx.workerWageObligation.findMany({
+        where: { engagementId: e.id, settledAt: null },
+        orderBy: { kind: 'asc' },
+        select: { kind: true },
+      });
       return {
         id: e.id,
         unitId: e.unitId,
@@ -681,6 +688,7 @@ export class WorkersService {
         monthlyWage: e.monthlyWage?.toFixed(2) ?? null,
         requestedBy: e.requestedBy,
         createdAt: e.createdAt,
+        openWageObligations: open.map((o) => o.kind),
         worker: {
           id: e.worker.id,
           fullName: e.worker.fullName,

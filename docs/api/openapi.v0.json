@@ -3320,6 +3320,13 @@
             "nullable": true,
             "type": "string"
           },
+          "openWageObligations": {
+            "description": "The wage obligations still open on it. `settle_before_close` is closed with `POST /worker-engagements/{id}/wage-obligation/settle`.",
+            "items": {
+              "$ref": "#/components/schemas/WageObligationKind"
+            },
+            "type": "array"
+          },
           "requestedBy": {
             "$ref": "#/components/schemas/AccountRefView"
           },
@@ -3360,6 +3367,7 @@
           "monthlyWage",
           "requestedBy",
           "createdAt",
+          "openWageObligations",
           "worker"
         ],
         "type": "object"
@@ -12375,6 +12383,14 @@
           "token"
         ],
         "type": "object"
+      },
+      "WageObligationKind": {
+        "description": "The wage obligations still open on it. `settle_before_close` is closed with `POST /worker-engagements/{id}/wage-obligation/settle`.",
+        "enum": [
+          "pay_in_full",
+          "settle_before_close"
+        ],
+        "type": "string"
       },
       "WagePaymentView": {
         "properties": {
@@ -24390,6 +24406,45 @@
                 }
               }
             },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "workers"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/worker-engagements/{id}/wage-obligation/settle": {
+      "post": {
+        "operationId": "WorkersController_settleWageObligation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
             "description": ""
           }
         },

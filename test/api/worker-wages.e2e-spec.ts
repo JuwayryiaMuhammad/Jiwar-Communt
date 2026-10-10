@@ -33,7 +33,8 @@ const month = (d: Date) =>
  * ADR 0037: a worker's monthly wage and its payments, recorded and never
  * processed. One payment per month; the worker gets a notice, the payer and
  * the primary a receipt. A payment settles nothing: the wage obligation of
- * an ended engagement (ADR 0022) stays open for management.
+ * an ended engagement (ADR 0022) stays open until a manager closes it with
+ * a reason code.
  */
 describe('API v0 — worker wages', () => {
   let h: HttpHarness;
@@ -255,7 +256,88 @@ describe('API v0 — worker wages', () => {
     expect(await obligation()).toMatchObject({
       settledAt: null,
       settledById: null,
+      settleReasonCode: null,
     });
+  });
+
+  const settle = (id: string, body: object, token = manager()) =>
+    call(w, 'POST', `/worker-engagements/${id}/wage-obligation/settle`, {
+      token,
+      body,
+    });
+  const detail = async (id: string) =>
+    (
+      await call(w, 'GET', `/worker-engagements/${id}`, {
+        token: manager(),
+      }).expect(200)
+    ).body as { openWageObligations: string[] };
+  const endedWork = async () => {
+    const id = await active();
+    await call(w, 'POST', `/worker-engagements/${id}/end`, {
+      token: owner(),
+      body: { reasonCode: 'work_finished', reason: 'Done' },
+    }).expect(204);
+    return id;
+  };
+
+  it('a manager settles the obligation with a reason code: who, when, why, and the trail', async () => {
+    const id = await endedWork();
+    expect((await detail(id)).openWageObligations).toEqual([
+      'settle_before_close',
+    ]);
+    // The household cannot: the route is the management's.
+    await settle(id, { reasonCode: 'worker_confirmed' }, owner()).expect(403);
+    const missing = await settle(id, {}).expect(400);
+    expect(err(missing).code).toBe('REASON_REQUIRED');
+
+    const before = Date.now();
+    await settle(id, { reasonCode: 'worker_confirmed' }).expect(204);
+    const row = await inA(() =>
+      w.helpers.prisma.tenant.workerWageObligation.findFirstOrThrow({
+        where: { engagementId: id, kind: 'settle_before_close' },
+      }),
+    );
+    expect(row).toMatchObject({
+      settledById: w.a.ids.manager,
+      settleReasonCode: 'worker_confirmed',
+    });
+    expect(row.settledAt!.getTime()).toBeGreaterThanOrEqual(before - 1000);
+    expect((await detail(id)).openWageObligations).toEqual([]);
+    const entries = await auditReaders(h).tenant(w.a.tenantId, {
+      action: 'worker.wage_obligation_settled',
+      targetId: id,
+    });
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      actorId: w.a.ids.manager,
+      metadata: {
+        obligationId: row.id,
+        kind: 'settle_before_close',
+        reasonCode: 'worker_confirmed',
+      },
+    });
+    // Once.
+    const again = await settle(id, { reasonCode: 'nothing_owed' }).expect(409);
+    expect(err(again).code).toBe('WAGE_OBLIGATION_NOT_OPEN');
+  });
+
+  it('nothing to settle while the engagement is open; two managers at once settle it once', async () => {
+    const open = await active();
+    const none = await settle(open, { reasonCode: 'nothing_owed' }).expect(409);
+    expect(err(none).code).toBe('WAGE_OBLIGATION_NOT_OPEN');
+
+    const id = await endedWork();
+    const results = await Promise.all([
+      settle(id, { reasonCode: 'worker_confirmed' }),
+      settle(id, { reasonCode: 'household_payment_confirmed' }),
+    ]);
+    expect(results.map((r) => r.status).sort()).toEqual([204, 409]);
+    expect(
+      await auditReaders(h).tenant(w.a.tenantId, {
+        action: 'worker.wage_obligation_settled',
+        targetId: id,
+      }),
+    ).toHaveLength(1);
   });
 
   it('only those who may act on the engagement: a manager never pays, a member or a neighbour sees nothing', async () => {

@@ -49,6 +49,14 @@ export class RolesService {
     return roles.map(toView);
   }
 
+  /**
+   * The caller's own role and what it allows now. No permission guards it:
+   * an account may always know what it may do (`GET /me`).
+   */
+  current(): Promise<RoleWithPermissions> {
+    return this.get(this.ctx.roleId);
+  }
+
   async get(roleId: string): Promise<RoleWithPermissions> {
     const role = await this.prisma.tenant.role.findUnique({
       where: { id: roleId },

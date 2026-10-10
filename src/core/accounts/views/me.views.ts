@@ -9,6 +9,20 @@ import { maskDocument } from '../../common/http/personal';
 import type { MySession } from '../account-self.service';
 import type { DeletionRequestView } from '../account-deletion.service';
 import type { AccountRecord } from '../account-record';
+import type { RoleWithPermissions } from '../../access/roles.service';
+
+/** The holder's role (ADR 0010). */
+export class MyRoleView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({
+    type: String,
+    description: 'System roles are translated by key.',
+  })
+  key: string;
+  @ApiProperty({ type: String, nullable: true })
+  name: string | null;
+}
 
 /**
  * The holder's own account. The document is masked and the birth date left
@@ -46,8 +60,32 @@ export class MeView {
       "A short-lived presigned URL of the holder's own photo (ADR 0031), or null. Shown only here and to the guard on a valid scan.",
   })
   photoUrl: string | null;
+  @ApiProperty({ type: MyRoleView })
+  role: MyRoleView;
+  @ApiProperty({
+    type: [String],
+    description:
+      "What the role allows now (ADR 0010), sorted: what the API will check on the holder's next request. For showing or hiding an action; every route still decides for itself.",
+  })
+  permissions: string[];
 
-  static from(a: AccountRecord, photoUrl: string | null): MeView {
+  static from(
+    a: AccountRecord,
+    photoUrl: string | null,
+    role: RoleWithPermissions,
+  ): MeView {
+    return {
+      ...MeView.profile(a, photoUrl),
+      role: { id: role.id, key: role.key, name: role.name },
+      permissions: [...role.permissions].sort(),
+    };
+  }
+
+  /** The person's own fields, without the role: what a data export carries. */
+  static profile(
+    a: AccountRecord,
+    photoUrl: string | null,
+  ): Omit<MeView, 'role' | 'permissions'> {
     return {
       id: a.id,
       type: a.type,

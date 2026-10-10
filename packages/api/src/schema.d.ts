@@ -5667,10 +5667,13 @@ export interface components {
             idDocumentNumberMasked: string | null;
             idDocumentType: components["schemas"]["IdDocumentType"] | null;
             nationality: string | null;
+            /** @description What the role allows now (ADR 0010), sorted: what the API will check on the holder's next request. For showing or hiding an action; every route still decides for itself. */
+            permissions: string[];
             phone: string | null;
             /** @description A short-lived presigned URL of the holder's own photo (ADR 0031), or null. Shown only here and to the guard on a valid scan. */
             photoUrl: string | null;
             preferredLocale: components["schemas"]["Locale"];
+            role: components["schemas"]["MyRoleView"];
             status: components["schemas"]["AccountStatus"];
             type: components["schemas"]["AccountType"];
         };
@@ -5748,6 +5751,13 @@ export interface components {
              * @description A finalized `resident_photo` of the caller's.
              */
             fileId: string;
+        };
+        MyRoleView: {
+            /** Format: uuid */
+            id: string;
+            /** @description System roles are translated by key. */
+            key: string;
+            name: string | null;
         };
         MyUnitView: {
             building: string | null;

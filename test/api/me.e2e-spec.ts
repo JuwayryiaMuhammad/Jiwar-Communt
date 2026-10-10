@@ -1,5 +1,7 @@
 import { NONE } from '../../src/community/capabilities/capabilities';
 import { DelegationsService } from '../../src/community/households/delegations.service';
+import { DEFAULT_ROLES } from '../../src/core/access/default-roles';
+import { RolesService } from '../../src/core/access/roles.service';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { keyPaths, listKeys } from './keys';
 import { call, err } from './request';
@@ -12,9 +14,14 @@ const ME = [
   'idDocumentNumberMasked',
   'idDocumentType',
   'nationality',
+  'permissions',
   'phone',
   'photoUrl',
   'preferredLocale',
+  'role',
+  'role.id',
+  'role.key',
+  'role.name',
   'status',
   'type',
 ];
@@ -54,6 +61,58 @@ describe('API v0 — me', () => {
       body: { locale: 'en' },
     }).expect(200);
     expect(locale.body).toEqual({ preferredLocale: 'en' });
+  });
+
+  it('my role and what it allows: the catalog’s defaults, sorted, and a change shows on the next request', async () => {
+    const mine = async (token: string) =>
+      (await call(w, 'GET', '/me', { token }).expect(200)).body as {
+        role: { id: string; key: string; name: string | null };
+        permissions: string[];
+      };
+    const defaults = (key: string) =>
+      [...DEFAULT_ROLES.find((r) => r.key === key)!.permissions].sort();
+
+    for (const [persona, key] of [
+      ['owner', 'resident'],
+      ['family', 'family_member'],
+      ['manager', 'manager'],
+      ['guard', 'guard'],
+      ['technician', 'technician'],
+    ] as const) {
+      const me = await mine(w.a.tokens[persona]);
+      expect(me.role).toMatchObject({ key, name: null });
+      expect(me.permissions).toEqual(defaults(key));
+    }
+
+    // The role is this compound's own row, not the other compound's.
+    const here = await mine(w.a.tokens.manager);
+    const there = await mine(w.b.tokens.manager);
+    expect(here.role.id).not.toBe(there.role.id);
+
+    // The guard reads permissions through a cache keyed by the role's
+    // version: `/me` must not serve the set from before the change.
+    const roles = h.moduleRef.get(RolesService);
+    const kept = here.permissions.filter((p) => p !== 'parcels.manage');
+    await w.helpers.asManager(w.a, () =>
+      roles.replacePermissions(here.role.id, kept),
+    );
+    try {
+      expect((await mine(w.a.tokens.manager)).permissions).toEqual(kept);
+      await call(w, 'GET', '/parcels', { token: w.a.tokens.manager }).expect(
+        403,
+      );
+      // The other compound's manager role is untouched.
+      expect((await mine(w.b.tokens.manager)).permissions).toEqual(
+        defaults('manager'),
+      );
+    } finally {
+      await w.helpers.asManager(w.a, () =>
+        roles.replacePermissions(here.role.id, here.permissions),
+      );
+    }
+    expect((await mine(w.a.tokens.manager)).permissions).toEqual(
+      defaults('manager'),
+    );
   });
 
   it('my units: the primary gets the household summary, a member its membership', async () => {

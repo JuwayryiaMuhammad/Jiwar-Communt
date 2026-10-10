@@ -13,6 +13,7 @@ import {
   ApiNoContentResponse,
   ApiOkResponse,
 } from '@nestjs/swagger';
+import { RolesService } from '../access/roles.service';
 import { appError, ErrorCode } from '../common/errors';
 import { ApiArea, NoStore } from '../common/http/decorators';
 import { bounded, ListOf, type ListResponse } from '../common/http/list';
@@ -39,6 +40,7 @@ import {
 export class MeController {
   constructor(
     private readonly accounts: AccountsService,
+    private readonly roles: RolesService,
     private readonly self: AccountSelfService,
     private readonly deletion: AccountDeletionService,
   ) {}
@@ -49,7 +51,11 @@ export class MeController {
   @ApiOkResponse({ type: MeView })
   async me(): Promise<MeView> {
     const account = await this.accounts.me();
-    return MeView.from(account, await this.accounts.myPhotoUrl());
+    return MeView.from(
+      account,
+      await this.accounts.myPhotoUrl(),
+      await this.roles.current(),
+    );
   }
 
   @Patch('locale')

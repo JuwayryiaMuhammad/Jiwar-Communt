@@ -65,7 +65,7 @@ export class CoreExportSections implements OnModuleInit {
     );
     yield {
       path: 'account.json',
-      json: MeView.from(AccountRecord.from(account), null),
+      json: MeView.profile(AccountRecord.from(account), null),
     };
   }
 

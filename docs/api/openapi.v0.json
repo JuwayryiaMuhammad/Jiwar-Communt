@@ -5513,6 +5513,13 @@
             "nullable": true,
             "type": "string"
           },
+          "permissions": {
+            "description": "What the role allows now (ADR 0010), sorted: what the API will check on the holder's next request. For showing or hiding an action; every route still decides for itself.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "phone": {
             "nullable": true,
             "type": "string"
@@ -5528,6 +5535,9 @@
                 "$ref": "#/components/schemas/Locale"
               }
             ]
+          },
+          "role": {
+            "$ref": "#/components/schemas/MyRoleView"
           },
           "status": {
             "allOf": [
@@ -5555,7 +5565,9 @@
           "idDocumentType",
           "idDocumentNumberMasked",
           "nationality",
-          "photoUrl"
+          "photoUrl",
+          "role",
+          "permissions"
         ],
         "type": "object"
       },
@@ -5827,6 +5839,28 @@
         },
         "required": [
           "fileId"
+        ],
+        "type": "object"
+      },
+      "MyRoleView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "description": "System roles are translated by key.",
+            "type": "string"
+          },
+          "name": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "name"
         ],
         "type": "object"
       },

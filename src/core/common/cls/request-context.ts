@@ -46,6 +46,13 @@ export class RequestContext {
     );
   }
 
+  /** The caller's role, as PermissionsGuard read it for this request. */
+  get roleId(): string {
+    const id = this.cls.isActive() ? this.cls.get('roleId') : undefined;
+    if (!id) throw new TenantContextMissingError();
+    return id;
+  }
+
   get accountType(): AccountType {
     const type = this.cls.isActive() ? this.cls.get('accountType') : undefined;
     if (!type) throw new TenantContextMissingError();

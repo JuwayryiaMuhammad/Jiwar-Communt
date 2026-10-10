@@ -120,6 +120,8 @@ export interface UnitDetail {
   createdAt: Date;
   management?: {
     reviewReasons: UnitReviewReason[];
+    /** The open flags behind the reasons, oldest first: what a clear names. */
+    reviewFlags: { id: string; reason: UnitReviewReason; flaggedAt: Date }[];
     occupants: UnitOccupant[];
   };
 }

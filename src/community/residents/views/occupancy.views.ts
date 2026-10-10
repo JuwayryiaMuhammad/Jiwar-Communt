@@ -85,7 +85,17 @@ export class UnitOccupantView {
   }
 }
 
-/** One unit. `reviewReasons` and `occupants` are for managers only. */
+/** An open review flag of a unit (ADR 0021): what `POST /review-flags/{id}/clear` names. */
+export class UnitReviewFlagView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ enum: UnitReviewReason, enumName: 'UnitReviewReason' })
+  reason: UnitReviewReason;
+  @ApiProperty({ type: String, format: 'date-time' })
+  flaggedAt: Date;
+}
+
+/** One unit. The review flags and `occupants` are for managers only. */
 export class UnitDetailView {
   @ApiProperty({ type: String, format: 'uuid' })
   id: string;
@@ -115,6 +125,13 @@ export class UnitDetailView {
   })
   reviewReasons?: UnitReviewReason[];
   @ApiProperty({
+    type: [UnitReviewFlagView],
+    required: false,
+    description:
+      'Managers only: the open flags behind `reviewReasons`, oldest first.',
+  })
+  reviewFlags?: UnitReviewFlagView[];
+  @ApiProperty({
     type: [UnitOccupantView],
     required: false,
     description: 'Managers only.',
@@ -134,6 +151,11 @@ export class UnitDetailView {
       ...(u.management
         ? {
             reviewReasons: u.management.reviewReasons,
+            reviewFlags: u.management.reviewFlags.map((f) => ({
+              id: f.id,
+              reason: f.reason,
+              flaggedAt: f.flaggedAt,
+            })),
             occupants: u.management.occupants.map((o) =>
               UnitOccupantView.from(o),
             ),

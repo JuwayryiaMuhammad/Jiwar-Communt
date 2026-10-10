@@ -88,6 +88,7 @@ describe('API v0 — units & occupancies', () => {
         'occupants[].occupancyType',
         'occupants[].resides',
         'occupants[].startedAt',
+        'reviewFlags',
         'reviewReasons',
       ].sort(),
     );
@@ -125,6 +126,38 @@ describe('API v0 — units & occupancies', () => {
     );
     expect(JSON.stringify(res.body)).not.toContain('A private note');
     expect(r.id).toBeTruthy();
+
+    // The unit's own page names the open flag: what a clear takes (ADR 0021).
+    const flag = (
+      res.body as { data: { unitId: string; flagId: string }[] }
+    ).data.find((u) => u.unitId === unit.id)!;
+    const detail = () =>
+      call(w, 'GET', `/units/${unit.id}`, { token: manager() }).expect(200);
+    const flagged = await detail();
+    expect(flagged.body).toMatchObject({
+      reviewReasons: ['separation'],
+      reviewFlags: [{ id: flag.flagId, reason: 'separation' }],
+    });
+    expect(
+      Object.keys(
+        (flagged.body as { reviewFlags: object[] }).reviewFlags[0],
+      ).sort(),
+    ).toEqual(['flaggedAt', 'id', 'reason']);
+    expect(JSON.stringify(flagged.body)).not.toContain('A private note');
+    // Never to the residents, not even the unit's own.
+    const asResident = await call(w, 'GET', `/units/${unit.id}`, {
+      token: await w.tokenFor(w.a, r.id, 'resident'),
+    }).expect(200);
+    expect(asResident.body).not.toHaveProperty('reviewFlags');
+
+    await call(w, 'POST', `/review-flags/${flag.flagId}/clear`, {
+      token: manager(),
+      body: { reasonCode: 'resolved' },
+    }).expect(204);
+    expect((await detail()).body).toMatchObject({
+      reviewReasons: [],
+      reviewFlags: [],
+    });
   });
 
   it('the primary: set by the manager; closed mode, activation and details by the primary', async () => {

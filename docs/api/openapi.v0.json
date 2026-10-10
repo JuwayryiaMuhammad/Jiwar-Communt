@@ -10947,6 +10947,13 @@
             },
             "type": "array"
           },
+          "reviewFlags": {
+            "description": "Managers only: the open flags behind `reviewReasons`, oldest first.",
+            "items": {
+              "$ref": "#/components/schemas/UnitReviewFlagView"
+            },
+            "type": "array"
+          },
           "reviewReasons": {
             "description": "Managers only.",
             "items": {
@@ -11066,6 +11073,31 @@
           "resides",
           "isPrimary",
           "startedAt"
+        ],
+        "type": "object"
+      },
+      "UnitReviewFlagView": {
+        "properties": {
+          "flaggedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnitReviewReason"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "reason",
+          "flaggedAt"
         ],
         "type": "object"
       },

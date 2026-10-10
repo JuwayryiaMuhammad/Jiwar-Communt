@@ -11,7 +11,8 @@ Journey 05 describes what happens when the household's structure breaks: the pri
   - cleared rows stay as history, and nothing is deleted;
   - existing flags were backfilled;
   - reasons are `primary_left`, `primary_frozen` (ADR 0023), `primary_deceased` and `separation`, and several can be open at once;
-  - `unitsNeedingReview` pages open flags.
+  - `unitsNeedingReview` pages open flags;
+  - a manager's unit detail lists the unit's open flags (`reviewFlags`: `id`, `reason`, `flaggedAt`), so a flag is cleared from the unit's own page. The note stays out, as everywhere.
 - **`primary_left` needs a decision.** Clearing it by hand is `REVIEW_NEEDS_DECISION`. It is resolved by one of two:
   - `setPrimary`: the family stays;
   - `endHousehold(unitId, reason)` (`residents.manage`): every membership, pending invite, delegation and worker engagement of the unit ends. Each person is told, `settle_before_close` is recorded where a code was issued, and the flags close.

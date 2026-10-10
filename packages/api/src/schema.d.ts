@@ -7237,6 +7237,8 @@ export interface components {
             id: string;
             /** @description Managers only. */
             occupants?: components["schemas"]["UnitOccupantView"][];
+            /** @description Managers only: the open flags behind `reviewReasons`, oldest first. */
+            reviewFlags?: components["schemas"]["UnitReviewFlagView"][];
             /** @description Managers only. */
             reviewReasons?: components["schemas"]["UnitReviewReason"][];
             unitType: components["schemas"]["UnitType"] | null;
@@ -7265,6 +7267,13 @@ export interface components {
             resides: boolean;
             /** Format: date-time */
             startedAt: string;
+        };
+        UnitReviewFlagView: {
+            /** Format: date-time */
+            flaggedAt: string;
+            /** Format: uuid */
+            id: string;
+            reason: components["schemas"]["UnitReviewReason"];
         };
         /** @enum {string} */
         UnitReviewReason: "primary_left" | "primary_frozen" | "primary_deceased" | "separation";

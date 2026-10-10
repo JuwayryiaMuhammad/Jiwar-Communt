@@ -1287,7 +1287,7 @@ export class ResidentsService {
 
   /**
    * One unit as the caller may see it (ResourceAccess: "not found"
-   * otherwise). Managers also get its open review reasons and its active
+   * otherwise). Managers also get its open review flags and its active
    * occupants; nobody else sees who lives in a unit here.
    */
   async unitDetail(unitId: string): Promise<UnitDetail> {
@@ -1307,13 +1307,17 @@ export class ResidentsService {
       if (this.ctx.accountType !== 'manager') return detail;
       const flags = await tx.unitReviewFlag.findMany({
         where: { unitId, clearedAt: null },
-        select: { reason: true },
-        orderBy: { flaggedAt: 'asc' },
+        select: { id: true, reason: true, flaggedAt: true },
+        orderBy: [{ flaggedAt: 'asc' }, { id: 'asc' }],
       });
       const occupants = await this.unitOccupants(tx, unitId);
       return {
         ...detail,
-        management: { reviewReasons: flags.map((f) => f.reason), occupants },
+        management: {
+          reviewReasons: flags.map((f) => f.reason),
+          reviewFlags: flags,
+          occupants,
+        },
       };
     });
   }

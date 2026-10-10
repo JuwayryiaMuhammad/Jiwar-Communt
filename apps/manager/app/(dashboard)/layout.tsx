@@ -16,6 +16,7 @@ import {
   SlidersHorizontal,
   UserCog,
   Users,
+  UserX,
   Wrench,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -62,6 +63,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     () => fetchers.tickets({ status: 'new' }, undefined, 100),
     can('tickets.dispatch'),
   );
+
+  // Requests the system could not carry out by itself: a manager's to settle.
+  const erasures = useQuery({
+    queryKey: [...keys.erasures, 'count'],
+    queryFn: () => fetchers.erasures(undefined, 100),
+    refetchInterval: 120_000,
+    retry: false,
+    enabled: can('accounts.erase'),
+  });
+  const deletions = erasures.data?.data.filter((e) => e.status === 'queued').length ?? 0;
 
   // Each entry shows only to a role that may read what its page opens with.
   const groups: { label?: string; items: GatedItem[] }[] = [
@@ -114,6 +125,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           label: 'Maintenance setup',
           icon: <SlidersHorizontal aria-hidden />,
           show: can('maintenance.manage'),
+        },
+        {
+          href: '/deletions',
+          label: 'Deletion requests',
+          icon: <UserX aria-hidden />,
+          count: deletions,
+          show: can('accounts.erase'),
         },
         { href: '/audit', label: 'Audit log', icon: <ScrollText aria-hidden />, show: can('audit.read') },
       ],

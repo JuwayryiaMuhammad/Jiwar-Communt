@@ -3812,6 +3812,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/workers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["WorkersController_one"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/visitor-passes/{id}/cancel": {
         parameters: {
             query?: never;
@@ -7319,6 +7335,27 @@ export interface components {
             /** @description Managers only. */
             reviewReasons?: components["schemas"]["UnitReviewReason"][];
             unitType: components["schemas"]["UnitType"] | null;
+        };
+        UnitEngagementView: {
+            capacity: components["schemas"]["WorkerCapacity"];
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description The latest month with a recorded wage payment. Only for the employer side, like `monthlyWage`: absent for anyone else.
+             * @example 2026-09
+             */
+            lastPaidPeriod?: string | null;
+            /**
+             * @description Per month; null until set. Only for the employer side (the primary, a `workers` delegate, the engagement’s requester): absent for anyone else.
+             * @example 3200.00
+             */
+            monthlyWage?: string | null;
+            schedule: components["schemas"]["WorkerScheduleDto"];
+            status: components["schemas"]["WorkerEngagementStatus"];
+            suspendedByManagement: boolean;
+            /** Format: date-time */
+            validUntil: string | null;
+            workerName: string;
         };
         UnitNeedingReviewView: {
             activeOccupants: number;
@@ -14067,6 +14104,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RegisteredView"];
+                };
+            };
+        };
+    };
+    WorkersController_one: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitEngagementView"];
                 };
             };
         };

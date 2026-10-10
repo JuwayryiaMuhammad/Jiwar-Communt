@@ -51,6 +51,7 @@ import {
   EngagementResponse,
   RegisteredView,
   ReviewEngagementView,
+  UnitEngagementView,
 } from './views/workers.views';
 import { WorkersService } from './workers.service';
 
@@ -75,6 +76,23 @@ export class WorkersController {
   ): Promise<ListResponse<EngagementResponse>> {
     return toList(await this.workers.listForUnit(unitId, q), (e) =>
       EngagementResponse.from(e),
+    );
+  }
+
+  /**
+   * One of the unit's workers (ADR 0037): the list item and the last month
+   * paid. Another unit's engagement is ENGAGEMENT_NOT_FOUND; the manager's
+   * `GET /worker-engagements/:id` is a different view.
+   */
+  @RequirePermissions('workers.manage')
+  @Get('units/:unitId/workers/:id')
+  @ApiOkResponse({ type: UnitEngagementView })
+  async one(
+    @Param('unitId', parseId('unitId')) unitId: string,
+    @Param('id', parseId()) id: string,
+  ): Promise<UnitEngagementView> {
+    return UnitEngagementView.fromDetail(
+      await this.workers.engagementForUnit(unitId, id),
     );
   }
 

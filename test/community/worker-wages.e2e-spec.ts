@@ -126,6 +126,29 @@ describe('Worker wages — the employer side', () => {
       [ofCoTenant]: 'hidden',
     });
 
+    // The worker's page: the wage and the last month paid, or neither.
+    const page = (as: typeof asOwner, id: string) =>
+      as(() => workers.engagementForUnit(unit.id, id));
+    expect(await page(asOwner, ofOwner)).toMatchObject({
+      monthlyWage: '3100.00',
+      lastPaidPeriod: month,
+    });
+    expect(await page(asDelegate, ofOwner)).toMatchObject({
+      lastPaidPeriod: month,
+    });
+    expect(await page(asCoTenant, ofCoTenant)).toMatchObject({
+      monthlyWage: '2900.00',
+      lastPaidPeriod: null,
+    });
+    for (const hidden of [
+      await page(asCoTenant, ofOwner),
+      await page(asMember, ofOwner),
+    ]) {
+      expect(hidden.id).toBe(ofOwner);
+      expect('monthlyWage' in hidden).toBe(false);
+      expect('lastPaidPeriod' in hidden).toBe(false);
+    }
+
     // The payments follow the same line.
     expect(
       (await asDelegate(() => wages.payments(ofOwner))).items,

@@ -655,7 +655,9 @@ describe('API v0 — PII leak scan', () => {
     );
     windowMarks.push(oldStart.toISOString(), oldEnd.toISOString());
 
-    const params: Record<string, string> = {
+    /** One id for every param of the path, or each param by name. */
+    type Ids = string | Record<string, string>;
+    const params: Record<string, Ids> = {
       '/tickets/{id}': ticket.id,
       '/technician/tickets/{id}': ticket.id,
       '/tickets/{id}/messages': ticket.id,
@@ -680,6 +682,11 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/household': unit.id,
       '/units/{unitId}/household/minors-ready': unit.id,
       '/units/{unitId}/workers': unit.id,
+      // ADR 0037.
+      '/units/{unitId}/workers/{id}': {
+        unitId: unit.id,
+        id: registered.engagementId,
+      },
       '/units/{unitId}/deferred-actions': unit.id,
       '/units/{unitId}/delegations': unit.id,
       '/units/{unitId}/visitor-passes': unit.id,
@@ -713,7 +720,7 @@ describe('API v0 — PII leak scan', () => {
      * out, the one they left — its unit routes, the ender's old ticket, the
      * household's member and worker.
      */
-    const rentedParams: Record<string, string> = {
+    const rentedParams: Record<string, Ids> = {
       ...Object.fromEntries(
         Object.keys(params)
           .filter((path) => /\/units\/\{(id|unitId)\}/.test(path))
@@ -726,6 +733,10 @@ describe('API v0 — PII leak scan', () => {
       '/worker-engagements/{id}': rentedEngagement.engagementId,
       '/worker-engagements/{id}/attendance': rentedEngagement.engagementId,
       '/worker-engagements/{id}/wage-payments': rentedEngagement.engagementId,
+      '/units/{unitId}/workers/{id}': {
+        unitId: rented.id,
+        id: rentedEngagement.engagementId,
+      },
     };
     const paramsOf = (name: string) =>
       name === 'landlord' || name === 'ender'
@@ -794,17 +805,19 @@ describe('API v0 — PII leak scan', () => {
       },
     };
 
+    const idsFor = (name: string, path: string): Record<string, string> => {
+      const given = paramsOf(name)[path];
+      return typeof given === 'string'
+        ? Object.fromEntries(paramNames(path).map((n) => [n, given]))
+        : given;
+    };
+
     const leaks: string[] = [];
     const seen = new Map<string, string>();
     for (const [name, persona] of Object.entries(personas)) {
       for (const r of gets) {
         const path = paramNames(r.path).length
-          ? fill(
-              r.path,
-              Object.fromEntries(
-                paramNames(r.path).map((n) => [n, paramsOf(name)[r.path]]),
-              ),
-            )
+          ? fill(r.path, idsFor(name, r.path))
           : r.path;
         const isPlatformRoute = r.auth === 'platform';
         if ((name === 'platform') !== isPlatformRoute && r.auth !== 'public')
@@ -987,8 +1000,18 @@ describe('API v0 — PII leak scan', () => {
     expect(seen.get('plainMember /units/{unitId}/workers')).toContain(
       registered.engagementId,
     );
-    expect(seen.get('resident /units/{unitId}/workers')).toContain(
-      `"monthlyWage":"${WAGE.home}"`,
+    expect(seen.get('plainMember /units/{unitId}/workers/{id}')).toContain(
+      registered.engagementId,
+    );
+    for (const path of [
+      '/units/{unitId}/workers',
+      '/units/{unitId}/workers/{id}',
+    ])
+      expect(seen.get(`resident ${path}`)).toContain(
+        `"monthlyWage":"${WAGE.home}"`,
+      );
+    expect(seen.get('resident /units/{unitId}/workers/{id}')).toContain(
+      `"lastPaidPeriod":"${wageMonth}"`,
     );
     for (const name of ['resident', 'manager'])
       expect(

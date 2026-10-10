@@ -70,6 +70,29 @@ export class EngagementResponse {
   }
 }
 
+/** One of the unit's engagements, for its residents (ADR 0037). */
+export class UnitEngagementView extends EngagementResponse {
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: '2026-09',
+    description:
+      'The latest month with a recorded wage payment. Only for the employer side, like `monthlyWage`: absent for anyone else.',
+  })
+  lastPaidPeriod?: string | null;
+
+  static fromDetail(
+    e: EngagementView & { lastPaidPeriod?: string | null },
+  ): UnitEngagementView {
+    return {
+      ...EngagementResponse.from(e),
+      ...(e.lastPaidPeriod !== undefined
+        ? { lastPaidPeriod: e.lastPaidPeriod }
+        : {}),
+    };
+  }
+}
+
 export class WarningView {
   @ApiProperty({ enum: ['WORKER_SCHEDULE_CONFLICT'] })
   code: string;

@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(errorBody('VALIDATION_FAILED', 400), { status: 400 });
   }
 
+  const userAgent = req.headers.get('user-agent');
   const restricted = req.cookies.get(PASSWORD_CHANGE_COOKIE)?.value;
   const session = readTokens(req, SESSION_PREFIX);
   let accessToken = restricted ?? session.accessToken;
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
   // itself fails.
   let renewed: SessionTokens | undefined;
   if (!accessToken && session.refreshToken) {
-    const r = await refreshOnce(session.refreshToken, adminBff.refresh);
+    const r = await refreshOnce(session.refreshToken, (token) => adminBff.refresh(token, userAgent));
     if (r.ok) {
       renewed = r.tokens;
       accessToken = r.tokens.accessToken;
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
     result = await backendJson<Record<string, unknown>>(
       '/api/v1/platform/auth/change-password',
       { currentPassword: input.currentPassword, newPassword: input.newPassword },
-      { accessToken },
+      { accessToken, userAgent },
     );
   } catch {
     return NextResponse.json(errorBody('NETWORK_ERROR', 503), { status: 503 });

@@ -25,7 +25,8 @@ export const adminBff: BffProxyConfig = {
   cookiePrefix: SESSION_PREFIX,
   isAllowed: (path) =>
     path.startsWith('/api/v1/platform/') && !path.startsWith('/api/v1/platform/auth/'),
-  refresh: (refreshToken) => callRefresh('/api/v1/platform/auth/refresh', refreshToken, fullTokens),
+  refresh: (refreshToken, userAgent) =>
+    callRefresh('/api/v1/platform/auth/refresh', refreshToken, fullTokens, userAgent),
 };
 
 /** The restricted token of a forced password change, kept for that call only. */

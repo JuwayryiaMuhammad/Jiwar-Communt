@@ -23,10 +23,11 @@ export async function POST(req: NextRequest) {
   }
   let result;
   try {
-    result = await backendJson<Verified>('/api/v1/auth/otp/verify', {
-      identifier: input.identifier.trim(),
-      code: input.code.trim(),
-    });
+    result = await backendJson<Verified>(
+      '/api/v1/auth/otp/verify',
+      { identifier: input.identifier.trim(), code: input.code.trim() },
+      { userAgent: req.headers.get('user-agent') },
+    );
   } catch {
     return NextResponse.json(errorBody('NETWORK_ERROR', 503), { status: 503 });
   }

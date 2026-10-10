@@ -30,7 +30,8 @@ const BLOCKED = [
 export const managerBff: BffProxyConfig = {
   cookiePrefix: SESSION_PREFIX,
   isAllowed: (path) => path.startsWith('/api/v1/') && !BLOCKED.some((p) => path.startsWith(p)),
-  refresh: (refreshToken) => callRefresh('/api/v1/auth/refresh', refreshToken, managerTokens),
+  refresh: (refreshToken, userAgent) =>
+    callRefresh('/api/v1/auth/refresh', refreshToken, managerTokens, userAgent),
 };
 
 /** The single-use login ticket between code verification and account choice. */

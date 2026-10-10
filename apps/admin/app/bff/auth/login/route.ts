@@ -19,10 +19,11 @@ export async function POST(req: NextRequest) {
 
   let result;
   try {
-    result = await backendJson<Record<string, unknown>>('/api/v1/platform/auth/login', {
-      email,
-      password: input.password,
-    });
+    result = await backendJson<Record<string, unknown>>(
+      '/api/v1/platform/auth/login',
+      { email, password: input.password },
+      { userAgent: req.headers.get('user-agent') },
+    );
   } catch {
     return NextResponse.json(errorBody('NETWORK_ERROR', 503), { status: 503 });
   }

@@ -20,8 +20,8 @@ export interface BffProxyConfig {
   cookiePrefix: string;
   /** `path` starts with `/api/v1/`; anything else is already refused. */
   isAllowed(path: string, method: string): boolean;
-  /** Calls the app's refresh endpoint on the backend. */
-  refresh(refreshToken: string): Promise<RefreshResult>;
+  /** Calls the app's refresh endpoint on the backend, as the browser's agent. */
+  refresh(refreshToken: string, userAgent?: string | null): Promise<RefreshResult>;
 }
 
 const FORWARDED_REQUEST_HEADERS = [
@@ -100,7 +100,9 @@ export function createBffProxy(config: BffProxyConfig) {
 
     const renew = async (): Promise<Response | null> => {
       if (!refreshToken) return unauthenticated(config.cookiePrefix);
-      const result = await refreshOnce(refreshToken, config.refresh);
+      const result = await refreshOnce(refreshToken, (token) =>
+        config.refresh(token, req.headers.get('user-agent')),
+      );
       if (!result.ok) {
         return result.ended ? unauthenticated(config.cookiePrefix) : unavailable();
       }
@@ -184,12 +186,14 @@ export async function callRefresh(
   path: string,
   refreshToken: string,
   pick: (body: Record<string, unknown>) => SessionTokens | null,
+  userAgent?: string | null,
 ): Promise<RefreshResult> {
   try {
     const res = await backendFetch(path, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
+      userAgent,
     });
     if (res.status === 401 || res.status === 400 || res.status === 403) {
       return { ok: false, ended: true };

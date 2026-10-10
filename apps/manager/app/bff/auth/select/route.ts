@@ -22,10 +22,13 @@ export async function POST(req: NextRequest) {
 
   let result;
   try {
-    result = await backendJson<Record<string, unknown>>('/api/v1/auth/select-account', {
-      loginTicket: ticket,
-      accountId: input.accountId,
-    });
+    // The browser's agent, not this server's: the API knows a device by it
+    // and alerts the account on a sign-in from a new one (ADR 0036).
+    result = await backendJson<Record<string, unknown>>(
+      '/api/v1/auth/select-account',
+      { loginTicket: ticket, accountId: input.accountId },
+      { userAgent: req.headers.get('user-agent') },
+    );
   } catch {
     return NextResponse.json(errorBody('NETWORK_ERROR', 503), { status: 503 });
   }

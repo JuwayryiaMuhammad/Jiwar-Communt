@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
   try {
     const result = await backendJson('/api/v1/auth/otp/request', { identifier: input.identifier.trim() }, {
       acceptLanguage: req.headers.get('accept-language') ?? 'en',
+      userAgent: req.headers.get('user-agent'),
     });
     if (result.status !== 202) return relayError(result.status, result.body);
     return NextResponse.json({ ok: true }, { status: 202, headers: { 'cache-control': 'no-store' } });

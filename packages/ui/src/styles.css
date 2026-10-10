@@ -1376,3 +1376,108 @@ textarea {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* -------------------------------------------------- timeline and thread */
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-sm) var(--space-lg);
+}
+
+.timeline__item {
+  position: relative;
+  padding: 0 0 var(--space-md) var(--space-lg);
+  border-left: 1px solid var(--color-hairline);
+}
+
+.timeline__item:last-child {
+  padding-bottom: 0;
+  border-left-color: transparent;
+}
+
+.timeline__item::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 5px;
+  width: 9px;
+  height: 9px;
+  border-radius: var(--radius-pill);
+  background: var(--color-canvas);
+  border: 2px solid var(--color-primary);
+}
+
+.timeline__item--warn::before {
+  border-color: var(--color-accent-terracotta);
+}
+
+.timeline__title {
+  color: var(--color-ink);
+  font-weight: 500;
+}
+
+.timeline__meta {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.thread__msg {
+  max-width: 80%;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  background: var(--surface-subtle);
+  overflow-wrap: anywhere;
+}
+
+.thread__msg--staff {
+  align-self: flex-end;
+  background: var(--color-accent-green-soft);
+}
+
+.thread__msg--internal {
+  align-self: flex-end;
+  background: var(--terracotta-wash);
+  border: 1px dashed var(--color-accent-terracotta);
+}
+
+.thread__meta {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.thread__body {
+  margin: 0;
+  color: var(--color-ink);
+  white-space: pre-wrap;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--space-sm);
+}
+
+.photo-grid a {
+  display: block;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--hairline-soft);
+}
+
+.photo-grid img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}

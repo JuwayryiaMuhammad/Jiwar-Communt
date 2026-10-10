@@ -1,14 +1,16 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { backendJson, errorBody, rejectForeignRequest, relayError, writeSession } from '@jiwar/bff';
-import { managerTokens, TENANT_COOKIE, TICKET_COOKIE } from '@/lib/bff';
+import { backendFetch, backendJson, errorBody, rejectForeignRequest, relayError, writeSession } from '@jiwar/bff';
+import { mayEnter } from '@/lib/access';
+import { sessionTokens, TENANT_COOKIE, TICKET_COOKIE } from '@/lib/bff';
 import { SESSION_PREFIX } from '@/lib/session-prefix';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * Step 3: exchange the ticket for a session of the chosen account. This
- * dashboard is for manager accounts only: a session of any other kind is
- * logged out at once and never reaches a cookie.
+ * dashboard is for managers and for roles holding a maintenance permission
+ * (lib/access.ts), read from the account's own `/me`. A session of anyone
+ * else is logged out at once and never reaches a cookie.
  */
 export async function POST(req: NextRequest) {
   const foreign = rejectForeignRequest(req);
@@ -43,12 +45,17 @@ export async function POST(req: NextRequest) {
     return res;
   }
 
-  const tokens = managerTokens(result.body);
-  if (!tokens) {
+  const tokens = sessionTokens(result.body);
+  const admitted = tokens !== null && (await admits(tokens.accessToken, req.headers.get('user-agent')));
+  if (!tokens || admitted !== true) {
     if (typeof result.body.refreshToken === 'string') {
       await backendJson('/api/v1/auth/logout', { refreshToken: result.body.refreshToken }).catch(() => undefined);
     }
-    const res = NextResponse.json(errorBody('NOT_A_MANAGER', 403), { status: 403 });
+    // The API could not be asked: nobody is let in on a guess.
+    const res =
+      admitted === null
+        ? NextResponse.json(errorBody('NETWORK_ERROR', 503), { status: 503 })
+        : NextResponse.json(errorBody('NO_DASHBOARD_ACCESS', 403), { status: 403 });
     clearTicket(res);
     return res;
   }
@@ -66,4 +73,15 @@ export async function POST(req: NextRequest) {
     });
   }
   return res;
+}
+
+/** The new session's own `/me`: true or false, or null when it cannot be read. */
+async function admits(accessToken: string, userAgent: string | null): Promise<boolean | null> {
+  try {
+    const res = await backendFetch('/api/v1/me', { accessToken, userAgent });
+    if (!res.ok) return res.status === 401 || res.status === 403 ? false : null;
+    return mayEnter((await res.json()) as Record<string, unknown>);
+  } catch {
+    return null;
+  }
 }

@@ -69,7 +69,6 @@ const ERROR_TEXT: Record<string, string> = {
   REFRESH_TOKEN_INVALID: 'Your session has ended. Sign in again.',
   INVALID_CREDENTIALS: 'Email or password is wrong.',
   PASSWORD_CHANGE_REQUIRED: 'Change your password to continue.',
-  NOT_A_MANAGER: 'This account is not a compound manager account.',
   TENANT_NOT_FOUND: 'Compound not found.',
   UNIT_NOT_FOUND: 'Unit not found.',
   ACCOUNT_NOT_FOUND: 'Account not found.',
@@ -106,6 +105,22 @@ const ERROR_TEXT: Record<string, string> = {
   LEGAL_HOLD_ACTIVE: 'This account is on legal hold.',
   SCOPE_CONFIRMATION_MISMATCH: 'The typed phrase does not match.',
   STORAGE_UNAVAILABLE: 'File storage is unavailable right now.',
+  NO_DASHBOARD_ACCESS: 'This account has no access to the management dashboard.',
+  TICKET_NOT_FOUND: 'Ticket not found.',
+  TICKET_CATEGORY_NOT_FOUND: 'Category not found.',
+  TECHNICIAN_NOT_FOUND: 'That technician cannot take tickets: not found, inactive or without the role.',
+  SPECIALTY_NOT_FOUND: 'Specialty not found.',
+  DISPATCH_BUSY: 'Dispatch is deciding on this ticket right now. Try again in a moment.',
+  TICKET_INVALID_TRANSITION: 'The ticket has moved on, so this is no longer possible. Refresh to see where it stands.',
+  TICKET_ACTION_NOT_ALLOWED: 'This action is not allowed on this ticket.',
+  TICKETS_NOT_ALLOWED: 'Tickets are not allowed for this person in this unit.',
+  VISIT_NOT_FOUND: 'Visit not found.',
+  VISIT_ALREADY_ACTIVE: 'This ticket already has a visit proposed or confirmed.',
+  VISIT_INVALID_TRANSITION: 'The visit has moved on, so this is no longer possible.',
+  VISIT_SAME_SIDE: 'The other side has to answer this proposal.',
+  VISIT_NOT_FOR_COMMON_AREA: 'Visits are for tickets in a unit.',
+  VISIT_WINDOW_PASSED: 'That visit window has already passed.',
+  VISITS_NOT_ALLOWED: 'Visits are not allowed on this ticket.',
 };
 
 const FIELD_TEXT: Record<string, string> = {
@@ -127,6 +142,15 @@ const FIELD_TEXT: Record<string, string> = {
   INVALID_VALUE: 'Not an allowed value.',
   DUPLICATE_VALUE: 'Already in use.',
   SAME_AS_CURRENT: 'Same as the current value.',
+  REPORTER_NOT_ELIGIBLE: 'This person may not open tickets for this place.',
+  CATEGORY_NOT_FOR_COMMON_AREA: 'This category is for units only, not for common areas.',
+  CATEGORY_NOT_AVAILABLE: 'This category is no longer in use.',
+  SPECIALTY_NOT_AVAILABLE: 'This specialty is no longer in use.',
+  VISIT_TOO_SOON: 'Too soon: a visit needs at least 15 minutes of notice.',
+  VISIT_TOO_FAR: 'Too far ahead: at most 30 days.',
+  VISIT_TOO_LONG: 'Too long: a visit window is at most 4 hours.',
+  VISIT_ENDS_BEFORE_START: 'The end must be after the start.',
+  VISIT_OUTSIDE_HOURS: "Outside the compound's visiting hours.",
 };
 
 export function errorText(error: unknown): string {

@@ -99,6 +99,86 @@ export function ReasonDialog({
   );
 }
 
+/**
+ * For the actions whose reason is a code alone and never reaches anyone as
+ * text (a ticket reassigned, a visit cancelled). `children` holds the
+ * action's own fields; `ready` is false while they are incomplete.
+ */
+export function ReasonCodeDialog({
+  open,
+  onClose,
+  title,
+  description,
+  codes,
+  confirmLabel,
+  danger,
+  pending,
+  error,
+  ready = true,
+  onConfirm,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: ReactNode;
+  description?: ReactNode;
+  codes: readonly string[];
+  confirmLabel: string;
+  danger?: boolean;
+  pending?: boolean;
+  error?: ReactNode;
+  ready?: boolean;
+  onConfirm: (reasonCode: string) => void;
+  children?: ReactNode;
+}) {
+  const [code, setCode] = useState('');
+  const [touched, setTouched] = useState(false);
+
+  const close = () => {
+    setCode('');
+    setTouched(false);
+    onClose();
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={close}
+      title={title}
+      description={description}
+      onSubmit={() => {
+        setTouched(true);
+        if (code !== '' && ready) onConfirm(code);
+      }}
+      footer={
+        <>
+          <Button onClick={close}>Cancel</Button>
+          <Button type="submit" variant={danger ? 'danger' : 'primary'} loading={pending}>
+            {confirmLabel}
+          </Button>
+        </>
+      }
+    >
+      <div className="form">
+        {children}
+        <Field label="Reason" error={touched && !code ? 'Pick a reason.' : undefined}>
+          {(p) => (
+            <Select {...p} value={code} onChange={(e) => setCode(e.target.value)}>
+              <option value="">Select…</option>
+              {codes.map((c) => (
+                <option key={c} value={c}>
+                  {label(c)}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+        {error}
+      </div>
+    </Dialog>
+  );
+}
+
 export function ConfirmDialog({
   open,
   onClose,

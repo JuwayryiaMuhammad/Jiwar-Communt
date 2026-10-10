@@ -32,7 +32,7 @@
     "dev:manager": "pnpm --filter @jiwar/manager dev",
     "dashboards:typecheck": "pnpm --filter \"./apps/*\" --filter \"./packages/*\" run typecheck",
     "dashboards:build": "pnpm --filter \"./apps/*\" run build",
-    "dashboards:test": "pnpm --filter @jiwar/bff test",
+    "dashboards:test": "pnpm --filter @jiwar/bff --filter @jiwar/manager test",
     "api:generate": "pnpm --filter @jiwar/api generate"
   },
   "dependencies": {

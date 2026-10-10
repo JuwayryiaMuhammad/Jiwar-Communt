@@ -2,9 +2,13 @@ import 'server-only';
 import { callRefresh, type BffProxyConfig, type SessionTokens } from '@jiwar/bff';
 import { SESSION_PREFIX } from './session-prefix';
 
-/** A manager-account token set from the tenant auth API, or null. */
-export function managerTokens(body: Record<string, unknown> | undefined): SessionTokens | null {
-  if (!body || body.accountType !== 'manager') return null;
+/**
+ * A token set from the tenant auth API, or null. Whether the account may use
+ * this dashboard is decided once, at sign-in (the select route), and shown by
+ * the shell from `/me`; a refresh only renews an admitted session.
+ */
+export function sessionTokens(body: Record<string, unknown> | undefined): SessionTokens | null {
+  if (!body) return null;
   const { accessToken, accessTokenExpiresIn, refreshToken, refreshTokenExpiresAt } = body;
   if (
     typeof accessToken !== 'string' ||
@@ -31,7 +35,7 @@ export const managerBff: BffProxyConfig = {
   cookiePrefix: SESSION_PREFIX,
   isAllowed: (path) => path.startsWith('/api/v1/') && !BLOCKED.some((p) => path.startsWith(p)),
   refresh: (refreshToken, userAgent) =>
-    callRefresh('/api/v1/auth/refresh', refreshToken, managerTokens, userAgent),
+    callRefresh('/api/v1/auth/refresh', refreshToken, sessionTokens, userAgent),
 };
 
 /** The single-use login ticket between code verification and account choice. */

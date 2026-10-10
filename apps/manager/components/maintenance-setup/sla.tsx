@@ -66,6 +66,7 @@ export function Sla() {
             : "Clocks start now for every open ticket, against its category's targets. Nothing is backdated: a ticket opened last week is measured from this moment. Residents will see due times and may escalate a ticket that becomes overdue."
         }
         confirmLabel={on ? 'Turn off and stop the clocks' : 'Turn on and start the clocks'}
+        // Red only here: stopping the clocks loses what they had measured.
         danger={on}
         pending={toggle.isPending}
         error={<ErrorAlert error={toggle.error} />}

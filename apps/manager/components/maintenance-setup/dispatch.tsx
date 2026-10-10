@@ -197,7 +197,6 @@ export function Dispatch() {
           )
         }
         confirmLabel={on ? 'Turn off' : 'Turn on and assign the queue'}
-        danger={!on}
         pending={toggle.isPending}
         error={
           <div className="stack stack--sm">

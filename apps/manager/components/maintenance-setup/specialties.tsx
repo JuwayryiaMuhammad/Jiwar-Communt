@@ -41,7 +41,7 @@ function SpecialtyDialog({ specialty, onClose }: { specialty: Specialty | null; 
       footer={
         <>
           <Button onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant={retiring ? 'danger' : 'primary'} loading={save.isPending} disabled={!ready}>
+          <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
             {specialty ? (retiring ? 'Save and retire' : 'Save') : 'Add specialty'}
           </Button>
         </>

@@ -20,6 +20,14 @@ export const REASON_CODES = {
     'documents_missing',
     'other',
   ],
+  // Unit states and households (ADR 0021).
+  reviewFlag: ['deceased', 'separation', 'other'],
+  reviewClear: ['resolved', 'data_correction', 'other'],
+  householdEnd: ['unit_changed_hands', 'household_left', 'other'],
+  permissionRevoke: ['misuse', 'no_longer_needed', 'security', 'other'],
+  // Workers (ADR 0017, 0022).
+  complianceReport: ['document_review', 'report_received', 'other'],
+  cardReissue: ['lost', 'compromised', 'other'],
   // Accounts (ADR 0023, 0036).
   legalHold: ['litigation', 'regulator_request', 'financial_audit', 'other'],
   legalHoldRelease: ['resolved', 'other'],

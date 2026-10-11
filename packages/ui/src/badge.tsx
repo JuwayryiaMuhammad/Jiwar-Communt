@@ -51,6 +51,10 @@ const STATUS_TONE: Record<string, Tone> = {
   rescheduled: 'beige',
   available: 'green',
   unavailable: 'beige',
+  // Parcels (ADR 0035).
+  held: 'terracotta',
+  handed_over: 'green',
+  returned: 'beige',
 };
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {

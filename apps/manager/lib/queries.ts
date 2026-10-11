@@ -47,6 +47,17 @@ export type Preferences = Schema<'PreferencesView'>;
 export type Consent = Schema<'ConsentView'>;
 export type DataExport = Schema<'DataExportView'>;
 export type DeletionRequest = Schema<'DeletionRequestResponse'>;
+export type Parcel = Schema<'ManagerParcelView'>;
+export type ParcelStatus = Schema<'ParcelStatus'>;
+export type ParcelCarrier = Schema<'ParcelCarrier'>;
+export type ParcelSettings = Schema<'ParcelSettingsResponse'>;
+
+export interface ParcelFilters {
+  status?: ParcelStatus | '';
+  carrier?: ParcelCarrier | '';
+  unitCode?: string;
+}
+type ParcelQuery = { [K in keyof ParcelFilters]?: Exclude<ParcelFilters[K], ''> };
 
 export interface TicketFilters {
   status?: TicketStatus | '';
@@ -97,6 +108,10 @@ export const keys = {
   account: (id: string) => ['accounts', 'detail', id] as const,
   accountPart: (id: string, part: string) => ['accounts', 'detail', id, part] as const,
   erasures: ['erasures'] as const,
+  parcels: (filters: object) => ['parcels', 'list', filters] as const,
+  parcel: (id: string) => ['parcels', 'detail', id] as const,
+  parcelSettings: ['parcel-settings'] as const,
+  engagement: (id: string) => ['worker-engagements', 'detail', id] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -152,6 +167,10 @@ export const fetchers = {
   account: (id: string) => unwrap(api.GET('/api/v1/accounts/{id}', { params: { path: { id } } })),
   erasures: (cursor?: string, limit = 50) => unwrap(api.GET('/api/v1/erasures', { params: { query: { cursor, limit } } })),
   legalHolds: (id: string) => unwrap(api.GET('/api/v1/accounts/{id}/legal-holds', { params: { path: { id } } })),
+  parcels: (filters: ParcelFilters, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/parcels', { params: { query: { ...(clean(filters) as ParcelQuery), cursor, limit } } })),
+  parcel: (id: string) => unwrap(api.GET('/api/v1/parcels/{id}', { params: { path: { id } } })),
+  parcelSettings: () => unwrap(api.GET('/api/v1/parcel-settings')),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

@@ -11,7 +11,7 @@ Both follow the design system in `docs/decisions/DESIGN.md`. The tokens live in 
 
 ```
 apps/admin        super admin: compounds, managers, security events, platform audit, account
-apps/manager      manager: overview, requests, units, residents, workers, maintenance, gate, staff, accounts, roles, settings, maintenance setup, deletion requests, audit
+apps/manager      manager: overview, requests, units, residents, workers, maintenance, gate, parcels, staff, accounts, roles, settings, maintenance setup, deletion requests, audit
 apps/Dockerfile   one image per app (--build-arg APP=admin|manager), Next.js standalone output
 packages/ui       design tokens + components (shell, cards, tables, dialogs, forms, toasts)
 packages/api      types generated from docs/api/openapi.v0.json, typed client, error texts, React data hooks
@@ -66,6 +66,7 @@ Because of the BFF, the API needs no `CORS_ORIGINS` for the dashboards.
 - Managers cannot read `GET /gate/inside` (it needs `gate.operate`, which only guards have), so the overview shows today's entries instead of who is inside.
 - A unit's workers (`GET /units/:id/workers`) and closed mode need `workers.manage` / `household.manage`, which only residents have, so the unit page leaves them out.
 - The client's IP reaches the API as the BFF's IP (no `X-Forwarded-For` is forwarded). Set it up at the reverse proxy if security events need the real client IP.
+- A file is uploaded by the browser straight to object storage with a presigned URL (`components/file-upload.tsx`), so the bucket must allow the dashboard's origin (CORS: `PUT`, headers `Content-Type` and `If-None-Match`) and its URL must be reachable from the browser. Photos shown on a page come from presigned URLs the same way.
 - English only for now. Error texts are keyed by API error code in `packages/api/src/errors.ts`, ready for an Arabic dictionary.
 
 ## Checks

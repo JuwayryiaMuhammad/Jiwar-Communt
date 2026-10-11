@@ -138,6 +138,17 @@ export default function ResidentPage() {
   const resident = useQuery({ queryKey: keys.resident(id), queryFn: () => fetchers.resident(id) });
   const r = resident.data;
   const active = r?.status === 'active';
+  const [handingOver, setHandingOver] = useState<Occupancy | null>(null);
+  const handover = useAction(
+    (o: Occupancy) => unwrap(api.POST('/api/v1/occupancies/{id}/handover', { params: { path: { id: o.id } } })),
+    {
+      invalidate: [keys.resident(id)],
+      onDone: (o) => {
+        toast.show(`Handover of unit ${o.unitCode} recorded.`);
+        setHandingOver(null);
+      },
+    },
+  );
 
   const setStatus = useAction(
     () =>
@@ -233,6 +244,24 @@ export default function ResidentPage() {
                       </span>
                     ),
                   },
+                  {
+                    key: 'handover',
+                    header: 'Handover',
+                    cell: (o) =>
+                      o.status !== 'ended' ? (
+                        <span className="t-secondary">—</span>
+                      ) : o.handedOverAt ? (
+                        <span title="The unit was handed back: its emergency button no longer shows in their archive.">
+                          {formatDate(o.handedOverAt)}
+                        </span>
+                      ) : can('residents.manage') ? (
+                        <Button size="sm" loading={handover.isPending && handover.variables?.id === o.id} onClick={() => setHandingOver(o)}>
+                          Record handover
+                        </Button>
+                      ) : (
+                        <span className="t-secondary">Not yet</span>
+                      ),
+                  },
                 ]}
               />
             </Card>
@@ -261,6 +290,19 @@ export default function ResidentPage() {
           </div>
         ) : null}
       </QueryState>
+      <ConfirmDialog
+        open={handingOver !== null}
+        onClose={() => {
+          setHandingOver(null);
+          handover.reset();
+        }}
+        title={`Record the handover of unit ${handingOver?.unitCode ?? ''}?`}
+        description="For a former occupant who has given the unit back: keys returned, nothing of theirs left. Their archive of the unit stops showing its emergency button. They are told."
+        confirmLabel="Record handover"
+        pending={handover.isPending}
+        error={<ErrorAlert error={handover.error} />}
+        onConfirm={() => handingOver && handover.mutate(handingOver)}
+      />
       {r && !r.erased ? (
         <>
           {editing ? <ContactDialog resident={r} open onClose={() => setEditing(false)} /> : null}

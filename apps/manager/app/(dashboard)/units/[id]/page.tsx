@@ -21,8 +21,12 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { MemberOverrides } from '@/components/units/household-overrides';
+import { OccupantActions } from '@/components/units/occupant-actions';
+import { UnitStates } from '@/components/units/unit-states';
 import { api } from '@/lib/api';
 import { REVIEW_TEXT } from '@/lib/labels';
+import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
 
 type Occupant = Schema<'UnitOccupantView'>;
@@ -31,6 +35,7 @@ type Member = Schema<'HouseholdMemberItemView'>;
 export default function UnitPage() {
   const { id } = useParams<{ id: string }>();
   const toast = useToast();
+  const { can } = usePermissions();
   const [ending, setEnding] = useState<Occupant | null>(null);
   const [primary, setPrimary] = useState<Occupant | null>(null);
 
@@ -139,6 +144,7 @@ export default function UnitPage() {
                               Make primary
                             </Button>
                           ) : null}
+                          {can('residents.manage') ? <OccupantActions unitId={id} occupant={o} /> : null}
                           <Button size="sm" onClick={() => setEnding(o)}>
                             End
                           </Button>
@@ -169,6 +175,16 @@ export default function UnitPage() {
                       },
                       { key: 'relation', header: 'Relation', cell: (m) => humanize(m.relation) },
                       { key: 'status', header: 'Status', cell: (m) => <StatusBadge status={m.status} /> },
+                      ...(can('household.override')
+                        ? [
+                            {
+                              key: 'actions',
+                              header: <span className="visually-hidden">Actions</span>,
+                              className: 'table__actions',
+                              cell: (m: Member) => <MemberOverrides unitId={id} member={m} />,
+                            },
+                          ]
+                        : []),
                     ]}
                   />
                 </QueryState>
@@ -177,7 +193,9 @@ export default function UnitPage() {
             </div>
 
             <div className="stack">
-              {u.reviewReasons?.length ? (
+              {can('residents.manage') ? (
+                <UnitStates unit={u} />
+              ) : u.reviewReasons?.length ? (
                 <Card tone="beige">
                   <div className="stack stack--sm">
                     <h2 className="t-title-md">Under review</h2>

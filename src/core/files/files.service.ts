@@ -226,19 +226,14 @@ export class FilesService implements OnModuleInit {
 
     const key = objectKey(file);
     const head = await this.storage.head(key);
-    if (!head) {
-      throw appError.conflict(
-        ErrorCode.FILE_UPLOAD_MISSING,
-        'Nothing has been uploaded for this file yet',
-      );
+    if (!head) return this.uploadMissing(id);
+    let matches =
+      head.size === file.sizeBytes && head.contentType === file.contentType;
+    if (matches) {
+      const bytes = await this.storage.firstBytes(key, SIGNATURE_BYTES);
+      if (!bytes) return this.uploadMissing(id);
+      matches = matchesSignature(file.contentType as FileContentType, bytes);
     }
-    const matches =
-      head.size === file.sizeBytes &&
-      head.contentType === file.contentType &&
-      matchesSignature(
-        file.contentType as FileContentType,
-        await this.storage.firstBytes(key, SIGNATURE_BYTES),
-      );
     if (!matches) {
       await this.removeOwn(id, 'content_mismatch');
       throw appError.unprocessable(
@@ -434,6 +429,22 @@ export class FilesService implements OnModuleInit {
         `file purge deferred to the sweep (${error instanceof Error ? error.name : 'Error'})`,
       );
     }
+  }
+
+  /**
+   * Finalize found no object. A delete purges only after it commits, so
+   * if the file was deleted while finalize read the store, the row under
+   * its lock says so: FILE_NOT_FOUND. Otherwise nothing is uploaded yet.
+   */
+  private async uploadMissing(id: string): Promise<never> {
+    await this.tenantTx.withTenantTx(async (tx) => {
+      await this.lock(tx, id);
+      await this.own(tx, id);
+    });
+    throw appError.conflict(
+      ErrorCode.FILE_UPLOAD_MISSING,
+      'Nothing has been uploaded for this file yet',
+    );
   }
 
   private async mayUpload(purpose: FilePurpose): Promise<boolean> {

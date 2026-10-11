@@ -182,9 +182,12 @@ export class ObjectStorage implements OnApplicationShutdown {
     }
   }
 
-  /** The first `count` bytes of an object (a ranged GET). */
-  async firstBytes(key: string, count: number): Promise<Buffer> {
-    return this.call('read', async () => {
+  /**
+   * The first `count` bytes of an object (a ranged GET); null when there
+   * is none, like `head` (it may be deleted since the caller's HEAD).
+   */
+  async firstBytes(key: string, count: number): Promise<Buffer | null> {
+    try {
       const res = await this.client.send(
         new GetObjectCommand({
           Bucket: this.bucket,
@@ -194,7 +197,10 @@ export class ObjectStorage implements OnApplicationShutdown {
       );
       const bytes = await res.Body!.transformToByteArray();
       return Buffer.from(bytes).subarray(0, count);
-    });
+    } catch (error: unknown) {
+      if (isNotFound(error)) return null;
+      throw this.unavailable('read', error);
+    }
   }
 
   /**

@@ -396,4 +396,59 @@ describe('API v0 — files (ADR 0029)', () => {
     expect(await storage.head(key(id))).toBeNull();
     await get(me.token, id).expect(404);
   });
+
+  // The two interleavings the race above can hit, pinned: the delete
+  // commits and purges between finalize's HEAD and its signature read, or
+  // between its row read and its HEAD. Either way the file is gone.
+  it.each([
+    ['after the HEAD, before the signature read', 'after'],
+    ['before the HEAD', 'before'],
+  ] as const)(
+    'a delete landing %s: finalize is FILE_NOT_FOUND',
+    async (_, when) => {
+      const me = await someone();
+      const id = await f.uploaded(me.token);
+      const realHead = storage.head.bind(storage);
+      const remove = () =>
+        call(w, 'DELETE', `/files/${id}`, { token: me.token }).expect(204);
+      const spy = jest
+        .spyOn(storage, 'head')
+        .mockImplementationOnce(async (k) => {
+          if (when === 'before') await remove();
+          const head = await realHead(k);
+          if (when === 'after') await remove();
+          return head;
+        });
+      try {
+        const fin = await f.finalize(me.token, id);
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(fin.status).toBe(404);
+        expect(err(fin)).toMatchObject({ code: 'FILE_NOT_FOUND' });
+      } finally {
+        spy.mockRestore();
+      }
+      expect(await row(id)).toBeNull();
+      expect(await storage.head(key(id))).toBeNull();
+    },
+  );
+
+  it('an object gone without a delete is FILE_UPLOAD_MISSING; the file waits', async () => {
+    const me = await someone();
+    const id = await f.uploaded(me.token);
+    const realHead = storage.head.bind(storage);
+    const spy = jest
+      .spyOn(storage, 'head')
+      .mockImplementationOnce(async (k) => {
+        const head = await realHead(k);
+        await storage.delete(k);
+        return head;
+      });
+    try {
+      const fin = await f.finalize(me.token, id).expect(409);
+      expect(err(fin)).toMatchObject({ code: 'FILE_UPLOAD_MISSING' });
+    } finally {
+      spy.mockRestore();
+    }
+    expect((await row(id))?.status).toBe('pending');
+  });
 });

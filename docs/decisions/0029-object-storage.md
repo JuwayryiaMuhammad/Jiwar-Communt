@@ -40,6 +40,7 @@ The database repeats types and limits as CHECKs, and a unit test keeps the two i
 - **Deleting a file takes three steps.** The row is marked `deleted_at` in the action's transaction (audited). After commit the object is deleted, then the row. If the object delete fails, the row stays and the sweep tries again. **An object never outlives the row that names it.**
 - **The `files.cleanup` sweep** first marks uploads never finalized an hour after their URL expired (`upload_expired`, actor `system`). Then it deletes the objects of deleted rows, and each row only after its object delete succeeded. Store calls run between two tenant transactions, never inside one.
 - **Races:** finalize, delete and the sweep each lock the row (`FOR UPDATE`). The sweep uses `SKIP LOCKED` and comes long after finalize's grace, so it never takes a file a finalize is working on. A finalize that loses to a delete or the sweep gets `FILE_NOT_FOUND`. Store calls in finalize happen before its transaction, so no database connection waits on the network.
+- *(Fix:)* An object that vanishes during finalize's HEAD or signature read is re-checked under the row's lock: deleted meanwhile is `FILE_NOT_FOUND`, not `STORAGE_UNAVAILABLE`; otherwise `FILE_UPLOAD_MISSING`.
 - **Erasure (ADR 0023)** marks the account's own files deleted in the erasure's transaction and deletes their objects after it commits. A rolled-back erasure deletes nothing.
 
 ### Worker photos (the first use)

@@ -2,9 +2,10 @@
 
 import { formatDate, humanize, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Alert, Badge, Button, Checkbox, Dialog, ReasonDialog, StatusBadge, useToast } from '@jiwar/ui';
+import { Alert, Badge, Button, Checkbox, Dialog, Field, Input, ReasonDialog, StatusBadge, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { WorkerActions } from '@/components/workers/worker-actions';
 import { api } from '@/lib/api';
 import { keys } from '@/lib/queries';
 
@@ -17,12 +18,20 @@ export function scheduleText(schedule: Schema<'WorkerScheduleDto'>): string {
 }
 
 /** The 8-digit code and card come back once, at approval or reissue. */
-export function AccessCodeDialog({ code, onClose }: { code: Schema<'AccessCodeView'> | null; onClose: () => void }) {
+export function AccessCodeDialog({
+  code,
+  onClose,
+  title = 'Worker approved',
+}: {
+  code: Schema<'AccessCodeView'> | null;
+  onClose: () => void;
+  title?: string;
+}) {
   return (
     <Dialog
       open={code !== null}
       onClose={onClose}
-      title="Worker approved"
+      title={title}
       description="The access code is shown once. Give it to the resident who registered the worker."
       footer={
         <Button variant="primary" onClick={onClose}>
@@ -50,9 +59,12 @@ export function EngagementReview({ id, onClose }: { id: string | null; onClose: 
   const [confirmBirth, setConfirmBirth] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [issued, setIssued] = useState<Schema<'AccessCodeView'> | null>(null);
+  // A code issued from the worker's own actions: a lost card, a reissue.
+  const [reissued, setReissued] = useState<Schema<'AccessCodeView'> | null>(null);
+  const [correction, setCorrection] = useState('');
 
   const detail = useQuery({
-    queryKey: ['worker-engagements', 'detail', id],
+    queryKey: keys.engagement(id ?? ''),
     queryFn: () => unwrap(api.GET('/api/v1/worker-engagements/{id}', { params: { path: { id: id ?? '' } } })),
     enabled: id !== null,
   });
@@ -67,7 +79,12 @@ export function EngagementReview({ id, onClose }: { id: string | null; onClose: 
           // The contract marks reasonCode/reason required (shared ReasonDto),
           // but the service asks for them on a rejection only.
           body: (v.decision === 'approve'
-            ? { decision: 'approve', ...(needsBirthConfirmation ? { birthDateConfirmed: confirmBirth } : {}) }
+            ? {
+                decision: 'approve',
+                ...(needsBirthConfirmation ? { birthDateConfirmed: confirmBirth } : {}),
+                // The passport says otherwise: corrected in the same step.
+                ...(needsBirthConfirmation && correction ? { birthDate: correction } : {}),
+              }
             : { decision: 'reject', reasonCode: v.reasonCode, reason: v.reason }) as Schema<'ReviewDto'>,
         }),
       ),
@@ -87,6 +104,7 @@ export function EngagementReview({ id, onClose }: { id: string | null; onClose: 
 
   function close() {
     setConfirmBirth(false);
+    setCorrection('');
     review.reset();
     onClose();
   }
@@ -95,7 +113,7 @@ export function EngagementReview({ id, onClose }: { id: string | null; onClose: 
     <>
       <Dialog
         wide
-        open={id !== null && issued === null && !rejecting}
+        open={id !== null && issued === null && reissued === null && !rejecting}
         onClose={close}
         title={d ? d.worker.fullName : 'Worker'}
         description={d ? `${humanize(d.capacity)} · unit ${d.unitCode}` : undefined}
@@ -166,14 +184,27 @@ export function EngagementReview({ id, onClose }: { id: string | null; onClose: 
               </div>
               {needsBirthConfirmation && d.status === 'pending_review' ? (
                 <Alert tone="warn">
-                  <Checkbox
-                    label="I checked the passport: the birth date above is correct and the worker is 18 or older."
-                    checked={confirmBirth}
-                    onChange={(e) => setConfirmBirth(e.target.checked)}
-                  />
+                  <div className="form">
+                    <Field
+                      label="Birth date on the passport, if it differs"
+                      hint={`Registered as ${formatDate(d.worker.birthDate)}. Leave empty when that is what the passport says.`}
+                    >
+                      {(p) => <Input {...p} type="date" value={correction} onChange={(e) => setCorrection(e.target.value)} />}
+                    </Field>
+                    <Checkbox
+                      label={
+                        correction
+                          ? `I checked the passport: the worker was born on ${formatDate(correction)} and is 18 or older.`
+                          : 'I checked the passport: the birth date above is correct and the worker is 18 or older.'
+                      }
+                      checked={confirmBirth}
+                      onChange={(e) => setConfirmBirth(e.target.checked)}
+                    />
+                  </div>
                 </Alert>
               ) : null}
               <ErrorAlert error={review.error} />
+              {d.status !== 'pending_review' ? <WorkerActions engagement={d} onCode={setReissued} /> : null}
             </div>
           ) : null}
         </QueryState>
@@ -193,6 +224,7 @@ export function EngagementReview({ id, onClose }: { id: string | null; onClose: 
         error={<ErrorAlert error={review.error} />}
         onConfirm={(reason) => review.mutate({ decision: 'reject', ...reason })}
       />
+      <AccessCodeDialog code={reissued} title="New access code" onClose={() => setReissued(null)} />
       <AccessCodeDialog
         code={issued}
         onClose={() => {

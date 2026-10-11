@@ -2,28 +2,13 @@
 
 import { ApiError, formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Alert, Badge, Button, Card, CardBody, CardHeader, Checkbox, Field, Input, ReasonCodeDialog, Select, StatusBadge, useToast } from '@jiwar/ui';
+import { Alert, Badge, Button, Card, CardBody, CardHeader, ReasonCodeDialog, StatusBadge, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
 import { api } from '@/lib/api';
-import { keys, type Consent, type Preferences } from '@/lib/queries';
-import { BLOCKER_TEXT, CONSENT_TEXT, NOTIFICATION_CATEGORY_TEXT } from './labels';
-
-type Pause = '' | '1h' | '8h' | 'until_resumed' | 'resume';
-interface PrefsForm {
-  categories: Record<string, { email: boolean; push: boolean }>;
-  quiet: boolean;
-  start: string;
-  end: string;
-  pause: Pause;
-}
-const toForm = (p: Preferences): PrefsForm => ({
-  categories: Object.fromEntries(p.categories.map((c) => [c.category, { email: c.email, push: c.push }])),
-  quiet: p.quietHours !== null,
-  start: p.quietHours?.start ?? '22:00',
-  end: p.quietHours?.end ?? '07:00',
-  pause: '',
-});
+import { keys, type Consent } from '@/lib/queries';
+import { preferencesChanges, PreferencesFields, toForm, type PrefsForm } from '@/components/notification-preferences';
+import { BLOCKER_TEXT, CONSENT_TEXT } from './labels';
 
 /** What an action waits on: it runs once the manager says how the person asked. */
 type Pending = { title: string; description: ReactNode; confirm: string; danger?: boolean; run: (reasonCode: string) => Promise<unknown>; done: string } | null;
@@ -95,18 +80,8 @@ export function AssistPanel({ accountId, name }: { accountId: string; name: stri
 
   // --- preferences: only what changed is sent -------------------------------
   const saved = prefs.data;
-  const changedCategories =
-    saved && form
-      ? saved.categories
-          .filter((c) => form.categories[c.category]?.email !== c.email || form.categories[c.category]?.push !== c.push)
-          .map((c) => ({ category: c.category, ...form.categories[c.category]! }))
-      : [];
-  const quietChanged =
-    saved && form
-      ? form.quiet !== (saved.quietHours !== null) ||
-        (form.quiet && (form.start !== saved.quietHours?.start || form.end !== saved.quietHours?.end))
-      : false;
-  const prefsDirty = changedCategories.length > 0 || quietChanged || (form?.pause ?? '') !== '';
+  const changes = saved && form ? preferencesChanges(saved, form) : null;
+  const prefsDirty = changes !== null;
   const savePrefs = () =>
     ask({
       title: `Change ${name}'s notification settings?`,
@@ -117,12 +92,7 @@ export function AssistPanel({ accountId, name }: { accountId: string; name: stri
         const next = await unwrap(
           api.PATCH('/api/v1/accounts/{id}/notification-preferences', {
             params: path,
-            body: {
-              reasonCode,
-              ...(changedCategories.length ? { categories: changedCategories } : {}),
-              ...(quietChanged ? { quietHours: form!.quiet ? { start: form!.start, end: form!.end } : null } : {}),
-              ...(form!.pause === 'resume' ? { pause: null } : form!.pause ? { pause: form!.pause } : {}),
-            },
+            body: { reasonCode, ...changes },
           }),
         );
         setForm(toForm(next));
@@ -160,61 +130,7 @@ export function AssistPanel({ accountId, name }: { accountId: string; name: stri
         <QueryState query={prefs} rows={3}>
           {form && saved ? (
             <div className="form">
-              <div className="stack stack--sm">
-                {saved.categories.map((c) => (
-                  <span key={c.category} className="row" style={{ gap: 16, flexWrap: 'wrap' }}>
-                    <span style={{ minWidth: 170 }}>{NOTIFICATION_CATEGORY_TEXT[c.category] ?? humanize(c.category)}</span>
-                    {(['email', 'push'] as const).map((channel) => (
-                      <Checkbox
-                        key={channel}
-                        label={channel === 'email' ? 'Email' : 'Push'}
-                        checked={form.categories[c.category]?.[channel] ?? false}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            categories: { ...form.categories, [c.category]: { ...form.categories[c.category]!, [channel]: e.target.checked } },
-                          })
-                        }
-                      />
-                    ))}
-                  </span>
-                ))}
-              </div>
-              <Checkbox
-                label={`Quiet hours: hold non-urgent notices at night (their time zone, ${saved.timeZone})`}
-                checked={form.quiet}
-                onChange={(e) => setForm({ ...form, quiet: e.target.checked })}
-              />
-              {form.quiet ? (
-                <div className="form__row">
-                  <Field label="Quiet from">
-                    {(p) => <Input {...p} type="time" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} />}
-                  </Field>
-                  <Field label="Quiet until" hint="Before the start: the window runs past midnight.">
-                    {(p) => <Input {...p} type="time" value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} />}
-                  </Field>
-                </div>
-              ) : null}
-              <Field
-                label="Pause"
-                hint={
-                  saved.pause
-                    ? saved.pause.until
-                      ? `Paused now, until ${formatDateTime(saved.pause.until)}.`
-                      : 'Paused now, until resumed.'
-                    : 'Not paused now.'
-                }
-              >
-                {(p) => (
-                  <Select {...p} value={form.pause} onChange={(e) => setForm({ ...form, pause: e.target.value as Pause })}>
-                    <option value="">Leave as it is</option>
-                    <option value="1h">Pause for 1 hour</option>
-                    <option value="8h">Pause for 8 hours</option>
-                    <option value="until_resumed">Pause until resumed</option>
-                    {saved.pause ? <option value="resume">Resume now</option> : null}
-                  </Select>
-                )}
-              </Field>
+              <PreferencesFields saved={saved} form={form} onChange={setForm} />
               <span className="row">
                 <Button disabled={!prefsDirty} onClick={() => setForm(toForm(saved))}>
                   Discard

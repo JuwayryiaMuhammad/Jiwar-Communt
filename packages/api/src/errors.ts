@@ -113,6 +113,7 @@ const ERROR_TEXT: Record<string, string> = {
   MEMBER_PERMISSION_MISSING: 'This member does not have that permission.',
   MEMBER_HAS_NO_ACCOUNT: 'This member has no account, so there is nothing to revoke.',
   PARCEL_NOT_FOUND: 'Parcel not found.',
+  NOTIFICATION_NOT_FOUND: 'Notification not found.',
   FILE_NOT_FOUND: 'File not found.',
   FILE_UPLOAD_MISSING: 'The upload did not arrive. Choose the file again.',
   FILE_UPLOAD_EXPIRED: 'The upload took too long. Choose the file again.',

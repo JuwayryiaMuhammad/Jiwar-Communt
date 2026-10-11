@@ -173,6 +173,11 @@ export default function ParcelsPage() {
   const [carrierFilter, setCarrierFilter] = useState<ParcelCarrier | ''>('');
   const [unitCode, setUnitCode] = useState('');
   const [open, setOpen] = useState<string | null>(null);
+  // A notification about a parcel links here with `?parcel=`.
+  useEffect(() => {
+    const linked = new URLSearchParams(window.location.search).get('parcel');
+    if (linked) setOpen(linked);
+  }, []);
   const [settings, setSettings] = useState(false);
   const filters: ParcelFilters = { status: view === 'all' ? '' : (view as ParcelStatus), carrier: carrierFilter, unitCode: unitCode.trim() };
   const { ready, can } = usePermissions();

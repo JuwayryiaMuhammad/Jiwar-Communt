@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
+import { NotificationBell } from '@/components/notification-bell';
 import { mayEnter } from '@/lib/access';
 import { bffAuth } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
@@ -190,6 +191,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       nav={ready && allowed ? nav : []}
       user={me ? { name: me.fullName ?? humanRole(me.type), meta: me.email ?? me.phone ?? '' } : null}
       onSignOut={signOut}
+      topbarEnd={ready && allowed ? <NotificationBell /> : null}
       signingOut={signingOut}
     >
       {body}

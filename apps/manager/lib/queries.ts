@@ -51,6 +51,8 @@ export type Parcel = Schema<'ManagerParcelView'>;
 export type ParcelStatus = Schema<'ParcelStatus'>;
 export type ParcelCarrier = Schema<'ParcelCarrier'>;
 export type ParcelSettings = Schema<'ParcelSettingsResponse'>;
+export type Notification = Schema<'NotificationView'>;
+export type Session = Schema<'SessionView'>;
 
 export interface ParcelFilters {
   status?: ParcelStatus | '';
@@ -112,6 +114,11 @@ export const keys = {
   parcel: (id: string) => ['parcels', 'detail', id] as const,
   parcelSettings: ['parcel-settings'] as const,
   engagement: (id: string) => ['worker-engagements', 'detail', id] as const,
+  notificationsAll: ['notifications'] as const,
+  notifications: (unread: boolean) => ['notifications', 'list', unread ? 'unread' : 'all'] as const,
+  unreadCount: ['notifications', 'unread-count'] as const,
+  mySessions: ['me', 'sessions'] as const,
+  myPreferences: ['me', 'notification-preferences'] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -171,6 +178,11 @@ export const fetchers = {
     unwrap(api.GET('/api/v1/parcels', { params: { query: { ...(clean(filters) as ParcelQuery), cursor, limit } } })),
   parcel: (id: string) => unwrap(api.GET('/api/v1/parcels/{id}', { params: { path: { id } } })),
   parcelSettings: () => unwrap(api.GET('/api/v1/parcel-settings')),
+  notifications: (unread: boolean, cursor?: string, limit = 30) =>
+    unwrap(api.GET('/api/v1/me/notifications', { params: { query: { ...(unread ? { unread: 'true' as const } : {}), cursor, limit } } })),
+  unreadCount: () => unwrap(api.GET('/api/v1/me/notifications/unread-count')),
+  mySessions: () => unwrap(api.GET('/api/v1/me/sessions')),
+  myPreferences: () => unwrap(api.GET('/api/v1/me/notification-preferences')),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

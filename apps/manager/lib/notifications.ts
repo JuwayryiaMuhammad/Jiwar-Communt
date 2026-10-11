@@ -1,0 +1,129 @@
+/**
+ * The inbox stores a kind and its params, never text (ADR 0027): the words
+ * are written here, one entry per kind of the backend catalog
+ * (src/core/notifications/kinds.ts). An unknown kind still reads as
+ * something. Plain TypeScript with no imports, so the tests run it as is.
+ */
+export interface NotificationLike {
+  kind: string;
+  params: Record<string, string | number>;
+  targetType: string | null;
+  targetId: string | null;
+}
+
+type P = NotificationLike['params'];
+
+const dateTime = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+const timeOnly = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+function words(value: string | number | undefined): string {
+  return value === undefined ? '' : String(value).replace(/[._]/g, ' ');
+}
+
+function when(value: string | number | undefined): string {
+  const d = new Date(String(value));
+  return value === undefined || Number.isNaN(d.getTime()) ? '' : dateTime.format(d);
+}
+
+/** "12 Oct, 10:00–12:00", from the visit's two instants. */
+function windowText(p: P): string {
+  const end = new Date(String(p.endsAt));
+  const start = when(p.startsAt);
+  if (!start) return '';
+  return Number.isNaN(end.getTime()) ? start : `${start}–${timeOnly.format(end)}`;
+}
+
+const ticket = (p: P) => `Ticket ${p.ticketNumber}`;
+const aTicket = (p: P) => `ticket ${p.ticketNumber}`;
+const inUnit = (p: P) => (p.unitCode ? ` · unit ${p.unitCode}` : '');
+const days = (p: P) => `${p.days} day${Number(p.days) === 1 ? '' : 's'}`;
+const pieces = (p: P) => `${p.pieces} piece${Number(p.pieces) === 1 ? '' : 's'}`;
+const list = (value: string | number | undefined) =>
+  String(value ?? '')
+    .split(',')
+    .filter(Boolean)
+    .map(words)
+    .join(', ');
+
+/** The coarse device type of a login (the backend's DeviceType). */
+const DEVICE_TEXT: Record<string, string> = {
+  ios: 'iPhone or iPad',
+  android: 'Android phone',
+  desktop_web: 'computer browser',
+  mobile_web: 'phone browser',
+};
+
+const TEXT: Record<string, (p: P) => string> = {
+  'gate.approval_requested': (p) => `The gate asks to let a ${words(p.requestKind)} in for unit ${p.unitCode}`,
+  'gate.approval_reversed': (p) => `Unit ${p.unitCode} withdrew its approval of a ${words(p.requestKind)}`,
+  'worker.entered': (p) => `${p.workerName ?? 'A worker'} entered through ${p.gateName} for unit ${p.unitCode}`,
+  'worker.exited': (p) => `${p.workerName ?? 'A worker'} left through ${p.gateName} · unit ${p.unitCode}`,
+  'visitor_pass.not_me': (p) => `A visitor pass of unit ${p.unitCode} was cancelled: the person said it was not theirs`,
+  'entry_credential.issued': () => 'A phone was registered for your entry code',
+  'account.new_device_login': (p) =>
+    `Your account was signed in to from a new ${DEVICE_TEXT[String(p.deviceType)] ?? 'device'}${when(p.at) ? `, ${when(p.at)}` : ''}`,
+  'data_export.ready': (p) => `Your data export is ready${when(p.expiresAt) ? `, until ${when(p.expiresAt)}` : ''}`,
+  'household.member_account_deleted': (p) => `A household member of unit ${p.unitCode} deleted their account`,
+  'account.deletion_requested': (p) => `Your account is set to be deleted on ${when(p.effectiveAt)}`,
+  'account.deletion_reminder': (p) => `Your account will be deleted on ${when(p.effectiveAt)}`,
+  'account.deletion_delayed': (p) => `Your account was not deleted yet: ${list(p.blockers)}`,
+  'account.deletion_queued': (p) => `A deletion request is waiting for management: ${list(p.blockers)}`,
+  'account.deletion_closed': (p) => `Your deletion request was closed without deleting the account (${words(p.reason)})`,
+  'account.assisted_action': (p) => `Management acted for you: ${words(p.action)} (asked ${words(p.reason)})`,
+  'ticket.emergency': (p) => `Emergency: ${ticket(p)} · ${words(p.categoryKey)}${inUnit(p)}`,
+  'ticket.assigned': (p) => `${ticket(p)} is assigned to you · ${words(p.priority)} · ${words(p.categoryKey)}${inUnit(p)}`,
+  'ticket.unassigned': (p) => `${ticket(p)} was given to someone else${inUnit(p)}`,
+  'ticket.status_changed': (p) =>
+    `${ticket(p)} is now ${words(p.status)}${p.holdReason ? ` (${words(p.holdReason)})` : ''}${inUnit(p)}`,
+  'ticket.completed': (p) => `${ticket(p)} is done and waits for confirmation${inUnit(p)}`,
+  'ticket.declined': (p) => `${ticket(p)} was declined by its technician and is back in the queue${inUnit(p)}`,
+  'ticket.technician_unavailable': (p) => `${ticket(p)} is back in the queue: its technician is unavailable${inUnit(p)}`,
+  'ticket.priority_changed': (p) => `${ticket(p)} is now ${words(p.priority)} priority${inUnit(p)}`,
+  'ticket.rejected': (p) => `${ticket(p)}: the reporter rejected the work (${p.rejectionCount}×)${inUnit(p)}`,
+  'ticket.reopened': (p) => `${ticket(p)} was reopened by its reporter (${p.rejectionCount}×)${inUnit(p)}`,
+  'ticket.escalated': (p) => `${ticket(p)} was rejected ${p.rejectionCount} times and needs a look${inUnit(p)}`,
+  'ticket.auto_closed': (p) => `${ticket(p)} was closed: nobody confirmed in time${inUnit(p)}`,
+  'ticket.message': (p) => `New message on ${aTicket(p)}${inUnit(p)}`,
+  'ticket.opened_on_behalf': (p) => `${ticket(p)} was opened in your name${inUnit(p)}`,
+  'ticket.unassignable': (p) => `${ticket(p)} has no technician who can take it · ${words(p.categoryKey)}${inUnit(p)}`,
+  'ticket.unassignable_emergency': (p) =>
+    `Emergency ${aTicket(p)} has no technician who can take it · ${words(p.categoryKey)}${inUnit(p)}`,
+  'ticket.sla_breached': (p) => `${ticket(p)} passed its ${words(p.clock)} target`,
+  'ticket.sla_breached_emergency': (p) => `Emergency ${aTicket(p)} passed its ${words(p.clock)} target`,
+  'ticket.resident_escalated': (p) => `A resident asked for attention on overdue ${aTicket(p)}`,
+  'ticket.resident_escalated_emergency': (p) => `A resident asked for attention on overdue emergency ${aTicket(p)}`,
+  'ticket.visit_proposed': (p) => `${ticket(p)}: a visit is proposed for ${windowText(p)}`,
+  'ticket.visit_confirmed': (p) => `${ticket(p)}: the visit is confirmed for ${windowText(p)}`,
+  'ticket.visit_cancelled': (p) => `${ticket(p)}: the visit of ${windowText(p)} was cancelled`,
+  'ticket.visit_arrived': (p) => `${ticket(p)}: the technician has arrived`,
+  'ticket.visit_arrival_confirmed': (p) => `${ticket(p)}: the residents confirmed the arrival`,
+  'ticket.visit_no_access': (p) => `${ticket(p)}: nobody let the technician in (${windowText(p)})`,
+  'ticket.visit_late': (p) => `${ticket(p)}: the technician is late for the visit of ${windowText(p)}`,
+  'ticket.visit_consent_granted': (p) => `${ticket(p)}: entry was allowed while nobody is home (${windowText(p)})`,
+  'ticket.category_changed': (p) => `${ticket(p)} is now under ${words(p.categoryKey)}${inUnit(p)}`,
+  'parcel.arrived': (p) => `A parcel from ${words(p.carrier)} (${pieces(p)}) is at the gate for unit ${p.unitCode}`,
+  'parcel.collected': (p) => `A parcel from ${words(p.carrier)} (${pieces(p)}) of unit ${p.unitCode} was handed over`,
+  'parcel.reminder': (p) => `A parcel from ${words(p.carrier)} has waited ${days(p)} at the gate for unit ${p.unitCode}`,
+  'parcel.held_long': (p) => `Parcel ${p.parcelNumber} (${words(p.carrier)}) has waited ${days(p)} for unit ${p.unitCode}`,
+  'parcel.rejected': (p) => `Parcel ${p.parcelNumber} (${words(p.carrier)}) was refused by the unit: send it back`,
+  'parcel.unclaimable': (p) => `Parcel ${p.parcelNumber} (${words(p.carrier)}) arrived for unit ${p.unitCode}, where nobody can collect it`,
+};
+
+export function notificationText(n: NotificationLike): string {
+  const render = TEXT[n.kind];
+  if (!render) return words(n.kind).replace(/^./, (c) => c.toUpperCase());
+  return render(n.params);
+}
+
+/**
+ * Where a notification leads in this dashboard, or null. `can` is the
+ * reader's permissions: a link is offered only where the page would open.
+ */
+export function notificationHref(n: NotificationLike, can: (permission: string) => boolean): string | null {
+  if (n.targetType === 'ticket' && n.targetId) return can('tickets.dispatch') ? `/maintenance/${n.targetId}` : null;
+  if (n.targetType === 'parcel' && n.targetId) return can('parcels.manage') ? `/parcels?parcel=${n.targetId}` : null;
+  if (n.kind === 'account.deletion_queued') return can('accounts.erase') ? '/deletions' : null;
+  if (n.kind === 'account.new_device_login') return '/account';
+  if (n.targetType === 'worker_engagement') return can('workers.review') ? '/workers?tab=all' : null;
+  return null;
+}

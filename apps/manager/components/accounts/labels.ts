@@ -3,7 +3,8 @@ export const BLOCKER_TEXT: Record<string, string> = {
   primary_resident: 'Primary resident of a unit: name another primary first',
   active_staff_role: 'Still an active staff or manager account: deactivate it first',
   legal_hold: 'On legal hold',
-  open_worker_obligations: 'Has domestic workers still engaged: end the engagements first',
+  open_worker_obligations:
+    'Registered a domestic worker whose wage is not settled: end the registration, then close its wage obligation from the worker’s page',
 };
 
 /** What a consent code means, for the person and for the manager acting for them. */

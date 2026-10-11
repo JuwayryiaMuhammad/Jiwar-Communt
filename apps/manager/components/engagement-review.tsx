@@ -6,6 +6,7 @@ import { Alert, Badge, Button, Checkbox, Dialog, Field, Input, ReasonDialog, Sta
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { WorkerActions } from '@/components/workers/worker-actions';
+import { WorkerWages } from '@/components/workers/worker-wages';
 import { api } from '@/lib/api';
 import { keys } from '@/lib/queries';
 
@@ -204,6 +205,7 @@ export function EngagementReview({ id, onClose }: { id: string | null; onClose: 
                 </Alert>
               ) : null}
               <ErrorAlert error={review.error} />
+              <WorkerWages engagement={d} />
               {d.status !== 'pending_review' ? <WorkerActions engagement={d} onCode={setReissued} /> : null}
             </div>
           ) : null}

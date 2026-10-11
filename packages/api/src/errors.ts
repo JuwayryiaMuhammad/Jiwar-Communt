@@ -101,6 +101,9 @@ const ERROR_TEXT: Record<string, string> = {
   WORKER_COMPLIANCE_HOLD: 'This worker has an open compliance case.',
   COMPLIANCE_CASE_NOT_FOUND: 'Compliance case not found.',
   CARD_INCIDENT_NOT_FOUND: 'Card incident not found.',
+  WAGE_NOT_PAYABLE: 'Nobody worked on this registration, so there is no wage to record.',
+  WAGE_PERIOD_ALREADY_PAID: 'That month is already recorded as paid.',
+  WAGE_OBLIGATION_NOT_OPEN: 'This worker has no open wage obligation: it was already closed.',
   GATE_NOT_FOUND: 'Gate not found.',
   LEGAL_HOLD_ACTIVE: 'This account is on legal hold.',
   SCOPE_CONFIRMATION_MISMATCH: 'The typed phrase does not match.',
@@ -176,6 +179,8 @@ const FIELD_TEXT: Record<string, string> = {
   VISIT_ENDS_BEFORE_START: 'The end must be after the start.',
   VISIT_OUTSIDE_HOURS: "Outside the compound's visiting hours.",
   VISIT_HOURS_TOO_SHORT: 'The visiting hours must hold at least one slot.',
+  WAGE_PERIOD_IN_FUTURE: 'That month has not started yet.',
+  WAGE_PERIOD_BEFORE_ENGAGEMENT: 'That month is before the worker was registered.',
   SLA_RESPONSE_AFTER_RESOLUTION: 'The response target cannot be longer than the resolution target.',
 };
 

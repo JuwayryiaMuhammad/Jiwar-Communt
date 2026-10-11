@@ -28,6 +28,8 @@ export const REASON_CODES = {
   // Workers (ADR 0017, 0022).
   complianceReport: ['document_review', 'report_received', 'other'],
   cardReissue: ['lost', 'compromised', 'other'],
+  // A manager closing a wage obligation (ADR 0037): a code only.
+  wageObligationSettle: ['household_payment_confirmed', 'worker_confirmed', 'nothing_owed'],
   // Accounts (ADR 0023, 0036).
   legalHold: ['litigation', 'regulator_request', 'financial_audit', 'other'],
   legalHoldRelease: ['resolved', 'other'],

@@ -283,6 +283,16 @@ textarea {
   min-width: 0;
 }
 
+a.sidebar__user {
+  text-decoration: none;
+  border-radius: var(--radius-md);
+}
+
+a.sidebar__user:hover,
+a.sidebar__user[aria-current='page'] {
+  background: var(--color-surface-dark-soft);
+}
+
 .sidebar__user-text {
   min-width: 0;
 }

@@ -189,8 +189,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       product="Jiwar Manager"
       context={session.data?.tenantName ?? 'Compound'}
       nav={ready && allowed ? nav : []}
-      user={me ? { name: me.fullName ?? humanRole(me.type), meta: me.email ?? me.phone ?? '' } : null}
+      user={me ? { name: me.fullName ?? humanRole(me.type), meta: me.email ?? me.phone ?? '', href: allowed ? '/account' : undefined } : null}
       onSignOut={signOut}
+      crumb={pathname === '/notifications' ? 'Notifications' : pathname === '/account' ? 'My account' : undefined}
       topbarEnd={ready && allowed ? <NotificationBell /> : null}
       signingOut={signingOut}
     >

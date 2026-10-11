@@ -74,6 +74,6 @@ Because of the BFF, the API needs no `CORS_ORIGINS` for the dashboards.
 
 ```bash
 pnpm dashboards:typecheck
-pnpm dashboards:test     # BFF (refresh, same-origin, user agent) and the manager's access rule
+pnpm dashboards:test     # BFF (refresh, same-origin, user agent); the manager's access rule, notification texts and session names
 pnpm dashboards:build
 ```

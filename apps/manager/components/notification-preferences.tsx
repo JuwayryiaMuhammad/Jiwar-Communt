@@ -1,6 +1,6 @@
 'use client';
 
-import { formatDateTime, humanize, type Schema } from '@jiwar/api';
+import { fieldError, formatDateTime, humanize, type Schema } from '@jiwar/api';
 import { Checkbox, Field, Input, Select } from '@jiwar/ui';
 import { NOTIFICATION_CATEGORY_TEXT } from '@/components/accounts/labels';
 import type { Preferences } from '@/lib/queries';
@@ -47,11 +47,14 @@ export function PreferencesFields({
   form,
   onChange,
   own,
+  error,
 }: {
   saved: Preferences;
   form: PrefsForm;
   onChange: (form: PrefsForm) => void;
   own?: boolean;
+  /** The save's error: a refused quiet-hours window is explained at its field. */
+  error?: unknown;
 }) {
   return (
     <>
@@ -85,7 +88,11 @@ export function PreferencesFields({
           <Field label="Quiet from">
             {(p) => <Input {...p} type="time" value={form.start} onChange={(e) => onChange({ ...form, start: e.target.value })} />}
           </Field>
-          <Field label="Quiet until" hint="Before the start: the window runs past midnight.">
+          <Field
+            label="Quiet until"
+            hint="Before the start: the window runs past midnight."
+            error={fieldError(error, 'quietHours') ? 'The end must differ from the start.' : undefined}
+          >
             {(p) => <Input {...p} type="time" value={form.end} onChange={(e) => onChange({ ...form, end: e.target.value })} />}
           </Field>
         </div>

@@ -114,6 +114,7 @@ const ERROR_TEXT: Record<string, string> = {
   MEMBER_HAS_NO_ACCOUNT: 'This member has no account, so there is nothing to revoke.',
   PARCEL_NOT_FOUND: 'Parcel not found.',
   NOTIFICATION_NOT_FOUND: 'Notification not found.',
+  SESSION_NOT_FOUND: 'That session has already ended.',
   FILE_NOT_FOUND: 'File not found.',
   FILE_UPLOAD_MISSING: 'The upload did not arrive. Choose the file again.',
   FILE_UPLOAD_EXPIRED: 'The upload took too long. Choose the file again.',

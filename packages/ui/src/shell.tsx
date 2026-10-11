@@ -29,6 +29,24 @@ function initials(name: string) {
     .join('');
 }
 
+function userInner(user: { name: string; meta: string }) {
+  return (
+    <>
+      <span className="avatar" aria-hidden>
+        {initials(user.name) || '?'}
+      </span>
+      <span className="sidebar__user-text">
+        <span className="sidebar__user-name" style={{ display: 'block' }}>
+          {user.name}
+        </span>
+        <span className="sidebar__user-meta" style={{ display: 'block' }}>
+          {user.meta}
+        </span>
+      </span>
+    </>
+  );
+}
+
 /**
  * The dashboard frame: the sidebar is the design's dark band (it frames
  * the product UI), the content sits on the white canvas.
@@ -41,15 +59,19 @@ export function AppShell({
   onSignOut,
   signingOut,
   topbarEnd,
+  crumb,
   children,
 }: {
   product: string;
   context: string;
   nav: NavGroup[];
-  user: { name: string; meta: string } | null;
+  /** `href`: the account's own page, which the name then opens. */
+  user: { name: string; meta: string; href?: string } | null;
   onSignOut: () => void;
   signingOut?: boolean;
   topbarEnd?: ReactNode;
+  /** The page's name in the top bar when no navigation entry matches it. */
+  crumb?: string;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -96,19 +118,13 @@ export function AppShell({
         </nav>
         <div className="sidebar__footer">
           {user ? (
-            <div className="sidebar__user">
-              <span className="avatar" aria-hidden>
-                {initials(user.name) || '?'}
-              </span>
-              <span className="sidebar__user-text">
-                <span className="sidebar__user-name" style={{ display: 'block' }}>
-                  {user.name}
-                </span>
-                <span className="sidebar__user-meta" style={{ display: 'block' }}>
-                  {user.meta}
-                </span>
-              </span>
-            </div>
+            user.href ? (
+              <Link href={user.href} className="sidebar__user" aria-current={pathname === user.href ? 'page' : undefined} title="My account">
+                {userInner(user)}
+              </Link>
+            ) : (
+              <div className="sidebar__user">{userInner(user)}</div>
+            )
           ) : null}
           <Button variant="ghost-dark" icon={<LogOut aria-hidden />} onClick={onSignOut} loading={signingOut}>
             Sign out
@@ -129,10 +145,10 @@ export function AppShell({
           />
           <div className="topbar__crumbs">
             <span>{product}</span>
-            {current ? (
+            {(current?.label ?? crumb) ? (
               <>
                 <span aria-hidden>/</span>
-                <span aria-current="page">{current.label}</span>
+                <span aria-current="page">{current?.label ?? crumb}</span>
               </>
             ) : null}
           </div>

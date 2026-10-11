@@ -12,6 +12,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
@@ -40,6 +41,7 @@ export class RegistrationsController {
   constructor(private readonly registrations: RegistrationService) {}
 
   @Get('registration-links')
+  @ApiOperation({ summary: 'List registration links' })
   @ApiOkResponse({ type: ListOf(RegistrationLinkResponse) })
   async links(
     @Query() q: PageQueryDto,
@@ -51,6 +53,7 @@ export class RegistrationsController {
 
   /** Older live links keep working until revoked. */
   @Post('registration-links')
+  @ApiOperation({ summary: 'Create a registration link' })
   @NoStore()
   @ApiCreatedResponse({ type: CreatedLinkView })
   async createLink(): Promise<CreatedLinkView> {
@@ -58,6 +61,7 @@ export class RegistrationsController {
   }
 
   @Post('registration-links/:id/revoke')
+  @ApiOperation({ summary: 'Revoke a registration link' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async revokeLink(@Param('id', parseId()) id: string): Promise<void> {
@@ -66,6 +70,7 @@ export class RegistrationsController {
 
   /** Pending requests, oldest first, each with its conflicts as of now. */
   @Get('registrations')
+  @ApiOperation({ summary: 'List pending registration requests' })
   @ApiOkResponse({ type: ListOf(PendingRegistrationView) })
   async pending(
     @Query() q: PageQueryDto,
@@ -77,6 +82,7 @@ export class RegistrationsController {
 
   /** The account and the occupancy are created now; a clash is REGISTRATION_CONFLICT. */
   @Post('registrations/:id/approve')
+  @ApiOperation({ summary: 'Approve a registration request' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: ApprovedRegistrationView })
   async approve(
@@ -90,6 +96,7 @@ export class RegistrationsController {
 
   /** The registrant is told, with the reason text. */
   @Post('registrations/:id/reject')
+  @ApiOperation({ summary: 'Reject a registration request' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async reject(

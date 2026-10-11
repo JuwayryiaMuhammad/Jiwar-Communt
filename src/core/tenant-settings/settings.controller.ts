@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Patch } from '@nestjs/common';
-import { ApiOkResponse, ApiProperty } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiProperty } from '@nestjs/swagger';
 import { RequirePermissions } from '../access/require-permissions.decorator';
 import { ApiArea } from '../common/http/decorators';
 import { UpdateSettingsDto } from './dto/settings.dto';
@@ -60,12 +60,14 @@ export class SettingsController {
   constructor(private readonly settings: TenantSettingsService) {}
 
   @Get()
+  @ApiOperation({ summary: "Get the compound's settings" })
   @ApiOkResponse({ type: SettingsView })
   async get(): Promise<SettingsView> {
     return SettingsView.from(await this.settings.get());
   }
 
   @Patch()
+  @ApiOperation({ summary: "Update the compound's settings" })
   @ApiOkResponse({ type: SettingsView })
   async update(@Body() dto: UpdateSettingsDto): Promise<SettingsView> {
     return SettingsView.from(await this.settings.update(dto));

@@ -6,7 +6,11 @@ import {
   Ip,
   Post,
 } from '@nestjs/common';
-import { ApiAcceptedResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiAcceptedResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { ApiArea, RequestHeader } from '../../core/common/http/decorators';
 import { Public } from '../../core/common/guards/public.decorator';
 import { resolveLocale } from '../../core/common/i18n/locale';
@@ -31,6 +35,9 @@ export class InviteAcceptanceController {
 
   /** The code goes to the invited email, and only to it. */
   @Post('start')
+  @ApiOperation({
+    summary: 'Start accepting a household invite (emails a code)',
+  })
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiAcceptedResponse({ type: InviteCodeRequestedView })
   async start(
@@ -48,6 +55,7 @@ export class InviteAcceptanceController {
 
   /** Every failure is the same 401 OTP_INVALID. */
   @Post('complete')
+  @ApiOperation({ summary: 'Accept a household invite with the code' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: InviteAcceptedView })
   async complete(

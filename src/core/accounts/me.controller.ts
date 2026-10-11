@@ -12,6 +12,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { RolesService } from '../access/roles.service';
 import { appError, ErrorCode } from '../common/errors';
@@ -47,6 +48,7 @@ export class MeController {
 
   /** No-store: the photo is a presigned URL (ADR 0031). */
   @Get()
+  @ApiOperation({ summary: 'Get the signed-in account, its roles and photo' })
   @NoStore()
   @ApiOkResponse({ type: MeView })
   async me(): Promise<MeView> {
@@ -59,6 +61,7 @@ export class MeController {
   }
 
   @Patch('locale')
+  @ApiOperation({ summary: 'Set my preferred language' })
   @ApiOkResponse({ type: LocaleView })
   async locale(@Body() dto: UpdateLocaleDto): Promise<LocaleView> {
     return {
@@ -68,6 +71,7 @@ export class MeController {
 
   /** Live sessions, the current one marked. Never the IP. */
   @Get('sessions')
+  @ApiOperation({ summary: 'List my live sessions, the current one marked' })
   @ApiOkResponse({ type: ListOf(SessionView) })
   async sessions(): Promise<ListResponse<SessionView>> {
     return bounded(await this.self.listMySessions(), (s) =>
@@ -76,6 +80,7 @@ export class MeController {
   }
 
   @Post('sessions/revoke-all')
+  @ApiOperation({ summary: 'Sign out every one of my sessions' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: RevokedView })
   async revokeAll(): Promise<RevokedView> {
@@ -83,6 +88,7 @@ export class MeController {
   }
 
   @Post('sessions/:id/revoke')
+  @ApiOperation({ summary: 'Sign out one of my sessions' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async revoke(@Param('id', parseId()) id: string): Promise<void> {
@@ -90,6 +96,7 @@ export class MeController {
   }
 
   @Get('deletion-request')
+  @ApiOperation({ summary: 'Get my account deletion request' })
   @ApiOkResponse({ type: DeletionRequestResponse })
   async deletionRequest(): Promise<DeletionRequestResponse> {
     const request = await this.deletion.myDeletionRequest();
@@ -104,6 +111,7 @@ export class MeController {
 
   /** Undo is possible until `effectiveAt` (ADR 0023). */
   @Post('deletion-request')
+  @ApiOperation({ summary: 'Request deletion of my account' })
   @ApiCreatedResponse({ type: DeletionRequestResponse })
   async requestDeletion(
     @Body() dto: DeletionConfirmationDto,
@@ -114,6 +122,7 @@ export class MeController {
   }
 
   @Post('deletion-request/cancel')
+  @ApiOperation({ summary: 'Cancel my account deletion request' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async cancelDeletion(): Promise<void> {

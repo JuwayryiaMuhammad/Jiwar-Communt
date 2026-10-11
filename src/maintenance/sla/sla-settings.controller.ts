@@ -9,7 +9,11 @@ import {
   Patch,
   Put,
 } from '@nestjs/common';
-import { ApiNoContentResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
@@ -32,12 +36,14 @@ export class SlaSettingsController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get the SLA switch' })
   @ApiOkResponse({ type: SlaSettingsResponse })
   async get(): Promise<SlaSettingsResponse> {
     return SlaSettingsResponse.from(await this.settings.get());
   }
 
   @Patch()
+  @ApiOperation({ summary: 'Turn the SLA on or off' })
   @ApiOkResponse({ type: SlaSettingsResponse })
   async update(
     @Body() dto: UpdateSlaSettingsDto,
@@ -68,6 +74,7 @@ export class CategorySlaTargetsController {
 
   /** All three priorities at once; running clocks keep their target. */
   @Put(':id/sla-targets')
+  @ApiOperation({ summary: "Set a category's SLA targets" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   set(

@@ -11,6 +11,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
@@ -43,6 +44,7 @@ export class UnitStatesController {
   /** Finance stops and permissions freeze until the capacity is settled. */
   @RequirePermissions('residents.manage')
   @Post('units/:id/deceased')
+  @ApiOperation({ summary: 'Report a resident of the unit as deceased' })
   @ApiCreatedResponse({ type: FlagCreatedView })
   deceased(
     @Param('id', parseId()) id: string,
@@ -54,6 +56,7 @@ export class UnitStatesController {
   /** Revoking an adult's access becomes a manager decision. */
   @RequirePermissions('residents.manage')
   @Post('units/:id/separation')
+  @ApiOperation({ summary: 'Report a separation in the unit' })
   @ApiCreatedResponse({ type: FlagCreatedView })
   separation(
     @Param('id', parseId()) id: string,
@@ -65,6 +68,7 @@ export class UnitStatesController {
   /** Death and separation flags; a primary who left needs a decision instead. */
   @RequirePermissions('residents.manage')
   @Post('review-flags/:id/clear')
+  @ApiOperation({ summary: 'Clear a review flag' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async clear(
@@ -77,6 +81,7 @@ export class UnitStatesController {
   /** Every membership, delegation and worker engagement of the unit ends. */
   @RequirePermissions('residents.manage')
   @Post('units/:id/end-household')
+  @ApiOperation({ summary: "End the unit's household" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async endHousehold(
@@ -89,6 +94,7 @@ export class UnitStatesController {
   /** Every occupancy and the household end; the new owner's occupancy starts. */
   @RequirePermissions('residents.manage')
   @Post('units/:id/transfer-ownership')
+  @ApiOperation({ summary: "Transfer the unit's ownership" })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: OccupancyResponse })
   async transferOwnership(
@@ -107,6 +113,9 @@ export class UnitStatesController {
   /** For a new primary: members whose permissions predate them. */
   @RequirePermissions('household.manage')
   @Get('units/:id/household/to-review')
+  @ApiOperation({
+    summary: 'Members whose permissions predate the new primary',
+  })
   @ApiOkResponse({ type: ListOf(MemberToReviewView) })
   async toReview(
     @Param('id', parseId()) id: string,
@@ -118,6 +127,7 @@ export class UnitStatesController {
 
   @RequirePermissions('household.manage')
   @Post('units/:id/household/reviewed')
+  @ApiOperation({ summary: "Mark the household's permissions as reviewed" })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: ReviewedView })
   async reviewed(

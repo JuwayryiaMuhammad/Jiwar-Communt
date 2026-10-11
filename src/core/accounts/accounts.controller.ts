@@ -9,7 +9,11 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { RequirePermissions } from '../access/require-permissions.decorator';
 import { ApiArea } from '../common/http/decorators';
 import {
@@ -37,6 +41,7 @@ export class AccountsController {
 
   @RequirePermissions('accounts.read')
   @Get()
+  @ApiOperation({ summary: "List the compound's accounts" })
   @ApiOkResponse({ type: ListOf(AccountListItemView) })
   async list(
     @Query() q: PageQueryDto,
@@ -48,6 +53,7 @@ export class AccountsController {
 
   @RequirePermissions('accounts.read')
   @Get(':id')
+  @ApiOperation({ summary: 'Get one account' })
   @ApiOkResponse({ type: AccountDetailView })
   async get(@Param('id', parseId()) id: string): Promise<Detail> {
     return AccountDetailView.fromRecord(await this.accounts.get(id));
@@ -55,6 +61,7 @@ export class AccountsController {
 
   @RequirePermissions('accounts.manage')
   @Post()
+  @ApiOperation({ summary: 'Create an account' })
   @ApiCreatedResponse({ type: AccountDetailView })
   async create(@Body() dto: CreateAccountDto): Promise<Detail> {
     return AccountDetailView.fromRecord(await this.accounts.create(dto));
@@ -63,6 +70,7 @@ export class AccountsController {
   /** Deactivating also revokes every session of the account. */
   @RequirePermissions('accounts.manage')
   @Patch(':id/status')
+  @ApiOperation({ summary: 'Activate or deactivate an account' })
   @ApiOkResponse({ type: AccountDetailView })
   async updateStatus(
     @Param('id', parseId()) id: string,
@@ -76,6 +84,9 @@ export class AccountsController {
   /** Recovery step 1 after a freeze: a new phone (never the released one). */
   @RequirePermissions('accounts.manage')
   @Patch(':id/contact')
+  @ApiOperation({
+    summary: "Change an account's phone (recovery after a freeze)",
+  })
   @ApiOkResponse({ type: AccountDetailView })
   async updateContact(
     @Param('id', parseId()) id: string,
@@ -89,6 +100,9 @@ export class AccountsController {
   /** "Not me" (ADR 0023): the phone went to someone else. */
   @RequirePermissions('accounts.manage')
   @Post(':id/freeze')
+  @ApiOperation({
+    summary: 'Freeze an account whose phone went to someone else',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: AccountDetailView })
   async freeze(
@@ -103,6 +117,7 @@ export class AccountsController {
   /** Recovery step 2: back to active. */
   @RequirePermissions('accounts.manage')
   @Post(':id/reactivate')
+  @ApiOperation({ summary: 'Reactivate a frozen account' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: AccountDetailView })
   async reactivate(@Param('id', parseId()) id: string): Promise<Detail> {

@@ -12,6 +12,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
@@ -46,6 +47,7 @@ export class HouseholdController {
   /** Members for everyone who sees the household; grants and invites for its managers. */
   @RequirePermissions('units.read')
   @Get('units/:unitId/household')
+  @ApiOperation({ summary: "Get the unit's household" })
   @ApiOkResponse({ type: HouseholdResponse })
   async household(
     @Param('unitId', parseId('unitId')) unitId: string,
@@ -56,6 +58,7 @@ export class HouseholdController {
   /** The token is shown once; the invitee accepts with a code sent to the email. */
   @RequirePermissions('household.manage')
   @Post('units/:unitId/household/invites')
+  @ApiOperation({ summary: 'Invite an adult to the household' })
   @NoStore()
   @ApiCreatedResponse({ type: CreatedInviteView })
   async invite(
@@ -69,6 +72,7 @@ export class HouseholdController {
 
   @RequirePermissions('household.manage')
   @Post('household/invites/:id/revoke')
+  @ApiOperation({ summary: 'Revoke a household invite' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async revokeInvite(@Param('id', parseId()) id: string): Promise<void> {
@@ -77,6 +81,7 @@ export class HouseholdController {
 
   @RequirePermissions('household.manage')
   @Post('units/:unitId/household/minors')
+  @ApiOperation({ summary: 'Add a minor to the household' })
   @ApiCreatedResponse({ type: HouseholdMemberResponse })
   async addMinor(
     @Param('unitId', parseId('unitId')) unitId: string,
@@ -90,6 +95,7 @@ export class HouseholdController {
   /** Minors who are 18 today in the compound's time zone (the primary only). */
   @RequirePermissions('household.manage')
   @Get('units/:unitId/household/minors-ready')
+  @ApiOperation({ summary: 'List minors who turned 18' })
   @ApiOkResponse({ type: ListOf(HouseholdMemberResponse) })
   async minorsReady(
     @Param('unitId', parseId('unitId')) unitId: string,
@@ -102,6 +108,9 @@ export class HouseholdController {
   /** An account of their own, linked to the same membership (the primary only). */
   @RequirePermissions('household.manage')
   @Post('household/members/:id/majority-invite')
+  @ApiOperation({
+    summary: 'Invite a member who turned 18 to an account of their own',
+  })
   @NoStore()
   @ApiCreatedResponse({ type: CreatedInviteView })
   async majorityInvite(
@@ -116,6 +125,7 @@ export class HouseholdController {
   /** The member is told, with the reason text. */
   @RequirePermissions('household.manage')
   @Post('household/members/:id/remove')
+  @ApiOperation({ summary: 'Remove a household member' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async remove(
@@ -128,6 +138,7 @@ export class HouseholdController {
   /** Memberships waiting for approval, oldest first. */
   @RequirePermissions('household.approve')
   @Get('household/pending')
+  @ApiOperation({ summary: 'List memberships waiting for approval' })
   @ApiOkResponse({ type: ListOf(PendingMemberView) })
   async pending(
     @Query() q: PageQueryDto,
@@ -139,6 +150,7 @@ export class HouseholdController {
 
   @RequirePermissions('household.approve')
   @Post('household/members/:id/approve')
+  @ApiOperation({ summary: 'Approve a household membership' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: HouseholdMemberResponse })
   async approve(
@@ -151,6 +163,7 @@ export class HouseholdController {
 
   @RequirePermissions('household.approve')
   @Post('household/members/:id/reject')
+  @ApiOperation({ summary: 'Reject a household membership' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async reject(
@@ -163,6 +176,7 @@ export class HouseholdController {
   /** During a separation, removal is the manager's decision (ADR 0021). */
   @RequirePermissions('household.override')
   @Post('household/members/:id/remove-by-management')
+  @ApiOperation({ summary: 'Remove a household member (management decision)' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async removeByManagement(

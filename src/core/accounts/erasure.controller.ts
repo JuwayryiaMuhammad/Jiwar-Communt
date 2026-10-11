@@ -12,6 +12,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../access/require-permissions.decorator';
 import { ApiArea } from '../common/http/decorators';
@@ -46,6 +47,7 @@ export class ErasureController {
   /** Open requests (pending, and queued with their blockers), most overdue first. */
   @RequirePermissions('accounts.erase')
   @Get('erasures')
+  @ApiOperation({ summary: 'List open account deletion requests' })
   @ApiOkResponse({ type: ListOf(PendingErasureView) })
   async pending(
     @Query() q: PageQueryDto,
@@ -58,6 +60,9 @@ export class ErasureController {
   /** Step 1: counts of what goes and what stays, and the phrase to type. */
   @RequirePermissions('accounts.erase')
   @Get('erasures/:id/scope')
+  @ApiOperation({
+    summary: 'What an erasure removes and keeps, and the phrase to type',
+  })
   @ApiOkResponse({ type: ErasureScopeView })
   async scope(@Param('id', parseId()) id: string): Promise<ErasureScopeView> {
     return ErasureScopeView.from(await this.deletion.erasureScope(id));
@@ -70,6 +75,7 @@ export class ErasureController {
    */
   @RequirePermissions('accounts.erase')
   @Post('erasures/:id/erase')
+  @ApiOperation({ summary: 'Erase the account (tombstone)' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async erase(
@@ -82,6 +88,7 @@ export class ErasureController {
   /** A queued request closed without erasing, with a reason code (ADR 0036). */
   @RequirePermissions('accounts.erase')
   @Post('erasures/:id/close')
+  @ApiOperation({ summary: 'Close a queued deletion request without erasing' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async close(
@@ -94,6 +101,7 @@ export class ErasureController {
   /** Step 2: any legal obligation to keep the data. */
   @RequirePermissions('accounts.legal_hold')
   @Get('accounts/:id/legal-holds')
+  @ApiOperation({ summary: "List an account's legal holds" })
   @ApiOkResponse({ type: ListOf(LegalHoldResponse) })
   async holds(
     @Param('id', parseId()) id: string,
@@ -106,6 +114,7 @@ export class ErasureController {
   /** The person learns their erasure is on hold, never why. */
   @RequirePermissions('accounts.legal_hold')
   @Post('accounts/:id/legal-holds')
+  @ApiOperation({ summary: 'Place a legal hold on an account' })
   @ApiCreatedResponse({ type: IdView })
   async placeHold(
     @Param('id', parseId()) id: string,
@@ -116,6 +125,7 @@ export class ErasureController {
 
   @RequirePermissions('accounts.legal_hold')
   @Post('legal-holds/:id/release')
+  @ApiOperation({ summary: 'Release a legal hold' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async releaseHold(

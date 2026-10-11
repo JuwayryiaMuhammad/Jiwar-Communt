@@ -12,6 +12,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../access/require-permissions.decorator';
 import { DeletionRequestResponse } from '../accounts/views/me.views';
@@ -43,6 +44,9 @@ export class AssistController {
   constructor(private readonly assist: AssistService) {}
 
   @Get('notification-preferences')
+  @ApiOperation({
+    summary: "Get an account's notification preferences (assisted)",
+  })
   @ApiOkResponse({ type: PreferencesView })
   async preferences(
     @Param('id', parseId()) id: string,
@@ -51,6 +55,9 @@ export class AssistController {
   }
 
   @Patch('notification-preferences')
+  @ApiOperation({
+    summary: "Update an account's notification preferences (assisted)",
+  })
   @ApiOkResponse({ type: PreferencesView })
   async updatePreferences(
     @Param('id', parseId()) id: string,
@@ -63,6 +70,7 @@ export class AssistController {
   }
 
   @Get('consents')
+  @ApiOperation({ summary: "List an account's consents (assisted)" })
   @ApiOkResponse({ type: ListOf(ConsentView) })
   async consents(
     @Param('id', parseId()) id: string,
@@ -73,6 +81,7 @@ export class AssistController {
   }
 
   @Post('consents/grant')
+  @ApiOperation({ summary: 'Grant a consent for an account (assisted)' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: ConsentView })
   async grant(
@@ -85,6 +94,7 @@ export class AssistController {
   }
 
   @Post('consents/revoke')
+  @ApiOperation({ summary: 'Revoke a consent for an account (assisted)' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: ConsentView })
   async revoke(
@@ -98,6 +108,7 @@ export class AssistController {
 
   /** Status and dates of the account's latest exports; never a link. */
   @Get('data-exports')
+  @ApiOperation({ summary: "List an account's data exports (assisted)" })
   @ApiOkResponse({ type: ListOf(DataExportView) })
   async exports(
     @Param('id', parseId()) id: string,
@@ -109,6 +120,9 @@ export class AssistController {
 
   /** Delivered only to the account's own email; never a link here. */
   @Post('data-exports')
+  @ApiOperation({
+    summary: "Request a data export to the account's own email (assisted)",
+  })
   @ApiCreatedResponse({ type: DataExportView })
   async requestExport(
     @Param('id', parseId()) id: string,
@@ -121,6 +135,7 @@ export class AssistController {
 
   /** The account's latest deletion request (DELETION_REQUEST_NOT_FOUND: none). */
   @Get('deletion-request')
+  @ApiOperation({ summary: "Get an account's deletion request (assisted)" })
   @ApiOkResponse({ type: DeletionRequestResponse })
   async deletionRequest(
     @Param('id', parseId()) id: string,
@@ -136,6 +151,7 @@ export class AssistController {
   }
 
   @Post('deletion-request')
+  @ApiOperation({ summary: 'Request deletion of an account (assisted)' })
   @ApiCreatedResponse({ type: DeletionRequestResponse })
   async requestDeletion(
     @Param('id', parseId()) id: string,
@@ -147,6 +163,7 @@ export class AssistController {
   }
 
   @Post('deletion-request/cancel')
+  @ApiOperation({ summary: "Cancel an account's deletion request (assisted)" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async cancelDeletion(

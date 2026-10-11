@@ -6,7 +6,7 @@ import {
   Param,
   Post,
 } from '@nestjs/common';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
 import { ReasonDto, reasonOf } from '../../core/common/http/reason.dto';
@@ -24,6 +24,7 @@ export class OccupanciesController {
 
   /** The occupant is told, with the reason text; the audit keeps the code. */
   @Post(':id/end')
+  @ApiOperation({ summary: 'End an occupancy' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: OccupancyResponse })
   async end(
@@ -37,6 +38,7 @@ export class OccupanciesController {
 
   /** Tenant → owner: a new owner row, the tenancy ended. */
   @Post(':id/convert-to-owner')
+  @ApiOperation({ summary: 'Convert a tenant into an owner' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: OccupancyResponse })
   async convertToOwner(
@@ -50,6 +52,7 @@ export class OccupanciesController {
 
   /** An owner moves in (resides) or lets the unit (a landlord). */
   @Post(':id/residence')
+  @ApiOperation({ summary: 'Set whether an owner lives in or lets the unit' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: OccupancyResponse })
   async residence(
@@ -63,6 +66,7 @@ export class OccupanciesController {
 
   /** The keys are back: the archive loses the emergency button. */
   @Post(':id/handover')
+  @ApiOperation({ summary: "Record the keys' handover" })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: OccupancyResponse })
   async handover(

@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { ApiOperation } from '@nestjs/swagger';
 import { ApiArea } from './core/common/http/decorators';
 import { Public } from './core/common/guards/public.decorator';
 
@@ -7,6 +8,7 @@ import { Public } from './core/common/guards/public.decorator';
 @Controller()
 export class AppController {
   @Get()
+  @ApiOperation({ summary: 'Service name and liveness' })
   getRoot() {
     return { name: 'jiwar-community-backend', status: 'ok' };
   }

@@ -1,5 +1,5 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { ApiArea } from '../../core/common/http/decorators';
 import {
   bounded,
@@ -31,6 +31,7 @@ export class MeUnitsController {
 
   /** Occupancies, then a family account's memberships. */
   @Get('units')
+  @ApiOperation({ summary: 'List my units and household memberships' })
   @ApiOkResponse({ type: ListOf(MyUnitView) })
   async units(): Promise<ListResponse<MyUnitView>> {
     return bounded(await this.residents.myUnits(), (u) => MyUnitView.from(u));
@@ -41,6 +42,9 @@ export class MeUnitsController {
    * A unit the caller has no place in is UNIT_NOT_FOUND.
    */
   @Get('units/:unitId/capabilities')
+  @ApiOperation({
+    summary: 'What I may do on one of my units (feature toggles)',
+  })
   @ApiOkResponse({ type: CapabilitiesView })
   async capabilitiesOn(
     @Param('unitId', parseId('unitId')) unitId: string,
@@ -50,6 +54,7 @@ export class MeUnitsController {
 
   /** A household member's own permissions on the unit, and the baseline. */
   @Get('units/:unitId/permissions')
+  @ApiOperation({ summary: 'My household permissions on a unit' })
   @ApiOkResponse({ type: MyPermissionsView })
   async permissionsOn(
     @Param('unitId', parseId('unitId')) unitId: string,
@@ -59,6 +64,7 @@ export class MeUnitsController {
 
   /** Live delegations the caller holds or gave. */
   @Get('delegations')
+  @ApiOperation({ summary: 'List the delegations I hold or gave' })
   @ApiOkResponse({ type: ListOf(MyDelegationView) })
   async myDelegations(): Promise<ListResponse<MyDelegationView>> {
     return bounded(await this.delegations.mine(), (d) =>

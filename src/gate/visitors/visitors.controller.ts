@@ -13,6 +13,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import {
@@ -60,6 +61,7 @@ export class VisitorsController {
   /** The code is shown once. A retry with the same key gets a fresh code. */
   @RequirePermissions('visitors.invite')
   @Post('units/:unitId/visitor-passes')
+  @ApiOperation({ summary: 'Create a visitor pass' })
   @NoStore()
   @IdempotencyHeader()
   @ApiCreatedResponse({ type: IssuedPassView })
@@ -75,6 +77,7 @@ export class VisitorsController {
 
   @RequirePermissions('visitors.invite')
   @Get('units/:unitId/visitor-passes')
+  @ApiOperation({ summary: "List the unit's visitor passes" })
   @ApiOkResponse({ type: ListOf(PassView) })
   async list(
     @Param('unitId', parseId('unitId')) unitId: string,
@@ -92,6 +95,7 @@ export class VisitorsController {
    */
   @RequirePermissions('visitors.invite')
   @Post('visitor-passes/:id/reissue-link')
+  @ApiOperation({ summary: "Reissue a visitor pass's link, QR and code" })
   @HttpCode(HttpStatus.OK)
   @NoStore()
   @Idempotent({ secret: true })
@@ -104,6 +108,7 @@ export class VisitorsController {
 
   @RequirePermissions('visitors.invite')
   @Post('visitor-passes/:id/cancel')
+  @ApiOperation({ summary: 'Cancel a visitor pass' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async cancel(
@@ -115,6 +120,7 @@ export class VisitorsController {
 
   @RequirePermissions('household.manage')
   @Get('units/:unitId/gate-instructions')
+  @ApiOperation({ summary: "Get the household's gate instructions" })
   @ApiOkResponse({ type: GateInstructionsView })
   async getInstructions(
     @Param('unitId', parseId('unitId')) unitId: string,
@@ -124,6 +130,7 @@ export class VisitorsController {
 
   @RequirePermissions('household.manage')
   @Put('units/:unitId/gate-instructions')
+  @ApiOperation({ summary: "Set the household's gate instructions" })
   @ApiOkResponse({ type: GateInstructionsView })
   async setInstructions(
     @Param('unitId', parseId('unitId')) unitId: string,

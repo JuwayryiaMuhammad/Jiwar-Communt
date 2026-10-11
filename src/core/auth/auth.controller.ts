@@ -12,6 +12,7 @@ import {
   ApiHeader,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { ApiArea, NoStore, RequestHeader } from '../common/http/decorators';
 import { Public } from '../common/guards/public.decorator';
@@ -39,6 +40,7 @@ export class AuthController {
 
   /** Always answers the same way, whether or not the identifier exists. */
   @Post('otp/request')
+  @ApiOperation({ summary: 'Request a login code by email' })
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiAcceptedResponse({ type: OtpRequestedView })
   async requestOtp(
@@ -57,6 +59,10 @@ export class AuthController {
   }
 
   @Post('otp/verify')
+  @ApiOperation({
+    summary:
+      'Verify the login code; get a login ticket and the accounts to pick from',
+  })
   @HttpCode(HttpStatus.OK)
   @NoStore()
   @ApiOkResponse({ type: OtpVerifiedView })
@@ -68,6 +74,9 @@ export class AuthController {
   }
 
   @Post('select-account')
+  @ApiOperation({
+    summary: 'Exchange the login ticket for tokens on one account',
+  })
   @HttpCode(HttpStatus.OK)
   @NoStore()
   @ApiOkResponse({ type: TokensView })
@@ -89,6 +98,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @ApiOperation({ summary: 'Refresh the access token' })
   @HttpCode(HttpStatus.OK)
   @NoStore()
   @ApiOkResponse({ type: TokensView })
@@ -97,6 +107,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @ApiOperation({ summary: 'Sign out this session' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async logout(@Body() dto: RefreshTokenDto): Promise<void> {

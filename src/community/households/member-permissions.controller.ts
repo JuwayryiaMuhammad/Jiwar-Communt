@@ -11,6 +11,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
@@ -45,6 +46,7 @@ export class MemberPermissionsController {
 
   @RequirePermissions('household.manage')
   @Get('household/members/:id/permissions')
+  @ApiOperation({ summary: "Get a member's permissions" })
   @ApiOkResponse({ type: MemberPermissionsResponse })
   async get(
     @Param('id', parseId()) id: string,
@@ -57,6 +59,7 @@ export class MemberPermissionsController {
   /** A second grant of the same permission changes its cap. */
   @RequirePermissions('household.manage')
   @Post('household/members/:id/permissions/grant')
+  @ApiOperation({ summary: 'Grant a permission to a member' })
   @ApiCreatedResponse({ type: MemberGrantResponse })
   async grant(
     @Param('id', parseId()) id: string,
@@ -72,6 +75,7 @@ export class MemberPermissionsController {
   /** The member is told, with the reason. */
   @RequirePermissions('household.manage')
   @Post('household/members/:id/permissions/revoke')
+  @ApiOperation({ summary: "Revoke a member's permission" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async revoke(
@@ -84,6 +88,7 @@ export class MemberPermissionsController {
   /** Everything granted; the baseline always remains. */
   @RequirePermissions('household.manage')
   @Post('household/members/:id/permissions/revoke-all')
+  @ApiOperation({ summary: "Revoke all of a member's granted permissions" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async revokeAll(
@@ -96,6 +101,9 @@ export class MemberPermissionsController {
   /** The manager's decision, e.g. during a separation. */
   @RequirePermissions('household.override')
   @Post('household/members/:id/permissions/revoke-by-management')
+  @ApiOperation({
+    summary: "Revoke a member's permission (management decision)",
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async revokeByManagement(
@@ -112,6 +120,7 @@ export class MemberPermissionsController {
   /** Members' requests waiting for the primary. */
   @RequirePermissions('household.manage')
   @Get('units/:unitId/deferred-actions')
+  @ApiOperation({ summary: "List members' requests waiting for the primary" })
   @ApiOkResponse({ type: ListOf(DeferredActionResponse) })
   async deferred(
     @Param('unitId', parseId('unitId')) unitId: string,
@@ -123,6 +132,7 @@ export class MemberPermissionsController {
 
   @RequirePermissions('household.manage')
   @Post('deferred-actions/:id/decide')
+  @ApiOperation({ summary: "Approve or refuse a member's request" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async decide(

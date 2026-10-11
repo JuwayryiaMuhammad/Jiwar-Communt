@@ -6,7 +6,11 @@ import {
   Ip,
   Post,
 } from '@nestjs/common';
-import { ApiNoContentResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { ApiArea, NoStore } from '../common/http/decorators';
 import { Public } from '../common/guards/public.decorator';
 import {
@@ -27,6 +31,7 @@ export class PlatformAuthController {
   /** Every failure is the same INVALID_CREDENTIALS; a first login returns a `password_change` token. */
   @Public()
   @Post('login')
+  @ApiOperation({ summary: 'Platform owner login with email and password' })
   @HttpCode(HttpStatus.OK)
   @NoStore()
   @ApiOkResponse({ type: PlatformTokensView })
@@ -42,6 +47,7 @@ export class PlatformAuthController {
   /** Revokes every platform session of the admin and starts a fresh one. */
   @PlatformAuth({ allowPasswordChange: true })
   @Post('change-password')
+  @ApiOperation({ summary: "Change the platform owner's password" })
   @HttpCode(HttpStatus.OK)
   @NoStore()
   @ApiOkResponse({ type: PlatformTokensView })
@@ -55,6 +61,7 @@ export class PlatformAuthController {
 
   @Public()
   @Post('refresh')
+  @ApiOperation({ summary: 'Refresh the platform access token' })
   @HttpCode(HttpStatus.OK)
   @NoStore()
   @ApiOkResponse({ type: PlatformTokensView })
@@ -64,6 +71,7 @@ export class PlatformAuthController {
 
   @Public()
   @Post('logout')
+  @ApiOperation({ summary: 'Sign out the platform session' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async logout(@Body() dto: PlatformRefreshDto): Promise<void> {

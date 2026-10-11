@@ -1,5 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '../access/require-permissions.decorator';
 import { ApiArea } from '../common/http/decorators';
 import { ListOf, toList, type ListResponse } from '../common/http/list';
@@ -15,6 +15,7 @@ export class AuditController {
 
   @RequirePermissions('audit.read')
   @Get()
+  @ApiOperation({ summary: "Read the compound's audit log, newest first" })
   @ApiOkResponse({ type: ListOf(AuditEntryView) })
   async list(@Query() q: AuditQueryDto): Promise<ListResponse<AuditEntryView>> {
     return toList(await this.audit.list({ ...q, ...window(q) }), (e) =>

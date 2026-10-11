@@ -1,5 +1,9 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { ApiAcceptedResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiAcceptedResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { ApiArea } from '../common/http/decorators';
 import { StepUpCodeDto, StepUpView } from './dto/step-up.dto';
 import { StepUpService } from './step-up.service';
@@ -14,6 +18,7 @@ export class StepUpController {
   constructor(private readonly stepUp: StepUpService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Email me a step-up code for a sensitive action' })
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiAcceptedResponse()
   async request(): Promise<void> {
@@ -21,6 +26,7 @@ export class StepUpController {
   }
 
   @Post('verify')
+  @ApiOperation({ summary: 'Verify the step-up code on this session' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: StepUpView })
   async verify(@Body() dto: StepUpCodeDto): Promise<StepUpView> {

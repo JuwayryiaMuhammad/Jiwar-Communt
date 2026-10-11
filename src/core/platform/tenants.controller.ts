@@ -7,7 +7,11 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { ApiArea } from '../common/http/decorators';
 import {
   ListOf,
@@ -38,6 +42,7 @@ export class TenantsController {
   constructor(private readonly tenants: TenantsService) {}
 
   @Get()
+  @ApiOperation({ summary: 'List compounds' })
   @ApiOkResponse({ type: ListOf(TenantView) })
   async list(@Query() q: PageQueryDto): Promise<ListResponse<TenantView>> {
     return toList(await this.tenants.list(q), (t) => TenantView.from(t));
@@ -45,6 +50,7 @@ export class TenantsController {
 
   /** The compound, its roles and settings, and its first manager. */
   @Post()
+  @ApiOperation({ summary: 'Create a compound with its first manager' })
   @ApiCreatedResponse({ type: TenantDetailView })
   async create(@Body() dto: CreateTenantDto): Promise<TenantDetailView> {
     return TenantDetailView.fromDetails(
@@ -53,6 +59,7 @@ export class TenantsController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get one compound' })
   @ApiOkResponse({ type: TenantDetailView })
   async get(@Param('id', parseId()) id: string): Promise<TenantDetailView> {
     return TenantDetailView.fromDetails(await this.tenants.get(id));
@@ -60,6 +67,7 @@ export class TenantsController {
 
   /** Suspending ends every session in the compound at once. */
   @Patch(':id/status')
+  @ApiOperation({ summary: 'Activate or suspend a compound' })
   @ApiOkResponse({ type: TenantView })
   async setStatus(
     @Param('id', parseId()) id: string,
@@ -69,6 +77,7 @@ export class TenantsController {
   }
 
   @Post(':id/managers')
+  @ApiOperation({ summary: 'Add a manager to a compound' })
   @ApiCreatedResponse({ type: ManagerView })
   async addManager(
     @Param('id', parseId()) id: string,
@@ -78,6 +87,7 @@ export class TenantsController {
   }
 
   @Patch(':id/managers/:accountId/status')
+  @ApiOperation({ summary: "Activate or deactivate a compound's manager" })
   @ApiOkResponse({ type: ManagerView })
   async setManagerStatus(
     @Param('id', parseId()) id: string,

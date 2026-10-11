@@ -6,7 +6,11 @@ import {
   HttpStatus,
   Post,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
 import {
@@ -33,12 +37,14 @@ export class ShiftsController {
 
   /** The active gates a shift can start at. */
   @Get('gates')
+  @ApiOperation({ summary: 'List the gates a shift can start at' })
   @ApiOkResponse({ type: ListOf(GuardGateView) })
   async gatesList(): Promise<ListResponse<GuardGateView>> {
     return bounded(await this.gates.active(), (g) => GuardGateView.from(g));
   }
 
   @Post('shifts/start')
+  @ApiOperation({ summary: 'Start my shift at a gate' })
   @Idempotent()
   @ApiCreatedResponse({ type: ShiftView })
   async start(@Body() dto: StartShiftDto): Promise<ShiftView> {
@@ -46,6 +52,7 @@ export class ShiftsController {
   }
 
   @Post('shifts/end')
+  @ApiOperation({ summary: 'End my shift' })
   @HttpCode(HttpStatus.OK)
   @Idempotent()
   @ApiOkResponse({ type: ShiftView })
@@ -54,6 +61,7 @@ export class ShiftsController {
   }
 
   @Get('shifts/current')
+  @ApiOperation({ summary: 'Get my current shift' })
   @ApiOkResponse({ type: ShiftView })
   async current(): Promise<ShiftView> {
     return ShiftView.from(await this.shifts.current());

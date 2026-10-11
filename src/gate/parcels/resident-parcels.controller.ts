@@ -12,6 +12,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import { ListOf, toList, type ListResponse } from '../../core/common/http/list';
@@ -37,6 +38,7 @@ export class ResidentParcelsController {
   constructor(private readonly parcels: ResidentParcels) {}
 
   @Get()
+  @ApiOperation({ summary: 'List my parcels' })
   @NoStore()
   @ApiOkResponse({ type: ListOf(ResidentParcelView) })
   async list(
@@ -48,6 +50,7 @@ export class ResidentParcelsController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get one of my parcels' })
   @NoStore()
   @ApiOkResponse({ type: ResidentParcelView })
   async get(@Param('id', parseId()) id: string): Promise<ResidentParcelView> {
@@ -56,6 +59,7 @@ export class ResidentParcelsController {
 
   /** "Not mine." `Idempotency-Key`: a retry answers with the parcel as it is. */
   @Post(':id/reject')
+  @ApiOperation({ summary: 'Reject a parcel as not mine' })
   @HttpCode(HttpStatus.OK)
   @NoStore()
   @Idempotent({ secret: true })
@@ -71,6 +75,7 @@ export class ResidentParcelsController {
 
   /** One delegate per parcel. A retry with the same key derives the same code. */
   @Post(':id/delegate')
+  @ApiOperation({ summary: 'Authorize someone to pick up a parcel' })
   @NoStore()
   @Idempotent({ secret: true })
   @ApiCreatedResponse({ type: ResidentParcelView })
@@ -84,6 +89,7 @@ export class ResidentParcelsController {
   }
 
   @Post(':id/delegate/revoke')
+  @ApiOperation({ summary: "Revoke a parcel's pickup delegate" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async revokeDelegate(@Param('id', parseId()) id: string): Promise<void> {

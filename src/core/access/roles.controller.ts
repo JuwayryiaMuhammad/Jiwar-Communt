@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Put } from '@nestjs/common';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { ApiArea } from '../common/http/decorators';
 import { bounded, ListOf, type ListResponse } from '../common/http/list';
 import { parseId } from '../common/validation/parse-id.pipe';
@@ -17,6 +17,7 @@ export class RolesController {
 
   @RequirePermissions('roles.read')
   @Get('roles')
+  @ApiOperation({ summary: "List the compound's roles" })
   @ApiOkResponse({ type: ListOf(RoleView) })
   async list(): Promise<ListResponse<RoleView>> {
     return bounded(await this.roles.list(), (r) => RoleView.from(r));
@@ -24,6 +25,7 @@ export class RolesController {
 
   @RequirePermissions('roles.read')
   @Get('roles/:id')
+  @ApiOperation({ summary: 'Get one role with its permissions' })
   @ApiOkResponse({ type: RoleView })
   async get(@Param('id', parseId()) id: string): Promise<RoleView> {
     return RoleView.from(await this.roles.get(id));
@@ -32,6 +34,7 @@ export class RolesController {
   /** Applies on every holder's next request (versioned cache). */
   @RequirePermissions('roles.manage')
   @Put('roles/:id/permissions')
+  @ApiOperation({ summary: "Replace a role's permissions" })
   @ApiOkResponse({ type: RoleView })
   async replace(
     @Param('id', parseId()) id: string,
@@ -44,6 +47,7 @@ export class RolesController {
 
   @RequirePermissions('roles.read')
   @Get('permissions')
+  @ApiOperation({ summary: 'List the permission catalog' })
   @ApiOkResponse({ type: ListOf(PermissionView) })
   catalog(): ListResponse<PermissionView> {
     return bounded(Object.entries(PERMISSIONS), (e) => PermissionView.from(e));

@@ -7,7 +7,11 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
@@ -42,6 +46,7 @@ export class EntriesController {
    */
   @RequirePermissions('gate.operate')
   @Post('verify')
+  @ApiOperation({ summary: 'Verify a code or QR at the gate' })
   @NoStore()
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: VerifyView })
@@ -51,6 +56,7 @@ export class EntriesController {
 
   @RequirePermissions('gate.operate')
   @Post('entries')
+  @ApiOperation({ summary: 'Record an entry or exit' })
   @Idempotent()
   @ApiCreatedResponse({ type: EntryView })
   async record(@Body() dto: RecordEntryDto): Promise<EntryView> {
@@ -59,6 +65,7 @@ export class EntriesController {
 
   @RequirePermissions('gate.read')
   @Get('entries')
+  @ApiOperation({ summary: 'Read the gate log' })
   @ApiOkResponse({ type: ListOf(EntryListView) })
   async list(
     @Query() q: EntriesQueryDto,
@@ -69,6 +76,7 @@ export class EntriesController {
   /** Who is inside now: an entry with no exit yet. */
   @RequirePermissions('gate.operate')
   @Get('inside')
+  @ApiOperation({ summary: 'List who is inside now' })
   @ApiOkResponse({ type: ListOf(InsideView) })
   async inside(@Query() q: PageQueryDto): Promise<ListResponse<InsideView>> {
     return toList(await this.entries.inside(q), (i) => InsideView.from(i));

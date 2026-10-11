@@ -8,7 +8,11 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiNoContentResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
 import {
@@ -36,6 +40,7 @@ export class UnitActionsController {
   /** Open review flags, newest first; never the notes behind them. */
   @RequirePermissions('residents.read')
   @Get('needing-review')
+  @ApiOperation({ summary: 'List units with open review flags' })
   @ApiOkResponse({ type: ListOf(UnitNeedingReviewView) })
   async needingReview(
     @Query() q: PageQueryDto,
@@ -48,6 +53,7 @@ export class UnitActionsController {
   /** Managers also get the review reasons and the occupants. */
   @RequirePermissions('units.read')
   @Get(':id')
+  @ApiOperation({ summary: 'Get one unit' })
   @ApiOkResponse({ type: UnitDetailView })
   async get(@Param('id', parseId()) id: string): Promise<UnitDetailView> {
     return UnitDetailView.from(await this.residents.unitDetail(id));
@@ -55,6 +61,7 @@ export class UnitActionsController {
 
   @RequirePermissions('residents.manage')
   @Post(':id/primary')
+  @ApiOperation({ summary: "Set the unit's primary resident" })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: OccupancyResponse })
   async setPrimary(
@@ -69,6 +76,7 @@ export class UnitActionsController {
   /** The owner-resident primary only. */
   @RequirePermissions('household.manage')
   @Post(':id/closed-mode')
+  @ApiOperation({ summary: "Turn the unit's closed mode on or off" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async closedMode(
@@ -81,6 +89,9 @@ export class UnitActionsController {
   /** The details the primary may still fill in (the activation card). */
   @RequirePermissions('household.manage')
   @Get(':id/activation')
+  @ApiOperation({
+    summary: 'Details the primary may still fill in (activation card)',
+  })
   @ApiOkResponse({ type: ActivationView })
   async activation(
     @Param('id', parseId()) id: string,
@@ -91,6 +102,7 @@ export class UnitActionsController {
   /** One missing detail; what the unit already knows always wins. */
   @RequirePermissions('household.manage')
   @Post(':id/details')
+  @ApiOperation({ summary: 'Fill in one missing unit detail' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async details(

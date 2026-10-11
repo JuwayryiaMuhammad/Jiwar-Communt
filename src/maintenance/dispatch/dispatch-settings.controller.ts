@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Logger, Patch } from '@nestjs/common';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
 import { DispatchSweep } from './dispatch-sweep';
@@ -20,12 +20,14 @@ export class DispatchSettingsController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get the dispatch settings' })
   @ApiOkResponse({ type: DispatchSettingsResponse })
   async get(): Promise<DispatchSettingsResponse> {
     return DispatchSettingsResponse.from(await this.settings.get());
   }
 
   @Patch()
+  @ApiOperation({ summary: 'Update the dispatch settings' })
   @ApiOkResponse({ type: DispatchSettingsResponse })
   async update(
     @Body() dto: UpdateDispatchSettingsDto,

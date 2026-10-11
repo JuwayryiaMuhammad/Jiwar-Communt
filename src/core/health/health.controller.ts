@@ -1,4 +1,5 @@
 import { Controller, Get, Inject, Logger } from '@nestjs/common';
+import { ApiOperation } from '@nestjs/swagger';
 import { appError, ErrorCode } from '../common/errors';
 import Redis from 'ioredis';
 import { ApiArea } from '../common/http/decorators';
@@ -22,6 +23,9 @@ export class HealthController {
    * non-empty value outside any transaction means a tenant leaked (ADR 0005).
    */
   @Get()
+  @ApiOperation({
+    summary: 'Readiness: database, Redis and the tenant-leak canary',
+  })
   async check() {
     const [db, leak, redis] = await Promise.allSettled([
       this.globalDb.ping(),

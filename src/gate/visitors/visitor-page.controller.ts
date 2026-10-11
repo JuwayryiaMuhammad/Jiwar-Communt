@@ -6,7 +6,11 @@ import {
   Ip,
   Post,
 } from '@nestjs/common';
-import { ApiNoContentResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { Public } from '../../core/common/guards/public.decorator';
 import { ApiArea, PublicPageHeaders } from '../../core/common/http/decorators';
 import { VisitorTokenDto } from './dto/visitor-page.dto';
@@ -26,6 +30,7 @@ export class VisitorPageController {
   constructor(private readonly page: VisitorPageService) {}
 
   @Post('lookup')
+  @ApiOperation({ summary: "Open a visitor pass from the host's link" })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: VisitorPageView })
   async lookup(
@@ -37,6 +42,7 @@ export class VisitorPageController {
 
   /** "This isn't me": the pass is cancelled; nothing is asked of the visitor. */
   @Post('not-me')
+  @ApiOperation({ summary: '"This isn\'t me": cancel the visitor pass' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async notMe(@Body() dto: VisitorTokenDto, @Ip() ip: string): Promise<void> {

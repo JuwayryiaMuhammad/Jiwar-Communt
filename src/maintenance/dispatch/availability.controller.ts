@@ -7,7 +7,7 @@ import {
   Param,
   Post,
 } from '@nestjs/common';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
@@ -26,6 +26,7 @@ export class TechnicianAvailabilityController {
   constructor(private readonly availability: AvailabilityService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get my availability' })
   @ApiOkResponse({ type: AvailabilityView })
   async get(): Promise<AvailabilityView> {
     return AvailabilityView.from(await this.availability.mine());
@@ -33,6 +34,7 @@ export class TechnicianAvailabilityController {
 
   /** Setting the state it already has changes nothing. */
   @Post()
+  @ApiOperation({ summary: 'Set my availability' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: AvailabilityView })
   async set(@Body() dto: SetAvailabilityDto): Promise<AvailabilityView> {
@@ -48,6 +50,7 @@ export class DispatchAvailabilityController {
   constructor(private readonly availability: AvailabilityService) {}
 
   @Post(':id/availability')
+  @ApiOperation({ summary: "Set a technician's availability" })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: AvailabilityView })
   async set(

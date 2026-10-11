@@ -1,5 +1,9 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
 import {
@@ -20,6 +24,7 @@ export class GatesController {
 
   @RequirePermissions('gate.read')
   @Get()
+  @ApiOperation({ summary: "List the compound's gates" })
   @ApiOkResponse({ type: ListOf(GateView) })
   async list(): Promise<ListResponse<GateView>> {
     return bounded(await this.gates.list(), (g) => GateView.from(g));
@@ -27,6 +32,7 @@ export class GatesController {
 
   @RequirePermissions('gate.manage')
   @Post()
+  @ApiOperation({ summary: 'Create a gate' })
   @ApiCreatedResponse({ type: GateView })
   async create(@Body() dto: CreateGateDto): Promise<GateView> {
     return GateView.from(await this.gates.create(dto));
@@ -34,6 +40,7 @@ export class GatesController {
 
   @RequirePermissions('gate.manage')
   @Patch(':id')
+  @ApiOperation({ summary: 'Update a gate' })
   @ApiOkResponse({ type: GateView })
   async update(
     @Param('id', parseId()) id: string,

@@ -11,6 +11,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Service name and liveness */
         get: operations["AppController_getRoot"];
         put?: never;
         post?: never;
@@ -27,8 +28,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the compound's accounts */
         get: operations["AccountsController_list"];
         put?: never;
+        /** Create an account */
         post: operations["AccountsController_create"];
         delete?: never;
         options?: never;
@@ -43,6 +46,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get one account */
         get: operations["AccountsController_get"];
         put?: never;
         post?: never;
@@ -59,6 +63,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List an account's consents (assisted) */
         get: operations["AssistController_consents"];
         put?: never;
         post?: never;
@@ -77,6 +82,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Grant a consent for an account (assisted) */
         post: operations["AssistController_grant"];
         delete?: never;
         options?: never;
@@ -93,6 +99,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Revoke a consent for an account (assisted) */
         post: operations["AssistController_revoke"];
         delete?: never;
         options?: never;
@@ -113,6 +120,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** Change an account's phone (recovery after a freeze) */
         patch: operations["AccountsController_updateContact"];
         trace?: never;
     };
@@ -123,8 +131,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List an account's data exports (assisted) */
         get: operations["AssistController_exports"];
         put?: never;
+        /** Request a data export to the account's own email (assisted) */
         post: operations["AssistController_requestExport"];
         delete?: never;
         options?: never;
@@ -139,8 +149,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get an account's deletion request (assisted) */
         get: operations["AssistController_deletionRequest"];
         put?: never;
+        /** Request deletion of an account (assisted) */
         post: operations["AssistController_requestDeletion"];
         delete?: never;
         options?: never;
@@ -157,6 +169,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Cancel an account's deletion request (assisted) */
         post: operations["AssistController_cancelDeletion"];
         delete?: never;
         options?: never;
@@ -173,6 +186,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Freeze an account whose phone went to someone else */
         post: operations["AccountsController_freeze"];
         delete?: never;
         options?: never;
@@ -187,8 +201,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List an account's legal holds */
         get: operations["ErasureController_holds"];
         put?: never;
+        /** Place a legal hold on an account */
         post: operations["ErasureController_placeHold"];
         delete?: never;
         options?: never;
@@ -203,12 +219,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get an account's notification preferences (assisted) */
         get: operations["AssistController_preferences"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
+        /** Update an account's notification preferences (assisted) */
         patch: operations["AssistController_updatePreferences"];
         trace?: never;
     };
@@ -221,6 +239,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Reactivate a frozen account */
         post: operations["AccountsController_reactivate"];
         delete?: never;
         options?: never;
@@ -241,6 +260,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** Activate or deactivate an account */
         patch: operations["AccountsController_updateStatus"];
         trace?: never;
     };
@@ -251,6 +271,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Read the compound's audit log, newest first */
         get: operations["AuditController_list"];
         put?: never;
         post?: never;
@@ -269,6 +290,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Sign out this session */
         post: operations["AuthController_logout"];
         delete?: never;
         options?: never;
@@ -285,6 +307,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Request a login code by email */
         post: operations["AuthController_requestOtp"];
         delete?: never;
         options?: never;
@@ -301,6 +324,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Verify the login code; get a login ticket and the accounts to pick from */
         post: operations["AuthController_verifyOtp"];
         delete?: never;
         options?: never;
@@ -317,6 +341,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Refresh the access token */
         post: operations["AuthController_refresh"];
         delete?: never;
         options?: never;
@@ -333,6 +358,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Exchange the login ticket for tokens on one account */
         post: operations["AuthController_selectAccount"];
         delete?: never;
         options?: never;
@@ -347,6 +373,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List card incidents */
         get: operations["WorkersController_incidents"];
         put?: never;
         post?: never;
@@ -365,6 +392,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Close a card incident */
         post: operations["WorkersController_closeIncident"];
         delete?: never;
         options?: never;
@@ -379,6 +407,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List compliance cases */
         get: operations["WorkersController_cases"];
         put?: never;
         post?: never;
@@ -397,6 +426,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Close a compliance case */
         post: operations["WorkersController_closeCase"];
         delete?: never;
         options?: never;
@@ -413,6 +443,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Approve or refuse a member's request */
         post: operations["MemberPermissionsController_decide"];
         delete?: never;
         options?: never;
@@ -429,6 +460,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Revoke a delegation */
         post: operations["DelegationsController_revoke"];
         delete?: never;
         options?: never;
@@ -443,6 +475,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List open account deletion requests */
         get: operations["ErasureController_pending"];
         put?: never;
         post?: never;
@@ -461,6 +494,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Close a queued deletion request without erasing */
         post: operations["ErasureController_close"];
         delete?: never;
         options?: never;
@@ -477,6 +511,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Erase the account (tombstone) */
         post: operations["ErasureController_erase"];
         delete?: never;
         options?: never;
@@ -491,6 +526,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** What an erasure removes and keeps, and the phrase to type */
         get: operations["ErasureController_scope"];
         put?: never;
         post?: never;
@@ -509,6 +545,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Declare an upload and get a presigned PUT URL */
         post: operations["FilesController_create"];
         delete?: never;
         options?: never;
@@ -523,9 +560,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get one of my uploads with a short-lived URL */
         get: operations["FilesController_read"];
         put?: never;
         post?: never;
+        /** Delete one of my uploads */
         delete: operations["FilesController_remove"];
         options?: never;
         head?: never;
@@ -541,6 +580,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Finalize an upload once the file is PUT */
         post: operations["FilesController_finalize"];
         delete?: never;
         options?: never;
@@ -557,6 +597,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Answer the gate's request */
         post: operations["HostApprovalsController_decide"];
         delete?: never;
         options?: never;
@@ -573,6 +614,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Ask a household to approve a visitor at the gate */
         post: operations["GuardApprovalsController_create"];
         delete?: never;
         options?: never;
@@ -587,6 +629,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get an approval request (poll while waiting) */
         get: operations["GuardApprovalsController_get"];
         put?: never;
         post?: never;
@@ -605,6 +648,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Withdraw an approval request */
         post: operations["GuardApprovalsController_withdraw"];
         delete?: never;
         options?: never;
@@ -619,8 +663,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Read the gate log */
         get: operations["EntriesController_list"];
         put?: never;
+        /** Record an entry or exit */
         post: operations["EntriesController_record"];
         delete?: never;
         options?: never;
@@ -635,6 +681,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the gates a shift can start at */
         get: operations["ShiftsController_gatesList"];
         put?: never;
         post?: never;
@@ -651,6 +698,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List who is inside now */
         get: operations["EntriesController_inside"];
         put?: never;
         post?: never;
@@ -667,8 +715,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the gate's parcels */
         get: operations["GateParcelsController_list"];
         put?: never;
+        /** Receive a parcel at the gate */
         post: operations["GateParcelsController_receive"];
         delete?: never;
         options?: never;
@@ -685,6 +735,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Look up a parcel code or QR */
         post: operations["GateParcelsController_lookup"];
         delete?: never;
         options?: never;
@@ -699,6 +750,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get one parcel with its photos */
         get: operations["GateParcelsController_get"];
         put?: never;
         post?: never;
@@ -717,6 +769,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Hand a parcel over */
         post: operations["GateParcelsController_handOver"];
         delete?: never;
         options?: never;
@@ -733,6 +786,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Return a parcel to the carrier */
         post: operations["GateParcelsController_markReturned"];
         delete?: never;
         options?: never;
@@ -747,6 +801,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get my current shift */
         get: operations["ShiftsController_current"];
         put?: never;
         post?: never;
@@ -765,6 +820,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** End my shift */
         post: operations["ShiftsController_end"];
         delete?: never;
         options?: never;
@@ -781,6 +837,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Start my shift at a gate */
         post: operations["ShiftsController_start"];
         delete?: never;
         options?: never;
@@ -797,6 +854,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Verify a code or QR at the gate */
         post: operations["EntriesController_verify"];
         delete?: never;
         options?: never;
@@ -811,8 +869,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the compound's gates */
         get: operations["GatesController_list"];
         put?: never;
+        /** Create a gate */
         post: operations["GatesController_create"];
         delete?: never;
         options?: never;
@@ -833,6 +893,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** Update a gate */
         patch: operations["GatesController_update"];
         trace?: never;
     };
@@ -843,6 +904,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Readiness: database, Redis and the tenant-leak canary */
         get: operations["HealthController_check"];
         put?: never;
         post?: never;
@@ -861,6 +923,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Revoke a household invite */
         post: operations["HouseholdController_revokeInvite"];
         delete?: never;
         options?: never;
@@ -877,6 +940,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Approve a household membership */
         post: operations["HouseholdController_approve"];
         delete?: never;
         options?: never;
@@ -893,6 +957,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Invite a member who turned 18 to an account of their own */
         post: operations["HouseholdController_majorityInvite"];
         delete?: never;
         options?: never;
@@ -907,6 +972,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get a member's permissions */
         get: operations["MemberPermissionsController_get"];
         put?: never;
         post?: never;
@@ -925,6 +991,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Grant a permission to a member */
         post: operations["MemberPermissionsController_grant"];
         delete?: never;
         options?: never;
@@ -941,6 +1008,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Revoke a member's permission */
         post: operations["MemberPermissionsController_revoke"];
         delete?: never;
         options?: never;
@@ -957,6 +1025,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Revoke all of a member's granted permissions */
         post: operations["MemberPermissionsController_revokeAll"];
         delete?: never;
         options?: never;
@@ -973,6 +1042,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Revoke a member's permission (management decision) */
         post: operations["MemberPermissionsController_revokeByManagement"];
         delete?: never;
         options?: never;
@@ -989,6 +1059,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Reject a household membership */
         post: operations["HouseholdController_reject"];
         delete?: never;
         options?: never;
@@ -1005,6 +1076,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Remove a household member */
         post: operations["HouseholdController_remove"];
         delete?: never;
         options?: never;
@@ -1021,6 +1093,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Remove a household member (management decision) */
         post: operations["HouseholdController_removeByManagement"];
         delete?: never;
         options?: never;
@@ -1035,6 +1108,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List memberships waiting for approval */
         get: operations["HouseholdController_pending"];
         put?: never;
         post?: never;
@@ -1053,6 +1127,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Accept a household invite with the code */
         post: operations["InviteAcceptanceController_complete"];
         delete?: never;
         options?: never;
@@ -1069,6 +1144,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Start accepting a household invite (emails a code) */
         post: operations["InviteAcceptanceController_start"];
         delete?: never;
         options?: never;
@@ -1085,6 +1161,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Release a legal hold */
         post: operations["ErasureController_releaseHold"];
         delete?: never;
         options?: never;
@@ -1099,8 +1176,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List ticket categories */
         get: operations["CategoriesController_list"];
         put?: never;
+        /** Create a ticket category */
         post: operations["CategoriesController_create"];
         delete?: never;
         options?: never;
@@ -1121,6 +1200,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** Update a ticket category */
         patch: operations["CategoriesController_update"];
         trace?: never;
     };
@@ -1132,6 +1212,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** Set a category's SLA targets */
         put: operations["CategorySlaTargetsController_set"];
         post?: never;
         delete?: never;
@@ -1148,6 +1229,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** Set the specialties that handle a category */
         put: operations["CategorySpecialtiesController_setForCategory"];
         post?: never;
         delete?: never;
@@ -1163,12 +1245,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get the dispatch settings */
         get: operations["DispatchSettingsController_get"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
+        /** Update the dispatch settings */
         patch: operations["DispatchSettingsController_update"];
         trace?: never;
     };
@@ -1179,8 +1263,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List preventive services */
         get: operations["PreventiveServicesController_list"];
         put?: never;
+        /** Create a preventive service */
         post: operations["PreventiveServicesController_create"];
         delete?: never;
         options?: never;
@@ -1201,6 +1287,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** Update a preventive service */
         patch: operations["PreventiveServicesController_update"];
         trace?: never;
     };
@@ -1211,12 +1298,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get the maintenance settings */
         get: operations["MaintenanceSettingsController_get"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
+        /** Update the maintenance settings */
         patch: operations["MaintenanceSettingsController_update"];
         trace?: never;
     };
@@ -1227,12 +1316,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get the SLA switch */
         get: operations["SlaSettingsController_get"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
+        /** Turn the SLA on or off */
         patch: operations["SlaSettingsController_update"];
         trace?: never;
     };
@@ -1243,8 +1334,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List specialties */
         get: operations["SpecialtiesController_list"];
         put?: never;
+        /** Create a specialty */
         post: operations["SpecialtiesController_create"];
         delete?: never;
         options?: never;
@@ -1265,6 +1358,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** Update a specialty */
         patch: operations["SpecialtiesController_update"];
         trace?: never;
     };
@@ -1275,6 +1369,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the technicians dispatch can assign to */
         get: operations["TechniciansController_list"];
         put?: never;
         post?: never;
@@ -1293,6 +1388,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Set a technician's availability */
         post: operations["DispatchAvailabilityController_set"];
         delete?: never;
         options?: never;
@@ -1308,6 +1404,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** Replace a technician's specialties */
         put: operations["TechniciansController_setSpecialties"];
         post?: never;
         delete?: never;
@@ -1323,8 +1420,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the compound's tickets */
         get: operations["DispatchTicketsController_list"];
         put?: never;
+        /** Open a ticket for a resident */
         post: operations["DispatchTicketsController_create"];
         delete?: never;
         options?: never;
@@ -1339,6 +1438,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get one ticket */
         get: operations["DispatchTicketsController_get"];
         put?: never;
         post?: never;
@@ -1357,6 +1457,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Assign a queued ticket to a technician */
         post: operations["DispatchTicketsController_assign"];
         delete?: never;
         options?: never;
@@ -1371,6 +1472,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get a ticket's assignments */
         get: operations["DispatchTicketsController_assignments"];
         put?: never;
         post?: never;
@@ -1389,6 +1491,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Run the dispatch engine on a queued ticket now */
         post: operations["DispatchTicketsController_autoAssign"];
         delete?: never;
         options?: never;
@@ -1405,6 +1508,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Cancel a ticket */
         post: operations["DispatchTicketsController_cancel"];
         delete?: never;
         options?: never;
@@ -1421,6 +1525,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Change a ticket's category */
         post: operations["DispatchTicketsController_category"];
         delete?: never;
         options?: never;
@@ -1435,6 +1540,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get the dispatch engine's attempts on a ticket */
         get: operations["DispatchTicketsController_dispatchAttempts"];
         put?: never;
         post?: never;
@@ -1451,6 +1557,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get a ticket's status history */
         get: operations["DispatchTicketsController_history"];
         put?: never;
         post?: never;
@@ -1467,8 +1574,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Read a ticket's thread, internal messages included */
         get: operations["DispatchTicketsController_messagesOf"];
         put?: never;
+        /** Post to a ticket's thread */
         post: operations["DispatchTicketsController_post"];
         delete?: never;
         options?: never;
@@ -1485,6 +1594,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Change a ticket's priority */
         post: operations["DispatchTicketsController_priority"];
         delete?: never;
         options?: never;
@@ -1501,6 +1611,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Reassign a ticket to another technician */
         post: operations["DispatchTicketsController_reassign"];
         delete?: never;
         options?: never;
@@ -1515,6 +1626,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get a ticket's SLA events */
         get: operations["DispatchTicketsController_slaEvents"];
         put?: never;
         post?: never;
@@ -1531,6 +1643,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List a ticket's visit events */
         get: operations["DispatchVisitsController_events"];
         put?: never;
         post?: never;
@@ -1547,8 +1660,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List a ticket's visits */
         get: operations["DispatchVisitsController_list"];
         put?: never;
+        /** Propose a visit window for the ticket's technician */
         post: operations["DispatchVisitsController_propose"];
         delete?: never;
         options?: never;
@@ -1565,6 +1680,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Cancel a visit for the technician */
         post: operations["DispatchVisitsController_cancel"];
         delete?: never;
         options?: never;
@@ -1581,6 +1697,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Confirm the residents' counter-proposal for the technician */
         post: operations["DispatchVisitsController_confirm"];
         delete?: never;
         options?: never;
@@ -1597,6 +1714,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Counter-propose another visit window for the technician */
         post: operations["DispatchVisitsController_counter"];
         delete?: never;
         options?: never;
@@ -1613,6 +1731,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Reschedule a confirmed visit for the technician */
         post: operations["DispatchVisitsController_reschedule"];
         delete?: never;
         options?: never;
@@ -1627,6 +1746,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get the signed-in account, its roles and photo */
         get: operations["MeController_me"];
         put?: never;
         post?: never;
@@ -1643,6 +1763,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List every consent and whether I granted it */
         get: operations["ConsentsController_mine"];
         put?: never;
         post?: never;
@@ -1661,6 +1782,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Grant a consent, for the version of the text shown */
         post: operations["ConsentsController_grant"];
         delete?: never;
         options?: never;
@@ -1677,6 +1799,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Revoke a consent */
         post: operations["ConsentsController_revoke"];
         delete?: never;
         options?: never;
@@ -1691,8 +1814,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List my data exports */
         get: operations["DataExportsController_mine"];
         put?: never;
+        /** Request an export of my personal data */
         post: operations["DataExportsController_request"];
         delete?: never;
         options?: never;
@@ -1707,6 +1832,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get a short-lived download URL for a ready export */
         get: operations["DataExportsController_download"];
         put?: never;
         post?: never;
@@ -1723,6 +1849,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the delegations I hold or gave */
         get: operations["MeUnitsController_myDelegations"];
         put?: never;
         post?: never;
@@ -1739,8 +1866,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get my account deletion request */
         get: operations["MeController_deletionRequest"];
         put?: never;
+        /** Request deletion of my account */
         post: operations["MeController_requestDeletion"];
         delete?: never;
         options?: never;
@@ -1757,6 +1886,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Cancel my account deletion request */
         post: operations["MeController_cancelDeletion"];
         delete?: never;
         options?: never;
@@ -1773,6 +1903,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** "Not me" on an unusual-login alert: freeze my account */
         post: operations["MeDevicesController_notMeFromApp"];
         delete?: never;
         options?: never;
@@ -1787,8 +1918,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List my entry credentials */
         get: operations["EntryCredentialsController_list"];
         put?: never;
+        /** Issue an entry QR credential for this phone */
         post: operations["EntryCredentialsController_issue"];
         delete?: never;
         options?: never;
@@ -1805,6 +1938,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Revoke an entry credential */
         post: operations["EntryCredentialsController_revoke"];
         delete?: never;
         options?: never;
@@ -1819,6 +1953,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the gate's requests waiting for my answer */
         get: operations["HostApprovalsController_mine"];
         put?: never;
         post?: never;
@@ -1841,6 +1976,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** Set my preferred language */
         patch: operations["MeController_locale"];
         trace?: never;
     };
@@ -1851,12 +1987,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get my notification preferences */
         get: operations["PreferencesController_mine"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
+        /** Update my notification preferences */
         patch: operations["PreferencesController_update"];
         trace?: never;
     };
@@ -1867,6 +2005,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List my notifications */
         get: operations["NotificationsController_list"];
         put?: never;
         post?: never;
@@ -1885,6 +2024,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Mark all my notifications as read */
         post: operations["NotificationsController_readAll"];
         delete?: never;
         options?: never;
@@ -1899,6 +2039,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Count my unread notifications */
         get: operations["NotificationsController_unreadCount"];
         put?: never;
         post?: never;
@@ -1917,6 +2058,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Mark one notification as read */
         post: operations["NotificationsController_read"];
         delete?: never;
         options?: never;
@@ -1931,6 +2073,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List my parcels */
         get: operations["ResidentParcelsController_list"];
         put?: never;
         post?: never;
@@ -1947,6 +2090,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get one of my parcels */
         get: operations["ResidentParcelsController_get"];
         put?: never;
         post?: never;
@@ -1965,6 +2109,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Authorize someone to pick up a parcel */
         post: operations["ResidentParcelsController_authorizeDelegate"];
         delete?: never;
         options?: never;
@@ -1981,6 +2126,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Revoke a parcel's pickup delegate */
         post: operations["ResidentParcelsController_revokeDelegate"];
         delete?: never;
         options?: never;
@@ -1997,6 +2143,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Reject a parcel as not mine */
         post: operations["ResidentParcelsController_reject"];
         delete?: never;
         options?: never;
@@ -2012,8 +2159,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** Set or replace my photo */
         put: operations["MePhotoController_set"];
         post?: never;
+        /** Remove my photo */
         delete: operations["MePhotoController_remove"];
         options?: never;
         head?: never;
@@ -2027,6 +2176,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List my live sessions, the current one marked */
         get: operations["MeController_sessions"];
         put?: never;
         post?: never;
@@ -2045,6 +2195,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Sign out every one of my sessions */
         post: operations["MeController_revokeAll"];
         delete?: never;
         options?: never;
@@ -2061,6 +2212,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Sign out one of my sessions */
         post: operations["MeController_revoke"];
         delete?: never;
         options?: never;
@@ -2077,6 +2229,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Email me a step-up code for a sensitive action */
         post: operations["StepUpController_request"];
         delete?: never;
         options?: never;
@@ -2093,6 +2246,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Verify the step-up code on this session */
         post: operations["StepUpController_verify"];
         delete?: never;
         options?: never;
@@ -2107,6 +2261,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List my units and household memberships */
         get: operations["MeUnitsController_units"];
         put?: never;
         post?: never;
@@ -2123,6 +2278,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** What I may do on one of my units (feature toggles) */
         get: operations["MeUnitsController_capabilitiesOn"];
         put?: never;
         post?: never;
@@ -2139,6 +2295,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** My household permissions on a unit */
         get: operations["MeUnitsController_permissionsOn"];
         put?: never;
         post?: never;
@@ -2155,6 +2312,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the maintenance visits coming to my unit */
         get: operations["UnitVisitsController_list"];
         put?: never;
         post?: never;
@@ -2173,6 +2331,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Convert a tenant into an owner */
         post: operations["OccupanciesController_convertToOwner"];
         delete?: never;
         options?: never;
@@ -2189,6 +2348,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** End an occupancy */
         post: operations["OccupanciesController_end"];
         delete?: never;
         options?: never;
@@ -2205,6 +2365,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Record the keys' handover */
         post: operations["OccupanciesController_handover"];
         delete?: never;
         options?: never;
@@ -2221,6 +2382,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Set whether an owner lives in or lets the unit */
         post: operations["OccupanciesController_residence"];
         delete?: never;
         options?: never;
@@ -2235,12 +2397,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get the parcel holding periods */
         get: operations["ParcelSettingsController_get"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
+        /** Update the parcel holding periods */
         patch: operations["ParcelSettingsController_update"];
         trace?: never;
     };
@@ -2251,6 +2415,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the compound's parcels */
         get: operations["ManagerParcelsController_list"];
         put?: never;
         post?: never;
@@ -2267,6 +2432,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get one parcel */
         get: operations["ManagerParcelsController_get"];
         put?: never;
         post?: never;
@@ -2283,6 +2449,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the permission catalog */
         get: operations["RolesController_catalog"];
         put?: never;
         post?: never;
@@ -2299,6 +2466,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Read the platform owner's audit log */
         get: operations["PlatformAuditController_auditLog"];
         put?: never;
         post?: never;
@@ -2317,6 +2485,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Change the platform owner's password */
         post: operations["PlatformAuthController_changePassword"];
         delete?: never;
         options?: never;
@@ -2333,6 +2502,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Platform owner login with email and password */
         post: operations["PlatformAuthController_login"];
         delete?: never;
         options?: never;
@@ -2349,6 +2519,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Sign out the platform session */
         post: operations["PlatformAuthController_logout"];
         delete?: never;
         options?: never;
@@ -2365,6 +2536,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Refresh the platform access token */
         post: operations["PlatformAuthController_refresh"];
         delete?: never;
         options?: never;
@@ -2379,6 +2551,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Read the security events */
         get: operations["PlatformAuditController_securityEvents"];
         put?: never;
         post?: never;
@@ -2395,8 +2568,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List compounds */
         get: operations["TenantsController_list"];
         put?: never;
+        /** Create a compound with its first manager */
         post: operations["TenantsController_create"];
         delete?: never;
         options?: never;
@@ -2411,6 +2586,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get one compound */
         get: operations["TenantsController_get"];
         put?: never;
         post?: never;
@@ -2429,6 +2605,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Add a manager to a compound */
         post: operations["TenantsController_addManager"];
         delete?: never;
         options?: never;
@@ -2449,6 +2626,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** Activate or deactivate a compound's manager */
         patch: operations["TenantsController_setManagerStatus"];
         trace?: never;
     };
@@ -2465,6 +2643,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** Activate or suspend a compound */
         patch: operations["TenantsController_setStatus"];
         trace?: never;
     };
@@ -2475,6 +2654,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the preventive services I may book */
         get: operations["PreventiveServiceOptionsController_list"];
         put?: never;
         post?: never;
@@ -2491,6 +2671,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the windows a check-up may be booked in */
         get: operations["PreventiveRequestsController_slots"];
         put?: never;
         post?: never;
@@ -2509,6 +2690,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Email a code for an assisted export's link */
         post: operations["PublicDataExportsController_code"];
         delete?: never;
         options?: never;
@@ -2525,6 +2707,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Download an assisted export with the link and the emailed code */
         post: operations["PublicDataExportsController_download"];
         delete?: never;
         options?: never;
@@ -2541,6 +2724,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** "Not me" from the alert email: freeze the account */
         post: operations["PublicNotMeController_notMeFromEmail"];
         delete?: never;
         options?: never;
@@ -2557,6 +2741,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Open a visitor pass from the host's link */
         post: operations["VisitorPageController_lookup"];
         delete?: never;
         options?: never;
@@ -2573,6 +2758,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** "This isn't me": cancel the visitor pass */
         post: operations["VisitorPageController_notMe"];
         delete?: never;
         options?: never;
@@ -2587,8 +2773,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List registration links */
         get: operations["RegistrationsController_links"];
         put?: never;
+        /** Create a registration link */
         post: operations["RegistrationsController_createLink"];
         delete?: never;
         options?: never;
@@ -2605,6 +2793,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Revoke a registration link */
         post: operations["RegistrationsController_revokeLink"];
         delete?: never;
         options?: never;
@@ -2619,6 +2808,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List pending registration requests */
         get: operations["RegistrationsController_pending"];
         put?: never;
         post?: never;
@@ -2637,6 +2827,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Complete a self-registration with the code */
         post: operations["RegistrationPublicController_complete"];
         delete?: never;
         options?: never;
@@ -2653,6 +2844,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Start a self-registration (emails a code) */
         post: operations["RegistrationPublicController_start"];
         delete?: never;
         options?: never;
@@ -2669,6 +2861,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Approve a registration request */
         post: operations["RegistrationsController_approve"];
         delete?: never;
         options?: never;
@@ -2685,6 +2878,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Reject a registration request */
         post: operations["RegistrationsController_reject"];
         delete?: never;
         options?: never;
@@ -2699,8 +2893,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List residents */
         get: operations["ResidentsController_list"];
         put?: never;
+        /** Create a resident with their occupancies */
         post: operations["ResidentsController_create"];
         delete?: never;
         options?: never;
@@ -2715,6 +2911,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get one resident */
         get: operations["ResidentsController_get"];
         put?: never;
         post?: never;
@@ -2737,6 +2934,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** Update a resident's contact details */
         patch: operations["ResidentsController_updateContact"];
         trace?: never;
     };
@@ -2749,6 +2947,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Add an occupancy to a resident */
         post: operations["ResidentsController_addOccupancy"];
         delete?: never;
         options?: never;
@@ -2765,6 +2964,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Clear a review flag */
         post: operations["UnitStatesController_clear"];
         delete?: never;
         options?: never;
@@ -2779,6 +2979,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the compound's roles */
         get: operations["RolesController_list"];
         put?: never;
         post?: never;
@@ -2795,6 +2996,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get one role with its permissions */
         get: operations["RolesController_get"];
         put?: never;
         post?: never;
@@ -2812,6 +3014,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** Replace a role's permissions */
         put: operations["RolesController_replace"];
         post?: never;
         delete?: never;
@@ -2827,12 +3030,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get the compound's settings */
         get: operations["SettingsController_get"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
+        /** Update the compound's settings */
         patch: operations["SettingsController_update"];
         trace?: never;
     };
@@ -2843,8 +3048,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get my availability */
         get: operations["TechnicianAvailabilityController_get"];
         put?: never;
+        /** Set my availability */
         post: operations["TechnicianAvailabilityController_set"];
         delete?: never;
         options?: never;
@@ -2859,6 +3066,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the tickets assigned to me */
         get: operations["TechnicianTicketsController_list"];
         put?: never;
         post?: never;
@@ -2875,6 +3083,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get one ticket assigned to me */
         get: operations["TechnicianTicketsController_get"];
         put?: never;
         post?: never;
@@ -2893,6 +3102,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Mark the work as done */
         post: operations["TechnicianTicketsController_complete"];
         delete?: never;
         options?: never;
@@ -2909,6 +3119,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Decline the ticket */
         post: operations["TechnicianTicketsController_decline"];
         delete?: never;
         options?: never;
@@ -2925,6 +3136,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Mark I'm on the way */
         post: operations["TechnicianTicketsController_enRoute"];
         delete?: never;
         options?: never;
@@ -2941,6 +3153,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Put the work on hold */
         post: operations["TechnicianTicketsController_hold"];
         delete?: never;
         options?: never;
@@ -2955,8 +3168,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Read the ticket's thread, internal messages included */
         get: operations["TechnicianTicketsController_messagesOf"];
         put?: never;
+        /** Post to the ticket's thread */
         post: operations["TechnicianTicketsController_post"];
         delete?: never;
         options?: never;
@@ -2973,6 +3188,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Add a photo to the ticket */
         post: operations["TechnicianTicketsController_addPhoto"];
         delete?: never;
         options?: never;
@@ -2989,6 +3205,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Resume the work */
         post: operations["TechnicianTicketsController_resume"];
         delete?: never;
         options?: never;
@@ -3005,6 +3222,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Start the work */
         post: operations["TechnicianTicketsController_start"];
         delete?: never;
         options?: never;
@@ -3019,8 +3237,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the ticket's visits */
         get: operations["TechnicianVisitsController_list"];
         put?: never;
+        /** Propose a visit window */
         post: operations["TechnicianVisitsController_propose"];
         delete?: never;
         options?: never;
@@ -3037,6 +3257,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Mark arrival at the door */
         post: operations["TechnicianVisitsController_arrive"];
         delete?: never;
         options?: never;
@@ -3053,6 +3274,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Cancel a visit */
         post: operations["TechnicianVisitsController_cancel"];
         delete?: never;
         options?: never;
@@ -3069,6 +3291,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Confirm the residents' counter-proposal */
         post: operations["TechnicianVisitsController_confirm"];
         delete?: never;
         options?: never;
@@ -3085,6 +3308,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Counter-propose another visit window */
         post: operations["TechnicianVisitsController_counter"];
         delete?: never;
         options?: never;
@@ -3101,6 +3325,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Mark the visit as done */
         post: operations["TechnicianVisitsController_done"];
         delete?: never;
         options?: never;
@@ -3117,6 +3342,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Report that nobody let me in */
         post: operations["TechnicianVisitsController_noAccess"];
         delete?: never;
         options?: never;
@@ -3133,6 +3359,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Reschedule a confirmed visit */
         post: operations["TechnicianVisitsController_reschedule"];
         delete?: never;
         options?: never;
@@ -3147,6 +3374,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the categories a ticket may be opened under */
         get: operations["CategoryOptionsController_list"];
         put?: never;
         post?: never;
@@ -3163,8 +3391,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List my tickets */
         get: operations["ResidentTicketsController_list"];
         put?: never;
+        /** Open a ticket */
         post: operations["ResidentTicketsController_create"];
         delete?: never;
         options?: never;
@@ -3181,6 +3411,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Book a preventive check-up */
         post: operations["PreventiveRequestsController_create"];
         delete?: never;
         options?: never;
@@ -3195,6 +3426,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get one of my tickets */
         get: operations["ResidentTicketsController_get"];
         put?: never;
         post?: never;
@@ -3213,6 +3445,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Cancel my ticket before the work starts */
         post: operations["ResidentTicketsController_cancel"];
         delete?: never;
         options?: never;
@@ -3229,6 +3462,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Confirm the work is done, with a rating */
         post: operations["ResidentTicketsController_confirm"];
         delete?: never;
         options?: never;
@@ -3245,6 +3479,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Escalate an overdue ticket */
         post: operations["ResidentTicketsController_escalate"];
         delete?: never;
         options?: never;
@@ -3259,8 +3494,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Read my ticket's thread */
         get: operations["ResidentTicketsController_messagesOf"];
         put?: never;
+        /** Post to my ticket's thread */
         post: operations["ResidentTicketsController_post"];
         delete?: never;
         options?: never;
@@ -3277,6 +3514,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Add a photo to my ticket */
         post: operations["ResidentTicketsController_addPhoto"];
         delete?: never;
         options?: never;
@@ -3293,6 +3531,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Reject the completed work */
         post: operations["ResidentTicketsController_reject"];
         delete?: never;
         options?: never;
@@ -3309,6 +3548,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Reopen a closed ticket */
         post: operations["ResidentTicketsController_reopen"];
         delete?: never;
         options?: never;
@@ -3323,6 +3563,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List free windows to counter or reschedule with */
         get: operations["ResidentVisitsController_slots"];
         put?: never;
         post?: never;
@@ -3339,6 +3580,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List my ticket's visits */
         get: operations["ResidentVisitsController_list"];
         put?: never;
         post?: never;
@@ -3357,7 +3599,9 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Allow entry while nobody is home, for this visit */
         post: operations["ResidentVisitsController_grantConsent"];
+        /** Withdraw consent to enter while nobody is home */
         delete: operations["ResidentVisitsController_revokeConsent"];
         options?: never;
         head?: never;
@@ -3373,6 +3617,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Cancel a visit */
         post: operations["ResidentVisitsController_cancel"];
         delete?: never;
         options?: never;
@@ -3389,6 +3634,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Confirm the technician's proposed visit */
         post: operations["ResidentVisitsController_confirm"];
         delete?: never;
         options?: never;
@@ -3405,6 +3651,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Confirm the technician is at the door */
         post: operations["ResidentVisitsController_confirmArrival"];
         delete?: never;
         options?: never;
@@ -3421,6 +3668,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Counter-propose another visit window */
         post: operations["ResidentVisitsController_counter"];
         delete?: never;
         options?: never;
@@ -3436,8 +3684,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** Set who lets the technician in */
         put: operations["ResidentVisitsController_setReceiver"];
         post?: never;
+        /** Clear who lets the technician in */
         delete: operations["ResidentVisitsController_clearReceiver"];
         options?: never;
         head?: never;
@@ -3453,6 +3703,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Reschedule a confirmed visit */
         post: operations["ResidentVisitsController_reschedule"];
         delete?: never;
         options?: never;
@@ -3467,8 +3718,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the units I may see */
         get: operations["UnitsController_list"];
         put?: never;
+        /** Create a unit */
         post: operations["UnitsController_create"];
         delete?: never;
         options?: never;
@@ -3483,6 +3736,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List units with open review flags */
         get: operations["UnitActionsController_needingReview"];
         put?: never;
         post?: never;
@@ -3499,6 +3753,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get one unit */
         get: operations["UnitActionsController_get"];
         put?: never;
         post?: never;
@@ -3515,6 +3770,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Details the primary may still fill in (activation card) */
         get: operations["UnitActionsController_activation"];
         put?: never;
         post?: never;
@@ -3533,6 +3789,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Turn the unit's closed mode on or off */
         post: operations["UnitActionsController_closedMode"];
         delete?: never;
         options?: never;
@@ -3549,6 +3806,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Report a resident of the unit as deceased */
         post: operations["UnitStatesController_deceased"];
         delete?: never;
         options?: never;
@@ -3565,6 +3823,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Fill in one missing unit detail */
         post: operations["UnitActionsController_details"];
         delete?: never;
         options?: never;
@@ -3581,6 +3840,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** End the unit's household */
         post: operations["UnitStatesController_endHousehold"];
         delete?: never;
         options?: never;
@@ -3597,6 +3857,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Mark the household's permissions as reviewed */
         post: operations["UnitStatesController_reviewed"];
         delete?: never;
         options?: never;
@@ -3611,6 +3872,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Members whose permissions predate the new primary */
         get: operations["UnitStatesController_toReview"];
         put?: never;
         post?: never;
@@ -3629,6 +3891,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Set the unit's primary resident */
         post: operations["UnitActionsController_setPrimary"];
         delete?: never;
         options?: never;
@@ -3645,6 +3908,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Report a separation in the unit */
         post: operations["UnitStatesController_separation"];
         delete?: never;
         options?: never;
@@ -3661,6 +3925,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Transfer the unit's ownership */
         post: operations["UnitStatesController_transferOwnership"];
         delete?: never;
         options?: never;
@@ -3675,6 +3940,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List members' requests waiting for the primary */
         get: operations["MemberPermissionsController_deferred"];
         put?: never;
         post?: never;
@@ -3691,8 +3957,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the unit's delegations */
         get: operations["DelegationsController_list"];
         put?: never;
+        /** Delegate the household or the workers to an adult member */
         post: operations["DelegationsController_create"];
         delete?: never;
         options?: never;
@@ -3707,7 +3975,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get the household's gate instructions */
         get: operations["VisitorsController_getInstructions"];
+        /** Set the household's gate instructions */
         put: operations["VisitorsController_setInstructions"];
         post?: never;
         delete?: never;
@@ -3723,6 +3993,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get the unit's household */
         get: operations["HouseholdController_household"];
         put?: never;
         post?: never;
@@ -3741,6 +4012,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Invite an adult to the household */
         post: operations["HouseholdController_invite"];
         delete?: never;
         options?: never;
@@ -3757,6 +4029,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Add a minor to the household */
         post: operations["HouseholdController_addMinor"];
         delete?: never;
         options?: never;
@@ -3771,6 +4044,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List minors who turned 18 */
         get: operations["HouseholdController_minorsReady"];
         put?: never;
         post?: never;
@@ -3787,8 +4061,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the unit's visitor passes */
         get: operations["VisitorsController_list"];
         put?: never;
+        /** Create a visitor pass */
         post: operations["VisitorsController_create"];
         delete?: never;
         options?: never;
@@ -3803,8 +4079,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List the unit's workers */
         get: operations["WorkersController_list"];
         put?: never;
+        /** Register a worker for the unit */
         post: operations["WorkersController_register"];
         delete?: never;
         options?: never;
@@ -3819,6 +4097,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get one of the unit's workers */
         get: operations["WorkersController_one"];
         put?: never;
         post?: never;
@@ -3837,6 +4116,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Cancel a visitor pass */
         post: operations["VisitorsController_cancel"];
         delete?: never;
         options?: never;
@@ -3853,6 +4133,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Reissue a visitor pass's link, QR and code */
         post: operations["VisitorsController_reissueLink"];
         delete?: never;
         options?: never;
@@ -3867,6 +4148,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List worker engagements for review */
         get: operations["WorkersController_forReview"];
         put?: never;
         post?: never;
@@ -3883,6 +4165,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get a worker engagement for review */
         get: operations["WorkersController_detail"];
         put?: never;
         post?: never;
@@ -3899,6 +4182,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** A worker's attendance days */
         get: operations["AttendanceController_get"];
         put?: never;
         post?: never;
@@ -3917,6 +4201,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** File a lost or confiscated worker card */
         post: operations["WorkersController_cardIncident"];
         delete?: never;
         options?: never;
@@ -3933,6 +4218,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** End a worker's engagement */
         post: operations["WorkersController_end"];
         delete?: never;
         options?: never;
@@ -3949,6 +4235,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Reissue a worker's access code */
         post: operations["WorkersController_reissue"];
         delete?: never;
         options?: never;
@@ -3965,6 +4252,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Resume a worker's engagement */
         post: operations["WorkersController_resume"];
         delete?: never;
         options?: never;
@@ -3981,6 +4269,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Approve or reject a worker engagement */
         post: operations["WorkersController_review"];
         delete?: never;
         options?: never;
@@ -3997,6 +4286,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Suspend a worker's engagement */
         post: operations["WorkersController_suspend"];
         delete?: never;
         options?: never;
@@ -4012,6 +4302,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** Set or clear a worker's monthly wage */
         put: operations["WorkersController_setWage"];
         post?: never;
         delete?: never;
@@ -4029,6 +4320,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Settle an engagement's open wage obligation */
         post: operations["WorkersController_settleWageObligation"];
         delete?: never;
         options?: never;
@@ -4043,8 +4335,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List a worker's wage payments */
         get: operations["WorkersController_payments"];
         put?: never;
+        /** Record a month's wage payment */
         post: operations["WorkersController_pay"];
         delete?: never;
         options?: never;
@@ -4061,6 +4355,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Ban a worker from the compound */
         post: operations["WorkersController_ban"];
         delete?: never;
         options?: never;
@@ -4077,6 +4372,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Attest a worker's birth date */
         post: operations["WorkersController_birthDate"];
         delete?: never;
         options?: never;
@@ -4092,6 +4388,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** Set or replace a worker's photo */
         put: operations["WorkersController_photo"];
         post?: never;
         delete?: never;
@@ -4109,6 +4406,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Report an underage worker */
         post: operations["WorkersController_reportUnderage"];
         delete?: never;
         options?: never;
@@ -4125,6 +4423,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Lift a worker ban */
         post: operations["WorkersController_unban"];
         delete?: never;
         options?: never;

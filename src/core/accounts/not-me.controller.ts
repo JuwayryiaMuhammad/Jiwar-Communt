@@ -7,7 +7,11 @@ import {
   Param,
   Post,
 } from '@nestjs/common';
-import { ApiNoContentResponse, ApiProperty } from '@nestjs/swagger';
+import {
+  ApiNoContentResponse,
+  ApiOperation,
+  ApiProperty,
+} from '@nestjs/swagger';
 import { IsString, Length } from 'class-validator';
 import { Public } from '../common/guards/public.decorator';
 import { ApiArea } from '../common/http/decorators';
@@ -34,6 +38,9 @@ export class MeDevicesController {
 
   /** Freezes the account and ends every session, this one included. */
   @Post(':id/not-me')
+  @ApiOperation({
+    summary: '"Not me" on an unusual-login alert: freeze my account',
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async notMeFromApp(@Param('id', parseId()) id: string): Promise<void> {
@@ -52,6 +59,9 @@ export class PublicNotMeController {
   constructor(private readonly notMe: NotMeService) {}
 
   @Post('not-me')
+  @ApiOperation({
+    summary: '"Not me" from the alert email: freeze the account',
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async notMeFromEmail(

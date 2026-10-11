@@ -11,6 +11,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
@@ -39,6 +40,7 @@ export class EntryCredentialsController {
 
   /** The secret comes back once. A retry with the same key gets the same one. */
   @Post()
+  @ApiOperation({ summary: 'Issue an entry QR credential for this phone' })
   @NoStore()
   @Idempotent({ secret: true })
   @ApiCreatedResponse({ type: IssuedEntryCredentialView })
@@ -49,6 +51,7 @@ export class EntryCredentialsController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'List my entry credentials' })
   @ApiOkResponse({ type: ListOf(EntryCredentialView) })
   async list(): Promise<ListResponse<EntryCredentialView>> {
     return bounded(await this.credentials.list(), (c) =>
@@ -57,6 +60,7 @@ export class EntryCredentialsController {
   }
 
   @Post(':id/revoke')
+  @ApiOperation({ summary: 'Revoke an entry credential' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async revoke(@Param('id', parseId()) id: string): Promise<void> {

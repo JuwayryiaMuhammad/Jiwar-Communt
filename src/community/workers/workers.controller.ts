@@ -13,6 +13,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import {
   RequireAnyPermission,
@@ -73,6 +74,7 @@ export class WorkersController {
   /** A landlord sees the unit, never who works in it. */
   @RequirePermissions('workers.manage')
   @Get('units/:unitId/workers')
+  @ApiOperation({ summary: "List the unit's workers" })
   @ApiOkResponse({ type: ListOf(EngagementResponse) })
   async list(
     @Param('unitId', parseId('unitId')) unitId: string,
@@ -90,6 +92,7 @@ export class WorkersController {
    */
   @RequirePermissions('workers.manage')
   @Get('units/:unitId/workers/:id')
+  @ApiOperation({ summary: "Get one of the unit's workers" })
   @ApiOkResponse({ type: UnitEngagementView })
   async one(
     @Param('unitId', parseId('unitId')) unitId: string,
@@ -103,6 +106,7 @@ export class WorkersController {
   /** Pending review; a schedule clash elsewhere only warns. */
   @RequirePermissions('workers.manage')
   @Post('units/:unitId/workers')
+  @ApiOperation({ summary: 'Register a worker for the unit' })
   @ApiCreatedResponse({ type: RegisteredView })
   async register(
     @Param('unitId', parseId('unitId')) unitId: string,
@@ -114,6 +118,7 @@ export class WorkersController {
   /** The code is kept but stops working; the worker gets a notice. */
   @RequireAnyPermission('workers.manage', 'workers.review')
   @Post('worker-engagements/:id/suspend')
+  @ApiOperation({ summary: "Suspend a worker's engagement" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async suspend(
@@ -126,6 +131,7 @@ export class WorkersController {
   /** The same code works again; a new one only when none is left. */
   @RequireAnyPermission('workers.manage', 'workers.review')
   @Post('worker-engagements/:id/resume')
+  @ApiOperation({ summary: "Resume a worker's engagement" })
   @HttpCode(HttpStatus.OK)
   @NoStore()
   @ApiOkResponse({ type: AccessCodeView })
@@ -135,6 +141,7 @@ export class WorkersController {
 
   @RequireAnyPermission('workers.manage', 'workers.review')
   @Post('worker-engagements/:id/end')
+  @ApiOperation({ summary: "End a worker's engagement" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async end(
@@ -149,6 +156,7 @@ export class WorkersController {
   /** While the engagement is open; null clears it. */
   @RequirePermissions('workers.manage')
   @Put('worker-engagements/:id/wage')
+  @ApiOperation({ summary: "Set or clear a worker's monthly wage" })
   @ApiOkResponse({ type: WageView })
   async setWage(
     @Param('id', parseId()) id: string,
@@ -164,6 +172,7 @@ export class WorkersController {
    */
   @RequirePermissions('workers.manage')
   @Post('worker-engagements/:id/wage-payments')
+  @ApiOperation({ summary: "Record a month's wage payment" })
   @ApiCreatedResponse({ type: WagePaymentView })
   async pay(
     @Param('id', parseId()) id: string,
@@ -175,6 +184,7 @@ export class WorkersController {
   /** The household's payments; managers read them for payroll. */
   @RequireAnyPermission('workers.manage', 'workers.review')
   @Get('worker-engagements/:id/wage-payments')
+  @ApiOperation({ summary: "List a worker's wage payments" })
   @ApiOkResponse({ type: ListOf(WagePaymentView) })
   async payments(
     @Param('id', parseId()) id: string,
@@ -191,6 +201,7 @@ export class WorkersController {
    */
   @RequirePermissions('workers.review')
   @Post('worker-engagements/:id/wage-obligation/settle')
+  @ApiOperation({ summary: "Settle an engagement's open wage obligation" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async settleWageObligation(
@@ -203,6 +214,7 @@ export class WorkersController {
   /** The old code is dead at once. */
   @RequireAnyPermission('workers.manage', 'workers.review')
   @Post('worker-engagements/:id/reissue-code')
+  @ApiOperation({ summary: "Reissue a worker's access code" })
   @HttpCode(HttpStatus.OK)
   @NoStore()
   @ApiOkResponse({ type: AccessCodeView })
@@ -222,6 +234,7 @@ export class WorkersController {
    */
   @RequirePermissions('workers.incidents')
   @Post('worker-engagements/:id/card-incident')
+  @ApiOperation({ summary: 'File a lost or confiscated worker card' })
   @NoStore()
   @ApiCreatedResponse({ type: CardIncidentCreatedView })
   async cardIncident(
@@ -245,6 +258,7 @@ export class WorkersController {
 
   @RequirePermissions('workers.review')
   @Get('worker-engagements')
+  @ApiOperation({ summary: 'List worker engagements for review' })
   @ApiOkResponse({ type: ListOf(ReviewEngagementView) })
   async forReview(
     @Query() q: EngagementsQueryDto,
@@ -257,6 +271,7 @@ export class WorkersController {
   /** The worker with the birth date to attest; the document masked; the photo's URL. */
   @RequirePermissions('workers.review')
   @Get('worker-engagements/:id')
+  @ApiOperation({ summary: 'Get a worker engagement for review' })
   @NoStore()
   @ApiOkResponse({ type: EngagementDetailView })
   async detail(
@@ -268,6 +283,7 @@ export class WorkersController {
   /** Approval issues the code, shown once; a rejection needs a reason. */
   @RequirePermissions('workers.review')
   @Post('worker-engagements/:id/review')
+  @ApiOperation({ summary: 'Approve or reject a worker engagement' })
   @HttpCode(HttpStatus.OK)
   @NoStore()
   @ApiOkResponse({ type: AccessCodeView })
@@ -292,6 +308,7 @@ export class WorkersController {
   /** Clears a passport worker's attestation; under 18 opens a compliance case. */
   @RequirePermissions('workers.review')
   @Post('workers/:id/birth-date')
+  @ApiOperation({ summary: "Attest a worker's birth date" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async birthDate(
@@ -304,6 +321,7 @@ export class WorkersController {
   /** Sets or replaces the photo; the file moves to the worker (ADR 0029). */
   @RequirePermissions('workers.review')
   @Put('workers/:id/photo')
+  @ApiOperation({ summary: "Set or replace a worker's photo" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async photo(
@@ -315,6 +333,7 @@ export class WorkersController {
 
   @RequirePermissions('workers.ban')
   @Post('workers/:id/ban')
+  @ApiOperation({ summary: 'Ban a worker from the compound' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async ban(
@@ -326,6 +345,7 @@ export class WorkersController {
 
   @RequirePermissions('workers.ban')
   @Post('workers/:id/unban')
+  @ApiOperation({ summary: 'Lift a worker ban' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async unban(@Param('id', parseId()) id: string): Promise<void> {
@@ -336,6 +356,7 @@ export class WorkersController {
 
   @RequirePermissions('workers.compliance')
   @Post('workers/:id/report-underage')
+  @ApiOperation({ summary: 'Report an underage worker' })
   @ApiCreatedResponse({ type: CaseCreatedView })
   async reportUnderage(
     @Param('id', parseId()) id: string,
@@ -346,6 +367,7 @@ export class WorkersController {
 
   @RequirePermissions('workers.compliance')
   @Get('compliance-cases')
+  @ApiOperation({ summary: 'List compliance cases' })
   @ApiOkResponse({ type: ListOf(ComplianceCaseResponse) })
   async cases(
     @Query() q: OpenClosedQueryDto,
@@ -357,6 +379,7 @@ export class WorkersController {
 
   @RequirePermissions('workers.compliance')
   @Post('compliance-cases/:id/close')
+  @ApiOperation({ summary: 'Close a compliance case' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async closeCase(
@@ -371,6 +394,7 @@ export class WorkersController {
   /** Never the note. */
   @RequirePermissions('workers.incidents')
   @Get('card-incidents')
+  @ApiOperation({ summary: 'List card incidents' })
   @ApiOkResponse({ type: ListOf(CardIncidentResponse) })
   async incidents(
     @Query() q: OpenClosedQueryDto,
@@ -382,6 +406,7 @@ export class WorkersController {
 
   @RequirePermissions('workers.incidents')
   @Post('card-incidents/:id/close')
+  @ApiOperation({ summary: 'Close a card incident' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async closeIncident(@Param('id', parseId()) id: string): Promise<void> {

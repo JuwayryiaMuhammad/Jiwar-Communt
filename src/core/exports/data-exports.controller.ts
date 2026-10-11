@@ -12,6 +12,7 @@ import {
   ApiAcceptedResponse,
   ApiCreatedResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { Public } from '../common/guards/public.decorator';
 import { ApiArea, NoStore, PublicPageHeaders } from '../common/http/decorators';
@@ -31,12 +32,14 @@ export class DataExportsController {
   constructor(private readonly exports: DataExportsService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Request an export of my personal data' })
   @ApiCreatedResponse({ type: DataExportView })
   async request(): Promise<DataExportView> {
     return DataExportView.from(await this.exports.request());
   }
 
   @Get()
+  @ApiOperation({ summary: 'List my data exports' })
   @ApiOkResponse({ type: ListOf(DataExportView) })
   async mine(): Promise<ListResponse<DataExportView>> {
     return bounded(await this.exports.mine(), (r) => DataExportView.from(r));
@@ -44,6 +47,9 @@ export class DataExportsController {
 
   /** No-store: a presigned URL of the archive. */
   @Get(':id/download')
+  @ApiOperation({
+    summary: 'Get a short-lived download URL for a ready export',
+  })
   @NoStore()
   @ApiOkResponse({ type: DownloadView })
   async download(@Param('id', parseId()) id: string): Promise<DownloadView> {
@@ -64,6 +70,7 @@ export class PublicDataExportsController {
   constructor(private readonly exports: DataExportsService) {}
 
   @Post('code')
+  @ApiOperation({ summary: "Email a code for an assisted export's link" })
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiAcceptedResponse()
   async code(@Body() dto: ExportLinkDto, @Ip() ip: string): Promise<void> {
@@ -71,6 +78,9 @@ export class PublicDataExportsController {
   }
 
   @Post('download')
+  @ApiOperation({
+    summary: 'Download an assisted export with the link and the emailed code',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: DownloadView })
   async download(

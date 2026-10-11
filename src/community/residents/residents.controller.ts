@@ -7,7 +7,11 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ContactDto } from '../../core/accounts/dto/contact.dto';
 import { ApiArea } from '../../core/common/http/decorators';
@@ -37,6 +41,7 @@ export class ResidentsController {
 
   @RequirePermissions('residents.read')
   @Get()
+  @ApiOperation({ summary: 'List residents' })
   @ApiOkResponse({ type: ListOf(ResidentListItemView) })
   async list(
     @Query() q: PageQueryDto,
@@ -49,6 +54,7 @@ export class ResidentsController {
   /** The account, its login identifiers and its occupancies, atomically. */
   @RequirePermissions('residents.manage')
   @Post()
+  @ApiOperation({ summary: 'Create a resident with their occupancies' })
   @ApiCreatedResponse({ type: ResidentDetailView })
   async create(@Body() dto: CreateResidentDto): Promise<Detail> {
     return ResidentDetailView.from(await this.residents.createResident(dto));
@@ -56,6 +62,7 @@ export class ResidentsController {
 
   @RequirePermissions('residents.read')
   @Get(':id')
+  @ApiOperation({ summary: 'Get one resident' })
   @ApiOkResponse({ type: ResidentDetailView })
   async get(@Param('id', parseId()) id: string): Promise<Detail> {
     return ResidentDetailView.from(await this.residents.get(id));
@@ -63,6 +70,7 @@ export class ResidentsController {
 
   @RequirePermissions('residents.manage')
   @Patch(':id/contact')
+  @ApiOperation({ summary: "Update a resident's contact details" })
   @ApiOkResponse({ type: ResidentDetailView })
   async updateContact(
     @Param('id', parseId()) id: string,
@@ -73,6 +81,7 @@ export class ResidentsController {
 
   @RequirePermissions('residents.manage')
   @Post(':id/occupancies')
+  @ApiOperation({ summary: 'Add an occupancy to a resident' })
   @ApiCreatedResponse({ type: OccupancyResponse })
   async addOccupancy(
     @Param('id', parseId()) id: string,

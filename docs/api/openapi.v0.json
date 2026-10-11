@@ -12666,6 +12666,7 @@
             "description": ""
           }
         },
+        "summary": "Service name and liveness",
         "tags": [
           "health"
         ],
@@ -12714,6 +12715,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the compound's accounts",
         "tags": [
           "accounts"
         ],
@@ -12749,6 +12751,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create an account",
         "tags": [
           "accounts"
         ],
@@ -12785,6 +12788,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get one account",
         "tags": [
           "accounts"
         ],
@@ -12821,6 +12825,7 @@
             "bearer": []
           }
         ],
+        "summary": "List an account's consents (assisted)",
         "tags": [
           "assist"
         ],
@@ -12867,6 +12872,7 @@
             "bearer": []
           }
         ],
+        "summary": "Grant a consent for an account (assisted)",
         "tags": [
           "assist"
         ],
@@ -12913,6 +12919,7 @@
             "bearer": []
           }
         ],
+        "summary": "Revoke a consent for an account (assisted)",
         "tags": [
           "assist"
         ],
@@ -12959,6 +12966,7 @@
             "bearer": []
           }
         ],
+        "summary": "Change an account's phone (recovery after a freeze)",
         "tags": [
           "accounts"
         ],
@@ -12995,6 +13003,7 @@
             "bearer": []
           }
         ],
+        "summary": "List an account's data exports (assisted)",
         "tags": [
           "assist"
         ],
@@ -13039,6 +13048,7 @@
             "bearer": []
           }
         ],
+        "summary": "Request a data export to the account's own email (assisted)",
         "tags": [
           "assist"
         ],
@@ -13075,6 +13085,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get an account's deletion request (assisted)",
         "tags": [
           "assist"
         ],
@@ -13119,6 +13130,7 @@
             "bearer": []
           }
         ],
+        "summary": "Request deletion of an account (assisted)",
         "tags": [
           "assist"
         ],
@@ -13158,6 +13170,7 @@
             "bearer": []
           }
         ],
+        "summary": "Cancel an account's deletion request (assisted)",
         "tags": [
           "assist"
         ],
@@ -13204,6 +13217,7 @@
             "bearer": []
           }
         ],
+        "summary": "Freeze an account whose phone went to someone else",
         "tags": [
           "accounts"
         ],
@@ -13240,6 +13254,7 @@
             "bearer": []
           }
         ],
+        "summary": "List an account's legal holds",
         "tags": [
           "erasure"
         ],
@@ -13284,6 +13299,7 @@
             "bearer": []
           }
         ],
+        "summary": "Place a legal hold on an account",
         "tags": [
           "erasure"
         ],
@@ -13320,6 +13336,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get an account's notification preferences (assisted)",
         "tags": [
           "assist"
         ],
@@ -13364,6 +13381,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update an account's notification preferences (assisted)",
         "tags": [
           "assist"
         ],
@@ -13400,6 +13418,7 @@
             "bearer": []
           }
         ],
+        "summary": "Reactivate a frozen account",
         "tags": [
           "accounts"
         ],
@@ -13446,6 +13465,7 @@
             "bearer": []
           }
         ],
+        "summary": "Activate or deactivate an account",
         "tags": [
           "accounts"
         ],
@@ -13549,6 +13569,7 @@
             "bearer": []
           }
         ],
+        "summary": "Read the compound's audit log, newest first",
         "tags": [
           "admin"
         ],
@@ -13574,6 +13595,7 @@
             "description": ""
           }
         },
+        "summary": "Sign out this session",
         "tags": [
           "auth"
         ],
@@ -13606,6 +13628,7 @@
             "description": ""
           }
         },
+        "summary": "Request a login code by email",
         "tags": [
           "auth"
         ],
@@ -13638,6 +13661,7 @@
             "description": ""
           }
         },
+        "summary": "Verify the login code; get a login ticket and the accounts to pick from",
         "tags": [
           "auth"
         ],
@@ -13671,6 +13695,7 @@
             "description": ""
           }
         },
+        "summary": "Refresh the access token",
         "tags": [
           "auth"
         ],
@@ -13714,6 +13739,7 @@
             "description": ""
           }
         },
+        "summary": "Exchange the login ticket for tokens on one account",
         "tags": [
           "auth"
         ],
@@ -13775,6 +13801,7 @@
             "bearer": []
           }
         ],
+        "summary": "List card incidents",
         "tags": [
           "workers"
         ],
@@ -13804,6 +13831,7 @@
             "bearer": []
           }
         ],
+        "summary": "Close a card incident",
         "tags": [
           "workers"
         ],
@@ -13864,6 +13892,7 @@
             "bearer": []
           }
         ],
+        "summary": "List compliance cases",
         "tags": [
           "workers"
         ],
@@ -13903,6 +13932,7 @@
             "bearer": []
           }
         ],
+        "summary": "Close a compliance case",
         "tags": [
           "workers"
         ],
@@ -13942,6 +13972,7 @@
             "bearer": []
           }
         ],
+        "summary": "Approve or refuse a member's request",
         "tags": [
           "member-permissions"
         ],
@@ -13971,6 +14002,7 @@
             "bearer": []
           }
         ],
+        "summary": "Revoke a delegation",
         "tags": [
           "delegations"
         ],
@@ -14019,6 +14051,7 @@
             "bearer": []
           }
         ],
+        "summary": "List open account deletion requests",
         "tags": [
           "erasure"
         ],
@@ -14058,6 +14091,7 @@
             "bearer": []
           }
         ],
+        "summary": "Close a queued deletion request without erasing",
         "tags": [
           "erasure"
         ],
@@ -14097,6 +14131,7 @@
             "bearer": []
           }
         ],
+        "summary": "Erase the account (tombstone)",
         "tags": [
           "erasure"
         ],
@@ -14133,6 +14168,7 @@
             "bearer": []
           }
         ],
+        "summary": "What an erasure removes and keeps, and the phrase to type",
         "tags": [
           "erasure"
         ],
@@ -14170,6 +14206,7 @@
             "bearer": []
           }
         ],
+        "summary": "Declare an upload and get a presigned PUT URL",
         "tags": [
           "files"
         ],
@@ -14200,6 +14237,7 @@
             "bearer": []
           }
         ],
+        "summary": "Delete one of my uploads",
         "tags": [
           "files"
         ],
@@ -14234,6 +14272,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get one of my uploads with a short-lived URL",
         "tags": [
           "files"
         ],
@@ -14271,6 +14310,7 @@
             "bearer": []
           }
         ],
+        "summary": "Finalize an upload once the file is PUT",
         "tags": [
           "files"
         ],
@@ -14317,6 +14357,7 @@
             "bearer": []
           }
         ],
+        "summary": "Answer the gate's request",
         "tags": [
           "gate-requests"
         ],
@@ -14364,6 +14405,7 @@
             "bearer": []
           }
         ],
+        "summary": "Ask a household to approve a visitor at the gate",
         "tags": [
           "gate"
         ],
@@ -14400,6 +14442,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get an approval request (poll while waiting)",
         "tags": [
           "gate"
         ],
@@ -14445,6 +14488,7 @@
             "bearer": []
           }
         ],
+        "summary": "Withdraw an approval request",
         "tags": [
           "gate"
         ],
@@ -14545,6 +14589,7 @@
             "bearer": []
           }
         ],
+        "summary": "Read the gate log",
         "tags": [
           "gate"
         ],
@@ -14590,6 +14635,7 @@
             "bearer": []
           }
         ],
+        "summary": "Record an entry or exit",
         "tags": [
           "gate"
         ],
@@ -14617,6 +14663,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the gates a shift can start at",
         "tags": [
           "gate"
         ],
@@ -14665,6 +14712,7 @@
             "bearer": []
           }
         ],
+        "summary": "List who is inside now",
         "tags": [
           "gate"
         ],
@@ -14730,6 +14778,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the gate's parcels",
         "tags": [
           "parcels"
         ],
@@ -14775,6 +14824,7 @@
             "bearer": []
           }
         ],
+        "summary": "Receive a parcel at the gate",
         "tags": [
           "parcels"
         ],
@@ -14812,6 +14862,7 @@
             "bearer": []
           }
         ],
+        "summary": "Look up a parcel code or QR",
         "tags": [
           "parcels"
         ],
@@ -14849,6 +14900,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get one parcel with its photos",
         "tags": [
           "parcels"
         ],
@@ -14905,6 +14957,7 @@
             "bearer": []
           }
         ],
+        "summary": "Hand a parcel over",
         "tags": [
           "parcels"
         ],
@@ -14951,6 +15004,7 @@
             "bearer": []
           }
         ],
+        "summary": "Return a parcel to the carrier",
         "tags": [
           "parcels"
         ],
@@ -14978,6 +15032,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get my current shift",
         "tags": [
           "gate"
         ],
@@ -15015,6 +15070,7 @@
             "bearer": []
           }
         ],
+        "summary": "End my shift",
         "tags": [
           "gate"
         ],
@@ -15062,6 +15118,7 @@
             "bearer": []
           }
         ],
+        "summary": "Start my shift at a gate",
         "tags": [
           "gate"
         ],
@@ -15099,6 +15156,7 @@
             "bearer": []
           }
         ],
+        "summary": "Verify a code or QR at the gate",
         "tags": [
           "gate"
         ],
@@ -15127,6 +15185,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the compound's gates",
         "tags": [
           "gates"
         ],
@@ -15162,6 +15221,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a gate",
         "tags": [
           "gates"
         ],
@@ -15208,6 +15268,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update a gate",
         "tags": [
           "gates"
         ],
@@ -15223,6 +15284,7 @@
             "description": ""
           }
         },
+        "summary": "Readiness: database, Redis and the tenant-leak canary",
         "tags": [
           "health"
         ],
@@ -15252,6 +15314,7 @@
             "bearer": []
           }
         ],
+        "summary": "Revoke a household invite",
         "tags": [
           "household"
         ],
@@ -15288,6 +15351,7 @@
             "bearer": []
           }
         ],
+        "summary": "Approve a household membership",
         "tags": [
           "household"
         ],
@@ -15334,6 +15398,7 @@
             "bearer": []
           }
         ],
+        "summary": "Invite a member who turned 18 to an account of their own",
         "tags": [
           "household"
         ],
@@ -15371,6 +15436,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get a member's permissions",
         "tags": [
           "member-permissions"
         ],
@@ -15417,6 +15483,7 @@
             "bearer": []
           }
         ],
+        "summary": "Grant a permission to a member",
         "tags": [
           "member-permissions"
         ],
@@ -15456,6 +15523,7 @@
             "bearer": []
           }
         ],
+        "summary": "Revoke a member's permission",
         "tags": [
           "member-permissions"
         ],
@@ -15495,6 +15563,7 @@
             "bearer": []
           }
         ],
+        "summary": "Revoke all of a member's granted permissions",
         "tags": [
           "member-permissions"
         ],
@@ -15534,6 +15603,7 @@
             "bearer": []
           }
         ],
+        "summary": "Revoke a member's permission (management decision)",
         "tags": [
           "member-permissions"
         ],
@@ -15573,6 +15643,7 @@
             "bearer": []
           }
         ],
+        "summary": "Reject a household membership",
         "tags": [
           "household"
         ],
@@ -15612,6 +15683,7 @@
             "bearer": []
           }
         ],
+        "summary": "Remove a household member",
         "tags": [
           "household"
         ],
@@ -15651,6 +15723,7 @@
             "bearer": []
           }
         ],
+        "summary": "Remove a household member (management decision)",
         "tags": [
           "household"
         ],
@@ -15699,6 +15772,7 @@
             "bearer": []
           }
         ],
+        "summary": "List memberships waiting for approval",
         "tags": [
           "household"
         ],
@@ -15731,6 +15805,7 @@
             "description": ""
           }
         },
+        "summary": "Accept a household invite with the code",
         "tags": [
           "public"
         ],
@@ -15763,6 +15838,7 @@
             "description": ""
           }
         },
+        "summary": "Start accepting a household invite (emails a code)",
         "tags": [
           "public"
         ],
@@ -15802,6 +15878,7 @@
             "bearer": []
           }
         ],
+        "summary": "Release a legal hold",
         "tags": [
           "erasure"
         ],
@@ -15829,6 +15906,7 @@
             "bearer": []
           }
         ],
+        "summary": "List ticket categories",
         "tags": [
           "maintenance"
         ],
@@ -15864,6 +15942,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a ticket category",
         "tags": [
           "maintenance"
         ],
@@ -15910,6 +15989,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update a ticket category",
         "tags": [
           "maintenance"
         ],
@@ -15949,6 +16029,7 @@
             "bearer": []
           }
         ],
+        "summary": "Set a category's SLA targets",
         "tags": [
           "maintenance"
         ],
@@ -15988,6 +16069,7 @@
             "bearer": []
           }
         ],
+        "summary": "Set the specialties that handle a category",
         "tags": [
           "maintenance"
         ],
@@ -16015,6 +16097,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get the dispatch settings",
         "tags": [
           "maintenance"
         ],
@@ -16050,6 +16133,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update the dispatch settings",
         "tags": [
           "maintenance"
         ],
@@ -16077,6 +16161,7 @@
             "bearer": []
           }
         ],
+        "summary": "List preventive services",
         "tags": [
           "maintenance"
         ],
@@ -16112,6 +16197,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a preventive service",
         "tags": [
           "maintenance"
         ],
@@ -16158,6 +16244,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update a preventive service",
         "tags": [
           "maintenance"
         ],
@@ -16185,6 +16272,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get the maintenance settings",
         "tags": [
           "maintenance"
         ],
@@ -16220,6 +16308,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update the maintenance settings",
         "tags": [
           "maintenance"
         ],
@@ -16247,6 +16336,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get the SLA switch",
         "tags": [
           "maintenance"
         ],
@@ -16282,6 +16372,7 @@
             "bearer": []
           }
         ],
+        "summary": "Turn the SLA on or off",
         "tags": [
           "maintenance"
         ],
@@ -16309,6 +16400,7 @@
             "bearer": []
           }
         ],
+        "summary": "List specialties",
         "tags": [
           "maintenance"
         ],
@@ -16344,6 +16436,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a specialty",
         "tags": [
           "maintenance"
         ],
@@ -16390,6 +16483,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update a specialty",
         "tags": [
           "maintenance"
         ],
@@ -16417,6 +16511,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the technicians dispatch can assign to",
         "tags": [
           "maintenance"
         ],
@@ -16463,6 +16558,7 @@
             "bearer": []
           }
         ],
+        "summary": "Set a technician's availability",
         "tags": [
           "maintenance"
         ],
@@ -16502,6 +16598,7 @@
             "bearer": []
           }
         ],
+        "summary": "Replace a technician's specialties",
         "tags": [
           "maintenance"
         ],
@@ -16632,6 +16729,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the compound's tickets",
         "tags": [
           "maintenance"
         ],
@@ -16677,6 +16775,7 @@
             "bearer": []
           }
         ],
+        "summary": "Open a ticket for a resident",
         "tags": [
           "maintenance"
         ],
@@ -16713,6 +16812,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get one ticket",
         "tags": [
           "maintenance"
         ],
@@ -16753,6 +16853,7 @@
             "bearer": []
           }
         ],
+        "summary": "Assign a queued ticket to a technician",
         "tags": [
           "maintenance"
         ],
@@ -16789,6 +16890,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get a ticket's assignments",
         "tags": [
           "maintenance"
         ],
@@ -16825,6 +16927,7 @@
             "bearer": []
           }
         ],
+        "summary": "Run the dispatch engine on a queued ticket now",
         "tags": [
           "maintenance"
         ],
@@ -16864,6 +16967,7 @@
             "bearer": []
           }
         ],
+        "summary": "Cancel a ticket",
         "tags": [
           "maintenance"
         ],
@@ -16903,6 +17007,7 @@
             "bearer": []
           }
         ],
+        "summary": "Change a ticket's category",
         "tags": [
           "maintenance"
         ],
@@ -16939,6 +17044,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get the dispatch engine's attempts on a ticket",
         "tags": [
           "maintenance"
         ],
@@ -16975,6 +17081,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get a ticket's status history",
         "tags": [
           "maintenance"
         ],
@@ -17031,6 +17138,7 @@
             "bearer": []
           }
         ],
+        "summary": "Read a ticket's thread, internal messages included",
         "tags": [
           "maintenance"
         ],
@@ -17084,6 +17192,7 @@
             "bearer": []
           }
         ],
+        "summary": "Post to a ticket's thread",
         "tags": [
           "maintenance"
         ],
@@ -17123,6 +17232,7 @@
             "bearer": []
           }
         ],
+        "summary": "Change a ticket's priority",
         "tags": [
           "maintenance"
         ],
@@ -17162,6 +17272,7 @@
             "bearer": []
           }
         ],
+        "summary": "Reassign a ticket to another technician",
         "tags": [
           "maintenance"
         ],
@@ -17198,6 +17309,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get a ticket's SLA events",
         "tags": [
           "maintenance"
         ],
@@ -17234,6 +17346,7 @@
             "bearer": []
           }
         ],
+        "summary": "List a ticket's visit events",
         "tags": [
           "maintenance"
         ],
@@ -17270,6 +17383,7 @@
             "bearer": []
           }
         ],
+        "summary": "List a ticket's visits",
         "tags": [
           "maintenance"
         ],
@@ -17315,6 +17429,7 @@
             "bearer": []
           }
         ],
+        "summary": "Propose a visit window for the ticket's technician",
         "tags": [
           "maintenance"
         ],
@@ -17362,6 +17477,7 @@
             "bearer": []
           }
         ],
+        "summary": "Cancel a visit for the technician",
         "tags": [
           "maintenance"
         ],
@@ -17399,6 +17515,7 @@
             "bearer": []
           }
         ],
+        "summary": "Confirm the residents' counter-proposal for the technician",
         "tags": [
           "maintenance"
         ],
@@ -17453,6 +17570,7 @@
             "bearer": []
           }
         ],
+        "summary": "Counter-propose another visit window for the technician",
         "tags": [
           "maintenance"
         ],
@@ -17507,6 +17625,7 @@
             "bearer": []
           }
         ],
+        "summary": "Reschedule a confirmed visit for the technician",
         "tags": [
           "maintenance"
         ],
@@ -17534,6 +17653,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get the signed-in account, its roles and photo",
         "tags": [
           "me"
         ],
@@ -17562,6 +17682,7 @@
             "bearer": []
           }
         ],
+        "summary": "List every consent and whether I granted it",
         "tags": [
           "consents"
         ],
@@ -17599,6 +17720,7 @@
             "bearer": []
           }
         ],
+        "summary": "Grant a consent, for the version of the text shown",
         "tags": [
           "consents"
         ],
@@ -17636,6 +17758,7 @@
             "bearer": []
           }
         ],
+        "summary": "Revoke a consent",
         "tags": [
           "consents"
         ],
@@ -17663,6 +17786,7 @@
             "bearer": []
           }
         ],
+        "summary": "List my data exports",
         "tags": [
           "data-exports"
         ],
@@ -17688,6 +17812,7 @@
             "bearer": []
           }
         ],
+        "summary": "Request an export of my personal data",
         "tags": [
           "data-exports"
         ],
@@ -17724,6 +17849,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get a short-lived download URL for a ready export",
         "tags": [
           "data-exports"
         ],
@@ -17752,6 +17878,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the delegations I hold or gave",
         "tags": [
           "me"
         ],
@@ -17779,6 +17906,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get my account deletion request",
         "tags": [
           "me"
         ],
@@ -17814,6 +17942,7 @@
             "bearer": []
           }
         ],
+        "summary": "Request deletion of my account",
         "tags": [
           "me"
         ],
@@ -17834,6 +17963,7 @@
             "bearer": []
           }
         ],
+        "summary": "Cancel my account deletion request",
         "tags": [
           "me"
         ],
@@ -17863,6 +17993,7 @@
             "bearer": []
           }
         ],
+        "summary": "\"Not me\" on an unusual-login alert: freeze my account",
         "tags": [
           "security"
         ],
@@ -17890,6 +18021,7 @@
             "bearer": []
           }
         ],
+        "summary": "List my entry credentials",
         "tags": [
           "entry-credentials"
         ],
@@ -17935,6 +18067,7 @@
             "bearer": []
           }
         ],
+        "summary": "Issue an entry QR credential for this phone",
         "tags": [
           "entry-credentials"
         ],
@@ -17965,6 +18098,7 @@
             "bearer": []
           }
         ],
+        "summary": "Revoke an entry credential",
         "tags": [
           "entry-credentials"
         ],
@@ -17992,6 +18126,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the gate's requests waiting for my answer",
         "tags": [
           "gate-requests"
         ],
@@ -18029,6 +18164,7 @@
             "bearer": []
           }
         ],
+        "summary": "Set my preferred language",
         "tags": [
           "me"
         ],
@@ -18056,6 +18192,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get my notification preferences",
         "tags": [
           "preferences"
         ],
@@ -18091,6 +18228,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update my notification preferences",
         "tags": [
           "preferences"
         ],
@@ -18151,6 +18289,7 @@
             "bearer": []
           }
         ],
+        "summary": "List my notifications",
         "tags": [
           "notifications"
         ],
@@ -18178,6 +18317,7 @@
             "bearer": []
           }
         ],
+        "summary": "Mark all my notifications as read",
         "tags": [
           "notifications"
         ],
@@ -18205,6 +18345,7 @@
             "bearer": []
           }
         ],
+        "summary": "Count my unread notifications",
         "tags": [
           "notifications"
         ],
@@ -18234,6 +18375,7 @@
             "bearer": []
           }
         ],
+        "summary": "Mark one notification as read",
         "tags": [
           "notifications"
         ],
@@ -18290,6 +18432,7 @@
             "bearer": []
           }
         ],
+        "summary": "List my parcels",
         "tags": [
           "parcels"
         ],
@@ -18327,6 +18470,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get one of my parcels",
         "tags": [
           "parcels"
         ],
@@ -18383,6 +18527,7 @@
             "bearer": []
           }
         ],
+        "summary": "Authorize someone to pick up a parcel",
         "tags": [
           "parcels"
         ],
@@ -18413,6 +18558,7 @@
             "bearer": []
           }
         ],
+        "summary": "Revoke a parcel's pickup delegate",
         "tags": [
           "parcels"
         ],
@@ -18468,6 +18614,7 @@
             "bearer": []
           }
         ],
+        "summary": "Reject a parcel as not mine",
         "tags": [
           "parcels"
         ],
@@ -18489,6 +18636,7 @@
             "bearer": []
           }
         ],
+        "summary": "Remove my photo",
         "tags": [
           "me"
         ],
@@ -18517,6 +18665,7 @@
             "bearer": []
           }
         ],
+        "summary": "Set or replace my photo",
         "tags": [
           "me"
         ],
@@ -18544,6 +18693,7 @@
             "bearer": []
           }
         ],
+        "summary": "List my live sessions, the current one marked",
         "tags": [
           "me"
         ],
@@ -18571,6 +18721,7 @@
             "bearer": []
           }
         ],
+        "summary": "Sign out every one of my sessions",
         "tags": [
           "me"
         ],
@@ -18600,6 +18751,7 @@
             "bearer": []
           }
         ],
+        "summary": "Sign out one of my sessions",
         "tags": [
           "me"
         ],
@@ -18620,6 +18772,7 @@
             "bearer": []
           }
         ],
+        "summary": "Email me a step-up code for a sensitive action",
         "tags": [
           "security"
         ],
@@ -18657,6 +18810,7 @@
             "bearer": []
           }
         ],
+        "summary": "Verify the step-up code on this session",
         "tags": [
           "security"
         ],
@@ -18684,6 +18838,7 @@
             "bearer": []
           }
         ],
+        "summary": "List my units and household memberships",
         "tags": [
           "me"
         ],
@@ -18720,6 +18875,7 @@
             "bearer": []
           }
         ],
+        "summary": "What I may do on one of my units (feature toggles)",
         "tags": [
           "me"
         ],
@@ -18756,6 +18912,7 @@
             "bearer": []
           }
         ],
+        "summary": "My household permissions on a unit",
         "tags": [
           "me"
         ],
@@ -18792,6 +18949,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the maintenance visits coming to my unit",
         "tags": [
           "me"
         ],
@@ -18839,6 +18997,7 @@
             "bearer": []
           }
         ],
+        "summary": "Convert a tenant into an owner",
         "tags": [
           "units"
         ],
@@ -18885,6 +19044,7 @@
             "bearer": []
           }
         ],
+        "summary": "End an occupancy",
         "tags": [
           "units"
         ],
@@ -18921,6 +19081,7 @@
             "bearer": []
           }
         ],
+        "summary": "Record the keys' handover",
         "tags": [
           "units"
         ],
@@ -18967,6 +19128,7 @@
             "bearer": []
           }
         ],
+        "summary": "Set whether an owner lives in or lets the unit",
         "tags": [
           "units"
         ],
@@ -18994,6 +19156,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get the parcel holding periods",
         "tags": [
           "parcels"
         ],
@@ -19029,6 +19192,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update the parcel holding periods",
         "tags": [
           "parcels"
         ],
@@ -19102,6 +19266,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the compound's parcels",
         "tags": [
           "parcels"
         ],
@@ -19138,6 +19303,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get one parcel",
         "tags": [
           "parcels"
         ],
@@ -19165,6 +19331,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the permission catalog",
         "tags": [
           "admin"
         ],
@@ -19277,6 +19444,7 @@
             "bearer": []
           }
         ],
+        "summary": "Read the platform owner's audit log",
         "tags": [
           "platform"
         ],
@@ -19314,6 +19482,7 @@
             "bearer": []
           }
         ],
+        "summary": "Change the platform owner's password",
         "tags": [
           "platform"
         ],
@@ -19347,6 +19516,7 @@
             "description": ""
           }
         },
+        "summary": "Platform owner login with email and password",
         "tags": [
           "platform"
         ],
@@ -19373,6 +19543,7 @@
             "description": ""
           }
         },
+        "summary": "Sign out the platform session",
         "tags": [
           "platform"
         ],
@@ -19405,6 +19576,7 @@
             "description": ""
           }
         },
+        "summary": "Refresh the platform access token",
         "tags": [
           "platform"
         ],
@@ -19518,6 +19690,7 @@
             "bearer": []
           }
         ],
+        "summary": "Read the security events",
         "tags": [
           "platform"
         ],
@@ -19566,6 +19739,7 @@
             "bearer": []
           }
         ],
+        "summary": "List compounds",
         "tags": [
           "platform"
         ],
@@ -19601,6 +19775,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a compound with its first manager",
         "tags": [
           "platform"
         ],
@@ -19637,6 +19812,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get one compound",
         "tags": [
           "platform"
         ],
@@ -19683,6 +19859,7 @@
             "bearer": []
           }
         ],
+        "summary": "Add a manager to a compound",
         "tags": [
           "platform"
         ],
@@ -19737,6 +19914,7 @@
             "bearer": []
           }
         ],
+        "summary": "Activate or deactivate a compound's manager",
         "tags": [
           "platform"
         ],
@@ -19783,6 +19961,7 @@
             "bearer": []
           }
         ],
+        "summary": "Activate or suspend a compound",
         "tags": [
           "platform"
         ],
@@ -19810,6 +19989,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the preventive services I may book",
         "tags": [
           "tickets"
         ],
@@ -19868,6 +20048,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the windows a check-up may be booked in",
         "tags": [
           "tickets"
         ],
@@ -19894,6 +20075,7 @@
             "description": ""
           }
         },
+        "summary": "Email a code for an assisted export's link",
         "tags": [
           "data-exports"
         ],
@@ -19927,6 +20109,7 @@
             "description": ""
           }
         },
+        "summary": "Download an assisted export with the link and the emailed code",
         "tags": [
           "data-exports"
         ],
@@ -19953,6 +20136,7 @@
             "description": ""
           }
         },
+        "summary": "\"Not me\" from the alert email: freeze the account",
         "tags": [
           "security"
         ],
@@ -19985,6 +20169,7 @@
             "description": ""
           }
         },
+        "summary": "Open a visitor pass from the host's link",
         "tags": [
           "public"
         ],
@@ -20011,6 +20196,7 @@
             "description": ""
           }
         },
+        "summary": "\"This isn't me\": cancel the visitor pass",
         "tags": [
           "public"
         ],
@@ -20060,6 +20246,7 @@
             "bearer": []
           }
         ],
+        "summary": "List registration links",
         "tags": [
           "registration"
         ],
@@ -20085,6 +20272,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a registration link",
         "tags": [
           "registration"
         ],
@@ -20115,6 +20303,7 @@
             "bearer": []
           }
         ],
+        "summary": "Revoke a registration link",
         "tags": [
           "registration"
         ],
@@ -20163,6 +20352,7 @@
             "bearer": []
           }
         ],
+        "summary": "List pending registration requests",
         "tags": [
           "registration"
         ],
@@ -20195,6 +20385,7 @@
             "description": ""
           }
         },
+        "summary": "Complete a self-registration with the code",
         "tags": [
           "public"
         ],
@@ -20227,6 +20418,7 @@
             "description": ""
           }
         },
+        "summary": "Start a self-registration (emails a code)",
         "tags": [
           "public"
         ],
@@ -20273,6 +20465,7 @@
             "bearer": []
           }
         ],
+        "summary": "Approve a registration request",
         "tags": [
           "registration"
         ],
@@ -20312,6 +20505,7 @@
             "bearer": []
           }
         ],
+        "summary": "Reject a registration request",
         "tags": [
           "registration"
         ],
@@ -20360,6 +20554,7 @@
             "bearer": []
           }
         ],
+        "summary": "List residents",
         "tags": [
           "residents"
         ],
@@ -20395,6 +20590,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a resident with their occupancies",
         "tags": [
           "residents"
         ],
@@ -20431,6 +20627,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get one resident",
         "tags": [
           "residents"
         ],
@@ -20477,6 +20674,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update a resident's contact details",
         "tags": [
           "residents"
         ],
@@ -20523,6 +20721,7 @@
             "bearer": []
           }
         ],
+        "summary": "Add an occupancy to a resident",
         "tags": [
           "residents"
         ],
@@ -20562,6 +20761,7 @@
             "bearer": []
           }
         ],
+        "summary": "Clear a review flag",
         "tags": [
           "unit-states"
         ],
@@ -20589,6 +20789,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the compound's roles",
         "tags": [
           "admin"
         ],
@@ -20625,6 +20826,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get one role with its permissions",
         "tags": [
           "admin"
         ],
@@ -20671,6 +20873,7 @@
             "bearer": []
           }
         ],
+        "summary": "Replace a role's permissions",
         "tags": [
           "admin"
         ],
@@ -20698,6 +20901,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get the compound's settings",
         "tags": [
           "admin"
         ],
@@ -20733,6 +20937,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update the compound's settings",
         "tags": [
           "admin"
         ],
@@ -20760,6 +20965,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get my availability",
         "tags": [
           "technician"
         ],
@@ -20795,6 +21001,7 @@
             "bearer": []
           }
         ],
+        "summary": "Set my availability",
         "tags": [
           "technician"
         ],
@@ -20851,6 +21058,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the tickets assigned to me",
         "tags": [
           "technician"
         ],
@@ -20887,6 +21095,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get one ticket assigned to me",
         "tags": [
           "technician"
         ],
@@ -20917,6 +21126,7 @@
             "bearer": []
           }
         ],
+        "summary": "Mark the work as done",
         "tags": [
           "technician"
         ],
@@ -20956,6 +21166,7 @@
             "bearer": []
           }
         ],
+        "summary": "Decline the ticket",
         "tags": [
           "technician"
         ],
@@ -20985,6 +21196,7 @@
             "bearer": []
           }
         ],
+        "summary": "Mark I'm on the way",
         "tags": [
           "technician"
         ],
@@ -21024,6 +21236,7 @@
             "bearer": []
           }
         ],
+        "summary": "Put the work on hold",
         "tags": [
           "technician"
         ],
@@ -21080,6 +21293,7 @@
             "bearer": []
           }
         ],
+        "summary": "Read the ticket's thread, internal messages included",
         "tags": [
           "technician"
         ],
@@ -21133,6 +21347,7 @@
             "bearer": []
           }
         ],
+        "summary": "Post to the ticket's thread",
         "tags": [
           "technician"
         ],
@@ -21179,6 +21394,7 @@
             "bearer": []
           }
         ],
+        "summary": "Add a photo to the ticket",
         "tags": [
           "technician"
         ],
@@ -21208,6 +21424,7 @@
             "bearer": []
           }
         ],
+        "summary": "Resume the work",
         "tags": [
           "technician"
         ],
@@ -21237,6 +21454,7 @@
             "bearer": []
           }
         ],
+        "summary": "Start the work",
         "tags": [
           "technician"
         ],
@@ -21273,6 +21491,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the ticket's visits",
         "tags": [
           "technician"
         ],
@@ -21318,6 +21537,7 @@
             "bearer": []
           }
         ],
+        "summary": "Propose a visit window",
         "tags": [
           "technician"
         ],
@@ -21362,6 +21582,7 @@
             "bearer": []
           }
         ],
+        "summary": "Mark arrival at the door",
         "tags": [
           "technician"
         ],
@@ -21410,6 +21631,7 @@
             "bearer": []
           }
         ],
+        "summary": "Cancel a visit",
         "tags": [
           "technician"
         ],
@@ -21447,6 +21669,7 @@
             "bearer": []
           }
         ],
+        "summary": "Confirm the residents' counter-proposal",
         "tags": [
           "technician"
         ],
@@ -21501,6 +21724,7 @@
             "bearer": []
           }
         ],
+        "summary": "Counter-propose another visit window",
         "tags": [
           "technician"
         ],
@@ -21538,6 +21762,7 @@
             "bearer": []
           }
         ],
+        "summary": "Mark the visit as done",
         "tags": [
           "technician"
         ],
@@ -21575,6 +21800,7 @@
             "bearer": []
           }
         ],
+        "summary": "Report that nobody let me in",
         "tags": [
           "technician"
         ],
@@ -21629,6 +21855,7 @@
             "bearer": []
           }
         ],
+        "summary": "Reschedule a confirmed visit",
         "tags": [
           "technician"
         ],
@@ -21656,6 +21883,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the categories a ticket may be opened under",
         "tags": [
           "tickets"
         ],
@@ -21721,6 +21949,7 @@
             "bearer": []
           }
         ],
+        "summary": "List my tickets",
         "tags": [
           "tickets"
         ],
@@ -21766,6 +21995,7 @@
             "bearer": []
           }
         ],
+        "summary": "Open a ticket",
         "tags": [
           "tickets"
         ],
@@ -21813,6 +22043,7 @@
             "bearer": []
           }
         ],
+        "summary": "Book a preventive check-up",
         "tags": [
           "tickets"
         ],
@@ -21849,6 +22080,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get one of my tickets",
         "tags": [
           "tickets"
         ],
@@ -21889,6 +22121,7 @@
             "bearer": []
           }
         ],
+        "summary": "Cancel my ticket before the work starts",
         "tags": [
           "tickets"
         ],
@@ -21928,6 +22161,7 @@
             "bearer": []
           }
         ],
+        "summary": "Confirm the work is done, with a rating",
         "tags": [
           "tickets"
         ],
@@ -21966,6 +22200,7 @@
             "bearer": []
           }
         ],
+        "summary": "Escalate an overdue ticket",
         "tags": [
           "tickets"
         ],
@@ -22022,6 +22257,7 @@
             "bearer": []
           }
         ],
+        "summary": "Read my ticket's thread",
         "tags": [
           "tickets"
         ],
@@ -22075,6 +22311,7 @@
             "bearer": []
           }
         ],
+        "summary": "Post to my ticket's thread",
         "tags": [
           "tickets"
         ],
@@ -22121,6 +22358,7 @@
             "bearer": []
           }
         ],
+        "summary": "Add a photo to my ticket",
         "tags": [
           "tickets"
         ],
@@ -22160,6 +22398,7 @@
             "bearer": []
           }
         ],
+        "summary": "Reject the completed work",
         "tags": [
           "tickets"
         ],
@@ -22199,6 +22438,7 @@
             "bearer": []
           }
         ],
+        "summary": "Reopen a closed ticket",
         "tags": [
           "tickets"
         ],
@@ -22256,6 +22496,7 @@
             "bearer": []
           }
         ],
+        "summary": "List free windows to counter or reschedule with",
         "tags": [
           "tickets"
         ],
@@ -22293,6 +22534,7 @@
             "bearer": []
           }
         ],
+        "summary": "List my ticket's visits",
         "tags": [
           "tickets"
         ],
@@ -22331,6 +22573,7 @@
             "bearer": []
           }
         ],
+        "summary": "Withdraw consent to enter while nobody is home",
         "tags": [
           "tickets"
         ],
@@ -22366,6 +22609,7 @@
             "bearer": []
           }
         ],
+        "summary": "Allow entry while nobody is home, for this visit",
         "tags": [
           "tickets"
         ],
@@ -22413,6 +22657,7 @@
             "bearer": []
           }
         ],
+        "summary": "Cancel a visit",
         "tags": [
           "tickets"
         ],
@@ -22450,6 +22695,7 @@
             "bearer": []
           }
         ],
+        "summary": "Confirm the technician's proposed visit",
         "tags": [
           "tickets"
         ],
@@ -22487,6 +22733,7 @@
             "bearer": []
           }
         ],
+        "summary": "Confirm the technician is at the door",
         "tags": [
           "tickets"
         ],
@@ -22541,6 +22788,7 @@
             "bearer": []
           }
         ],
+        "summary": "Counter-propose another visit window",
         "tags": [
           "tickets"
         ],
@@ -22578,6 +22826,7 @@
             "bearer": []
           }
         ],
+        "summary": "Clear who lets the technician in",
         "tags": [
           "tickets"
         ],
@@ -22623,6 +22872,7 @@
             "bearer": []
           }
         ],
+        "summary": "Set who lets the technician in",
         "tags": [
           "tickets"
         ],
@@ -22677,6 +22927,7 @@
             "bearer": []
           }
         ],
+        "summary": "Reschedule a confirmed visit",
         "tags": [
           "tickets"
         ],
@@ -22725,6 +22976,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the units I may see",
         "tags": [
           "units"
         ],
@@ -22760,6 +23012,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a unit",
         "tags": [
           "units"
         ],
@@ -22808,6 +23061,7 @@
             "bearer": []
           }
         ],
+        "summary": "List units with open review flags",
         "tags": [
           "units"
         ],
@@ -22844,6 +23098,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get one unit",
         "tags": [
           "units"
         ],
@@ -22880,6 +23135,7 @@
             "bearer": []
           }
         ],
+        "summary": "Details the primary may still fill in (activation card)",
         "tags": [
           "units"
         ],
@@ -22919,6 +23175,7 @@
             "bearer": []
           }
         ],
+        "summary": "Turn the unit's closed mode on or off",
         "tags": [
           "units"
         ],
@@ -22965,6 +23222,7 @@
             "bearer": []
           }
         ],
+        "summary": "Report a resident of the unit as deceased",
         "tags": [
           "unit-states"
         ],
@@ -23004,6 +23262,7 @@
             "bearer": []
           }
         ],
+        "summary": "Fill in one missing unit detail",
         "tags": [
           "units"
         ],
@@ -23043,6 +23302,7 @@
             "bearer": []
           }
         ],
+        "summary": "End the unit's household",
         "tags": [
           "unit-states"
         ],
@@ -23089,6 +23349,7 @@
             "bearer": []
           }
         ],
+        "summary": "Mark the household's permissions as reviewed",
         "tags": [
           "unit-states"
         ],
@@ -23125,6 +23386,7 @@
             "bearer": []
           }
         ],
+        "summary": "Members whose permissions predate the new primary",
         "tags": [
           "unit-states"
         ],
@@ -23171,6 +23433,7 @@
             "bearer": []
           }
         ],
+        "summary": "Set the unit's primary resident",
         "tags": [
           "units"
         ],
@@ -23217,6 +23480,7 @@
             "bearer": []
           }
         ],
+        "summary": "Report a separation in the unit",
         "tags": [
           "unit-states"
         ],
@@ -23263,6 +23527,7 @@
             "bearer": []
           }
         ],
+        "summary": "Transfer the unit's ownership",
         "tags": [
           "unit-states"
         ],
@@ -23299,6 +23564,7 @@
             "bearer": []
           }
         ],
+        "summary": "List members' requests waiting for the primary",
         "tags": [
           "member-permissions"
         ],
@@ -23335,6 +23601,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the unit's delegations",
         "tags": [
           "delegations"
         ],
@@ -23379,6 +23646,7 @@
             "bearer": []
           }
         ],
+        "summary": "Delegate the household or the workers to an adult member",
         "tags": [
           "delegations"
         ],
@@ -23415,6 +23683,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get the household's gate instructions",
         "tags": [
           "visitors"
         ],
@@ -23459,6 +23728,7 @@
             "bearer": []
           }
         ],
+        "summary": "Set the household's gate instructions",
         "tags": [
           "visitors"
         ],
@@ -23495,6 +23765,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get the unit's household",
         "tags": [
           "household"
         ],
@@ -23541,6 +23812,7 @@
             "bearer": []
           }
         ],
+        "summary": "Invite an adult to the household",
         "tags": [
           "household"
         ],
@@ -23588,6 +23860,7 @@
             "bearer": []
           }
         ],
+        "summary": "Add a minor to the household",
         "tags": [
           "household"
         ],
@@ -23624,6 +23897,7 @@
             "bearer": []
           }
         ],
+        "summary": "List minors who turned 18",
         "tags": [
           "household"
         ],
@@ -23680,6 +23954,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the unit's visitor passes",
         "tags": [
           "visitors"
         ],
@@ -23733,6 +24008,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a visitor pass",
         "tags": [
           "visitors"
         ],
@@ -23790,6 +24066,7 @@
             "bearer": []
           }
         ],
+        "summary": "List the unit's workers",
         "tags": [
           "workers"
         ],
@@ -23834,6 +24111,7 @@
             "bearer": []
           }
         ],
+        "summary": "Register a worker for the unit",
         "tags": [
           "workers"
         ],
@@ -23878,6 +24156,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get one of the unit's workers",
         "tags": [
           "workers"
         ],
@@ -23917,6 +24196,7 @@
             "bearer": []
           }
         ],
+        "summary": "Cancel a visitor pass",
         "tags": [
           "visitors"
         ],
@@ -23962,6 +24242,7 @@
             "bearer": []
           }
         ],
+        "summary": "Reissue a visitor pass's link, QR and code",
         "tags": [
           "visitors"
         ],
@@ -24019,6 +24300,7 @@
             "bearer": []
           }
         ],
+        "summary": "List worker engagements for review",
         "tags": [
           "workers"
         ],
@@ -24055,6 +24337,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get a worker engagement for review",
         "tags": [
           "workers"
         ],
@@ -24112,6 +24395,7 @@
             "bearer": []
           }
         ],
+        "summary": "A worker's attendance days",
         "tags": [
           "workers"
         ],
@@ -24158,6 +24442,7 @@
             "bearer": []
           }
         ],
+        "summary": "File a lost or confiscated worker card",
         "tags": [
           "workers"
         ],
@@ -24198,6 +24483,7 @@
             "bearer": []
           }
         ],
+        "summary": "End a worker's engagement",
         "tags": [
           "workers"
         ],
@@ -24244,6 +24530,7 @@
             "bearer": []
           }
         ],
+        "summary": "Reissue a worker's access code",
         "tags": [
           "workers"
         ],
@@ -24281,6 +24568,7 @@
             "bearer": []
           }
         ],
+        "summary": "Resume a worker's engagement",
         "tags": [
           "workers"
         ],
@@ -24328,6 +24616,7 @@
             "bearer": []
           }
         ],
+        "summary": "Approve or reject a worker engagement",
         "tags": [
           "workers"
         ],
@@ -24368,6 +24657,7 @@
             "bearer": []
           }
         ],
+        "summary": "Suspend a worker's engagement",
         "tags": [
           "workers"
         ],
@@ -24414,6 +24704,7 @@
             "bearer": []
           }
         ],
+        "summary": "Set or clear a worker's monthly wage",
         "tags": [
           "workers"
         ],
@@ -24453,6 +24744,7 @@
             "bearer": []
           }
         ],
+        "summary": "Settle an engagement's open wage obligation",
         "tags": [
           "workers"
         ],
@@ -24509,6 +24801,7 @@
             "bearer": []
           }
         ],
+        "summary": "List a worker's wage payments",
         "tags": [
           "workers"
         ],
@@ -24553,6 +24846,7 @@
             "bearer": []
           }
         ],
+        "summary": "Record a month's wage payment",
         "tags": [
           "workers"
         ],
@@ -24592,6 +24886,7 @@
             "bearer": []
           }
         ],
+        "summary": "Ban a worker from the compound",
         "tags": [
           "workers"
         ],
@@ -24631,6 +24926,7 @@
             "bearer": []
           }
         ],
+        "summary": "Attest a worker's birth date",
         "tags": [
           "workers"
         ],
@@ -24670,6 +24966,7 @@
             "bearer": []
           }
         ],
+        "summary": "Set or replace a worker's photo",
         "tags": [
           "workers"
         ],
@@ -24716,6 +25013,7 @@
             "bearer": []
           }
         ],
+        "summary": "Report an underage worker",
         "tags": [
           "workers"
         ],
@@ -24745,6 +25043,7 @@
             "bearer": []
           }
         ],
+        "summary": "Lift a worker ban",
         "tags": [
           "workers"
         ],

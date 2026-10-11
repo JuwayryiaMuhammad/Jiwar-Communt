@@ -13,6 +13,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
@@ -40,6 +41,7 @@ export class SpecialtiesController {
   constructor(private readonly specialties: SpecialtiesService) {}
 
   @Get()
+  @ApiOperation({ summary: 'List specialties' })
   @RequirePermissions('tickets.dispatch')
   @ApiOkResponse({ type: ListOf(SpecialtyView) })
   async list(): Promise<ListResponse<SpecialtyView>> {
@@ -47,6 +49,7 @@ export class SpecialtiesController {
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a specialty' })
   @RequirePermissions('maintenance.manage')
   @ApiCreatedResponse({ type: SpecialtyView })
   async create(@Body() dto: CreateSpecialtyDto): Promise<SpecialtyView> {
@@ -54,6 +57,7 @@ export class SpecialtiesController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update a specialty' })
   @RequirePermissions('maintenance.manage')
   @ApiOkResponse({ type: SpecialtyView })
   async update(
@@ -73,6 +77,7 @@ export class CategorySpecialtiesController {
 
   /** The whole set; empty means any technician can take the category. */
   @Put(':id/specialties')
+  @ApiOperation({ summary: 'Set the specialties that handle a category' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   setForCategory(

@@ -6,7 +6,7 @@ import {
   HttpStatus,
   Put,
 } from '@nestjs/common';
-import { ApiNoContentResponse } from '@nestjs/swagger';
+import { ApiNoContentResponse, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '../access/require-permissions.decorator';
 import { ApiArea } from '../common/http/decorators';
 import { AccountPhotoService } from './account-photo.service';
@@ -24,6 +24,7 @@ export class MePhotoController {
 
   /** Sets or replaces it; the file moves to the account. */
   @Put()
+  @ApiOperation({ summary: 'Set or replace my photo' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async set(@Body() dto: MyPhotoDto): Promise<void> {
@@ -31,6 +32,7 @@ export class MePhotoController {
   }
 
   @Delete()
+  @ApiOperation({ summary: 'Remove my photo' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async remove(): Promise<void> {

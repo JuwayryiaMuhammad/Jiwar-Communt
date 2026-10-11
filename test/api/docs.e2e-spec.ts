@@ -12,6 +12,7 @@ interface Parameter {
 }
 
 interface Operation {
+  summary?: string;
   tags?: string[];
   parameters?: Parameter[];
   security?: Record<string, unknown>[];
@@ -73,6 +74,13 @@ describe('API docs', () => {
         tags: op.tags?.length,
       }).toEqual({ key, stability: 'draft', tags: 1 });
     }
+  });
+
+  it('gives every operation a summary', () => {
+    const missing = operations()
+      .filter(({ op }) => !op.summary?.trim())
+      .map(({ key }) => key);
+    expect(missing).toEqual([]);
   });
 
   it('requires bearer auth exactly where the registry says', () => {

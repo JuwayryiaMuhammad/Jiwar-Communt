@@ -1,5 +1,9 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
@@ -35,6 +39,7 @@ export class PreventiveRequestsController {
    * technician takes it, the window is proposed to them as a visit.
    */
   @Post('tickets/preventive')
+  @ApiOperation({ summary: 'Book a preventive check-up' })
   @Idempotent()
   @ApiCreatedResponse({ type: TicketCreatedView })
   async create(
@@ -49,6 +54,7 @@ export class PreventiveRequestsController {
    * like every visit read.
    */
   @Get('preventive-slots')
+  @ApiOperation({ summary: 'List the windows a check-up may be booked in' })
   @NoStore()
   @ApiOkResponse({ type: ListOf(VisitSlotView) })
   async slots(

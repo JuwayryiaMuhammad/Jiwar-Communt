@@ -6,7 +6,7 @@ import {
   Ip,
   Post,
 } from '@nestjs/common';
-import { ApiAcceptedResponse } from '@nestjs/swagger';
+import { ApiAcceptedResponse, ApiOperation } from '@nestjs/swagger';
 import { ApiArea, RequestHeader } from '../../core/common/http/decorators';
 import { Public } from '../../core/common/guards/public.decorator';
 import { resolveLocale } from '../../core/common/i18n/locale';
@@ -31,6 +31,7 @@ export class RegistrationPublicController {
   constructor(private readonly registrations: RegistrationService) {}
 
   @Post('start')
+  @ApiOperation({ summary: 'Start a self-registration (emails a code)' })
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiAcceptedResponse({ type: RegistrationCodeSentView })
   start(
@@ -43,6 +44,7 @@ export class RegistrationPublicController {
 
   /** A wrong code is 401 OTP_INVALID; everything else is REGISTRATION_RECEIVED. */
   @Post('complete')
+  @ApiOperation({ summary: 'Complete a self-registration with the code' })
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiAcceptedResponse({ type: RegistrationReceivedView })
   complete(

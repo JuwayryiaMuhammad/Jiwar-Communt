@@ -1,5 +1,9 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import {
   RequireAnyPermission,
   RequirePermissions,
@@ -23,18 +27,21 @@ export class CategoriesController {
   constructor(private readonly categories: CategoriesService) {}
 
   @Get()
+  @ApiOperation({ summary: 'List ticket categories' })
   @ApiOkResponse({ type: ListOf(CategoryView) })
   async list(): Promise<ListResponse<CategoryView>> {
     return bounded(await this.categories.list(), (c) => CategoryView.from(c));
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a ticket category' })
   @ApiCreatedResponse({ type: CategoryView })
   async create(@Body() dto: CreateCategoryDto): Promise<CategoryView> {
     return CategoryView.from(await this.categories.create(dto));
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update a ticket category' })
   @ApiOkResponse({ type: CategoryView })
   async update(
     @Param('id', parseId()) id: string,
@@ -52,6 +59,7 @@ export class CategoryOptionsController {
   constructor(private readonly categories: CategoriesService) {}
 
   @Get()
+  @ApiOperation({ summary: 'List the categories a ticket may be opened under' })
   @ApiOkResponse({ type: ListOf(CategoryOptionView) })
   async list(): Promise<ListResponse<CategoryOptionView>> {
     return bounded(await this.categories.options(), (c) =>

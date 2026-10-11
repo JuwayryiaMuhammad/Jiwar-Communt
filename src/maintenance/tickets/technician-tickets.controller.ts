@@ -12,6 +12,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { RequestContext } from '../../core/common/cls/request-context';
@@ -63,6 +64,7 @@ export class TechnicianTicketsController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'List the tickets assigned to me' })
   @ApiOkResponse({ type: ListOf(TechnicianTicketView) })
   async list(
     @Query() q: TechnicianTicketsQueryDto,
@@ -74,6 +76,7 @@ export class TechnicianTicketsController {
 
   /** No-store: the photos are presigned URLs. */
   @Get(':id')
+  @ApiOperation({ summary: 'Get one ticket assigned to me' })
   @NoStore()
   @ApiOkResponse({ type: TechnicianTicketDetailView })
   async get(
@@ -89,6 +92,7 @@ export class TechnicianTicketsController {
    * told. `start` works from either.
    */
   @Post(':id/en-route')
+  @ApiOperation({ summary: "Mark I'm on the way" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   enRoute(@Param('id', parseId()) id: string): Promise<void> {
@@ -96,6 +100,7 @@ export class TechnicianTicketsController {
   }
 
   @Post(':id/start')
+  @ApiOperation({ summary: 'Start the work' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   start(@Param('id', parseId()) id: string): Promise<void> {
@@ -103,6 +108,7 @@ export class TechnicianTicketsController {
   }
 
   @Post(':id/hold')
+  @ApiOperation({ summary: 'Put the work on hold' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   hold(
@@ -113,6 +119,7 @@ export class TechnicianTicketsController {
   }
 
   @Post(':id/resume')
+  @ApiOperation({ summary: 'Resume the work' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   resume(@Param('id', parseId()) id: string): Promise<void> {
@@ -120,6 +127,7 @@ export class TechnicianTicketsController {
   }
 
   @Post(':id/complete')
+  @ApiOperation({ summary: 'Mark the work as done' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   complete(@Param('id', parseId()) id: string): Promise<void> {
@@ -128,6 +136,7 @@ export class TechnicianTicketsController {
 
   /** `reasonCode` from the closed list `ticketDecline`. */
   @Post(':id/decline')
+  @ApiOperation({ summary: 'Decline the ticket' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   decline(
@@ -138,6 +147,7 @@ export class TechnicianTicketsController {
   }
 
   @Post(':id/photos')
+  @ApiOperation({ summary: 'Add a photo to the ticket' })
   @ApiCreatedResponse({ type: PhotoAddedView })
   async addPhoto(
     @Param('id', parseId()) id: string,
@@ -150,6 +160,9 @@ export class TechnicianTicketsController {
 
   /** The thread, oldest first, internal messages included. */
   @Get(':id/messages')
+  @ApiOperation({
+    summary: "Read the ticket's thread, internal messages included",
+  })
   @ApiOkResponse({ type: ListOf(TechnicianMessageView) })
   async messagesOf(
     @Param('id', parseId()) id: string,
@@ -162,6 +175,7 @@ export class TechnicianTicketsController {
   }
 
   @Post(':id/messages')
+  @ApiOperation({ summary: "Post to the ticket's thread" })
   @Idempotent()
   @ApiCreatedResponse({ type: MessageCreatedView })
   async post(

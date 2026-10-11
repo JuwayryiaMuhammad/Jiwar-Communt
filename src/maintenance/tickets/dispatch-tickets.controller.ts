@@ -13,6 +13,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiProperty,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
@@ -76,6 +77,7 @@ export class DispatchTicketsController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: "List the compound's tickets" })
   @ApiOkResponse({ type: ListOf(DispatchTicketView) })
   async list(
     @Query() q: DispatchTicketsQueryDto,
@@ -93,6 +95,7 @@ export class DispatchTicketsController {
 
   /** A ticket opened for a resident: audited, and the resident is told. */
   @Post()
+  @ApiOperation({ summary: 'Open a ticket for a resident' })
   @Idempotent()
   @ApiCreatedResponse({ type: TicketCreatedView })
   async create(
@@ -103,6 +106,7 @@ export class DispatchTicketsController {
 
   /** No-store: the photos are presigned URLs. */
   @Get(':id')
+  @ApiOperation({ summary: 'Get one ticket' })
   @NoStore()
   @ApiOkResponse({ type: DispatchTicketDetailView })
   async get(
@@ -114,6 +118,7 @@ export class DispatchTicketsController {
   }
 
   @Get(':id/history')
+  @ApiOperation({ summary: "Get a ticket's status history" })
   @ApiOkResponse({ type: ListOf(StatusHistoryView) })
   async history(
     @Param('id', parseId()) id: string,
@@ -125,6 +130,7 @@ export class DispatchTicketsController {
   }
 
   @Get(':id/assignments')
+  @ApiOperation({ summary: "Get a ticket's assignments" })
   @ApiOkResponse({ type: ListOf(AssignmentView) })
   async assignments(
     @Param('id', parseId()) id: string,
@@ -137,6 +143,7 @@ export class DispatchTicketsController {
 
   /** From the queue (`new`) to a technician. */
   @Post(':id/assign')
+  @ApiOperation({ summary: 'Assign a queued ticket to a technician' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   assign(
@@ -151,6 +158,7 @@ export class DispatchTicketsController {
    * dispatch is off (ADR 0033). `no_candidate` is an answer, not an error.
    */
   @Post(':id/auto-assign')
+  @ApiOperation({ summary: 'Run the dispatch engine on a queued ticket now' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: AutoAssignmentView })
   async autoAssign(
@@ -161,6 +169,7 @@ export class DispatchTicketsController {
 
   /** Why the engine did what it did on this ticket, oldest first. */
   @Get(':id/dispatch-attempts')
+  @ApiOperation({ summary: "Get the dispatch engine's attempts on a ticket" })
   @ApiOkResponse({ type: ListOf(DispatchAttemptView) })
   async dispatchAttempts(
     @Param('id', parseId()) id: string,
@@ -173,6 +182,7 @@ export class DispatchTicketsController {
 
   /** The ticket's SLA events, every cycle, oldest first (ADR 0034). */
   @Get(':id/sla-events')
+  @ApiOperation({ summary: "Get a ticket's SLA events" })
   @ApiOkResponse({ type: ListOf(SlaEventView) })
   async slaEvents(
     @Param('id', parseId()) id: string,
@@ -182,6 +192,7 @@ export class DispatchTicketsController {
 
   /** `reasonCode` from the closed list `ticketReassign`. */
   @Post(':id/reassign')
+  @ApiOperation({ summary: 'Reassign a ticket to another technician' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   reassign(
@@ -193,6 +204,7 @@ export class DispatchTicketsController {
 
   /** `reasonCode` from the closed list `ticketPriority`; audited. */
   @Post(':id/priority')
+  @ApiOperation({ summary: "Change a ticket's priority" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   priority(
@@ -209,6 +221,7 @@ export class DispatchTicketsController {
    * running clocks take the new category's targets.
    */
   @Post(':id/category')
+  @ApiOperation({ summary: "Change a ticket's category" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   category(
@@ -220,6 +233,7 @@ export class DispatchTicketsController {
 
   /** Any time before it is closed; `reasonCode` from `ticketCancel`. */
   @Post(':id/cancel')
+  @ApiOperation({ summary: 'Cancel a ticket' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   cancel(
@@ -231,6 +245,9 @@ export class DispatchTicketsController {
 
   /** The thread, oldest first, internal messages included. */
   @Get(':id/messages')
+  @ApiOperation({
+    summary: "Read a ticket's thread, internal messages included",
+  })
   @ApiOkResponse({ type: ListOf(DispatchMessageView) })
   async messagesOf(
     @Param('id', parseId()) id: string,
@@ -242,6 +259,7 @@ export class DispatchTicketsController {
   }
 
   @Post(':id/messages')
+  @ApiOperation({ summary: "Post to a ticket's thread" })
   @Idempotent()
   @ApiCreatedResponse({ type: MessageCreatedView })
   async post(
@@ -301,6 +319,7 @@ export class TechniciansController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'List the technicians dispatch can assign to' })
   @ApiOkResponse({ type: ListOf(TechnicianOptionView) })
   async list(): Promise<ListResponse<TechnicianOptionView>> {
     return bounded(await this.dispatch.technicians(), (t) =>
@@ -310,6 +329,7 @@ export class TechniciansController {
 
   /** The whole set, replacing the current one; empty clears it (audited). */
   @Put(':id/specialties')
+  @ApiOperation({ summary: "Replace a technician's specialties" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   setSpecialties(

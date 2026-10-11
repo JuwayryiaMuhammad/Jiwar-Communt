@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
 import { ListOf, toList, type ListResponse } from '../../core/common/http/list';
@@ -27,6 +27,7 @@ export class ManagerParcelsController {
   constructor(private readonly parcels: ParcelsService) {}
 
   @Get()
+  @ApiOperation({ summary: "List the compound's parcels" })
   @ApiOkResponse({ type: ListOf(ManagerParcelView) })
   async list(
     @Query() q: ManagerParcelsQueryDto,
@@ -37,6 +38,7 @@ export class ManagerParcelsController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get one parcel' })
   @ApiOkResponse({ type: ManagerParcelDetailView })
   async get(
     @Param('id', parseId()) id: string,
@@ -53,12 +55,14 @@ export class ParcelSettingsController {
   constructor(private readonly settings: ParcelSettingsService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get the parcel holding periods' })
   @ApiOkResponse({ type: ParcelSettingsResponse })
   async get(): Promise<ParcelSettingsResponse> {
     return ParcelSettingsResponse.from(await this.settings.get());
   }
 
   @Patch()
+  @ApiOperation({ summary: 'Update the parcel holding periods' })
   @ApiOkResponse({ type: ParcelSettingsResponse })
   async update(
     @Body() dto: UpdateParcelSettingsDto,

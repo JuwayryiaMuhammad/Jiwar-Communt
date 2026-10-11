@@ -1,5 +1,9 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
 import {
@@ -26,6 +30,7 @@ export class PreventiveServicesController {
   constructor(private readonly services: PreventiveServicesService) {}
 
   @Get()
+  @ApiOperation({ summary: 'List preventive services' })
   @ApiOkResponse({ type: ListOf(PreventiveServiceView) })
   async list(): Promise<ListResponse<PreventiveServiceView>> {
     return bounded(await this.services.list(), (s) =>
@@ -34,6 +39,7 @@ export class PreventiveServicesController {
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a preventive service' })
   @ApiCreatedResponse({ type: PreventiveServiceView })
   async create(
     @Body() dto: CreatePreventiveServiceDto,
@@ -42,6 +48,7 @@ export class PreventiveServicesController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update a preventive service' })
   @ApiOkResponse({ type: PreventiveServiceView })
   async update(
     @Param('id', parseId()) id: string,
@@ -59,6 +66,7 @@ export class PreventiveServiceOptionsController {
   constructor(private readonly services: PreventiveServicesService) {}
 
   @Get()
+  @ApiOperation({ summary: 'List the preventive services I may book' })
   @ApiOkResponse({ type: ListOf(PreventiveServiceOptionView) })
   async list(): Promise<ListResponse<PreventiveServiceOptionView>> {
     return bounded(await this.services.options(), (s) =>

@@ -12,6 +12,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { RequireAnyPermission } from '../access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../common/http/decorators';
@@ -39,6 +40,7 @@ export class FilesController {
   constructor(private readonly files: FilesService) {}
 
   @Post('uploads')
+  @ApiOperation({ summary: 'Declare an upload and get a presigned PUT URL' })
   @NoStore()
   @ApiCreatedResponse({ type: NewUploadView })
   async create(@Body() dto: NewUploadDto): Promise<NewUploadView> {
@@ -47,6 +49,7 @@ export class FilesController {
   }
 
   @Post(':id/finalize')
+  @ApiOperation({ summary: 'Finalize an upload once the file is PUT' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: FileView })
   async finalize(@Param('id', parseId()) id: string): Promise<FileView> {
@@ -54,6 +57,7 @@ export class FilesController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get one of my uploads with a short-lived URL' })
   @NoStore()
   @ApiOkResponse({ type: FileReadView })
   async read(@Param('id', parseId()) id: string): Promise<FileReadView> {
@@ -62,6 +66,7 @@ export class FilesController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete one of my uploads' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async remove(@Param('id', parseId()) id: string): Promise<void> {

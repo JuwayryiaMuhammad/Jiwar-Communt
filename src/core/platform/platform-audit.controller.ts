@@ -1,5 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import {
   PlatformAuditQueryService,
   SecurityEventsQueryService,
@@ -28,6 +28,7 @@ export class PlatformAuditController {
   ) {}
 
   @Get('audit')
+  @ApiOperation({ summary: "Read the platform owner's audit log" })
   @ApiOkResponse({ type: ListOf(PlatformAuditEntryView) })
   async auditLog(
     @Query() q: PlatformAuditQueryDto,
@@ -38,6 +39,7 @@ export class PlatformAuditController {
   }
 
   @Get('security-events')
+  @ApiOperation({ summary: 'Read the security events' })
   @ApiOkResponse({ type: ListOf(SecurityEventView) })
   async securityEvents(
     @Query() q: SecurityEventsQueryDto,

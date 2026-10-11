@@ -7,7 +7,11 @@ import {
   Param,
   Post,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import { ApiArea } from '../../core/common/http/decorators';
@@ -34,6 +38,7 @@ export class GuardApprovalsController {
   constructor(private readonly approvals: ApprovalsService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Ask a household to approve a visitor at the gate' })
   @Idempotent()
   @ApiCreatedResponse({ type: GuardRequestResponse })
   async create(
@@ -46,12 +51,14 @@ export class GuardApprovalsController {
 
   /** Polled while waiting; applies a due timeout. */
   @Get(':id')
+  @ApiOperation({ summary: 'Get an approval request (poll while waiting)' })
   @ApiOkResponse({ type: GuardRequestResponse })
   async get(@Param('id', parseId()) id: string): Promise<GuardRequestResponse> {
     return GuardRequestResponse.from(await this.approvals.forGuard(id));
   }
 
   @Post(':id/withdraw')
+  @ApiOperation({ summary: 'Withdraw an approval request' })
   @HttpCode(HttpStatus.OK)
   @Idempotent()
   @ApiOkResponse({ type: GuardRequestResponse })
@@ -69,6 +76,7 @@ export class HostApprovalsController {
   constructor(private readonly approvals: ApprovalsService) {}
 
   @Get('me/gate-requests')
+  @ApiOperation({ summary: "List the gate's requests waiting for my answer" })
   @ApiOkResponse({ type: ListOf(HostRequestResponse) })
   async mine(): Promise<ListResponse<HostRequestResponse>> {
     return bounded(await this.approvals.mine(), (r) =>
@@ -77,6 +85,7 @@ export class HostApprovalsController {
   }
 
   @Post('gate-requests/:id/decide')
+  @ApiOperation({ summary: "Answer the gate's request" })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: DecisionResponse })
   decide(

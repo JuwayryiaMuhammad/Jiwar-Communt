@@ -7,7 +7,11 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiNoContentResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { ApiArea } from '../common/http/decorators';
 import { ListOf, toList, type ListResponse } from '../common/http/list';
 import { parseId } from '../common/validation/parse-id.pipe';
@@ -26,6 +30,7 @@ export class NotificationsController {
   constructor(private readonly notifications: NotificationsService) {}
 
   @Get()
+  @ApiOperation({ summary: 'List my notifications' })
   @ApiOkResponse({ type: ListOf(NotificationView) })
   async list(
     @Query() q: InboxQueryDto,
@@ -37,12 +42,14 @@ export class NotificationsController {
   }
 
   @Get('unread-count')
+  @ApiOperation({ summary: 'Count my unread notifications' })
   @ApiOkResponse({ type: UnreadCountView })
   unreadCount(): Promise<UnreadCountView> {
     return this.notifications.unreadCount();
   }
 
   @Post('read-all')
+  @ApiOperation({ summary: 'Mark all my notifications as read' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: ReadAllView })
   async readAll(): Promise<ReadAllView> {
@@ -50,6 +57,7 @@ export class NotificationsController {
   }
 
   @Post(':id/read')
+  @ApiOperation({ summary: 'Mark one notification as read' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async read(@Param('id', parseId()) id: string): Promise<void> {

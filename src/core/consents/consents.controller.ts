@@ -6,7 +6,7 @@ import {
   HttpStatus,
   Post,
 } from '@nestjs/common';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { ApiArea } from '../common/http/decorators';
 import { bounded, ListOf, type ListResponse } from '../common/http/list';
 import { ConsentsService } from './consents.service';
@@ -21,12 +21,16 @@ export class ConsentsController {
 
   /** Every consent of the catalog, granted or not. */
   @Get()
+  @ApiOperation({ summary: 'List every consent and whether I granted it' })
   @ApiOkResponse({ type: ListOf(ConsentView) })
   async mine(): Promise<ListResponse<ConsentView>> {
     return bounded(await this.consents.mine(), (s) => ConsentView.from(s));
   }
 
   @Post('grant')
+  @ApiOperation({
+    summary: 'Grant a consent, for the version of the text shown',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: ConsentView })
   async grant(@Body() dto: GrantConsentDto): Promise<ConsentView> {
@@ -35,6 +39,7 @@ export class ConsentsController {
 
   /** Allowed at any time; it takes effect at once. */
   @Post('revoke')
+  @ApiOperation({ summary: 'Revoke a consent' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: ConsentView })
   async revoke(@Body() dto: RevokeConsentDto): Promise<ConsentView> {

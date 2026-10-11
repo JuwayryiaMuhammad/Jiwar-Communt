@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Patch } from '@nestjs/common';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { ApiArea } from '../common/http/decorators';
 import { UpdatePreferencesDto } from './dto/preferences.dto';
 import { NotificationPreferencesService } from './notification-preferences.service';
@@ -12,12 +12,14 @@ export class PreferencesController {
   constructor(private readonly preferences: NotificationPreferencesService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get my notification preferences' })
   @ApiOkResponse({ type: PreferencesView })
   async mine(): Promise<PreferencesView> {
     return PreferencesView.from(await this.preferences.mine());
   }
 
   @Patch()
+  @ApiOperation({ summary: 'Update my notification preferences' })
   @ApiOkResponse({ type: PreferencesView })
   async update(@Body() dto: UpdatePreferencesDto): Promise<PreferencesView> {
     return PreferencesView.from(await this.preferences.update(dto));

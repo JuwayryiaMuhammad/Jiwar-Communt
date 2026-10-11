@@ -11,6 +11,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
@@ -35,6 +36,7 @@ export class DelegationsController {
   constructor(private readonly delegations: DelegationsService) {}
 
   @Get('units/:unitId/delegations')
+  @ApiOperation({ summary: "List the unit's delegations" })
   @ApiOkResponse({ type: ListOf(UnitDelegationView) })
   async list(
     @Param('unitId', parseId('unitId')) unitId: string,
@@ -46,6 +48,9 @@ export class DelegationsController {
 
   /** Both sides are emailed. */
   @Post('units/:unitId/delegations')
+  @ApiOperation({
+    summary: 'Delegate the household or the workers to an adult member',
+  })
   @ApiCreatedResponse({ type: CreatedDelegationView })
   async create(
     @Param('unitId', parseId('unitId')) unitId: string,
@@ -62,6 +67,7 @@ export class DelegationsController {
   }
 
   @Post('delegations/:id/revoke')
+  @ApiOperation({ summary: 'Revoke a delegation' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async revoke(@Param('id', parseId()) id: string): Promise<void> {

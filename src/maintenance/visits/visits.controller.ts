@@ -14,6 +14,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { RequestContext } from '../../core/common/cls/request-context';
@@ -63,6 +64,7 @@ export class ResidentVisitsController {
   ) {}
 
   @Get(':id/visits')
+  @ApiOperation({ summary: "List my ticket's visits" })
   @NoStore()
   @ApiOkResponse({ type: ListOf(ResidentVisitView) })
   async list(
@@ -80,6 +82,7 @@ export class ResidentVisitsController {
    * No-store like every visit read.
    */
   @Get(':id/visit-slots')
+  @ApiOperation({ summary: 'List free windows to counter or reschedule with' })
   @NoStore()
   @ApiOkResponse({ type: ListOf(VisitSlotView) })
   async slots(
@@ -93,6 +96,7 @@ export class ResidentVisitsController {
 
   /** The technician's proposal, agreed. */
   @Post(':id/visits/:visitId/confirm')
+  @ApiOperation({ summary: "Confirm the technician's proposed visit" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   confirm(
@@ -104,6 +108,7 @@ export class ResidentVisitsController {
 
   /** Another window instead of the technician's proposal. */
   @Post(':id/visits/:visitId/counter')
+  @ApiOperation({ summary: 'Counter-propose another visit window' })
   @ApiCreatedResponse({ type: VisitCreatedView })
   async counter(
     @Param('id', parseId()) id: string,
@@ -117,6 +122,7 @@ export class ResidentVisitsController {
 
   /** A confirmed window moves; `reasonCode` from `visitChange`. */
   @Post(':id/visits/:visitId/reschedule')
+  @ApiOperation({ summary: 'Reschedule a confirmed visit' })
   @ApiCreatedResponse({ type: VisitCreatedView })
   async reschedule(
     @Param('id', parseId()) id: string,
@@ -136,6 +142,7 @@ export class ResidentVisitsController {
 
   /** `reasonCode` from `visitChange`. */
   @Post(':id/visits/:visitId/cancel')
+  @ApiOperation({ summary: 'Cancel a visit' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   cancel(
@@ -151,6 +158,7 @@ export class ResidentVisitsController {
    * visit; the technician is told.
    */
   @Post(':id/visits/:visitId/confirm-arrival')
+  @ApiOperation({ summary: 'Confirm the technician is at the door' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   confirmArrival(
@@ -165,6 +173,7 @@ export class ResidentVisitsController {
    * adult who lives there, on a confirmed visit. Not implied by confirming.
    */
   @Post(':id/visits/:visitId/absence-consent')
+  @ApiOperation({ summary: 'Allow entry while nobody is home, for this visit' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   grantConsent(
@@ -176,6 +185,7 @@ export class ResidentVisitsController {
 
   /** Until the technician arrives. */
   @Delete(':id/visits/:visitId/absence-consent')
+  @ApiOperation({ summary: 'Withdraw consent to enter while nobody is home' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   revokeConsent(
@@ -187,6 +197,7 @@ export class ResidentVisitsController {
 
   /** Who lets the technician in, on a confirmed visit. */
   @Put(':id/visits/:visitId/receiver')
+  @ApiOperation({ summary: 'Set who lets the technician in' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   setReceiver(
@@ -204,6 +215,7 @@ export class ResidentVisitsController {
   }
 
   @Delete(':id/visits/:visitId/receiver')
+  @ApiOperation({ summary: 'Clear who lets the technician in' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   clearReceiver(
@@ -222,6 +234,7 @@ export class TechnicianVisitsController {
   constructor(private readonly visits: VisitsService) {}
 
   @Get(':id/visits')
+  @ApiOperation({ summary: "List the ticket's visits" })
   @NoStore()
   @ApiOkResponse({ type: ListOf(TechnicianVisitView) })
   async list(
@@ -234,6 +247,7 @@ export class TechnicianVisitsController {
 
   /** A window for the residents to confirm; none may be active. */
   @Post(':id/visits')
+  @ApiOperation({ summary: 'Propose a visit window' })
   @ApiCreatedResponse({ type: VisitCreatedView })
   async propose(
     @Param('id', parseId()) id: string,
@@ -246,6 +260,7 @@ export class TechnicianVisitsController {
 
   /** The residents' counter-proposal, agreed. */
   @Post(':id/visits/:visitId/confirm')
+  @ApiOperation({ summary: "Confirm the residents' counter-proposal" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   confirm(
@@ -256,6 +271,7 @@ export class TechnicianVisitsController {
   }
 
   @Post(':id/visits/:visitId/counter')
+  @ApiOperation({ summary: 'Counter-propose another visit window' })
   @ApiCreatedResponse({ type: VisitCreatedView })
   async counter(
     @Param('id', parseId()) id: string,
@@ -268,6 +284,7 @@ export class TechnicianVisitsController {
   }
 
   @Post(':id/visits/:visitId/reschedule')
+  @ApiOperation({ summary: 'Reschedule a confirmed visit' })
   @ApiCreatedResponse({ type: VisitCreatedView })
   async reschedule(
     @Param('id', parseId()) id: string,
@@ -286,6 +303,7 @@ export class TechnicianVisitsController {
   }
 
   @Post(':id/visits/:visitId/cancel')
+  @ApiOperation({ summary: 'Cancel a visit' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   cancel(
@@ -301,6 +319,7 @@ export class TechnicianVisitsController {
    * nobody is home was allowed, as of this moment.
    */
   @Post(':id/visits/:visitId/arrive')
+  @ApiOperation({ summary: 'Mark arrival at the door' })
   @HttpCode(HttpStatus.OK)
   @NoStore()
   @ApiOkResponse({ type: TechnicianVisitView })
@@ -312,6 +331,7 @@ export class TechnicianVisitsController {
   }
 
   @Post(':id/visits/:visitId/done')
+  @ApiOperation({ summary: 'Mark the visit as done' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   done(
@@ -323,6 +343,7 @@ export class TechnicianVisitsController {
 
   /** Nobody let them in: the ticket waits for the residents. */
   @Post(':id/visits/:visitId/no-access')
+  @ApiOperation({ summary: 'Report that nobody let me in' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   noAccess(
@@ -341,6 +362,7 @@ export class DispatchVisitsController {
   constructor(private readonly visits: VisitsService) {}
 
   @Get(':id/visits')
+  @ApiOperation({ summary: "List a ticket's visits" })
   @NoStore()
   @ApiOkResponse({ type: ListOf(DispatchVisitView) })
   async list(
@@ -353,6 +375,7 @@ export class DispatchVisitsController {
 
   /** What happened to the ticket's visits and who did it; never a window. */
   @Get(':id/visit-events')
+  @ApiOperation({ summary: "List a ticket's visit events" })
   @ApiOkResponse({ type: ListOf(VisitEventView) })
   async events(
     @Param('id', parseId()) id: string,
@@ -362,6 +385,9 @@ export class DispatchVisitsController {
 
   /** For the ticket's technician. */
   @Post(':id/visits')
+  @ApiOperation({
+    summary: "Propose a visit window for the ticket's technician",
+  })
   @ApiCreatedResponse({ type: VisitCreatedView })
   async propose(
     @Param('id', parseId()) id: string,
@@ -373,6 +399,9 @@ export class DispatchVisitsController {
   }
 
   @Post(':id/visits/:visitId/confirm')
+  @ApiOperation({
+    summary: "Confirm the residents' counter-proposal for the technician",
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   confirm(
@@ -383,6 +412,9 @@ export class DispatchVisitsController {
   }
 
   @Post(':id/visits/:visitId/counter')
+  @ApiOperation({
+    summary: 'Counter-propose another visit window for the technician',
+  })
   @ApiCreatedResponse({ type: VisitCreatedView })
   async counter(
     @Param('id', parseId()) id: string,
@@ -395,6 +427,7 @@ export class DispatchVisitsController {
   }
 
   @Post(':id/visits/:visitId/reschedule')
+  @ApiOperation({ summary: 'Reschedule a confirmed visit for the technician' })
   @ApiCreatedResponse({ type: VisitCreatedView })
   async reschedule(
     @Param('id', parseId()) id: string,
@@ -413,6 +446,7 @@ export class DispatchVisitsController {
   }
 
   @Post(':id/visits/:visitId/cancel')
+  @ApiOperation({ summary: 'Cancel a visit for the technician' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   cancel(
@@ -438,6 +472,7 @@ export class UnitVisitsController {
   ) {}
 
   @Get(':unitId/visits')
+  @ApiOperation({ summary: 'List the maintenance visits coming to my unit' })
   @NoStore()
   @ApiOkResponse({ type: ListOf(UnitVisitView) })
   async list(

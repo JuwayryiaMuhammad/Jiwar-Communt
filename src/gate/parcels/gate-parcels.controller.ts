@@ -8,7 +8,11 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import { ListOf, toList, type ListResponse } from '../../core/common/http/list';
@@ -45,6 +49,7 @@ export class GateParcelsController {
 
   /** `Idempotency-Key`: a retry replays the same parcel. */
   @Post()
+  @ApiOperation({ summary: 'Receive a parcel at the gate' })
   @Idempotent()
   @ApiCreatedResponse({ type: GateParcelView })
   async receive(@Body() dto: ReceiveParcelDto): Promise<GateParcelView> {
@@ -52,6 +57,7 @@ export class GateParcelsController {
   }
 
   @Get()
+  @ApiOperation({ summary: "List the gate's parcels" })
   @ApiOkResponse({ type: ListOf(GateParcelView) })
   async list(
     @Query() q: GateParcelsQueryDto,
@@ -63,6 +69,7 @@ export class GateParcelsController {
 
   /** With the photos as short-lived URLs, so never cached. */
   @Get(':id')
+  @ApiOperation({ summary: 'Get one parcel with its photos' })
   @NoStore()
   @ApiOkResponse({ type: GateParcelDetailView })
   async get(@Param('id', parseId()) id: string): Promise<GateParcelDetailView> {
@@ -75,6 +82,7 @@ export class GateParcelsController {
    * answer; five wrong ones in ten minutes lock the guard out of codes.
    */
   @Post('lookup')
+  @ApiOperation({ summary: 'Look up a parcel code or QR' })
   @HttpCode(HttpStatus.OK)
   @NoStore()
   @ApiOkResponse({ type: ParcelLookupView })
@@ -89,6 +97,7 @@ export class GateParcelsController {
    * parcel as it is.
    */
   @Post(':id/handover')
+  @ApiOperation({ summary: 'Hand a parcel over' })
   @HttpCode(HttpStatus.OK)
   @NoStore()
   @Idempotent({ secret: true })
@@ -102,6 +111,7 @@ export class GateParcelsController {
 
   /** To the carrier: a rejected parcel, or an unclaimed one after the holding period. */
   @Post(':id/return')
+  @ApiOperation({ summary: 'Return a parcel to the carrier' })
   @HttpCode(HttpStatus.OK)
   @Idempotent()
   @ApiOkResponse({ type: GateParcelView })

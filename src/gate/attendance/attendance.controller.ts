@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiOkResponse, ApiProperty } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { RequireAnyPermission } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
@@ -88,6 +88,7 @@ export class AttendanceController {
 
   @RequireAnyPermission('workers.manage', 'workers.review')
   @Get(':id/attendance')
+  @ApiOperation({ summary: "A worker's attendance days" })
   @ApiOkResponse({ type: AttendanceView })
   async get(
     @Param('id', parseId()) id: string,

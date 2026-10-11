@@ -12,6 +12,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { RequestContext } from '../../core/common/cls/request-context';
@@ -64,6 +65,7 @@ export class ResidentTicketsController {
   ) {}
 
   @Post()
+  @ApiOperation({ summary: 'Open a ticket' })
   @Idempotent()
   @ApiCreatedResponse({ type: TicketCreatedView })
   async create(@Body() dto: CreateTicketDto): Promise<TicketCreatedView> {
@@ -71,6 +73,7 @@ export class ResidentTicketsController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'List my tickets' })
   @ApiOkResponse({ type: ListOf(ResidentTicketView) })
   async list(
     @Query() q: ResidentTicketsQueryDto,
@@ -83,6 +86,7 @@ export class ResidentTicketsController {
 
   /** No-store: the photos are presigned URLs. */
   @Get(':id')
+  @ApiOperation({ summary: 'Get one of my tickets' })
   @NoStore()
   @ApiOkResponse({ type: ResidentTicketDetailView })
   async get(
@@ -95,6 +99,7 @@ export class ResidentTicketsController {
   }
 
   @Post(':id/photos')
+  @ApiOperation({ summary: 'Add a photo to my ticket' })
   @ApiCreatedResponse({ type: PhotoAddedView })
   async addPhoto(
     @Param('id', parseId()) id: string,
@@ -107,6 +112,7 @@ export class ResidentTicketsController {
 
   /** Before the work starts; `reasonCode` from `ticketCancel`. */
   @Post(':id/cancel')
+  @ApiOperation({ summary: 'Cancel my ticket before the work starts' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   cancel(
@@ -117,6 +123,7 @@ export class ResidentTicketsController {
   }
 
   @Post(':id/confirm')
+  @ApiOperation({ summary: 'Confirm the work is done, with a rating' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   confirm(
@@ -136,6 +143,7 @@ export class ResidentTicketsController {
    * ticket's thread for the technician.
    */
   @Post(':id/reject')
+  @ApiOperation({ summary: 'Reject the completed work' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   reject(
@@ -147,6 +155,7 @@ export class ResidentTicketsController {
 
   /** Within the compound's `reopenDays`; as a rejection. */
   @Post(':id/reopen')
+  @ApiOperation({ summary: 'Reopen a closed ticket' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   reopen(
@@ -161,6 +170,7 @@ export class ResidentTicketsController {
    * cycle, while `canEscalate`.
    */
   @Post(':id/escalate')
+  @ApiOperation({ summary: 'Escalate an overdue ticket' })
   @Idempotent()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
@@ -170,6 +180,7 @@ export class ResidentTicketsController {
 
   /** The thread, oldest first; never an internal message. */
   @Get(':id/messages')
+  @ApiOperation({ summary: "Read my ticket's thread" })
   @ApiOkResponse({ type: ListOf(ResidentMessageView) })
   async messagesOf(
     @Param('id', parseId()) id: string,
@@ -181,6 +192,7 @@ export class ResidentTicketsController {
   }
 
   @Post(':id/messages')
+  @ApiOperation({ summary: "Post to my ticket's thread" })
   @Idempotent()
   @ApiCreatedResponse({ type: MessageCreatedView })
   async post(

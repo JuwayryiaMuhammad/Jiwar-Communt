@@ -20,14 +20,14 @@ export default async function globalSetup(): Promise<void> {
 
   // Wipe data BEFORE migrating too: a new migration may add NOT NULL columns
   // that rows left by the previous run could not satisfy.
-  await truncateAll(migratorUrl);
+  await truncateAll(required('TEST_SUPERUSER_DATABASE_URL'));
 
   execSync('pnpm exec prisma migrate deploy', {
     env: { ...process.env, MIGRATOR_DATABASE_URL: migratorUrl },
     stdio: 'pipe',
   });
 
-  await truncateAll(migratorUrl);
+  await truncateAll(required('TEST_SUPERUSER_DATABASE_URL'));
   await clearAuditTables(required('TEST_SUPERUSER_DATABASE_URL'));
 
   // Permission sync is a deploy step (ADR 0010); run it like a deploy would.
@@ -133,9 +133,18 @@ async function clearAuditTables(superuserUrl: string): Promise<void> {
   }
 }
 
-/** Every table except the migration history and the audit tables. TRUNCATE is not subject to RLS. */
-async function truncateAll(migratorUrl: string): Promise<void> {
-  const db = new Client({ connectionString: migratorUrl });
+/**
+ * Every table except the migration history and the audit tables. TRUNCATE
+ * is not subject to RLS.
+ *
+ * Over the superuser connection, with the triggers off like
+ * `clearAuditTables`: three of the append-only tables (a management
+ * request's messages, attachments and ratings, ADR 0039) have foreign keys,
+ * so the CASCADE from the tables they point at reaches them, and their
+ * TRUNCATE trigger would refuse it for any other role.
+ */
+async function truncateAll(superuserUrl: string): Promise<void> {
+  const db = new Client({ connectionString: superuserUrl });
   await db.connect();
   try {
     const { rows } = await db.query<{ tablename: string }>(
@@ -145,9 +154,12 @@ async function truncateAll(migratorUrl: string): Promise<void> {
       [AUDIT_TABLES],
     );
     if (rows.length) {
+      await db.query('BEGIN');
+      await db.query('SET LOCAL session_replication_role = replica');
       await db.query(
         `TRUNCATE ${rows.map((r) => `"${r.tablename}"`).join(', ')} CASCADE`,
       );
+      await db.query('COMMIT');
     }
   } finally {
     await db.end();

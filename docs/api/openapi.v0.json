@@ -20972,6 +20972,19 @@
             }
           },
           {
+            "description": "`true`: only requests that are not closed.",
+            "in": "query",
+            "name": "open",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
             "description": "`true`: only requests whose response time has passed with no response in the cycle.",
             "in": "query",
             "name": "overdue",

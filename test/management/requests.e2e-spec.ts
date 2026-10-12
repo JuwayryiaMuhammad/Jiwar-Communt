@@ -344,6 +344,24 @@ describe('Management requests — opening, reading and assigning', () => {
       expect(
         await list('/management/requests?status=closed', handler.token),
       ).toEqual([]);
+      // "Open" is everything not closed, decided by the API.
+      await m
+        .http('post', `/management/requests/${id}/close`, handler.token, {
+          reasonCode: 'duplicate',
+        })
+        .expect(204);
+      const open = await list(
+        '/management/requests?open=true&limit=100',
+        handler.token,
+      );
+      expect(open.map((r) => r.id)).not.toContain(id);
+      expect(open.length).toBeGreaterThan(0);
+      expect(new Set(open.map((r) => r.status))).not.toContain('closed');
+      expect(
+        (await list('/management/requests?status=closed', handler.token)).map(
+          (r) => r.id,
+        ),
+      ).toEqual([id]);
       const bad = await m
         .http('get', '/management/requests?assignee=somebody', handler.token)
         .expect(400);

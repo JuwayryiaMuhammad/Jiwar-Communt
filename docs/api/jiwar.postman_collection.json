@@ -6489,6 +6489,12 @@
                   "value": ""
                 },
                 {
+                  "description": "`true`: only requests that are not closed.",
+                  "disabled": true,
+                  "key": "open",
+                  "value": ""
+                },
+                {
                   "description": "`true`: only requests whose response time has passed with no response in the cycle.",
                   "disabled": true,
                   "key": "overdue",

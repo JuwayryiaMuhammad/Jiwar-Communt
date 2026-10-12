@@ -73,6 +73,7 @@ export class StaffRequestsController {
     return toList(
       await this.requests.listForStaff({
         ...q,
+        open: q.open === 'true',
         overdue: q.overdue === 'true',
         escalated: q.escalated === 'true',
       }),

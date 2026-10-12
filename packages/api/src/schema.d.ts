@@ -12722,6 +12722,8 @@ export interface operations {
                 topicId?: string;
                 /** @description An account id, `me` for the caller’s own, or `none` for the unassigned queue. */
                 assignee?: string;
+                /** @description `true`: only requests that are not closed. */
+                open?: "true" | "false";
                 /** @description `true`: only requests whose response time has passed with no response in the cycle. */
                 overdue?: "true" | "false";
                 /** @description `true`: only requests whose current cycle was escalated. */

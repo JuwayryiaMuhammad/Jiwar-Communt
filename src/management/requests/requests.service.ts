@@ -127,6 +127,8 @@ export interface StaffRequestsQuery extends ResidentRequestsQuery {
   topicId?: string;
   /** An account's id, `me`, or `none` for the unassigned queue. */
   assignee?: string;
+  /** Not closed: decided here, so every page of the inbox is full. */
+  open?: boolean;
   overdue?: boolean;
   escalated?: boolean;
 }
@@ -436,6 +438,7 @@ export class RequestsService implements OnModuleInit {
           q.status ? { status: q.status } : {},
           q.type ? { type: q.type } : {},
           q.topicId ? { topicId: q.topicId } : {},
+          q.open ? { status: { not: 'closed' } } : {},
           assignee,
           // request-rules.isOverdue, as a query.
           q.overdue

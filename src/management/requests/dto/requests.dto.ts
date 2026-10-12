@@ -163,6 +163,15 @@ export class StaffRequestsQueryDto extends ResidentRequestsQueryDto {
   @ApiProperty({
     enum: BOOLEAN,
     required: false,
+    description: '`true`: only requests that are not closed.',
+  })
+  @IsOptional()
+  @IsIn([...BOOLEAN], withParams({ allowed: [...BOOLEAN] }))
+  open?: (typeof BOOLEAN)[number];
+
+  @ApiProperty({
+    enum: BOOLEAN,
+    required: false,
     description:
       '`true`: only requests whose response time has passed with no response in the cycle.',
   })

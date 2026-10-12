@@ -316,6 +316,22 @@ export const AUDIT_ACTIONS = {
     target: 'management_request',
   },
   'management_request.resumed': { log: 'tenant', target: 'management_request' },
+  // The ends. metadata: requestNumber, cycle, fromStatus; a staff close
+  // adds reasonCode. `auto_closed` is the sweep's (actor: system).
+  'management_request.closed': { log: 'tenant', target: 'management_request' },
+  'management_request.withdrawn': {
+    log: 'tenant',
+    target: 'management_request',
+  },
+  'management_request.auto_closed': {
+    log: 'tenant',
+    target: 'management_request',
+  },
+  // metadata: requestNumber, cycle (the new one), closeReason (what it was).
+  'management_request.reopened': {
+    log: 'tenant',
+    target: 'management_request',
+  },
   // changes: autoCloseDays, appointmentSlotMinutes, appointmentSlotCapacity.
   'management.settings_changed': { log: 'tenant', target: 'tenant' },
   // changes: windows, each as `<weekday>:<startMinute>-<endMinute>`.

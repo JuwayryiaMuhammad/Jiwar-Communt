@@ -247,6 +247,9 @@ export const ErrorCode = {
   /** The request's status does not take the action (409, params.status). */
   MANAGEMENT_REQUEST_INVALID_TRANSITION:
     'MANAGEMENT_REQUEST_INVALID_TRANSITION',
+  /** Closed more than seven days ago (409, params.reopenDays). */
+  MANAGEMENT_REQUEST_REOPEN_WINDOW_PASSED:
+    'MANAGEMENT_REQUEST_REOPEN_WINDOW_PASSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

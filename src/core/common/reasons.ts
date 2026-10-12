@@ -245,4 +245,13 @@ export const REASON_CODES = {
     'resident_walk_in',
     'resident_written_letter',
   ],
+  // Why staff close a request.
+  managementRequestClose: [
+    'resolved',
+    'duplicate',
+    'not_for_management',
+    'other',
+  ],
+  // Written by the system only: the sweep's close and the author's own.
+  managementRequestSystemClose: ['auto_closed', 'withdrawn_by_author'],
 } as const;

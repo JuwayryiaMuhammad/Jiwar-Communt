@@ -26,10 +26,12 @@ import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import {
   AssignRequestDto,
+  CloseRequestDto,
   CreateRequestOnBehalfDto,
   PostStaffRequestMessageDto,
   StaffRequestsQueryDto,
 } from './dto/requests.dto';
+import { RequestLifecycle } from './lifecycle.service';
 import { MessagesService } from './messages.service';
 import { RequestsService } from './requests.service';
 import {
@@ -54,6 +56,7 @@ export class StaffRequestsController {
   constructor(
     private readonly requests: RequestsService,
     private readonly messages: MessagesService,
+    private readonly lifecycle: RequestLifecycle,
   ) {}
 
   @Get()
@@ -139,6 +142,28 @@ export class StaffRequestsController {
     @Body() dto: PostStaffRequestMessageDto,
   ): Promise<MessageCreatedView> {
     return MessageCreatedView.from(await this.messages.post(id, 'staff', dto));
+  }
+
+  /** Taken in hand without a message: a response, the clock stops. */
+  @Post(':id/start')
+  @NoStore()
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Take an open request in hand' })
+  @ApiNoContentResponse()
+  async start(@Param('id', parseId()) id: string): Promise<void> {
+    await this.lifecycle.start(id);
+  }
+
+  @Post(':id/close')
+  @NoStore()
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Close a request' })
+  @ApiNoContentResponse()
+  async close(
+    @Param('id', parseId()) id: string,
+    @Body() dto: CloseRequestDto,
+  ): Promise<void> {
+    await this.lifecycle.close(id, dto.reasonCode);
   }
 }
 

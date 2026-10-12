@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { CommunityManagementPortModule } from '../community';
 import { FilesModule } from '../core/files/files.module';
 import { ManagementProvisioning } from './provisioning';
+import { RequestLifecycle } from './requests/lifecycle.service';
 import { MessagesService } from './requests/messages.service';
 import { RequestAccess } from './requests/request-access';
 import { RequestProgress } from './requests/request-progress';
@@ -50,6 +51,7 @@ import { TopicsService } from './topics/topics.service';
     RequestProgress,
     MessagesService,
     RequestsService,
+    RequestLifecycle,
   ],
 })
 export class ManagementModule {}

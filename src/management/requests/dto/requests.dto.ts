@@ -222,3 +222,9 @@ export class PostStaffRequestMessageDto extends PostRequestMessageDto {
   @IsBoolean()
   official?: boolean;
 }
+
+export class CloseRequestDto {
+  @ApiProperty({ enum: REASON_CODES.managementRequestClose })
+  @IsString()
+  reasonCode: string;
+}

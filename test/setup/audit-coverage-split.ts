@@ -184,4 +184,8 @@ export const MANAGEMENT_COVERAGE: readonly string[] = [
   'management_request.started',
   'management_request.answered',
   'management_request.resumed',
+  'management_request.closed',
+  'management_request.withdrawn',
+  'management_request.auto_closed',
+  'management_request.reopened',
 ];

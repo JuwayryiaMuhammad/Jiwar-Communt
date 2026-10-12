@@ -1,6 +1,15 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import {
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
@@ -19,6 +28,7 @@ import {
   PostRequestMessageDto,
   ResidentRequestsQueryDto,
 } from './dto/requests.dto';
+import { RequestLifecycle } from './lifecycle.service';
 import { MessagesService } from './messages.service';
 import { RequestsService } from './requests.service';
 import {
@@ -38,6 +48,7 @@ export class ResidentRequestsController {
   constructor(
     private readonly requests: RequestsService,
     private readonly messages: MessagesService,
+    private readonly lifecycle: RequestLifecycle,
   ) {}
 
   @Post()
@@ -95,5 +106,28 @@ export class ResidentRequestsController {
     return MessageCreatedView.from(
       await this.messages.post(id, 'resident', dto),
     );
+  }
+
+  /** Closed by its author, with no reason to pick. */
+  @Post(':id/withdraw')
+  @NoStore()
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Withdraw my request' })
+  @ApiNoContentResponse()
+  async withdraw(@Param('id', parseId()) id: string): Promise<void> {
+    await this.lifecycle.withdraw(id);
+  }
+
+  /** Within seven days of the close; the body says why and starts a new cycle. */
+  @Post(':id/reopen')
+  @NoStore()
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Reopen my closed request' })
+  @ApiNoContentResponse()
+  async reopen(
+    @Param('id', parseId()) id: string,
+    @Body() dto: PostRequestMessageDto,
+  ): Promise<void> {
+    await this.lifecycle.reopen(id, dto);
   }
 }

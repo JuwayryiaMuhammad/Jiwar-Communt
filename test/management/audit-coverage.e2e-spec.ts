@@ -1,4 +1,6 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
+import { SweepRunner } from '../../src/core/sweep/sweep-runner';
+import { AUTO_CLOSE_SWEEP } from '../../src/management/requests/lifecycle.service';
 import { auditReaders } from '../setup/audit';
 import {
   COMMUNITY_COVERAGE,
@@ -312,6 +314,83 @@ describe('Audit coverage — management requests', () => {
       expect(row).toMatchObject({ actorId: s.owner.id });
       expect(row.metadata).toEqual({
         requestNumber: 3,
+        cycle: 1,
+        fromStatus: 'answered',
+      });
+    });
+  });
+
+  describe('a request’s ends', () => {
+    const DAY = 86_400_000;
+    const post = (who: { token: string }, path: string, body?: object) =>
+      m.http('post', path, who.token, body);
+
+    it('management_request.closed — by staff, with the reason code and the status it left', async () => {
+      const { id } = await m.open(s.c, s.owner, { body: `${MARKER} q` });
+      await post(s.manager, `/management/requests/${id}/close`, {
+        reasonCode: 'not_for_management',
+      }).expect(204);
+      const row = await single('management_request.closed', id);
+      expect(row).toMatchObject({
+        actorType: 'account',
+        actorId: s.manager.id,
+        targetType: 'management_request',
+      });
+      expect(row.metadata).toEqual({
+        requestNumber: 4,
+        cycle: 1,
+        fromStatus: 'open',
+        reasonCode: 'not_for_management',
+      });
+    });
+
+    it('management_request.reopened — by the author: the new cycle and what it was closed as, never why they reopen', async () => {
+      const [closed] = await read.tenant(s.c.tenantId, {
+        action: 'management_request.closed',
+      });
+      const id = closed.targetId!;
+      await post(s.owner, `/management-requests/${id}/reopen`, {
+        body: `${MARKER} it is for you after all`,
+      }).expect(204);
+      const row = await single('management_request.reopened', id);
+      expect(row).toMatchObject({ actorId: s.owner.id });
+      expect(row.metadata).toEqual({
+        requestNumber: 4,
+        cycle: 2,
+        closeReason: 'not_for_management',
+      });
+    });
+
+    it('management_request.withdrawn — by the author, with no reason code', async () => {
+      const { id } = await m.open(s.c, s.owner, { body: `${MARKER} q` });
+      await post(s.owner, `/management-requests/${id}/withdraw`).expect(204);
+      const row = await single('management_request.withdrawn', id);
+      expect(row).toMatchObject({ actorType: 'account', actorId: s.owner.id });
+      expect(row.metadata).toEqual({
+        requestNumber: 5,
+        cycle: 1,
+        fromStatus: 'open',
+      });
+    });
+
+    it('management_request.auto_closed — by the system, after the answer went unanswered', async () => {
+      const { id } = await m.open(s.c, s.owner, { body: `${MARKER} q` });
+      await post(s.manager, `/management/requests/${id}/messages`, {
+        body: `${MARKER} the answer`,
+        official: true,
+      }).expect(201);
+      // The compound's days were set to 14 above.
+      await h.moduleRef
+        .get(SweepRunner)
+        .run(AUTO_CLOSE_SWEEP, new Date(Date.now() + 15 * DAY));
+      const row = await single('management_request.auto_closed', id);
+      expect(row).toMatchObject({
+        actorType: 'system',
+        actorId: null,
+        targetType: 'management_request',
+      });
+      expect(row.metadata).toEqual({
+        requestNumber: 6,
         cycle: 1,
         fromStatus: 'answered',
       });

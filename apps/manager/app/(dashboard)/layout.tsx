@@ -5,6 +5,7 @@ import { AppShell, Button, EmptyState, SkeletonRows, type NavGroup, type NavItem
 import { useQuery } from '@tanstack/react-query';
 import {
   Building,
+  CalendarClock,
   DoorOpen,
   HardHat,
   Inbox,
@@ -128,6 +129,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           count: queued,
           show: can('requests.handle'),
         },
+        { href: '/appointments', label: 'Appointments', icon: <CalendarClock aria-hidden />, show: can('requests.handle') },
         { href: '/gate', label: 'Gate', icon: <DoorOpen aria-hidden />, show: can('gate.read') },
         { href: '/parcels', label: 'Parcels', icon: <Package aria-hidden />, show: can('parcels.manage') },
         { href: '/staff', label: 'Staff', icon: <UserCog aria-hidden />, show: can('accounts.read') },

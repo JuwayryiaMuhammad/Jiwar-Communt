@@ -7,6 +7,7 @@ import { Type } from 'class-transformer';
 import {
   IsDate,
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -100,6 +101,16 @@ export class StaffAppointmentsQueryDto extends PageQueryDto {
     withParams({ allowed: Object.values(ManagementAppointmentStatus) }),
   )
   status?: ManagementAppointmentStatus;
+
+  @ApiProperty({
+    enum: ['true', 'false'],
+    required: false,
+    description:
+      '`true`: only appointments that hold a slot (requested, proposed or confirmed).',
+  })
+  @IsOptional()
+  @IsIn(['true', 'false'], withParams({ allowed: ['true', 'false'] }))
+  live?: 'true' | 'false';
 
   @ApiProperty({
     type: String,

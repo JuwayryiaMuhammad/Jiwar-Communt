@@ -20525,6 +20525,19 @@
             }
           },
           {
+            "description": "`true`: only appointments that hold a slot (requested, proposed or confirmed).",
+            "in": "query",
+            "name": "live",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
             "description": "Starting at or after.",
             "in": "query",
             "name": "from",

@@ -123,8 +123,12 @@ export class StaffAppointmentsController {
   async list(
     @Query() q: StaffAppointmentsQueryDto,
   ): Promise<ListResponse<StaffAppointmentListItemView>> {
-    return toList(await this.requests.appointmentsForStaff(q), (a) =>
-      StaffAppointmentListItemView.fromRead(a),
+    return toList(
+      await this.requests.appointmentsForStaff({
+        ...q,
+        live: q.live === 'true',
+      }),
+      (a) => StaffAppointmentListItemView.fromRead(a),
     );
   }
 

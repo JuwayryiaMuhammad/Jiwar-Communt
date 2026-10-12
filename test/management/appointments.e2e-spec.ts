@@ -574,6 +574,19 @@ describe('Management appointments', () => {
         number: expect.stringMatching(/^MR-\d{6}$/) as string,
         author: { id: s.owner.id },
       });
+      // Holding a slot: decided by the API, so every page of an agenda is full.
+      const live = await list('&live=true');
+      expect(live.length).toBeGreaterThan(0);
+      expect(
+        live.every((a) =>
+          ['requested', 'proposed', 'confirmed'].includes(a.status),
+        ),
+      ).toBe(true);
+      expect(live.length).toBe(
+        all.filter((a) =>
+          ['requested', 'proposed', 'confirmed'].includes(a.status),
+        ).length,
+      );
       const confirmed = await list('&status=confirmed');
       expect(confirmed.length).toBeGreaterThan(0);
       expect(new Set(confirmed.map((a) => a.status))).toEqual(

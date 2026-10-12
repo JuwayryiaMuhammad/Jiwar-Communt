@@ -84,6 +84,7 @@ type ManagementRequestQuery = { [K in keyof ManagementRequestFilters]?: Exclude<
 
 export interface AppointmentFilters {
   status?: AppointmentStatus | '';
+  live?: 'true' | '';
   from?: string;
   to?: string;
 }

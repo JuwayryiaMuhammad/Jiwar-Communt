@@ -63,6 +63,8 @@ export interface SlotChoice {
 
 export interface AppointmentsQuery {
   status?: ManagementAppointmentStatus;
+  /** Holding a slot: requested, proposed or confirmed. */
+  live?: boolean;
   /** Starting at or after. */
   from?: Date;
   /** Starting before. */
@@ -205,6 +207,7 @@ export class AppointmentsService implements OnModuleInit {
       const where: Prisma.ManagementAppointmentWhereInput = {
         AND: [
           q.status ? { status: q.status } : {},
+          q.live ? { status: { in: [...LIVE] } } : {},
           q.from ? { startsAt: { gte: q.from } } : {},
           q.to ? { startsAt: { lt: q.to } } : {},
           ...PAGE.after(q.cursor),

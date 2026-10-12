@@ -6157,6 +6157,12 @@
                   "value": ""
                 },
                 {
+                  "description": "`true`: only appointments that hold a slot (requested, proposed or confirmed).",
+                  "disabled": true,
+                  "key": "live",
+                  "value": ""
+                },
+                {
                   "description": "Starting at or after.",
                   "disabled": true,
                   "key": "from",

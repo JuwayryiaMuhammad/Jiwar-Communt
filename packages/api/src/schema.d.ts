@@ -12494,6 +12494,8 @@ export interface operations {
                 cursor?: string;
                 limit?: number;
                 status?: components["schemas"]["ManagementAppointmentStatus"];
+                /** @description `true`: only appointments that hold a slot (requested, proposed or confirmed). */
+                live?: "true" | "false";
                 /** @description Starting at or after. */
                 from?: string;
                 /** @description Starting before. */

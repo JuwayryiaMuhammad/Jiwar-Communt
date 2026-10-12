@@ -11,6 +11,7 @@ import { call, err } from './request';
 import { buildWorld, type World } from './world';
 
 const GATE = ['createdAt', 'id', 'kind', 'name', 'status'];
+const GATE_STATUS = ['id', 'name', 'open'];
 const SHIFT = ['endedAt', 'gateId', 'gateName', 'id', 'startedAt'];
 
 describe('API v0 — gates and shifts (ADR 0028)', () => {
@@ -104,6 +105,96 @@ describe('API v0 — gates and shifts (ADR 0028)', () => {
       body: { gateId: id },
     });
     expect(code(atInactive)).toEqual({ status: 404, code: 'GATE_NOT_FOUND' });
+  });
+
+  it('residents and family see each gate open or closed, and nothing else', async () => {
+    const closed = await call(w, 'POST', '/gates', {
+      token: manager(),
+      body: { name: `Closed ${uniqueSuffix()}`, kind: 'vehicle' },
+    }).expect(201);
+    const closedId = (closed.body as { id: string }).id;
+    await call(w, 'PATCH', `/gates/${closedId}`, {
+      token: manager(),
+      body: { status: 'inactive' },
+    }).expect(200);
+
+    // Nobody is on duty here: it is as open as a manned gate.
+    const unmanned = await call(w, 'POST', '/gates', {
+      token: manager(),
+      body: { name: `Unmanned ${uniqueSuffix()}`, kind: 'pedestrian' },
+    }).expect(201);
+    const unmannedId = (unmanned.body as { id: string }).id;
+
+    type Status = { id: string; name: string; open: boolean };
+    for (const persona of ['owner', 'tenant', 'landlord', 'family'] as const) {
+      const res = await call(w, 'GET', '/gates/status', {
+        token: w.a.tokens[persona],
+      }).expect(200);
+      expect(keyPaths(res.body)).toEqual(listKeys(GATE_STATUS));
+      expect(res.headers['cache-control']).toBe('no-store');
+      const gates = (res.body as { data: Status[] }).data;
+      // The guard is on duty at this one: it reads like any open gate.
+      expect(gates.find((x) => x.id === w.a.gateId)).toEqual({
+        id: w.a.gateId,
+        name: w.a.gateName,
+        open: true,
+      });
+      expect(gates.find((x) => x.id === unmannedId)?.open).toBe(true);
+      expect(gates.find((x) => x.id === closedId)?.open).toBe(false);
+      // Compound B's gate is not here (RLS).
+      expect(gates.map((x) => x.id)).not.toContain(w.b.gateId);
+    }
+
+    for (const persona of ['manager', 'guard', 'technician'] as const) {
+      const res = await call(w, 'GET', '/gates/status', {
+        token: w.a.tokens[persona],
+      });
+      expect(code(res)).toEqual({ status: 403, code: 'FORBIDDEN' });
+    }
+    // The management's reads stay the management's.
+    for (const persona of ['owner', 'family'] as const) {
+      for (const path of ['/gates', '/gate/entries']) {
+        const res = await call(w, 'GET', path, { token: w.a.tokens[persona] });
+        expect(code(res)).toEqual({ status: 403, code: 'FORBIDDEN' });
+      }
+    }
+  });
+
+  it('a gate.read left on a resident role does not work, even before access:sync revokes it', async () => {
+    const { prisma, asManager } = w.helpers;
+    const grant = (on: boolean) =>
+      asManager(w.a, async () => {
+        const role = await prisma.tenant.role.findUniqueOrThrow({
+          where: { tenantId_key: { tenantId: w.a.tenantId, key: 'resident' } },
+        });
+        const where = { roleId: role.id, permission: 'gate.read' };
+        if (on)
+          await prisma.tenant.rolePermission.create({
+            data: { tenantId: w.a.tenantId, ...where },
+          });
+        else await prisma.tenant.rolePermission.deleteMany({ where });
+        // A new version: the cache holds nothing for it.
+        await prisma.tenant.role.update({
+          where: { id: role.id },
+          data: { permissionsVersion: { increment: 1 } },
+        });
+      });
+    await grant(true);
+    try {
+      for (const path of ['/gates', '/gate/entries']) {
+        // Twice: read from the database, then from the cache.
+        for (let i = 0; i < 2; i++) {
+          const res = await call(w, 'GET', path, { token: w.a.tokens.owner });
+          expect(code(res)).toEqual({ status: 403, code: 'FORBIDDEN' });
+        }
+      }
+      // What the role may hold still works.
+      await call(w, 'GET', '/me/units', { token: w.a.tokens.owner }).expect(
+        200,
+      );
+    } finally {
+      await grant(false);
+    }
   });
 
   it('a shift: none, start, one at a time, current, end', async () => {

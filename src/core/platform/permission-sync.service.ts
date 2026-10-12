@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import type { AccountType } from '@prisma/client';
 import { ClsService } from 'nestjs-cls';
 import { ACCESS_CATALOG, type AccessCatalog } from '../access/access-catalog';
 import { RoleLifecycle } from '../access/role-lifecycle';
@@ -17,6 +18,11 @@ export interface TenantSyncReport {
   renamed: string[];
   retired: string[];
   added: string[];
+  /**
+   * Grants deleted because the permission no longer allows the role's kind:
+   * `kinds` was narrowed in code after a role had been given it.
+   */
+  revoked: { roleKey: string; kind: AccountType; permission: string }[];
   /** Default roles the compound did not have yet (created with all their permissions). */
   rolesCreated: string[];
   /** In the database but in none of the code lists; left untouched. */
@@ -32,6 +38,10 @@ export interface TenantSyncReport {
  * when listed in `retired`, and only moved when listed in `renamed`; anything
  * else is left alone and reported, so a rolled-back deploy cannot erase or
  * later re-grant a permission.
+ *
+ * One removal follows from code alone: a grant of a permission still in the
+ * catalog, held by a role whose kind its `kinds` no longer list. No manager
+ * could have made it under the current code, so it is revoked and reported.
  *
  * Cross-tenant by nature, hence in src/platform/ where runInTenantUnsafe is
  * allowed; each compound is synced in its own transaction.
@@ -83,6 +93,7 @@ export class PermissionSyncService {
           renamed: [],
           retired: [],
           added: [],
+          revoked: [],
           rolesCreated: [],
           unknown: [],
           rolesChanged: 0,
@@ -95,6 +106,7 @@ export class PermissionSyncService {
         await this.applyRetirements(tx, report, changed);
         await this.createMissingRoles(tx, tenantId, report, changed, created);
         await this.applyAdditions(tx, tenantId, report, changed);
+        await this.revokeOutOfKind(tx, report, changed);
         await this.reportUnknown(tx, report);
 
         const after = await this.snapshot(tx);
@@ -130,6 +142,9 @@ export class PermissionSyncService {
               added: report.added,
               renamed: report.renamed,
               retired: report.retired,
+              revoked: report.revoked
+                .filter((r) => r.roleKey === role.key)
+                .map((r) => r.permission),
             },
           });
         }
@@ -282,6 +297,35 @@ export class PermissionSyncService {
         data: { tenantId, permission },
       });
       report.added.push(permission);
+    }
+  }
+
+  /**
+   * Narrowing a permission's `kinds` reaches the grants made before it. Only
+   * permissions of the code catalog: an unknown one stays untouched. A second
+   * run finds nothing left.
+   */
+  private async revokeOutOfKind(
+    tx: TenantTxClient,
+    report: TenantSyncReport,
+    changed: Set<string>,
+  ) {
+    const grants = await tx.rolePermission.findMany({
+      select: {
+        roleId: true,
+        permission: true,
+        role: { select: { key: true, kind: true } },
+      },
+      orderBy: [{ roleId: 'asc' }, { permission: 'asc' }],
+    });
+    for (const { roleId, permission, role } of grants) {
+      const def = this.catalog.permissions[permission];
+      if (!def || def.kinds.includes(role.kind)) continue;
+      await tx.rolePermission.delete({
+        where: { roleId_permission: { roleId, permission } },
+      });
+      changed.add(roleId);
+      report.revoked.push({ roleKey: role.key, kind: role.kind, permission });
     }
   }
 

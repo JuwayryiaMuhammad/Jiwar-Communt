@@ -52,7 +52,11 @@ async function main(): Promise<void> {
   try {
     const reports = await app.get(PermissionSyncService).syncAll();
     const changed = reports.filter(
-      (r) => r.added.length || r.renamed.length || r.retired.length,
+      (r) =>
+        r.added.length ||
+        r.renamed.length ||
+        r.retired.length ||
+        r.revoked.length,
     );
     console.log(
       `access:sync: ${reports.length} compound(s), ${changed.length} changed.`,
@@ -61,6 +65,12 @@ async function main(): Promise<void> {
       console.log(
         `  ${r.tenantId}: roles created [${r.rolesCreated.join(', ')}] added [${r.added.join(', ')}] renamed [${r.renamed.join(', ')}] retired [${r.retired.join(', ')}]`,
       );
+      // One line per grant, so a deploy log shows exactly who lost what.
+      for (const v of r.revoked) {
+        console.log(
+          `  ${r.tenantId}: revoked ${v.permission} from role ${v.roleKey} (${v.kind}): no longer assignable to that kind`,
+        );
+      }
     }
   } finally {
     await app.close();

@@ -14,6 +14,16 @@ export const GATE_ROUTES: Row[] = [
     invalid: 'none',
   },
   {
+    method: 'GET',
+    path: '/gates/status',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: 'none',
+    noStore: true,
+  },
+  {
     method: 'POST',
     path: '/gates',
     auth: 'tenant',

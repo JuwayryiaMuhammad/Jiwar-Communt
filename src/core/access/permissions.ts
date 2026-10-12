@@ -10,7 +10,9 @@ import type { AccountType } from '@prisma/client';
 //
 // Changing this file? Run `pnpm access:sync` (a deploy step). Removal is
 // never inferred: to remove a permission, move it to `retiredPermissions`;
-// to rename one, add `old: new` to `renamedPermissions`.
+// to rename one, add `old: new` to `renamedPermissions`. Narrowing `kinds`
+// is the exception: the sync revokes the grants a kind may no longer hold,
+// and PermissionsGuard ignores them until it has run.
 
 export interface PermissionDefinition {
   kinds: readonly AccountType[];
@@ -56,7 +58,7 @@ export const PERMISSIONS = {
   // (capabilities.visitorsInvite decides per unit).
   'gate.operate': { kinds: ['staff'] },
   'gate.manage': { kinds: ['manager'] },
-  'gate.read': { kinds: ['manager', 'resident'] },
+  'gate.read': { kinds: ['manager'] },
   'visitors.invite': { kinds: ['resident', 'family'] },
   // One's own photo, shown to the guard at the gate (ADR 0031).
   'profile.photo': { kinds: ['resident', 'family'] },

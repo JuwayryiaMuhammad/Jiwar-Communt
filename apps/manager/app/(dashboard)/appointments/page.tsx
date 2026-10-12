@@ -130,6 +130,7 @@ export default function AppointmentsPage() {
               {
                 key: 'actions',
                 header: '',
+                className: 'table__actions',
                 cell: (a) =>
                   a.status === 'requested' || a.status === 'proposed' || a.status === 'confirmed' ? (
                     <AppointmentActions requestId={a.request.id} number={a.request.number} requestStatus={a.request.status} appointment={a} compact />

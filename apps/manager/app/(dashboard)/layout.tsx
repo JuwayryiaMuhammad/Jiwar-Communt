@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   Lock,
   MessagesSquare,
+  MessageSquareMore,
   Package,
   ScrollText,
   Settings,
@@ -145,6 +146,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           label: 'Maintenance setup',
           icon: <SlidersHorizontal aria-hidden />,
           show: can('maintenance.manage'),
+        },
+        {
+          href: '/management-setup',
+          label: 'Requests setup',
+          icon: <MessageSquareMore aria-hidden />,
+          show: can('requests.manage'),
         },
         {
           href: '/deletions',

@@ -67,6 +67,8 @@ Because of the BFF, the API needs no `CORS_ORIGINS` for the dashboards.
 - The client's IP reaches the API as the BFF's IP (no `X-Forwarded-For` is forwarded). Set it up at the reverse proxy if security events need the real client IP.
 - A file is uploaded by the browser straight to object storage with a presigned URL (`components/file-upload.tsx`), so the bucket must allow the dashboard's origin (CORS: `PUT`, headers `Content-Type` and `If-None-Match`) and its URL must be reachable from the browser. Photos shown on a page come from presigned URLs the same way.
 - A wage has no currency: the API does not name the compound's, so amounts show as plain numbers. Wage payments and closing a wage obligation are for manager accounts only (the API refuses a staff role, whatever it holds), so a staff reviewer sees the monthly wage and the open obligation without them.
+- Requests to the management (ADR 0039): the inbox, a request's page, the appointments agenda and "Requests setup" need `requests.handle` or `requests.manage`; an account holding only one of them may sign in. Opening a request for a resident also needs `residents.read` and `units.read` (the resident is found through their unit, from the first 100 units). A request has no subject, so the inbox shows the start of its first message. Appointment slots are shown in the browser's time zone, the office hours are set in the compound's.
+- Topic names are entered in English and Arabic (the residents' app shows the Arabic one); the Arabic field is the only right-to-left input.
 - English only for now. Error texts are keyed by API error code in `packages/api/src/errors.ts`, ready for an Arabic dictionary.
 
 ## Checks

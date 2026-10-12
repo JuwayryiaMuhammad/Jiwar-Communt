@@ -242,6 +242,7 @@ describe('Permission sync', () => {
     expect((await role(t, 'family_member')).permissions).toEqual([
       'household.manage',
       'profile.photo',
+      'requests.create',
       'tickets.create',
       'units.read',
       'visitors.invite',
@@ -268,6 +269,7 @@ describe('Permission sync', () => {
           to: [
             'household.manage',
             'profile.photo',
+            'requests.create',
             'tickets.create',
             'units.read',
             'visitors.invite',
@@ -475,6 +477,59 @@ describe('Permission sync', () => {
     expect((await sync(base, t)).added).toEqual([]);
     expect((await role(t, 'manager')).permissions).not.toContain(
       'parcels.manage',
+    );
+  });
+
+  it('Phase R2 reaches an existing compound: requests.create for residents and family, handle and manage for the manager (ADR 0039)', async () => {
+    const r2 = ['requests.create', 'requests.handle', 'requests.manage'];
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !r2.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !r2.includes(p)),
+      })),
+    };
+    expect(catalogProblems(before)).toEqual([]);
+    const t = newId();
+    await h.globalDb.tenant.create({
+      data: { id: t, name: `Sync R2 compound ${t}` },
+    });
+    await h.asTenant(t, () =>
+      h.tenantTx.withTenantTx(async (tx) => {
+        await new RoleProvisioner(before).provision(tx, t);
+        await tx.tenantSettings.create({ data: { tenantId: t } });
+        // The domains' rows, as the migrations' backfills gave it.
+        await tenantLifecycle.tenantCreated(tx, t);
+      }),
+    );
+
+    const report = await sync(base, t);
+    expect([...report.added].sort()).toEqual([...r2].sort());
+    for (const key of ['resident', 'family_member']) {
+      const { permissions } = await role(t, key);
+      expect(permissions).toContain('requests.create');
+      expect(permissions).not.toContain('requests.handle');
+      expect(permissions).not.toContain('requests.manage');
+    }
+    expect((await role(t, 'manager')).permissions).toEqual(
+      expect.arrayContaining(['requests.handle', 'requests.manage']),
+    );
+    expect((await role(t, 'manager')).permissions).not.toContain(
+      'requests.create',
+    );
+    // No staff role handles requests until a manager says so.
+    for (const key of ['guard', 'technician', 'maintenance_supervisor']) {
+      for (const permission of r2)
+        expect((await role(t, key)).permissions).not.toContain(permission);
+    }
+    // A manager who dropped it by hand keeps it dropped.
+    await removeByHand(t, 'manager', 'requests.manage');
+    expect((await sync(base, t)).added).toEqual([]);
+    expect((await role(t, 'manager')).permissions).not.toContain(
+      'requests.manage',
     );
   });
 

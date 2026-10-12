@@ -75,6 +75,13 @@ export const PERMISSIONS = {
   // Residents act through the capability `parcels`, with no permission.
   'parcels.handle': { kinds: ['staff'] },
   'parcels.manage': { kinds: ['manager'] },
+  // Requests to the management (ADR 0039). Residents and family open and
+  // follow their own; handlers (a staff member, or the manager) answer,
+  // assign and close them and run the appointments; the manager sets the
+  // topics, targets, office hours and reads the ratings.
+  'requests.create': { kinds: ['resident', 'family'] },
+  'requests.handle': { kinds: ['staff', 'manager'] },
+  'requests.manage': { kinds: ['manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

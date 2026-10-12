@@ -62,7 +62,7 @@ export const FILE_PURPOSES = {
   request_attachment: {
     types: [...IMAGE_TYPES, 'application/pdf'],
     maxBytes: 10 * MB,
-    uploaders: [],
+    uploaders: ['requests.create', 'requests.handle'],
   },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.

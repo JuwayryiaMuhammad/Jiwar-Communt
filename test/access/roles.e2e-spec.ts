@@ -92,6 +92,7 @@ describe('Roles', () => {
         'household.delegate',
         'household.manage',
         'profile.photo',
+        'requests.create',
         'tickets.create',
         'units.read',
         'visitors.invite',
@@ -224,6 +225,7 @@ describe('Roles', () => {
         'visitors.invite',
         'profile.photo',
         'tickets.create',
+        'requests.create',
       ]),
     );
     expect(await version()).toBe(before);

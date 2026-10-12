@@ -49,6 +49,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'tickets.dispatch',
       'maintenance.manage',
       'parcels.manage',
+      'requests.handle',
+      'requests.manage',
     ],
   },
   {
@@ -63,6 +65,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'visitors.invite',
       'profile.photo',
       'tickets.create',
+      'requests.create',
     ],
   },
   {
@@ -77,6 +80,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'visitors.invite',
       'profile.photo',
       'tickets.create',
+      'requests.create',
     ],
   },
   {

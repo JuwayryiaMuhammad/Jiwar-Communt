@@ -1739,6 +1739,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/units/{unitId}/reporters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List who a ticket may be opened for in a unit */
+        get: operations["DispatchUnitsController_reporters"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -7568,6 +7585,15 @@ export interface components {
         };
         /** @enum {string} */
         TicketPriority: "normal" | "urgent" | "emergency";
+        TicketReporterView: {
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+        };
+        TicketReporterViewList: {
+            data: components["schemas"]["TicketReporterView"][];
+            nextCursor: string | null;
+        };
         TicketSlaView: {
             /** @description ADR 0038: a commitment of this SLA cycle is late (breached, or past its due time now) and still unmet: the response until the ticket is responded to, the resolution until the work is reported done. */
             overdue: boolean;
@@ -10863,6 +10889,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VisitCreatedView"];
+                };
+            };
+        };
+    };
+    DispatchUnitsController_reporters: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketReporterViewList"];
                 };
             };
         };

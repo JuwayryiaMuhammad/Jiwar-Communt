@@ -43,6 +43,7 @@ import { SpecialtiesService } from './specialties/specialties.service';
 import { MaintenanceSettingsController } from './settings/maintenance-settings.controller';
 import { MaintenanceSettingsService } from './settings/maintenance-settings.service';
 import { AttachmentsService } from './tickets/attachments.service';
+import { DispatchUnitsController } from './tickets/dispatch-units.controller';
 import {
   DispatchTicketsController,
   TechniciansController,
@@ -89,6 +90,7 @@ import { VisitsService } from './visits/visits.service';
     MaintenanceSettingsController,
     ResidentTicketsController,
     DispatchTicketsController,
+    DispatchUnitsController,
     TechnicianTicketsController,
     TechniciansController,
     TechnicianAvailabilityController,

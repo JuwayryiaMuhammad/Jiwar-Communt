@@ -487,6 +487,19 @@ export const TICKET_ROUTES: Row[] = [
       ],
     },
   },
+  // Whom dispatch may open a ticket for: names, so `residents.read` too.
+  {
+    method: 'GET',
+    path: '/maintenance/units/{unitId}/reporters',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
   {
     method: 'POST',
     path: '/maintenance/tickets',

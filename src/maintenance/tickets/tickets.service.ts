@@ -13,7 +13,7 @@ import {
   type TicketStatusHistory,
   type TicketUnitLocation,
 } from '@prisma/client';
-import { CommunityMaintenancePort } from '../../community';
+import { CommunityMaintenancePort, type TicketReporter } from '../../community';
 import { AuditService } from '../../core/audit/audit.service';
 import { ConsentsService } from '../../core/consents/consents.service';
 import { RequestContext } from '../../core/common/cls/request-context';
@@ -339,6 +339,18 @@ export class TicketsService implements OnModuleInit {
   }
 
   /**
+   * Whom dispatch may open a ticket for in a unit (ADR 0032): exactly the
+   * accounts `createOnBehalf` accepts there, ids and names only.
+   */
+  reportersOf(unitId: string): Promise<TicketReporter[]> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      if (!(await this.community.unit(tx, unitId)))
+        throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
+      return this.community.ticketReporters(tx, unitId);
+    });
+  }
+
+  /**
    * Dispatch opens a ticket for a resident who called or came by (ADR
    * 0032). The reporter must be someone who could have opened it: an
    * active resident or family account with `tickets` there. Audited, and
@@ -354,16 +366,8 @@ export class TicketsService implements OnModuleInit {
       if (where.unitId && !(await this.community.unit(tx, where.unitId)))
         throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
       const category = await this.category(tx, input.categoryId, where);
-      const reporter = await tx.account.findUnique({
-        where: { id: input.reporterAccountId },
-        select: { id: true, type: true, status: true },
-      });
-      if (
-        !reporter ||
-        reporter.status !== 'active' ||
-        (reporter.type !== 'resident' && reporter.type !== 'family') ||
-        !(await this.access.mayOpen(tx, where.unitId, reporter.id))
-      )
+      const reporter = { id: input.reporterAccountId };
+      if (!(await this.community.mayReport(tx, reporter.id, where.unitId)))
         throw invalid([
           {
             field: 'reporterAccountId',

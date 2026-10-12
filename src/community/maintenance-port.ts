@@ -10,10 +10,20 @@ export interface VisitWorker {
   fullName: string;
 }
 
+/** Someone dispatch may open a unit's ticket for: an id and a name. */
+export interface TicketReporter {
+  id: string;
+  fullName: string | null;
+}
+
+/** Who can be a ticket's reporter at all: the people of a household. */
+const REPORTER_TYPES = ['resident', 'family'] as const;
+
 /**
  * What the maintenance domain reads from the community domain (ADR 0015,
  * 0032, 0034), and nothing else: units, who may open tickets on a unit
- * (capabilitiesFor's `tickets`) and since when someone no longer may, who
+ * (capabilitiesFor's `tickets`) and since when someone no longer may, whom
+ * dispatch may open one for, who
  * may let a technician in while nobody
  * is home (`visitConsent`), a unit's active domestic workers, and the
  * unit's primary. Every method takes the maintenance transaction, so the
@@ -70,6 +80,59 @@ export class CommunityMaintenancePort {
       .filter((d): d is Date => d instanceof Date)
       .map((d) => d.getTime());
     return new Date(ends.length ? Math.max(...ends) : 0);
+  }
+
+  /**
+   * Whether dispatch may open a ticket there in this account's name (ADR
+   * 0032): an active resident or family account that could have opened it
+   * itself — `tickets` on the unit, or on any unit for a common area
+   * (null).
+   */
+  async mayReport(
+    tx: TenantTxClient,
+    accountId: string,
+    unitId: string | null,
+  ): Promise<boolean> {
+    const account = await tx.account.findFirst({
+      where: {
+        id: accountId,
+        status: 'active',
+        type: { in: [...REPORTER_TYPES] },
+      },
+      select: { id: true },
+    });
+    if (!account) return false;
+    if (unitId === null)
+      return (
+        (await this.capabilities.unitsWhere(tx, accountId, 'tickets')).length >
+        0
+      );
+    return (
+      (await this.capabilities.placeOf(tx, accountId, unitId))?.tickets === true
+    );
+  }
+
+  /**
+   * Everyone `mayReport` accepts on the unit, by name: its occupants and
+   * the household members with an account who hold `tickets`. The same
+   * rule, read the other way: `holders` asks `placeOf` for each active
+   * account with a place there, and the type is the one `mayReport` tests.
+   */
+  async ticketReporters(
+    tx: TenantTxClient,
+    unitId: string,
+  ): Promise<TicketReporter[]> {
+    const holders = await this.capabilities.holders(tx, unitId, 'tickets');
+    if (!holders.length) return [];
+    return tx.account.findMany({
+      where: {
+        id: { in: holders },
+        status: 'active',
+        type: { in: [...REPORTER_TYPES] },
+      },
+      select: { id: true, fullName: true },
+      orderBy: [{ fullName: 'asc' }, { id: 'asc' }],
+    });
   }
 
   /** The units where the account may open tickets now. */

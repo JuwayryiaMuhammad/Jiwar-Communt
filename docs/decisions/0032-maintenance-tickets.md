@@ -161,3 +161,9 @@ Neither changes these tables.
   - the reporter is active and still holds `tickets` on the ticket's unit.
 
   Otherwise it is null. Dispatch still never sees a phone.
+
+## Update (B2)
+- **Who a ticket may be opened for.** "Someone who could have opened it themselves" is, in the code, an **active resident or family account** holding `tickets` on the unit (on any unit for a common area). The account type and status come from the guard on the resident's own path; on behalf of someone they are checked here. `CommunityMaintenancePort.mayReport` is that rule.
+- **`GET /maintenance/units/:unitId/reporters`** lists exactly those accounts for a unit: its occupants who may report there (a landlord who lives elsewhere may not) and the household members with an account who hold the `tickets` member permission (ADR 0021). Ids and names only, by name; bounded by one unit, so not paged. It is built from the same capabilities as `mayReport`, so the list and `REPORTER_NOT_ELIGIBLE` cannot disagree. An unknown unit is `UNIT_NOT_FOUND`.
+- It names residents, so it needs **`tickets.dispatch` and `residents.read` together**. `residents.read` is a manager's permission by kind, so a maintenance supervisor (staff) cannot read it and still cannot pick a reporter: opening a ticket for a resident stays, in practice, the manager's.
+- A dispatcher could pick only occupants before (from `GET /units/:id`), although a family member with `tickets` was always accepted as the reporter.

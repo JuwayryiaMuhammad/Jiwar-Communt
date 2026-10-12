@@ -16,7 +16,11 @@ export {
   type GateSchedule,
 } from './gate-port';
 export { CommunityMaintenancePortModule } from './maintenance-port.module';
-export { CommunityMaintenancePort, type VisitWorker } from './maintenance-port';
+export {
+  CommunityMaintenancePort,
+  type TicketReporter,
+  type VisitWorker,
+} from './maintenance-port';
 export {
   capabilitiesFor,
   type Capabilities,

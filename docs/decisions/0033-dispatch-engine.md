@@ -14,7 +14,7 @@ ADR 0032 gave maintenance manual assignment. 5.2 adds **automatic** assignment: 
 - **`category_specialties`** says which specialties can handle a category (many to many); the manager replaces the set (`PUT /maintenance/categories/:id/specialties`, `maintenance.manage`). Each default category is linked to its namesake. A category with **no** specialty can go to any technician.
 - **`technician_specialties`** is set by dispatchers (`PUT /maintenance/technicians/:id/specialties`, `tickets.dispatch`), since the supervisor manages the team. The set is replaced; a row that leaves it is switched off (`active: false`), not deleted. Audited with keys (`technician.specialties_changed`, `ticket_category.specialties_changed`, `specialty.created`, `specialty.updated`).
 - **Retired specialties count for nobody**, on both sides: a category whose specialties are all retired behaves as one with none, and a technician's retired specialty does not match.
-- `GET /maintenance/specialties` is for `tickets.dispatch` (supervisors give technicians their specialties but do not hold `maintenance.manage`); writes need `maintenance.manage`.
+- `GET /maintenance/specialties` is for `tickets.dispatch` (supervisors give technicians their specialties but do not hold `maintenance.manage`) or `maintenance.manage` (update below); writes need `maintenance.manage`.
 
 ### Availability
 
@@ -92,7 +92,7 @@ ADR 0032 left a technician whose role lost `tickets.work` holding their tickets 
 
 |  | Permission |
 |---|---|
-| `GET`, `POST`, `PATCH /maintenance/specialties[/:id]` | `tickets.dispatch` (read), `maintenance.manage` (write) |
+| `GET`, `POST`, `PATCH /maintenance/specialties[/:id]` | `tickets.dispatch` or `maintenance.manage` (read), `maintenance.manage` (write) |
 | `PUT /maintenance/categories/:id/specialties` | `maintenance.manage` |
 | `PUT /maintenance/technicians/:id/specialties` | `tickets.dispatch` |
 | `GET`, `POST /technician/availability` | `tickets.work` (the caller's own) |
@@ -121,3 +121,4 @@ Workload, availability (state, since, reason, who), specialties and the attempts
 - **A dispatcher putting a technician back gives no reason.** Both directions asked for a code from `availabilityChange`, so "back from leave" had to be filed as sick, leave, training or other. `available` now takes none, and a `reasonCode` sent with it is refused (`FIELD_NOT_ALLOWED`) rather than dropped; `unavailable` is unchanged (`REASON_REQUIRED`, `INVALID_REASON_CODE`). No list of "reasons to return" was added: there is nothing to choose between.
 - **The history CHECK** gains a branch: a row needs a reason unless the technician changed their own, or a person (a non-NULL actor) made them `available`. A NULL actor satisfies neither exception, so the system's rows always carry a code.
 - Availability changes are still not in the audit trail: the append-only history is their record.
+- **`GET /maintenance/specialties` also reads with `maintenance.manage`.** It needed `tickets.dispatch`, so a role that may create and rename specialties but does not dispatch could not list them. Either permission is enough; a technician, a guard and the residents still hold neither.

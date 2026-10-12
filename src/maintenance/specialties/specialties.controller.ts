@@ -15,7 +15,10 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '../../core/access/require-permissions.decorator';
+import {
+  RequireAnyPermission,
+  RequirePermissions,
+} from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
 import {
   bounded,
@@ -33,7 +36,8 @@ import { SpecialtyView } from './views/specialty.views';
 
 /**
  * The compound's specialties (ADR 0033). Dispatch reads them, to give
- * technicians theirs; the manager writes them.
+ * technicians theirs; the manager writes them, and whoever may write them
+ * may read them.
  */
 @ApiArea('maintenance')
 @Controller('maintenance/specialties')
@@ -42,7 +46,7 @@ export class SpecialtiesController {
 
   @Get()
   @ApiOperation({ summary: 'List specialties' })
-  @RequirePermissions('tickets.dispatch')
+  @RequireAnyPermission('tickets.dispatch', 'maintenance.manage')
   @ApiOkResponse({ type: ListOf(SpecialtyView) })
   async list(): Promise<ListResponse<SpecialtyView>> {
     return bounded(await this.specialties.list(), (s) => SpecialtyView.from(s));

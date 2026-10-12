@@ -1,10 +1,12 @@
+import { RolesService } from '../../src/core/access/roles.service';
 import { dispatchHelpers } from '../setup/dispatch';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 
 /**
  * ADR 0033: specialties, which of them can handle a category, and which a
- * technician has. Readable by dispatch, written by the manager (specialties
- * and categories) or by dispatchers (technicians).
+ * technician has. Readable by dispatch and by whoever may write them,
+ * written by the manager (specialties and categories) or by dispatchers
+ * (technicians).
  */
 describe('Maintenance — specialties', () => {
   let h: HttpHarness;
@@ -299,5 +301,51 @@ describe('Maintenance — specialties', () => {
         .sort();
       expect([[a, b].sort(), [c]]).toContainEqual(active);
     }
+  });
+
+  // Last: it edits the manager role, and puts it back.
+  it('the list reads with either permission: maintenance.manage without tickets.dispatch, and neither is refused', async () => {
+    const roles = h.moduleRef.get(RolesService);
+    const manager = await d.x.asManager(s.c, async () =>
+      (await roles.list()).find((r) => r.key === 'manager')!,
+    );
+    const hold = (drop: string[]) =>
+      d.x.asManager(s.c, () =>
+        roles.replacePermissions(
+          manager.id,
+          manager.permissions.filter((p) => !drop.includes(p)),
+        ),
+      );
+    const read = (token: string) =>
+      d.http('get', '/maintenance/specialties', token);
+    try {
+      // May create specialties, does not dispatch: lists them, and writes.
+      await hold(['tickets.dispatch']);
+      const res = await read(s.manager.token).expect(200);
+      expect(
+        (res.body as { data: { key: string }[] }).data.map((r) => r.key),
+      ).toContain('plumbing');
+      await d
+        .http('post', '/maintenance/specialties', s.manager.token, {
+          key: 'glazing',
+          nameAr: 'زجاج',
+          nameEn: 'Glazing',
+        })
+        .expect(201);
+      // The supervisor still reads with tickets.dispatch alone.
+      await read(s.supervisor.token).expect(200);
+      await hold(['maintenance.manage']);
+      await read(s.manager.token).expect(200);
+      await hold(['tickets.dispatch', 'maintenance.manage']);
+      await read(s.manager.token).expect(403);
+    } finally {
+      await d.x.asManager(s.c, () =>
+        roles.replacePermissions(manager.id, manager.permissions),
+      );
+    }
+    await read(s.manager.token).expect(200);
+    // A technician and a resident hold neither.
+    await read(s.techs[0].token).expect(403);
+    await read(s.owner.token).expect(403);
   });
 });

@@ -21,6 +21,8 @@ export {
   type TicketReporter,
   type VisitWorker,
 } from './maintenance-port';
+export { CommunityManagementPortModule } from './management-port.module';
+export { CommunityManagementPort, type RequestAuthor } from './management-port';
 export {
   capabilitiesFor,
   type Capabilities,

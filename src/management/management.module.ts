@@ -1,5 +1,15 @@
 import { Module } from '@nestjs/common';
+import { CommunityManagementPortModule } from '../community';
 import { ManagementProvisioning } from './provisioning';
+import { MessagesService } from './requests/messages.service';
+import { RequestAccess } from './requests/request-access';
+import { RequestsService } from './requests/requests.service';
+import { ResidentRequestsController } from './requests/resident-requests.controller';
+import {
+  RequestAssigneesController,
+  RequestUnitsController,
+  StaffRequestsController,
+} from './requests/staff-requests.controller';
 import { OfficeHoursService } from './settings/office-hours.service';
 import {
   OfficeHoursController,
@@ -18,17 +28,25 @@ import { TopicsService } from './topics/topics.service';
  * the gate.
  */
 @Module({
+  imports: [CommunityManagementPortModule],
   controllers: [
     TopicsController,
     TopicOptionsController,
     RequestSettingsController,
     OfficeHoursController,
+    ResidentRequestsController,
+    StaffRequestsController,
+    RequestAssigneesController,
+    RequestUnitsController,
   ],
   providers: [
     ManagementProvisioning,
     TopicsService,
     RequestSettingsService,
     OfficeHoursService,
+    RequestAccess,
+    MessagesService,
+    RequestsService,
   ],
 })
 export class ManagementModule {}

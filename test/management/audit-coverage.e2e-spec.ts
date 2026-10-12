@@ -159,6 +159,100 @@ describe('Audit coverage — management requests', () => {
     });
   });
 
+  describe('requests', () => {
+    let requestId: string;
+
+    it('management_request.created — by the author: number, type, topic key, never the words', async () => {
+      const created = await m.open(s.c, s.owner, {
+        type: 'general',
+        unitId: s.unit.id,
+        body: `${MARKER} my gate remote is broken`,
+      });
+      requestId = created.id;
+      const row = await single('management_request.created', requestId);
+      expect(row).toMatchObject({
+        actorType: 'account',
+        actorId: s.owner.id,
+        targetType: 'management_request',
+      });
+      expect(row.metadata).toEqual({
+        requestNumber: 1,
+        type: 'general',
+        topicKey: 'general',
+        withUnit: true,
+      });
+    });
+
+    it('management_request.created_on_behalf — by the staff member, with the reason code and the author', async () => {
+      const res = await m
+        .http('post', '/management/requests', s.manager.token, {
+          type: 'question',
+          topicId: await m.topicId(s.c, 'documents'),
+          authorAccountId: s.owner.id,
+          reasonCode: 'resident_phone_call',
+          body: `${MARKER} asked by phone`,
+        })
+        .expect(201);
+      const { id } = res.body as { id: string };
+      const row = await single('management_request.created_on_behalf', id);
+      expect(row).toMatchObject({
+        actorType: 'account',
+        actorId: s.manager.id,
+        targetType: 'management_request',
+      });
+      expect(row.metadata).toEqual({
+        requestNumber: 2,
+        type: 'question',
+        topicKey: 'documents',
+        withUnit: false,
+        reasonCode: 'resident_phone_call',
+        authorId: s.owner.id,
+      });
+      // Opened by staff: not also recorded as the author's own.
+      expect(
+        await read.tenant(s.c.tenantId, {
+          action: 'management_request.created',
+          targetId: id,
+        }),
+      ).toEqual([]);
+    });
+
+    const assign = (assigneeId: string | null) =>
+      m
+        .http(
+          'post',
+          `/management/requests/${requestId}/assign`,
+          s.manager.token,
+          { assigneeId },
+        )
+        .expect(204);
+
+    it('management_request.assigned — from nobody to the handler; the same again records nothing', async () => {
+      await assign(s.manager.id);
+      const row = await single('management_request.assigned', requestId);
+      expect(row).toMatchObject({ actorId: s.manager.id });
+      expect(row.changes).toEqual({
+        assigneeId: { from: null, to: s.manager.id },
+      });
+      expect(row.metadata).toEqual({ requestNumber: 1 });
+      await assign(s.manager.id);
+      expect(
+        await read.tenant(s.c.tenantId, {
+          action: 'management_request.assigned',
+          targetId: requestId,
+        }),
+      ).toHaveLength(1);
+    });
+
+    it('management_request.unassigned — back to the queue', async () => {
+      await assign(null);
+      const row = await single('management_request.unassigned', requestId);
+      expect(row.changes).toEqual({
+        assigneeId: { from: s.manager.id, to: null },
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every management entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

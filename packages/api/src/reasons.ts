@@ -46,6 +46,8 @@ export const REASON_CODES = {
   ticketCategory: ['misclassified', 'reassessed', 'other'],
   availabilityChange: ['sick', 'leave', 'training', 'other'],
   visitChange: ['schedule_conflict', 'resident_request', 'technician_request', 'parts_unavailable', 'other'],
+  // Requests to the management (ADR 0039): codes only, never text.
+  managementRequestOnBehalf: ['resident_phone_call', 'resident_walk_in', 'resident_written_letter'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

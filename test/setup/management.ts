@@ -1,6 +1,8 @@
 import type { Server } from 'node:http';
 import request from 'supertest';
+import { RolesService } from '../../src/core/access/roles.service';
 import { communityHelpers, type Compound } from './community';
+import { gateHelpers } from './gate';
 import { API, type HttpHarness } from './http-app';
 
 /** An account of the suite with a token of its own. */
@@ -16,6 +18,7 @@ export interface Who {
  */
 export function managementHelpers(h: HttpHarness) {
   const x = communityHelpers(h);
+  const g = gateHelpers(h);
 
   async function who(
     c: Compound,
@@ -41,6 +44,51 @@ export function managementHelpers(h: HttpHarness) {
     };
   }
 
+  /**
+   * A staff account that handles requests and does nothing else: no default
+   * staff role holds `requests.handle` (ADR 0039), so the compound's
+   * maintenance supervisor role is given it and it alone, as a manager
+   * would in the roles screen.
+   */
+  async function handler(c: Compound): Promise<Who> {
+    await x.asManager(c, async () => {
+      const role = await x.prisma.tenant.role.findUniqueOrThrow({
+        where: {
+          tenantId_key: { tenantId: c.tenantId, key: 'maintenance_supervisor' },
+        },
+      });
+      await h.moduleRef
+        .get(RolesService)
+        .replacePermissions(role.id, ['requests.handle']);
+    });
+    return who(c, (await g.guard(c, 'maintenance_supervisor')).id, 'staff');
+  }
+
+  /** The id of one of the compound's seeded topics. */
+  async function topicId(c: Compound, key = 'general'): Promise<string> {
+    const topic = await x.asManager(c, () =>
+      x.prisma.tenant.managementRequestTopic.findFirstOrThrow({
+        where: { key },
+      }),
+    );
+    return topic.id;
+  }
+
+  /** `POST /management-requests` as `author`; the created view. */
+  async function open(
+    c: Compound,
+    author: Who,
+    over: Record<string, unknown> = {},
+  ): Promise<{ id: string; number: string; status: string }> {
+    const res = await http('post', '/management-requests', author.token, {
+      type: 'question',
+      topicId: await topicId(c),
+      body: 'When is the pool open?',
+      ...over,
+    }).expect(201);
+    return res.body as { id: string; number: string; status: string };
+  }
+
   const http = (
     method: 'get' | 'post' | 'put' | 'patch' | 'delete',
     path: string,
@@ -58,7 +106,7 @@ export function managementHelpers(h: HttpHarness) {
     return method === 'get' || method === 'delete' ? req : req.send(body ?? {});
   };
 
-  return { x, who, setUp, http };
+  return { x, who, setUp, handler, topicId, open, http };
 }
 
 export type ManagementSetUp = Awaited<

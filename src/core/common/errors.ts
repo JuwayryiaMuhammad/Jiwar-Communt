@@ -242,6 +242,11 @@ export const ErrorCode = {
   // requests to the management (ADR 0039)
   /** Unknown, or another compound's. */
   MANAGEMENT_TOPIC_NOT_FOUND: 'MANAGEMENT_TOPIC_NOT_FOUND',
+  /** Unknown, another compound's, or not the caller's own: one answer. */
+  MANAGEMENT_REQUEST_NOT_FOUND: 'MANAGEMENT_REQUEST_NOT_FOUND',
+  /** The request's status does not take the action (409, params.status). */
+  MANAGEMENT_REQUEST_INVALID_TRANSITION:
+    'MANAGEMENT_REQUEST_INVALID_TRANSITION',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -312,6 +317,12 @@ export const FieldErrorCode = {
   // requests to the management (ADR 0039)
   /** Overlaps an earlier window of the same weekday; params.other is its index. */
   OFFICE_HOURS_OVERLAP: 'OFFICE_HOURS_OVERLAP',
+  /** Not an active topic of this compound. */
+  TOPIC_NOT_AVAILABLE: 'TOPIC_NOT_AVAILABLE',
+  /** Not an active resident or family account of this compound. */
+  AUTHOR_NOT_ELIGIBLE: 'AUTHOR_NOT_ELIGIBLE',
+  /** Not an active account holding `requests.handle`. */
+  ASSIGNEE_NOT_ELIGIBLE: 'ASSIGNEE_NOT_ELIGIBLE',
 } as const;
 
 export type FieldErrorCode =

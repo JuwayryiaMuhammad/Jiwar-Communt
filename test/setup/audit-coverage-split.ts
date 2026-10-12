@@ -177,4 +177,8 @@ export const MANAGEMENT_COVERAGE: readonly string[] = [
   'management_request_topic.updated',
   'management.settings_changed',
   'management.office_hours_changed',
+  'management_request.created',
+  'management_request.created_on_behalf',
+  'management_request.assigned',
+  'management_request.unassigned',
 ];

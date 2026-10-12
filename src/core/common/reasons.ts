@@ -238,4 +238,11 @@ export const REASON_CODES = {
   parcelReject: ['not_ours', 'not_expected', 'other'],
   parcelDelegateEnd: ['revoked', 'authorizer_left'],
   parcelReturn: ['rejected', 'unclaimed'],
+  // Requests to the management (ADR 0039). How the resident reached the
+  // management when staff open a request on their behalf.
+  managementRequestOnBehalf: [
+    'resident_phone_call',
+    'resident_walk_in',
+    'resident_written_letter',
+  ],
 } as const;

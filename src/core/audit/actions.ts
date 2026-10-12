@@ -291,6 +291,22 @@ export const AUDIT_ACTIONS = {
     target: 'management_request_topic',
     sensitive: ['nameAr', 'nameEn'],
   },
+  // metadata: requestNumber, type, topicKey, withUnit.
+  'management_request.created': { log: 'tenant', target: 'management_request' },
+  // The same, with reasonCode and authorId: the actor is the staff member.
+  'management_request.created_on_behalf': {
+    log: 'tenant',
+    target: 'management_request',
+  },
+  // changes: assigneeId (from, to); metadata: requestNumber.
+  'management_request.assigned': {
+    log: 'tenant',
+    target: 'management_request',
+  },
+  'management_request.unassigned': {
+    log: 'tenant',
+    target: 'management_request',
+  },
   // changes: autoCloseDays, appointmentSlotMinutes, appointmentSlotCapacity.
   'management.settings_changed': { log: 'tenant', target: 'tenant' },
   // changes: windows, each as `<weekday>:<startMinute>-<endMinute>`.

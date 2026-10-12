@@ -32,7 +32,8 @@ Every endpoint exists so the features can be exercised end to end now. When the 
 
 - every operation carries `x-stability: draft` in Swagger, and **nothing is frozen**: paths, fields and shapes may change without a version bump;
 - the contract is [`docs/api/openapi.v0.json`](docs/api/openapi.v0.json), written by `pnpm openapi:export`; a test fails when it is stale, so every API change shows up in review as a diff of that file;
-- endpoints whose shape clearly depends on a screen are built minimal and listed in [`docs/api/v0-notes.md`](docs/api/v0-notes.md) under "to reshape with design".
+- endpoints whose shape clearly depends on a screen are built minimal and listed in [`docs/api/v0-notes.md`](docs/api/v0-notes.md) under "to reshape with design";
+- a Postman collection, [`docs/api/jiwar.postman_collection.json`](docs/api/jiwar.postman_collection.json), is built from that file by `pnpm postman:export` (one folder per tag; the sign-in requests store their tokens in collection variables). Nothing checks it, so regenerate it with the contract.
 
 Conventions (ADR 0025):
 
@@ -164,6 +165,7 @@ pnpm test:e2e     # test/**/*.e2e-spec.ts against real Postgres, Redis and Mailp
 pnpm lint
 pnpm build
 pnpm openapi:export  # after any API change; the docs suite checks the file
+pnpm postman:export  # then the Postman collection, from the exported file
 ```
 
 ### Reproduce CI locally
@@ -332,7 +334,7 @@ prisma/        schema, migrations (RLS SQL inside), seed
 docker/        postgres init (roles)
 test/          rls/, access/, platform/, residents/, audit/, db/, auth/, settings/, community/, mail/ suites + setup/
 docs/decisions ADRs
-docs/api       the OpenAPI contract (openapi.v0.json) and v0-notes.md
+docs/api       the OpenAPI contract (openapi.v0.json), the Postman collection built from it, and v0-notes.md
 ```
 
 Rules the code enforces:

@@ -1,3 +1,4 @@
+import { RolesService } from '../../src/core/access/roles.service';
 import { bornYearsAgo } from '../setup/fixtures';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { keyPaths, listKeys } from './keys';
@@ -82,6 +83,98 @@ describe('API v0 — household', () => {
         token: hm.owner,
       },
     ).expect(204);
+  });
+
+  it('the management sees which permissions each member holds: codes only, with residents.read', async () => {
+    const hm = await home();
+    const minor = await call(
+      w,
+      'POST',
+      `/units/${hm.unitId}/household/minors`,
+      { token: hm.owner, body: minorBody() },
+    ).expect(201);
+    const minorId = (minor.body as { id: string }).id;
+    type Body = {
+      members: { id: string; grantedPermissions?: string[] }[];
+    };
+    const asManager = async () => {
+      const res = await call(w, 'GET', `/units/${hm.unitId}/household`, {
+        token: w.a.tokens.manager,
+      }).expect(200);
+      return res;
+    };
+    const held = (body: Body, id: string) =>
+      body.members.find((m) => m.id === id)?.grantedPermissions;
+
+    const first = await asManager();
+    // Codes: no cap, no `permissions`, no invites.
+    expect(keyPaths(first.body)).toEqual(
+      [
+        'members',
+        ...ITEM.map((k) => `members[].${k}`),
+        'members[].grantedPermissions',
+      ].sort(),
+    );
+    expect(first.text).not.toContain('capPerOperation');
+    expect([...held(first.body as Body, hm.familyMemberId)!].sort()).toEqual([
+      'bookings',
+      'tickets',
+      'visitors_invite',
+    ]);
+    // A minor holds nothing: an empty list, not an absent one.
+    expect(held(first.body as Body, minorId)).toEqual([]);
+
+    // What the manager revokes leaves the list at once.
+    await call(
+      w,
+      'POST',
+      `/household/members/${hm.familyMemberId}/permissions/revoke-by-management`,
+      {
+        token: w.a.tokens.manager,
+        body: { permission: 'tickets', reasonCode: 'misuse', reason: 'x' },
+      },
+    ).expect(204);
+    expect(
+      [...held((await asManager()).body as Body, hm.familyMemberId)!].sort(),
+    ).toEqual(['bookings', 'visitors_invite']);
+
+    // The primary's and a member's views are what they were.
+    const asPrimary = await call(w, 'GET', `/units/${hm.unitId}/household`, {
+      token: hm.owner,
+    }).expect(200);
+    expect(keyPaths(asPrimary.body)).not.toContain(
+      'members[].grantedPermissions',
+    );
+    const asMember = await call(w, 'GET', `/units/${hm.unitId}/household`, {
+      token: hm.family,
+    }).expect(200);
+    expect(keyPaths(asMember.body)).toEqual(
+      ['members', ...ITEM.map((k) => `members[].${k}`)].sort(),
+    );
+
+    // A manager whose role does not read residents: members, no codes.
+    const roles = h.moduleRef.get(RolesService);
+    const role = await w.helpers.asManager(w.a, async () =>
+      (await roles.list()).find((r) => r.key === 'manager')!,
+    );
+    await w.helpers.asManager(w.a, () =>
+      roles.replacePermissions(
+        role.id,
+        role.permissions.filter((p) => p !== 'residents.read'),
+      ),
+    );
+    try {
+      expect(keyPaths((await asManager()).body)).toEqual(
+        ['members', ...ITEM.map((k) => `members[].${k}`)].sort(),
+      );
+    } finally {
+      await w.helpers.asManager(w.a, () =>
+        roles.replacePermissions(role.id, role.permissions),
+      );
+    }
+    expect(keyPaths((await asManager()).body)).toContain(
+      'members[].grantedPermissions',
+    );
   });
 
   it('minors, coming of age, and removal', async () => {

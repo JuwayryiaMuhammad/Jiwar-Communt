@@ -74,3 +74,6 @@ A unit is lived in by more people than its occupants: spouses, children, parents
 - **Reasons:** removal and rejection take `{ code, text }`; the code goes into the audit metadata.
 - **Per-member permissions** are a separate concept from delegation (ADR 0021). A `household` delegate may grant daily permissions but never finance.
 - Delegation ends also when the household ends (`end_reason = household_ended`).
+
+## Update (B2)
+- **The household read has a third viewer.** Besides everyone who sees the household (members) and the primary or a `household` delegate (grants and invites), a manager account holding `residents.read` reads the codes of the permissions each member holds (ADR 0021's update). "Its managers" in the earlier text means the primary or a delegate, never the manager account type.

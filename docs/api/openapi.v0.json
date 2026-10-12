@@ -4733,6 +4733,20 @@
             "nullable": true,
             "type": "string"
           },
+          "grantedPermissions": {
+            "description": "The management only (a manager account holding `residents.read`): the codes of the permissions the member holds, so a revocation names one they have. Never the finance cap.",
+            "items": {
+              "enum": [
+                "visitors_invite",
+                "bookings",
+                "tickets",
+                "finance",
+                "unit_security"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
           "id": {
             "format": "uuid",
             "type": "string"

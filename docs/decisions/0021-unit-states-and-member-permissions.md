@@ -65,3 +65,8 @@ Journey 05 describes what happens when the household's structure breaks: the pri
 - Unit review: `unit.household_review_flagged` (every reason), `unit.household_review_cleared`, `unit.household_ended`, `unit.ownership_transferred`.
 - Household: `household.permissions_reviewed`, `household.permission_granted`, `household.permission_revoked`, `household.deferred_action_submitted`, `household.deferred_action_decided`, `household.member_majority_reached` (system), `household.member_came_of_age` (system).
 - Workers: `worker.wage_obligation_recorded`.
+
+## Update (B2)
+- **The management sees which permissions a member holds.** The household read showed a member's grants to the primary and a `household` delegate only, so a manager revoking one (`revokeByManagement`, `household.override`) had to guess and was refused with `MEMBER_PERMISSION_MISSING`. `GET /units/:unitId/household` now gives each member `grantedPermissions` for a **manager account whose role holds `residents.read`**: the codes of the live grants, an empty list for a member who holds none (a minor). Never the finance cap, never the pending invites: those stay the household's.
+- There is one household read for every viewer (`units.read`); who sees what is decided inside it. The primary's and a member's views are unchanged.
+- This ADR places the management's revocation under a separation. The code never limited it to one: it is refused only while the unit is under a death review (`HOUSEHOLD_UNDER_REVIEW`). That is unchanged, and recorded here.

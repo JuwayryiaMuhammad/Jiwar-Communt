@@ -14,6 +14,7 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
+import { PermissionsService } from '../../core/access/permissions.service';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
@@ -42,9 +43,16 @@ import {
 @ApiArea('household')
 @Controller()
 export class HouseholdController {
-  constructor(private readonly households: HouseholdsService) {}
+  constructor(
+    private readonly households: HouseholdsService,
+    private readonly permissions: PermissionsService,
+  ) {}
 
-  /** Members for everyone who sees the household; grants and invites for its managers. */
+  /**
+   * Members for everyone who sees the household; grants and invites for
+   * the primary or a household delegate; the codes of what each member
+   * holds for the management (a manager account holding `residents.read`).
+   */
   @RequirePermissions('units.read')
   @Get('units/:unitId/household')
   @ApiOperation({ summary: "Get the unit's household" })
@@ -52,7 +60,11 @@ export class HouseholdController {
   async household(
     @Param('unitId', parseId('unitId')) unitId: string,
   ): Promise<HouseholdResponse> {
-    return HouseholdResponse.from(await this.households.household(unitId));
+    return HouseholdResponse.from(
+      await this.households.household(unitId, {
+        residentsRead: await this.permissions.has('residents.read'),
+      }),
+    );
   }
 
   /** The token is shown once; the invitee accepts with a code sent to the email. */

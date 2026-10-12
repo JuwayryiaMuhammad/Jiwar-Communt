@@ -689,11 +689,21 @@ export class HouseholdsService {
    * who sees it (an owner-landlord does not); their grants and the pending
    * invites only for the primary or a live `household` delegate. Never a
    * phone, an email or a document.
+   *
+   * The management revokes a member's permission (ADR 0021) and must know
+   * which they hold: a manager account whose role reads residents
+   * (`residentsRead`, which the caller establishes) gets the codes, never
+   * the finance cap and never the invites.
    */
-  async household(unitId: string): Promise<HouseholdView> {
+  async household(
+    unitId: string,
+    viewer: { residentsRead?: boolean } = {},
+  ): Promise<HouseholdView> {
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.authority.assertHouseholdVisible(tx, unitId);
       const manages = await this.managesHousehold(tx, unitId);
+      const management =
+        this.ctx.accountType === 'manager' && viewer.residentsRead === true;
       const rows = await tx.householdMember.findMany({
         where: { unitId, status: { in: ['active', 'pending_approval'] } },
         include: {
@@ -715,6 +725,9 @@ export class HouseholdsService {
                 capPerOperation: g.capPerOperation?.toFixed(2) ?? null,
               })),
             }
+          : {}),
+        ...(management
+          ? { grantedPermissions: m.grants.map((g) => g.permission) }
           : {}),
       }));
       if (!manages) return { members, invites: null };

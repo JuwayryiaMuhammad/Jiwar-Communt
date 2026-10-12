@@ -64,10 +64,15 @@ export interface PendingInviteView {
 /**
  * A unit's household as the caller may see it: members for everyone who
  * sees the household; their grants and the pending invites only for the
- * primary or a `household` delegate (`invites` is null otherwise).
+ * primary or a `household` delegate (`invites` is null otherwise); the
+ * codes of what each member holds, and no more, for the management.
  */
 export interface HouseholdView {
-  members: (HouseholdMemberView & { grants?: MemberGrantSummary[] })[];
+  members: (HouseholdMemberView & {
+    grants?: MemberGrantSummary[];
+    /** Management only: which permissions the member holds, no cap. */
+    grantedPermissions?: MemberPermission[];
+  })[];
   invites: PendingInviteView[] | null;
 }
 

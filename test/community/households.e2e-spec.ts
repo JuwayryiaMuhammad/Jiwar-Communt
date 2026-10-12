@@ -509,6 +509,44 @@ describe('Households', () => {
       expect(delegateView.invites).toHaveLength(1);
     });
 
+    it('the management reads the codes each member holds, and only a manager who reads residents', async () => {
+      const hm = await home();
+      const joined = await join(hm);
+      const kid = await asPrimary(hm, () =>
+        households.addMinor(hm.unitId, minor()),
+      );
+      const view = await x.asManager(hm.c, () =>
+        households.household(hm.unitId, { residentsRead: true }),
+      );
+      expect(view.invites).toBeNull();
+      const byId = new Map(view.members.map((m) => [m.id, m]));
+      expect(
+        [...byId.get(joined.memberId)!.grantedPermissions!].sort(),
+      ).toEqual(['bookings', 'tickets', 'visitors_invite']);
+      expect(byId.get(kid.id)!.grantedPermissions).toEqual([]);
+      // Codes only: the grants, with the finance cap, stay the primary's.
+      for (const m of view.members) expect(m).not.toHaveProperty('grants');
+
+      // A manager whose role does not read residents: nothing.
+      for (const viewer of [{}, { residentsRead: false }]) {
+        const without = await x.asManager(hm.c, () =>
+          households.household(hm.unitId, viewer),
+        );
+        for (const m of without.members)
+          expect(m).not.toHaveProperty('grantedPermissions');
+      }
+      // The flag is the management's alone: a resident never gets the
+      // codes through it, whatever the caller claims.
+      const primaryView = await asPrimary(hm, () =>
+        households.household(hm.unitId, { residentsRead: true }),
+      );
+      const memberView = await asFamily(hm, joined.accountId, () =>
+        households.household(hm.unitId, { residentsRead: true }),
+      );
+      for (const m of [...primaryView.members, ...memberView.members])
+        expect(m).not.toHaveProperty('grantedPermissions');
+    });
+
     it('an owner-landlord does not see the household', async () => {
       const hm = await home();
       const landlord = await x.asManager(hm.c, () =>

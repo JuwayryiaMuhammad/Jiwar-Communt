@@ -5828,6 +5828,8 @@ export interface components {
         };
         HouseholdMemberItemView: {
             fullName: string | null;
+            /** @description The management only (a manager account holding `residents.read`): the codes of the permissions the member holds, so a revocation names one they have. Never the finance cap. */
+            grantedPermissions?: ("visitors_invite" | "bookings" | "tickets" | "finance" | "unit_security")[];
             /** Format: uuid */
             id: string;
             isMinor: boolean;

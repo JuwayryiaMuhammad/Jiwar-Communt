@@ -49,10 +49,16 @@ export class HouseholdMemberItemView {
     description: 'The primary or a household delegate only.',
   })
   permissions?: GrantSummaryView[];
+  @ApiProperty({
+    enum: PERMISSIONS,
+    isArray: true,
+    required: false,
+    description:
+      'The management only (a manager account holding `residents.read`): the codes of the permissions the member holds, so a revocation names one they have. Never the finance cap.',
+  })
+  grantedPermissions?: string[];
 
-  static from(
-    m: HouseholdMemberView & { grants?: MemberGrantSummary[] },
-  ): HouseholdMemberItemView {
+  static from(m: HouseholdView['members'][number]): HouseholdMemberItemView {
     return {
       id: m.id,
       fullName: m.fullName,
@@ -61,6 +67,9 @@ export class HouseholdMemberItemView {
       status: m.status,
       ...(m.grants
         ? { permissions: m.grants.map((g) => GrantSummaryView.from(g)) }
+        : {}),
+      ...(m.grantedPermissions
+        ? { grantedPermissions: [...m.grantedPermissions] }
         : {}),
     };
   }

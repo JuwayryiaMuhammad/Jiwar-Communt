@@ -39,7 +39,7 @@ After 5.1 alone, maintenance works end to end with manual assignment. 5.2 and 5.
   - An emergency, at creation or by a change, sends a **critical** notification to every active `tickets.dispatch` holder except the account that performed the action.
 - **Number:** `MT-000123`. It comes from the compound's `ticket_counters` row through `INSERT … ON CONFLICT DO UPDATE … RETURNING` in the creating transaction. The row lock serializes creations, a rollback gives the number back, and a unique index backs it. Numbers are distinct and grow; gaps are tolerated, duplicates never.
 - **Two statuses**, tied together by CHECKs:
-  - `status`: new → assigned → in_progress ⇄ on_hold → completed → closed, or cancelled;
+  - `status`: new → assigned → (en_route →) in_progress ⇄ on_hold → completed → closed, or cancelled (`en_route` is optional and came with ADR 0038);
   - `confirmation_status`: null until the first completion, then `pending` while completed, `confirmed` or `auto_closed` when closed, and `rejected` after a rejection or reopen, until the next completion.
   - `on_hold` carries `hold_reason` (`awaiting_resident`, `awaiting_parts`, `other`), which 5.3's SLA will pause on.
   - `cycle` starts at 1. `cycle` and `rejection_count` both grow by one on every rejection and every reopen.
@@ -157,7 +157,7 @@ Neither changes these tables.
 ## Update (Phase R1, ADR 0036)
 - The technician's detail carries `reporterPhone`, decided at read time:
   - the reporter consented (`ticket_phone_share`, at its current version);
-  - the reader is the ticket's technician now and the work is open;
+  - the reader is the ticket's technician now and the work is open (assigned, on the way, in progress or on hold);
   - the reporter is active and still holds `tickets` on the ticket's unit.
 
   Otherwise it is null. Dispatch still never sees a phone.

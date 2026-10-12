@@ -65,7 +65,7 @@ Held deliveries are never dropped on their own; the 7-day retention below is the
   - An erasure revokes what was granted, as the system.
 - **The first code, `ticket_phone_share`,** is account-level and off by default. The technician's ticket detail (`GET /technician/tickets/{id}`) carries `reporterPhone`, and it is null unless all of these hold at read time:
   - the reader is the ticket's technician now;
-  - the work is open (`assigned`, `in_progress`, `on_hold`);
+  - the work is open (`assigned`, `en_route`, `in_progress`, `on_hold`; `en_route` came with ADR 0038 and was first left out, which hid the phone exactly while the technician was on the way);
   - the reporter is active (never frozen, erased or deactivated) and has a phone;
   - the reporter still holds `tickets` on the ticket's unit, the same check as a resident reader's cutoff (`CommunityMaintenancePort.ticketsLostAt` is null), so someone who left never has their phone shown; for a common area, `tickets` on any unit;
   - the consent is granted at its current version.

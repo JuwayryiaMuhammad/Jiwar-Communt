@@ -219,6 +219,56 @@ describe('Consents', () => {
       expect(await phoneSeen(t.techToken, t.ticketId)).toBeNull();
     });
 
+    it('is shown while the technician is on the way, under the same conditions', async () => {
+      const r = await reporter();
+      const t = await assignedTicket(r);
+      const enRoute = await h
+        .http()
+        .post(`${API}/technician/tickets/${t.ticketId}/en-route`)
+        .set(bearer(t.techToken))
+        .send({});
+      expect(enRoute.status).toBe(204);
+      const res = await techView(t.techToken, t.ticketId);
+      expect((res.body as { status: string }).status).toBe('en_route');
+      // Not consented: on the way changes nothing.
+      expect(await phoneSeen(t.techToken, t.ticketId)).toBeNull();
+      await grant(r.token).expect(200);
+      expect(await phoneSeen(t.techToken, t.ticketId)).toBe(r.phone);
+
+      // Still nobody else's: another technician, dispatch, the reporter.
+      const other = await gateHelpers(h).guard(c, 'technician');
+      const notTheirs = await techView(
+        await tokenOf(other.id, 'staff'),
+        t.ticketId,
+      );
+      expect(notTheirs.status).toBe(404);
+      expect(notTheirs.text).not.toContain(r.phone);
+      const asDispatch = await h
+        .http()
+        .get(`${API}/maintenance/tickets/${t.ticketId}`)
+        .set(bearer(await tokenOf(c.managerId, 'manager')));
+      expect(asDispatch.status).toBe(200);
+      expect(asDispatch.text).not.toContain(r.phone);
+      const list = await h
+        .http()
+        .get(`${API}/technician/tickets`)
+        .set(bearer(t.techToken));
+      expect(list.text).not.toContain(r.phone);
+
+      // Taken off the ticket while on the way: gone with the assignment.
+      await x.asManager(c, () =>
+        h.moduleRef
+          .get(DispatchService)
+          .reassign(t.ticketId, other.id, 'workload'),
+      );
+      expect((await techView(t.techToken, t.ticketId)).status).toBe(404);
+      // Revoked: hidden from the new technician on the very next read.
+      const otherToken = await tokenOf(other.id, 'staff');
+      expect(await phoneSeen(otherToken, t.ticketId)).toBe(r.phone);
+      await revoke(r.token).expect(200);
+      expect(await phoneSeen(otherToken, t.ticketId)).toBeNull();
+    });
+
     it('is never shown to another technician, to dispatch or to residents', async () => {
       const r = await reporter();
       const t = await assignedTicket(r);

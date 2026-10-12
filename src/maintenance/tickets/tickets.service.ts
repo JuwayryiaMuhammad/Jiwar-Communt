@@ -46,7 +46,7 @@ import { ticketNotFound, TicketAccess, type Audience } from './ticket-access';
 import { COMMON_AREA_LENGTH, DESCRIPTION_LENGTH } from './ticket-limits';
 import { TicketLog } from './ticket-log';
 import { TicketNotices } from './ticket-notices';
-import { ticketNumber, UNFINISHED } from './ticket-rules';
+import { IN_HAND, ticketNumber, UNFINISHED } from './ticket-rules';
 import { TicketCreatedView } from './views/ticket.views';
 
 export const TICKET_RESOURCE = 'ticket';
@@ -157,12 +157,13 @@ export interface TicketDetail extends TicketRead {
   reporterPhone: string | null;
 }
 
-/** The statuses in which the work is open: the technician has it in hand. */
-export const PHONE_SHARE_STATUSES: readonly TicketStatus[] = [
-  'assigned',
-  'in_progress',
-  'on_hold',
-];
+/**
+ * The statuses in which the work is open: the technician has it in hand.
+ * On the way (ADR 0038) is among them, and is when the phone is needed
+ * most; the list is `IN_HAND` itself, so a status added there is not
+ * forgotten here.
+ */
+export const PHONE_SHARE_STATUSES: readonly TicketStatus[] = IN_HAND;
 
 export interface HistoryRead<T> {
   rows: T[];
@@ -622,7 +623,7 @@ export class TicketsService implements OnModuleInit {
    * The reporter's phone for `technicianId`, decided at read time
    * (ADR 0036), or null. All of these must hold now:
    * - `technicianId` is the ticket's technician;
-   * - the work is open (assigned, in progress or on hold);
+   * - the work is open (assigned, on the way, in progress or on hold);
    * - the reporter's account is active (never frozen or erased) and has a
    *   phone;
    * - the reporter still holds `tickets` on the ticket's unit (any unit for

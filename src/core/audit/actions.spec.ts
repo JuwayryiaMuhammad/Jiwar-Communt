@@ -64,6 +64,7 @@ describe('audit catalog', () => {
         'specialty',
         'parcel',
         'data_export',
+        'management_request_topic',
       ]).toContain(def.target);
     }
   });

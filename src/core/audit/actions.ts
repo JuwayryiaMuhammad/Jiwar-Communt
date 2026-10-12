@@ -277,6 +277,24 @@ export const AUDIT_ACTIONS = {
   'parcel.settings_changed': { log: 'tenant', target: 'tenant' },
   // metadata: reasonCode (rejected, unclaimed).
   'parcel.returned': { log: 'tenant', target: 'parcel' },
+  // requests to the management (ADR 0039). Ids, numbers, keys and reason
+  // codes only: never a message, a note or a rating's comment.
+  // changes: key, targetResponseHours, active by value; the names as
+  // `{ changed: true }` only.
+  'management_request_topic.created': {
+    log: 'tenant',
+    target: 'management_request_topic',
+    sensitive: ['nameAr', 'nameEn'],
+  },
+  'management_request_topic.updated': {
+    log: 'tenant',
+    target: 'management_request_topic',
+    sensitive: ['nameAr', 'nameEn'],
+  },
+  // changes: autoCloseDays, appointmentSlotMinutes, appointmentSlotCapacity.
+  'management.settings_changed': { log: 'tenant', target: 'tenant' },
+  // changes: windows, each as `<weekday>:<startMinute>-<endMinute>`.
+  'management.office_hours_changed': { log: 'tenant', target: 'tenant' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

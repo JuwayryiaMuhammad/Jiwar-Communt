@@ -18,13 +18,14 @@
 // pieces and each carries every pattern that applies to its files.
 
 /** Top-level domain folders under src/. The unit test keeps this in sync with the disk. */
-const DOMAINS = ['community', 'gate', 'maintenance'];
+const DOMAINS = ['community', 'gate', 'maintenance', 'management'];
 
 /**
  * Domains a domain must not import at all, not even through the index:
- * maintenance reads community only (ADR 0032).
+ * maintenance reads community only (ADR 0032); management reads community
+ * and maintenance (ADR 0039).
  */
-const NO_IMPORT = { maintenance: ['gate'] };
+const NO_IMPORT = { maintenance: ['gate'], management: ['gate'] };
 
 const BASE_PRISMA = {
   group: ['**/base-prisma', '**/database/base-prisma'],
@@ -56,7 +57,7 @@ function otherDomainsInternals(domain) {
     banned.includes(d)
       ? {
           group: [`**/${d}`, `**/${d}/**`],
-          message: `${domain} must not import ${d} at all (ADR 0032).`,
+          message: `${domain} must not import ${d} at all (ADR 0032, 0039).`,
         }
       : {
           group: [`**/${d}/**`, `!**/${d}/index`],

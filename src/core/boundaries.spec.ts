@@ -140,6 +140,50 @@ describe('import boundaries', () => {
     expect(fromCore[0]).toContain('src/core must not import a domain');
   });
 
+  it('the management domain imports core, community and maintenance only through their index.ts, and never the gate (ADR 0039)', async () => {
+    const management = 'src/management/requests/x.ts';
+    expect(
+      await problems(
+        management,
+        "import { A } from '../../core/audit/audit.service';",
+      ),
+    ).toEqual([]);
+    for (const domain of ['community', 'maintenance']) {
+      expect(
+        await problems(management, `import { A } from '../../${domain}';`),
+      ).toEqual([]);
+    }
+    for (const [deep, domain] of [
+      ['../../community/capabilities/capabilities', 'community'],
+      ['../../maintenance/tickets/tickets.service', 'maintenance'],
+    ]) {
+      const found = await problems(management, `import { A } from '${deep}';`);
+      expect(found).toHaveLength(1);
+      expect(found[0]).toContain(
+        `Import ${domain} only through its public index.ts`,
+      );
+    }
+    for (const gate of ['../../gate', '../../gate/entries/verify.service']) {
+      const found = await problems(management, `import { A } from '${gate}';`);
+      expect(found).toHaveLength(1);
+      expect(found[0]).toContain('management must not import gate at all');
+    }
+    const fromCore = await problems(
+      'src/core/sweep/x.ts',
+      "import { A } from '../../management';",
+    );
+    expect(fromCore).toHaveLength(1);
+    expect(fromCore[0]).toContain('src/core must not import a domain');
+    const deep = await problems(
+      'src/community/residents/x.ts',
+      "import { A } from '../../management/requests/requests.service';",
+    );
+    expect(deep).toHaveLength(1);
+    expect(deep[0]).toContain(
+      'Import management only through its public index.ts',
+    );
+  });
+
   it('other domains reach maintenance only through its index.ts; maintenance never the base client, the port file or the gate index (ADR 0032)', async () => {
     for (const from of [
       'src/community/residents/x.ts',

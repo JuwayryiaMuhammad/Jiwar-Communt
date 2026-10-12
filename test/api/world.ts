@@ -116,6 +116,8 @@ export interface World {
   bEntryCredentialId: string;
   /** One of B's ticket categories (seeded, ADR 0032). */
   bCategoryId: string;
+  /** One of B's management request topics (seeded, ADR 0039). */
+  bManagementTopicId: string;
   /** A ticket B's owner opened on B's home, assigned to B's technician. */
   bTicketId: string;
   /** A visit B's technician proposed on that ticket (ADR 0034). */
@@ -442,6 +444,11 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
         'technician',
       ),
   );
+  const bManagementTopic = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.managementRequestTopic.findFirstOrThrow({
+      where: { key: 'general' },
+    }),
+  );
   const aCategory = await helpers.asManager(a, () =>
     helpers.prisma.tenant.ticketCategory.findFirstOrThrow({
       where: { key: 'plumbing' },
@@ -496,6 +503,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bExportId,
     aSpecialtyId: aSpecialty.id,
     bCategoryId: bCategory.id,
+    bManagementTopicId: bManagementTopic.id,
     bTicketId: bTicket.id,
     bVisitId: bVisit.id,
     bUnitId: b.homeUnitId,

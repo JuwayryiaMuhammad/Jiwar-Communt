@@ -192,6 +192,60 @@ describe('API v0 — no-store', () => {
   }
 
   const CALLS: Record<string, () => Promise<Response>> = {
+    // Requests to the management (ADR 0039): every response is no-store.
+    'GET /management/request-topics': () =>
+      call(w, 'GET', '/management/request-topics', {
+        token: w.a.tokens.manager,
+      }),
+    'POST /management/request-topics': () =>
+      call(w, 'POST', '/management/request-topics', {
+        token: w.a.tokens.manager,
+        body: {
+          key: 'no_store_topic',
+          nameAr: 'موضوع',
+          nameEn: 'Topic',
+          targetResponseHours: 24,
+        },
+      }),
+    'PATCH /management/request-topics/{id}': async () => {
+      const topic = await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.managementRequestTopic.findFirstOrThrow({
+          where: { key: 'documents' },
+        }),
+      );
+      return call(w, 'PATCH', `/management/request-topics/${topic.id}`, {
+        token: w.a.tokens.manager,
+        body: { targetResponseHours: 72 },
+      });
+    },
+    'GET /management-request-topics': () =>
+      call(w, 'GET', '/management-request-topics', {
+        token: w.a.tokens.owner,
+      }),
+    'GET /management/request-settings': () =>
+      call(w, 'GET', '/management/request-settings', {
+        token: w.a.tokens.manager,
+      }),
+    'PATCH /management/request-settings': () =>
+      call(w, 'PATCH', '/management/request-settings', {
+        token: w.a.tokens.manager,
+        body: { autoCloseDays: 7 },
+      }),
+    'GET /management/office-hours': () =>
+      call(w, 'GET', '/management/office-hours', {
+        token: w.a.tokens.manager,
+      }),
+    'PUT /management/office-hours': () =>
+      call(w, 'PUT', '/management/office-hours', {
+        token: w.a.tokens.manager,
+        body: {
+          windows: [0, 1, 2, 3, 4, 6].map((weekday) => ({
+            weekday,
+            startMinute: 540,
+            endMinute: 1020,
+          })),
+        },
+      }),
     // Not a secret, but live: a cached answer would show a closed gate open.
     'GET /gates/status': () =>
       call(w, 'GET', '/gates/status', { token: w.a.tokens.owner }),

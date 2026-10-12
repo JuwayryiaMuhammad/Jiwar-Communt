@@ -239,6 +239,9 @@ export const ErrorCode = {
    * open_worker_obligations).
    */
   DELETION_BLOCKED: 'DELETION_BLOCKED',
+  // requests to the management (ADR 0039)
+  /** Unknown, or another compound's. */
+  MANAGEMENT_TOPIC_NOT_FOUND: 'MANAGEMENT_TOPIC_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -306,6 +309,9 @@ export const FieldErrorCode = {
   WAGE_PERIOD_IN_FUTURE: 'WAGE_PERIOD_IN_FUTURE',
   /** A month before the engagement's first; params.first. */
   WAGE_PERIOD_BEFORE_ENGAGEMENT: 'WAGE_PERIOD_BEFORE_ENGAGEMENT',
+  // requests to the management (ADR 0039)
+  /** Overlaps an earlier window of the same weekday; params.other is its index. */
+  OFFICE_HOURS_OVERLAP: 'OFFICE_HOURS_OVERLAP',
 } as const;
 
 export type FieldErrorCode =

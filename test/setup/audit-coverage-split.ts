@@ -167,3 +167,14 @@ export const R1_COVERAGE: readonly string[] = [
   'data_export.expired',
   'data_export.failed',
 ];
+
+/**
+ * Requests to the management (ADR 0039), covered by
+ * test/management/audit-coverage.e2e-spec.ts.
+ */
+export const MANAGEMENT_COVERAGE: readonly string[] = [
+  'management_request_topic.created',
+  'management_request_topic.updated',
+  'management.settings_changed',
+  'management.office_hours_changed',
+];

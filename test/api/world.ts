@@ -15,6 +15,7 @@ import { LoginAlerts } from '../../src/core/auth/login-alerts';
 import { Notifier } from '../../src/core/notifications/notifier';
 import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
 import { ApprovalsService } from '../../src/gate/approvals/approvals.service';
+import { RequestsService } from '../../src/management/requests/requests.service';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
 import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
 import { VisitsService } from '../../src/maintenance/visits/visits.service';
@@ -118,6 +119,8 @@ export interface World {
   bCategoryId: string;
   /** One of B's management request topics (seeded, ADR 0039). */
   bManagementTopicId: string;
+  /** A request B's owner opened to B's management. */
+  bManagementRequestId: string;
   /** A ticket B's owner opened on B's home, assigned to B's technician. */
   bTicketId: string;
   /** A visit B's technician proposed on that ticket (ADR 0034). */
@@ -449,6 +452,13 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       where: { key: 'general' },
     }),
   );
+  const bManagementRequest = await asBOwner(() =>
+    h.moduleRef.get(RequestsService).create({
+      type: 'question',
+      topicId: bManagementTopic.id,
+      body: 'World',
+    }),
+  );
   const aCategory = await helpers.asManager(a, () =>
     helpers.prisma.tenant.ticketCategory.findFirstOrThrow({
       where: { key: 'plumbing' },
@@ -504,6 +514,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     aSpecialtyId: aSpecialty.id,
     bCategoryId: bCategory.id,
     bManagementTopicId: bManagementTopic.id,
+    bManagementRequestId: bManagementRequest.id,
     bTicketId: bTicket.id,
     bVisitId: bVisit.id,
     bUnitId: b.homeUnitId,

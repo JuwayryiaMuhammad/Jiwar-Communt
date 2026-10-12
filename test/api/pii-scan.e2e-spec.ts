@@ -655,6 +655,45 @@ describe('API v0 — PII leak scan', () => {
     );
     windowMarks.push(oldStart.toISOString(), oldEnd.toISOString());
 
+    // Requests to the management (ADR 0039): the primary's, with a reply, a
+    // staff note and a rating; and one of the family member's own.
+    const generalTopic = await manager(() =>
+      c.prisma.tenant.managementRequestTopic.findFirstOrThrow({
+        where: { key: 'general' },
+      }),
+    );
+    const primaryToken = await w.tokenFor(a, primary.id, 'resident');
+    const openRequest = async (token: string, text: string) =>
+      (
+        (
+          await call(w, 'POST', '/management-requests', {
+            token,
+            body: { type: 'question', topicId: generalTopic.id, body: text },
+          }).expect(201)
+        ).body as { id: string }
+      ).id;
+    const mgmtRequest = await openRequest(primaryToken, 'PII-REQUEST-text');
+    await openRequest(
+      await w.tokenFor(a, family.id, 'family'),
+      'PII-FAMILY-REQUEST-text',
+    );
+    for (const message of [
+      { body: 'PII-REQUEST-reply' },
+      { body: 'PII-REQUEST-note', internal: true },
+    ])
+      await call(w, 'POST', `/management/requests/${mgmtRequest}/messages`, {
+        token: a.tokens.manager,
+        body: message,
+      }).expect(201);
+    await call(w, 'POST', `/management/requests/${mgmtRequest}/close`, {
+      token: a.tokens.manager,
+      body: { reasonCode: 'resolved' },
+    }).expect(204);
+    await call(w, 'POST', `/management-requests/${mgmtRequest}/rating`, {
+      token: primaryToken,
+      body: { rating: 2, comment: 'PII-REQUEST-comment' },
+    }).expect(201);
+
     /** One id for every param of the path, or each param by name. */
     type Ids = string | Record<string, string>;
     const params: Record<string, Ids> = {
@@ -715,6 +754,13 @@ describe('API v0 — PII leak scan', () => {
       // Where an assisted export and a deletion request stand: no link.
       '/accounts/{id}/data-exports': primary.id,
       '/accounts/{id}/deletion-request': leaving.id,
+      // ADR 0039: the primary's own request.
+      '/management-requests/{id}': mgmtRequest,
+      '/management-requests/{id}/messages': mgmtRequest,
+      '/management/requests/{id}': mgmtRequest,
+      '/management/requests/{id}/messages': mgmtRequest,
+      '/management/requests/{id}/rating': mgmtRequest,
+      '/management/units/{unitId}/request-authors': unit.id,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented
@@ -958,6 +1004,35 @@ describe('API v0 — PII leak scan', () => {
           for (const s of [...windowMarks, 'absence', 'receiver', 'consent'])
             if (trail.includes(s)) leaks.push(`${name} ${r.path}: audit ${s}`);
         }
+        // Requests to the management (ADR 0039). A request is its author's
+        // alone on the resident side: its words reach the author and the
+        // staff (the manager here, whose inbox also carries a preview of
+        // the first message) and nobody else — not the household, a
+        // landlord, a guard, a technician or the platform. A staff note
+        // reaches the staff only. Nothing anyone typed is in the audit
+        // trail or in a notification, whoever reads it.
+        const requestWords = [
+          'PII-REQUEST-text',
+          'PII-REQUEST-reply',
+          'PII-REQUEST-comment',
+        ];
+        if (name !== 'manager') {
+          if (found('PII-REQUEST-note'))
+            leaks.push(`${name} ${r.path}: a staff note`);
+          if (name !== 'resident')
+            for (const s of requestWords)
+              if (found(s)) leaks.push(`${name} ${r.path}: ${s}`);
+          if (name !== 'family' && found('PII-FAMILY-REQUEST-text'))
+            leaks.push(`${name} ${r.path}: a family member's request`);
+          if (found('"preview"')) leaks.push(`${name} ${r.path}: a preview`);
+        }
+        if (r.path.includes('audit') || r.path.includes('notifications'))
+          for (const s of [
+            ...requestWords,
+            'PII-REQUEST-note',
+            'PII-FAMILY-REQUEST-text',
+          ])
+            if (found(s)) leaks.push(`${name} ${r.path}: free text ${s}`);
         if (['resident', 'landlord', 'family', 'guard'].includes(name)) {
           // Internal messages and ratings are staff's (ADR 0032).
           for (const s of ['PII-INTERNAL-note', 'PII-FEEDBACK-comment'])
@@ -995,6 +1070,29 @@ describe('API v0 — PII leak scan', () => {
       }
     }
     expect(leaks).toEqual([]);
+
+    // Requests, positively: the scan saw the words where they belong.
+    const asResident = (path: string) => seen.get(`resident ${path}`) ?? '';
+    const asStaff = (path: string) => seen.get(`manager ${path}`) ?? '';
+    expect(asResident('/management-requests/{id}/messages')).toContain(
+      'PII-REQUEST-reply',
+    );
+    expect(asResident('/management-requests/{id}')).toContain(
+      'PII-REQUEST-comment',
+    );
+    expect(asStaff('/management/requests/{id}/messages')).toContain(
+      'PII-REQUEST-note',
+    );
+    // The staff inbox item carries the preview; no resident list does.
+    expect(asStaff('/management/requests')).toContain(
+      '"preview":"PII-REQUEST-text"',
+    );
+    expect(asStaff('/management/requests/{id}/rating')).toContain(
+      'PII-REQUEST-comment',
+    );
+    expect(seen.get('family /management-requests') ?? '').toContain(
+      'PII-FAMILY-REQUEST-text',
+    );
 
     // Wages, positively: the plain member reads the home's worker without
     // the wage, while the primary and the manager read what was hidden.

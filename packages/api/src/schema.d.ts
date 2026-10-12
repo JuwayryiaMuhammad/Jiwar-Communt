@@ -1773,6 +1773,523 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/management-appointment-slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the free appointment slots */
+        get: operations["ResidentAppointmentSlotsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management-request-topics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the topics a request may be opened under */
+        get: operations["TopicOptionsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List my requests to the management */
+        get: operations["ResidentRequestsController_list"];
+        put?: never;
+        /** Open a request to the management */
+        post: operations["ResidentRequestsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management-requests/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one of my requests to the management */
+        get: operations["ResidentRequestsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management-requests/{id}/appointment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pick a slot for my appointment */
+        post: operations["ResidentAppointmentsController_book"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management-requests/{id}/appointment/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept the slot the management proposed */
+        post: operations["ResidentAppointmentsController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management-requests/{id}/appointment/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel my appointment */
+        post: operations["ResidentAppointmentsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management-requests/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read the conversation of my request */
+        get: operations["ResidentRequestsController_thread"];
+        put?: never;
+        /** Write on my request */
+        post: operations["ResidentRequestsController_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management-requests/{id}/rating": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rate my closed request */
+        post: operations["ResidentRequestsController_rate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management-requests/{id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reopen my closed request */
+        post: operations["ResidentRequestsController_reopen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management-requests/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw my request */
+        post: operations["ResidentRequestsController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/appointment-slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the free appointment slots, with places left */
+        get: operations["StaffAppointmentsController_slots"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/appointments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the appointments, soonest first */
+        get: operations["StaffAppointmentsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/office-hours": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the office hours */
+        get: operations["OfficeHoursController_get"];
+        /** Replace the office hours */
+        put: operations["OfficeHoursController_replace"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/request-assignees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List who a request may be assigned to */
+        get: operations["RequestAssigneesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/request-ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the ratings of requests, newest first */
+        get: operations["RequestRatingsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/request-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the management request settings */
+        get: operations["RequestSettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update the management request settings */
+        patch: operations["RequestSettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/management/request-topics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List management request topics */
+        get: operations["TopicsController_list"];
+        put?: never;
+        /** Create a management request topic */
+        post: operations["TopicsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/request-topics/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a management request topic */
+        patch: operations["TopicsController_update"];
+        trace?: never;
+    };
+    "/api/v1/management/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the requests to the management */
+        get: operations["StaffRequestsController_list"];
+        put?: never;
+        /** Open a request for a resident */
+        post: operations["StaffRequestsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/requests/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one request to the management */
+        get: operations["StaffRequestsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/requests/{id}/appointment/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an appointment */
+        post: operations["StaffAppointmentsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/requests/{id}/appointment/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm the slot the resident picked */
+        post: operations["StaffAppointmentsController_confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/requests/{id}/appointment/propose": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Propose a slot, or counter the resident’s pick */
+        post: operations["StaffAppointmentsController_propose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/requests/{id}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Assign a request, or return it to the queue */
+        post: operations["StaffRequestsController_assign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/requests/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close a request */
+        post: operations["StaffRequestsController_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/requests/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read the conversation of a request, notes included */
+        get: operations["StaffRequestsController_thread"];
+        put?: never;
+        /** Reply to a request, or add a staff note */
+        post: operations["StaffRequestsController_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/requests/{id}/rating": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the rating of a request */
+        get: operations["RequestRatingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/requests/{id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take an open request in hand */
+        post: operations["StaffRequestsController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/units/{unitId}/request-authors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List who a request may be opened for in a unit */
+        get: operations["RequestUnitsController_authors"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -2198,6 +2715,23 @@ export interface paths {
         post?: never;
         /** Remove my photo */
         delete: operations["MePhotoController_remove"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all my requests: tickets and requests to the management */
+        get: operations["MyRequestsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -4550,6 +5084,44 @@ export interface components {
         ActivationView: {
             missing: ("unitType" | "areaSqm" | "building")[];
         };
+        AppointmentBookedView: {
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            startsAt: string;
+            status: components["schemas"]["ManagementAppointmentStatus"];
+        };
+        AppointmentSlotView: {
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: date-time */
+            startsAt: string;
+        };
+        AppointmentSlotViewList: {
+            data: components["schemas"]["AppointmentSlotView"][];
+            nextCursor: string | null;
+        };
+        AppointmentView: {
+            /** @description On a cancelled appointment: the reason code. */
+            cancelReason: string | null;
+            /** @description Who cancelled it; `system` when its request closed. */
+            cancelledBy: components["schemas"]["ManagementActorSide"] | null;
+            /** Format: date-time */
+            confirmedAt: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            mode: components["schemas"]["ManagementAppointmentMode"];
+            /** @description Who chose this slot. */
+            proposedBy: components["schemas"]["ManagementSide"];
+            /** Format: date-time */
+            startsAt: string;
+            /** @description `requested` waits for the management, `proposed` waits for the resident, `confirmed` is agreed. */
+            status: components["schemas"]["ManagementAppointmentStatus"];
+        };
         ApproveRegistrationDto: {
             /** @description Adds the unit to the same person's existing resident account (same phone AND email). */
             linkToExistingAccount?: boolean;
@@ -4568,6 +5140,13 @@ export interface components {
         AssignDto: {
             /** Format: uuid */
             technicianId: string;
+        };
+        AssignRequestDto: {
+            /**
+             * Format: uuid
+             * @description An active account holding `requests.handle` (ASSIGNEE_NOT_ELIGIBLE), or null for the unassigned queue.
+             */
+            assigneeId: string | null;
         };
         AssignmentView: {
             /** Format: date-time */
@@ -4678,6 +5257,14 @@ export interface components {
         BirthDateDto: {
             /** Format: date */
             birthDate: string;
+        };
+        CancelAppointmentByResidentDto: {
+            /** @enum {string} */
+            reasonCode: "no_longer_needed" | "cannot_attend" | "other";
+        };
+        CancelAppointmentByStaffDto: {
+            /** @enum {string} */
+            reasonCode: "staff_unavailable" | "office_closed" | "other";
         };
         CancelVisitorPassDto: {
             /** @description From the closed list `visitorPassCancel`. */
@@ -4823,6 +5410,10 @@ export interface components {
         ClearReviewFlagDto: {
             /** @description From the closed list `reviewClear`. */
             reasonCode: string;
+        };
+        CloseRequestDto: {
+            /** @enum {string} */
+            reasonCode: "resolved" | "duplicate" | "not_for_management" | "other";
         };
         ClosedModeDto: {
             closed: boolean;
@@ -5023,6 +5614,56 @@ export interface components {
             /** @description The order the residents see, lowest first; after the others when absent. */
             position?: number;
         };
+        CreateRequestDto: {
+            /** @description Required for an `appointment` request, refused for any other type. */
+            appointment?: components["schemas"]["SlotChoiceDto"];
+            /** @description The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). */
+            attachmentFileIds?: string[];
+            /** @description What the request says: it becomes its first message. */
+            body: string;
+            /**
+             * Format: uuid
+             * @description An active topic of the compound (TOPIC_NOT_AVAILABLE).
+             */
+            topicId: string;
+            /** @description An `appointment` names its slot in `appointment`. */
+            type: components["schemas"]["ManagementRequestType"];
+            /**
+             * Format: uuid
+             * @description One of the author’s units, when the request is about one.
+             */
+            unitId?: string;
+        };
+        CreateRequestOnBehalfDto: {
+            /** @description Required for an `appointment` request, refused for any other type. */
+            appointment?: components["schemas"]["SlotChoiceDto"];
+            /** @description The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). */
+            attachmentFileIds?: string[];
+            /**
+             * Format: uuid
+             * @description The resident the request is for: an active resident or family account (AUTHOR_NOT_ELIGIBLE). They are its author.
+             */
+            authorAccountId: string;
+            /** @description What the request says: it becomes its first message. */
+            body: string;
+            /**
+             * @description How the resident reached the management.
+             * @enum {string}
+             */
+            reasonCode: "resident_phone_call" | "resident_walk_in" | "resident_written_letter";
+            /**
+             * Format: uuid
+             * @description An active topic of the compound (TOPIC_NOT_AVAILABLE).
+             */
+            topicId: string;
+            /** @description An `appointment` names its slot in `appointment`. */
+            type: components["schemas"]["ManagementRequestType"];
+            /**
+             * Format: uuid
+             * @description One of the author’s units, when the request is about one.
+             */
+            unitId?: string;
+        };
         CreateResidentDto: {
             /**
              * Format: date
@@ -5090,6 +5731,14 @@ export interface components {
             unitId?: string;
             /** @description The room (ADR 0038); with `unitId` only. */
             unitLocation?: components["schemas"]["TicketUnitLocation"];
+        };
+        CreateTopicDto: {
+            /** @description Stable code, lowercase (e.g. `parking`). Never changes once created. */
+            key: string;
+            nameAr: string;
+            nameEn: string;
+            /** @description Hours the management gives itself to answer. */
+            targetResponseHours: number;
         };
         CreateUnitDto: {
             building?: string;
@@ -5589,7 +6238,7 @@ export interface components {
             technicianRating: number | null;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -6019,6 +6668,30 @@ export interface components {
             email: string;
             phone: string;
         };
+        /**
+         * @description Who cancelled it; `system` when its request closed.
+         * @enum {string}
+         */
+        ManagementActorSide: "resident" | "staff" | "system";
+        /** @enum {string} */
+        ManagementAppointmentMode: "in_person" | "phone";
+        /**
+         * @description `requested` waits for the management, `proposed` waits for the resident, `confirmed` is agreed.
+         * @enum {string}
+         */
+        ManagementAppointmentStatus: "requested" | "proposed" | "confirmed" | "cancelled" | "superseded";
+        /** @enum {string} */
+        ManagementRequestStatus: "open" | "in_progress" | "answered" | "closed";
+        /**
+         * @description An `appointment` names its slot in `appointment`.
+         * @enum {string}
+         */
+        ManagementRequestType: "question" | "general" | "appointment";
+        /**
+         * @description Who chose this slot.
+         * @enum {string}
+         */
+        ManagementSide: "resident" | "staff";
         ManagerParcelDetailView: {
             carrier: components["schemas"]["ParcelCarrier"];
             events: components["schemas"]["ParcelEventView"][];
@@ -6077,6 +6750,10 @@ export interface components {
         ManagerParcelViewList: {
             data: components["schemas"]["ManagerParcelView"][];
             nextCursor: string | null;
+        };
+        ManagerRequestRatingView: {
+            /** @description Null: the author has not rated the request. */
+            rating: components["schemas"]["RequestRatingView"] | null;
         };
         ManagerView: {
             email?: string | null;
@@ -6143,6 +6820,16 @@ export interface components {
             /** @description Member ids; or send `all: true` instead. */
             memberIds?: string[];
         };
+        MessageAttachmentView: {
+            /** @description image/jpeg, image/png, image/webp or application/pdf. */
+            contentType: string;
+            /** Format: date-time */
+            expiresAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description A presigned GET, valid until `expiresAt`. Null when gone. */
+            url: string | null;
+        };
         MessageCreatedView: {
             /** Format: date-time */
             createdAt: string;
@@ -6185,6 +6872,36 @@ export interface components {
              * @description A finalized `resident_photo` of the caller's.
              */
             fileId: string;
+        };
+        MyRequestView: {
+            /** @description A ticket’s category key; null for a request. */
+            categoryKey: string | null;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date-time
+             * @description What the list is ordered by, newest first.
+             */
+            lastActivityAt: string;
+            /** @example MR-000123 */
+            number: string;
+            /** @description A request’s kind; null for a ticket. */
+            requestType: components["schemas"]["ManagementRequestType"] | null;
+            /** @description The item’s own status: a TicketStatus for a ticket, a ManagementRequestStatus for a request. */
+            status: string;
+            /** @description A request’s topic key; null for a ticket. */
+            topicKey: string | null;
+            /**
+             * @description `maintenance`: a ticket (`/tickets/{id}`). `management`: a request to the management (`/management-requests/{id}`).
+             * @enum {string}
+             */
+            type: "maintenance" | "management";
+            /** Format: uuid */
+            unitId: string | null;
+        };
+        MyRequestViewList: {
+            data: components["schemas"]["MyRequestView"][];
+            nextCursor: string | null;
         };
         MyRoleView: {
             /** Format: uuid */
@@ -6318,7 +7035,7 @@ export interface components {
             validUntil?: string;
         };
         /** @enum {string} */
-        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security";
+        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management";
         NotificationView: {
             /** Format: date-time */
             createdAt: string;
@@ -6374,6 +7091,18 @@ export interface components {
         OccupancyStatus: "active" | "ended";
         /** @enum {string} */
         OccupancyType: "owner" | "tenant";
+        OfficeHoursResponse: {
+            /** @description By weekday, then start. Empty: the office is closed. */
+            windows: components["schemas"]["OfficeWindowDto"][];
+        };
+        OfficeWindowDto: {
+            /** @description Minutes after local midnight; after the start. */
+            endMinute: number;
+            /** @description Minutes after midnight in the compound’s time zone. */
+            startMinute: number;
+            /** @description 0 is Sunday, 6 is Saturday. */
+            weekday: number;
+        };
         OtpRequestedView: {
             /**
              * @description Stable key for the frontend to translate.
@@ -6639,6 +7368,26 @@ export interface components {
              */
             scope: "full" | "password_change";
         };
+        PostRequestMessageDto: {
+            /** @description The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). */
+            attachmentFileIds?: string[];
+            body: string;
+        };
+        PostStaffRequestMessageDto: {
+            /** @description The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). */
+            attachmentFileIds?: string[];
+            body: string;
+            /**
+             * @description A staff note: the author never sees it or its attachments, and it moves nothing.
+             * @default false
+             */
+            internal: boolean;
+            /**
+             * @description The official reply: the request becomes answered. Chosen when sending and never changed; not with `internal`.
+             * @default false
+             */
+            official: boolean;
+        };
         PreferencesView: {
             categories: components["schemas"]["CategoryPreferenceView"][];
             pause: components["schemas"]["PauseView"] | null;
@@ -6718,6 +7467,22 @@ export interface components {
             end: string;
             /** @example 22:00 */
             start: string;
+        };
+        RateRequestDto: {
+            comment?: string;
+            rating: number;
+        };
+        RatingListItemView: {
+            /** @description Optional; null too once its author was erased. */
+            comment: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            rating: number;
+            request: components["schemas"]["StaffRequestView"];
+        };
+        RatingListItemViewList: {
+            data: components["schemas"]["RatingListItemView"][];
+            nextCursor: string | null;
         };
         ReadAllView: {
             read: number;
@@ -6843,13 +7608,74 @@ export interface components {
             /** @description From the closed list `parcelReject`: not_ours, not_expected, other. */
             reasonCode: string;
         };
+        ReplaceOfficeHoursDto: {
+            /** @description The whole week. Windows of one weekday may touch, never overlap (OFFICE_HOURS_OVERLAP). An empty list closes the office. */
+            windows: components["schemas"]["OfficeWindowDto"][];
+        };
         ReplacePermissionsDto: {
             /** @description The whole set; keys from GET /permissions. The manager role keeps roles.manage and residents.manage. */
             permissions: string[];
         };
+        RequestCreatedView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @example MR-000123 */
+            number: string;
+            status: components["schemas"]["ManagementRequestStatus"];
+        };
+        RequestEscalationView: {
+            cycle: number;
+            /**
+             * Format: date-time
+             * @description The response time that passed.
+             */
+            dueAt: string;
+            /** Format: date-time */
+            escalatedAt: string;
+        };
         RequestOtpDto: {
             /** @description Email or phone (local Egyptian format or international). */
             identifier: string;
+        };
+        RequestPersonView: {
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+        };
+        RequestPersonViewList: {
+            data: components["schemas"]["RequestPersonView"][];
+            nextCursor: string | null;
+        };
+        RequestRatingView: {
+            /** @description Optional; null too once its author was erased. */
+            comment: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            rating: number;
+        };
+        RequestSettingsResponse: {
+            /** @description Appointments one slot takes. */
+            appointmentSlotCapacity: number;
+            /** @description The length of an appointment slot, in minutes. */
+            appointmentSlotMinutes: number;
+            /** @description Days an answered request waits for its author before it closes itself. */
+            autoCloseDays: number;
+        };
+        RequestTopicRefView: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+        };
+        RequestUnitRefView: {
+            code: string | null;
+            /** Format: uuid */
+            id: string;
         };
         ResidenceDto: {
             resides: boolean;
@@ -6943,6 +7769,104 @@ export interface components {
              */
             id: string;
             kind: components["schemas"]["VisitReceiverKind"];
+        };
+        ResidentRequestDetailView: {
+            /** @description On an appointment request: the live appointment, else the last one. */
+            appointment: components["schemas"]["AppointmentView"] | null;
+            /** @description Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`. */
+            closeReason: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description 1 when opened; one more each time it is reopened. */
+            cycle: number;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date-time
+             * @description What the lists are ordered by.
+             */
+            lastActivityAt: string;
+            /** @example MR-000123 */
+            number: string;
+            /** @description Opened by the management on the author’s behalf. */
+            openedByManagement: boolean;
+            /** @description The author’s own rating, once given. */
+            rating: components["schemas"]["RequestRatingView"] | null;
+            /**
+             * Format: date-time
+             * @description On a closed request: until when the author may reopen it.
+             */
+            reopenUntil: string | null;
+            /**
+             * Format: date-time
+             * @description While the request waits for a first response: when the management means to give it.
+             */
+            responseDueAt: string | null;
+            status: components["schemas"]["ManagementRequestStatus"];
+            topic: components["schemas"]["RequestTopicRefView"];
+            type: components["schemas"]["ManagementRequestType"];
+            /** @description The unit the request is about, when it names one. */
+            unit: components["schemas"]["RequestUnitRefView"] | null;
+        };
+        ResidentRequestMessageView: {
+            attachments: components["schemas"]["MessageAttachmentView"][];
+            /** @description Null once its sender was erased. */
+            body: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            erased: boolean;
+            /** Format: uuid */
+            id: string;
+            /** @description The management’s official reply to the request. */
+            official: boolean;
+            sender: components["schemas"]["FirstNameRefView"];
+            senderSide: components["schemas"]["ManagementSide"];
+        };
+        ResidentRequestMessageViewList: {
+            data: components["schemas"]["ResidentRequestMessageView"][];
+            nextCursor: string | null;
+        };
+        ResidentRequestView: {
+            /** @description Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`. */
+            closeReason: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description 1 when opened; one more each time it is reopened. */
+            cycle: number;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date-time
+             * @description What the lists are ordered by.
+             */
+            lastActivityAt: string;
+            /** @example MR-000123 */
+            number: string;
+            /** @description Opened by the management on the author’s behalf. */
+            openedByManagement: boolean;
+            /**
+             * Format: date-time
+             * @description On a closed request: until when the author may reopen it.
+             */
+            reopenUntil: string | null;
+            /**
+             * Format: date-time
+             * @description While the request waits for a first response: when the management means to give it.
+             */
+            responseDueAt: string | null;
+            status: components["schemas"]["ManagementRequestStatus"];
+            topic: components["schemas"]["RequestTopicRefView"];
+            type: components["schemas"]["ManagementRequestType"];
+            /** @description The unit the request is about, when it names one. */
+            unit: components["schemas"]["RequestUnitRefView"] | null;
+        };
+        ResidentRequestViewList: {
+            data: components["schemas"]["ResidentRequestView"][];
+            nextCursor: string | null;
         };
         ResidentTicketDetailView: {
             /**
@@ -7342,6 +8266,14 @@ export interface components {
             normal: components["schemas"]["SlaTargetView"];
             urgent: components["schemas"]["SlaTargetView"];
         };
+        SlotChoiceDto: {
+            mode: components["schemas"]["ManagementAppointmentMode"];
+            /**
+             * Format: date-time
+             * @description The start of one of the offered slots, exactly (APPOINTMENT_SLOT_NOT_OFFERED); at least an hour and at most thirty days from now.
+             */
+            startsAt: string;
+        };
         SpecialtyIdsDto: {
             /** @description The whole set, replacing the current one; empty clears it. Active specialties of the compound only. */
             specialtyIds: string[];
@@ -7365,6 +8297,42 @@ export interface components {
             data: components["schemas"]["SpecialtyView"][];
             nextCursor: string | null;
         };
+        StaffAppointmentListItemView: {
+            /** @description On a cancelled appointment: the reason code. */
+            cancelReason: string | null;
+            /** @description Who cancelled it; `system` when its request closed. */
+            cancelledBy: components["schemas"]["ManagementActorSide"] | null;
+            /** Format: date-time */
+            confirmedAt: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            mode: components["schemas"]["ManagementAppointmentMode"];
+            /** @description Who chose this slot. */
+            proposedBy: components["schemas"]["ManagementSide"];
+            request: components["schemas"]["StaffRequestView"];
+            /** Format: date-time */
+            startsAt: string;
+            /** @description `requested` waits for the management, `proposed` waits for the resident, `confirmed` is agreed. */
+            status: components["schemas"]["ManagementAppointmentStatus"];
+        };
+        StaffAppointmentListItemViewList: {
+            data: components["schemas"]["StaffAppointmentListItemView"][];
+            nextCursor: string | null;
+        };
+        StaffAppointmentSlotView: {
+            /** Format: date-time */
+            endsAt: string;
+            /** @description How many more appointments the slot takes. */
+            remaining: number;
+            /** Format: date-time */
+            startsAt: string;
+        };
+        StaffAppointmentSlotViewList: {
+            data: components["schemas"]["StaffAppointmentSlotView"][];
+            nextCursor: string | null;
+        };
         StaffMessageDto: {
             body: string;
             /**
@@ -7372,6 +8340,187 @@ export interface components {
              * @default false
              */
             internal: boolean;
+        };
+        StaffRequestDetailView: {
+            /** Format: date-time */
+            answeredAt: string | null;
+            /** @description On an appointment request: the live appointment, else the last one. */
+            appointment: components["schemas"]["AppointmentView"] | null;
+            /** @description Null: in the unassigned queue. */
+            assignee: components["schemas"]["AccountRefView"] | null;
+            author: components["schemas"]["AccountRefView"];
+            /** @description Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`. */
+            closeReason: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description 1 when opened; one more each time it is reopened. */
+            cycle: number;
+            /**
+             * Format: date-time
+             * @description When this cycle was escalated (at most once).
+             */
+            escalatedAt: string | null;
+            /** @description At most one per cycle, oldest first. */
+            escalations: components["schemas"]["RequestEscalationView"][];
+            /**
+             * Format: date-time
+             * @description The cycle’s first staff response.
+             */
+            firstResponseAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date-time
+             * @description What the lists are ordered by.
+             */
+            lastActivityAt: string;
+            /** @example MR-000123 */
+            number: string;
+            /** @description Why it was opened on the author’s behalf (a reason code). */
+            onBehalfReason: string | null;
+            /** @description The staff member who opened it for the author. */
+            openedBy: components["schemas"]["AccountRefView"] | null;
+            /** @description The response time has passed and nobody has responded in this cycle. */
+            overdue: boolean;
+            /**
+             * Format: date-time
+             * @description The cycle’s response time: its start plus the topic’s target.
+             */
+            responseDueAt: string;
+            status: components["schemas"]["ManagementRequestStatus"];
+            topic: components["schemas"]["RequestTopicRefView"];
+            type: components["schemas"]["ManagementRequestType"];
+            /** @description The unit the request is about, when it names one. */
+            unit: components["schemas"]["RequestUnitRefView"] | null;
+        };
+        StaffRequestListItemView: {
+            /** Format: date-time */
+            answeredAt: string | null;
+            /** @description Null: in the unassigned queue. */
+            assignee: components["schemas"]["AccountRefView"] | null;
+            author: components["schemas"]["AccountRefView"];
+            /** @description Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`. */
+            closeReason: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description 1 when opened; one more each time it is reopened. */
+            cycle: number;
+            /**
+             * Format: date-time
+             * @description When this cycle was escalated (at most once).
+             */
+            escalatedAt: string | null;
+            /**
+             * Format: date-time
+             * @description The cycle’s first staff response.
+             */
+            firstResponseAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date-time
+             * @description What the lists are ordered by.
+             */
+            lastActivityAt: string;
+            /** @example MR-000123 */
+            number: string;
+            /** @description Why it was opened on the author’s behalf (a reason code). */
+            onBehalfReason: string | null;
+            /** @description The staff member who opened it for the author. */
+            openedBy: components["schemas"]["AccountRefView"] | null;
+            /** @description The response time has passed and nobody has responded in this cycle. */
+            overdue: boolean;
+            /** @description The first 120 characters of the request’s first message, as written. Null once that message was erased. Staff inbox only. */
+            preview: string | null;
+            /**
+             * Format: date-time
+             * @description The cycle’s response time: its start plus the topic’s target.
+             */
+            responseDueAt: string;
+            status: components["schemas"]["ManagementRequestStatus"];
+            topic: components["schemas"]["RequestTopicRefView"];
+            type: components["schemas"]["ManagementRequestType"];
+            /** @description The unit the request is about, when it names one. */
+            unit: components["schemas"]["RequestUnitRefView"] | null;
+        };
+        StaffRequestListItemViewList: {
+            data: components["schemas"]["StaffRequestListItemView"][];
+            nextCursor: string | null;
+        };
+        StaffRequestMessageView: {
+            attachments: components["schemas"]["MessageAttachmentView"][];
+            /** @description Null once its sender was erased. */
+            body: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description The request’s cycle when it was written. */
+            cycle: number;
+            erased: boolean;
+            /** Format: uuid */
+            id: string;
+            /** @description A staff note: the author never sees it. */
+            internal: boolean;
+            official: boolean;
+            sender: components["schemas"]["AccountRefView"];
+            senderSide: components["schemas"]["ManagementSide"];
+        };
+        StaffRequestMessageViewList: {
+            data: components["schemas"]["StaffRequestMessageView"][];
+            nextCursor: string | null;
+        };
+        StaffRequestView: {
+            /** Format: date-time */
+            answeredAt: string | null;
+            /** @description Null: in the unassigned queue. */
+            assignee: components["schemas"]["AccountRefView"] | null;
+            author: components["schemas"]["AccountRefView"];
+            /** @description Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`. */
+            closeReason: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description 1 when opened; one more each time it is reopened. */
+            cycle: number;
+            /**
+             * Format: date-time
+             * @description When this cycle was escalated (at most once).
+             */
+            escalatedAt: string | null;
+            /**
+             * Format: date-time
+             * @description The cycle’s first staff response.
+             */
+            firstResponseAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date-time
+             * @description What the lists are ordered by.
+             */
+            lastActivityAt: string;
+            /** @example MR-000123 */
+            number: string;
+            /** @description Why it was opened on the author’s behalf (a reason code). */
+            onBehalfReason: string | null;
+            /** @description The staff member who opened it for the author. */
+            openedBy: components["schemas"]["AccountRefView"] | null;
+            /** @description The response time has passed and nobody has responded in this cycle. */
+            overdue: boolean;
+            /**
+             * Format: date-time
+             * @description The cycle’s response time: its start plus the topic’s target.
+             */
+            responseDueAt: string;
+            status: components["schemas"]["ManagementRequestStatus"];
+            topic: components["schemas"]["RequestTopicRefView"];
+            type: components["schemas"]["ManagementRequestType"];
+            /** @description The unit the request is about, when it names one. */
+            unit: components["schemas"]["RequestUnitRefView"] | null;
         };
         StartShiftDto: {
             /** Format: uuid */
@@ -7660,6 +8809,41 @@ export interface components {
             /** Format: date-time */
             refreshTokenExpiresAt: string;
         };
+        TopicOptionView: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+            /** @description Hours the management gives itself to answer. */
+            targetResponseHours: number;
+        };
+        TopicOptionViewList: {
+            data: components["schemas"]["TopicOptionView"][];
+            nextCursor: string | null;
+        };
+        TopicView: {
+            active: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+            /** @description Hours the management gives itself to answer. */
+            targetResponseHours: number;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        TopicViewList: {
+            data: components["schemas"]["TopicView"][];
+            nextCursor: string | null;
+        };
         TransferOwnershipDto: {
             /** @description What the person is told (at most 1000 characters). Never stored in the audit trail. */
             reason: string;
@@ -7892,6 +9076,14 @@ export interface components {
             nameEn?: string;
             position?: number;
         };
+        UpdateRequestSettingsDto: {
+            /** @description Appointments one slot takes. */
+            appointmentSlotCapacity?: number;
+            /** @description The length of an appointment slot, in minutes. */
+            appointmentSlotMinutes?: number;
+            /** @description Days an answered request waits for its author before it closes itself. */
+            autoCloseDays?: number;
+        };
         UpdateSettingsDto: {
             /**
              * @description Stored in E.164; on the visitor page and the worker card. `null` clears it.
@@ -7921,6 +9113,14 @@ export interface components {
             active?: boolean;
             nameAr?: string;
             nameEn?: string;
+        };
+        UpdateTopicDto: {
+            /** @description False retires the topic: no new request may use it. */
+            active?: boolean;
+            nameAr?: string;
+            nameEn?: string;
+            /** @description Applies to requests opened or reopened from now on; a running cycle keeps its due time. */
+            targetResponseHours?: number;
         };
         UploadHeadersView: {
             "Content-Type": string;
@@ -10963,6 +12163,863 @@ export interface operations {
             };
         };
     };
+    ResidentAppointmentSlotsController_list: {
+        parameters: {
+            query?: {
+                /** @description The first day, `YYYY-MM-DD` in the compound’s time zone; today by default. */
+                from?: string;
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentSlotViewList"];
+                };
+            };
+        };
+    };
+    TopicOptionsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopicOptionViewList"];
+                };
+            };
+        };
+    };
+    ResidentRequestsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["ManagementRequestStatus"];
+                type?: components["schemas"]["ManagementRequestType"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentRequestViewList"];
+                };
+            };
+        };
+    };
+    ResidentRequestsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestCreatedView"];
+                };
+            };
+        };
+    };
+    ResidentRequestsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentRequestDetailView"];
+                };
+            };
+        };
+    };
+    ResidentAppointmentsController_book: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SlotChoiceDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentBookedView"];
+                };
+            };
+        };
+    };
+    ResidentAppointmentsController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ResidentAppointmentsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelAppointmentByResidentDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ResidentRequestsController_thread: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentRequestMessageViewList"];
+                };
+            };
+        };
+    };
+    ResidentRequestsController_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostRequestMessageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageCreatedView"];
+                };
+            };
+        };
+    };
+    ResidentRequestsController_rate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RateRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestRatingView"];
+                };
+            };
+        };
+    };
+    ResidentRequestsController_reopen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostRequestMessageDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ResidentRequestsController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffAppointmentsController_slots: {
+        parameters: {
+            query?: {
+                /** @description The first day, `YYYY-MM-DD` in the compound’s time zone; today by default. */
+                from?: string;
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffAppointmentSlotViewList"];
+                };
+            };
+        };
+    };
+    StaffAppointmentsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["ManagementAppointmentStatus"];
+                /** @description Starting at or after. */
+                from?: string;
+                /** @description Starting before. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffAppointmentListItemViewList"];
+                };
+            };
+        };
+    };
+    OfficeHoursController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfficeHoursResponse"];
+                };
+            };
+        };
+    };
+    OfficeHoursController_replace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceOfficeHoursDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfficeHoursResponse"];
+                };
+            };
+        };
+    };
+    RequestAssigneesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestPersonViewList"];
+                };
+            };
+        };
+    };
+    RequestRatingsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RatingListItemViewList"];
+                };
+            };
+        };
+    };
+    RequestSettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestSettingsResponse"];
+                };
+            };
+        };
+    };
+    RequestSettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRequestSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestSettingsResponse"];
+                };
+            };
+        };
+    };
+    TopicsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopicViewList"];
+                };
+            };
+        };
+    };
+    TopicsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTopicDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopicView"];
+                };
+            };
+        };
+    };
+    TopicsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTopicDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopicView"];
+                };
+            };
+        };
+    };
+    StaffRequestsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["ManagementRequestStatus"];
+                type?: components["schemas"]["ManagementRequestType"];
+                topicId?: string;
+                /** @description An account id, `me` for the caller’s own, or `none` for the unassigned queue. */
+                assignee?: string;
+                /** @description `true`: only requests whose response time has passed with no response in the cycle. */
+                overdue?: "true" | "false";
+                /** @description `true`: only requests whose current cycle was escalated. */
+                escalated?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffRequestListItemViewList"];
+                };
+            };
+        };
+    };
+    StaffRequestsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRequestOnBehalfDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestCreatedView"];
+                };
+            };
+        };
+    };
+    StaffRequestsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffRequestDetailView"];
+                };
+            };
+        };
+    };
+    StaffAppointmentsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelAppointmentByStaffDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffAppointmentsController_confirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffAppointmentsController_propose: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SlotChoiceDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentBookedView"];
+                };
+            };
+        };
+    };
+    StaffRequestsController_assign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignRequestDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffRequestsController_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseRequestDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffRequestsController_thread: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffRequestMessageViewList"];
+                };
+            };
+        };
+    };
+    StaffRequestsController_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostStaffRequestMessageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageCreatedView"];
+                };
+            };
+        };
+    };
+    RequestRatingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagerRequestRatingView"];
+                };
+            };
+        };
+    };
+    StaffRequestsController_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    RequestUnitsController_authors: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestPersonViewList"];
+                };
+            };
+        };
+    };
     MeController_me: {
         parameters: {
             query?: never;
@@ -11587,6 +13644,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    MyRequestsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyRequestViewList"];
+                };
             };
         };
     };

@@ -2894,7 +2894,7 @@
               },
               "raw": "{\n  \"purpose\": \"worker_photo\",\n  \"contentType\": \"image/jpeg\",\n  \"size\": 1\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -3518,6 +3518,26 @@
                 "gates"
               ],
               "raw": "{{baseUrl}}/api/v1/gates"
+            }
+          }
+        },
+        {
+          "name": "See which gates are open (residents and family)",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gates",
+                "status"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gates/status"
             }
           }
         },
@@ -5576,6 +5596,1411 @@
         }
       ],
       "name": "maintenance"
+    },
+    {
+      "item": [
+        {
+          "name": "List the free appointment slots",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management-appointment-slots"
+              ],
+              "query": [
+                {
+                  "description": "The first day, `YYYY-MM-DD` in the compound’s time zone; today by default.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "days",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/management-appointment-slots"
+            }
+          }
+        },
+        {
+          "name": "List the topics a request may be opened under",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management-request-topics"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management-request-topics"
+            }
+          }
+        },
+        {
+          "name": "List my requests to the management",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management-requests"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "type",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/management-requests"
+            }
+          }
+        },
+        {
+          "name": "Open a request to the management",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"type\": \"question\",\n  \"topicId\": \"\",\n  \"body\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `appointment` | object |  | Required for an `appointment` request, refused for any other type. |\n| `attachmentFileIds` | string (uuid)[] |  | The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). |\n| `body` | string | yes | What the request says: it becomes its first message. |\n| `topicId` | string (uuid) | yes | An active topic of the compound (TOPIC_NOT_AVAILABLE). |\n| `type` | `question` \\| `general` \\| `appointment` | yes | An `appointment` names its slot in `appointment`. |\n| `unitId` | string (uuid) |  | One of the author’s units, when the request is about one. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management-requests"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management-requests"
+            }
+          }
+        },
+        {
+          "name": "Get one of my requests to the management",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management-requests",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management-requests/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pick a slot for my appointment",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"startsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"mode\": \"in_person\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `mode` | `in_person` \\| `phone` | yes |  |\n| `startsAt` | string (date-time) | yes | The start of one of the offered slots, exactly (APPOINTMENT_SLOT_NOT_OFFERED); at least an hour and at most thirty days from now. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management-requests",
+                ":id",
+                "appointment"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management-requests/:id/appointment",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Accept the slot the management proposed",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management-requests",
+                ":id",
+                "appointment",
+                "accept"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management-requests/:id/appointment/accept",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel my appointment",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"no_longer_needed\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | `no_longer_needed` \\| `cannot_attend` \\| `other` | yes |  |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management-requests",
+                ":id",
+                "appointment",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management-requests/:id/appointment/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Read the conversation of my request",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management-requests",
+                ":id",
+                "messages"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/management-requests/:id/messages",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Write on my request",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"body\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentFileIds` | string (uuid)[] |  | The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). |\n| `body` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management-requests",
+                ":id",
+                "messages"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management-requests/:id/messages",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rate my closed request",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"rating\": 1\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `comment` | string |  |  |\n| `rating` | number | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management-requests",
+                ":id",
+                "rating"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management-requests/:id/rating",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reopen my closed request",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"body\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentFileIds` | string (uuid)[] |  | The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). |\n| `body` | string | yes |  |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management-requests",
+                ":id",
+                "reopen"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management-requests/:id/reopen",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Withdraw my request",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management-requests",
+                ":id",
+                "withdraw"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management-requests/:id/withdraw",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the free appointment slots, with places left",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "appointment-slots"
+              ],
+              "query": [
+                {
+                  "description": "The first day, `YYYY-MM-DD` in the compound’s time zone; today by default.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "days",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/appointment-slots"
+            }
+          }
+        },
+        {
+          "name": "List the appointments, soonest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "appointments"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "Starting at or after.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "Starting before.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/appointments"
+            }
+          }
+        },
+        {
+          "name": "Get the office hours",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "office-hours"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/office-hours"
+            }
+          }
+        },
+        {
+          "name": "Replace the office hours",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"windows\": []\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `windows` | object[] | yes | The whole week. Windows of one weekday may touch, never overlap (OFFICE_HOURS_OVERLAP). An empty list closes the office. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "office-hours"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/office-hours"
+            }
+          }
+        },
+        {
+          "name": "List who a request may be assigned to",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "request-assignees"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/request-assignees"
+            }
+          }
+        },
+        {
+          "name": "List the ratings of requests, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "request-ratings"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/request-ratings"
+            }
+          }
+        },
+        {
+          "name": "Get the management request settings",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "request-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/request-settings"
+            }
+          }
+        },
+        {
+          "name": "Update the management request settings",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"appointmentSlotCapacity\": 1,\n  \"appointmentSlotMinutes\": 10,\n  \"autoCloseDays\": 1\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `appointmentSlotCapacity` | number |  | Appointments one slot takes. |\n| `appointmentSlotMinutes` | number |  | The length of an appointment slot, in minutes. |\n| `autoCloseDays` | number |  | Days an answered request waits for its author before it closes itself. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "request-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/request-settings"
+            }
+          }
+        },
+        {
+          "name": "List management request topics",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "request-topics"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/request-topics"
+            }
+          }
+        },
+        {
+          "name": "Create a management request topic",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"key\": \"\",\n  \"nameAr\": \"\",\n  \"nameEn\": \"\",\n  \"targetResponseHours\": 1\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `key` | string | yes | Stable code, lowercase (e.g. `parking`). Never changes once created. |\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n| `targetResponseHours` | number | yes | Hours the management gives itself to answer. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "request-topics"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/request-topics"
+            }
+          }
+        },
+        {
+          "name": "Update a management request topic",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"active\": false,\n  \"nameAr\": \"\",\n  \"nameEn\": \"\",\n  \"targetResponseHours\": 1\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `active` | boolean |  | False retires the topic: no new request may use it. |\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n| `targetResponseHours` | number |  | Applies to requests opened or reopened from now on; a running cycle keeps its due time. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "request-topics",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/request-topics/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the requests to the management",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "requests"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "type",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "topicId",
+                  "value": ""
+                },
+                {
+                  "description": "An account id, `me` for the caller’s own, or `none` for the unassigned queue.",
+                  "disabled": true,
+                  "key": "assignee",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: only requests whose response time has passed with no response in the cycle.",
+                  "disabled": true,
+                  "key": "overdue",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: only requests whose current cycle was escalated.",
+                  "disabled": true,
+                  "key": "escalated",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/requests"
+            }
+          }
+        },
+        {
+          "name": "Open a request for a resident",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"type\": \"question\",\n  \"topicId\": \"\",\n  \"body\": \"\",\n  \"authorAccountId\": \"\",\n  \"reasonCode\": \"resident_phone_call\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `appointment` | object |  | Required for an `appointment` request, refused for any other type. |\n| `attachmentFileIds` | string (uuid)[] |  | The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). |\n| `authorAccountId` | string (uuid) | yes | The resident the request is for: an active resident or family account (AUTHOR_NOT_ELIGIBLE). They are its author. |\n| `body` | string | yes | What the request says: it becomes its first message. |\n| `reasonCode` | `resident_phone_call` \\| `resident_walk_in` \\| `resident_written_letter` | yes | How the resident reached the management. |\n| `topicId` | string (uuid) | yes | An active topic of the compound (TOPIC_NOT_AVAILABLE). |\n| `type` | `question` \\| `general` \\| `appointment` | yes | An `appointment` names its slot in `appointment`. |\n| `unitId` | string (uuid) |  | One of the author’s units, when the request is about one. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "requests"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/requests"
+            }
+          }
+        },
+        {
+          "name": "Get one request to the management",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "requests",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/requests/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel an appointment",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"staff_unavailable\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | `staff_unavailable` \\| `office_closed` \\| `other` | yes |  |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "requests",
+                ":id",
+                "appointment",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/requests/:id/appointment/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Confirm the slot the resident picked",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "requests",
+                ":id",
+                "appointment",
+                "confirm"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/requests/:id/appointment/confirm",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Propose a slot, or counter the resident’s pick",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"startsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"mode\": \"in_person\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `mode` | `in_person` \\| `phone` | yes |  |\n| `startsAt` | string (date-time) | yes | The start of one of the offered slots, exactly (APPOINTMENT_SLOT_NOT_OFFERED); at least an hour and at most thirty days from now. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "requests",
+                ":id",
+                "appointment",
+                "propose"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/requests/:id/appointment/propose",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Assign a request, or return it to the queue",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"assigneeId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `assigneeId` | string (uuid) | yes | An active account holding `requests.handle` (ASSIGNEE_NOT_ELIGIBLE), or null for the unassigned queue. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "requests",
+                ":id",
+                "assign"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/requests/:id/assign",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Close a request",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"resolved\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | `resolved` \\| `duplicate` \\| `not_for_management` \\| `other` | yes |  |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "requests",
+                ":id",
+                "close"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/requests/:id/close",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Read the conversation of a request, notes included",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "requests",
+                ":id",
+                "messages"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/requests/:id/messages",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reply to a request, or add a staff note",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"body\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentFileIds` | string (uuid)[] |  | The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). |\n| `body` | string | yes |  |\n| `internal` | boolean |  | A staff note: the author never sees it or its attachments, and it moves nothing. |\n| `official` | boolean |  | The official reply: the request becomes answered. Chosen when sending and never changed; not with `internal`. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "requests",
+                ":id",
+                "messages"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/requests/:id/messages",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get the rating of a request",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "requests",
+                ":id",
+                "rating"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/requests/:id/rating",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Take an open request in hand",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "requests",
+                ":id",
+                "start"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/requests/:id/start",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List who a request may be opened for in a unit",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "units",
+                ":unitId",
+                "request-authors"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/units/:unitId/request-authors",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List all my requests: tickets and requests to the management",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "requests"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/requests"
+            }
+          }
+        }
+      ],
+      "name": "management-requests"
     },
     {
       "item": [

@@ -87,6 +87,59 @@ describe('API v0 — no-store', () => {
     return body<{ id: string }>(res).id;
   }
 
+  // Requests to the management (ADR 0039).
+  const topic = async (key = 'general') =>
+    (
+      await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.managementRequestTopic.findFirstOrThrow({
+          where: { key },
+        }),
+      )
+    ).id;
+  /** A request A's owner opened; its id. */
+  async function aRequest(): Promise<string> {
+    const res = await call(w, 'POST', '/management-requests', {
+      token: w.a.tokens.owner,
+      body: { type: 'question', topicId: await topic(), body: 'No-store' },
+    }).expect(201);
+    return body<{ id: string }>(res).id;
+  }
+  /** A request staff closed. */
+  async function aClosedRequest(): Promise<string> {
+    const id = await aRequest();
+    await call(w, 'POST', `/management/requests/${id}/close`, {
+      token: w.a.tokens.manager,
+      body: { reasonCode: 'resolved' },
+    }).expect(204);
+    return id;
+  }
+  /** Free slots, far enough ahead to still be bookable a moment later. */
+  let slotsTaken = 0;
+  async function aSlot(): Promise<string> {
+    const res = await call(w, 'GET', '/management-appointment-slots', {
+      token: w.a.tokens.owner,
+      query: { days: '31' },
+    }).expect(200);
+    const soon = Date.now() + 2 * 3_600_000;
+    const free = body<{ data: { startsAt: string }[] }>(res).data.filter(
+      (slot) => new Date(slot.startsAt).getTime() > soon,
+    );
+    return free[slotsTaken++].startsAt;
+  }
+  /** An appointment request of A's owner, waiting for the management. */
+  async function anAppointment(): Promise<string> {
+    const res = await call(w, 'POST', '/management-requests', {
+      token: w.a.tokens.owner,
+      body: {
+        type: 'appointment',
+        topicId: await topic(),
+        body: 'No-store',
+        appointment: { startsAt: await aSlot(), mode: 'in_person' },
+      },
+    }).expect(201);
+    return body<{ id: string }>(res).id;
+  }
+
   /** A parcel the guard received for A's home. */
   async function aParcel(): Promise<string> {
     const unit = await w.helpers.unitRow(w.a, w.a.homeUnitId);
@@ -193,6 +246,173 @@ describe('API v0 — no-store', () => {
 
   const CALLS: Record<string, () => Promise<Response>> = {
     // Requests to the management (ADR 0039): every response is no-store.
+    'POST /management-requests': async () =>
+      call(w, 'POST', '/management-requests', {
+        token: w.a.tokens.owner,
+        body: { type: 'general', topicId: await topic(), body: 'No-store' },
+      }),
+    'GET /management-requests': async () => {
+      await aRequest();
+      return call(w, 'GET', '/management-requests', {
+        token: w.a.tokens.owner,
+      });
+    },
+    'GET /management-requests/{id}': async () =>
+      call(w, 'GET', `/management-requests/${await aRequest()}`, {
+        token: w.a.tokens.owner,
+      }),
+    'GET /management-requests/{id}/messages': async () =>
+      call(w, 'GET', `/management-requests/${await aRequest()}/messages`, {
+        token: w.a.tokens.owner,
+      }),
+    'POST /management-requests/{id}/messages': async () =>
+      call(w, 'POST', `/management-requests/${await aRequest()}/messages`, {
+        token: w.a.tokens.owner,
+        body: { body: 'More' },
+      }),
+    'POST /management-requests/{id}/withdraw': async () =>
+      call(w, 'POST', `/management-requests/${await aRequest()}/withdraw`, {
+        token: w.a.tokens.owner,
+      }),
+    'POST /management-requests/{id}/reopen': async () =>
+      call(w, 'POST', `/management-requests/${await aClosedRequest()}/reopen`, {
+        token: w.a.tokens.owner,
+        body: { body: 'Again' },
+      }),
+    'POST /management-requests/{id}/rating': async () =>
+      call(w, 'POST', `/management-requests/${await aClosedRequest()}/rating`, {
+        token: w.a.tokens.owner,
+        body: { rating: 5 },
+      }),
+    'GET /management-appointment-slots': () =>
+      call(w, 'GET', '/management-appointment-slots', {
+        token: w.a.tokens.owner,
+      }),
+    'POST /management-requests/{id}/appointment': async () => {
+      const id = await anAppointment();
+      return call(w, 'POST', `/management-requests/${id}/appointment`, {
+        token: w.a.tokens.owner,
+        body: { startsAt: await aSlot(), mode: 'phone' },
+      });
+    },
+    'POST /management-requests/{id}/appointment/accept': async () => {
+      const id = await anAppointment();
+      await call(w, 'POST', `/management/requests/${id}/appointment/propose`, {
+        token: w.a.tokens.manager,
+        body: { startsAt: await aSlot(), mode: 'phone' },
+      }).expect(201);
+      return call(w, 'POST', `/management-requests/${id}/appointment/accept`, {
+        token: w.a.tokens.owner,
+      });
+    },
+    'POST /management-requests/{id}/appointment/cancel': async () =>
+      call(
+        w,
+        'POST',
+        `/management-requests/${await anAppointment()}/appointment/cancel`,
+        { token: w.a.tokens.owner, body: { reasonCode: 'cannot_attend' } },
+      ),
+    'GET /me/requests': async () => {
+      await aRequest();
+      return call(w, 'GET', '/me/requests', { token: w.a.tokens.owner });
+    },
+    'GET /management/requests': async () => {
+      await aRequest();
+      return call(w, 'GET', '/management/requests', {
+        token: w.a.tokens.manager,
+      });
+    },
+    'POST /management/requests': async () =>
+      call(w, 'POST', '/management/requests', {
+        token: w.a.tokens.manager,
+        body: {
+          type: 'general',
+          topicId: await topic(),
+          authorAccountId: w.a.ids.owner,
+          reasonCode: 'resident_walk_in',
+          body: 'No-store',
+        },
+      }),
+    'GET /management/requests/{id}': async () =>
+      call(w, 'GET', `/management/requests/${await aRequest()}`, {
+        token: w.a.tokens.manager,
+      }),
+    'POST /management/requests/{id}/assign': async () =>
+      call(w, 'POST', `/management/requests/${await aRequest()}/assign`, {
+        token: w.a.tokens.manager,
+        body: { assigneeId: w.a.ids.manager },
+      }),
+    'GET /management/requests/{id}/messages': async () =>
+      call(w, 'GET', `/management/requests/${await aRequest()}/messages`, {
+        token: w.a.tokens.manager,
+      }),
+    'POST /management/requests/{id}/messages': async () =>
+      call(w, 'POST', `/management/requests/${await aRequest()}/messages`, {
+        token: w.a.tokens.manager,
+        body: { body: 'The answer', official: true },
+      }),
+    'POST /management/requests/{id}/start': async () =>
+      call(w, 'POST', `/management/requests/${await aRequest()}/start`, {
+        token: w.a.tokens.manager,
+      }),
+    'POST /management/requests/{id}/close': async () =>
+      call(w, 'POST', `/management/requests/${await aRequest()}/close`, {
+        token: w.a.tokens.manager,
+        body: { reasonCode: 'duplicate' },
+      }),
+    'GET /management/request-assignees': () =>
+      call(w, 'GET', '/management/request-assignees', {
+        token: w.a.tokens.manager,
+      }),
+    'GET /management/units/{unitId}/request-authors': () =>
+      call(w, 'GET', `/management/units/${w.a.homeUnitId}/request-authors`, {
+        token: w.a.tokens.manager,
+      }),
+    'GET /management/appointments': async () => {
+      await anAppointment();
+      return call(w, 'GET', '/management/appointments', {
+        token: w.a.tokens.manager,
+      });
+    },
+    'GET /management/appointment-slots': () =>
+      call(w, 'GET', '/management/appointment-slots', {
+        token: w.a.tokens.manager,
+      }),
+    'POST /management/requests/{id}/appointment/confirm': async () =>
+      call(
+        w,
+        'POST',
+        `/management/requests/${await anAppointment()}/appointment/confirm`,
+        { token: w.a.tokens.manager },
+      ),
+    'POST /management/requests/{id}/appointment/propose': async () => {
+      const id = await anAppointment();
+      return call(w, 'POST', `/management/requests/${id}/appointment/propose`, {
+        token: w.a.tokens.manager,
+        body: { startsAt: await aSlot(), mode: 'in_person' },
+      });
+    },
+    'POST /management/requests/{id}/appointment/cancel': async () =>
+      call(
+        w,
+        'POST',
+        `/management/requests/${await anAppointment()}/appointment/cancel`,
+        { token: w.a.tokens.manager, body: { reasonCode: 'office_closed' } },
+      ),
+    'GET /management/request-ratings': async () => {
+      const id = await aClosedRequest();
+      await call(w, 'POST', `/management-requests/${id}/rating`, {
+        token: w.a.tokens.owner,
+        body: { rating: 4 },
+      }).expect(201);
+      return call(w, 'GET', '/management/request-ratings', {
+        token: w.a.tokens.manager,
+      });
+    },
+    'GET /management/requests/{id}/rating': async () =>
+      call(w, 'GET', `/management/requests/${await aClosedRequest()}/rating`, {
+        token: w.a.tokens.manager,
+      }),
     'GET /management/request-topics': () =>
       call(w, 'GET', '/management/request-topics', {
         token: w.a.tokens.manager,

@@ -24,7 +24,11 @@ import {
   VISIT_ROUTES,
   WORK_ROUTES,
 } from './maintenance';
-import { MANAGEMENT_SETUP_ROUTES } from './management';
+import {
+  MANAGEMENT_RESIDENT_ROUTES,
+  MANAGEMENT_SETUP_ROUTES,
+  MANAGEMENT_STAFF_ROUTES,
+} from './management';
 import { ME_ROUTES } from './me';
 import { MEMBER_PERMISSIONS_ROUTES } from './member-permissions';
 import { NOTIFICATIONS_ROUTES } from './notifications';
@@ -88,4 +92,6 @@ export const ROUTES: Row[] = [
   ...EXPORTS_ROUTES,
   ...ASSIST_ROUTES,
   ...MANAGEMENT_SETUP_ROUTES,
+  ...MANAGEMENT_RESIDENT_ROUTES,
+  ...MANAGEMENT_STAFF_ROUTES,
 ];

@@ -267,6 +267,142 @@
         ],
         "type": "object"
       },
+      "AppointmentBookedView": {
+        "properties": {
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementAppointmentStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "startsAt",
+          "endsAt"
+        ],
+        "type": "object"
+      },
+      "AppointmentSlotView": {
+        "properties": {
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "startsAt",
+          "endsAt"
+        ],
+        "type": "object"
+      },
+      "AppointmentSlotViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AppointmentSlotView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "AppointmentView": {
+        "properties": {
+          "cancelReason": {
+            "description": "On a cancelled appointment: the reason code.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementActorSide"
+              }
+            ],
+            "description": "Who cancelled it; `system` when its request closed.",
+            "nullable": true
+          },
+          "confirmedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementAppointmentMode"
+              }
+            ]
+          },
+          "proposedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementSide"
+              }
+            ],
+            "description": "Who chose this slot."
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementAppointmentStatus"
+              }
+            ],
+            "description": "`requested` waits for the management, `proposed` waits for the resident, `confirmed` is agreed."
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "mode",
+          "startsAt",
+          "endsAt",
+          "proposedBy",
+          "confirmedAt",
+          "cancelReason",
+          "cancelledBy"
+        ],
+        "type": "object"
+      },
       "ApproveRegistrationDto": {
         "properties": {
           "linkToExistingAccount": {
@@ -307,6 +443,20 @@
         },
         "required": [
           "technicianId"
+        ],
+        "type": "object"
+      },
+      "AssignRequestDto": {
+        "properties": {
+          "assigneeId": {
+            "description": "An active account holding `requests.handle` (ASSIGNEE_NOT_ELIGIBLE), or null for the unassigned queue.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "assigneeId"
         ],
         "type": "object"
       },
@@ -712,6 +862,38 @@
         },
         "required": [
           "birthDate"
+        ],
+        "type": "object"
+      },
+      "CancelAppointmentByResidentDto": {
+        "properties": {
+          "reasonCode": {
+            "enum": [
+              "no_longer_needed",
+              "cannot_attend",
+              "other"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "CancelAppointmentByStaffDto": {
+        "properties": {
+          "reasonCode": {
+            "enum": [
+              "staff_unavailable",
+              "office_closed",
+              "other"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -1220,6 +1402,23 @@
         "properties": {
           "reasonCode": {
             "description": "From the closed list `reviewClear`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "CloseRequestDto": {
+        "properties": {
+          "reasonCode": {
+            "enum": [
+              "resolved",
+              "duplicate",
+              "not_for_management",
+              "other"
+            ],
             "type": "string"
           }
         },
@@ -1815,6 +2014,124 @@
         ],
         "type": "object"
       },
+      "CreateRequestDto": {
+        "properties": {
+          "appointment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SlotChoiceDto"
+              }
+            ],
+            "description": "Required for an `appointment` request, refused for any other type."
+          },
+          "attachmentFileIds": {
+            "description": "The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE).",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "body": {
+            "description": "What the request says: it becomes its first message.",
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "topicId": {
+            "description": "An active topic of the compound (TOPIC_NOT_AVAILABLE).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementRequestType"
+              }
+            ],
+            "description": "An `appointment` names its slot in `appointment`."
+          },
+          "unitId": {
+            "description": "One of the author’s units, when the request is about one.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "topicId",
+          "body"
+        ],
+        "type": "object"
+      },
+      "CreateRequestOnBehalfDto": {
+        "properties": {
+          "appointment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SlotChoiceDto"
+              }
+            ],
+            "description": "Required for an `appointment` request, refused for any other type."
+          },
+          "attachmentFileIds": {
+            "description": "The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE).",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "authorAccountId": {
+            "description": "The resident the request is for: an active resident or family account (AUTHOR_NOT_ELIGIBLE). They are its author.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "body": {
+            "description": "What the request says: it becomes its first message.",
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "How the resident reached the management.",
+            "enum": [
+              "resident_phone_call",
+              "resident_walk_in",
+              "resident_written_letter"
+            ],
+            "type": "string"
+          },
+          "topicId": {
+            "description": "An active topic of the compound (TOPIC_NOT_AVAILABLE).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementRequestType"
+              }
+            ],
+            "description": "An `appointment` names its slot in `appointment`."
+          },
+          "unitId": {
+            "description": "One of the author’s units, when the request is about one.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "topicId",
+          "body",
+          "authorAccountId",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "CreateResidentDto": {
         "properties": {
           "birthDate": {
@@ -2018,6 +2335,38 @@
           "categoryId",
           "description",
           "reporterAccountId"
+        ],
+        "type": "object"
+      },
+      "CreateTopicDto": {
+        "properties": {
+          "key": {
+            "description": "Stable code, lowercase (e.g. `parking`). Never changes once created.",
+            "pattern": "^[a-z][a-z0-9_]{1,39}$",
+            "type": "string"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "targetResponseHours": {
+            "description": "Hours the management gives itself to answer.",
+            "maximum": 720,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "key",
+          "nameAr",
+          "nameEn",
+          "targetResponseHours"
         ],
         "type": "object"
       },
@@ -3844,7 +4193,8 @@
           "resident_photo",
           "ticket_photo",
           "parcel_photo",
-          "data_export"
+          "data_export",
+          "request_attachment"
         ],
         "type": "string"
       },
@@ -5332,6 +5682,59 @@
         ],
         "type": "object"
       },
+      "ManagementActorSide": {
+        "description": "Who cancelled it; `system` when its request closed.",
+        "enum": [
+          "resident",
+          "staff",
+          "system"
+        ],
+        "type": "string"
+      },
+      "ManagementAppointmentMode": {
+        "enum": [
+          "in_person",
+          "phone"
+        ],
+        "type": "string"
+      },
+      "ManagementAppointmentStatus": {
+        "description": "`requested` waits for the management, `proposed` waits for the resident, `confirmed` is agreed.",
+        "enum": [
+          "requested",
+          "proposed",
+          "confirmed",
+          "cancelled",
+          "superseded"
+        ],
+        "type": "string"
+      },
+      "ManagementRequestStatus": {
+        "enum": [
+          "open",
+          "in_progress",
+          "answered",
+          "closed"
+        ],
+        "type": "string"
+      },
+      "ManagementRequestType": {
+        "description": "An `appointment` names its slot in `appointment`.",
+        "enum": [
+          "question",
+          "general",
+          "appointment"
+        ],
+        "type": "string"
+      },
+      "ManagementSide": {
+        "description": "Who chose this slot.",
+        "enum": [
+          "resident",
+          "staff"
+        ],
+        "type": "string"
+      },
       "ManagerParcelDetailView": {
         "properties": {
           "carrier": {
@@ -5541,6 +5944,24 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ManagerRequestRatingView": {
+        "properties": {
+          "rating": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestRatingView"
+              }
+            ],
+            "description": "Null: the author has not rated the request.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "rating"
         ],
         "type": "object"
       },
@@ -5795,6 +6216,35 @@
         },
         "type": "object"
       },
+      "MessageAttachmentView": {
+        "properties": {
+          "contentType": {
+            "description": "image/jpeg, image/png, image/webp or application/pdf.",
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "url": {
+            "description": "A presigned GET, valid until `expiresAt`. Null when gone.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "contentType",
+          "url",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
       "MessageCreatedView": {
         "properties": {
           "createdAt": {
@@ -5939,6 +6389,90 @@
         },
         "required": [
           "fileId"
+        ],
+        "type": "object"
+      },
+      "MyRequestView": {
+        "properties": {
+          "categoryKey": {
+            "description": "A ticket’s category key; null for a request.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastActivityAt": {
+            "description": "What the list is ordered by, newest first.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "number": {
+            "example": "MR-000123",
+            "type": "string"
+          },
+          "requestType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementRequestType"
+              }
+            ],
+            "description": "A request’s kind; null for a ticket.",
+            "nullable": true
+          },
+          "status": {
+            "description": "The item’s own status: a TicketStatus for a ticket, a ManagementRequestStatus for a request.",
+            "type": "string"
+          },
+          "topicKey": {
+            "description": "A request’s topic key; null for a ticket.",
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "description": "`maintenance`: a ticket (`/tickets/{id}`). `management`: a request to the management (`/management-requests/{id}`).",
+            "enum": [
+              "maintenance",
+              "management"
+            ],
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "number",
+          "status",
+          "lastActivityAt",
+          "categoryKey",
+          "topicKey",
+          "requestType",
+          "unitId"
+        ],
+        "type": "object"
+      },
+      "MyRequestViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MyRequestView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -6342,7 +6876,8 @@
           "gate_visitors",
           "parcels",
           "household",
-          "account_security"
+          "account_security",
+          "management"
         ],
         "type": "string"
       },
@@ -6549,6 +7084,49 @@
           "tenant"
         ],
         "type": "string"
+      },
+      "OfficeHoursResponse": {
+        "properties": {
+          "windows": {
+            "description": "By weekday, then start. Empty: the office is closed.",
+            "items": {
+              "$ref": "#/components/schemas/OfficeWindowDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "windows"
+        ],
+        "type": "object"
+      },
+      "OfficeWindowDto": {
+        "properties": {
+          "endMinute": {
+            "description": "Minutes after local midnight; after the start.",
+            "maximum": 1440,
+            "minimum": 1,
+            "type": "number"
+          },
+          "startMinute": {
+            "description": "Minutes after midnight in the compound’s time zone.",
+            "maximum": 1439,
+            "minimum": 0,
+            "type": "number"
+          },
+          "weekday": {
+            "description": "0 is Sunday, 6 is Saturday.",
+            "maximum": 6,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "weekday",
+          "startMinute",
+          "endMinute"
+        ],
+        "type": "object"
       },
       "OtpRequestedView": {
         "properties": {
@@ -7454,6 +8032,60 @@
         ],
         "type": "object"
       },
+      "PostRequestMessageDto": {
+        "properties": {
+          "attachmentFileIds": {
+            "description": "The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE).",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "body": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "PostStaffRequestMessageDto": {
+        "properties": {
+          "attachmentFileIds": {
+            "description": "The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE).",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "body": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "internal": {
+            "default": false,
+            "description": "A staff note: the author never sees it or its attachments, and it moves nothing.",
+            "type": "boolean"
+          },
+          "official": {
+            "default": false,
+            "description": "The official reply: the request becomes answered. Chosen when sending and never changed; not with `internal`.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
       "PreferencesView": {
         "properties": {
           "categories": {
@@ -7701,6 +8333,70 @@
         "required": [
           "start",
           "end"
+        ],
+        "type": "object"
+      },
+      "RateRequestDto": {
+        "properties": {
+          "comment": {
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "rating": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "rating"
+        ],
+        "type": "object"
+      },
+      "RatingListItemView": {
+        "properties": {
+          "comment": {
+            "description": "Optional; null too once its author was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "rating": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          },
+          "request": {
+            "$ref": "#/components/schemas/StaffRequestView"
+          }
+        },
+        "required": [
+          "rating",
+          "comment",
+          "createdAt",
+          "request"
+        ],
+        "type": "object"
+      },
+      "RatingListItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/RatingListItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -8085,6 +8781,22 @@
         ],
         "type": "object"
       },
+      "ReplaceOfficeHoursDto": {
+        "properties": {
+          "windows": {
+            "description": "The whole week. Windows of one weekday may touch, never overlap (OFFICE_HOURS_OVERLAP). An empty list closes the office.",
+            "items": {
+              "$ref": "#/components/schemas/OfficeWindowDto"
+            },
+            "maxItems": 28,
+            "type": "array"
+          }
+        },
+        "required": [
+          "windows"
+        ],
+        "type": "object"
+      },
       "ReplacePermissionsDto": {
         "properties": {
           "permissions": {
@@ -8100,6 +8812,58 @@
         ],
         "type": "object"
       },
+      "RequestCreatedView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "example": "MR-000123",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementRequestStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "status",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "RequestEscalationView": {
+        "properties": {
+          "cycle": {
+            "type": "number"
+          },
+          "dueAt": {
+            "description": "The response time that passed.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "escalatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cycle",
+          "dueAt",
+          "escalatedAt"
+        ],
+        "type": "object"
+      },
       "RequestOtpDto": {
         "properties": {
           "identifier": {
@@ -8111,6 +8875,131 @@
         },
         "required": [
           "identifier"
+        ],
+        "type": "object"
+      },
+      "RequestPersonView": {
+        "properties": {
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ],
+        "type": "object"
+      },
+      "RequestPersonViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/RequestPersonView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "RequestRatingView": {
+        "properties": {
+          "comment": {
+            "description": "Optional; null too once its author was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "rating": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "rating",
+          "comment",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "RequestSettingsResponse": {
+        "properties": {
+          "appointmentSlotCapacity": {
+            "description": "Appointments one slot takes.",
+            "type": "number"
+          },
+          "appointmentSlotMinutes": {
+            "description": "The length of an appointment slot, in minutes.",
+            "type": "number"
+          },
+          "autoCloseDays": {
+            "description": "Days an answered request waits for its author before it closes itself.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "autoCloseDays",
+          "appointmentSlotMinutes",
+          "appointmentSlotCapacity"
+        ],
+        "type": "object"
+      },
+      "RequestTopicRefView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn"
+        ],
+        "type": "object"
+      },
+      "RequestUnitRefView": {
+        "properties": {
+          "code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code"
         ],
         "type": "object"
       },
@@ -8482,6 +9371,307 @@
           "kind",
           "id",
           "firstName"
+        ],
+        "type": "object"
+      },
+      "ResidentRequestDetailView": {
+        "properties": {
+          "appointment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AppointmentView"
+              }
+            ],
+            "description": "On an appointment request: the live appointment, else the last one.",
+            "nullable": true,
+            "type": "object"
+          },
+          "closeReason": {
+            "description": "Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "cycle": {
+            "description": "1 when opened; one more each time it is reopened.",
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastActivityAt": {
+            "description": "What the lists are ordered by.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "number": {
+            "example": "MR-000123",
+            "type": "string"
+          },
+          "openedByManagement": {
+            "description": "Opened by the management on the author’s behalf.",
+            "type": "boolean"
+          },
+          "rating": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestRatingView"
+              }
+            ],
+            "description": "The author’s own rating, once given.",
+            "nullable": true,
+            "type": "object"
+          },
+          "reopenUntil": {
+            "description": "On a closed request: until when the author may reopen it.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "responseDueAt": {
+            "description": "While the request waits for a first response: when the management means to give it.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementRequestStatus"
+              }
+            ]
+          },
+          "topic": {
+            "$ref": "#/components/schemas/RequestTopicRefView"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementRequestType"
+              }
+            ]
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestUnitRefView"
+              }
+            ],
+            "description": "The unit the request is about, when it names one.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "type",
+          "status",
+          "topic",
+          "unit",
+          "cycle",
+          "closeReason",
+          "closedAt",
+          "createdAt",
+          "lastActivityAt",
+          "openedByManagement",
+          "responseDueAt",
+          "reopenUntil",
+          "appointment",
+          "rating"
+        ],
+        "type": "object"
+      },
+      "ResidentRequestMessageView": {
+        "properties": {
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/MessageAttachmentView"
+            },
+            "type": "array"
+          },
+          "body": {
+            "description": "Null once its sender was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "erased": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "official": {
+            "description": "The management’s official reply to the request.",
+            "type": "boolean"
+          },
+          "sender": {
+            "$ref": "#/components/schemas/FirstNameRefView"
+          },
+          "senderSide": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementSide"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "sender",
+          "senderSide",
+          "official",
+          "body",
+          "erased",
+          "attachments",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ResidentRequestMessageViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ResidentRequestMessageView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ResidentRequestView": {
+        "properties": {
+          "closeReason": {
+            "description": "Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "cycle": {
+            "description": "1 when opened; one more each time it is reopened.",
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastActivityAt": {
+            "description": "What the lists are ordered by.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "number": {
+            "example": "MR-000123",
+            "type": "string"
+          },
+          "openedByManagement": {
+            "description": "Opened by the management on the author’s behalf.",
+            "type": "boolean"
+          },
+          "reopenUntil": {
+            "description": "On a closed request: until when the author may reopen it.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "responseDueAt": {
+            "description": "While the request waits for a first response: when the management means to give it.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementRequestStatus"
+              }
+            ]
+          },
+          "topic": {
+            "$ref": "#/components/schemas/RequestTopicRefView"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementRequestType"
+              }
+            ]
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestUnitRefView"
+              }
+            ],
+            "description": "The unit the request is about, when it names one.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "type",
+          "status",
+          "topic",
+          "unit",
+          "cycle",
+          "closeReason",
+          "closedAt",
+          "createdAt",
+          "lastActivityAt",
+          "openedByManagement",
+          "responseDueAt",
+          "reopenUntil"
+        ],
+        "type": "object"
+      },
+      "ResidentRequestViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ResidentRequestView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -9877,6 +11067,27 @@
         ],
         "type": "object"
       },
+      "SlotChoiceDto": {
+        "properties": {
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementAppointmentMode"
+              }
+            ]
+          },
+          "startsAt": {
+            "description": "The start of one of the offered slots, exactly (APPOINTMENT_SLOT_NOT_OFFERED); at least an hour and at most thirty days from now.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "startsAt",
+          "mode"
+        ],
+        "type": "object"
+      },
       "SpecialtyIdsDto": {
         "properties": {
           "specialtyIds": {
@@ -9959,6 +11170,140 @@
         ],
         "type": "object"
       },
+      "StaffAppointmentListItemView": {
+        "properties": {
+          "cancelReason": {
+            "description": "On a cancelled appointment: the reason code.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementActorSide"
+              }
+            ],
+            "description": "Who cancelled it; `system` when its request closed.",
+            "nullable": true
+          },
+          "confirmedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementAppointmentMode"
+              }
+            ]
+          },
+          "proposedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementSide"
+              }
+            ],
+            "description": "Who chose this slot."
+          },
+          "request": {
+            "$ref": "#/components/schemas/StaffRequestView"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementAppointmentStatus"
+              }
+            ],
+            "description": "`requested` waits for the management, `proposed` waits for the resident, `confirmed` is agreed."
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "mode",
+          "startsAt",
+          "endsAt",
+          "proposedBy",
+          "confirmedAt",
+          "cancelReason",
+          "cancelledBy",
+          "request"
+        ],
+        "type": "object"
+      },
+      "StaffAppointmentListItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffAppointmentListItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffAppointmentSlotView": {
+        "properties": {
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "remaining": {
+            "description": "How many more appointments the slot takes.",
+            "type": "number"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "startsAt",
+          "endsAt",
+          "remaining"
+        ],
+        "type": "object"
+      },
+      "StaffAppointmentSlotViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffAppointmentSlotView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StaffMessageDto": {
         "properties": {
           "body": {
@@ -9974,6 +11319,547 @@
         },
         "required": [
           "body"
+        ],
+        "type": "object"
+      },
+      "StaffRequestDetailView": {
+        "properties": {
+          "answeredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "appointment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AppointmentView"
+              }
+            ],
+            "description": "On an appointment request: the live appointment, else the last one.",
+            "nullable": true,
+            "type": "object"
+          },
+          "assignee": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Null: in the unassigned queue.",
+            "nullable": true,
+            "type": "object"
+          },
+          "author": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "closeReason": {
+            "description": "Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "cycle": {
+            "description": "1 when opened; one more each time it is reopened.",
+            "type": "number"
+          },
+          "escalatedAt": {
+            "description": "When this cycle was escalated (at most once).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "escalations": {
+            "description": "At most one per cycle, oldest first.",
+            "items": {
+              "$ref": "#/components/schemas/RequestEscalationView"
+            },
+            "type": "array"
+          },
+          "firstResponseAt": {
+            "description": "The cycle’s first staff response.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastActivityAt": {
+            "description": "What the lists are ordered by.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "number": {
+            "example": "MR-000123",
+            "type": "string"
+          },
+          "onBehalfReason": {
+            "description": "Why it was opened on the author’s behalf (a reason code).",
+            "nullable": true,
+            "type": "string"
+          },
+          "openedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "The staff member who opened it for the author.",
+            "nullable": true,
+            "type": "object"
+          },
+          "overdue": {
+            "description": "The response time has passed and nobody has responded in this cycle.",
+            "type": "boolean"
+          },
+          "responseDueAt": {
+            "description": "The cycle’s response time: its start plus the topic’s target.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementRequestStatus"
+              }
+            ]
+          },
+          "topic": {
+            "$ref": "#/components/schemas/RequestTopicRefView"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementRequestType"
+              }
+            ]
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestUnitRefView"
+              }
+            ],
+            "description": "The unit the request is about, when it names one.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "type",
+          "status",
+          "topic",
+          "unit",
+          "cycle",
+          "closeReason",
+          "closedAt",
+          "createdAt",
+          "lastActivityAt",
+          "author",
+          "openedBy",
+          "onBehalfReason",
+          "assignee",
+          "responseDueAt",
+          "firstResponseAt",
+          "overdue",
+          "escalatedAt",
+          "answeredAt",
+          "escalations",
+          "appointment"
+        ],
+        "type": "object"
+      },
+      "StaffRequestListItemView": {
+        "properties": {
+          "answeredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "assignee": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Null: in the unassigned queue.",
+            "nullable": true,
+            "type": "object"
+          },
+          "author": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "closeReason": {
+            "description": "Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "cycle": {
+            "description": "1 when opened; one more each time it is reopened.",
+            "type": "number"
+          },
+          "escalatedAt": {
+            "description": "When this cycle was escalated (at most once).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "firstResponseAt": {
+            "description": "The cycle’s first staff response.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastActivityAt": {
+            "description": "What the lists are ordered by.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "number": {
+            "example": "MR-000123",
+            "type": "string"
+          },
+          "onBehalfReason": {
+            "description": "Why it was opened on the author’s behalf (a reason code).",
+            "nullable": true,
+            "type": "string"
+          },
+          "openedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "The staff member who opened it for the author.",
+            "nullable": true,
+            "type": "object"
+          },
+          "overdue": {
+            "description": "The response time has passed and nobody has responded in this cycle.",
+            "type": "boolean"
+          },
+          "preview": {
+            "description": "The first 120 characters of the request’s first message, as written. Null once that message was erased. Staff inbox only.",
+            "maxLength": 120,
+            "nullable": true,
+            "type": "string"
+          },
+          "responseDueAt": {
+            "description": "The cycle’s response time: its start plus the topic’s target.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementRequestStatus"
+              }
+            ]
+          },
+          "topic": {
+            "$ref": "#/components/schemas/RequestTopicRefView"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementRequestType"
+              }
+            ]
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestUnitRefView"
+              }
+            ],
+            "description": "The unit the request is about, when it names one.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "type",
+          "status",
+          "topic",
+          "unit",
+          "cycle",
+          "closeReason",
+          "closedAt",
+          "createdAt",
+          "lastActivityAt",
+          "author",
+          "openedBy",
+          "onBehalfReason",
+          "assignee",
+          "responseDueAt",
+          "firstResponseAt",
+          "overdue",
+          "escalatedAt",
+          "answeredAt",
+          "preview"
+        ],
+        "type": "object"
+      },
+      "StaffRequestListItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffRequestListItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffRequestMessageView": {
+        "properties": {
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/MessageAttachmentView"
+            },
+            "type": "array"
+          },
+          "body": {
+            "description": "Null once its sender was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "cycle": {
+            "description": "The request’s cycle when it was written.",
+            "type": "number"
+          },
+          "erased": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "internal": {
+            "description": "A staff note: the author never sees it.",
+            "type": "boolean"
+          },
+          "official": {
+            "type": "boolean"
+          },
+          "sender": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "senderSide": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementSide"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "sender",
+          "senderSide",
+          "internal",
+          "official",
+          "cycle",
+          "body",
+          "erased",
+          "attachments",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StaffRequestMessageViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffRequestMessageView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffRequestView": {
+        "properties": {
+          "answeredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "assignee": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Null: in the unassigned queue.",
+            "nullable": true,
+            "type": "object"
+          },
+          "author": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "closeReason": {
+            "description": "Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "cycle": {
+            "description": "1 when opened; one more each time it is reopened.",
+            "type": "number"
+          },
+          "escalatedAt": {
+            "description": "When this cycle was escalated (at most once).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "firstResponseAt": {
+            "description": "The cycle’s first staff response.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastActivityAt": {
+            "description": "What the lists are ordered by.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "number": {
+            "example": "MR-000123",
+            "type": "string"
+          },
+          "onBehalfReason": {
+            "description": "Why it was opened on the author’s behalf (a reason code).",
+            "nullable": true,
+            "type": "string"
+          },
+          "openedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "The staff member who opened it for the author.",
+            "nullable": true,
+            "type": "object"
+          },
+          "overdue": {
+            "description": "The response time has passed and nobody has responded in this cycle.",
+            "type": "boolean"
+          },
+          "responseDueAt": {
+            "description": "The cycle’s response time: its start plus the topic’s target.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementRequestStatus"
+              }
+            ]
+          },
+          "topic": {
+            "$ref": "#/components/schemas/RequestTopicRefView"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagementRequestType"
+              }
+            ]
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestUnitRefView"
+              }
+            ],
+            "description": "The unit the request is about, when it names one.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "type",
+          "status",
+          "topic",
+          "unit",
+          "cycle",
+          "closeReason",
+          "closedAt",
+          "createdAt",
+          "lastActivityAt",
+          "author",
+          "openedBy",
+          "onBehalfReason",
+          "assignee",
+          "responseDueAt",
+          "firstResponseAt",
+          "overdue",
+          "escalatedAt",
+          "answeredAt"
         ],
         "type": "object"
       },
@@ -11013,6 +12899,120 @@
         ],
         "type": "object"
       },
+      "TopicOptionView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "targetResponseHours": {
+            "description": "Hours the management gives itself to answer.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn",
+          "targetResponseHours"
+        ],
+        "type": "object"
+      },
+      "TopicOptionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TopicOptionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "TopicView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "targetResponseHours": {
+            "description": "Hours the management gives itself to answer.",
+            "type": "number"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn",
+          "targetResponseHours",
+          "active",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "TopicViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TopicView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "TransferOwnershipDto": {
         "properties": {
           "reason": {
@@ -11815,6 +13815,29 @@
         },
         "type": "object"
       },
+      "UpdateRequestSettingsDto": {
+        "properties": {
+          "appointmentSlotCapacity": {
+            "description": "Appointments one slot takes.",
+            "maximum": 50,
+            "minimum": 1,
+            "type": "number"
+          },
+          "appointmentSlotMinutes": {
+            "description": "The length of an appointment slot, in minutes.",
+            "maximum": 240,
+            "minimum": 10,
+            "type": "number"
+          },
+          "autoCloseDays": {
+            "description": "Days an answered request waits for its author before it closes itself.",
+            "maximum": 90,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
       "UpdateSettingsDto": {
         "properties": {
           "emergencyPhone": {
@@ -11881,6 +13904,31 @@
             "maxLength": 80,
             "minLength": 1,
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateTopicDto": {
+        "properties": {
+          "active": {
+            "description": "False retires the topic: no new request may use it.",
+            "type": "boolean"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "targetResponseHours": {
+            "description": "Applies to requests opened or reopened from now on; a running cycle keeps its due time.",
+            "maximum": 720,
+            "minimum": 1,
+            "type": "number"
           }
         },
         "type": "object"
@@ -17818,6 +19866,1679 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/management-appointment-slots": {
+      "get": {
+        "operationId": "ResidentAppointmentSlotsController_list",
+        "parameters": [
+          {
+            "description": "The first day, `YYYY-MM-DD` in the compound’s time zone; today by default.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-10-18",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 31,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentSlotViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the free appointment slots",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management-request-topics": {
+      "get": {
+        "operationId": "TopicOptionsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopicOptionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the topics a request may be opened under",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management-requests": {
+      "get": {
+        "operationId": "ResidentRequestsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ManagementRequestStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ManagementRequestType"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentRequestViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my requests to the management",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ResidentRequestsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open a request to the management",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management-requests/{id}": {
+      "get": {
+        "operationId": "ResidentRequestsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentRequestDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one of my requests to the management",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management-requests/{id}/appointment": {
+      "post": {
+        "operationId": "ResidentAppointmentsController_book",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SlotChoiceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentBookedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Pick a slot for my appointment",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management-requests/{id}/appointment/accept": {
+      "post": {
+        "operationId": "ResidentAppointmentsController_accept",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accept the slot the management proposed",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management-requests/{id}/appointment/cancel": {
+      "post": {
+        "operationId": "ResidentAppointmentsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelAppointmentByResidentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel my appointment",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management-requests/{id}/messages": {
+      "get": {
+        "operationId": "ResidentRequestsController_thread",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentRequestMessageViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the conversation of my request",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ResidentRequestsController_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostRequestMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Write on my request",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management-requests/{id}/rating": {
+      "post": {
+        "operationId": "ResidentRequestsController_rate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RateRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestRatingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rate my closed request",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management-requests/{id}/reopen": {
+      "post": {
+        "operationId": "ResidentRequestsController_reopen",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostRequestMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reopen my closed request",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management-requests/{id}/withdraw": {
+      "post": {
+        "operationId": "ResidentRequestsController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw my request",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/appointment-slots": {
+      "get": {
+        "operationId": "StaffAppointmentsController_slots",
+        "parameters": [
+          {
+            "description": "The first day, `YYYY-MM-DD` in the compound’s time zone; today by default.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-10-18",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 31,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffAppointmentSlotViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the free appointment slots, with places left",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/appointments": {
+      "get": {
+        "operationId": "StaffAppointmentsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ManagementAppointmentStatus"
+            }
+          },
+          {
+            "description": "Starting at or after.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Starting before.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffAppointmentListItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the appointments, soonest first",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/office-hours": {
+      "get": {
+        "operationId": "OfficeHoursController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfficeHoursResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the office hours",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "put": {
+        "operationId": "OfficeHoursController_replace",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceOfficeHoursDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfficeHoursResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Replace the office hours",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/request-assignees": {
+      "get": {
+        "operationId": "RequestAssigneesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestPersonViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List who a request may be assigned to",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/request-ratings": {
+      "get": {
+        "operationId": "RequestRatingsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RatingListItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the ratings of requests, newest first",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/request-settings": {
+      "get": {
+        "operationId": "RequestSettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the management request settings",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "RequestSettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRequestSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update the management request settings",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/request-topics": {
+      "get": {
+        "operationId": "TopicsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopicViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List management request topics",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "TopicsController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTopicDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopicView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a management request topic",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/request-topics/{id}": {
+      "patch": {
+        "operationId": "TopicsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTopicDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopicView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a management request topic",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/requests": {
+      "get": {
+        "operationId": "StaffRequestsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ManagementRequestStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ManagementRequestType"
+            }
+          },
+          {
+            "in": "query",
+            "name": "topicId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "An account id, `me` for the caller’s own, or `none` for the unassigned queue.",
+            "in": "query",
+            "name": "assignee",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "`true`: only requests whose response time has passed with no response in the cycle.",
+            "in": "query",
+            "name": "overdue",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "`true`: only requests whose current cycle was escalated.",
+            "in": "query",
+            "name": "escalated",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffRequestListItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the requests to the management",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffRequestsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRequestOnBehalfDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open a request for a resident",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/requests/{id}": {
+      "get": {
+        "operationId": "StaffRequestsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffRequestDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one request to the management",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/requests/{id}/appointment/cancel": {
+      "post": {
+        "operationId": "StaffAppointmentsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelAppointmentByStaffDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel an appointment",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/requests/{id}/appointment/confirm": {
+      "post": {
+        "operationId": "StaffAppointmentsController_confirm",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Confirm the slot the resident picked",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/requests/{id}/appointment/propose": {
+      "post": {
+        "operationId": "StaffAppointmentsController_propose",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SlotChoiceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentBookedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Propose a slot, or counter the resident’s pick",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/requests/{id}/assign": {
+      "post": {
+        "operationId": "StaffRequestsController_assign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Assign a request, or return it to the queue",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/requests/{id}/close": {
+      "post": {
+        "operationId": "StaffRequestsController_close",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close a request",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/requests/{id}/messages": {
+      "get": {
+        "operationId": "StaffRequestsController_thread",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffRequestMessageViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the conversation of a request, notes included",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffRequestsController_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostStaffRequestMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reply to a request, or add a staff note",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/requests/{id}/rating": {
+      "get": {
+        "operationId": "RequestRatingsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerRequestRatingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the rating of a request",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/requests/{id}/start": {
+      "post": {
+        "operationId": "StaffRequestsController_start",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take an open request in hand",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/units/{unitId}/request-authors": {
+      "get": {
+        "operationId": "RequestUnitsController_authors",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestPersonViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List who a request may be opened for in a unit",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me": {
       "get": {
         "operationId": "MeController_me",
@@ -18855,6 +22576,56 @@
         "tags": [
           "me"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/requests": {
+      "get": {
+        "operationId": "MyRequestsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyRequestViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all my requests: tickets and requests to the management",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

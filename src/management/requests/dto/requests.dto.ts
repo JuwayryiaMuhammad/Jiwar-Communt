@@ -6,11 +6,14 @@ import {
   IsBoolean,
   IsEnum,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   Length,
   Matches,
+  Max,
+  Min,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
@@ -20,6 +23,7 @@ import { PageQueryDto } from '../../../core/common/http/list';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { MAX_ATTACHMENTS, MESSAGE_LENGTH } from '../messages.service';
+import { RATING, RATING_COMMENT_LENGTH } from '../rating.service';
 
 const BOOLEAN = ['true', 'false'] as const;
 const UUID =
@@ -246,4 +250,26 @@ export class CloseRequestDto {
   @ApiProperty({ enum: REASON_CODES.managementRequestClose })
   @IsString()
   reasonCode: string;
+}
+
+export class RateRequestDto {
+  @ApiProperty({ type: Number, minimum: RATING.min, maximum: RATING.max })
+  @IsInt(withParams({ ...RATING }))
+  @Min(RATING.min, withParams({ ...RATING }))
+  @Max(RATING.max, withParams({ ...RATING }))
+  rating: number;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    maxLength: RATING_COMMENT_LENGTH.max,
+  })
+  @IsOptional()
+  @IsString()
+  @Length(
+    0,
+    RATING_COMMENT_LENGTH.max,
+    withParams({ ...RATING_COMMENT_LENGTH }),
+  )
+  comment?: string;
 }

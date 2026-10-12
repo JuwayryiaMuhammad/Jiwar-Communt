@@ -33,14 +33,18 @@ import {
 } from './dto/requests.dto';
 import { RequestLifecycle } from './lifecycle.service';
 import { MessagesService } from './messages.service';
+import { RatingService } from './rating.service';
 import { RequestsService } from './requests.service';
 import {
   MessageCreatedView,
   StaffRequestMessageView,
 } from './views/message.views';
 import {
+  ManagerRequestRatingView,
+  RatingListItemView,
   RequestCreatedView,
   RequestPersonView,
+  RequestRatingView,
   StaffRequestDetailView,
   StaffRequestListItemView,
 } from './views/request.views';
@@ -168,6 +172,43 @@ export class StaffRequestsController {
     @Body() dto: CloseRequestDto,
   ): Promise<void> {
     await this.lifecycle.close(id, dto.reasonCode);
+  }
+}
+
+/**
+ * Ratings (ADR 0039): for `requests.manage` alone. A handler without it
+ * reads no rating anywhere: the staff views of a request carry none.
+ */
+@ApiArea('management-requests')
+@RequirePermissions('requests.manage')
+@Controller('management')
+export class RequestRatingsController {
+  constructor(
+    private readonly requests: RequestsService,
+    private readonly ratings: RatingService,
+  ) {}
+
+  @Get('request-ratings')
+  @NoStore()
+  @ApiOperation({ summary: 'List the ratings of requests, newest first' })
+  @ApiOkResponse({ type: ListOf(RatingListItemView) })
+  async list(
+    @Query() q: PageQueryDto,
+  ): Promise<ListResponse<RatingListItemView>> {
+    return toList(await this.requests.ratingsForManager(q), (r) =>
+      RatingListItemView.fromRead(r),
+    );
+  }
+
+  @Get('requests/:id/rating')
+  @NoStore()
+  @ApiOperation({ summary: 'Get the rating of a request' })
+  @ApiOkResponse({ type: ManagerRequestRatingView })
+  async get(
+    @Param('id', parseId()) id: string,
+  ): Promise<ManagerRequestRatingView> {
+    const rating = await this.ratings.forManager(id);
+    return { rating: rating ? RequestRatingView.from(rating) : null };
   }
 }
 

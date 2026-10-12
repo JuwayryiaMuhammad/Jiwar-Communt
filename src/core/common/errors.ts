@@ -250,6 +250,8 @@ export const ErrorCode = {
   /** Closed more than seven days ago (409, params.reopenDays). */
   MANAGEMENT_REQUEST_REOPEN_WINDOW_PASSED:
     'MANAGEMENT_REQUEST_REOPEN_WINDOW_PASSED',
+  /** A request is rated once (409). */
+  MANAGEMENT_REQUEST_ALREADY_RATED: 'MANAGEMENT_REQUEST_ALREADY_RATED',
   /** An appointment action on a request of another type (409). */
   MANAGEMENT_REQUEST_NOT_AN_APPOINTMENT:
     'MANAGEMENT_REQUEST_NOT_AN_APPOINTMENT',

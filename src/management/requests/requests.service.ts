@@ -4,6 +4,7 @@ import {
   type ManagementAppointment,
   type ManagementRequest,
   type ManagementRequestEscalation,
+  type ManagementRequestRating,
   type ManagementRequestStatus,
   type ManagementRequestTopic,
   type ManagementRequestType,
@@ -33,6 +34,7 @@ import {
 import { dbNow } from '../db-clock';
 import { MessagesService } from './messages.service';
 import { RequestEscalation } from './escalation.service';
+import { RatingService } from './rating.service';
 import { RequestAccess } from './request-access';
 import { RequestProgress } from './request-progress';
 import { assertCan, responseDueAt } from './request-rules';
@@ -83,6 +85,17 @@ export interface RequestRead {
 /** One request with its appointment: the live one, else the last. */
 export interface DetailRead extends RequestRead {
   appointment: ManagementAppointment | null;
+}
+
+/** One of the author's own requests: with the rating they gave. */
+export interface ResidentDetailRead extends DetailRead {
+  rating: ManagementRequestRating | null;
+}
+
+/** A row of the manager's ratings. */
+export interface RatingRead {
+  rating: ManagementRequestRating;
+  request: RequestRead;
 }
 
 /** One request as staff read it: with the history of its escalations. */
@@ -160,6 +173,7 @@ export class RequestsService implements OnModuleInit {
     private readonly idempotency: IdempotencyService,
     private readonly escalation: RequestEscalation,
     private readonly appointments: AppointmentsService,
+    private readonly ratings: RatingService,
   ) {}
 
   onModuleInit(): void {
@@ -437,11 +451,41 @@ export class RequestsService implements OnModuleInit {
   }
 
   /** One of the caller's own requests. */
-  detail(id: string): Promise<DetailRead> {
+  detail(id: string): Promise<ResidentDetailRead> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const request = await this.access.load(tx, id, 'resident');
       const [read] = await this.withNames(tx, [request], await dbNow(tx));
-      return { ...read, appointment: await this.appointments.current(tx, id) };
+      return {
+        ...read,
+        appointment: await this.appointments.current(tx, id),
+        rating: await this.ratings.of(tx, id),
+      };
+    });
+  }
+
+  /** The compound's ratings with their requests (`requests.manage`). */
+  async ratingsForManager(q: {
+    cursor?: string;
+    limit?: number;
+  }): Promise<Page<RatingRead>> {
+    const page = await this.ratings.list(q);
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const requests = await tx.managementRequest.findMany({
+        where: { id: { in: page.items.map((r) => r.requestId) } },
+      });
+      const reads = new Map(
+        (await this.withNames(tx, requests, await dbNow(tx))).map((r) => [
+          r.request.id,
+          r,
+        ]),
+      );
+      return {
+        ...page,
+        items: page.items.map((rating) => ({
+          rating,
+          request: reads.get(rating.requestId)!,
+        })),
+      };
     });
   }
 

@@ -11,12 +11,14 @@ import { ManagementProvisioning } from './provisioning';
 import { RequestEscalation } from './requests/escalation.service';
 import { RequestLifecycle } from './requests/lifecycle.service';
 import { MessagesService } from './requests/messages.service';
+import { RatingService } from './requests/rating.service';
 import { RequestAccess } from './requests/request-access';
 import { RequestProgress } from './requests/request-progress';
 import { RequestsService } from './requests/requests.service';
 import { ResidentRequestsController } from './requests/resident-requests.controller';
 import {
   RequestAssigneesController,
+  RequestRatingsController,
   RequestUnitsController,
   StaffRequestsController,
 } from './requests/staff-requests.controller';
@@ -47,6 +49,7 @@ import { TopicsService } from './topics/topics.service';
     ResidentRequestsController,
     StaffRequestsController,
     RequestAssigneesController,
+    RequestRatingsController,
     RequestUnitsController,
     ResidentAppointmentSlotsController,
     ResidentAppointmentsController,
@@ -64,6 +67,7 @@ import { TopicsService } from './topics/topics.service';
     RequestLifecycle,
     RequestEscalation,
     AppointmentsService,
+    RatingService,
   ],
 })
 export class ManagementModule {}

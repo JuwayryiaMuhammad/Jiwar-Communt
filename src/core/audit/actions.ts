@@ -338,6 +338,8 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'management_request',
   },
+  // metadata: requestNumber, cycle. Never the rating or its comment.
+  'management_request.rated': { log: 'tenant', target: 'management_request' },
   // Appointments. target: the appointment. metadata: requestNumber, mode,
   // startsAt, and `replaces` (it took the place of another) or `by`
   // (resident | staff); a cancellation: reasonCode, by, fromStatus.

@@ -26,10 +26,12 @@ import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import {
   CreateRequestDto,
   PostRequestMessageDto,
+  RateRequestDto,
   ResidentRequestsQueryDto,
 } from './dto/requests.dto';
 import { RequestLifecycle } from './lifecycle.service';
 import { MessagesService } from './messages.service';
+import { RatingService } from './rating.service';
 import { RequestsService } from './requests.service';
 import {
   MessageCreatedView,
@@ -37,6 +39,7 @@ import {
 } from './views/message.views';
 import {
   RequestCreatedView,
+  RequestRatingView,
   ResidentRequestDetailView,
   ResidentRequestView,
 } from './views/request.views';
@@ -53,6 +56,7 @@ export class ResidentRequestsController {
     private readonly requests: RequestsService,
     private readonly messages: MessagesService,
     private readonly lifecycle: RequestLifecycle,
+    private readonly ratings: RatingService,
   ) {}
 
   @Post()
@@ -135,5 +139,17 @@ export class ResidentRequestsController {
     @Body() dto: PostRequestMessageDto,
   ): Promise<void> {
     await this.lifecycle.reopen(id, dto);
+  }
+
+  /** A closed request, once: 1 to 5 and an optional comment, never changed. */
+  @Post(':id/rating')
+  @NoStore()
+  @ApiOperation({ summary: 'Rate my closed request' })
+  @ApiCreatedResponse({ type: RequestRatingView })
+  async rate(
+    @Param('id', parseId()) id: string,
+    @Body() dto: RateRequestDto,
+  ): Promise<RequestRatingView> {
+    return RequestRatingView.from(await this.ratings.rate(id, dto));
   }
 }

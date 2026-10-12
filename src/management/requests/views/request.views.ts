@@ -3,16 +3,18 @@ import {
   ManagementRequestStatus,
   ManagementRequestType,
   type ManagementRequest,
+  type ManagementRequestRating,
 } from '@prisma/client';
 import { accountRef, AccountRefView } from '../../../core/common/http/personal';
 import { isOverdue, reopenUntil, requestNumber } from '../request-rules';
 import { AppointmentView } from '../../appointments/views/appointment.views';
 import type {
   AppointmentRead,
-  DetailRead,
+  RatingRead,
   InboxRead,
   Person,
   RequestRead,
+  ResidentDetailRead,
   StaffDetailRead,
   TopicRef,
 } from '../requests.service';
@@ -173,6 +175,24 @@ export class ResidentRequestView extends RequestBaseView {
   }
 }
 
+/** A request's rating: by its author, once, never changed. */
+export class RequestRatingView {
+  @ApiProperty({ type: Number, minimum: 1, maximum: 5 })
+  rating: number;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'Optional; null too once its author was erased.',
+  })
+  comment: string | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: Date;
+
+  static from(r: ManagementRequestRating): RequestRatingView {
+    return { rating: r.rating, comment: r.comment, createdAt: r.createdAt };
+  }
+}
+
 /** One of the author's requests, with its appointment. */
 export class ResidentRequestDetailView extends ResidentRequestView {
   @ApiProperty({
@@ -182,10 +202,17 @@ export class ResidentRequestDetailView extends ResidentRequestView {
       'On an appointment request: the live appointment, else the last one.',
   })
   appointment: AppointmentView | null;
+  @ApiProperty({
+    type: RequestRatingView,
+    nullable: true,
+    description: 'The author’s own rating, once given.',
+  })
+  rating: RequestRatingView | null;
 
-  static fromDetail(read: DetailRead): ResidentRequestDetailView {
+  static fromDetail(read: ResidentDetailRead): ResidentRequestDetailView {
     return {
       ...ResidentRequestView.from(read),
+      rating: read.rating ? RequestRatingView.from(read.rating) : null,
       appointment: read.appointment
         ? AppointmentView.from(read.appointment)
         : null,
@@ -343,6 +370,29 @@ export class StaffAppointmentListItemView extends AppointmentView {
   static fromRead(read: AppointmentRead): StaffAppointmentListItemView {
     return {
       ...AppointmentView.from(read.appointment),
+      request: StaffRequestView.from(read.request),
+    };
+  }
+}
+
+/** What `requests.manage` reads of one request's rating: it, or nothing yet. */
+export class ManagerRequestRatingView {
+  @ApiProperty({
+    type: RequestRatingView,
+    nullable: true,
+    description: 'Null: the author has not rated the request.',
+  })
+  rating: RequestRatingView | null;
+}
+
+/** A row of the manager's ratings: the rating and the request it is of. */
+export class RatingListItemView extends RequestRatingView {
+  @ApiProperty({ type: StaffRequestView })
+  request: StaffRequestView;
+
+  static fromRead(read: RatingRead): RatingListItemView {
+    return {
+      ...RequestRatingView.from(read.rating),
       request: StaffRequestView.from(read.request),
     };
   }

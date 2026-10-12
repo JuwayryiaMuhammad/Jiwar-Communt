@@ -537,6 +537,35 @@ describe('Audit coverage — management requests', () => {
     });
   });
 
+  describe('rating', () => {
+    it('management_request.rated — that it was, never the rating or its comment', async () => {
+      const { id, number } = await m.open(s.c, s.owner, {
+        body: `${MARKER} q`,
+      });
+      await m
+        .http('post', `/management/requests/${id}/close`, s.manager.token, {
+          reasonCode: 'resolved',
+        })
+        .expect(204);
+      await m
+        .http('post', `/management-requests/${id}/rating`, s.owner.token, {
+          rating: 1,
+          comment: `${MARKER} nobody answered`,
+        })
+        .expect(201);
+      const row = await single('management_request.rated', id);
+      expect(row).toMatchObject({
+        actorType: 'account',
+        actorId: s.owner.id,
+        targetType: 'management_request',
+      });
+      expect(row.metadata).toEqual({
+        requestNumber: Number(number.slice(3)),
+        cycle: 1,
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every management entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

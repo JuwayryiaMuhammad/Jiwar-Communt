@@ -868,11 +868,7 @@
       "CancelAppointmentByResidentDto": {
         "properties": {
           "reasonCode": {
-            "enum": [
-              "no_longer_needed",
-              "cannot_attend",
-              "other"
-            ],
+            "description": "From the closed list `managementAppointmentCancelByResident`.",
             "type": "string"
           }
         },
@@ -884,11 +880,7 @@
       "CancelAppointmentByStaffDto": {
         "properties": {
           "reasonCode": {
-            "enum": [
-              "staff_unavailable",
-              "office_closed",
-              "other"
-            ],
+            "description": "From the closed list `managementAppointmentCancelByStaff`.",
             "type": "string"
           }
         },
@@ -1413,12 +1405,7 @@
       "CloseRequestDto": {
         "properties": {
           "reasonCode": {
-            "enum": [
-              "resolved",
-              "duplicate",
-              "not_for_management",
-              "other"
-            ],
+            "description": "From the closed list `managementRequestClose`.",
             "type": "string"
           }
         },
@@ -2096,12 +2083,7 @@
             "type": "string"
           },
           "reasonCode": {
-            "description": "How the resident reached the management.",
-            "enum": [
-              "resident_phone_call",
-              "resident_walk_in",
-              "resident_written_letter"
-            ],
+            "description": "How the resident reached the management, from the closed list `managementRequestOnBehalf`.",
             "type": "string"
           },
           "topicId": {

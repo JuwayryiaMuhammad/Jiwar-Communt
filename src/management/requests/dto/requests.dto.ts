@@ -20,7 +20,6 @@ import {
 import { Type } from 'class-transformer';
 import { SlotChoiceDto } from '../../appointments/dto/appointments.dto';
 import { PageQueryDto } from '../../../core/common/http/list';
-import { REASON_CODES } from '../../../core/common/reasons';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { MAX_ATTACHMENTS, MESSAGE_LENGTH } from '../messages.service';
 import { RATING, RATING_COMMENT_LENGTH } from '../rating.service';
@@ -110,8 +109,9 @@ export class CreateRequestOnBehalfDto extends CreateRequestDto {
   authorAccountId: string;
 
   @ApiProperty({
-    enum: REASON_CODES.managementRequestOnBehalf,
-    description: 'How the resident reached the management.',
+    type: String,
+    description:
+      'How the resident reached the management, from the closed list `managementRequestOnBehalf`.',
   })
   @IsString()
   reasonCode: string;
@@ -256,7 +256,10 @@ export class PostStaffRequestMessageDto extends PostRequestMessageDto {
 }
 
 export class CloseRequestDto {
-  @ApiProperty({ enum: REASON_CODES.managementRequestClose })
+  @ApiProperty({
+    type: String,
+    description: 'From the closed list `managementRequestClose`.',
+  })
   @IsString()
   reasonCode: string;
 }

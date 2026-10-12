@@ -5259,12 +5259,12 @@ export interface components {
             birthDate: string;
         };
         CancelAppointmentByResidentDto: {
-            /** @enum {string} */
-            reasonCode: "no_longer_needed" | "cannot_attend" | "other";
+            /** @description From the closed list `managementAppointmentCancelByResident`. */
+            reasonCode: string;
         };
         CancelAppointmentByStaffDto: {
-            /** @enum {string} */
-            reasonCode: "staff_unavailable" | "office_closed" | "other";
+            /** @description From the closed list `managementAppointmentCancelByStaff`. */
+            reasonCode: string;
         };
         CancelVisitorPassDto: {
             /** @description From the closed list `visitorPassCancel`. */
@@ -5412,8 +5412,8 @@ export interface components {
             reasonCode: string;
         };
         CloseRequestDto: {
-            /** @enum {string} */
-            reasonCode: "resolved" | "duplicate" | "not_for_management" | "other";
+            /** @description From the closed list `managementRequestClose`. */
+            reasonCode: string;
         };
         ClosedModeDto: {
             closed: boolean;
@@ -5646,11 +5646,8 @@ export interface components {
             authorAccountId: string;
             /** @description What the request says: it becomes its first message. */
             body: string;
-            /**
-             * @description How the resident reached the management.
-             * @enum {string}
-             */
-            reasonCode: "resident_phone_call" | "resident_walk_in" | "resident_written_letter";
+            /** @description How the resident reached the management, from the closed list `managementRequestOnBehalf`. */
+            reasonCode: string;
             /**
              * Format: uuid
              * @description An active topic of the compound (TOPIC_NOT_AVAILABLE).

@@ -15,7 +15,6 @@ import {
   Min,
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
-import { REASON_CODES } from '../../../core/common/reasons';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { SLOT_DAYS } from '../appointment-slots';
 
@@ -71,13 +70,20 @@ export class SlotChoiceDto {
 }
 
 export class CancelAppointmentByResidentDto {
-  @ApiProperty({ enum: REASON_CODES.managementAppointmentCancelByResident })
+  @ApiProperty({
+    type: String,
+    description:
+      'From the closed list `managementAppointmentCancelByResident`.',
+  })
   @IsString()
   reasonCode: string;
 }
 
 export class CancelAppointmentByStaffDto {
-  @ApiProperty({ enum: REASON_CODES.managementAppointmentCancelByStaff })
+  @ApiProperty({
+    type: String,
+    description: 'From the closed list `managementAppointmentCancelByStaff`.',
+  })
   @IsString()
   reasonCode: string;
 }

@@ -5849,9 +5849,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"reasonCode\": \"no_longer_needed\"\n}"
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | `no_longer_needed` \\| `cannot_attend` \\| `other` | yes |  |\n\n**Responses:** 204",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `managementAppointmentCancelByResident`. |\n\n**Responses:** 204",
             "header": [
               {
                 "description": "",
@@ -6521,9 +6521,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"type\": \"question\",\n  \"topicId\": \"\",\n  \"body\": \"\",\n  \"authorAccountId\": \"\",\n  \"reasonCode\": \"resident_phone_call\"\n}"
+              "raw": "{\n  \"type\": \"question\",\n  \"topicId\": \"\",\n  \"body\": \"\",\n  \"authorAccountId\": \"\",\n  \"reasonCode\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `appointment` | object |  | Required for an `appointment` request, refused for any other type. |\n| `attachmentFileIds` | string (uuid)[] |  | The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). |\n| `authorAccountId` | string (uuid) | yes | The resident the request is for: an active resident or family account (AUTHOR_NOT_ELIGIBLE). They are its author. |\n| `body` | string | yes | What the request says: it becomes its first message. |\n| `reasonCode` | `resident_phone_call` \\| `resident_walk_in` \\| `resident_written_letter` | yes | How the resident reached the management. |\n| `topicId` | string (uuid) | yes | An active topic of the compound (TOPIC_NOT_AVAILABLE). |\n| `type` | `question` \\| `general` \\| `appointment` | yes | An `appointment` names its slot in `appointment`. |\n| `unitId` | string (uuid) |  | One of the author’s units, when the request is about one. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `appointment` | object |  | Required for an `appointment` request, refused for any other type. |\n| `attachmentFileIds` | string (uuid)[] |  | The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). |\n| `authorAccountId` | string (uuid) | yes | The resident the request is for: an active resident or family account (AUTHOR_NOT_ELIGIBLE). They are its author. |\n| `body` | string | yes | What the request says: it becomes its first message. |\n| `reasonCode` | string | yes | How the resident reached the management, from the closed list `managementRequestOnBehalf`. |\n| `topicId` | string (uuid) | yes | An active topic of the compound (TOPIC_NOT_AVAILABLE). |\n| `type` | `question` \\| `general` \\| `appointment` | yes | An `appointment` names its slot in `appointment`. |\n| `unitId` | string (uuid) |  | One of the author’s units, when the request is about one. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -6589,9 +6589,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"reasonCode\": \"staff_unavailable\"\n}"
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | `staff_unavailable` \\| `office_closed` \\| `other` | yes |  |\n\n**Responses:** 204",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `managementAppointmentCancelByStaff`. |\n\n**Responses:** 204",
             "header": [
               {
                 "description": "",
@@ -6758,9 +6758,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"reasonCode\": \"resolved\"\n}"
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | `resolved` \\| `duplicate` \\| `not_for_management` \\| `other` | yes |  |\n\n**Responses:** 204",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `managementRequestClose`. |\n\n**Responses:** 204",
             "header": [
               {
                 "description": "",

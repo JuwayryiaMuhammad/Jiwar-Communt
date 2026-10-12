@@ -10,6 +10,7 @@ import {
   Inbox,
   LayoutDashboard,
   Lock,
+  MessagesSquare,
   Package,
   ScrollText,
   Settings,
@@ -66,6 +67,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     can('tickets.dispatch'),
   );
 
+  // Requests to the management nobody has taken yet (ADR 0039).
+  const queued = useQueueSize(
+    keys.managementRequests({ assignee: 'none', open: 'true' }),
+    () => fetchers.managementRequests({ assignee: 'none', open: 'true' }, undefined, 100),
+    can('requests.handle'),
+  );
+
   // Requests the system could not carry out by itself: a manager's to settle.
   const erasures = useQuery({
     queryKey: [...keys.erasures, 'count'],
@@ -112,6 +120,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           icon: <Wrench aria-hidden />,
           count: unassigned,
           show: can('tickets.dispatch'),
+        },
+        {
+          href: '/management-requests',
+          label: 'Management requests',
+          icon: <MessagesSquare aria-hidden />,
+          count: queued,
+          show: can('requests.handle'),
         },
         { href: '/gate', label: 'Gate', icon: <DoorOpen aria-hidden />, show: can('gate.read') },
         { href: '/parcels', label: 'Parcels', icon: <Package aria-hidden />, show: can('parcels.manage') },

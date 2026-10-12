@@ -5,7 +5,8 @@ export interface SessionPolicy {
   refreshTtlSeconds: number;
 }
 
-const FIFTEEN_MINUTES = 15 * 60;
+// const FIFTEEN_MINUTES = 15 * 60;
+const FIFTEEN_MINUTES = 15 * 60 * 60;
 const THIRTY_DAYS = 30 * 24 * 60 * 60;
 
 /**

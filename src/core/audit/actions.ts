@@ -316,6 +316,12 @@ export const AUDIT_ACTIONS = {
     target: 'management_request',
   },
   'management_request.resumed': { log: 'tenant', target: 'management_request' },
+  // The sweep's (actor: system), once per cycle. metadata: requestNumber,
+  // cycle.
+  'management_request.escalated': {
+    log: 'tenant',
+    target: 'management_request',
+  },
   // The ends. metadata: requestNumber, cycle, fromStatus; a staff close
   // adds reasonCode. `auto_closed` is the sweep's (actor: system).
   'management_request.closed': { log: 'tenant', target: 'management_request' },

@@ -41,8 +41,8 @@ import {
 import {
   RequestCreatedView,
   RequestPersonView,
+  StaffRequestDetailView,
   StaffRequestListItemView,
-  StaffRequestView,
 } from './views/request.views';
 
 /**
@@ -96,9 +96,13 @@ export class StaffRequestsController {
   @Get(':id')
   @NoStore()
   @ApiOperation({ summary: 'Get one request to the management' })
-  @ApiOkResponse({ type: StaffRequestView })
-  async get(@Param('id', parseId()) id: string): Promise<StaffRequestView> {
-    return StaffRequestView.from(await this.requests.detail(id, 'staff'));
+  @ApiOkResponse({ type: StaffRequestDetailView })
+  async get(
+    @Param('id', parseId()) id: string,
+  ): Promise<StaffRequestDetailView> {
+    return StaffRequestDetailView.fromDetail(
+      await this.requests.detailForStaff(id),
+    );
   }
 
   @Post(':id/assign')

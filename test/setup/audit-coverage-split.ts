@@ -188,4 +188,5 @@ export const MANAGEMENT_COVERAGE: readonly string[] = [
   'management_request.withdrawn',
   'management_request.auto_closed',
   'management_request.reopened',
+  'management_request.escalated',
 ];

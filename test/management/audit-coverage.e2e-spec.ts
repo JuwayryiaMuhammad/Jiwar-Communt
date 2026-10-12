@@ -1,5 +1,6 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { SweepRunner } from '../../src/core/sweep/sweep-runner';
+import { ESCALATION_SWEEP } from '../../src/management/requests/escalation.service';
 import { AUTO_CLOSE_SWEEP } from '../../src/management/requests/lifecycle.service';
 import { auditReaders } from '../setup/audit';
 import {
@@ -394,6 +395,30 @@ describe('Audit coverage — management requests', () => {
         cycle: 1,
         fromStatus: 'answered',
       });
+    });
+  });
+
+  describe('escalation', () => {
+    it('management_request.escalated — by the system, once for the cycle', async () => {
+      const { id } = await m.open(s.c, s.owner, { body: `${MARKER} q` });
+      const request = await m.x.asManager(s.c, () =>
+        m.x.prisma.tenant.managementRequest.findUniqueOrThrow({
+          where: { id },
+        }),
+      );
+      const sweep = h.moduleRef.get(SweepRunner);
+      await sweep.run(ESCALATION_SWEEP, request.responseDueAt);
+      await sweep.run(
+        ESCALATION_SWEEP,
+        new Date(request.responseDueAt.getTime() + 3_600_000),
+      );
+      const row = await single('management_request.escalated', id);
+      expect(row).toMatchObject({
+        actorType: 'system',
+        actorId: null,
+        targetType: 'management_request',
+      });
+      expect(row.metadata).toEqual({ requestNumber: 7, cycle: 1 });
     });
   });
 

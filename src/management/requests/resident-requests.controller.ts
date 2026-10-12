@@ -77,7 +77,7 @@ export class ResidentRequestsController {
   @ApiOperation({ summary: 'Get one of my requests to the management' })
   @ApiOkResponse({ type: ResidentRequestView })
   async get(@Param('id', parseId()) id: string): Promise<ResidentRequestView> {
-    return ResidentRequestView.from(await this.requests.detail(id, 'resident'));
+    return ResidentRequestView.from(await this.requests.detail(id));
   }
 
   /** Never a staff note: the read filters them out and the view has no field for one. */

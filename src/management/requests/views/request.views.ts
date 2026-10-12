@@ -10,6 +10,7 @@ import type {
   InboxRead,
   Person,
   RequestRead,
+  StaffDetailRead,
   TopicRef,
 } from '../requests.service';
 
@@ -239,6 +240,40 @@ export class StaffRequestView extends RequestBaseView {
       overdue: isOverdue(r, read.now),
       escalatedAt: r.escalatedAt,
       answeredAt: r.answeredAt,
+    };
+  }
+}
+
+/** One escalation: the cycle whose response time passed, and when. */
+export class RequestEscalationView {
+  @ApiProperty({ type: Number })
+  cycle: number;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description: 'The response time that passed.',
+  })
+  dueAt: Date;
+  @ApiProperty({ type: String, format: 'date-time' })
+  escalatedAt: Date;
+}
+
+/** One request as staff read it. */
+export class StaffRequestDetailView extends StaffRequestView {
+  @ApiProperty({
+    type: [RequestEscalationView],
+    description: 'At most one per cycle, oldest first.',
+  })
+  escalations: RequestEscalationView[];
+
+  static fromDetail(read: StaffDetailRead): StaffRequestDetailView {
+    return {
+      ...StaffRequestView.from(read),
+      escalations: read.escalations.map((e) => ({
+        cycle: e.cycle,
+        dueAt: e.dueAt,
+        escalatedAt: e.createdAt,
+      })),
     };
   }
 }

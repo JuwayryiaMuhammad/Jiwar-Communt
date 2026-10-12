@@ -2,6 +2,7 @@ import { Injectable, type OnModuleInit } from '@nestjs/common';
 import {
   Prisma,
   type ManagementRequest,
+  type ManagementRequestEscalation,
   type ManagementRequestStatus,
   type ManagementRequestTopic,
   type ManagementRequestType,
@@ -24,7 +25,8 @@ import { TenantTx } from '../../core/database/tenant-tx.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { dbNow } from '../db-clock';
 import { MessagesService } from './messages.service';
-import { RequestAccess, type Audience } from './request-access';
+import { RequestEscalation } from './escalation.service';
+import { RequestAccess } from './request-access';
 import { assertCan, responseDueAt } from './request-rules';
 import { RequestCreatedView } from './views/request.views';
 
@@ -66,6 +68,11 @@ export interface RequestRead {
   people: Map<string, Person>;
   /** The database's clock at the read: what "overdue" is measured by. */
   now: Date;
+}
+
+/** One request as staff read it: with the history of its escalations. */
+export interface StaffDetailRead extends RequestRead {
+  escalations: ManagementRequestEscalation[];
 }
 
 /** A row of the staff inbox: the request and the start of what it says. */
@@ -119,6 +126,7 @@ export class RequestsService implements OnModuleInit {
     private readonly staff: StaffRecipients,
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
+    private readonly escalation: RequestEscalation,
   ) {}
 
   onModuleInit(): void {
@@ -363,12 +371,21 @@ export class RequestsService implements OnModuleInit {
     });
   }
 
-  /** One request, as the audience may see it. */
-  detail(id: string, audience: Audience): Promise<RequestRead> {
+  /** One of the caller's own requests. */
+  detail(id: string): Promise<RequestRead> {
     return this.tenantTx.withTenantTx(async (tx) => {
-      const request = await this.access.load(tx, id, audience);
+      const request = await this.access.load(tx, id, 'resident');
       const [read] = await this.withNames(tx, [request], await dbNow(tx));
       return read;
+    });
+  }
+
+  /** One request of the compound, with what only staff read of it. */
+  detailForStaff(id: string): Promise<StaffDetailRead> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const request = await this.access.load(tx, id, 'staff');
+      const [read] = await this.withNames(tx, [request], await dbNow(tx));
+      return { ...read, escalations: await this.escalation.list(tx, id) };
     });
   }
 

@@ -134,6 +134,13 @@ export const REASON_CODES = {
     'worker_confirmed',
     'nothing_owed',
   ],
+  // Closing the underage `pay_in_full` obligation (ADR 0022): the wages are
+  // owed in full, so "nothing owed" is not among them.
+  wageObligationPayInFull: [
+    'household_payment_confirmed',
+    'worker_confirmed',
+    'referred_to_authorities',
+  ],
   accountFreeze: ['phone_reassigned'],
   /** The freeze an account asks for itself on an unusual login (ADR 0036). */
   accountFreezeSelf: ['login_not_me'],

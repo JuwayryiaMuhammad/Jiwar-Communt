@@ -47,7 +47,7 @@ Nothing closed a wage obligation before (ADR 0022 only records it), and a househ
 - `POST /worker-engagements/:id/wage-obligation/settle` (`workers.review`, and a manager account by type) with `reasonCode`, from a new closed list (`REASON_CODES.wageObligationSettle`): `household_payment_confirmed` (the manager checked the household's recorded payments), `worker_confirmed` (the worker says they were paid), `nothing_owed`. A code only, never text.
 - It closes the engagement's open `settle_before_close` obligation: `settled_at`, `settled_by` and the new `settle_reason_code` are written together, and a CHECK keeps them all set or all null. No open one: 409 `WAGE_OBLIGATION_NOT_OPEN`. It takes the unit's lock, so two managers at once settle it once.
 - Audited as `worker.wage_obligation_settled` (obligation id, kind, reason code; no amount, no name).
-- The underage `pay_in_full` obligation is a compliance matter (ADR 0022) and is not closed by this route.
+- The underage `pay_in_full` obligation was first left out of this route; the update below takes it in.
 - The manager's `GET /worker-engagements/:id` gains `openWageObligations` (the kinds still open), so the screen knows when to offer it.
 - From then on the deletion blocker (`open_worker_obligations`, ADR 0036) no longer counts it.
 
@@ -64,3 +64,8 @@ The design's worker page (allowed hours, last check-in, monthly wage, Pay Wage, 
 
 - May a resident change a unit's type or area once the manager has set it, or only propose a correction?
 - A wage payment recorded by mistake cannot be edited or removed (append-only). Should a correction be a reversal row, by the household or by management?
+
+## Update (B2)
+- **The settle route takes a `kind`** (`settle_before_close` by default, or `pay_in_full`), because one engagement may hold both open: an underage report on work that then ends. Each kind closes alone and has its own reason list (`wageObligationSettle`, `wageObligationPayInFull`; ADR 0022's update); a code from the other list is `INVALID_REASON_CODE` with the kind's `allowed`.
+- Same lock, same columns, same 409 `WAGE_OBLIGATION_NOT_OPEN` (now: none of that kind is open), same audit action (`worker.wage_obligation_settled`, whose metadata already carries the kind). No schema change: the CHECK on the three settlement columns never depended on the kind.
+- A recorded payment still settles nothing, of either kind.

@@ -1183,7 +1183,8 @@ model UnitReviewFlag {
   @@map("unit_review_flags")
 }
 
-/// A wage obligation for payroll (ADR 0017): recorded, not paid, here.
+/// A wage obligation (ADR 0017, 0022): recorded here, never paid here; a
+/// manager closes it (ADR 0037).
 model WorkerWageObligation {
   id           String             @id @db.Uuid
   tenantId     String             @map("tenant_id") @db.Uuid

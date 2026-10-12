@@ -315,7 +315,7 @@ export class EngagementDetailView {
     enumName: 'WageObligationKind',
     isArray: true,
     description:
-      'The wage obligations still open on it. `settle_before_close` is closed with `POST /worker-engagements/{id}/wage-obligation/settle`.',
+      'The wage obligations still open on it. Each is closed, by its kind, with `POST /worker-engagements/{id}/wage-obligation/settle`.',
   })
   openWageObligations: WageObligationKind[];
   @ApiProperty({ type: ReviewWorkerView })

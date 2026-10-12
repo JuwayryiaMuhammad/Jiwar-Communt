@@ -5414,7 +5414,7 @@ export interface components {
              * @example 3200.00
              */
             monthlyWage: string | null;
-            /** @description The wage obligations still open on it. `settle_before_close` is closed with `POST /worker-engagements/{id}/wage-obligation/settle`. */
+            /** @description The wage obligations still open on it. Each is closed, by its kind, with `POST /worker-engagements/{id}/wage-obligation/settle`. */
             openWageObligations: components["schemas"]["WageObligationKind"][];
             requestedBy: components["schemas"]["AccountRefView"];
             schedule: components["schemas"]["WorkerScheduleDto"];
@@ -7223,6 +7223,11 @@ export interface components {
             /** @description Shown to visitors on the public pass page (ADR 0030). */
             visitorDirections: string | null;
         };
+        SettleWageObligationDto: {
+            kind?: components["schemas"]["WageObligationKind"];
+            /** @description A code from the closed list for the kind; see `allowed` on INVALID_REASON_CODE. */
+            reasonCode: string;
+        };
         ShiftView: {
             /** Format: date-time */
             endedAt: string | null;
@@ -8046,10 +8051,7 @@ export interface components {
             /** @description The fragment of the visitor link. Anything that is not a live link answers 404 VISITOR_PASS_NOT_FOUND. */
             token: string;
         };
-        /**
-         * @description The wage obligations still open on it. `settle_before_close` is closed with `POST /worker-engagements/{id}/wage-obligation/settle`.
-         * @enum {string}
-         */
+        /** @enum {string} */
         WageObligationKind: "pay_in_full" | "settle_before_close";
         WagePaymentView: {
             /** @example 3200.00 */
@@ -14748,7 +14750,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+                "application/json": components["schemas"]["SettleWageObligationDto"];
             };
         };
         responses: {

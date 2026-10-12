@@ -19,7 +19,7 @@ Journey 11 says a worker found to be under 18 after registration is stopped at o
 - **Resuming** is refused while an underage case is open (`WORKER_COMPLIANCE_HOLD`). This covers a report that contradicts an adult document; `WORKER_UNDERAGE` still wins when the stored date is under 18.
 - **`worker_wage_obligations`:**
   - kinds `pay_in_full | settle_before_close`, one open per (engagement, kind);
-  - `settled_at/by` are for payroll to fill;
+  - `settled_at/by` were for payroll to fill; a manager fills them now (ADR 0037 and the update below);
   - `settle_before_close` is recorded whenever an engagement that had a code closes (end, expiry, household end, erasure of the requester): the worker's file is not closed before the wage is settled.
 - **Card incidents:** permission **`workers.incidents`** (managers now; the guard role with the gate). `worker_card_incidents` records type `lost | confiscated`, `reported_via manager | resident`, note and status.
   - `reportCardIncident(engagement, type, note)` files the incident and reissues the code **in the same transaction**, so the old code is dead at commit. The replacement is free: no fee exists anywhere, and finance must never charge for it.
@@ -31,3 +31,7 @@ Journey 11 says a worker found to be under 18 after registration is stopped at o
 
 ## Audit
 `worker.compliance_case_opened`, `worker.compliance_case_closed`, `worker.card_incident_reported`, `worker.card_incident_closed`, `worker.wage_obligation_recorded`. `worker.code_reissued` records `reasonCode` and `incidentId`. Notes and texts never enter the trail.
+
+## Update (B2)
+- **`pay_in_full` can be closed.** Nothing closed it, so an underage report kept the employer's account from ever being deleted (`open_worker_obligations`, ADR 0036). A manager closes it through the settle route of ADR 0037, naming the kind, with a reason from its own closed list (`REASON_CODES.wageObligationPayInFull`): `household_payment_confirmed`, `worker_confirmed`, `referred_to_authorities`. `nothing_owed` is not among them: the wages are owed in full.
+- It is the manager's decision by `workers.review`, like the other kind; closing the compliance case (`workers.compliance`) stays separate and neither closes the other.

@@ -173,6 +173,34 @@ describe('Account deletion', () => {
           .settleObligation(reg.engagementId, 'household_payment_confirmed'),
       );
       expect(await refusal(ask(tenant.id))).toBeNull();
+      // An underage report: the wages owed in full block again, until a
+      // manager closes that obligation too, by its kind.
+      await asResident(tenant.id, () => deletion.cancelDeletion());
+      const { workerId } = await x.asManager(c, () =>
+        x.prisma.tenant.workerEngagement.findUniqueOrThrow({
+          where: { id: reg.engagementId },
+          select: { workerId: true },
+        }),
+      );
+      await x.asManager(c, () =>
+        workers.reportUnderage(workerId, {
+          code: 'report_received',
+          text: 'A report',
+        }),
+      );
+      expect(await refusal(ask(tenant.id))).toMatchObject({
+        params: { blockers: ['open_worker_obligations'] },
+      });
+      await x.asManager(c, () =>
+        h.moduleRef
+          .get(WorkerWagesService)
+          .settleObligation(
+            reg.engagementId,
+            'referred_to_authorities',
+            'pay_in_full',
+          ),
+      );
+      expect(await refusal(ask(tenant.id))).toBeNull();
     });
 
     it('none for a tenant beside the owner: filed, told, critical', async () => {

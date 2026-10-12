@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   Prisma,
+  type WageObligationKind,
   type WorkerEngagement,
   type WorkerWagePayment,
 } from '@prisma/client';
@@ -33,6 +34,12 @@ export const MAX_WAGE = new Prisma.Decimal('1000000');
 const OPEN = new Set(['pending_review', 'active', 'suspended']);
 /** Someone who could have worked: active, suspended, or ended after it. */
 const PAYABLE = new Set(['active', 'suspended', 'ended']);
+
+/** What closes an obligation of each kind (ADR 0037). */
+const SETTLE_REASONS: Record<WageObligationKind, readonly string[]> = {
+  settle_before_close: REASON_CODES.wageObligationSettle,
+  pay_in_full: REASON_CODES.wageObligationPayInFull,
+};
 
 const PAYMENT_PAGE = keysetCursor('createdAt');
 
@@ -213,10 +220,11 @@ export class WorkerWagesService {
   }
 
   /**
-   * A manager closes the engagement's open `settle_before_close` obligation
-   * (ADR 0022): the worker's file may close, and the employer's account
-   * deletion is no longer blocked by it. The underage `pay_in_full`
-   * obligation is a compliance matter and is not closed here.
+   * A manager closes one of the engagement's open wage obligations (ADR
+   * 0022): the worker's file may close, and the employer's account deletion
+   * is no longer blocked by it. The kind is named, since an engagement may
+   * hold both open, and each has its own reasons: the underage `pay_in_full`
+   * is owed in full and never closes as "nothing owed".
    *
    * Under the unit's lock, like every engagement change: of two managers
    * at once, one settles and the other finds nothing open.
@@ -224,15 +232,16 @@ export class WorkerWagesService {
   async settleObligation(
     engagementId: string,
     reasonCode: string | undefined,
+    kind: WageObligationKind = 'settle_before_close',
   ): Promise<void> {
     if (this.ctx.accountType !== 'manager')
       throw appError.forbidden(
         ErrorCode.FORBIDDEN,
         'Only the management settles a wage obligation',
       );
-    const reason = requireReasonCodeOnly(
+    const reason = requireReasonCodeOnly<string>(
       reasonCode,
-      REASON_CODES.wageObligationSettle,
+      SETTLE_REASONS[kind],
     );
     await this.tenantTx.withTenantTx(async (tx) => {
       const found = await tx.workerEngagement.findUnique({
@@ -247,7 +256,7 @@ export class WorkerWagesService {
       const open = await tx.workerWageObligation.findFirst({
         where: {
           engagementId: e.id,
-          kind: 'settle_before_close',
+          kind,
           settledAt: null,
         },
         select: { id: true, kind: true },

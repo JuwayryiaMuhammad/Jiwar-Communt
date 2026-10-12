@@ -1,7 +1,12 @@
 import { Client } from 'pg';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { auditReaders } from '../setup/audit';
-import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import {
+  createHttpHarness,
+  uniqueEmail,
+  uniquePhone,
+  type HttpHarness,
+} from '../setup/http-app';
 import { required } from '../setup/test-env';
 import { keyPaths, listKeys } from './keys';
 import { call, err } from './request';
@@ -338,6 +343,190 @@ describe('API v0 — worker wages', () => {
         targetId: id,
       }),
     ).toHaveLength(1);
+  });
+
+  /** An approved engagement whose worker was then reported underage. */
+  const underage = async () => {
+    const id = await active();
+    const read = await call(w, 'GET', `/worker-engagements/${id}`, {
+      token: manager(),
+    }).expect(200);
+    const workerId = (read.body as { worker: { id: string } }).worker.id;
+    await call(w, 'POST', `/workers/${workerId}/report-underage`, {
+      token: manager(),
+      body: { reasonCode: 'report_received', reason: 'A report' },
+    }).expect(201);
+    return id;
+  };
+  const obligations = (id: string) =>
+    inA(() =>
+      w.helpers.prisma.tenant.workerWageObligation.findMany({
+        where: { engagementId: id },
+        orderBy: { kind: 'asc' },
+      }),
+    );
+  const PAY_IN_FULL = [
+    'household_payment_confirmed',
+    'worker_confirmed',
+    'referred_to_authorities',
+  ];
+
+  it('a manager closes the underage pay_in_full obligation, by kind and with its own reasons', async () => {
+    const id = await underage();
+    expect((await detail(id)).openWageObligations).toEqual(['pay_in_full']);
+    // The default kind is the wage to settle: none is open here.
+    const other = await settle(id, { reasonCode: 'worker_confirmed' }).expect(
+      409,
+    );
+    expect(err(other).code).toBe('WAGE_OBLIGATION_NOT_OPEN');
+    await settle(
+      id,
+      { kind: 'pay_in_full', reasonCode: 'worker_confirmed' },
+      owner(),
+    ).expect(403);
+    const missing = await settle(id, { kind: 'pay_in_full' }).expect(400);
+    expect(err(missing).code).toBe('REASON_REQUIRED');
+    // Owed in full: never closed as "nothing owed".
+    const wrong = await settle(id, {
+      kind: 'pay_in_full',
+      reasonCode: 'nothing_owed',
+    }).expect(400);
+    expect(err(wrong).fields).toEqual([
+      {
+        field: 'reasonCode',
+        code: 'INVALID_REASON_CODE',
+        params: { allowed: PAY_IN_FULL },
+      },
+    ]);
+    const unknown = await settle(id, {
+      kind: 'payroll',
+      reasonCode: 'worker_confirmed',
+    }).expect(400);
+    expect(err(unknown).fields).toEqual([
+      {
+        field: 'kind',
+        code: 'INVALID_VALUE',
+        params: { allowed: ['pay_in_full', 'settle_before_close'] },
+      },
+    ]);
+    expect(await obligations(id)).toEqual([
+      expect.objectContaining({ kind: 'pay_in_full', settledAt: null }),
+    ]);
+
+    const before = Date.now();
+    await settle(id, {
+      kind: 'pay_in_full',
+      reasonCode: 'referred_to_authorities',
+    }).expect(204);
+    const [row] = await obligations(id);
+    expect(row).toMatchObject({
+      kind: 'pay_in_full',
+      settledById: w.a.ids.manager,
+      settleReasonCode: 'referred_to_authorities',
+    });
+    expect(row.settledAt!.getTime()).toBeGreaterThanOrEqual(before - 1000);
+    expect((await detail(id)).openWageObligations).toEqual([]);
+    const entries = await auditReaders(h).tenant(w.a.tenantId, {
+      action: 'worker.wage_obligation_settled',
+      targetId: id,
+    });
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      actorId: w.a.ids.manager,
+      metadata: {
+        obligationId: row.id,
+        kind: 'pay_in_full',
+        reasonCode: 'referred_to_authorities',
+      },
+    });
+    const again = await settle(id, {
+      kind: 'pay_in_full',
+      reasonCode: 'worker_confirmed',
+    }).expect(409);
+    expect(err(again).code).toBe('WAGE_OBLIGATION_NOT_OPEN');
+  });
+
+  it('with both kinds open, each closes alone', async () => {
+    const id = await underage();
+    await call(w, 'POST', `/worker-engagements/${id}/end`, {
+      token: owner(),
+      body: { reasonCode: 'work_finished', reason: 'Done' },
+    }).expect(204);
+    expect((await detail(id)).openWageObligations.sort()).toEqual([
+      'pay_in_full',
+      'settle_before_close',
+    ]);
+    await settle(id, {
+      kind: 'pay_in_full',
+      reasonCode: 'household_payment_confirmed',
+    }).expect(204);
+    expect((await detail(id)).openWageObligations).toEqual([
+      'settle_before_close',
+    ]);
+    // The wage to settle keeps its own list.
+    const wrong = await settle(id, {
+      kind: 'settle_before_close',
+      reasonCode: 'referred_to_authorities',
+    }).expect(400);
+    expect(err(wrong).fields).toEqual([
+      expect.objectContaining({ code: 'INVALID_REASON_CODE' }),
+    ]);
+    await settle(id, {
+      kind: 'settle_before_close',
+      reasonCode: 'nothing_owed',
+    }).expect(204);
+    expect(
+      (await obligations(id)).map((o) => [o.kind, o.settleReasonCode]),
+    ).toEqual([
+      ['pay_in_full', 'household_payment_confirmed'],
+      ['settle_before_close', 'nothing_owed'],
+    ]);
+  });
+
+  it('two managers at once close a pay_in_full obligation once, and the row names the one who did', async () => {
+    const second = await h.createAccount(w.a.tenantId, {
+      type: 'manager',
+      email: uniqueEmail('mgr2'),
+      phone: uniquePhone(),
+    });
+    const secondToken = await h.tokenFor({
+      sub: second.id,
+      tid: w.a.tenantId,
+      typ: 'manager',
+    });
+    const id = await underage();
+    const by = [
+      { accountId: w.a.ids.manager, reasonCode: 'worker_confirmed' },
+      { accountId: second.id, reasonCode: 'referred_to_authorities' },
+    ];
+    const results = await Promise.all([
+      settle(id, { kind: 'pay_in_full', reasonCode: by[0].reasonCode }),
+      settle(
+        id,
+        { kind: 'pay_in_full', reasonCode: by[1].reasonCode },
+        secondToken,
+      ),
+    ]);
+    expect(results.map((r) => r.status).sort()).toEqual([204, 409]);
+    const loser = results.find((r) => r.status === 409)!;
+    expect(err(loser).code).toBe('WAGE_OBLIGATION_NOT_OPEN');
+    const winner = by[results.findIndex((r) => r.status === 204)];
+    const rows = await obligations(id);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      kind: 'pay_in_full',
+      settledById: winner.accountId,
+      settleReasonCode: winner.reasonCode,
+    });
+    const entries = await auditReaders(h).tenant(w.a.tenantId, {
+      action: 'worker.wage_obligation_settled',
+      targetId: id,
+    });
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      actorId: winner.accountId,
+      metadata: { kind: 'pay_in_full', reasonCode: winner.reasonCode },
+    });
   });
 
   it('only those who may act on the engagement: a manager never pays, a member or a neighbour sees nothing', async () => {

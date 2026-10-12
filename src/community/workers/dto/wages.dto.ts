@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, Matches } from 'class-validator';
+import { WageObligationKind } from '@prisma/client';
+import { IsEnum, IsOptional, IsString, Matches } from 'class-validator';
 import { withParams } from '../../../core/common/validation/validation-errors';
 
 const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -31,4 +32,32 @@ export class PayWageDto {
   })
   @IsOptional()
   amount?: string | number;
+}
+
+const KINDS = Object.values(WageObligationKind);
+
+/**
+ * ADR 0037. An engagement may hold one open obligation of each kind, so the
+ * kind is named (`settle_before_close` when it is not); the reason code is
+ * checked by the service against the kind's closed list. The enum's
+ * description is the view's: the schema is shared.
+ */
+export class SettleWageObligationDto {
+  @ApiProperty({
+    enum: KINDS,
+    enumName: 'WageObligationKind',
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(WageObligationKind, withParams({ allowed: KINDS }))
+  kind?: WageObligationKind;
+
+  @ApiProperty({
+    type: String,
+    description:
+      'A code from the closed list for the kind; see `allowed` on INVALID_REASON_CODE.',
+  })
+  @IsOptional()
+  @IsString()
+  reasonCode?: string;
 }

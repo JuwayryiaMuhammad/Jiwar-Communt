@@ -30,6 +30,8 @@ export const REASON_CODES = {
   cardReissue: ['lost', 'compromised', 'other'],
   // A manager closing a wage obligation (ADR 0037): a code only.
   wageObligationSettle: ['household_payment_confirmed', 'worker_confirmed', 'nothing_owed'],
+  // The underage `pay_in_full` obligation: owed in full, so never "nothing owed".
+  wageObligationPayInFull: ['household_payment_confirmed', 'worker_confirmed', 'referred_to_authorities'],
   // Accounts (ADR 0023, 0036).
   legalHold: ['litigation', 'regulator_request', 'financial_audit', 'other'],
   legalHoldRelease: ['resolved', 'other'],

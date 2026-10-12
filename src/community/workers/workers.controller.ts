@@ -26,11 +26,7 @@ import {
   toList,
   type ListResponse,
 } from '../../core/common/http/list';
-import {
-  ReasonCodeOnlyDto,
-  ReasonDto,
-  reasonOf,
-} from '../../core/common/http/reason.dto';
+import { ReasonDto, reasonOf } from '../../core/common/http/reason.dto';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import {
   BirthDateDto,
@@ -42,7 +38,11 @@ import {
   ReviewDto,
   WorkerPhotoDto,
 } from './dto/workers.dto';
-import { PayWageDto, SetWageDto } from './dto/wages.dto';
+import {
+  PayWageDto,
+  SetWageDto,
+  SettleWageObligationDto,
+} from './dto/wages.dto';
 import { WagePaymentView, WageView } from './views/wage.views';
 import { WorkerWagesService } from './worker-wages.service';
 import {
@@ -167,8 +167,8 @@ export class WorkersController {
 
   /**
    * One month, once: the worker gets a notice, the payer and the unit's
-   * primary a receipt by email. After the engagement ended, it settles the
-   * wage obligation (ADR 0022).
+   * primary a receipt by email. It settles no wage obligation (ADR 0037):
+   * a manager does.
    */
   @RequirePermissions('workers.manage')
   @Post('worker-engagements/:id/wage-payments')
@@ -196,8 +196,9 @@ export class WorkersController {
   }
 
   /**
-   * A manager closes the engagement's open wage obligation (ADR 0022,
-   * 0037), with a reason code: a recorded payment never does.
+   * A manager closes one of the engagement's open wage obligations (ADR
+   * 0022, 0037), named by kind, with a reason code: a recorded payment
+   * never does.
    */
   @RequirePermissions('workers.review')
   @Post('worker-engagements/:id/wage-obligation/settle')
@@ -206,9 +207,9 @@ export class WorkersController {
   @ApiNoContentResponse()
   async settleWageObligation(
     @Param('id', parseId()) id: string,
-    @Body() dto: ReasonCodeOnlyDto,
+    @Body() dto: SettleWageObligationDto,
   ): Promise<void> {
-    await this.wages.settleObligation(id, dto.reasonCode);
+    await this.wages.settleObligation(id, dto.reasonCode, dto.kind);
   }
 
   /** The old code is dead at once. */

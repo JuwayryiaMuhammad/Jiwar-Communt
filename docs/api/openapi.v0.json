@@ -3321,7 +3321,7 @@
             "type": "string"
           },
           "openWageObligations": {
-            "description": "The wage obligations still open on it. `settle_before_close` is closed with `POST /worker-engagements/{id}/wage-obligation/settle`.",
+            "description": "The wage obligations still open on it. Each is closed, by its kind, with `POST /worker-engagements/{id}/wage-obligation/settle`.",
             "items": {
               "$ref": "#/components/schemas/WageObligationKind"
             },
@@ -9579,6 +9579,25 @@
         ],
         "type": "object"
       },
+      "SettleWageObligationDto": {
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WageObligationKind"
+              }
+            ]
+          },
+          "reasonCode": {
+            "description": "A code from the closed list for the kind; see `allowed` on INVALID_REASON_CODE.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "ShiftView": {
         "properties": {
           "endedAt": {
@@ -12385,7 +12404,6 @@
         "type": "object"
       },
       "WageObligationKind": {
-        "description": "The wage obligations still open on it. `settle_before_close` is closed with `POST /worker-engagements/{id}/wage-obligation/settle`.",
         "enum": [
           "pay_in_full",
           "settle_before_close"
@@ -24728,7 +24746,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+                "$ref": "#/components/schemas/SettleWageObligationDto"
               }
             }
           },

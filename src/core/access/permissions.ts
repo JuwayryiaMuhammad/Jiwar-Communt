@@ -56,7 +56,7 @@ export const PERMISSIONS = {
   // (capabilities.visitorsInvite decides per unit).
   'gate.operate': { kinds: ['staff'] },
   'gate.manage': { kinds: ['manager'] },
-  'gate.read': { kinds: ['manager'] },
+  'gate.read': { kinds: ['manager','resident'] },
   'visitors.invite': { kinds: ['resident', 'family'] },
   // One's own photo, shown to the guard at the gate (ADR 0031).
   'profile.photo': { kinds: ['resident', 'family'] },

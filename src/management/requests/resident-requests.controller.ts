@@ -6,11 +6,25 @@ import {
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
-import { ListOf, toList, type ListResponse } from '../../core/common/http/list';
+import {
+  ListOf,
+  PageQueryDto,
+  toList,
+  type ListResponse,
+} from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
-import { CreateRequestDto, ResidentRequestsQueryDto } from './dto/requests.dto';
+import {
+  CreateRequestDto,
+  PostRequestMessageDto,
+  ResidentRequestsQueryDto,
+} from './dto/requests.dto';
+import { MessagesService } from './messages.service';
 import { RequestsService } from './requests.service';
+import {
+  MessageCreatedView,
+  ResidentRequestMessageView,
+} from './views/message.views';
 import { RequestCreatedView, ResidentRequestView } from './views/request.views';
 
 /**
@@ -21,7 +35,10 @@ import { RequestCreatedView, ResidentRequestView } from './views/request.views';
 @RequirePermissions('requests.create')
 @Controller('management-requests')
 export class ResidentRequestsController {
-  constructor(private readonly requests: RequestsService) {}
+  constructor(
+    private readonly requests: RequestsService,
+    private readonly messages: MessagesService,
+  ) {}
 
   @Post()
   @NoStore()
@@ -50,5 +67,33 @@ export class ResidentRequestsController {
   @ApiOkResponse({ type: ResidentRequestView })
   async get(@Param('id', parseId()) id: string): Promise<ResidentRequestView> {
     return ResidentRequestView.from(await this.requests.detail(id, 'resident'));
+  }
+
+  /** Never a staff note: the read filters them out and the view has no field for one. */
+  @Get(':id/messages')
+  @NoStore()
+  @ApiOperation({ summary: 'Read the conversation of my request' })
+  @ApiOkResponse({ type: ListOf(ResidentRequestMessageView) })
+  async thread(
+    @Param('id', parseId()) id: string,
+    @Query() q: PageQueryDto,
+  ): Promise<ListResponse<ResidentRequestMessageView>> {
+    return toList(await this.messages.list(id, 'resident', q), (m) =>
+      ResidentRequestMessageView.from(m),
+    );
+  }
+
+  @Post(':id/messages')
+  @NoStore()
+  @ApiOperation({ summary: 'Write on my request' })
+  @Idempotent()
+  @ApiCreatedResponse({ type: MessageCreatedView })
+  async post(
+    @Param('id', parseId()) id: string,
+    @Body() dto: PostRequestMessageDto,
+  ): Promise<MessageCreatedView> {
+    return MessageCreatedView.from(
+      await this.messages.post(id, 'resident', dto),
+    );
   }
 }

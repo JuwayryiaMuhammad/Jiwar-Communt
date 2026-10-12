@@ -23,7 +23,7 @@ import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { TenantTx } from '../../core/database/tenant-tx.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { dbNow } from '../db-clock';
-import { MessagesService, MESSAGE_LENGTH } from './messages.service';
+import { MessagesService } from './messages.service';
 import { RequestAccess, type Audience } from './request-access';
 import { assertCan, responseDueAt } from './request-rules';
 import { RequestCreatedView } from './views/request.views';
@@ -37,6 +37,8 @@ export interface NewRequest {
   unitId?: string;
   /** What the request says: its first message. */
   body: string;
+  /** The caller's own finalized files, attached to that message. */
+  attachmentFileIds?: string[];
 }
 
 export interface NewRequestOnBehalf extends NewRequest {
@@ -254,15 +256,8 @@ export class RequestsService implements OnModuleInit {
       onBehalfReason?: string;
     },
   ): Promise<ManagementRequest> {
-    const body = input.body.trim();
-    if (body.length < MESSAGE_LENGTH.min || body.length > MESSAGE_LENGTH.max)
-      throw invalid([
-        {
-          field: 'body',
-          code: FieldErrorCode.INVALID_LENGTH,
-          params: { ...MESSAGE_LENGTH },
-        },
-      ]);
+    const body = this.messages.body(input.body);
+    const fileIds = this.messages.fileIds(input.attachmentFileIds);
     const tenantId = this.ctx.tenantId;
     const [{ number }] = await tx.$queryRaw<{ number: number }[]>`
       INSERT INTO management_request_counters (tenant_id, last_number)
@@ -290,7 +285,13 @@ export class RequestsService implements OnModuleInit {
     });
     // Written by whoever typed it: the author, or the staff member who
     // took it down. Not a response: the clock keeps running.
-    await this.messages.write(tx, request, { side: by.side, body }, now);
+    const message = await this.messages.write(
+      tx,
+      request,
+      { side: by.side, body },
+      now,
+    );
+    await this.messages.attach(tx, message, fileIds, 'attachmentFileIds');
     return request;
   }
 

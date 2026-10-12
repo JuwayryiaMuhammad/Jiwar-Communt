@@ -253,6 +253,71 @@ describe('Audit coverage — management requests', () => {
     });
   });
 
+  describe('a request’s moves', () => {
+    let id: string;
+    const say = (who: { token: string }, staff: boolean, body: object) =>
+      m
+        .http(
+          'post',
+          `${staff ? '/management/requests' : '/management-requests'}/${id}/messages`,
+          who.token,
+          body,
+        )
+        .expect(201);
+    const moves = (action: string) =>
+      read.tenant(s.c.tenantId, { action, targetId: id });
+
+    beforeAll(async () => {
+      id = (await m.open(s.c, s.owner, { body: `${MARKER} question` })).id;
+    });
+
+    it('a message that moves nothing is not audited: the author’s on an open request, a staff note', async () => {
+      await say(s.owner, false, { body: `${MARKER} more` });
+      await say(s.manager, true, { body: `${MARKER} note`, internal: true });
+      for (const action of [
+        'management_request.started',
+        'management_request.answered',
+        'management_request.resumed',
+      ])
+        expect(await moves(action)).toEqual([]);
+    });
+
+    it('management_request.started — by the first staff reply, once', async () => {
+      await say(s.manager, true, { body: `${MARKER} looking` });
+      const row = await single('management_request.started', id);
+      expect(row).toMatchObject({
+        actorType: 'account',
+        actorId: s.manager.id,
+        targetType: 'management_request',
+      });
+      expect(row.metadata).toEqual({ requestNumber: 3, cycle: 1, by: 'reply' });
+      await say(s.manager, true, { body: `${MARKER} still looking` });
+      expect(await moves('management_request.started')).toHaveLength(1);
+    });
+
+    it('management_request.answered — by the official reply, with the status it found', async () => {
+      await say(s.manager, true, { body: `${MARKER} answer`, official: true });
+      const row = await single('management_request.answered', id);
+      expect(row).toMatchObject({ actorId: s.manager.id });
+      expect(row.metadata).toEqual({
+        requestNumber: 3,
+        cycle: 1,
+        fromStatus: 'in_progress',
+      });
+    });
+
+    it('management_request.resumed — by the author’s reply to the answer', async () => {
+      await say(s.owner, false, { body: `${MARKER} but` });
+      const row = await single('management_request.resumed', id);
+      expect(row).toMatchObject({ actorId: s.owner.id });
+      expect(row.metadata).toEqual({
+        requestNumber: 3,
+        cycle: 1,
+        fromStatus: 'answered',
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every management entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { CommunityManagementPortModule } from '../community';
+import { FilesModule } from '../core/files/files.module';
 import { ManagementProvisioning } from './provisioning';
 import { MessagesService } from './requests/messages.service';
 import { RequestAccess } from './requests/request-access';
+import { RequestProgress } from './requests/request-progress';
 import { RequestsService } from './requests/requests.service';
 import { ResidentRequestsController } from './requests/resident-requests.controller';
 import {
@@ -28,7 +30,7 @@ import { TopicsService } from './topics/topics.service';
  * the gate.
  */
 @Module({
-  imports: [CommunityManagementPortModule],
+  imports: [CommunityManagementPortModule, FilesModule],
   controllers: [
     TopicsController,
     TopicOptionsController,
@@ -45,6 +47,7 @@ import { TopicsService } from './topics/topics.service';
     RequestSettingsService,
     OfficeHoursService,
     RequestAccess,
+    RequestProgress,
     MessagesService,
     RequestsService,
   ],

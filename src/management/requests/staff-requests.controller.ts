@@ -18,6 +18,7 @@ import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
   bounded,
   ListOf,
+  PageQueryDto,
   toList,
   type ListResponse,
 } from '../../core/common/http/list';
@@ -26,9 +27,15 @@ import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import {
   AssignRequestDto,
   CreateRequestOnBehalfDto,
+  PostStaffRequestMessageDto,
   StaffRequestsQueryDto,
 } from './dto/requests.dto';
+import { MessagesService } from './messages.service';
 import { RequestsService } from './requests.service';
+import {
+  MessageCreatedView,
+  StaffRequestMessageView,
+} from './views/message.views';
 import {
   RequestCreatedView,
   RequestPersonView,
@@ -44,7 +51,10 @@ import {
 @RequirePermissions('requests.handle')
 @Controller('management/requests')
 export class StaffRequestsController {
-  constructor(private readonly requests: RequestsService) {}
+  constructor(
+    private readonly requests: RequestsService,
+    private readonly messages: MessagesService,
+  ) {}
 
   @Get()
   @NoStore()
@@ -98,6 +108,37 @@ export class StaffRequestsController {
     @Body() dto: AssignRequestDto,
   ): Promise<void> {
     await this.requests.assign(id, dto.assigneeId);
+  }
+
+  @Get(':id/messages')
+  @NoStore()
+  @ApiOperation({
+    summary: 'Read the conversation of a request, notes included',
+  })
+  @ApiOkResponse({ type: ListOf(StaffRequestMessageView) })
+  async thread(
+    @Param('id', parseId()) id: string,
+    @Query() q: PageQueryDto,
+  ): Promise<ListResponse<StaffRequestMessageView>> {
+    return toList(await this.messages.list(id, 'staff', q), (m) =>
+      StaffRequestMessageView.from(m),
+    );
+  }
+
+  /**
+   * A reply the author reads, the official reply (the request becomes
+   * answered), or a staff note (`internal`).
+   */
+  @Post(':id/messages')
+  @NoStore()
+  @ApiOperation({ summary: 'Reply to a request, or add a staff note' })
+  @Idempotent()
+  @ApiCreatedResponse({ type: MessageCreatedView })
+  async post(
+    @Param('id', parseId()) id: string,
+    @Body() dto: PostStaffRequestMessageDto,
+  ): Promise<MessageCreatedView> {
+    return MessageCreatedView.from(await this.messages.post(id, 'staff', dto));
   }
 }
 

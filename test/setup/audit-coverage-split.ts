@@ -181,4 +181,7 @@ export const MANAGEMENT_COVERAGE: readonly string[] = [
   'management_request.created_on_behalf',
   'management_request.assigned',
   'management_request.unassigned',
+  'management_request.started',
+  'management_request.answered',
+  'management_request.resumed',
 ];

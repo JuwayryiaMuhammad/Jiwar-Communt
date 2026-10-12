@@ -307,6 +307,15 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'management_request',
   },
+  // A request's moves. metadata: requestNumber, cycle, and what moved it:
+  // `by` (reply | start | appointment) or `fromStatus`. A message itself is
+  // never audited: its row is its record, and it never changes.
+  'management_request.started': { log: 'tenant', target: 'management_request' },
+  'management_request.answered': {
+    log: 'tenant',
+    target: 'management_request',
+  },
+  'management_request.resumed': { log: 'tenant', target: 'management_request' },
   // changes: autoCloseDays, appointmentSlotMinutes, appointmentSlotCapacity.
   'management.settings_changed': { log: 'tenant', target: 'tenant' },
   // changes: windows, each as `<weekday>:<startMinute>-<endMinute>`.

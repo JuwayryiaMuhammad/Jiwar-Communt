@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ManagementRequestStatus, ManagementRequestType } from '@prisma/client';
 import {
+  ArrayMaxSize,
+  IsArray,
+  IsBoolean,
   IsEnum,
   IsIn,
   IsOptional,
@@ -13,7 +16,7 @@ import {
 import { PageQueryDto } from '../../../core/common/http/list';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { withParams } from '../../../core/common/validation/validation-errors';
-import { MESSAGE_LENGTH } from '../messages.service';
+import { MAX_ATTACHMENTS, MESSAGE_LENGTH } from '../messages.service';
 
 /** What a resident opens by writing: an appointment is booked with a slot. */
 export const WRITTEN_TYPES = ['question', 'general'] as const;
@@ -57,6 +60,20 @@ export class CreateRequestDto {
     withParams({ ...MESSAGE_LENGTH }),
   )
   body: string;
+
+  @ApiProperty({
+    type: [String],
+    format: 'uuid',
+    required: false,
+    maxItems: MAX_ATTACHMENTS,
+    description:
+      'The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE).',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(MAX_ATTACHMENTS, withParams({ min: 0, max: MAX_ATTACHMENTS }))
+  @IsUUID(undefined, { each: true })
+  attachmentFileIds?: string[];
 }
 
 export class CreateRequestOnBehalfDto extends CreateRequestDto {
@@ -151,4 +168,57 @@ export class AssignRequestDto {
   @ValidateIf((o: AssignRequestDto) => o.assigneeId !== null)
   @IsUUID()
   assigneeId: string | null;
+}
+
+export class PostRequestMessageDto {
+  @ApiProperty({
+    type: String,
+    minLength: MESSAGE_LENGTH.min,
+    maxLength: MESSAGE_LENGTH.max,
+  })
+  @IsString()
+  @Length(
+    MESSAGE_LENGTH.min,
+    MESSAGE_LENGTH.max,
+    withParams({ ...MESSAGE_LENGTH }),
+  )
+  body: string;
+
+  @ApiProperty({
+    type: [String],
+    format: 'uuid',
+    required: false,
+    maxItems: MAX_ATTACHMENTS,
+    description:
+      'The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE).',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(MAX_ATTACHMENTS, withParams({ min: 0, max: MAX_ATTACHMENTS }))
+  @IsUUID(undefined, { each: true })
+  attachmentFileIds?: string[];
+}
+
+export class PostStaffRequestMessageDto extends PostRequestMessageDto {
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    default: false,
+    description:
+      'A staff note: the author never sees it or its attachments, and it moves nothing.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  internal?: boolean;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    default: false,
+    description:
+      'The official reply: the request becomes answered. Chosen when sending and never changed; not with `internal`.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  official?: boolean;
 }

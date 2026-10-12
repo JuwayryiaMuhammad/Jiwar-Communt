@@ -38,6 +38,7 @@ import { dbNow } from '../db-clock';
 import { preventiveServiceNotFound } from '../preventive/preventive-services.service';
 import { assertWindow } from '../visits/visit-rules';
 import { withinVisitingHours } from '../visits/visit-slots';
+import { residentTickets } from './resident-ticket-feed';
 import { DispatchEngine } from '../dispatch/dispatch-engine';
 import { MaintenanceSettingsService } from '../settings/maintenance-settings.service';
 import { SlaService, type SlaSummary } from '../sla/sla.service';
@@ -426,13 +427,7 @@ export class TicketsService implements OnModuleInit {
       const primaryOf = await this.community.primaryUnits(tx, me);
       const page = await this.page(tx, q, {
         AND: [
-          {
-            OR: [
-              { createdById: me },
-              { reporterId: me },
-              ...(primaryOf.length ? [{ unitId: { in: primaryOf } }] : []),
-            ],
-          },
+          residentTickets(me, primaryOf),
           q.status ? { status: q.status } : {},
           q.unitId ? { unitId: q.unitId } : {},
         ],

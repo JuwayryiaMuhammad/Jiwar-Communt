@@ -2233,6 +2233,10 @@ model Ticket {
   completedAt        DateTime?                 @map("completed_at") @db.Timestamptz(3)
   closedAt           DateTime?                 @map("closed_at") @db.Timestamptz(3)
   cancelledAt        DateTime?                 @map("cancelled_at") @db.Timestamptz(3)
+  /// ADR 0039: the last thing a resident on the ticket could see happen (a
+  /// status or cycle change, a non-internal message, a photo). Kept by
+  /// triggers; nothing in the app writes it.
+  lastActivityAt     DateTime                  @default(now()) @map("last_activity_at") @db.Timestamptz(3)
 
   unit        Unit?              @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   category    TicketCategory     @relation(fields: [tenantId, categoryId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
@@ -2253,6 +2257,7 @@ model Ticket {
   @@index([tenantId, reporterId], map: "tickets_tenant_id_reporter_idx")
   @@index([tenantId, createdById], map: "tickets_tenant_id_created_by_idx")
   @@index([tenantId, unitId])
+  @@index([tenantId, lastActivityAt(sort: Desc), id(sort: Desc)], map: "tickets_tenant_id_last_activity_idx")
   @@map("tickets")
 }
 

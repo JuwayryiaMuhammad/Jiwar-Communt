@@ -55,6 +55,7 @@ import { MessagesService } from './tickets/messages.service';
 import { TechnicianRelease } from './tickets/technician-release';
 import { TechnicianTicketsController } from './tickets/technician-tickets.controller';
 import { WorkService } from './tickets/work.service';
+import { ResidentTicketFeed } from './tickets/resident-ticket-feed';
 import { ResidentTicketsController } from './tickets/resident-tickets.controller';
 import { TicketAccess } from './tickets/ticket-access';
 import { TicketLog } from './tickets/ticket-log';
@@ -137,6 +138,9 @@ import { VisitsService } from './visits/visits.service';
     VisitConsentService,
     VisitLifecycle,
     MaintenanceExportSections,
+    ResidentTicketFeed,
   ],
+  // What the management domain reads of a resident's tickets (ADR 0039).
+  exports: [ResidentTicketFeed],
 })
 export class MaintenanceModule {}

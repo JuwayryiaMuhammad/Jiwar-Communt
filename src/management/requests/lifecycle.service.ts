@@ -9,6 +9,7 @@ import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { dbNow } from '../db-clock';
 import { MessagesService, type PostedMessage } from './messages.service';
 import { RequestAccess } from './request-access';
+import { RequestNotices } from './request-notices';
 import { RequestProgress } from './request-progress';
 import {
   assertCan,
@@ -51,6 +52,7 @@ export class RequestLifecycle implements OnModuleInit {
     private readonly messages: MessagesService,
     private readonly audit: AuditService,
     private readonly sweep: SweepRunner,
+    private readonly notices: RequestNotices,
   ) {}
 
   onModuleInit(): void {
@@ -73,6 +75,11 @@ export class RequestLifecycle implements OnModuleInit {
       const request = await this.access.load(tx, id, 'staff', { lock: true });
       assertCan(request, 'start');
       await this.progress.responded(tx, request, 'start', await dbNow(tx));
+      await this.notices.toAuthor(
+        tx,
+        request,
+        'management_request.status_changed',
+      );
     });
   }
 
@@ -160,6 +167,11 @@ export class RequestLifecycle implements OnModuleInit {
         now,
       );
       await this.messages.attach(tx, message, fileIds, 'attachmentFileIds');
+      await this.notices.toHandlers(
+        tx,
+        reopened,
+        'management_request.reopened',
+      );
       await this.audit.record(tx, {
         action: 'management_request.reopened',
         targetId: id,
@@ -246,5 +258,21 @@ export class RequestLifecycle implements OnModuleInit {
         ...(side === 'staff' ? { reasonCode: reason } : {}),
       },
     });
+    // Staff's close and the sweep's are told to the author; the author's
+    // own withdrawal to whoever was handling it, if anyone.
+    if (side === 'resident')
+      await this.notices.toAssignee(
+        tx,
+        request,
+        'management_request.withdrawn',
+      );
+    else
+      await this.notices.toAuthor(
+        tx,
+        request,
+        side === 'system'
+          ? 'management_request.auto_closed'
+          : 'management_request.status_changed',
+      );
   }
 }

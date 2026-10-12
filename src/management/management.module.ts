@@ -16,6 +16,7 @@ import { RequestLifecycle } from './requests/lifecycle.service';
 import { MessagesService } from './requests/messages.service';
 import { RatingService } from './requests/rating.service';
 import { RequestAccess } from './requests/request-access';
+import { RequestNotices } from './requests/request-notices';
 import { RequestProgress } from './requests/request-progress';
 import { RequestsService } from './requests/requests.service';
 import { ResidentRequestsController } from './requests/resident-requests.controller';
@@ -65,6 +66,7 @@ import { TopicsService } from './topics/topics.service';
     RequestSettingsService,
     OfficeHoursService,
     RequestAccess,
+    RequestNotices,
     RequestProgress,
     MessagesService,
     RequestsService,

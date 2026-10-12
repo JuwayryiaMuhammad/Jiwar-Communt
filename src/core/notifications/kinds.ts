@@ -546,6 +546,145 @@ export const NOTIFICATION_KINDS = {
     target: 'parcel',
     params: { parcelNumber: {}, unitCode: {}, carrier: {} },
   },
+  // Requests to the management (ADR 0039). No kind is critical. Params are
+  // the request number and the topic's key only: never a message, a note, a
+  // rating or a name. The target is always the request.
+  /** The management wrote on the author's request (a reply, or the official one); never its body. */
+  'management_request.replied': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
+  /** The management took the author's request in hand, or closed it. */
+  'management_request.status_changed': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
+  /** The author's answered request closed itself after the compound's days. */
+  'management_request.auto_closed': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
+  /** The management opened a request in the author's name. */
+  'management_request.opened_for_you': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
+  /** The management proposed a slot (the author accepts, or picks another). */
+  'management_appointment.proposed': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
+  /** The management proposed another slot instead of the author's pick. */
+  'management_appointment.countered': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
+  /** The management confirmed the author's slot. */
+  'management_appointment.confirmed': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
+  /** The management cancelled the author's appointment. */
+  'management_appointment.cancelled': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
+  /** A new request (whoever handles requests). */
+  'management_request.created': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
+  /** A request was given to you (the assignee). */
+  'management_request.assigned': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
+  /** A request's response is overdue (whoever holds requests.manage; once per cycle). */
+  'management_request.escalated': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
+  /** The author wrote on a request (its assignee, else the handlers); never its body. */
+  'management_request.resident_replied': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
+  /** The author reopened a closed request (its assignee, else the handlers). */
+  'management_request.reopened': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
+  /** The author withdrew a request (its assignee alone). */
+  'management_request.withdrawn': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
+  /** The author picked a slot (the assignee, else the handlers). */
+  'management_appointment.requested': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
+  /** The author accepted the slot the management proposed. */
+  'management_appointment.accepted': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
+  /** The author cancelled their appointment. */
+  'management_appointment.cancelled_by_resident': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

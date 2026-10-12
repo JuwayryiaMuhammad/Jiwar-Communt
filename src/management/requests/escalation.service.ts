@@ -4,6 +4,7 @@ import { AuditService } from '../../core/audit/audit.service';
 import { newId } from '../../core/common/uuid';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
+import { RequestNotices } from './request-notices';
 import { isOverdue } from './request-rules';
 
 export const ESCALATION_SWEEP = 'management.escalation';
@@ -29,6 +30,7 @@ export class RequestEscalation implements OnModuleInit {
   constructor(
     private readonly sweep: SweepRunner,
     private readonly audit: AuditService,
+    private readonly notices: RequestNotices,
   ) {}
 
   onModuleInit(): void {
@@ -88,6 +90,11 @@ export class RequestEscalation implements OnModuleInit {
           targetId: id,
           metadata: { requestNumber: request.number, cycle: request.cycle },
         });
+        await this.notices.toManagers(
+          tx,
+          request,
+          'management_request.escalated',
+        );
         return 1;
       },
     );

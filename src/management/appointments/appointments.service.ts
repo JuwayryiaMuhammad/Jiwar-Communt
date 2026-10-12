@@ -31,6 +31,7 @@ import { TenantSettingsService } from '../../core/tenant-settings/tenant-setting
 import { dbNow } from '../db-clock';
 import { RequestLifecycle } from '../requests/lifecycle.service';
 import { RequestAccess, type Audience } from '../requests/request-access';
+import { RequestNotices } from '../requests/request-notices';
 import { RequestProgress } from '../requests/request-progress';
 import { assertCan } from '../requests/request-rules';
 import { OfficeHoursService } from '../settings/office-hours.service';
@@ -119,6 +120,7 @@ export class AppointmentsService implements OnModuleInit {
     private readonly tenantSettings: TenantSettingsService,
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
+    private readonly notices: RequestNotices,
   ) {}
 
   onModuleInit(): void {
@@ -258,7 +260,7 @@ export class AppointmentsService implements OnModuleInit {
       await this.access.lockSelf(tx);
       const request = await this.locked(tx, requestId, 'resident');
       const now = await dbNow(tx);
-      const appointment = await this.reserve(tx, request, choice, {
+      const { appointment } = await this.reserve(tx, request, choice, {
         id,
         side: 'resident',
         status: 'requested',
@@ -268,6 +270,11 @@ export class AppointmentsService implements OnModuleInit {
         where: { id: request.id },
         data: { lastActivityAt: now },
       });
+      await this.notices.toHandlers(
+        tx,
+        request,
+        'management_appointment.requested',
+      );
       return appointment;
     });
   }
@@ -283,6 +290,11 @@ export class AppointmentsService implements OnModuleInit {
         where: { id: request.id },
         data: { lastActivityAt: now },
       });
+      await this.notices.toHandlers(
+        tx,
+        request,
+        'management_appointment.accepted',
+      );
     });
   }
 
@@ -307,6 +319,11 @@ export class AppointmentsService implements OnModuleInit {
         where: { id: request.id },
         data: { lastActivityAt: now },
       });
+      await this.notices.toHandlers(
+        tx,
+        request,
+        'management_appointment.cancelled_by_resident',
+      );
     });
   }
 
@@ -322,6 +339,11 @@ export class AppointmentsService implements OnModuleInit {
       const now = await dbNow(tx);
       await this.confirmRow(tx, request, 'requested', 'staff', now);
       await this.progress.responded(tx, request, 'appointment', now);
+      await this.notices.toAuthor(
+        tx,
+        request,
+        'management_appointment.confirmed',
+      );
     });
   }
 
@@ -340,13 +362,20 @@ export class AppointmentsService implements OnModuleInit {
       await this.access.lockSelf(tx);
       const request = await this.locked(tx, requestId, 'staff');
       const now = await dbNow(tx);
-      const appointment = await this.reserve(tx, request, choice, {
-        id,
-        side: 'staff',
-        status: 'proposed',
-        now,
-      });
+      const { appointment, replaced } = await this.reserve(
+        tx,
+        request,
+        choice,
+        { id, side: 'staff', status: 'proposed', now },
+      );
       await this.progress.responded(tx, request, 'appointment', now);
+      await this.notices.toAuthor(
+        tx,
+        request,
+        replaced
+          ? 'management_appointment.countered'
+          : 'management_appointment.proposed',
+      );
       return appointment;
     });
   }
@@ -372,6 +401,11 @@ export class AppointmentsService implements OnModuleInit {
         where: { id: request.id },
         data: { lastActivityAt: now },
       });
+      await this.notices.toAuthor(
+        tx,
+        request,
+        'management_appointment.cancelled',
+      );
     });
   }
 
@@ -391,12 +425,13 @@ export class AppointmentsService implements OnModuleInit {
     side: ManagementSide,
     now: Date,
   ): Promise<ManagementAppointment> {
-    return this.reserve(tx, request, choice, {
+    const { appointment } = await this.reserve(tx, request, choice, {
       id: newId(),
       side,
       status: side === 'staff' ? 'confirmed' : 'requested',
       now,
     });
+    return appointment;
   }
 
   /** The request, locked, of type appointment and still live. */
@@ -450,7 +485,7 @@ export class AppointmentsService implements OnModuleInit {
       status: 'requested' | 'proposed' | 'confirmed';
       now: Date;
     },
-  ): Promise<ManagementAppointment> {
+  ): Promise<{ appointment: ManagementAppointment; replaced: boolean }> {
     const { now } = as;
     const settings = await this.settings.share(tx);
     const calendar = await this.calendar(tx, settings.appointmentSlotMinutes);
@@ -533,7 +568,7 @@ export class AppointmentsService implements OnModuleInit {
           : { replaces: previous !== null }),
       },
     });
-    return appointment;
+    return { appointment, replaced: previous !== null };
   }
 
   /**

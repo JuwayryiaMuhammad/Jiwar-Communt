@@ -15,6 +15,7 @@ import type { PresignedRead } from '../../core/files/object-storage';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { dbNow } from '../db-clock';
 import { RequestAccess, type Audience } from './request-access';
+import { RequestNotices } from './request-notices';
 import { RequestProgress } from './request-progress';
 import { assertCan } from './request-rules';
 
@@ -89,6 +90,7 @@ export class MessagesService implements OnModuleInit {
     private readonly progress: RequestProgress,
     private readonly files: FilesService,
     private readonly idempotency: IdempotencyService,
+    private readonly notices: RequestNotices,
   ) {}
 
   onModuleInit(): void {
@@ -214,8 +216,17 @@ export class MessagesService implements OnModuleInit {
         id,
       );
       await this.attach(tx, message, fileIds, 'attachmentFileIds');
-      if (!internal)
-        await this.progress.afterMessage(tx, request, { side, official }, now);
+      // A note moves nothing and tells nobody.
+      if (internal) return message;
+      await this.progress.afterMessage(tx, request, { side, official }, now);
+      if (side === 'staff')
+        await this.notices.toAuthor(tx, request, 'management_request.replied');
+      else
+        await this.notices.toHandlers(
+          tx,
+          request,
+          'management_request.resident_replied',
+        );
       return message;
     });
   }

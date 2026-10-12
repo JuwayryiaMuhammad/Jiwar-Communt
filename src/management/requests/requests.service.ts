@@ -36,6 +36,7 @@ import { MessagesService } from './messages.service';
 import { RequestEscalation } from './escalation.service';
 import { RatingService } from './rating.service';
 import { RequestAccess } from './request-access';
+import { RequestNotices } from './request-notices';
 import { RequestProgress } from './request-progress';
 import { assertCan, responseDueAt } from './request-rules';
 import { RequestCreatedView } from './views/request.views';
@@ -174,6 +175,7 @@ export class RequestsService implements OnModuleInit {
     private readonly escalation: RequestEscalation,
     private readonly appointments: AppointmentsService,
     private readonly ratings: RatingService,
+    private readonly notices: RequestNotices,
   ) {}
 
   onModuleInit(): void {
@@ -211,6 +213,7 @@ export class RequestsService implements OnModuleInit {
         targetId: request.id,
         metadata: this.facts(request, topic),
       });
+      await this.notices.toHandlers(tx, request, 'management_request.created');
       return request;
     });
   }
@@ -265,6 +268,17 @@ export class RequestsService implements OnModuleInit {
           authorId: author.id,
         },
       });
+      await this.notices.toHandlers(
+        tx,
+        request,
+        'management_request.created',
+        me,
+      );
+      await this.notices.toAuthor(
+        tx,
+        request,
+        'management_request.opened_for_you',
+      );
       return request;
     });
   }
@@ -669,6 +683,14 @@ export class RequestsService implements OnModuleInit {
         },
         metadata: { requestNumber: request.number },
       });
+      // Told when given a request by someone else; not when taking it.
+      if (assigneeId)
+        await this.notices.toAssignee(
+          tx,
+          { ...request, assigneeId },
+          'management_request.assigned',
+          this.ctx.accountId,
+        );
     });
   }
 

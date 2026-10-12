@@ -265,6 +265,48 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'reason_code is compared only after reason_code IS NULL, and the ' +
       'other side is IS NOT NULL',
   },
+  // Management requests (ADR 0039): no nullable column outside IS [NOT] NULL.
+  management_request_topics_key_shape: {},
+  management_request_topics_names_length: {},
+  management_request_topics_target: {},
+  management_request_settings_ranges: {},
+  management_office_hours_window: {},
+  management_requests_number_positive: {},
+  management_requests_cycle: {},
+  management_request_messages_erased_shape: {},
+  management_request_messages_staff_flags: {},
+  management_request_messages_cycle_positive: {},
+  management_request_escalations_cycle_positive: {},
+  management_request_ratings_rating: {},
+  management_appointments_window: {},
+  // Management requests: compare nullable columns.
+  management_requests_on_behalf: {
+    guarded:
+      'on_behalf_reason IS NULL is tested first; the list runs only on a value',
+  },
+  management_requests_closed_shape: {
+    guarded:
+      'close_reason IS NULL is tested first; the list runs only on a value. ' +
+      'The other terms are IS [NOT] NULL tests and status, which is NOT NULL',
+  },
+  management_requests_close_reason_side: {
+    guarded:
+      'close_reason IS NULL and closed_by_side IS NULL are tested first; the ' +
+      'comparisons run only when both have a value',
+  },
+  management_requests_answered_at: {},
+  management_request_messages_body_length: {
+    guarded: 'body IS NULL is tested first; the length runs only on a value',
+  },
+  management_request_ratings_comment_length: {
+    guarded: 'comment IS NULL is tested first; the length runs only on a value',
+  },
+  management_appointments_end_shape: {
+    guarded:
+      'cancel_reason IS NULL is tested first; the list runs only on a value. ' +
+      'The other terms are IS [NOT] NULL tests and status, which is NOT NULL',
+  },
+  management_appointments_confirmed_at: {},
   // Dispatch: compares nullable columns.
   technician_availability_history_from_shape: {
     guarded:

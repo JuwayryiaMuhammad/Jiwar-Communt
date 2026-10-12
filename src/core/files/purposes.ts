@@ -28,7 +28,8 @@ export interface FilePurposeDefinition {
  * uploaded by the account itself (`profile.photo`, ADR 0031). A ticket's
  * photos come from whoever opens tickets or works them (ADR 0032). A
  * parcel's photos are the guard's (`parcels.handle`, ADR 0035). An
- * export's archive is the server's alone (ADR 0036).
+ * export's archive is the server's alone (ADR 0036). A management request
+ * message's attachment comes from either side of the request (ADR 0039).
  */
 export const FILE_PURPOSES = {
   worker_photo: {
@@ -55,6 +56,13 @@ export const FILE_PURPOSES = {
     types: IMAGE_TYPES,
     maxBytes: 5 * MB,
     uploaders: ['parcels.handle'],
+  },
+  // A management request message's attachment (ADR 0039): a photo or a
+  // document. Uploaded by whoever may write on a request.
+  request_attachment: {
+    types: [...IMAGE_TYPES, 'application/pdf'],
+    maxBytes: 10 * MB,
+    uploaders: [],
   },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.

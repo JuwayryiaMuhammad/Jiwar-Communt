@@ -10,6 +10,8 @@ export const NOTIFICATION_CATEGORIES = [
   'parcels',
   'household',
   'account_security',
+  // Management requests and their appointments (ADR 0039).
+  'management',
 ] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 

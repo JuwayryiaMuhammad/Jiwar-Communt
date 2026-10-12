@@ -124,4 +124,19 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   data_exports_tenant_id_id_key: null,
   data_exports_one_active: null,
   data_exports_file_id_key: null,
+  // Management requests (ADR 0039). A topic's key is the manager's input.
+  management_request_topics_tenant_id_key_key: ['key'],
+  management_request_topics_tenant_id_id_key: null,
+  // Checked when the set of office hours is validated; server-made rows.
+  management_office_hours_window_key: null,
+  // Numbers come from the counter under its row lock; server ids.
+  management_requests_tenant_id_id_key: null,
+  management_requests_tenant_id_number_key: null,
+  management_request_messages_tenant_id_id_key: null,
+  management_request_messages_request_message_key: null,
+  // A file is claimed under its row lock before it is attached.
+  management_request_attachments_file_id_key: null,
+  // Decided under the request's lock; a violation is a race.
+  management_request_escalations_once_per_cycle: null,
+  management_appointments_one_live_per_request: null,
 };

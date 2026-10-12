@@ -99,6 +99,12 @@ const AUDIT_TABLES = [
   'consent_events',
   // And the wage payments (ADR 0037).
   'worker_wage_payments',
+  // And the management requests' conversation, escalations and ratings
+  // (ADR 0039): their triggers refuse DELETE and TRUNCATE too.
+  'management_request_attachments',
+  'management_request_messages',
+  'management_request_escalations',
+  'management_request_ratings',
 ];
 
 /**

@@ -472,6 +472,11 @@ model Tenant {
   ticketCounter     TicketCounter?
   parcelSettings    ParcelSettings?
   parcelCounter     ParcelCounter?
+  managementTopics   ManagementRequestTopic[]
+  managementSettings ManagementRequestSettings?
+  managementOfficeHours ManagementOfficeHours[]
+  managementCounter  ManagementRequestCounter?
+  managementSlots    ManagementAppointmentSlot[]
   specialties       Specialty[]
   dispatchSettings  MaintenanceDispatchSettings?
   slaSettings       MaintenanceSlaSettings?
@@ -796,6 +801,13 @@ model Account {
   ticketFeedback        TicketFeedback[]          @relation("FeedbackAuthor")
   ticketMessages        TicketMessage[]           @relation("MessageSender")
   ticketAttachments     TicketAttachment[]        @relation("AttachmentUploader")
+  managementRequestsAuthored ManagementRequest[]           @relation("ManagementRequestAuthor")
+  managementRequestsOpened   ManagementRequest[]           @relation("ManagementRequestOpenedBy")
+  managementRequestsAssigned ManagementRequest[]           @relation("ManagementRequestAssignee")
+  managementMessages         ManagementRequestMessage[]    @relation("ManagementMessageSender")
+  managementAttachments      ManagementRequestAttachment[] @relation("ManagementAttachmentUploader")
+  managementRatings          ManagementRequestRating[]     @relation("ManagementRatingAuthor")
+  managementAppointments     ManagementAppointment[]       @relation("ManagementAppointmentProposer")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -881,6 +893,7 @@ model Unit {
   gateRequests      GateApprovalRequest[]
   tickets           Ticket[]
   parcels           Parcel[]
+  managementRequests ManagementRequest[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -1467,6 +1480,8 @@ enum NotificationCategory {
   parcels
   household
   account_security
+  /// Management requests and their appointments (ADR 0039).
+  management
 
   @@map("notification_category")
 }
@@ -1874,6 +1889,8 @@ enum FilePurpose {
   parcel_photo
   /// A personal-data export's archive (ADR 0036): written by the server.
   data_export
+  /// A management request message's attachment (ADR 0039): image or PDF.
+  request_attachment
 
   @@map("file_purpose")
 }
@@ -1909,6 +1926,7 @@ model StoredFile {
   tickets  TicketAttachment[] @relation("AttachmentFile")
   parcelPhotos         Parcel[]           @relation("ParcelPhoto")
   parcelHandoverPhotos Parcel[]           @relation("ParcelHandoverPhoto")
+  managementAttachments ManagementRequestAttachment[] @relation("ManagementAttachmentFile")
   owner    Account?           @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([tenantId, id])
@@ -2905,4 +2923,293 @@ model ParcelCounter {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@map("parcel_counters")
+}
+
+// ============================================================================
+// Phase R2 — talking to management (ADR 0039)
+//
+// A management request is a resident's question, general matter or
+// appointment booking, with a conversation between its author and the staff.
+// It is private to its author on the resident side. Internal notes are
+// staff's alone. Messages, attachments, escalations and ratings never
+// change: triggers refuse it for every role, and let through only the
+// erasure that clears a message's body or a rating's comment.
+// ============================================================================
+
+enum ManagementRequestType {
+  question
+  general
+  appointment
+
+  @@map("management_request_type")
+}
+
+enum ManagementRequestStatus {
+  open
+  in_progress
+  answered
+  closed
+
+  @@map("management_request_status")
+}
+
+enum ManagementSide {
+  resident
+  staff
+
+  @@map("management_side")
+}
+
+enum ManagementActorSide {
+  resident
+  staff
+  system
+
+  @@map("management_actor_side")
+}
+
+enum ManagementAppointmentStatus {
+  /// The resident's slot, waiting for staff.
+  requested
+  /// Staff's slot, waiting for the resident.
+  proposed
+  confirmed
+  cancelled
+  /// Replaced by a counter-proposal or a new booking.
+  superseded
+
+  @@map("management_appointment_status")
+}
+
+enum ManagementAppointmentMode {
+  in_person
+  phone
+
+  @@map("management_appointment_mode")
+}
+
+/// A compound's closed list of topics. Never deleted; retired with `active`.
+model ManagementRequestTopic {
+  id                  String   @id @db.Uuid
+  tenantId            String   @map("tenant_id") @db.Uuid
+  key                 String
+  nameAr              String   @map("name_ar")
+  nameEn              String   @map("name_en")
+  /// The hours management gives itself to answer a request of this topic.
+  targetResponseHours Int      @map("target_response_hours")
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant   Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  requests ManagementRequest[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, key])
+  @@map("management_request_topics")
+}
+
+/// One row per compound, created with it.
+model ManagementRequestSettings {
+  tenantId                String   @id @map("tenant_id") @db.Uuid
+  /// Days an answered request waits for its author before it closes itself.
+  autoCloseDays           Int      @default(7) @map("auto_close_days")
+  appointmentSlotMinutes  Int      @default(30) @map("appointment_slot_minutes")
+  /// Appointments one slot takes.
+  appointmentSlotCapacity Int      @default(1) @map("appointment_slot_capacity")
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("management_request_settings")
+}
+
+/// A weekly office-hours window: weekday 0 is Sunday, minutes after local
+/// midnight. The set is replaced as a whole.
+model ManagementOfficeHours {
+  id          String @id @db.Uuid
+  tenantId    String @map("tenant_id") @db.Uuid
+  weekday     Int
+  startMinute Int    @map("start_minute")
+  endMinute   Int    @map("end_minute")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, weekday, startMinute], map: "management_office_hours_window_key")
+  @@map("management_office_hours")
+}
+
+/// The last request number of a compound, taken under its row lock.
+model ManagementRequestCounter {
+  tenantId   String @id @map("tenant_id") @db.Uuid
+  lastNumber Int    @default(0) @map("last_number")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("management_request_counters")
+}
+
+model ManagementRequest {
+  id              String                  @id @db.Uuid
+  tenantId        String                  @map("tenant_id") @db.Uuid
+  number          Int
+  type            ManagementRequestType
+  topicId         String                  @map("topic_id") @db.Uuid
+  /// Always the resident, also when staff opened it for them.
+  authorId        String                  @map("author_account_id") @db.Uuid
+  /// The staff member who opened it on the resident's behalf.
+  openedById      String?                 @map("opened_by_account_id") @db.Uuid
+  onBehalfReason  String?                 @map("on_behalf_reason")
+  unitId          String?                 @map("unit_id") @db.Uuid
+  status          ManagementRequestStatus @default(open)
+  /// 1 at creation, +1 at every reopening.
+  cycle           Int                     @default(1)
+  cycleStartedAt  DateTime                @map("cycle_started_at") @db.Timestamptz(3)
+  /// The cycle's start plus the topic's target, fixed for the cycle.
+  responseDueAt   DateTime                @map("response_due_at") @db.Timestamptz(3)
+  /// The cycle's first staff response: stops the response clock.
+  firstResponseAt DateTime?               @map("first_response_at") @db.Timestamptz(3)
+  /// The cycle was escalated (at most once).
+  escalatedAt     DateTime?               @map("escalated_at") @db.Timestamptz(3)
+  assigneeId      String?                 @map("assignee_account_id") @db.Uuid
+  answeredAt      DateTime?               @map("answered_at") @db.Timestamptz(3)
+  closedAt        DateTime?               @map("closed_at") @db.Timestamptz(3)
+  closeReason     String?                 @map("close_reason")
+  closedBySide    ManagementActorSide?    @map("closed_by_side")
+  /// What both lists are ordered by. Internal notes do not move it.
+  lastActivityAt  DateTime                @map("last_activity_at") @db.Timestamptz(3)
+  createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  topic        ManagementRequestTopic     @relation(fields: [tenantId, topicId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  author       Account                    @relation("ManagementRequestAuthor", fields: [tenantId, authorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "management_requests_tenant_id_author_fkey")
+  openedBy     Account?                   @relation("ManagementRequestOpenedBy", fields: [tenantId, openedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "management_requests_tenant_id_opened_by_fkey")
+  assignee     Account?                   @relation("ManagementRequestAssignee", fields: [tenantId, assigneeId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "management_requests_tenant_id_assignee_fkey")
+  unit         Unit?                      @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  messages     ManagementRequestMessage[]
+  rating       ManagementRequestRating?
+  appointments ManagementAppointment[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number])
+  @@index([tenantId, authorId, lastActivityAt(sort: Desc), id(sort: Desc)], map: "management_requests_author_activity_idx")
+  @@index([tenantId, status, lastActivityAt(sort: Desc), id(sort: Desc)], map: "management_requests_status_activity_idx")
+  @@index([tenantId, lastActivityAt(sort: Desc), id(sort: Desc)], map: "management_requests_activity_idx")
+  @@map("management_requests")
+}
+
+model ManagementRequestMessage {
+  id         String         @id @db.Uuid
+  tenantId   String         @map("tenant_id") @db.Uuid
+  requestId  String         @map("request_id") @db.Uuid
+  senderId   String         @map("sender_account_id") @db.Uuid
+  senderSide ManagementSide @map("sender_side")
+  /// A staff note: no resident route returns it or its attachments.
+  internal   Boolean        @default(false)
+  /// Chosen by staff when sending; makes the request answered.
+  official   Boolean        @default(false)
+  /// Free text, may name people: never in the audit trail or a
+  /// notification. NULL once its sender is erased.
+  body       String?
+  cycle      Int
+  createdAt  DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  erasedAt   DateTime?      @map("erased_at") @db.Timestamptz(3)
+
+  request     ManagementRequest             @relation(fields: [tenantId, requestId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  sender      Account                       @relation("ManagementMessageSender", fields: [tenantId, senderId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "management_request_messages_tenant_id_sender_fkey")
+  attachments ManagementRequestAttachment[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, requestId, id], map: "management_request_messages_request_message_key")
+  @@index([tenantId, requestId, createdAt, id], map: "management_request_messages_request_idx")
+  @@index([tenantId, senderId], map: "management_request_messages_sender_idx")
+  @@map("management_request_messages")
+}
+
+model ManagementRequestAttachment {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  requestId    String   @map("request_id") @db.Uuid
+  messageId    String   @map("message_id") @db.Uuid
+  fileId       String   @unique @map("file_id") @db.Uuid
+  uploadedById String   @map("uploaded_by_account_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  message    ManagementRequestMessage @relation(fields: [tenantId, requestId, messageId], references: [tenantId, requestId, id], onDelete: Restrict, onUpdate: Restrict, map: "management_request_attachments_message_fkey")
+  file       StoredFile               @relation("ManagementAttachmentFile", fields: [tenantId, fileId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  uploadedBy Account                  @relation("ManagementAttachmentUploader", fields: [tenantId, uploadedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "management_request_attachments_tenant_id_uploaded_by_fkey")
+
+  @@index([tenantId, messageId, createdAt, id], map: "management_request_attachments_message_idx")
+  @@map("management_request_attachments")
+}
+
+/// Append-only, no foreign keys: one per cycle, written by the sweep.
+model ManagementRequestEscalation {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  requestId String   @map("request_id") @db.Uuid
+  cycle     Int
+  /// The response time that passed.
+  dueAt     DateTime @map("due_at") @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, requestId, cycle], map: "management_request_escalations_once_per_cycle")
+  @@map("management_request_escalations")
+}
+
+/// Once per request, by its author. Shown only to `requests.manage`.
+model ManagementRequestRating {
+  tenantId  String   @map("tenant_id") @db.Uuid
+  requestId String   @map("request_id") @db.Uuid
+  authorId  String   @map("author_account_id") @db.Uuid
+  rating    Int
+  /// Free text: NULL once its author is erased.
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  request ManagementRequest @relation(fields: [tenantId, requestId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  author  Account           @relation("ManagementRatingAuthor", fields: [tenantId, authorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "management_request_ratings_tenant_id_author_fkey")
+
+  @@id([tenantId, requestId])
+  @@index([tenantId, authorId], map: "management_request_ratings_author_idx")
+  @@map("management_request_ratings")
+}
+
+model ManagementAppointment {
+  id              String                      @id @db.Uuid
+  tenantId        String                      @map("tenant_id") @db.Uuid
+  requestId       String                      @map("request_id") @db.Uuid
+  status          ManagementAppointmentStatus
+  mode            ManagementAppointmentMode
+  startsAt        DateTime                    @map("starts_at") @db.Timestamptz(3)
+  endsAt          DateTime                    @map("ends_at") @db.Timestamptz(3)
+  proposedBySide  ManagementSide              @map("proposed_by_side")
+  proposedById    String                      @map("proposed_by_account_id") @db.Uuid
+  confirmedAt     DateTime?                   @map("confirmed_at") @db.Timestamptz(3)
+  /// Cancelled or superseded.
+  endedAt         DateTime?                   @map("ended_at") @db.Timestamptz(3)
+  cancelReason    String?                     @map("cancel_reason")
+  cancelledBySide ManagementActorSide?        @map("cancelled_by_side")
+  createdAt       DateTime                    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime                    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  request    ManagementRequest @relation(fields: [tenantId, requestId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  proposedBy Account           @relation("ManagementAppointmentProposer", fields: [tenantId, proposedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "management_appointments_tenant_id_proposed_by_fkey")
+
+  @@index([tenantId, status, startsAt, id], map: "management_appointments_status_idx")
+  @@index([tenantId, requestId, createdAt, id], map: "management_appointments_request_idx")
+  @@map("management_appointments")
+}
+
+/// A slot's lock row: a booking locks it, then counts the live appointments
+/// on that window. It holds no count.
+model ManagementAppointmentSlot {
+  tenantId String   @map("tenant_id") @db.Uuid
+  startsAt DateTime @map("starts_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([tenantId, startsAt])
+  @@map("management_appointment_slots")
 }

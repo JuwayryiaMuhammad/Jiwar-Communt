@@ -273,7 +273,9 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   technician_availability_history_reason_shape: {
     guarded:
       'changed_by_account_id IS NOT NULL is tested in the same branch before ' +
-      'it is compared with account_id, so a NULL actor never satisfies it',
+      'it is compared with account_id, and again before to_state (NOT NULL) ' +
+      'is compared, so a NULL actor satisfies neither: the system always ' +
+      'needs a reason_code',
   },
   // Visits and the SLA (ADR 0034): no nullable column, or only under
   // IS [NOT] NULL.

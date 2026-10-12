@@ -319,7 +319,7 @@ describe('Dispatch engine — triggers', () => {
       });
     });
 
-    it('a dispatcher making them available does the same, with a reason', async () => {
+    it('a dispatcher making them available does the same', async () => {
       const s = await pool(1);
       const id = await d.openTicket(s);
       await d
@@ -327,10 +327,7 @@ describe('Dispatch engine — triggers', () => {
           'post',
           `/maintenance/technicians/${s.techs[0].id}/availability`,
           s.supervisor.token,
-          {
-            state: 'available',
-            reasonCode: 'training',
-          },
+          { state: 'available' },
         )
         .expect(200);
       expect(await d.ticketRow(s.c, id)).toMatchObject({

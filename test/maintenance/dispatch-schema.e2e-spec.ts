@@ -53,12 +53,21 @@ describe('Dispatch tables — CHECKs and indexes', () => {
       ).resolves.toBeDefined();
     });
 
-    it('a dispatcher needs a reason code', async () => {
+    it('a dispatcher needs a reason code to take a technician off, none to put them back', async () => {
       await expect(
         history(null, 'unavailable', newId(), tech, null),
       ).rejects.toThrow(/reason_shape/);
       await expect(
+        history('available', 'unavailable', newId(), tech, null),
+      ).rejects.toThrow(/reason_shape/);
+      await expect(
         history(null, 'unavailable', newId(), tech, 'sick'),
+      ).resolves.toBeDefined();
+      await expect(
+        history(null, 'available', newId(), tech, null),
+      ).resolves.toBeDefined();
+      await expect(
+        history('unavailable', 'available', newId(), tech, null),
       ).resolves.toBeDefined();
     });
 
@@ -69,6 +78,13 @@ describe('Dispatch tables — CHECKs and indexes', () => {
       await expect(
         history(null, 'unavailable', null, tech, 'account_deactivated'),
       ).resolves.toBeDefined();
+      // Nor does "available" excuse it: only a person puts someone back.
+      await expect(
+        history(null, 'available', null, tech, null),
+      ).rejects.toThrow(/reason_shape/);
+      await expect(
+        history('unavailable', 'available', null, tech, null),
+      ).rejects.toThrow(/reason_shape/);
     });
 
     it('a change always changes something', async () => {

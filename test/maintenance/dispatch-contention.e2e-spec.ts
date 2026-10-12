@@ -289,7 +289,7 @@ describe('Dispatch — a stuck dispatch lock', () => {
               'post',
               `/maintenance/technicians/${s.techs[0].id}/availability`,
               s.supervisor.token,
-              { state: 'available', reasonCode: 'other' },
+              { state: 'available' },
             )
             .expect(200);
           return ticketId!;

@@ -8,8 +8,8 @@ import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 
 /**
  * ADR 0033: a technician's availability — opt-in, set by the technician or
- * by a dispatcher with a reason, never edited in its history, and cleared
- * by deactivation, a freeze and an erasure.
+ * by a dispatcher (with a reason when it takes them off), never edited in
+ * its history, and cleared by deactivation, a freeze and an erasure.
  */
 describe('Maintenance — technician availability', () => {
   let h: HttpHarness;
@@ -104,30 +104,32 @@ describe('Maintenance — technician availability', () => {
     expect((await listed(tech.id))!.availability.state).toBe('unavailable');
   });
 
-  it('a dispatcher sets it with a reason code, which is required and from the list', async () => {
+  const setFor = (id: string, body: object, token = s.supervisor.token) =>
+    d.http('post', `/maintenance/technicians/${id}/availability`, token, body);
+
+  it('a dispatcher puts a technician back with no reason, and takes them off with one from the list', async () => {
     const tech = s.techs[1];
-    const missing = await d
-      .http(
-        'post',
-        `/maintenance/technicians/${tech.id}/availability`,
-        s.supervisor.token,
-        {
-          state: 'available',
-        },
-      )
-      .expect(400);
+    // Back to work: nothing to explain, and a reason is not taken.
+    const given = await setFor(tech.id, {
+      state: 'available',
+      reasonCode: 'training',
+    }).expect(400);
+    expect(given.body).toMatchObject({
+      code: 'VALIDATION_FAILED',
+      fields: [{ field: 'reasonCode', code: 'FIELD_NOT_ALLOWED' }],
+    });
+    expect(await history(tech.id)).toHaveLength(0);
+    await setFor(tech.id, { state: 'available' }).expect(200);
+    // The technician sees the dispatcher's change as their own state.
+    expect((await mine(tech.token)).state).toBe('available');
+
+    // Off: the reason is required and from the list.
+    const missing = await setFor(tech.id, { state: 'unavailable' }).expect(400);
     expect(missing.body).toMatchObject({ code: 'REASON_REQUIRED' });
-    const wrong = await d
-      .http(
-        'post',
-        `/maintenance/technicians/${tech.id}/availability`,
-        s.supervisor.token,
-        {
-          state: 'available',
-          reasonCode: 'bored',
-        },
-      )
-      .expect(400);
+    const wrong = await setFor(tech.id, {
+      state: 'unavailable',
+      reasonCode: 'bored',
+    }).expect(400);
     expect(wrong.body).toMatchObject({
       fields: [
         {
@@ -137,25 +139,42 @@ describe('Maintenance — technician availability', () => {
         },
       ],
     });
-    await d
-      .http(
-        'post',
-        `/maintenance/technicians/${tech.id}/availability`,
-        s.supervisor.token,
-        {
-          state: 'available',
-          reasonCode: 'training',
-        },
-      )
-      .expect(200);
+    expect((await mine(tech.token)).state).toBe('available');
+    await setFor(tech.id, { state: 'unavailable', reasonCode: 'sick' }).expect(
+      200,
+    );
     expect(
       (await history(tech.id)).map((r) => [
+        r.fromState,
         r.toState,
         r.changedById,
         r.reasonCode,
       ]),
-    ).toEqual([['available', s.supervisor.id, 'training']]);
-    // The technician sees the dispatcher's change as their own state.
+    ).toEqual([
+      [null, 'available', s.supervisor.id, null],
+      ['available', 'unavailable', s.supervisor.id, 'sick'],
+    ]);
+  });
+
+  it('two dispatchers at once put a technician back once: one history row', async () => {
+    const tech = s.techs[1];
+    expect((await mine(tech.token)).state).toBe('unavailable');
+    const before = (await history(tech.id)).length;
+    const results = await Promise.all([
+      setFor(tech.id, { state: 'available' }, s.supervisor.token),
+      setFor(tech.id, { state: 'available' }, s.manager.token),
+    ]);
+    expect(results.map((r) => r.status)).toEqual([200, 200]);
+    for (const r of results)
+      expect(r.body).toMatchObject({ state: 'available' });
+    const rows = (await history(tech.id)).slice(before);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      fromState: 'unavailable',
+      toState: 'available',
+      reasonCode: null,
+    });
+    expect([s.supervisor.id, s.manager.id]).toContain(rows[0].changedById);
     expect((await mine(tech.token)).state).toBe('available');
   });
 
@@ -166,10 +185,7 @@ describe('Maintenance — technician availability', () => {
           'post',
           `/maintenance/technicians/${id}/availability`,
           s.supervisor.token,
-          {
-            state: 'available',
-            reasonCode: 'other',
-          },
+          { state: 'unavailable', reasonCode: 'other' },
         )
         .expect(404);
       expect(res.body).toMatchObject({ code: 'TECHNICIAN_NOT_FOUND' });

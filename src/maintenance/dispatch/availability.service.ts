@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { TechnicianAvailabilityState } from '@prisma/client';
 import { RequestContext } from '../../core/common/cls/request-context';
+import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import { REASON_CODES, requireReasonCodeOnly } from '../../core/common/reasons';
 import { newId } from '../../core/common/uuid';
 import {
@@ -10,13 +11,19 @@ import {
 import { TicketAccess } from '../tickets/ticket-access';
 import { DispatchEngine } from './dispatch-engine';
 
+const unavailableReason = (code: string | undefined) =>
+  requireReasonCodeOnly(code, REASON_CODES.availabilityChange);
+
 export interface AvailabilityRead {
   state: TechnicianAvailabilityState;
   /** When it last changed; null when the technician never set it. */
   since: Date | null;
 }
 
-/** Who changed it, and why; the system's changes carry a code too. */
+/**
+ * Who changed it, and why. The system's changes carry a code; a
+ * dispatcher's does when it takes the technician off.
+ */
 interface Change {
   by: string | null;
   reasonCode: string | null;
@@ -28,7 +35,8 @@ interface Change {
  * unavailable: opting in is an act.
  *
  * - The technician sets their own, with no reason.
- * - A dispatcher may set it, with a reason code (sick, leave…).
+ * - A dispatcher may set it: taking a technician off needs a reason code
+ *   (sick, leave…), putting them back needs none and takes none.
  * - Deactivation, a freeze, an erasure and losing `tickets.work` set it to
  *   `unavailable` through the lifecycle hooks, in their own transaction.
  *
@@ -70,16 +78,27 @@ export class AvailabilityService {
     return read;
   }
 
-  /** A dispatcher's change, with a reason from `availabilityChange`. */
+  /**
+   * A dispatcher's change. Taking a technician off carries a reason from
+   * `availabilityChange`; putting them back carries none, and one sent with
+   * it is refused rather than dropped.
+   */
   async setFor(
     technicianId: string,
     state: TechnicianAvailabilityState,
     reasonCode?: string,
   ): Promise<AvailabilityRead> {
-    const code = requireReasonCodeOnly(
-      reasonCode,
-      REASON_CODES.availabilityChange,
-    );
+    const code = state === 'unavailable' ? unavailableReason(reasonCode) : null;
+    if (state === 'available' && reasonCode !== undefined)
+      throw appError.badRequest(
+        ErrorCode.VALIDATION_FAILED,
+        'Becoming available takes no reason',
+        {
+          fields: [
+            { field: 'reasonCode', code: FieldErrorCode.FIELD_NOT_ALLOWED },
+          ],
+        },
+      );
     const me = this.ctx.accountId;
     const { changed, read } = await this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockTechnician(tx, technicianId, 'write');

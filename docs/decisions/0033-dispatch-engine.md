@@ -19,8 +19,8 @@ ADR 0032 gave maintenance manual assignment. 5.2 adds **automatic** assignment: 
 ### Availability
 
 - **`technician_availability`** is one row per technician: `available` or `unavailable`. **No row is unavailable**: a technician opts in.
-- **`technician_availability_history`** is append-only like `ticket_assignments` (SELECT and INSERT for the app, triggers refuse UPDATE, DELETE and TRUNCATE for every role, no foreign keys): from, to, changed by (null = system), a reason code, time. A CHECK requires a reason unless the technician changed their own (guarded against the NULL trap).
-- The technician sets their own (`POST /technician/availability`, no reason). A dispatcher may set it with a code from `availabilityChange` (sick, leave, training, other). Deactivation, a freeze, an erasure and **losing `tickets.work`** set it to `unavailable` through the lifecycle hooks, with a system code. Reactivation does not set it back: they opt in again.
+- **`technician_availability_history`** is append-only like `ticket_assignments` (SELECT and INSERT for the app, triggers refuse UPDATE, DELETE and TRUNCATE for every role, no foreign keys): from, to, changed by (null = system), a reason code, time. A CHECK requires a reason unless the technician changed their own (guarded against the NULL trap); see the update below for a dispatcher putting them back.
+- The technician sets their own (`POST /technician/availability`, no reason). A dispatcher may set it: `unavailable` with a code from `availabilityChange` (sick, leave, training, other), `available` with none (update below). Deactivation, a freeze, an erasure and **losing `tickets.work`** set it to `unavailable` through the lifecycle hooks, with a system code. Reactivation does not set it back: they opt in again.
 - Every write locks the technician's account `FOR NO KEY UPDATE`; the engine shared-locks the account it is about to assign to and re-reads the candidate rules after the lock, so an availability change is ordered before or after an assignment, never inside it.
 
 ### Dispatch settings
@@ -116,3 +116,8 @@ Workload, availability (state, since, reason, who), specialties and the attempts
 - Turning dispatch on assigns up to 50 queued tickets at once; the rest wait for the next sweep (`SWEEP_INTERVAL_MS`, one hour by default) or a dispatcher's `auto-assign`.
 - The dispatch lock is held for one decision, so a creation waits behind at most one. Decisions of one compound in one process run one after the other (the price of not holding connections while waiting), so a creation's response can take as long as the decisions queued before it: a burst of 40 creations during a sweep of 100 took 8 s for the last. No request fails, and a stuck lock costs a creation one bounded wait of 3 s at most, after which the ticket waits for the sweep.
 - A ticket released by a sync of `access:sync` waits for the next sweep, not for the deploy.
+
+## Update (B2)
+- **A dispatcher putting a technician back gives no reason.** Both directions asked for a code from `availabilityChange`, so "back from leave" had to be filed as sick, leave, training or other. `available` now takes none, and a `reasonCode` sent with it is refused (`FIELD_NOT_ALLOWED`) rather than dropped; `unavailable` is unchanged (`REASON_REQUIRED`, `INVALID_REASON_CODE`). No list of "reasons to return" was added: there is nothing to choose between.
+- **The history CHECK** gains a branch: a row needs a reason unless the technician changed their own, or a person (a non-NULL actor) made them `available`. A NULL actor satisfies neither exception, so the system's rows always carry a code.
+- Availability changes are still not in the audit trail: the append-only history is their record.

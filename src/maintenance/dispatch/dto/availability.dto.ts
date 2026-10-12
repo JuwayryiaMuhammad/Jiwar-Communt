@@ -17,11 +17,13 @@ export class SetAvailabilityDto {
   state: TechnicianAvailabilityState;
 }
 
-/** A dispatcher's change: with a reason code. */
+/** A dispatcher's change: with a reason code when it is `unavailable`. */
 export class SetTechnicianAvailabilityDto extends SetAvailabilityDto {
   @ApiProperty({
     type: String,
-    description: 'From the closed list `availabilityChange`.',
+    required: false,
+    description:
+      'From the closed list `availabilityChange`. Required with `unavailable`; not taken with `available`.',
   })
   @IsOptional()
   @IsString()

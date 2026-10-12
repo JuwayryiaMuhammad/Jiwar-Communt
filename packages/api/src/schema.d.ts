@@ -7198,8 +7198,8 @@ export interface components {
             accountId: string;
         };
         SetTechnicianAvailabilityDto: {
-            /** @description From the closed list `availabilityChange`. */
-            reasonCode: string;
+            /** @description From the closed list `availabilityChange`. Required with `unavailable`; not taken with `available`. */
+            reasonCode?: string;
             state: components["schemas"]["TechnicianAvailabilityState"];
         };
         SetWageDto: {

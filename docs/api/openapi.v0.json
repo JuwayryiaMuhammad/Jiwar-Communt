@@ -9499,7 +9499,7 @@
       "SetTechnicianAvailabilityDto": {
         "properties": {
           "reasonCode": {
-            "description": "From the closed list `availabilityChange`.",
+            "description": "From the closed list `availabilityChange`. Required with `unavailable`; not taken with `available`.",
             "type": "string"
           },
           "state": {
@@ -9511,8 +9511,7 @@
           }
         },
         "required": [
-          "state",
-          "reasonCode"
+          "state"
         ],
         "type": "object"
       },

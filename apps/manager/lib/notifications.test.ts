@@ -50,3 +50,14 @@ test('a link is offered only where the reader may open the page', () => {
   assert.equal(notificationHref(n('account.new_device_login', {}, 'known_device', 'd1'), () => false), '/account');
   assert.equal(notificationHref(n('account.deletion_requested', {}, 'account_deletion_request', 'r1'), () => true), null);
 });
+
+test('a request to the management is named by its number and topic, and leads to its page for a handler', () => {
+  const escalated = n('management_request.escalated', { requestNumber: 'MR-000012', topicKey: 'billing_fees' }, 'management_request', 'r-1');
+  assert.equal(notificationText(escalated), 'Request MR-000012 (billing fees) is overdue: nobody has responded');
+  assert.equal(
+    notificationText(n('management_appointment.requested', { requestNumber: 'MR-000003', topicKey: 'general' })),
+    'Request MR-000003 (general): the resident picked an appointment slot',
+  );
+  assert.equal(notificationHref(escalated, (p) => p === 'requests.handle'), '/management-requests/r-1');
+  assert.equal(notificationHref(escalated, (p) => p === 'tickets.dispatch'), null);
+});

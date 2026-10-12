@@ -41,4 +41,7 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'maintenance.manage': 'Set up maintenance',
   'parcels.handle': 'Receive and hand over parcels',
   'parcels.manage': 'See parcels and set holding periods',
+  'requests.create': 'Open requests to the management',
+  'requests.handle': 'Answer, assign and close requests; run appointments',
+  'requests.manage': 'Set up request topics, office hours and auto-close; see ratings',
 };

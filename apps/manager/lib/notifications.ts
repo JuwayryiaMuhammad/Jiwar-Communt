@@ -33,6 +33,8 @@ function windowText(p: P): string {
   return Number.isNaN(end.getTime()) ? start : `${start}–${timeOnly.format(end)}`;
 }
 
+/** "MR-000012 (billing fees)": a request by its number and topic (ADR 0039). */
+const request = (p: P) => `Request ${p.requestNumber} (${words(p.topicKey)})`;
 const ticket = (p: P) => `Ticket ${p.ticketNumber}`;
 const aTicket = (p: P) => `ticket ${p.ticketNumber}`;
 const inUnit = (p: P) => (p.unitCode ? ` · unit ${p.unitCode}` : '');
@@ -107,6 +109,25 @@ const TEXT: Record<string, (p: P) => string> = {
   'parcel.held_long': (p) => `Parcel ${p.parcelNumber} (${words(p.carrier)}) has waited ${days(p)} for unit ${p.unitCode}`,
   'parcel.rejected': (p) => `Parcel ${p.parcelNumber} (${words(p.carrier)}) was refused by the unit: send it back`,
   'parcel.unclaimable': (p) => `Parcel ${p.parcelNumber} (${words(p.carrier)}) arrived for unit ${p.unitCode}, where nobody can collect it`,
+  // Requests to the management (ADR 0039): the number and the topic, never what was written.
+  'management_request.created': (p) => `${request(p)} is new`,
+  'management_request.assigned': (p) => `${request(p)} was assigned to you`,
+  'management_request.escalated': (p) => `${request(p)} is overdue: nobody has responded`,
+  'management_request.resident_replied': (p) => `${request(p)}: the resident wrote`,
+  'management_request.reopened': (p) => `${request(p)} was reopened by the resident`,
+  'management_request.withdrawn': (p) => `${request(p)} was withdrawn by the resident`,
+  'management_appointment.requested': (p) => `${request(p)}: the resident picked an appointment slot`,
+  'management_appointment.accepted': (p) => `${request(p)}: the resident accepted the proposed slot`,
+  'management_appointment.cancelled_by_resident': (p) => `${request(p)}: the resident cancelled the appointment`,
+  // The resident's side: read here only by someone who is both.
+  'management_request.replied': (p) => `${request(p)}: the management replied`,
+  'management_request.status_changed': (p) => `${request(p)} has moved`,
+  'management_request.auto_closed': (p) => `${request(p)} was closed: no reply to the answer`,
+  'management_request.opened_for_you': (p) => `${request(p)} was opened for you by the management`,
+  'management_appointment.proposed': (p) => `${request(p)}: the management proposed an appointment slot`,
+  'management_appointment.countered': (p) => `${request(p)}: the management proposed another slot`,
+  'management_appointment.confirmed': (p) => `${request(p)}: the appointment is confirmed`,
+  'management_appointment.cancelled': (p) => `${request(p)}: the management cancelled the appointment`,
 };
 
 export function notificationText(n: NotificationLike): string {
@@ -122,6 +143,8 @@ export function notificationText(n: NotificationLike): string {
 export function notificationHref(n: NotificationLike, can: (permission: string) => boolean): string | null {
   if (n.targetType === 'ticket' && n.targetId) return can('tickets.dispatch') ? `/maintenance/${n.targetId}` : null;
   if (n.targetType === 'parcel' && n.targetId) return can('parcels.manage') ? `/parcels?parcel=${n.targetId}` : null;
+  if (n.targetType === 'management_request' && n.targetId)
+    return can('requests.handle') ? `/management-requests/${n.targetId}` : null;
   if (n.kind === 'account.deletion_queued') return can('accounts.erase') ? '/deletions' : null;
   if (n.kind === 'account.new_device_login') return '/account';
   if (n.targetType === 'worker_engagement') return can('workers.review') ? '/workers?tab=all' : null;

@@ -55,6 +55,11 @@ const STATUS_TONE: Record<string, Tone> = {
   held: 'terracotta',
   handed_over: 'green',
   returned: 'beige',
+  // Requests to the management and their appointments (ADR 0039). `open`,
+  // `in_progress`, `closed`, `proposed`, `confirmed` and `cancelled` are above.
+  answered: 'green',
+  requested: 'terracotta',
+  superseded: 'beige',
 };
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {

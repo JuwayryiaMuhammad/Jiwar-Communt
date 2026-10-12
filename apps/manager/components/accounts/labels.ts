@@ -21,6 +21,7 @@ export const NOTIFICATION_CATEGORY_TEXT: Record<string, string> = {
   parcels: 'Parcels',
   household: 'Household',
   account_security: 'Account and security',
+  management: 'Requests to the management',
 };
 
 /** Personal fields an erasure blanks, as the scope lists them. */

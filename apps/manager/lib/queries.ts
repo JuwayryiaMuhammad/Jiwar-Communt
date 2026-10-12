@@ -53,6 +53,41 @@ export type ParcelCarrier = Schema<'ParcelCarrier'>;
 export type ParcelSettings = Schema<'ParcelSettingsResponse'>;
 export type Notification = Schema<'NotificationView'>;
 export type Session = Schema<'SessionView'>;
+// Requests to the management (ADR 0039).
+export type ManagementRequest = Schema<'StaffRequestListItemView'>;
+export type ManagementRequestDetail = Schema<'StaffRequestDetailView'>;
+export type ManagementRequestStatus = Schema<'ManagementRequestStatus'>;
+export type ManagementRequestType = Schema<'ManagementRequestType'>;
+export type RequestMessage = Schema<'StaffRequestMessageView'>;
+export type RequestTopic = Schema<'TopicView'>;
+export type RequestTopicOption = Schema<'TopicOptionView'>;
+export type RequestSettings = Schema<'RequestSettingsResponse'>;
+export type OfficeWindow = Schema<'OfficeWindowDto'>;
+export type Appointment = Schema<'AppointmentView'>;
+export type AppointmentItem = Schema<'StaffAppointmentListItemView'>;
+export type AppointmentStatus = Schema<'ManagementAppointmentStatus'>;
+export type AppointmentMode = Schema<'ManagementAppointmentMode'>;
+export type AppointmentSlot = Schema<'StaffAppointmentSlotView'>;
+export type RequestRating = Schema<'RatingListItemView'>;
+
+export interface ManagementRequestFilters {
+  status?: ManagementRequestStatus | '';
+  type?: ManagementRequestType | '';
+  topicId?: string;
+  /** An account id, `me`, or `none`. */
+  assignee?: string;
+  open?: 'true' | '';
+  overdue?: 'true' | '';
+  escalated?: 'true' | '';
+}
+type ManagementRequestQuery = { [K in keyof ManagementRequestFilters]?: Exclude<ManagementRequestFilters[K], ''> };
+
+export interface AppointmentFilters {
+  status?: AppointmentStatus | '';
+  from?: string;
+  to?: string;
+}
+type AppointmentQuery = { [K in keyof AppointmentFilters]?: Exclude<AppointmentFilters[K], ''> };
 
 export interface ParcelFilters {
   status?: ParcelStatus | '';
@@ -121,6 +156,19 @@ export const keys = {
   unreadCount: ['notifications', 'unread-count'] as const,
   mySessions: ['me', 'sessions'] as const,
   myPreferences: ['me', 'notification-preferences'] as const,
+  managementAll: ['management-requests'] as const,
+  managementRequests: (filters: object) => ['management-requests', 'list', filters] as const,
+  managementRequest: (id: string) => ['management-requests', 'detail', id] as const,
+  managementRequestPart: (id: string, part: string) => ['management-requests', 'detail', id, part] as const,
+  requestAssignees: ['management-requests', 'assignees'] as const,
+  requestAuthors: (unitId: string) => ['units', 'detail', unitId, 'request-authors'] as const,
+  requestTopicOptions: ['management-request-topic-options'] as const,
+  requestTopics: ['management-request-topics'] as const,
+  requestSettings: ['management-request-settings'] as const,
+  officeHours: ['management-office-hours'] as const,
+  appointments: (filters: object) => ['management-requests', 'appointments', filters] as const,
+  appointmentSlots: (from: string, days: number) => ['management-requests', 'appointment-slots', from, days] as const,
+  requestRatings: ['management-requests', 'ratings'] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -187,6 +235,31 @@ export const fetchers = {
   unreadCount: () => unwrap(api.GET('/api/v1/me/notifications/unread-count')),
   mySessions: () => unwrap(api.GET('/api/v1/me/sessions')),
   myPreferences: () => unwrap(api.GET('/api/v1/me/notification-preferences')),
+  managementRequests: (filters: ManagementRequestFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/management/requests', {
+        params: { query: { ...(clean(filters) as ManagementRequestQuery), cursor, limit } },
+      }),
+    ),
+  managementRequest: (id: string) => unwrap(api.GET('/api/v1/management/requests/{id}', { params: { path: { id } } })),
+  requestAssignees: () => unwrap(api.GET('/api/v1/management/request-assignees')),
+  requestAuthors: (unitId: string) =>
+    unwrap(api.GET('/api/v1/management/units/{unitId}/request-authors', { params: { path: { unitId } } })),
+  requestTopicOptions: () => unwrap(api.GET('/api/v1/management-request-topics')),
+  requestTopics: () => unwrap(api.GET('/api/v1/management/request-topics')),
+  requestSettings: () => unwrap(api.GET('/api/v1/management/request-settings')),
+  officeHours: () => unwrap(api.GET('/api/v1/management/office-hours')),
+  appointments: (filters: AppointmentFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/management/appointments', {
+        params: { query: { ...(clean(filters) as AppointmentQuery), cursor, limit } },
+      }),
+    ),
+  appointmentSlots: (from: string | undefined, days: number) =>
+    unwrap(api.GET('/api/v1/management/appointment-slots', { params: { query: { from, days } } })),
+  requestRating: (id: string) => unwrap(api.GET('/api/v1/management/requests/{id}/rating', { params: { path: { id } } })),
+  requestRatings: (cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/management/request-ratings', { params: { query: { cursor, limit } } })),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

@@ -16,7 +16,8 @@ Adding a permission in code must reach existing compounds without undoing manage
 1. **Renames** (`renamedPermissions: { old: new }` in code) move assignments and the catalog row as they are.
 2. **Retirements** (`retiredPermissions` in code) are deleted from roles and the catalog.
 3. **Additions:** a code permission not yet in the catalog is added to every system role whose default includes it, then recorded.
-4. **Unknown leftovers** (in the DB, but in none of the lists — e.g. after a rollback) are left untouched and reported as a warning. Removal is never inferred.
+4. **Out-of-kind grants:** a grant of a code permission held by a role whose kind its `kinds` no longer list (the list was narrowed after the grant) is deleted and reported, one line per role in the CLI output. `PermissionsGuard` already ignores such a grant at request time, so it never works between the deploy and the sync.
+5. **Unknown leftovers** (in the DB, but in none of the lists — e.g. after a rollback) are left untouched and reported as a warning. Removal is never inferred.
 
 A permission already in the catalog is never re-added, so a permission a manager removed stays removed. The sync is idempotent.
 

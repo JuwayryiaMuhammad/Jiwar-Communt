@@ -47,6 +47,27 @@ export class GatesService {
     );
   }
 
+  /**
+   * What an occupant sees of the gates: which exist and whether each is in
+   * service. For resident and family accounts only, by kind and with no
+   * permission: nothing here is a manager's to grant or withdraw. Never who
+   * is on duty: a shift is not read.
+   */
+  statuses(): Promise<Pick<Gate, 'id' | 'name' | 'status'>[]> {
+    const type = this.ctx.accountType;
+    if (type !== 'resident' && type !== 'family')
+      throw appError.forbidden(
+        ErrorCode.FORBIDDEN,
+        'Only residents and their family see the gate status',
+      );
+    return this.tenantTx.withTenantTx((tx) =>
+      tx.gate.findMany({
+        select: { id: true, name: true, status: true },
+        orderBy: [{ name: 'asc' }, { id: 'asc' }],
+      }),
+    );
+  }
+
   create(input: GateInput): Promise<Gate> {
     const tenantId = this.ctx.tenantId;
     return this.tenantTx.withTenantTx(async (tx) => {

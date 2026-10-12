@@ -5,7 +5,7 @@ import {
   ApiOperation,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
-import { ApiArea } from '../../core/common/http/decorators';
+import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
   bounded,
   ListOf,
@@ -14,9 +14,9 @@ import {
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { CreateGateDto, UpdateGateDto } from './dto/gates.dto';
 import { GatesService } from './gates.service';
-import { GateView } from './views/gate.views';
+import { GateStatusView, GateView } from './views/gate.views';
 
-/** The compound's gates, for management (ADR 0028). */
+/** The compound's gates: for management, and their status for residents (ADR 0028). */
 @ApiArea('gates')
 @Controller('gates')
 export class GatesController {
@@ -28,6 +28,18 @@ export class GatesController {
   @ApiOkResponse({ type: ListOf(GateView) })
   async list(): Promise<ListResponse<GateView>> {
     return bounded(await this.gates.list(), (g) => GateView.from(g));
+  }
+
+  /**
+   * No permission: the account kind decides (resident or family), in the
+   * service. Declared before `:id`.
+   */
+  @Get('status')
+  @ApiOperation({ summary: 'See which gates are open (residents and family)' })
+  @NoStore()
+  @ApiOkResponse({ type: ListOf(GateStatusView) })
+  async status(): Promise<ListResponse<GateStatusView>> {
+    return bounded(await this.gates.statuses(), (g) => GateStatusView.from(g));
   }
 
   @RequirePermissions('gate.manage')

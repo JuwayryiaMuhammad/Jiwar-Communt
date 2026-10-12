@@ -192,6 +192,9 @@ describe('API v0 — no-store', () => {
   }
 
   const CALLS: Record<string, () => Promise<Response>> = {
+    // Not a secret, but live: a cached answer would show a closed gate open.
+    'GET /gates/status': () =>
+      call(w, 'GET', '/gates/status', { token: w.a.tokens.owner }),
     // A resident's parcels carry the label, the photos and the codes (ADR 0035).
     'GET /me/parcels': async () => {
       await aParcel();

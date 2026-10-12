@@ -28,6 +28,25 @@ export class GateView {
   }
 }
 
+/** What a resident sees of a gate: that it exists and whether it is open. */
+export class GateStatusView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+
+  @ApiProperty({ type: String })
+  name: string;
+
+  @ApiProperty({
+    type: Boolean,
+    description: 'The gate is in service (its status is `active`).',
+  })
+  open: boolean;
+
+  static from(g: Pick<Gate, 'id' | 'name' | 'status'>): GateStatusView {
+    return { id: g.id, name: g.name, open: g.status === 'active' };
+  }
+}
+
 /** What a guard picks a gate from. */
 export class GuardGateView {
   @ApiProperty({ type: String, format: 'uuid' })

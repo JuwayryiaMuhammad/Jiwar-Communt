@@ -104,6 +104,7 @@ export class PermissionsGuard implements CanActivate {
       tenantId,
       account.roleId,
       account.role.permissionsVersion,
+      account.type,
     );
     if (required?.length && required.every((p) => granted.has(p))) return true;
     if (anyOf?.length && anyOf.some((p) => granted.has(p))) return true;

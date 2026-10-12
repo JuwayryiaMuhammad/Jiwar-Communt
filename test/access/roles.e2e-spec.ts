@@ -233,7 +233,12 @@ describe('Roles', () => {
     expect(await version()).toBe(before + 1);
     expect([
       ...(await as(c.tenant.id, c.manager.id, () =>
-        permissions.forRole(c.tenant.id, c.residentRole.id, before + 1),
+        permissions.forRole(
+          c.tenant.id,
+          c.residentRole.id,
+          before + 1,
+          'resident',
+        ),
       )),
     ]).toEqual([]);
   });

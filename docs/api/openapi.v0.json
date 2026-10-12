@@ -4303,6 +4303,46 @@
         ],
         "type": "string"
       },
+      "GateStatusView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "open": {
+            "description": "The gate is in service (its status is `active`).",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "open"
+        ],
+        "type": "object"
+      },
+      "GateStatusViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GateStatusView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "GateSubjectType": {
         "enum": [
           "visitor_pass",
@@ -15292,6 +15332,35 @@
         "tags": [
           "gates"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gates/status": {
+      "get": {
+        "operationId": "GatesController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateStatusViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "See which gates are open (residents and family)",
+        "tags": [
+          "gates"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

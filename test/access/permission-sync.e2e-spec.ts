@@ -120,6 +120,26 @@ describe('Permission sync', () => {
     return new Map(rows.map((r) => [r.permission, r.firstSeenAt]));
   }
 
+  /** A grant as an earlier catalog allowed it: no kind check. */
+  async function grantByHand(
+    tenantId: string,
+    key: string,
+    permission: string,
+  ) {
+    const { id } = await role(tenantId, key);
+    await h.asTenant(tenantId, () =>
+      h.tenantTx.withTenantTx(async (tx) => {
+        await tx.rolePermission.create({
+          data: { tenantId, roleId: id, permission },
+        });
+        await tx.role.update({
+          where: { id },
+          data: { permissionsVersion: { increment: 1 } },
+        });
+      }),
+    );
+  }
+
   /** What a manager does by hand through RolesService, minus the checks. */
   async function removeByHand(
     tenantId: string,
@@ -581,6 +601,81 @@ describe('Permission sync', () => {
     expect(manager.permissions).not.toContain('accounts.read');
     expect(manager.version).toBe(before.version + 1);
     expect((await catalogOf(t)).has('accounts.read')).toBe(false);
+  });
+
+  it('a grant the role’s kind may no longer hold is revoked, once, and reported', async () => {
+    const t = await createTenant(h, 'Sync narrowed');
+    const other = await createTenant(h, 'Sync narrowed other');
+    // What the role editor allowed while `gate.read` listed `resident`.
+    await grantByHand(t, 'resident', 'gate.read');
+    const before = {
+      resident: await role(t, 'resident'),
+      manager: await role(t, 'manager'),
+      family: await role(t, 'family_member'),
+    };
+    expect(before.resident.permissions).toContain('gate.read');
+    const calls: { roleId: string; added: string[]; removed: string[] }[] = [];
+    const lifecycle = new RoleLifecycle();
+    lifecycle.onPermissionsChanged((_tx, roleId, added, removed) => {
+      calls.push({ roleId, added: [...added], removed: [...removed] });
+      return Promise.resolve();
+    });
+
+    const report = await sync(base, t, lifecycle);
+
+    expect(report).toMatchObject({
+      added: [],
+      renamed: [],
+      retired: [],
+      unknown: [],
+      revoked: [
+        { roleKey: 'resident', kind: 'resident', permission: 'gate.read' },
+      ],
+      rolesChanged: 1,
+    });
+    const resident = await role(t, 'resident');
+    expect(resident.permissions).toEqual(
+      before.resident.permissions.filter((p) => p !== 'gate.read'),
+    );
+    expect(resident.version).toBe(before.resident.version + 1);
+    // The manager keeps it; no other role is touched.
+    expect(await role(t, 'manager')).toEqual(before.manager);
+    expect(await role(t, 'family_member')).toEqual(before.family);
+    expect(calls).toEqual([
+      { roleId: resident.id, added: [], removed: ['gate.read'] },
+    ]);
+    const audit = await h.asTenant(t, () =>
+      h.prisma.tenant.auditLog.findMany({
+        where: { action: 'role.permissions_synced', targetId: resident.id },
+      }),
+    );
+    expect(audit).toHaveLength(1);
+    expect(audit[0].metadata).toMatchObject({
+      roleKey: 'resident',
+      revoked: ['gate.read'],
+    });
+
+    // Idempotent: nothing left to revoke, nobody told, no new version.
+    calls.length = 0;
+    const again = await sync(base, t, lifecycle);
+    expect(again).toMatchObject({ revoked: [], rolesChanged: 0 });
+    expect(await role(t, 'resident')).toEqual(resident);
+    expect(calls).toEqual([]);
+    // And a compound with no such grant reports none.
+    expect(await sync(base, other)).toMatchObject({
+      revoked: [],
+      rolesChanged: 0,
+    });
+  });
+
+  it('a permission unknown to code is not revoked by kind', async () => {
+    const t = await createTenant(h, 'Sync narrowed unknown');
+    await grantByHand(t, 'resident', 'units.export');
+
+    const report = await sync(base, t);
+
+    expect(report).toMatchObject({ revoked: [], unknown: ['units.export'] });
+    expect((await role(t, 'resident')).permissions).toContain('units.export');
   });
 
   it('tells the domains what each role gained and lost, in the sync’s transaction (ADR 0033)', async () => {

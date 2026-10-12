@@ -880,6 +880,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gates/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** See which gates are open (residents and family) */
+        get: operations["GatesController_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gates/{id}": {
         parameters: {
             query?: never;
@@ -5705,6 +5722,17 @@ export interface components {
         GateRequestStatus: "pending" | "approved" | "denied" | "timed_out" | "leave_at_gate" | "withdrawn";
         /** @enum {string} */
         GateStatus: "active" | "inactive";
+        GateStatusView: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @description The gate is in service (its status is `active`). */
+            open: boolean;
+        };
+        GateStatusViewList: {
+            data: components["schemas"]["GateStatusView"][];
+            nextCursor: string | null;
+        };
         /** @enum {string} */
         GateSubjectType: "visitor_pass" | "worker_engagement" | "gate_request";
         GateView: {
@@ -9549,6 +9577,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GateView"];
+                };
+            };
+        };
+    };
+    GatesController_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateStatusViewList"];
                 };
             };
         };

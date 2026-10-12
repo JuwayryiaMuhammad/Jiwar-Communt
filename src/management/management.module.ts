@@ -1,6 +1,12 @@
 import { Module } from '@nestjs/common';
 import { CommunityManagementPortModule } from '../community';
 import { FilesModule } from '../core/files/files.module';
+import {
+  ResidentAppointmentsController,
+  ResidentAppointmentSlotsController,
+  StaffAppointmentsController,
+} from './appointments/appointments.controller';
+import { AppointmentsService } from './appointments/appointments.service';
 import { ManagementProvisioning } from './provisioning';
 import { RequestEscalation } from './requests/escalation.service';
 import { RequestLifecycle } from './requests/lifecycle.service';
@@ -42,6 +48,9 @@ import { TopicsService } from './topics/topics.service';
     StaffRequestsController,
     RequestAssigneesController,
     RequestUnitsController,
+    ResidentAppointmentSlotsController,
+    ResidentAppointmentsController,
+    StaffAppointmentsController,
   ],
   providers: [
     ManagementProvisioning,
@@ -54,6 +63,7 @@ import { TopicsService } from './topics/topics.service';
     RequestsService,
     RequestLifecycle,
     RequestEscalation,
+    AppointmentsService,
   ],
 })
 export class ManagementModule {}

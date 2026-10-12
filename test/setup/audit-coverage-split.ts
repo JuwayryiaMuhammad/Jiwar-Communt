@@ -189,4 +189,8 @@ export const MANAGEMENT_COVERAGE: readonly string[] = [
   'management_request.auto_closed',
   'management_request.reopened',
   'management_request.escalated',
+  'management_appointment.requested',
+  'management_appointment.proposed',
+  'management_appointment.confirmed',
+  'management_appointment.cancelled',
 ];

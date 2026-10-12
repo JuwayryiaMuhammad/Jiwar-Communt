@@ -66,6 +66,7 @@ describe('audit catalog', () => {
         'data_export',
         'management_request_topic',
         'management_request',
+        'management_appointment',
       ]).toContain(def.target);
     }
   });

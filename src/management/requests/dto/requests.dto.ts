@@ -12,22 +12,30 @@ import {
   Length,
   Matches,
   ValidateIf,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { SlotChoiceDto } from '../../appointments/dto/appointments.dto';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { MAX_ATTACHMENTS, MESSAGE_LENGTH } from '../messages.service';
 
-/** What a resident opens by writing: an appointment is booked with a slot. */
-export const WRITTEN_TYPES = ['question', 'general'] as const;
 const BOOLEAN = ['true', 'false'] as const;
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export class CreateRequestDto {
-  @ApiProperty({ enum: WRITTEN_TYPES })
-  @IsIn([...WRITTEN_TYPES], withParams({ allowed: [...WRITTEN_TYPES] }))
-  type: (typeof WRITTEN_TYPES)[number];
+  @ApiProperty({
+    enum: ManagementRequestType,
+    enumName: 'ManagementRequestType',
+    description: 'An `appointment` names its slot in `appointment`.',
+  })
+  @IsEnum(
+    ManagementRequestType,
+    withParams({ allowed: Object.values(ManagementRequestType) }),
+  )
+  type: ManagementRequestType;
 
   @ApiProperty({
     type: String,
@@ -74,6 +82,17 @@ export class CreateRequestDto {
   @ArrayMaxSize(MAX_ATTACHMENTS, withParams({ min: 0, max: MAX_ATTACHMENTS }))
   @IsUUID(undefined, { each: true })
   attachmentFileIds?: string[];
+
+  @ApiProperty({
+    type: SlotChoiceDto,
+    required: false,
+    description:
+      'Required for an `appointment` request, refused for any other type.',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => SlotChoiceDto)
+  appointment?: SlotChoiceDto;
 }
 
 export class CreateRequestOnBehalfDto extends CreateRequestDto {

@@ -35,7 +35,11 @@ import {
   MessageCreatedView,
   ResidentRequestMessageView,
 } from './views/message.views';
-import { RequestCreatedView, ResidentRequestView } from './views/request.views';
+import {
+  RequestCreatedView,
+  ResidentRequestDetailView,
+  ResidentRequestView,
+} from './views/request.views';
 
 /**
  * A resident's requests to the management (ADR 0039): their own, and only
@@ -75,9 +79,11 @@ export class ResidentRequestsController {
   @Get(':id')
   @NoStore()
   @ApiOperation({ summary: 'Get one of my requests to the management' })
-  @ApiOkResponse({ type: ResidentRequestView })
-  async get(@Param('id', parseId()) id: string): Promise<ResidentRequestView> {
-    return ResidentRequestView.from(await this.requests.detail(id));
+  @ApiOkResponse({ type: ResidentRequestDetailView })
+  async get(
+    @Param('id', parseId()) id: string,
+  ): Promise<ResidentRequestDetailView> {
+    return ResidentRequestDetailView.fromDetail(await this.requests.detail(id));
   }
 
   /** Never a staff note: the read filters them out and the view has no field for one. */

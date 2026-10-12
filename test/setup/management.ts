@@ -89,6 +89,41 @@ export function managementHelpers(h: HttpHarness) {
     return res.body as { id: string; number: string; status: string };
   }
 
+  /** The free slots the API offers the author, soonest first. */
+  async function slots(
+    who: Who,
+    days = 14,
+  ): Promise<{ startsAt: string; endsAt: string }[]> {
+    const res = await http(
+      'get',
+      `/management-appointment-slots?days=${days}`,
+      who.token,
+    ).expect(200);
+    // Not the ones about to become too soon: a booking made a moment after
+    // this read must still be an hour ahead.
+    const soon = Date.now() + 2 * 3_600_000;
+    return (
+      res.body as { data: { startsAt: string; endsAt: string }[] }
+    ).data.filter((slot) => new Date(slot.startsAt).getTime() > soon);
+  }
+
+  /** `POST /management-requests` of type appointment on `startsAt`. */
+  function book(
+    c: Compound,
+    author: Who,
+    startsAt: string,
+    topic: string,
+    over: Record<string, unknown> = {},
+  ) {
+    return http('post', '/management-requests', author.token, {
+      type: 'appointment',
+      topicId: topic,
+      body: 'I would like to meet the management',
+      appointment: { startsAt, mode: 'in_person' },
+      ...over,
+    });
+  }
+
   const http = (
     method: 'get' | 'post' | 'put' | 'patch' | 'delete',
     path: string,
@@ -106,7 +141,7 @@ export function managementHelpers(h: HttpHarness) {
     return method === 'get' || method === 'delete' ? req : req.send(body ?? {});
   };
 
-  return { x, who, setUp, handler, topicId, open, http };
+  return { x, who, setUp, handler, topicId, open, slots, book, http };
 }
 
 export type ManagementSetUp = Awaited<

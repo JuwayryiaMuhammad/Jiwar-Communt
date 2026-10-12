@@ -338,6 +338,25 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'management_request',
   },
+  // Appointments. target: the appointment. metadata: requestNumber, mode,
+  // startsAt, and `replaces` (it took the place of another) or `by`
+  // (resident | staff); a cancellation: reasonCode, by, fromStatus.
+  'management_appointment.requested': {
+    log: 'tenant',
+    target: 'management_appointment',
+  },
+  'management_appointment.proposed': {
+    log: 'tenant',
+    target: 'management_appointment',
+  },
+  'management_appointment.confirmed': {
+    log: 'tenant',
+    target: 'management_appointment',
+  },
+  'management_appointment.cancelled': {
+    log: 'tenant',
+    target: 'management_appointment',
+  },
   // changes: autoCloseDays, appointmentSlotMinutes, appointmentSlotCapacity.
   'management.settings_changed': { log: 'tenant', target: 'tenant' },
   // changes: windows, each as `<weekday>:<startMinute>-<endMinute>`.

@@ -422,6 +422,121 @@ describe('Audit coverage — management requests', () => {
     });
   });
 
+  describe('appointments', () => {
+    let requestId: string;
+    let number: number;
+    let slots: string[];
+    const appointments = () =>
+      m.x.asManager(s.c, () =>
+        m.x.prisma.tenant.managementAppointment.findMany({
+          where: { requestId },
+          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        }),
+      );
+
+    beforeAll(async () => {
+      // The office was closed by an earlier scenario: open it again.
+      await m
+        .http('put', '/management/office-hours', s.manager.token, {
+          windows: [0, 1, 2, 3, 4, 6].map((weekday) => ({
+            weekday,
+            startMinute: 540,
+            endMinute: 1020,
+          })),
+        })
+        .expect(200);
+      slots = (await m.slots(s.owner, 31)).map((x) => x.startsAt);
+    });
+
+    it('management_appointment.requested — the resident’s pick: mode and time, never why', async () => {
+      const res = await m
+        .book(s.c, s.owner, slots[0], await m.topicId(s.c), {
+          body: `${MARKER} I want to talk about my neighbour`,
+        })
+        .expect(201);
+      requestId = (res.body as { id: string }).id;
+      number = Number((res.body as { number: string }).number.slice(3));
+      const [appointment] = await appointments();
+      const row = await single(
+        'management_appointment.requested',
+        appointment.id,
+      );
+      expect(row).toMatchObject({
+        actorType: 'account',
+        actorId: s.owner.id,
+        targetType: 'management_appointment',
+      });
+      expect(row.metadata).toEqual({
+        requestNumber: number,
+        mode: 'in_person',
+        startsAt: slots[0],
+        replaces: false,
+      });
+    });
+
+    it('management_appointment.proposed — staff’s counter, replacing the pick', async () => {
+      await m
+        .http(
+          'post',
+          `/management/requests/${requestId}/appointment/propose`,
+          s.manager.token,
+          { startsAt: slots[1], mode: 'phone' },
+        )
+        .expect(201);
+      const [, proposed] = await appointments();
+      const row = await single('management_appointment.proposed', proposed.id);
+      expect(row).toMatchObject({ actorId: s.manager.id });
+      expect(row.metadata).toEqual({
+        requestNumber: number,
+        mode: 'phone',
+        startsAt: slots[1],
+        replaces: true,
+      });
+    });
+
+    it('management_appointment.confirmed — by the resident accepting it', async () => {
+      await m
+        .http(
+          'post',
+          `/management-requests/${requestId}/appointment/accept`,
+          s.owner.token,
+        )
+        .expect(204);
+      const [, proposed] = await appointments();
+      const row = await single('management_appointment.confirmed', proposed.id);
+      expect(row).toMatchObject({ actorId: s.owner.id });
+      expect(row.metadata).toEqual({
+        requestNumber: number,
+        mode: 'phone',
+        startsAt: slots[1],
+        by: 'resident',
+      });
+    });
+
+    it('management_appointment.cancelled — with the reason code, who and from what', async () => {
+      await m
+        .http(
+          'post',
+          `/management/requests/${requestId}/appointment/cancel`,
+          s.manager.token,
+          { reasonCode: 'staff_unavailable' },
+        )
+        .expect(204);
+      const [, cancelled] = await appointments();
+      const row = await single(
+        'management_appointment.cancelled',
+        cancelled.id,
+      );
+      expect(row).toMatchObject({ actorId: s.manager.id });
+      expect(row.metadata).toEqual({
+        requestNumber: number,
+        reasonCode: 'staff_unavailable',
+        by: 'staff',
+        fromStatus: 'confirmed',
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every management entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

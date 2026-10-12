@@ -49,6 +49,7 @@ export const REASON_CODES = {
   // Requests to the management (ADR 0039): codes only, never text.
   managementRequestOnBehalf: ['resident_phone_call', 'resident_walk_in', 'resident_written_letter'],
   managementRequestClose: ['resolved', 'duplicate', 'not_for_management', 'other'],
+  managementAppointmentCancelByStaff: ['staff_unavailable', 'office_closed', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

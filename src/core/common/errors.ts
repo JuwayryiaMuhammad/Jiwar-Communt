@@ -250,6 +250,18 @@ export const ErrorCode = {
   /** Closed more than seven days ago (409, params.reopenDays). */
   MANAGEMENT_REQUEST_REOPEN_WINDOW_PASSED:
     'MANAGEMENT_REQUEST_REOPEN_WINDOW_PASSED',
+  /** An appointment action on a request of another type (409). */
+  MANAGEMENT_REQUEST_NOT_AN_APPOINTMENT:
+    'MANAGEMENT_REQUEST_NOT_AN_APPOINTMENT',
+  /** The slot already holds as many appointments as it takes (409). */
+  MANAGEMENT_APPOINTMENT_SLOT_FULL: 'MANAGEMENT_APPOINTMENT_SLOT_FULL',
+  /**
+   * The request's appointment does not take the action (409); params.status
+   * is its status, or `none` when it has no live one.
+   */
+  MANAGEMENT_APPOINTMENT_INVALID_STATE: 'MANAGEMENT_APPOINTMENT_INVALID_STATE',
+  /** Its start has passed: nothing left to confirm (409). */
+  MANAGEMENT_APPOINTMENT_WINDOW_PASSED: 'MANAGEMENT_APPOINTMENT_WINDOW_PASSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -326,6 +338,12 @@ export const FieldErrorCode = {
   AUTHOR_NOT_ELIGIBLE: 'AUTHOR_NOT_ELIGIBLE',
   /** Not an active account holding `requests.handle`. */
   ASSIGNEE_NOT_ELIGIBLE: 'ASSIGNEE_NOT_ELIGIBLE',
+  /** Not the start of a slot the office hours offer. */
+  APPOINTMENT_SLOT_NOT_OFFERED: 'APPOINTMENT_SLOT_NOT_OFFERED',
+  /** An appointment starts at least an hour from now. */
+  APPOINTMENT_TOO_SOON: 'APPOINTMENT_TOO_SOON',
+  /** An appointment starts within thirty days. */
+  APPOINTMENT_TOO_FAR: 'APPOINTMENT_TOO_FAR',
 } as const;
 
 export type FieldErrorCode =

@@ -66,6 +66,18 @@ export class RequestSettingsService {
     return this.inTx(tx);
   }
 
+  /**
+   * The row share-locked: a booking reads the slot length and the capacity
+   * here and they stay so until it commits, because a change waits for the
+   * lock (`lock`) and bookings do not wait for each other.
+   */
+  async share(tx: TenantTxClient): Promise<ManagementRequestSettings> {
+    await tx.$queryRaw`
+      SELECT tenant_id FROM management_request_settings
+       WHERE tenant_id = ${this.ctx.txTenantId}::uuid FOR SHARE`;
+    return this.inTx(tx);
+  }
+
   async get(): Promise<RequestSettingsView> {
     return view(await this.tenantTx.withTenantTx((tx) => this.inTx(tx)));
   }

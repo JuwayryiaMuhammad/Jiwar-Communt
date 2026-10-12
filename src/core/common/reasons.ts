@@ -254,4 +254,17 @@ export const REASON_CODES = {
   ],
   // Written by the system only: the sweep's close and the author's own.
   managementRequestSystemClose: ['auto_closed', 'withdrawn_by_author'],
+  // Why an appointment is cancelled, by each side; and by the system when
+  // its request closes.
+  managementAppointmentCancelByResident: [
+    'no_longer_needed',
+    'cannot_attend',
+    'other',
+  ],
+  managementAppointmentCancelByStaff: [
+    'staff_unavailable',
+    'office_closed',
+    'other',
+  ],
+  managementAppointmentSystemCancel: ['request_closed'],
 } as const;

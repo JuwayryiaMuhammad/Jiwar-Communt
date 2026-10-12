@@ -6,7 +6,10 @@ import {
 } from '@prisma/client';
 import { accountRef, AccountRefView } from '../../../core/common/http/personal';
 import { isOverdue, reopenUntil, requestNumber } from '../request-rules';
+import { AppointmentView } from '../../appointments/views/appointment.views';
 import type {
+  AppointmentRead,
+  DetailRead,
   InboxRead,
   Person,
   RequestRead,
@@ -170,6 +173,26 @@ export class ResidentRequestView extends RequestBaseView {
   }
 }
 
+/** One of the author's requests, with its appointment. */
+export class ResidentRequestDetailView extends ResidentRequestView {
+  @ApiProperty({
+    type: AppointmentView,
+    nullable: true,
+    description:
+      'On an appointment request: the live appointment, else the last one.',
+  })
+  appointment: AppointmentView | null;
+
+  static fromDetail(read: DetailRead): ResidentRequestDetailView {
+    return {
+      ...ResidentRequestView.from(read),
+      appointment: read.appointment
+        ? AppointmentView.from(read.appointment)
+        : null,
+    };
+  }
+}
+
 function person(people: Map<string, Person>, id: string): AccountRefView {
   // A request's people always exist: accounts are never deleted (ADR 0023).
   return accountRef(people.get(id) ?? { id, fullName: null, status: 'erased' });
@@ -265,10 +288,20 @@ export class StaffRequestDetailView extends StaffRequestView {
     description: 'At most one per cycle, oldest first.',
   })
   escalations: RequestEscalationView[];
+  @ApiProperty({
+    type: AppointmentView,
+    nullable: true,
+    description:
+      'On an appointment request: the live appointment, else the last one.',
+  })
+  appointment: AppointmentView | null;
 
   static fromDetail(read: StaffDetailRead): StaffRequestDetailView {
     return {
       ...StaffRequestView.from(read),
+      appointment: read.appointment
+        ? AppointmentView.from(read.appointment)
+        : null,
       escalations: read.escalations.map((e) => ({
         cycle: e.cycle,
         dueAt: e.dueAt,
@@ -300,4 +333,17 @@ export class RequestPersonView {
   id: string;
   @ApiProperty({ type: String, nullable: true })
   fullName: string | null;
+}
+
+/** A row of the staff's agenda: an appointment and the request it is on. */
+export class StaffAppointmentListItemView extends AppointmentView {
+  @ApiProperty({ type: StaffRequestView })
+  request: StaffRequestView;
+
+  static fromRead(read: AppointmentRead): StaffAppointmentListItemView {
+    return {
+      ...AppointmentView.from(read.appointment),
+      request: StaffRequestView.from(read.request),
+    };
+  }
 }

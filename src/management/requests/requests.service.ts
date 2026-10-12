@@ -1,6 +1,7 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import {
   Prisma,
+  type ManagementAppointment,
   type ManagementRequest,
   type ManagementRequestEscalation,
   type ManagementRequestStatus,
@@ -14,6 +15,7 @@ import { RequestContext } from '../../core/common/cls/request-context';
 import { clampLimit, keysetCursor, type Page } from '../../core/common/cursor';
 import {
   appError,
+  AppException,
   ErrorCode,
   FieldErrorCode,
   type FieldError,
@@ -23,10 +25,16 @@ import { newId } from '../../core/common/uuid';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { TenantTx } from '../../core/database/tenant-tx.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
+import {
+  AppointmentsService,
+  type AppointmentsQuery,
+  type SlotChoice,
+} from '../appointments/appointments.service';
 import { dbNow } from '../db-clock';
 import { MessagesService } from './messages.service';
 import { RequestEscalation } from './escalation.service';
 import { RequestAccess } from './request-access';
+import { RequestProgress } from './request-progress';
 import { assertCan, responseDueAt } from './request-rules';
 import { RequestCreatedView } from './views/request.views';
 
@@ -41,6 +49,8 @@ export interface NewRequest {
   body: string;
   /** The caller's own finalized files, attached to that message. */
   attachmentFileIds?: string[];
+  /** The slot of an appointment request: required for one, refused otherwise. */
+  appointment?: SlotChoice;
 }
 
 export interface NewRequestOnBehalf extends NewRequest {
@@ -70,9 +80,20 @@ export interface RequestRead {
   now: Date;
 }
 
+/** One request with its appointment: the live one, else the last. */
+export interface DetailRead extends RequestRead {
+  appointment: ManagementAppointment | null;
+}
+
 /** One request as staff read it: with the history of its escalations. */
-export interface StaffDetailRead extends RequestRead {
+export interface StaffDetailRead extends DetailRead {
   escalations: ManagementRequestEscalation[];
+}
+
+/** A row of the staff's agenda: an appointment and its request. */
+export interface AppointmentRead {
+  appointment: ManagementAppointment;
+  request: RequestRead;
 }
 
 /** A row of the staff inbox: the request and the start of what it says. */
@@ -103,6 +124,16 @@ const TOPIC = {
   select: { id: true, key: true, nameAr: true, nameEn: true },
 } as const;
 
+/** A field error of a nested object, named from the body's root. */
+function nested(error: unknown, prefix: string): unknown {
+  if (!(error instanceof AppException) || error.code !== 'VALIDATION_FAILED')
+    return error;
+  const body = error.getResponse() as { fields?: FieldError[] };
+  return invalid(
+    (body.fields ?? []).map((f) => ({ ...f, field: `${prefix}.${f.field}` })),
+  );
+}
+
 const invalid = (fields: FieldError[]) =>
   appError.badRequest(ErrorCode.VALIDATION_FAILED, 'Invalid request', {
     fields,
@@ -122,11 +153,13 @@ export class RequestsService implements OnModuleInit {
     private readonly ctx: RequestContext,
     private readonly access: RequestAccess,
     private readonly messages: MessagesService,
+    private readonly progress: RequestProgress,
     private readonly community: CommunityManagementPort,
     private readonly staff: StaffRecipients,
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
     private readonly escalation: RequestEscalation,
+    private readonly appointments: AppointmentsService,
   ) {}
 
   onModuleInit(): void {
@@ -147,6 +180,7 @@ export class RequestsService implements OnModuleInit {
    */
   create(input: NewRequest): Promise<ManagementRequest> {
     const me = this.ctx.accountId;
+    this.assertSlot(input);
     return this.tenantTx.withTenantTx(async (tx) => {
       const id = newId();
       await this.idempotency.claim(tx, { type: REQUEST_RESOURCE, id });
@@ -179,6 +213,7 @@ export class RequestsService implements OnModuleInit {
       input.reasonCode,
       REASON_CODES.managementRequestOnBehalf,
     );
+    this.assertSlot(input);
     return this.tenantTx.withTenantTx(async (tx) => {
       const id = newId();
       await this.idempotency.claim(tx, { type: REQUEST_RESOURCE, id });
@@ -218,6 +253,21 @@ export class RequestsService implements OnModuleInit {
       });
       return request;
     });
+  }
+
+  /** An appointment request names its slot; no other request has one. */
+  private assertSlot(input: NewRequest): void {
+    if ((input.type === 'appointment') === (input.appointment !== undefined))
+      return;
+    throw invalid([
+      {
+        field: 'appointment',
+        code:
+          input.type === 'appointment'
+            ? FieldErrorCode.FIELD_REQUIRED
+            : FieldErrorCode.FIELD_NOT_ALLOWED,
+      },
+    ]);
   }
 
   /** What the audit trail says of a new request: codes, never its words. */
@@ -300,7 +350,22 @@ export class RequestsService implements OnModuleInit {
       now,
     );
     await this.messages.attach(tx, message, fileIds, 'attachmentFileIds');
-    return request;
+    if (!input.appointment) return request;
+    try {
+      await this.appointments.bookAtCreation(
+        tx,
+        request,
+        input.appointment,
+        by.side,
+        now,
+      );
+    } catch (error) {
+      throw nested(error, 'appointment');
+    }
+    // A slot staff book for the resident is their response to the request.
+    return by.side === 'staff'
+      ? this.progress.responded(tx, request, 'appointment', now)
+      : request;
   }
 
   // --------------------------------------------------------------------------
@@ -372,11 +437,11 @@ export class RequestsService implements OnModuleInit {
   }
 
   /** One of the caller's own requests. */
-  detail(id: string): Promise<RequestRead> {
+  detail(id: string): Promise<DetailRead> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const request = await this.access.load(tx, id, 'resident');
       const [read] = await this.withNames(tx, [request], await dbNow(tx));
-      return read;
+      return { ...read, appointment: await this.appointments.current(tx, id) };
     });
   }
 
@@ -385,7 +450,36 @@ export class RequestsService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       const request = await this.access.load(tx, id, 'staff');
       const [read] = await this.withNames(tx, [request], await dbNow(tx));
-      return { ...read, escalations: await this.escalation.list(tx, id) };
+      return {
+        ...read,
+        appointment: await this.appointments.current(tx, id),
+        escalations: await this.escalation.list(tx, id),
+      };
+    });
+  }
+
+  /** The compound's appointments with their requests, soonest first. */
+  async appointmentsForStaff(
+    q: AppointmentsQuery,
+  ): Promise<Page<AppointmentRead>> {
+    const page = await this.appointments.listForStaff(q);
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const requests = await tx.managementRequest.findMany({
+        where: { id: { in: page.items.map((a) => a.requestId) } },
+      });
+      const reads = new Map(
+        (await this.withNames(tx, requests, await dbNow(tx))).map((r) => [
+          r.request.id,
+          r,
+        ]),
+      );
+      return {
+        ...page,
+        items: page.items.map((appointment) => ({
+          appointment,
+          request: reads.get(appointment.requestId)!,
+        })),
+      };
     });
   }
 

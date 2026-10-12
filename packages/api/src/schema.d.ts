@@ -10361,6 +10361,8 @@ export interface operations {
                 technicianId?: string;
                 unitId?: string;
                 categoryId?: string;
+                /** @description `true`: only tickets that are not finished: every status but `closed` and `cancelled`. Combines with `status` (both must hold). */
+                open?: "true" | "false";
                 /** @description `true`: only tickets whose `sla.overdue` is true (ADR 0034). None while the SLA is off. */
                 overdue?: "true" | "false";
                 /** @description `true`: only tickets with an `escalatedAt` (ADR 0038). None while the SLA is off. */

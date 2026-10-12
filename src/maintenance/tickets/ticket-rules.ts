@@ -50,6 +50,13 @@ const NOT_STARTED: readonly TicketStatus[] = ['assigned', 'en_route'];
 
 const OPEN: readonly TicketStatus[] = ['new', ...IN_HAND];
 
+/**
+ * Not finished: every status but `closed` and `cancelled`. A `completed`
+ * ticket still waits for its reporter, so it is still someone's to watch;
+ * this is what the dispatch list's `open` filter shows.
+ */
+export const UNFINISHED: readonly TicketStatus[] = [...OPEN, 'completed'];
+
 export const ALLOWED_FROM: Record<TicketAction, readonly TicketStatus[]> = {
   assign: ['new'],
   reassign: IN_HAND,
@@ -64,20 +71,20 @@ export const ALLOWED_FROM: Record<TicketAction, readonly TicketStatus[]> = {
   release: IN_HAND,
   cancelByReporter: ['new', ...NOT_STARTED],
   // Any time before it is closed.
-  cancelByDispatcher: [...OPEN, 'completed'],
+  cancelByDispatcher: UNFINISHED,
   confirm: ['completed'],
   reject: ['completed'],
   reopen: ['closed'],
   autoClose: ['completed'],
-  changePriority: [...OPEN, 'completed'],
+  changePriority: UNFINISHED,
   // ADR 0034: like the priority; the technician keeps the ticket.
-  changeCategory: [...OPEN, 'completed'],
+  changeCategory: UNFINISHED,
   // ADR 0034: a visit is arranged, changed and made while a technician
   // holds the ticket.
   visit: IN_HAND,
   // ADR 0038: while someone still owes the residents the work.
   escalate: OPEN,
-  message: [...OPEN, 'completed'],
+  message: UNFINISHED,
   reportPhoto: OPEN,
   workPhoto: ['in_progress', 'on_hold'],
 };

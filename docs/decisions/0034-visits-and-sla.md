@@ -236,3 +236,8 @@ Every visit read and the arrival are no-store. There is no new permission, so `a
 - The SLA measures 24/7. Business hours, a pre-breach warning, reminders before a visit, resident escalation, live tracking and key handover are deferred.
 - A worker receiver is checked live: until community has an engagement hook, a worker who no longer qualifies stays on the row but reads as no receiver everywhere (the technician never sees them).
 - Turning the SLA on in a large compound starts clocks over a few seconds after the answer; a breach on a ticket whose clock had not started yet cannot happen (no clock, no breach), and nothing is backdated.
+
+## Update (B2)
+- **The dispatch list filters `open=true`:** every status but `closed` and `cancelled` (`new`, `assigned`, `en_route`, `in_progress`, `on_hold`, `completed`). A `completed` ticket still waits for its reporter, so it counts. The list took one `status` at a time, so a screen of "what is still ours" had to hide finished tickets from the pages it had loaded, and its pages were not full.
+- Decided in SQL with the keyset, on both paths (with and without `overdue` / `escalated`), so a page is full and its cursor true. It does not depend on the SLA: it works while the SLA is off. It combines with `status` (both must hold, so `open=true&status=closed` is empty); `open=false` is no filter.
+- `escalated=true` is unchanged and still returns a finished ticket escalated in its current cycle; a view of escalations that need attention sends `open=true` with it. `overdue=true` was always among open tickets only.

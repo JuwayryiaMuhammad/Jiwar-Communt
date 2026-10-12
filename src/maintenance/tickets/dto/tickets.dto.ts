@@ -203,6 +203,16 @@ export class DispatchTicketsQueryDto extends PageQueryDto {
     required: false,
     enum: BOOL,
     description:
+      '`true`: only tickets that are not finished: every status but `closed` and `cancelled`. Combines with `status` (both must hold).',
+  })
+  @IsOptional()
+  @IsIn(BOOL, withParams({ allowed: [...BOOL] }))
+  open?: (typeof BOOL)[number];
+
+  @ApiProperty({
+    required: false,
+    enum: BOOL,
+    description:
       '`true`: only tickets whose `sla.overdue` is true (ADR 0034). None while the SLA is off.',
   })
   @IsOptional()

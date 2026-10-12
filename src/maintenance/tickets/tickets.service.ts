@@ -46,7 +46,7 @@ import { ticketNotFound, TicketAccess, type Audience } from './ticket-access';
 import { COMMON_AREA_LENGTH, DESCRIPTION_LENGTH } from './ticket-limits';
 import { TicketLog } from './ticket-log';
 import { TicketNotices } from './ticket-notices';
-import { ticketNumber } from './ticket-rules';
+import { ticketNumber, UNFINISHED } from './ticket-rules';
 import { TicketCreatedView } from './views/ticket.views';
 
 export const TICKET_RESOURCE = 'ticket';
@@ -181,6 +181,8 @@ export interface DispatchQuery extends ResidentQuery {
   unassigned?: boolean;
   technicianId?: string;
   categoryId?: string;
+  /** Only tickets not finished: neither closed nor cancelled. */
+  open?: boolean;
   /** Only tickets whose SLA row says `overdue` (ADR 0034). */
   overdue?: boolean;
   /** Only tickets escalated in their current SLA cycle. */
@@ -456,7 +458,9 @@ export class TicketsService implements OnModuleInit {
   }
 
   /**
-   * Every ticket of the compound; `unassigned` is the dispatch queue. Each
+   * Every ticket of the compound; `unassigned` is the dispatch queue and
+   * `open` leaves out what is closed or cancelled, in the database like
+   * every filter here, so a page is full and its cursor true. Each
    * row carries its SLA and this cycle's escalation, read for the whole page
    * in a fixed number of queries (ADR 0034). One reading of the database's
    * clock decides the `overdue` filter and every row's `overdue`.
@@ -470,6 +474,7 @@ export class TicketsService implements OnModuleInit {
           : await this.rows(tx, q, {
               AND: [
                 q.status ? { status: q.status } : {},
+                q.open ? { status: { in: [...UNFINISHED] } } : {},
                 q.priority ? { priority: q.priority } : {},
                 q.unassigned ? { technicianId: null } : {},
                 q.technicianId ? { technicianId: q.technicianId } : {},
@@ -508,6 +513,9 @@ export class TicketsService implements OnModuleInit {
     const where: Prisma.Sql[] = [
       ...flags,
       ...(q.status ? [Prisma.sql`t.status = ${q.status}::ticket_status`] : []),
+      ...(q.open
+        ? [Prisma.sql`t.status::text IN (${Prisma.join([...UNFINISHED])})`]
+        : []),
       ...(q.priority
         ? [Prisma.sql`t.priority = ${q.priority}::ticket_priority`]
         : []),

@@ -16703,6 +16703,19 @@
             }
           },
           {
+            "description": "`true`: only tickets that are not finished: every status but `closed` and `cancelled`. Combines with `status` (both must hold).",
+            "in": "query",
+            "name": "open",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
             "description": "`true`: only tickets whose `sla.overdue` is true (ADR 0034). None while the SLA is off.",
             "in": "query",
             "name": "overdue",

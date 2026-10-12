@@ -267,4 +267,11 @@ export const REASON_CODES = {
     'other',
   ],
   managementAppointmentSystemCancel: ['request_closed'],
+  // Written by the system only: why a request went back to the queue.
+  managementRequestRelease: [
+    'account_deactivated',
+    'account_frozen',
+    'account_erased',
+    'role_lost',
+  ],
 } as const;

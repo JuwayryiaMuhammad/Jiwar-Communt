@@ -298,7 +298,10 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'management_request',
   },
-  // changes: assigneeId (from, to); metadata: requestNumber.
+  // changes: assigneeId (from, to); metadata: requestNumber. When the
+  // system took a request back from a handler who can no longer handle
+  // it: reasonCode (account_deactivated, account_frozen, account_erased,
+  // role_lost).
   'management_request.assigned': {
     log: 'tenant',
     target: 'management_request',

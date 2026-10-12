@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CommunityManagementPortModule } from '../community';
+import { AccountsModule } from '../core/accounts/accounts.module';
 import { FilesModule } from '../core/files/files.module';
 import { MaintenanceModule } from '../maintenance';
 import {
@@ -8,10 +9,12 @@ import {
   StaffAppointmentsController,
 } from './appointments/appointments.controller';
 import { AppointmentsService } from './appointments/appointments.service';
+import { ManagementExportSections } from './export/export-sections';
 import { MyRequestsController } from './feed/my-requests.controller';
 import { MyRequestsService } from './feed/my-requests.service';
 import { ManagementProvisioning } from './provisioning';
 import { RequestEscalation } from './requests/escalation.service';
+import { RequestHandlerRelease } from './requests/handler-release';
 import { RequestLifecycle } from './requests/lifecycle.service';
 import { MessagesService } from './requests/messages.service';
 import { RatingService } from './requests/rating.service';
@@ -44,7 +47,12 @@ import { TopicsService } from './topics/topics.service';
  * the gate.
  */
 @Module({
-  imports: [CommunityManagementPortModule, FilesModule, MaintenanceModule],
+  imports: [
+    AccountsModule,
+    CommunityManagementPortModule,
+    FilesModule,
+    MaintenanceModule,
+  ],
   controllers: [
     TopicsController,
     TopicOptionsController,
@@ -75,6 +83,8 @@ import { TopicsService } from './topics/topics.service';
     AppointmentsService,
     RatingService,
     MyRequestsService,
+    RequestHandlerRelease,
+    ManagementExportSections,
   ],
 })
 export class ManagementModule {}

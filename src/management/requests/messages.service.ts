@@ -4,6 +4,7 @@ import type {
   ManagementRequestMessage,
   ManagementSide,
 } from '@prisma/client';
+import { AccountLifecycle } from '../../core/accounts/account-lifecycle';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { clampLimit, keysetCursor, type Page } from '../../core/common/cursor';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
@@ -91,6 +92,7 @@ export class MessagesService implements OnModuleInit {
     private readonly files: FilesService,
     private readonly idempotency: IdempotencyService,
     private readonly notices: RequestNotices,
+    private readonly lifecycle: AccountLifecycle,
   ) {}
 
   onModuleInit(): void {
@@ -103,6 +105,23 @@ export class MessagesService implements OnModuleInit {
         return { id: m.id, createdAt: m.createdAt };
       }),
     );
+    // Erasure (ADR 0023), exactly as tickets do it (ADR 0032): the person's
+    // words go — the bodies of the messages they sent and the comment of the
+    // rating they gave — in the erasure's transaction, which locked the
+    // account row first; a post or a rating in flight holds that row shared,
+    // so none lands after. The rows stay and point at the tombstone; the
+    // requests, their status and their attachments stay too. These two
+    // statements are the one change the tables' triggers let through.
+    this.lifecycle.onErasing(async (tx, account) => {
+      await tx.$executeRaw`
+        UPDATE management_request_messages
+           SET body = NULL, erased_at = date_trunc('milliseconds', now())
+         WHERE sender_account_id = ${account.id}::uuid AND body IS NOT NULL`;
+      await tx.$executeRaw`
+        UPDATE management_request_ratings SET comment = NULL
+         WHERE author_account_id = ${account.id}::uuid AND comment IS NOT NULL`;
+      return [];
+    });
   }
 
   /**

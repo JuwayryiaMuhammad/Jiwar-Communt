@@ -6,10 +6,10 @@ import { Button, Field, ReasonDialog, Select, useToast } from '@jiwar/ui';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { keys } from '@/lib/queries';
+import { revocable } from './revocable';
 
 type Member = Schema<'HouseholdMemberItemView'>;
 type Permission = Schema<'RevokeByManagementDto'>['permission'];
-const ALL = ['visitors_invite', 'bookings', 'tickets', 'finance', 'unit_security'] as const;
 const PERMISSION_TEXT: Record<string, string> = {
   visitors_invite: 'Invite visitors',
   bookings: 'Bookings',
@@ -65,14 +65,20 @@ export function MemberOverrides({ unitId, member }: { unitId: string; member: Me
     },
   );
   if (member.status !== 'active') return null;
-  // The API shows a member's permissions to the unit's primary, not to
-  // management: every permission is offered, and one the member does not
-  // hold is refused with a plain message.
-  const granted = member.permissions?.map((g) => g.permission) ?? ALL;
+  // What the member holds, as the API tells a manager who reads residents;
+  // without that, every permission is offered and the API refuses one they
+  // do not hold.
+  const { known, options } = revocable(member.grantedPermissions);
+  const nothing = known && options.length === 0;
 
   return (
     <span className="row" style={{ justifyContent: 'flex-end' }}>
-      <Button size="sm" onClick={() => setOpen('revoke')}>
+      <Button
+        size="sm"
+        disabled={nothing}
+        title={nothing ? `${name} holds no permission in this household.` : undefined}
+        onClick={() => setOpen('revoke')}
+      >
         Revoke access
       </Button>
       <Button size="sm" onClick={() => setOpen('remove')}>
@@ -94,7 +100,11 @@ export function MemberOverrides({ unitId, member }: { unitId: string; member: Me
         open={open === 'revoke'}
         onClose={close}
         title={`Take back access from ${name}?`}
-        description="They keep their place in the household and lose what you pick. They are told, with your message. What the primary gave them is not shown to management, so a permission they do not hold is simply refused."
+        description={
+          known
+            ? 'They keep their place in the household and lose what you pick, from what they hold now. They are told, with your message.'
+            : 'They keep their place in the household and lose what you pick. They are told, with your message. Your role does not show what they hold, so a permission they do not hold is simply refused.'
+        }
         codes={REASON_CODES.permissionRevoke}
         confirmLabel="Revoke"
         pending={revoke.isPending}
@@ -105,7 +115,7 @@ export function MemberOverrides({ unitId, member }: { unitId: string; member: Me
           {(p) => (
             <Select {...p} value={permission} onChange={(e) => setPermission(e.target.value as Permission | '')}>
               <option value="">Select…</option>
-              {granted.map((g) => (
+              {options.map((g) => (
                 <option key={g} value={g}>
                   {PERMISSION_TEXT[g] ?? humanize(g)}
                 </option>

@@ -147,8 +147,10 @@ type Open = { kind: 'new' } | { kind: 'edit' | 'specialties' | 'sla'; category: 
 export function Categories({ view }: { view: 'categories' | 'sla' }) {
   const { can } = usePermissions();
   const categories = useQuery({ queryKey: keys.categories, queryFn: fetchers.categories });
-  // The specialties list is a dispatcher's read; a role without it sees counts, not names.
-  const specialties = useQuery({ queryKey: keys.specialties, queryFn: fetchers.specialties, enabled: can('tickets.dispatch'), retry: false });
+  // The specialties list reads with either permission (a dispatcher's, or the
+  // one that writes them); a role with neither sees counts, not names.
+  const readsSpecialties = can('tickets.dispatch') || can('maintenance.manage');
+  const specialties = useQuery({ queryKey: keys.specialties, queryFn: fetchers.specialties, enabled: readsSpecialties, retry: false });
   const [open, setOpen] = useState<Open>(null);
   const names = new Map((specialties.data?.data ?? []).map((s) => [s.id, s]));
   const target = (c: Category, p: TicketPriority) =>
@@ -228,7 +230,7 @@ export function Categories({ view }: { view: 'categories' | 'sla' }) {
                         <Button size="sm" onClick={() => setOpen({ kind: 'edit', category: c })}>
                           Edit
                         </Button>
-                        {can('tickets.dispatch') ? (
+                        {readsSpecialties ? (
                           <Button size="sm" onClick={() => setOpen({ kind: 'specialties', category: c })}>
                             Specialties
                           </Button>

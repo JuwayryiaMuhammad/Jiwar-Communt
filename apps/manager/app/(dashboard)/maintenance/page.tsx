@@ -22,8 +22,6 @@ type Tab = (typeof TABS)[number];
 const VIEWS = ['open', 'unassigned', 'overdue', 'escalated', 'all'] as const;
 type View = (typeof VIEWS)[number];
 const STATUSES: TicketStatus[] = ['new', 'assigned', 'en_route', 'in_progress', 'on_hold', 'completed', 'closed', 'cancelled'];
-/** Still someone's to move: what "Open" shows, since the API filters one status at a time. */
-const OPEN: ReadonlySet<string> = new Set(['new', 'assigned', 'en_route', 'in_progress', 'on_hold', 'completed']);
 
 function Queue() {
   const toast = useToast();
@@ -48,13 +46,15 @@ function Queue() {
     categoryId,
     technicianId: view === 'unassigned' ? '' : technicianId,
     unassigned: view === 'unassigned' ? 'true' : '',
+    // Not closed, not cancelled: decided by the API, so every page is full.
+    // An escalation of a finished ticket needs nobody, so "Escalated" asks
+    // for the open ones too. A status picked by hand says what to show.
+    open: (view === 'open' || view === 'escalated') && !status ? 'true' : '',
     overdue: view === 'overdue' ? 'true' : '',
     escalated: view === 'escalated' ? 'true' : '',
   };
   const categories = useQuery({ queryKey: keys.ticketCategories, queryFn: fetchers.ticketCategories });
   const list = useCursorList(keys.tickets(filters), (c) => fetchers.tickets(filters, c), { refetchInterval: 60_000 });
-  // "Open" hides what is finished, on the pages loaded so far.
-  const rows = view === 'open' && !status ? list.rows?.filter((t) => OPEN.has(t.status)) : list.rows;
 
   return (
     <>
@@ -127,7 +127,7 @@ function Queue() {
       <Card flush>
         <QueryState query={list}>
           <DataTable<Ticket>
-            rows={rows}
+            rows={list.rows}
             rowKey={(t) => t.id}
             empty={
               view === 'overdue'

@@ -58,8 +58,7 @@ Because of the BFF, the API needs no `CORS_ORIGINS` for the dashboards.
 
 ## Known limits (API v0)
 
-- A ticket opened for a resident takes its reporter from the unit's occupants, or for a common area from the first 100 residents: household members with a login are not listed anywhere a manager can pick them from.
-- The ticket list filters one status at a time, so the "Open" view hides finished tickets on the pages loaded so far.
+- A ticket opened for a resident in a common area takes its reporter from the first 100 residents (for a unit, the API lists who may report there).
 
 - No count endpoints: overview numbers come from one page of up to 100 rows and show `100+` beyond that.
 - No unit search: the unit picker lists the first 100 units by code.

@@ -11,6 +11,7 @@ import { keys } from '@/lib/queries';
 
 type Engagement = Schema<'EngagementDetailView'>;
 type Payment = Schema<'WagePaymentView'>;
+type ObligationKind = Schema<'WageObligationKind'>;
 
 const amountFormat = new Intl.NumberFormat('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const monthFormat = new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
@@ -37,7 +38,8 @@ export function periodText(period: string): string {
 export function WorkerWages({ engagement }: { engagement: Engagement }) {
   const toast = useToast();
   const { me, can } = usePermissions();
-  const [closing, setClosing] = useState(false);
+  // Which open obligation is being closed: each kind closes alone, with its own reasons.
+  const [closing, setClosing] = useState<ObligationKind | null>(null);
   // The API gives payments and the closing to manager accounts, whatever a staff role holds.
   const isManager = me?.type === 'manager';
   const path = { path: { id: engagement.id } };
@@ -49,13 +51,14 @@ export function WorkerWages({ engagement }: { engagement: Engagement }) {
   );
 
   const settle = useAction(
-    (reasonCode: string) => unwrap(api.POST('/api/v1/worker-engagements/{id}/wage-obligation/settle', { params: path, body: { reasonCode } })),
+    (v: { kind: ObligationKind; reasonCode: string }) =>
+      unwrap(api.POST('/api/v1/worker-engagements/{id}/wage-obligation/settle', { params: path, body: v })),
     {
       // Closing it may unblock the employer's deletion request.
       invalidate: [keys.engagement(engagement.id), keys.erasures],
       onDone: () => {
         toast.show('Wage obligation closed.');
-        setClosing(false);
+        setClosing(null);
       },
     },
   );
@@ -94,7 +97,7 @@ export function WorkerWages({ engagement }: { engagement: Engagement }) {
                   size="sm"
                   onClick={() => {
                     settle.reset();
-                    setClosing(true);
+                    setClosing('settle_before_close');
                   }}
                 >
                   Close wage obligation…
@@ -106,7 +109,25 @@ export function WorkerWages({ engagement }: { engagement: Engagement }) {
       ) : null}
       {open.includes('pay_in_full') ? (
         <Alert tone="warn">
-          The worker is owed their wages in full after an underage report. This obligation cannot be closed from the dashboard, and it keeps the employer&apos;s account from being deleted.
+          <div className="stack stack--sm">
+            <span>
+              The worker is owed their wages in full after an underage report. The employer&apos;s account cannot be deleted until
+              management closes this obligation. Closing the compliance case does not close it.
+            </span>
+            {isManager && can('workers.review') ? (
+              <span>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    settle.reset();
+                    setClosing('pay_in_full');
+                  }}
+                >
+                  Close the wages owed in full…
+                </Button>
+              </span>
+            ) : null}
+          </div>
         </Alert>
       ) : null}
       {isManager ? (
@@ -126,16 +147,24 @@ export function WorkerWages({ engagement }: { engagement: Engagement }) {
         </QueryState>
       ) : null}
       <ReasonCodeDialog
-        open={closing}
-        onClose={() => setClosing(false)}
-        title={`Close the wage obligation of ${engagement.worker.fullName}?`}
-        description="Close it once you know nothing is owed to the worker for this registration. It is recorded with your name and cannot be reopened."
-        codes={REASON_CODES.wageObligationSettle}
+        open={closing !== null}
+        onClose={() => setClosing(null)}
+        title={
+          closing === 'pay_in_full'
+            ? `Close the wages owed in full to ${engagement.worker.fullName}?`
+            : `Close the wage obligation of ${engagement.worker.fullName}?`
+        }
+        description={
+          closing === 'pay_in_full'
+            ? 'Close it once the worker has been paid in full, or the matter is with the authorities. It is recorded with your name and cannot be reopened.'
+            : 'Close it once you know nothing is owed to the worker for this registration. It is recorded with your name and cannot be reopened.'
+        }
+        codes={closing === 'pay_in_full' ? REASON_CODES.wageObligationPayInFull : REASON_CODES.wageObligationSettle}
         codeLabel="How you know"
         confirmLabel="Close obligation"
         pending={settle.isPending}
         error={<ErrorAlert error={settle.error} />}
-        onConfirm={(reasonCode) => settle.mutate(reasonCode)}
+        onConfirm={(reasonCode) => closing && settle.mutate({ kind: closing, reasonCode })}
       />
     </div>
   );

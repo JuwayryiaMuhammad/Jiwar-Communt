@@ -65,6 +65,7 @@ export interface TicketFilters {
   status?: TicketStatus | '';
   priority?: TicketPriority | '';
   unassigned?: 'true' | '';
+  open?: 'true' | '';
   overdue?: 'true' | '';
   escalated?: 'true' | '';
   technicianId?: string;
@@ -100,6 +101,7 @@ export const keys = {
   ticket: (id: string) => ['tickets', 'detail', id] as const,
   ticketPart: (id: string, part: string) => ['tickets', 'detail', id, part] as const,
   technicians: ['technicians'] as const,
+  ticketReporters: (unitId: string) => ['units', 'detail', unitId, 'ticket-reporters'] as const,
   specialties: ['specialties'] as const,
   ticketCategories: ['ticket-categories'] as const,
   categories: ['maintenance-categories'] as const,
@@ -164,6 +166,8 @@ export const fetchers = {
     unwrap(api.GET('/api/v1/maintenance/tickets', { params: { query: { ...(clean(filters) as TicketQuery), cursor, limit } } })),
   ticket: (id: string) => unwrap(api.GET('/api/v1/maintenance/tickets/{id}', { params: { path: { id } } })),
   technicians: () => unwrap(api.GET('/api/v1/maintenance/technicians')),
+  ticketReporters: (unitId: string) =>
+    unwrap(api.GET('/api/v1/maintenance/units/{unitId}/reporters', { params: { path: { unitId } } })),
   specialties: () => unwrap(api.GET('/api/v1/maintenance/specialties')),
   ticketCategories: () => unwrap(api.GET('/api/v1/ticket-categories')),
   categories: () => unwrap(api.GET('/api/v1/maintenance/categories')),

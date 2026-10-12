@@ -25,8 +25,9 @@ const EMPTY = {
 
 /**
  * A ticket opened for a resident who asked in person or by phone. The
- * resident is told and it is audited (ADR 0032). The reporter is one of the
- * unit's occupants; for a common area, a resident of the compound.
+ * resident is told and it is audited (ADR 0032). The reporter is someone the
+ * API accepts there: for a unit, its occupants and the household members who
+ * may open tickets; for a common area, a resident of the compound.
  */
 export function NewTicketDialog({
   open,
@@ -44,9 +45,9 @@ export function NewTicketDialog({
   const set = <K extends keyof typeof EMPTY>(key: K, value: (typeof EMPTY)[K]) => setForm((f) => ({ ...f, [key]: value }));
 
   const categories = useQuery({ queryKey: keys.ticketCategories, queryFn: fetchers.ticketCategories, enabled: open });
-  const unit = useQuery({
-    queryKey: keys.unit(form.unitId),
-    queryFn: () => fetchers.unit(form.unitId),
+  const unitReporters = useQuery({
+    queryKey: keys.ticketReporters(form.unitId),
+    queryFn: () => fetchers.ticketReporters(form.unitId),
     enabled: open && form.place === 'unit' && form.unitId !== '',
   });
   const residents = useQuery({
@@ -59,7 +60,7 @@ export function NewTicketDialog({
   const usable = (categories.data?.data ?? []).filter((c) => form.place === 'unit' || c.commonAreaAllowed);
   const reporters =
     form.place === 'unit'
-      ? (unit.data?.occupants ?? []).filter((o) => !o.account.erased).map((o) => ({ id: o.account.id, name: o.account.fullName ?? 'Resident' }))
+      ? (unitReporters.data?.data ?? []).map((r) => ({ id: r.id, name: r.fullName ?? 'Resident' }))
       : (residents.data?.data ?? []).map((r) => ({ id: r.id, name: r.fullName ?? 'Resident' }));
 
   const reset = () => {
@@ -166,7 +167,11 @@ export function NewTicketDialog({
           label="Reported by"
           hint={
             form.place === 'unit'
-              ? "One of the unit's occupants."
+              ? unitReporters.isError
+                ? 'The people of this unit could not be loaded.'
+                : unitReporters.isSuccess && reporters.length === 0
+                  ? 'Nobody in this unit may open a ticket there.'
+                  : 'The occupants and the household members who may open tickets there.'
               : 'A resident of the compound (the first 100 by the list’s order).'
           }
           error={err('reporterAccountId')}

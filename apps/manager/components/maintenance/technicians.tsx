@@ -88,11 +88,12 @@ export function Technicians() {
   const names = new Map((specialties.data?.data ?? []).map((s) => [s.id, s.nameEn]));
 
   const setAvailability = useAction(
-    (v: { t: Technician; reasonCode: string }) =>
+    // Taking a technician off needs a reason; putting them back takes none.
+    (v: { t: Technician; reasonCode?: string }) =>
       unwrap(
         api.POST('/api/v1/maintenance/technicians/{id}/availability', {
           params: { path: { id: v.t.id } },
-          body: { state: v.t.availability.state === 'available' ? 'unavailable' : 'available', reasonCode: v.reasonCode },
+          body: v.reasonCode ? { state: 'unavailable', reasonCode: v.reasonCode } : { state: 'available' },
         }),
       ),
     {
@@ -103,10 +104,11 @@ export function Technicians() {
       },
     },
   );
-  const goingOff = switching?.availability.state === 'available';
 
   return (
     <>
+      {/* Setting someone available has no dialog: its refusal shows here. */}
+      {switching === null ? <ErrorAlert error={setAvailability.error} /> : null}
       <Card flush>
         <QueryState query={technicians}>
           <DataTable<Technician>
@@ -168,9 +170,21 @@ export function Technicians() {
                     <Button size="sm" onClick={() => setEditing(t)}>
                       Specialties
                     </Button>
-                    <Button size="sm" onClick={() => setSwitching(t)}>
-                      {t.availability.state === 'available' ? 'Set unavailable' : 'Set available'}
-                    </Button>
+                    {t.availability.state === 'available' ? (
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setAvailability.reset();
+                          setSwitching(t);
+                        }}
+                      >
+                        Set unavailable
+                      </Button>
+                    ) : (
+                      <Button size="sm" disabled={setAvailability.isPending} onClick={() => setAvailability.mutate({ t })}>
+                        Set available
+                      </Button>
+                    )}
                   </span>
                 ),
               },
@@ -187,14 +201,10 @@ export function Technicians() {
           setSwitching(null);
           setAvailability.reset();
         }}
-        title={goingOff ? `Set ${switching?.fullName ?? 'this technician'} unavailable?` : `Set ${switching?.fullName ?? 'this technician'} available?`}
-        description={
-          goingOff
-            ? 'Auto-dispatch stops offering them tickets. The tickets they already have stay with them until you reassign them.'
-            : 'Auto-dispatch may offer them tickets again, starting with those waiting in the queue.'
-        }
+        title={`Set ${switching?.fullName ?? 'this technician'} unavailable?`}
+        description="Auto-dispatch stops offering them tickets. The tickets they already have stay with them until you reassign them."
         codes={REASON_CODES.availabilityChange}
-        confirmLabel={goingOff ? 'Set unavailable' : 'Set available'}
+        confirmLabel="Set unavailable"
         pending={setAvailability.isPending}
         error={<ErrorAlert error={setAvailability.error} />}
         onConfirm={(reasonCode) => switching && setAvailability.mutate({ t: switching, reasonCode })}

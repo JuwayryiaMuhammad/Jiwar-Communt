@@ -30,6 +30,7 @@ export const FILES_ROUTES: Row[] = [
               'ticket_photo',
               'parcel_photo',
               'data_export',
+              'request_attachment',
             ],
           },
         },

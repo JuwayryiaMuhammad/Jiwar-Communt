@@ -480,7 +480,8 @@ ALTER TABLE "files" ADD CONSTRAINT "files_content_type_for_purpose"
 
 -- ----------------------------------------------------------------------------
 -- Privileges and RLS. The app deletes only office hours (the set is
--- replaced); messages and ratings take the one UPDATE their triggers allow.
+-- replaced); messages and ratings take the one UPDATE their triggers allow;
+-- the slot rows are locked, never changed.
 -- ----------------------------------------------------------------------------
 REVOKE ALL ON "management_request_topics", "management_request_settings",
   "management_office_hours", "management_request_counters", "management_requests",
@@ -492,7 +493,9 @@ GRANT SELECT, INSERT, UPDATE ON "management_request_topics", "management_request
   "management_request_ratings", "management_appointments" TO jiwar_app;
 GRANT SELECT, INSERT, DELETE ON "management_office_hours" TO jiwar_app;
 GRANT SELECT, INSERT ON "management_request_attachments",
-  "management_request_escalations", "management_appointment_slots" TO jiwar_app;
+  "management_request_escalations" TO jiwar_app;
+-- A slot row is only ever locked (SELECT … FOR UPDATE), which needs UPDATE.
+GRANT SELECT, INSERT, UPDATE ON "management_appointment_slots" TO jiwar_app;
 
 DO $$
 DECLARE

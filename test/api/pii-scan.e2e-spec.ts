@@ -1090,8 +1090,12 @@ describe('API v0 — PII leak scan', () => {
     expect(asStaff('/management/requests/{id}/rating')).toContain(
       'PII-REQUEST-comment',
     );
+    // The family member's list is their own request, and not the primary's.
     expect(seen.get('family /management-requests') ?? '').toContain(
-      'PII-FAMILY-REQUEST-text',
+      '"MR-000002"',
+    );
+    expect(seen.get('family /management-requests') ?? '').not.toContain(
+      mgmtRequest,
     );
 
     // Wages, positively: the plain member reads the home's worker without

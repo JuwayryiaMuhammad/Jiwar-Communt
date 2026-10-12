@@ -140,7 +140,7 @@ describe('Management requests — opening, reading and assigning', () => {
       }
     });
 
-    it('the topic is an active one of the compound; an appointment is not opened by writing', async () => {
+    it('the topic is an active one of the compound; an appointment is not opened without its slot', async () => {
       const retired = await m
         .http('post', '/management/request-topics', s.manager.token, {
           key: 'retired',
@@ -179,14 +179,9 @@ describe('Management requests — opening, reading and assigning', () => {
           body: 'Hello',
         })
         .expect(400);
+      // An appointment names its slot: it is not opened by writing alone.
       expect(res.body).toMatchObject({
-        fields: [
-          {
-            field: 'type',
-            code: 'INVALID_VALUE',
-            params: { allowed: ['question', 'general'] },
-          },
-        ],
+        fields: [{ field: 'appointment', code: 'FIELD_REQUIRED' }],
       });
     });
 

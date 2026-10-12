@@ -396,8 +396,9 @@ describe('Management tables — CHECKs and indexes', () => {
 
   describe('files of a message', () => {
     const file = (contentType: string, purpose: string, size = 100) =>
-      `INSERT INTO files (id, tenant_id, purpose, content_type, size_bytes, status, upload_expires_at)
-       VALUES ('${newId()}', '${tenantId}', '${purpose}', '${contentType}', ${size}, 'pending', now())`;
+      // A pending file is its uploader's (files_owned_or_attached).
+      `INSERT INTO files (id, tenant_id, owner_account_id, purpose, content_type, size_bytes, status, upload_expires_at)
+       VALUES ('${newId()}', '${tenantId}', '${residentId}', '${purpose}', '${contentType}', ${size}, 'pending', now())`;
 
     it('an image or a PDF up to 10 MiB, and no archive', async () => {
       await expect(

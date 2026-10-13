@@ -1,0 +1,325 @@
+/* Mobile first, right-to-left first. Logical properties only, so the same
+   rules serve Arabic and English. System fonts: nothing is fetched. */
+:root {
+  --bg: #f4f6f5;
+  --surface: #fff;
+  --text: #17211e;
+  --muted: #5b6763;
+  --line: #d5dcd9;
+  --brand: #0f5f4a;
+  --brand-text: #fff;
+  --danger: #a4262c;
+  --ok-bg: #e3f3ec;
+  --wait-bg: #fdf1d7;
+  --off-bg: #f6e1e1;
+  --radius: 12px;
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Arabic', 'Noto Naskh Arabic', Tahoma, Arial,
+    sans-serif;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.page {
+  max-inline-size: 30rem;
+  margin-inline: auto;
+  padding: 0.75rem;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: 0.25rem 0.75rem;
+}
+
+.bar__name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.bar__lang {
+  min-block-size: 2.75rem;
+  padding-inline: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.card {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.card__title {
+  margin-block: 0 0.75rem;
+  font-size: 1.35rem;
+  line-height: 1.4;
+}
+
+.card__subtitle {
+  margin-block: 1.25rem 0.5rem;
+  font-size: 1.05rem;
+}
+
+p {
+  margin-block: 0 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.muted,
+.hint {
+  color: var(--muted);
+}
+
+.hint {
+  margin-block: 0.25rem 0;
+  font-size: 0.875rem;
+}
+
+.list {
+  margin-block: 0 1rem;
+  padding-inline-start: 1.25rem;
+}
+
+.field {
+  margin-block-end: 1rem;
+}
+
+.field label,
+.group legend {
+  display: block;
+  margin-block-end: 0.25rem;
+  font-weight: 600;
+}
+
+.input {
+  inline-size: 100%;
+  min-block-size: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #8a9792;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  /* 16px at least: iOS zooms the page on anything smaller. */
+  font-size: 1rem;
+}
+
+.input[dir='ltr'] {
+  text-align: start;
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.input--code {
+  font-size: 1.5rem;
+  letter-spacing: 0.4em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.group {
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.group legend {
+  padding-inline: 0.25rem;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-block-size: 2.75rem;
+  margin-block-end: 1rem;
+}
+
+.check input {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+}
+
+.button {
+  display: block;
+  inline-size: 100%;
+  min-block-size: 3rem;
+  margin-block-start: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--brand);
+  border-radius: var(--radius);
+  background: var(--brand);
+  color: var(--brand-text);
+  font: inherit;
+  font-weight: 600;
+}
+
+.button--danger {
+  border-color: var(--danger);
+  background: var(--danger);
+}
+
+.button--quiet {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 400;
+}
+
+.button:disabled {
+  opacity: 0.55;
+}
+
+.link {
+  min-block-size: 2.75rem;
+  margin-block-start: 0.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--danger);
+  font: inherit;
+  text-decoration: underline;
+}
+
+a {
+  color: var(--brand);
+}
+
+:focus-visible {
+  outline: 3px solid #1a73e8;
+  outline-offset: 2px;
+}
+
+.note {
+  margin-block: 0.25rem 0.5rem;
+  font-size: 0.925rem;
+}
+
+.note--error {
+  color: var(--danger);
+}
+
+.state {
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.state--ok {
+  background: var(--ok-bg);
+}
+
+.state--wait {
+  background: var(--wait-bg);
+}
+
+.state--off {
+  background: var(--off-bg);
+}
+
+.qr {
+  display: block;
+  inline-size: min(100%, 17rem);
+  block-size: auto;
+  margin-inline: auto;
+}
+
+.gate-code {
+  display: grid;
+  justify-items: center;
+  margin-block: 0.75rem 1rem;
+  text-align: center;
+}
+
+.gate-code__label {
+  font-weight: 600;
+}
+
+.gate-code__digits {
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  font-variant-numeric: tabular-nums;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0 0 0.5rem;
+}
+
+.facts dt {
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+
+.window {
+  display: block;
+  unicode-bidi: isolate;
+}
+
+.directions {
+  white-space: pre-wrap;
+}
+
+.confirm {
+  margin-block-start: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.confirm .card__subtitle {
+  margin-block-start: 0;
+}
+
+.stores {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.store {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-block-size: 3rem;
+  padding-inline: 1rem;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+}

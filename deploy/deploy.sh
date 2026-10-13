@@ -9,8 +9,9 @@
 #   ssh jiwar-deploy@host "status"
 #
 # The README's deploy order: migrate, access:sync, and only then the server.
-# A release is three images under one SHA: the API (`<sha>`) and the two
-# dashboards (`<sha>-admin`, `<sha>-manager`).
+# A release is four images under one SHA: the API (`<sha>`), the two
+# dashboards (`<sha>-admin`, `<sha>-manager`) and the public web pages
+# (`<sha>-public`).
 set -Eeuo pipefail
 
 APP_DIR=/srv/jiwar-community
@@ -39,7 +40,7 @@ use_release() {
 # The token lives for this call only, in a throwaway config directory.
 pull() {
   local image token cfg rc=0 missing=()
-  for image in "$IMAGE_REPO:$1" "$IMAGE_REPO:$1-admin" "$IMAGE_REPO:$1-manager"; do
+  for image in "$IMAGE_REPO:$1" "$IMAGE_REPO:$1-admin" "$IMAGE_REPO:$1-manager" "$IMAGE_REPO:$1-public"; do
     docker image inspect "$image" >/dev/null 2>&1 || missing+=("$image")
   done
   ((${#missing[@]})) || return 0
@@ -57,11 +58,11 @@ pull() {
   return "$rc"
 }
 
-# The app and the dashboards this release's compose.yml has: a release from
-# before the dashboards shipped has none, and rolls back as the app alone.
+# The app and the web apps this release's compose.yml has: a release from
+# before one of them shipped does not have it, and rolls back without it.
 servers() {
   echo app
-  compose config --services | grep -x -e admin -e manager || true
+  compose config --services | grep -x -e admin -e manager -e public || true
 }
 
 start() {
@@ -89,6 +90,7 @@ prune() {
   for tag in $(docker image ls "$IMAGE_REPO" --format '{{.Tag}}'); do
     sha=${tag%-admin}
     sha=${sha%-manager}
+    sha=${sha%-public}
     [[ "$sha" == "$keep_a" || "$sha" == "$keep_b" ]] && continue
     docker image rm "$IMAGE_REPO:$tag" >/dev/null || true
   done

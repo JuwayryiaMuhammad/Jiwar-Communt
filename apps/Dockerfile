@@ -1,4 +1,5 @@
-# One image per dashboard: docker build -f apps/Dockerfile --build-arg APP=admin .
+# One image per app (admin, manager, public):
+#   docker build -f apps/Dockerfile --build-arg APP=admin .
 # The context is the repo root (pnpm workspace); only the chosen app and the
 # shared packages are installed and built. Next.js `standalone` output keeps
 # the runtime image to the traced files.
@@ -14,6 +15,7 @@ ARG APP
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/admin/package.json apps/admin/
 COPY apps/manager/package.json apps/manager/
+COPY apps/public/package.json apps/public/
 COPY packages/api/package.json packages/api/
 COPY packages/bff/package.json packages/bff/
 COPY packages/ui/package.json packages/ui/

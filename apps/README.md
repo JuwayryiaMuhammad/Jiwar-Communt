@@ -12,7 +12,8 @@ Both follow the design system in `docs/decisions/DESIGN.md`. The tokens live in 
 ```
 apps/admin        super admin: compounds, managers, security events, platform audit, account
 apps/manager      manager: overview, requests, units, residents, workers, maintenance, gate, parcels, staff, accounts, roles, settings, maintenance setup, deletion requests, audit, notifications, own account
-apps/Dockerfile   one image per app (--build-arg APP=admin|manager), Next.js standalone output
+apps/public       the public web pages the API's links open (port 3003); not a dashboard, see apps/public/README.md
+apps/Dockerfile   one image per app (--build-arg APP=admin|manager|public), Next.js standalone output
 packages/ui       design tokens + components (shell, cards, tables, dialogs, forms, toasts)
 packages/api      types generated from docs/api/openapi.v0.json, typed client, error texts, React data hooks
 packages/bff      server-only: cookie session, /bff proxy, single-flight token refresh, CSRF guard

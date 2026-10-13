@@ -31,9 +31,10 @@
     "postman:export": "ts-node --transpile-only src/postman.cli.ts",
     "dev:admin": "pnpm --filter @jiwar/admin dev",
     "dev:manager": "pnpm --filter @jiwar/manager dev",
+    "dev:public": "pnpm --filter @jiwar/public dev",
     "dashboards:typecheck": "pnpm --filter \"./apps/*\" --filter \"./packages/*\" run typecheck",
     "dashboards:build": "pnpm --filter \"./apps/*\" run build",
-    "dashboards:test": "pnpm --filter @jiwar/bff --filter @jiwar/manager test",
+    "dashboards:test": "pnpm --filter @jiwar/bff --filter @jiwar/manager --filter @jiwar/public test",
     "api:generate": "pnpm --filter @jiwar/api generate"
   },
   "dependencies": {

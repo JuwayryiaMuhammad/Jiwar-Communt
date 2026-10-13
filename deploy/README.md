@@ -7,18 +7,18 @@ none of them: its own containers, nothing listening outside 127.0.0.1.
 ## Flow
 
 1. A push to `main` runs CI (`.github/workflows/ci.yml`).
-2. When CI passes, `.github/workflows/deploy.yml` builds three images and
+2. When CI passes, `.github/workflows/deploy.yml` builds four images and
    pushes them to `ghcr.io/juwayryiamuhammad/jiwar-communt`: the API as
    `<sha>`, the dashboards (`apps/Dockerfile`) as `<sha>-admin` and
-   `<sha>-manager`. It can also be run by hand (Actions → Deploy → Run
+   `<sha>-manager`, the public web pages as `<sha>-public`. It can also be run by hand (Actions → Deploy → Run
    workflow), on `main` only.
 3. It connects as `jiwar-deploy` and runs `deploy <sha>`, the job's token on
    stdin. That key is bound to `/usr/local/bin/jiwar-community-deploy`
    (`deploy/deploy.sh`) with `command=…,restrict`: no shell, no forwarding.
 4. The script pulls the images, takes `compose.yml` from the API's, then
    runs the README's deploy order: `prisma migrate deploy` as
-   `jiwar_migrator`, `access:sync`, the bucket, and only then the app and
-   both dashboards, waiting for their health checks. If one is not healthy,
+   `jiwar_migrator`, `access:sync`, the bucket, and only then the app, both
+   dashboards and the public web pages, waiting for their health checks. If one is not healthy,
    the previous release goes back up. Migrations are not undone.
 
 ## Dashboards
@@ -103,6 +103,85 @@ ssh root@191.218.163.45 'docker rm -f jiwar-community-admin-1 jiwar-community-ma
 Rolling back to a release from before this change brings back that API and
 leaves the dashboards as they are: that release has none of its own.
 
+## Public web pages
+
+`public` (`apps/public`) is a fourth service of the same stack: the pages the
+API's links open (`/v`, `/a/not-me`, `/a/export`, and `/i`, `/r`). It ships,
+rolls back and is pruned with the API.
+
+| Service | Container | Listens on | Image | Environment |
+|---|---|---|---|---|
+| `public` | `jiwar-community-public-1` | `127.0.0.1:3003` | `<sha>-public` | `PORT=3003`, `JIWAR_API_URL=http://app:3100` |
+
+No env file, no secret, no cookie. Health check: `/` answers. 256 MB.
+
+### What the server needs, by hand
+
+Nothing in this repository installs any of it, and none of it touches the
+existing server blocks.
+
+1. **nginx:** a new server block for `community.escanestate.com` (TLS by
+   certbot, like the dashboards') with the upstream `http://127.0.0.1:3003`.
+   It must pass `Host $host` (the proxy under `/api` compares a request's
+   `Origin` with it) and the client address:
+
+   ```nginx
+   proxy_set_header Host $host;
+   proxy_set_header X-Forwarded-For $remote_addr;   # overwritten, as in deploy/nginx.conf
+   proxy_set_header X-Forwarded-Proto $scheme;
+   ```
+
+2. **`app.env`:** `PUBLIC_APP_URL=https://community.escanestate.com`, and
+   `TRUST_PROXY=1` (already what `deploy/nginx.conf` assumes). A changed
+   `app.env` takes effect when the app container is recreated; the next
+   deploy does that.
+3. **The deploy script:** install the new `deploy/deploy.sh` as in
+   "Putting this change on the server" above (the same two commands). With the old script a deploy
+   releases the API and the dashboards and simply does not start `public`;
+   with the new script, do not deploy a commit from before this change (it
+   would look for a `-public` image that was never built and stop before
+   touching anything).
+
+Check afterwards: `status` lists `public` as healthy, and
+`curl -sI https://community.escanestate.com/ | head -1` answers 200.
+
+### The client address, and why `TRUST_PROXY=1` is safe
+
+The API's per-IP limits (20 per 15 minutes on the code and not-me routes, 60
+per minute on the visitor page) count `req.ip`. With `TRUST_PROXY=1` the API
+believes exactly one hop: the address its direct peer wrote last in
+`X-Forwarded-For`. There are two paths to the API, and in each the API trusts
+one hop, its peer:
+
+| Path | The API's peer | `X-Forwarded-For` the API reads | Hops trusted |
+|---|---|---|---|
+| nginx → API (`deploy/nginx.conf`, port 80) | nginx | `$remote_addr`, overwritten by nginx | 1 (nginx) |
+| nginx → `public` → API | `public` | one address: the right-most entry of what nginx sent `public` | 1 (`public`), which itself believed 1 (nginx) |
+
+`public` never passes a chain on: whatever the browser put in
+`X-Forwarded-For` is dropped and only the entry nginx wrote last goes to the
+API (`apps/public/lib/proxy-rules.ts`, with a test), so appending
+(`$proxy_add_x_forwarded_for`) in the block above would be safe too.
+
+**This holds only because every path to the API goes through nginx or
+through `public`.** `compose.yml` publishes the API on `127.0.0.1:3100` and
+`public` on `127.0.0.1:3003`, never on `0.0.0.0`: a client that could reach
+either port directly could write its own `X-Forwarded-For` and pick the
+address the limits count, a fresh one per request. Keep both bindings on
+localhost, and never raise `TRUST_PROXY` above 1 for this layout. The
+dashboards send no `X-Forwarded-For`, so their calls count as the dashboard
+container's address, as before.
+
+### Known limit on staging: file downloads
+
+The export page (`/a/export`) ends by opening the presigned URL the API
+returns. Staging's storage is MinIO over plain HTTP
+(`S3_ENDPOINT=http://191.218.163.45`), and a browser on an HTTPS page blocks
+that download as mixed content. The page cannot see the block; it tells the
+person that the file service may be unavailable and to try later. This
+clears when storage moves to HTTPS (R2, below). Registration has no file
+upload: the API has no upload path for a registrant yet (ADR 0024).
+
 ## Server layout
 
 | Path | Contents |
@@ -114,10 +193,11 @@ leaves the dashboards as they are: that release has none of its own.
 | `/srv/jiwar-community/current`, `previous` | Deployed SHAs |
 | `/etc/nginx/sites-available/jiwar-community` | `deploy/nginx.conf`: default server on port 80, `/jiwar/` to MinIO |
 
-`app.env` must set `PUBLIC_APP_URL` (ADR 0030): visitor links are built from
-it and the app refuses to boot without it. The image runs with
-`NODE_ENV=production`, so it must be `https://`, the web app's address (a
-placeholder until the web app exists; this API host itself is plain HTTP).
+`app.env` must set `PUBLIC_APP_URL` (ADR 0030, ADR 0036): visitor and email
+links are built from it and the app refuses to boot without it. The image
+runs with `NODE_ENV=production`, so it must be `https://`: the address of the
+public web pages, `https://community.escanestate.com` (Public web pages,
+above).
 
 `app.env` must set `ENTRY_CREDENTIAL_KEY` (ADR 0031; the app refuses to boot
 without it): the key every resident's entry secret is derived from. Generate
@@ -157,7 +237,7 @@ presigned URLs are signed for), `S3_REGION=us-east-1`, `S3_BUCKET=jiwar`,
 
 `deploy.sh` and `nginx.conf` are installed by hand: a change to either is
 copied to the server, it does not ship with the image. The dashboards' HTTPS
-server blocks are not in `nginx.conf` at all (Dashboards, above).
+server blocks, and the public web pages', are not in `nginx.conf` at all.
 
 ## Production object storage: Cloudflare R2
 

@@ -126,3 +126,5 @@ jobs:
         run: pnpm --filter @jiwar/admin build
       - name: Build the manager dashboard
         run: pnpm --filter @jiwar/manager build
+      - name: Build the public web pages
+        run: pnpm --filter @jiwar/public build

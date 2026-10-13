@@ -49,11 +49,11 @@ Stack: Node ≥ 22, pnpm, NestJS 11, Prisma 7 (`@prisma/adapter-pg`), PostgreSQL
 
 ## Run everything in Docker
 
-The repo is a pnpm workspace: the backend at the root, the two dashboards in `apps/`, their shared code in `packages/` (see [apps/README.md](apps/README.md)).
+The repo is a pnpm workspace: the backend at the root, the two dashboards and the public web pages in `apps/`, their shared code in `packages/` (see [apps/README.md](apps/README.md)).
 
 ```bash
 cp .env.example .env          # once; the containers read it after .env.example
-docker compose up -d --build  # infrastructure, migrations + access:sync, API, both dashboards
+docker compose up -d --build  # infrastructure, migrations + access:sync, API, dashboards, public pages
 ```
 
 | Service | URL |
@@ -61,6 +61,7 @@ docker compose up -d --build  # infrastructure, migrations + access:sync, API, b
 | API | http://localhost:3100/api/v1 (Swagger on `/docs`) |
 | Super admin dashboard | http://localhost:3001 |
 | Manager dashboard | http://localhost:3002 |
+| Public web pages (link pages) | http://localhost:3003 |
 | Mailpit (emails, OTP codes) | http://localhost:8025 |
 | MinIO console | http://localhost:9006 |
 

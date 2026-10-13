@@ -137,6 +137,7 @@ export const en: Record<MessageKey, string> = {
   'error.VISITOR_PASS_NOT_FOUND': 'This pass does not exist or is no longer available.',
   'error.ACTION_TOKEN_INVALID': 'This link is not valid any more.',
   'error.STEP_UP_CODE_INVALID': 'The code is wrong or has expired. Ask for a new one.',
+  'error.STORAGE_UNAVAILABLE': 'The file service is unavailable right now. Try again later.',
   'error.OTP_INVALID': 'The code is wrong or has expired, or the link is no longer valid. Ask for a new code.',
 
   'field.generic': 'This value is not valid.',

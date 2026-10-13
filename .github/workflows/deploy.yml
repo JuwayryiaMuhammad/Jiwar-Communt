@@ -1,8 +1,8 @@
 # Continuous deployment to the staging server (deploy/README.md). Runs after
 # CI passes on a push to main, or by hand on main. The images are built here,
 # never on the server, and pushed to GHCR under the commit SHA: the API as
-# `<sha>`, the dashboards as `<sha>-admin` and `<sha>-manager` in the same
-# package, so one release is one SHA. The server's key can run the deploy
+# `<sha>`, the dashboards as `<sha>-admin` and `<sha>-manager` and the public
+# web pages as `<sha>-public` in the same package, so one release is one SHA. The server's key can run the deploy
 # script and nothing else.
 #
 # Repository settings: secret DEPLOY_SSH_KEY (private key of jiwar-deploy),
@@ -96,6 +96,20 @@ jobs:
             org.opencontainers.image.revision=${{ env.SHA }}
           cache-from: type=gha,scope=manager
           cache-to: type=gha,mode=max,scope=manager
+
+      - name: Public web pages image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/Dockerfile
+          build-args: APP=public
+          push: true
+          tags: ${{ env.IMAGE }}:${{ env.SHA }}-public
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ env.SHA }}
+          cache-from: type=gha,scope=public
+          cache-to: type=gha,mode=max,scope=public
 
       # The job token goes to the server on stdin and expires with this job.
       - name: Deploy

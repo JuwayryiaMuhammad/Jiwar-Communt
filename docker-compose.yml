@@ -181,6 +181,25 @@ services:
       api:
         condition: service_healthy
 
+  # Public web pages on http://localhost:3003 (apps/public): the visitor
+  # pass, email action, invite and registration links (PUBLIC_APP_URL).
+  public:
+    build:
+      context: .
+      dockerfile: apps/Dockerfile
+      args:
+        APP: public
+    image: jiwar-community-public:dev
+    container_name: jiwar-community-public
+    environment:
+      PORT: '3003'
+      JIWAR_API_URL: http://api:3100
+    ports:
+      - '127.0.0.1:3003:3003'
+    depends_on:
+      api:
+        condition: service_healthy
+
 volumes:
   postgres-data:
   minio-data:

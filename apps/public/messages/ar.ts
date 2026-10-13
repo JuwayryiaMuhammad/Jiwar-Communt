@@ -136,6 +136,7 @@ export const ar = {
   'error.VISITOR_PASS_NOT_FOUND': 'هذا التصريح غير موجود أو لم يعد متاحًا.',
   'error.ACTION_TOKEN_INVALID': 'هذا الرابط لم يعد صالحًا.',
   'error.STEP_UP_CODE_INVALID': 'الرمز غير صحيح أو انتهت صلاحيته. اطلب رمزًا جديدًا.',
+  'error.STORAGE_UNAVAILABLE': 'خدمة الملفات غير متاحة حاليًا. حاول مرة أخرى لاحقًا.',
   'error.OTP_INVALID': 'الرمز غير صحيح أو انتهت صلاحيته، أو أن الرابط لم يعد صالحًا. اطلب رمزًا جديدًا.',
 
   'field.generic': 'قيمة غير صحيحة.',

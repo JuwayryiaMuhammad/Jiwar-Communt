@@ -43,3 +43,4 @@
 | [0039](0039-management-requests.md) | Talking to management: requests and their conversation, cycles and escalation, appointments with slot capacity, ratings, and one list of everything a resident asked for | Accepted |
 | [0040](0040-community-engagement.md) | Community life: announcements with audiences read at read time, works and closures, events with a capacity that holds, consultative polls with a ballot secret against the database, suggestions and their public board, the daily brief | Accepted |
 | [0041](0041-push-notifications.md) | Push notifications: device tokens, the push outbox, FCM | Accepted |
+| [0042](0042-neighbours.md) | Neighbours: complaints against a unit with three private threads and one notice to the unit, lost and found with claims and the handover, the lending board, masked contact with blocks and reported cases, and the welcome | Accepted |

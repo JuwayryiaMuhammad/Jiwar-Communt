@@ -705,6 +705,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'نشرت الإدارة إعلاناً مهماً. افتح التطبيق لقراءته.',
     },
   },
+  'community_event.cancelled': {
+    en: {
+      title: 'Event cancelled',
+      body: 'An event you said you are going to was cancelled. Open the app for details.',
+    },
+    ar: {
+      title: 'تم إلغاء فعالية',
+      body: 'أُلغيت فعالية كنت قد أكدت حضورها. افتح التطبيق للتفاصيل.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

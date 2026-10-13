@@ -154,4 +154,8 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   announcement_versions_announcement_version_key: null,
   // A file is claimed under its row lock before it is attached.
   announcement_attachments_file_id_key: null,
+  community_events_tenant_id_id_key: null,
+  event_attachments_file_id_key: null,
+  // Written under the event's lock, one answer per account: a race.
+  event_rsvps_one_per_account: null,
 };

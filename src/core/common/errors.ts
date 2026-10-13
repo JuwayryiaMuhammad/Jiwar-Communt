@@ -276,6 +276,12 @@ export const ErrorCode = {
   ANNOUNCEMENT_NOT_FOUND: 'ANNOUNCEMENT_NOT_FOUND',
   /** Its state does not take the action (409, params.status). */
   ANNOUNCEMENT_INVALID_STATE: 'ANNOUNCEMENT_INVALID_STATE',
+  /** Unknown, another compound's, or not put to the caller: one answer. */
+  COMMUNITY_EVENT_NOT_FOUND: 'COMMUNITY_EVENT_NOT_FOUND',
+  /** Its state does not take the action (409, params.status). */
+  COMMUNITY_EVENT_INVALID_STATE: 'COMMUNITY_EVENT_INVALID_STATE',
+  /** No room for this answer and its guests (409, params.remaining). */
+  COMMUNITY_EVENT_FULL: 'COMMUNITY_EVENT_FULL',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

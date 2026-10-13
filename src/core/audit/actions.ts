@@ -394,6 +394,35 @@ export const AUDIT_ACTIONS = {
   // Its audience was told (important ones; the publisher's action, or the
   // sweep's as actor system). metadata: recipients, a count.
   'announcement.announced': { log: 'tenant', target: 'announcement' },
+  // Events. changes: startsAt, endsAt, capacity, audienceOccupancy,
+  // audienceBuildings, attachments (a count) by value; the words and the
+  // place as `{ changed: true }`.
+  'community_event.created': {
+    log: 'tenant',
+    target: 'community_event',
+    sensitive: [
+      'titleEn',
+      'descriptionEn',
+      'titleAr',
+      'descriptionAr',
+      'place',
+    ],
+  },
+  'community_event.changed': {
+    log: 'tenant',
+    target: 'community_event',
+    sensitive: [
+      'titleEn',
+      'descriptionEn',
+      'titleAr',
+      'descriptionAr',
+      'place',
+    ],
+  },
+  // metadata: reasonCode, fromStatus, told (how many were going and told).
+  'community_event.cancelled': { log: 'tenant', target: 'community_event' },
+  // The actor's own answer. metadata: response, guests, unitId, from.
+  'community_event.rsvp_changed': { log: 'tenant', target: 'community_event' },
   'suggestion_topic.created': {
     log: 'tenant',
     target: 'suggestion_topic',

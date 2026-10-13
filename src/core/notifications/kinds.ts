@@ -695,6 +695,14 @@ export const NOTIFICATION_KINDS = {
     target: 'community_announcement',
     params: {},
   },
+  /** An event the account said it is going to was cancelled. */
+  'community_event.cancelled': {
+    priority: 'normal',
+    category: 'community',
+    critical: false,
+    target: 'community_event',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

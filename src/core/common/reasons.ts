@@ -274,4 +274,12 @@ export const REASON_CODES = {
     'account_erased',
     'role_lost',
   ],
+  // Community life (ADR 0040). Why the staff cancel an event.
+  communityEventCancel: [
+    'weather',
+    'low_attendance',
+    'venue_unavailable',
+    'organizer_unavailable',
+    'other',
+  ],
 } as const;

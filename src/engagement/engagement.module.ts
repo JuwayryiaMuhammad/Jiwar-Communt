@@ -12,6 +12,11 @@ import { AudienceCheck } from './audience/audience-check';
 import { AudienceController } from './audience/audience.controller';
 import { CommunityAttachments } from './content/attachments';
 import { EngagementProvisioning } from './provisioning';
+import {
+  EventsController,
+  StaffEventsController,
+} from './events/events.controller';
+import { EventsService } from './events/events.service';
 import { OpaqueRefs } from './refs/opaque-refs';
 import { EngagementSettingsController } from './settings/engagement-settings.controller';
 import { EngagementSettingsService } from './settings/engagement-settings.service';
@@ -36,6 +41,8 @@ import { SuggestionTopicsService } from './topics/topics.service';
     AudienceController,
     StaffAnnouncementsController,
     AnnouncementsController,
+    StaffEventsController,
+    EventsController,
   ],
   providers: [
     EngagementProvisioning,
@@ -46,6 +53,7 @@ import { SuggestionTopicsService } from './topics/topics.service';
     EngagementSettingsService,
     SuggestionTopicsService,
     AnnouncementsService,
+    EventsService,
   ],
 })
 export class EngagementModule {}

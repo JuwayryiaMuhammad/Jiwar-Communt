@@ -50,6 +50,8 @@ export const REASON_CODES = {
   managementRequestOnBehalf: ['resident_phone_call', 'resident_walk_in', 'resident_written_letter'],
   managementRequestClose: ['resolved', 'duplicate', 'not_for_management', 'other'],
   managementAppointmentCancelByStaff: ['staff_unavailable', 'office_closed', 'other'],
+  // Community life (ADR 0040): codes only, never text.
+  communityEventCancel: ['weather', 'low_attendance', 'venue_unavailable', 'organizer_unavailable', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

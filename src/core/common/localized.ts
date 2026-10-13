@@ -1,9 +1,4 @@
-import {
-  appError,
-  ErrorCode,
-  FieldErrorCode,
-  type FieldError,
-} from '../../core/common/errors';
+import { appError, ErrorCode, FieldErrorCode, type FieldError } from './errors';
 
 /** One text the staff write in both languages, e.g. `title` → titleEn, titleAr. */
 export interface TextField {

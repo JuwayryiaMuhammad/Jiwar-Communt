@@ -28,7 +28,7 @@ import {
   sees,
 } from '../audience/audience';
 import { AudienceCheck } from '../audience/audience-check';
-import { invalid, localized } from '../content/localized';
+import { invalid, localized } from '../../core/common/localized';
 import { dbNow } from '../db-clock';
 import { OpaqueRefs } from '../refs/opaque-refs';
 import {

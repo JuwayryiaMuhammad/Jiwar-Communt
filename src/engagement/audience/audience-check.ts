@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CommunityEngagementPort, type Audience } from '../../community';
 import { FieldErrorCode } from '../../core/common/errors';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
-import { invalid } from '../content/localized';
+import { invalid } from '../../core/common/localized';
 import { EVERYONE } from './audience';
 
 /**

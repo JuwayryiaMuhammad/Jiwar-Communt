@@ -24,7 +24,7 @@ import {
   CommunityAttachments,
   type AttachmentRead,
 } from '../content/attachments';
-import { invalid, localized } from '../content/localized';
+import { invalid, localized } from '../../core/common/localized';
 import { dbNow } from '../db-clock';
 import {
   canMove,

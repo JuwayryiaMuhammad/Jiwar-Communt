@@ -3,7 +3,7 @@ import type { StoredFile } from '@prisma/client';
 import { FieldErrorCode } from '../../core/common/errors';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { FilesService } from '../../core/files/files.service';
-import { invalid } from './localized';
+import { invalid } from '../../core/common/localized';
 
 /** An announcement, an event or a "we did" note shows this many files at most. */
 export const MAX_ATTACHMENTS = 5;

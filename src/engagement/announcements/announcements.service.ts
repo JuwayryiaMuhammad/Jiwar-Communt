@@ -46,7 +46,7 @@ import {
   namesText,
   sameText,
   type Localized,
-} from '../content/localized';
+} from '../../core/common/localized';
 import { dbNow } from '../db-clock';
 import { OpaqueRefs, sameRef } from '../refs/opaque-refs';
 import {

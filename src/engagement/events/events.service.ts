@@ -37,7 +37,7 @@ import {
   localized,
   namesText,
   type Localized,
-} from '../content/localized';
+} from '../../core/common/localized';
 import { dbNow } from '../db-clock';
 import { EngagementSettingsService } from '../settings/engagement-settings.service';
 import {

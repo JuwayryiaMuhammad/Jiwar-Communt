@@ -1,4 +1,4 @@
-import { AppException, type AppErrorBody } from '../../core/common/errors';
+import { AppException, type AppErrorBody } from './errors';
 import { localized, namesText, sameText } from './localized';
 
 const FIELDS = [

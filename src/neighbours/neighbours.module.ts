@@ -34,6 +34,8 @@ import {
 import { ConversationsService } from './conversations/conversations.service';
 import { ReportsService } from './conversations/reports.service';
 import { StaffReportsController } from './conversations/staff-reports.controller';
+import { NeighboursExportSections } from './export/export-sections';
+import { NeighboursLifecycle } from './privacy/neighbours-lifecycle';
 import { NeighboursProvisioning } from './provisioning';
 import {
   WelcomeController,
@@ -89,6 +91,8 @@ import { NeighbourSettingsService } from './settings/neighbour-settings.service'
     ReportsService,
     WelcomeTemplateService,
     WelcomeService,
+    NeighboursLifecycle,
+    NeighboursExportSections,
   ],
 })
 export class NeighboursModule {}

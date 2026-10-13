@@ -694,6 +694,17 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'ألغى الساكن الموعد الخاص بالطلب رقم {requestNumber}.',
     },
   },
+  // Community life (ADR 0040): what happened, never a word anyone wrote.
+  'community_announcement.important': {
+    en: {
+      title: 'Important announcement',
+      body: 'The management published an important announcement. Open the app to read it.',
+    },
+    ar: {
+      title: 'إعلان مهم',
+      body: 'نشرت الإدارة إعلاناً مهماً. افتح التطبيق لقراءته.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

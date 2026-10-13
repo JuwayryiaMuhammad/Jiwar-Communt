@@ -497,6 +497,7 @@ model Tenant {
   managementSlots    ManagementAppointmentSlot[]
   engagementSettings EngagementSettings?
   suggestionTopics   SuggestionTopic[]
+  announcements      Announcement[]
   specialties       Specialty[]
   dispatchSettings  MaintenanceDispatchSettings?
   slaSettings       MaintenanceSlaSettings?
@@ -884,6 +885,9 @@ model Account {
   managementMessages         ManagementRequestMessage[]    @relation("ManagementMessageSender")
   managementAttachments      ManagementRequestAttachment[] @relation("ManagementAttachmentUploader")
   managementRatings          ManagementRequestRating[]     @relation("ManagementRatingAuthor")
+  announcementsCreated       Announcement[]                @relation("AnnouncementCreator")
+  announcementVersions       AnnouncementVersion[]         @relation("AnnouncementVersionEditor")
+  announcementAttachments    AnnouncementAttachment[]      @relation("AnnouncementAttachmentUploader")
   managementAppointments     ManagementAppointment[]       @relation("ManagementAppointmentProposer")
 
   @@unique([tenantId, type, email])
@@ -1793,6 +1797,7 @@ model Gate {
 
   shifts   GuardShift[]
   requests GateApprovalRequest[]
+  works    Announcement[]
 
   @@unique([tenantId, name])
   @@unique([tenantId, id])
@@ -2008,6 +2013,7 @@ model StoredFile {
   parcelPhotos         Parcel[]           @relation("ParcelPhoto")
   parcelHandoverPhotos Parcel[]           @relation("ParcelHandoverPhoto")
   managementAttachments ManagementRequestAttachment[] @relation("ManagementAttachmentFile")
+  announcementAttachments AnnouncementAttachment[] @relation("AnnouncementAttachmentFile")
   owner    Account?           @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([tenantId, id])
@@ -3335,4 +3341,140 @@ model SuggestionTopic {
   @@unique([tenantId, id])
   @@unique([tenantId, key])
   @@map("suggestion_topics")
+}
+
+/// Which capacities a piece of community content is put to (ADR 0040).
+enum AudienceOccupancy {
+  everyone
+  owners
+  tenants
+
+  @@map("audience_occupancy")
+}
+
+enum AnnouncementKind {
+  general
+  /// Works and closures: dated, with the area they affect.
+  works
+
+  @@map("announcement_kind")
+}
+
+enum AnnouncementPriority {
+  normal
+  important
+
+  @@map("announcement_priority")
+}
+
+enum WorksAreaKind {
+  road
+  facility
+  gate
+
+  @@map("works_area_kind")
+}
+
+enum ReadMarkKind {
+  account
+  unit
+
+  @@map("read_mark_kind")
+}
+
+/// An announcement (ADR 0040). Never deleted: archived. Draft while
+/// `publishAt` is null, scheduled while it is ahead. Its audience is a rule
+/// read against today's residents; `audienceBuildings` empty is the whole
+/// compound. What it says is its current version's.
+model Announcement {
+  id                String               @id @db.Uuid
+  tenantId          String               @map("tenant_id") @db.Uuid
+  kind              AnnouncementKind
+  priority          AnnouncementPriority @default(normal)
+  /// Only an important announcement is pinned (CHECK).
+  pinnedUntil       DateTime?            @map("pinned_until") @db.Timestamptz(3)
+  publishAt         DateTime?            @map("publish_at") @db.Timestamptz(3)
+  /// A general announcement's; works end by their own dates.
+  expiresAt         DateTime?            @map("expires_at") @db.Timestamptz(3)
+  archivedAt        DateTime?            @map("archived_at") @db.Timestamptz(3)
+  audienceBuildings String[]             @default([]) @map("audience_buildings")
+  audienceOccupancy AudienceOccupancy    @default(everyone) @map("audience_occupancy")
+  currentVersion    Int                  @default(1) @map("current_version")
+  /// The last edit made after it was out: what "edited" shows.
+  editedAt          DateTime?            @map("edited_at") @db.Timestamptz(3)
+  /// When its audience was told (important ones only).
+  notifiedAt        DateTime?            @map("notified_at") @db.Timestamptz(3)
+  worksStartsAt     DateTime?            @map("works_starts_at") @db.Timestamptz(3)
+  worksEndsAt       DateTime?            @map("works_ends_at") @db.Timestamptz(3)
+  worksAreaKind     WorksAreaKind?       @map("works_area_kind")
+  worksGateId       String?              @map("works_gate_id") @db.Uuid
+  worksPlace        String?              @map("works_place")
+  createdById       String               @map("created_by_account_id") @db.Uuid
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant      Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  createdBy   Account                  @relation("AnnouncementCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "announcements_tenant_id_created_by_fkey")
+  worksGate   Gate?                    @relation(fields: [tenantId, worksGateId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  versions    AnnouncementVersion[]
+  attachments AnnouncementAttachment[]
+  readMarks   AnnouncementReadMark[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, publishAt, id], map: "announcements_feed_idx")
+  @@index([tenantId, createdAt, id], map: "announcements_created_idx")
+  @@map("announcements")
+}
+
+/// What an announcement said, version by version. Append-only.
+model AnnouncementVersion {
+  id             String   @id @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  announcementId String   @map("announcement_id") @db.Uuid
+  version        Int
+  titleEn        String?  @map("title_en")
+  bodyEn         String?  @map("body_en")
+  titleAr        String?  @map("title_ar")
+  bodyAr         String?  @map("body_ar")
+  /// The attachments this version shows (announcement_attachments ids).
+  attachmentIds  String[] @default([]) @map("attachment_ids") @db.Uuid
+  editedById     String   @map("edited_by_account_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  announcement Announcement @relation(fields: [tenantId, announcementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  editedBy     Account      @relation("AnnouncementVersionEditor", fields: [tenantId, editedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "announcement_versions_tenant_id_edited_by_fkey")
+
+  @@unique([tenantId, announcementId, version], map: "announcement_versions_announcement_version_key")
+  @@map("announcement_versions")
+}
+
+/// A file attached to an announcement. Append-only.
+model AnnouncementAttachment {
+  id             String   @id @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  announcementId String   @map("announcement_id") @db.Uuid
+  fileId         String   @unique @map("file_id") @db.Uuid
+  uploadedById   String   @map("uploaded_by_account_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  announcement Announcement @relation(fields: [tenantId, announcementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  file         StoredFile   @relation("AnnouncementAttachmentFile", fields: [tenantId, fileId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  uploadedBy   Account      @relation("AnnouncementAttachmentUploader", fields: [tenantId, uploadedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "announcement_attachments_tenant_id_uploaded_by_fkey")
+
+  @@index([tenantId, announcementId, createdAt, id], map: "announcement_attachments_announcement_idx")
+  @@map("announcement_attachments")
+}
+
+/// Counts an announcement's readers without naming them: `ref` is a keyed
+/// hash of the account or the unit. Append-only.
+model AnnouncementReadMark {
+  tenantId       String       @map("tenant_id") @db.Uuid
+  announcementId String       @map("announcement_id") @db.Uuid
+  kind           ReadMarkKind
+  ref            Bytes
+
+  announcement Announcement @relation(fields: [tenantId, announcementId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([tenantId, announcementId, kind, ref])
+  @@map("announcement_read_marks")
 }

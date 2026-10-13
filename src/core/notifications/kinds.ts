@@ -685,6 +685,16 @@ export const NOTIFICATION_KINDS = {
     target: 'management_request',
     params: { requestNumber: {}, topicKey: {} },
   },
+  // Community life (ADR 0040). Nothing here is critical, and no param is
+  // a text: what happened is the kind, the rest is read on the target.
+  /** An important announcement came out (its audience at that moment). */
+  'community_announcement.important': {
+    priority: 'normal',
+    category: 'community',
+    critical: false,
+    target: 'community_announcement',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

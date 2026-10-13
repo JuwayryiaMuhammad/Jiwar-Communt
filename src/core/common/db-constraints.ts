@@ -149,4 +149,9 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // Community life (ADR 0040). A topic's key is the staff's input.
   suggestion_topics_tenant_id_key_key: ['key'],
   suggestion_topics_tenant_id_id_key: null,
+  // Server ids and version numbers, written under the announcement's lock.
+  announcements_tenant_id_id_key: null,
+  announcement_versions_announcement_version_key: null,
+  // A file is claimed under its row lock before it is attached.
+  announcement_attachments_file_id_key: null,
 };

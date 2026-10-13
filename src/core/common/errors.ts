@@ -269,6 +269,13 @@ export const ErrorCode = {
   // community life (ADR 0040)
   /** Unknown, or another compound's. */
   SUGGESTION_TOPIC_NOT_FOUND: 'SUGGESTION_TOPIC_NOT_FOUND',
+  /**
+   * Unknown or another compound's; for a resident also not out yet, over,
+   * or not put to them: one answer.
+   */
+  ANNOUNCEMENT_NOT_FOUND: 'ANNOUNCEMENT_NOT_FOUND',
+  /** Its state does not take the action (409, params.status). */
+  ANNOUNCEMENT_INVALID_STATE: 'ANNOUNCEMENT_INVALID_STATE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -351,6 +358,9 @@ export const FieldErrorCode = {
   APPOINTMENT_TOO_SOON: 'APPOINTMENT_TOO_SOON',
   /** An appointment starts within thirty days. */
   APPOINTMENT_TOO_FAR: 'APPOINTMENT_TOO_FAR',
+  // community life (ADR 0040)
+  /** An end that is not after its start (works, an event, an expiry, a poll). */
+  ENDS_BEFORE_START: 'ENDS_BEFORE_START',
 } as const;
 
 export type FieldErrorCode =

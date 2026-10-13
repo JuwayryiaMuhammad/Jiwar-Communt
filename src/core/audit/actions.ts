@@ -371,6 +371,29 @@ export const AUDIT_ACTIONS = {
   // changes: eventMaxGuests.
   'engagement.settings_changed': { log: 'tenant', target: 'tenant' },
   // changes: key, active by value; the names as `{ changed: true }` only.
+  // Announcements, works and closures among them. Never a title or a
+  // text. changes: kind, priority, pinnedUntil, expiresAt,
+  // audienceOccupancy, audienceBuildings, worksStartsAt, worksEndsAt,
+  // worksAreaKind, worksGateId by value; worksPlace as `{ changed: true }`.
+  'announcement.created': {
+    log: 'tenant',
+    target: 'announcement',
+    sensitive: ['worksPlace'],
+  },
+  'announcement.changed': {
+    log: 'tenant',
+    target: 'announcement',
+    sensitive: ['worksPlace'],
+  },
+  // New words or files: metadata: version, afterPublication.
+  'announcement.edited': { log: 'tenant', target: 'announcement' },
+  // metadata: publishAt, scheduled, fromStatus.
+  'announcement.published': { log: 'tenant', target: 'announcement' },
+  // metadata: fromStatus.
+  'announcement.archived': { log: 'tenant', target: 'announcement' },
+  // Its audience was told (important ones; the publisher's action, or the
+  // sweep's as actor system). metadata: recipients, a count.
+  'announcement.announced': { log: 'tenant', target: 'announcement' },
   'suggestion_topic.created': {
     log: 'tenant',
     target: 'suggestion_topic',

@@ -15,6 +15,7 @@ const PERMISSIONS = [
   'tickets',
   'finance',
   'unit_security',
+  'polls_vote',
 ];
 
 export class GrantSummaryView {

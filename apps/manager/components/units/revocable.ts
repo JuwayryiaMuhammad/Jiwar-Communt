@@ -1,5 +1,5 @@
 /** The permissions a primary may give a household member (ADR 0021). */
-export const MEMBER_PERMISSIONS = ['visitors_invite', 'bookings', 'tickets', 'finance', 'unit_security'] as const;
+export const MEMBER_PERMISSIONS = ['visitors_invite', 'bookings', 'tickets', 'finance', 'unit_security', 'polls_vote'] as const;
 
 /**
  * What the revoke dialog offers for a member. The API tells a manager who

@@ -366,4 +366,54 @@ describe('capabilitiesFor', () => {
         capabilitiesFor(s, OPEN).gateEntry,
       );
   });
+
+  it('pollsVote (ADR 0040): the primary, or a member given polls_vote — never a landlord, a minor or someone who left; owners vote as owners', () => {
+    const vote = (s: Subject, state = OPEN) => {
+      const c = capabilitiesFor(s, state);
+      return [c.pollsVote, c.pollsVoteAsOwner];
+    };
+    // The household's poll: its primary, whatever their capacity.
+    expect(vote(occ({ isPrimary: true }))).toEqual([true, true]);
+    expect(vote(occ({ occupancyType: 'tenant', isPrimary: true }))).toEqual([
+      true,
+      false,
+    ]);
+    // Not the primary: no household vote; an owner still votes as an owner.
+    expect(vote(occ())).toEqual([false, true]);
+    expect(vote(occ({ resides: false }))).toEqual([false, true]);
+    expect(vote(occ({ occupancyType: 'tenant' }))).toEqual([false, false]);
+    // A member only with the grant, and never as an owner.
+    expect(vote(member())).toEqual([false, false]);
+    expect(
+      vote(
+        member({
+          grants: [{ permission: 'polls_vote', capPerOperation: null }],
+        }),
+      ),
+    ).toEqual([true, false]);
+    // The grant switches its own flag and no other.
+    expect(
+      on(
+        capabilitiesFor(
+          member({
+            grants: [{ permission: 'polls_vote', capPerOperation: null }],
+          }),
+          OPEN,
+        ),
+      ).filter((f) => !on(capabilitiesFor(member(), OPEN)).includes(f)),
+    ).toEqual(['pollsVote']);
+    for (const gone of [
+      occ({ status: 'ended', isPrimary: true }),
+      member({ status: 'removed' }),
+      member({ status: 'pending_approval' }),
+      member({ isMinor: true, hasAccount: false }),
+      { kind: 'registration', status: 'pending' } as const,
+    ])
+      expect(vote(gone)).toEqual([false, false]);
+    // Consultative: no review takes it away.
+    for (const reason of ['primary_deceased', 'separation'] as const) {
+      const state: UnitState = { closed: false, reviewReasons: [reason] };
+      expect(vote(occ({ isPrimary: true }), state)).toEqual([true, true]);
+    }
+  });
 });

@@ -16,7 +16,12 @@ export type ReviewReason =
   'primary_left' | 'primary_frozen' | 'primary_deceased' | 'separation';
 
 export type MemberPermission =
-  'visitors_invite' | 'bookings' | 'tickets' | 'finance' | 'unit_security';
+  | 'visitors_invite'
+  | 'bookings'
+  | 'tickets'
+  | 'finance'
+  | 'unit_security'
+  | 'polls_vote';
 
 export interface UnitState {
   /** Closed-unit mode (the owner is away). */
@@ -99,6 +104,20 @@ export interface Capabilities {
   governanceBudget: boolean;
   governanceCandidacy: boolean;
 
+  /**
+   * Casts the unit's one vote in a consultative poll put to its household
+   * (ADR 0040): the primary occupant, or an adult member the primary gave
+   * `polls_vote`. Never a landlord, a minor or someone who left. Nothing
+   * formal hangs on it (that is governanceVote), so no review takes it away.
+   */
+  pollsVote: boolean;
+  /**
+   * Casts the unit's vote in a poll put to the owners only (ADR 0040): any
+   * active owner of the unit, landlords included. Never a tenant or a
+   * member: an owners' poll is not delegated.
+   */
+  pollsVoteAsOwner: boolean;
+
   /** The "ownership" card shown to tenants. */
   ownershipCard: boolean;
   /** Closed-unit card: inspections, agent. */
@@ -140,6 +159,8 @@ export const NONE: Capabilities = Object.freeze({
   governanceVote: false,
   governanceBudget: false,
   governanceCandidacy: false,
+  pollsVote: false,
+  pollsVoteAsOwner: false,
   ownershipCard: false,
   closedUnitCard: false,
   endLease: false,
@@ -214,6 +235,8 @@ function occupancy(
     governanceVote: owner,
     governanceBudget: owner,
     governanceCandidacy: owner,
+    pollsVote: o.isPrimary,
+    pollsVoteAsOwner: owner,
     ownershipCard: !owner,
     closedUnitCard: owner && unit.closed,
     endLease: o.isPrimary,
@@ -249,6 +272,7 @@ function member(m: Extract<Subject, { kind: 'member' }>): Capabilities {
     financeView: finance !== undefined,
     financePay: finance !== undefined,
     financeCapPerOperation: finance?.capPerOperation ?? null,
+    pollsVote: has('polls_vote'),
     activityVisibleToPrimary: true,
   };
 }

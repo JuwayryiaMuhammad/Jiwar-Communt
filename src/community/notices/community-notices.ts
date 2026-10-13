@@ -81,6 +81,7 @@ const PERMISSION = {
     tickets: 'البلاغات',
     finance: 'العمليات المالية',
     unit_security: 'أجهزة حماية الوحدة',
+    polls_vote: 'التصويت في استطلاعات الرأي',
   },
   en: {
     visitors_invite: 'inviting visitors',
@@ -88,6 +89,7 @@ const PERMISSION = {
     tickets: 'maintenance tickets',
     finance: 'payments',
     unit_security: 'unit security devices',
+    polls_vote: 'voting in polls',
   },
 } as const;
 

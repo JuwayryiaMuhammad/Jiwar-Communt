@@ -25,7 +25,10 @@ import { ReviewFlags } from '../units/review-flags';
 import { lockUnits } from '../units/unit-lock';
 import { HouseholdAuthority, type Authority } from './household-authority';
 
-/** Granted to every adult who joins (ADR 0021); finance and unit security are not. */
+/**
+ * Granted to every adult who joins (ADR 0021); finance, unit security and
+ * the unit's vote in polls (ADR 0040) are not.
+ */
 export const DEFAULT_MEMBER_PERMISSIONS: readonly MemberPermission[] = [
   'visitors_invite',
   'bookings',

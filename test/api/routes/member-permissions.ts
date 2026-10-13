@@ -6,6 +6,7 @@ const PERMISSIONS = [
   'tickets',
   'finance',
   'unit_security',
+  'polls_vote',
 ];
 const withReason = (body: object) => () => ({
   ...body,

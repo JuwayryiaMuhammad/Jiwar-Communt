@@ -86,6 +86,7 @@ export class MemberGrantResponse {
       'tickets',
       'finance',
       'unit_security',
+      'polls_vote',
     ],
   })
   permission: string;

@@ -23,6 +23,14 @@ export {
 } from './maintenance-port';
 export { CommunityManagementPortModule } from './management-port.module';
 export { CommunityManagementPort, type RequestAuthor } from './management-port';
+export { CommunityEngagementPortModule } from './engagement-port.module';
+export {
+  CommunityEngagementPort,
+  inAudience,
+  type Audience,
+  type AudienceOccupancy,
+  type CommunityPlace,
+} from './engagement-port';
 export {
   capabilitiesFor,
   type Capabilities,

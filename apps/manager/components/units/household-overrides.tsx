@@ -16,6 +16,7 @@ const PERMISSION_TEXT: Record<string, string> = {
   tickets: 'Maintenance tickets',
   finance: 'Payments',
   unit_security: 'Unit security',
+  polls_vote: 'Voting in polls',
   all: 'Everything they were given',
 };
 

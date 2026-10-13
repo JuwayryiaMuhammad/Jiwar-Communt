@@ -306,6 +306,18 @@ export const ErrorCode = {
   /** Unknown, or another compound's. */
   NEIGHBOUR_COMPLAINT_CATEGORY_NOT_FOUND:
     'NEIGHBOUR_COMPLAINT_CATEGORY_NOT_FOUND',
+  /**
+   * Unknown or another compound's; for a resident also anyone else's (a
+   * complaint is its author's alone): one answer.
+   */
+  NEIGHBOUR_COMPLAINT_NOT_FOUND: 'NEIGHBOUR_COMPLAINT_NOT_FOUND',
+  /** Its status does not take the action (409, params.status). */
+  NEIGHBOUR_COMPLAINT_INVALID_TRANSITION:
+    'NEIGHBOUR_COMPLAINT_INVALID_TRANSITION',
+  /** The author has as many open complaints as the compound allows (409, params.max). */
+  NEIGHBOUR_COMPLAINT_LIMIT_REACHED: 'NEIGHBOUR_COMPLAINT_LIMIT_REACHED',
+  /** The unit was not sent a notice: nobody writes in its thread yet (409). */
+  NEIGHBOUR_NOTICE_NOT_SENT: 'NEIGHBOUR_NOTICE_NOT_SENT',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -391,6 +403,11 @@ export const FieldErrorCode = {
   // community life (ADR 0040)
   /** An end that is not after its start (works, an event, an expiry, a poll). */
   ENDS_BEFORE_START: 'ENDS_BEFORE_START',
+  // neighbours (ADR 0042)
+  /** No unit of the compound has this code. */
+  UNIT_CODE_UNKNOWN: 'UNIT_CODE_UNKNOWN',
+  /** A unit of the author's own: nobody complains about their own unit. */
+  OWN_UNIT: 'OWN_UNIT',
 } as const;
 
 export type FieldErrorCode =

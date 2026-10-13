@@ -73,6 +73,7 @@ describe('audit catalog', () => {
         'poll',
         'suggestion',
         'neighbour_complaint_category',
+        'neighbour_complaint',
       ]).toContain(def.target);
     }
   });

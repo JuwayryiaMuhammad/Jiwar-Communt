@@ -166,4 +166,14 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // Neighbours (ADR 0042). A category's key is the manager's input.
   neighbour_complaint_categories_tenant_id_key_key: ['key'],
   neighbour_complaint_categories_tenant_id_id_key: null,
+  // Server ids and numbers; the number comes from the counter's row lock.
+  neighbour_complaints_tenant_id_id_key: null,
+  neighbour_complaints_tenant_id_number_key: null,
+  neighbour_complaint_messages_tenant_id_id_key: null,
+  neighbour_complaint_messages_complaint_message_key: null,
+  // A file is claimed under its row lock before it is attached.
+  neighbour_complaint_attachments_file_id_key: null,
+  neighbour_complaint_notices_tenant_id_id_key: null,
+  // Decided under the complaint's lock; a violation is a race.
+  neighbour_complaint_notices_one_per_complaint: null,
 };

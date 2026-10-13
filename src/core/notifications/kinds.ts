@@ -714,6 +714,74 @@ export const NOTIFICATION_KINDS = {
     target: 'community_suggestion',
     params: { status: {}, topicKey: {} },
   },
+  // Neighbours (ADR 0042). No kind is critical. A complaint's kinds carry
+  // its number and its category's key only: never a message, a notice's
+  // text, a unit or a name. The number never reaches the unit complained
+  // about: its own kinds target the notice and carry the category alone.
+  /** A resident filed a complaint against a unit: to the staff who handle them. */
+  'neighbour_complaint.submitted': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_complaint',
+    params: { complaintNumber: {}, categoryKey: {} },
+  },
+  /** The author wrote on their complaint: to the staff; never its body. */
+  'neighbour_complaint.author_replied': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_complaint',
+    params: { complaintNumber: {}, categoryKey: {} },
+  },
+  /** The author took their complaint back: to the staff. */
+  'neighbour_complaint.withdrawn': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_complaint',
+    params: { complaintNumber: {}, categoryKey: {} },
+  },
+  /** The management took the author's complaint under review. */
+  'neighbour_complaint.under_review': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_complaint',
+    params: { complaintNumber: {}, categoryKey: {} },
+  },
+  /** The management put the author's complaint in mediation. */
+  'neighbour_complaint.in_mediation': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_complaint',
+    params: { complaintNumber: {}, categoryKey: {} },
+  },
+  /** The management resolved the author's complaint. */
+  'neighbour_complaint.resolved': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_complaint',
+    params: { complaintNumber: {}, categoryKey: {} },
+  },
+  /** The management dismissed the author's complaint. */
+  'neighbour_complaint.dismissed': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_complaint',
+    params: { complaintNumber: {}, categoryKey: {} },
+  },
+  /** The management wrote on the author's complaint; never its body. */
+  'neighbour_complaint.replied': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_complaint',
+    params: { complaintNumber: {}, categoryKey: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

@@ -282,4 +282,15 @@ export const REASON_CODES = {
     'organizer_unavailable',
     'other',
   ],
+  // Neighbours (ADR 0042). Why the staff dismiss a complaint against a
+  // unit, and how they resolve one.
+  neighbourComplaintDismiss: [
+    'unfounded',
+    'duplicate',
+    'insufficient_evidence',
+    'out_of_scope',
+  ],
+  neighbourComplaintResolve: ['complied', 'mediated', 'no_further_action'],
+  // Written by the system only: the author's own withdrawal.
+  neighbourComplaintSystemClose: ['withdrawn'],
 } as const;

@@ -499,6 +499,8 @@ model Tenant {
   suggestionTopics   SuggestionTopic[]
   neighbourSettings            NeighbourSettings?
   neighbourComplaintCategories NeighbourComplaintCategory[]
+  neighbourComplaintCounter    NeighbourComplaintCounter?
+  neighbourComplaints          NeighbourComplaint[]
   announcements      Announcement[]
   communityEvents    CommunityEvent[]
   polls              Poll[]
@@ -901,6 +903,12 @@ model Account {
   suggestionUpdates          SuggestionUpdate[]            @relation("SuggestionUpdateBy")
   suggestionAttachments      SuggestionAttachment[]        @relation("SuggestionAttachmentUploader")
   suggestionSupports         SuggestionSupport[]           @relation("SuggestionSupporter")
+  neighbourComplaintsAuthored    NeighbourComplaint[]                @relation("NeighbourComplaintAuthor")
+  neighbourComplaintMoves        NeighbourComplaintStatusChange[]    @relation("NeighbourComplaintStatusActor")
+  neighbourComplaintMessages     NeighbourComplaintMessage[]         @relation("NeighbourComplaintMessageSender")
+  neighbourComplaintAttachments  NeighbourComplaintAttachment[]      @relation("NeighbourComplaintAttachmentUploader")
+  neighbourNoticesSent           NeighbourComplaintNotice[]          @relation("NeighbourNoticeSender")
+  neighbourNoticesReceived       NeighbourComplaintNoticeRecipient[] @relation("NeighbourNoticeRecipient")
   managementAppointments     ManagementAppointment[]       @relation("ManagementAppointmentProposer")
 
   @@unique([tenantId, type, email])
@@ -991,6 +999,8 @@ model Unit {
   eventRsvps         EventRsvp[]
   pollParticipations PollParticipation[]
   suggestions        Suggestion[]
+  neighbourComplaintsFrom    NeighbourComplaint[] @relation("NeighbourComplaintAuthorUnit")
+  neighbourComplaintsAgainst NeighbourComplaint[] @relation("NeighbourComplaintTargetUnit")
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -2038,6 +2048,7 @@ model StoredFile {
   announcementAttachments AnnouncementAttachment[] @relation("AnnouncementAttachmentFile")
   eventAttachments EventAttachment[] @relation("EventAttachmentFile")
   suggestionAttachments SuggestionAttachment[] @relation("SuggestionAttachmentFile")
+  neighbourComplaintAttachments NeighbourComplaintAttachment[] @relation("NeighbourComplaintAttachmentFile")
   owner    Account?           @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([tenantId, id])
@@ -3806,9 +3817,198 @@ model NeighbourComplaintCategory {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  tenant     Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  complaints NeighbourComplaint[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, key])
   @@map("neighbour_complaint_categories")
+}
+
+enum NeighbourComplaintStatus {
+  submitted
+  under_review
+  notice_sent
+  mediation
+  resolved
+  dismissed
+
+  @@map("neighbour_complaint_status")
+}
+
+/// Whose a complaint message is: the complainant's thread with the staff,
+/// the complained-about unit's thread with the staff, or the staff's notes.
+enum NeighbourThread {
+  complainant
+  target
+  internal
+
+  @@map("neighbour_thread")
+}
+
+enum NeighbourSide {
+  resident
+  staff
+
+  @@map("neighbour_side")
+}
+
+/// Who a notice went to: the household living in the unit, or its owners.
+enum NeighbourRecipientKind {
+  household
+  owners
+
+  @@map("neighbour_recipient_kind")
+}
+
+/// One row per compound; its row lock serializes the compound's new
+/// complaints.
+model NeighbourComplaintCounter {
+  tenantId   String @id @map("tenant_id") @db.Uuid
+  lastNumber Int    @default(0) @map("last_number")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("neighbour_complaint_counters")
+}
+
+/// A complaint against a unit, never a person. No free text of its own:
+/// what it says is its first message. Its number, parties and category
+/// never change (trigger).
+model NeighbourComplaint {
+  id             String                   @id @db.Uuid
+  tenantId       String                   @map("tenant_id") @db.Uuid
+  /// `NC-000123` to the complainant and the staff; never shown to the unit
+  /// complained about.
+  number         Int
+  authorId       String                   @map("author_account_id") @db.Uuid
+  /// One of the author's own units, when they name one.
+  authorUnitId   String?                  @map("author_unit_id") @db.Uuid
+  /// The unit complained about.
+  targetUnitId   String                   @map("target_unit_id") @db.Uuid
+  categoryId     String                   @map("category_id") @db.Uuid
+  status         NeighbourComplaintStatus @default(submitted)
+  closedAt       DateTime?                @map("closed_at") @db.Timestamptz(3)
+  closeReason    String?                  @map("close_reason")
+  closedBySide   NeighbourSide?           @map("closed_by_side")
+  /// What the lists are ordered by. Internal notes and the unit's own
+  /// thread do not move it.
+  lastActivityAt DateTime                 @map("last_activity_at") @db.Timestamptz(3)
+  createdAt      DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant     Tenant                           @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  author     Account                          @relation("NeighbourComplaintAuthor", fields: [tenantId, authorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_complaints_tenant_id_author_fkey")
+  authorUnit Unit?                            @relation("NeighbourComplaintAuthorUnit", fields: [tenantId, authorUnitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_complaints_tenant_id_author_unit_fkey")
+  targetUnit Unit                             @relation("NeighbourComplaintTargetUnit", fields: [tenantId, targetUnitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_complaints_tenant_id_target_unit_fkey")
+  category   NeighbourComplaintCategory       @relation(fields: [tenantId, categoryId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  history    NeighbourComplaintStatusChange[]
+  messages   NeighbourComplaintMessage[]
+  notice     NeighbourComplaintNotice?
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number])
+  @@index([tenantId, authorId, lastActivityAt(sort: Desc), id(sort: Desc)], map: "neighbour_complaints_author_activity_idx")
+  @@index([tenantId, status, lastActivityAt(sort: Desc), id(sort: Desc)], map: "neighbour_complaints_status_activity_idx")
+  @@index([tenantId, lastActivityAt(sort: Desc), id(sort: Desc)], map: "neighbour_complaints_activity_idx")
+  @@index([tenantId, targetUnitId, lastActivityAt(sort: Desc), id(sort: Desc)], map: "neighbour_complaints_target_unit_idx")
+  @@map("neighbour_complaints")
+}
+
+/// Every status a complaint has had, in order; the first is its filing.
+/// Append-only.
+model NeighbourComplaintStatusChange {
+  id          String                    @id @db.Uuid
+  tenantId    String                    @map("tenant_id") @db.Uuid
+  complaintId String                    @map("complaint_id") @db.Uuid
+  fromStatus  NeighbourComplaintStatus? @map("from_status")
+  toStatus    NeighbourComplaintStatus  @map("to_status")
+  actorId     String                    @map("actor_account_id") @db.Uuid
+  actorSide   NeighbourSide             @map("actor_side")
+  reasonCode  String?                   @map("reason_code")
+  createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  complaint NeighbourComplaint @relation(fields: [tenantId, complaintId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  actor     Account            @relation("NeighbourComplaintStatusActor", fields: [tenantId, actorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_complaint_status_history_tenant_id_actor_fkey")
+
+  @@index([tenantId, complaintId, createdAt, id], map: "neighbour_complaint_status_history_complaint_idx")
+  @@map("neighbour_complaint_status_history")
+}
+
+/// One message in one of a complaint's three threads. Never changes; an
+/// erasure clears its body.
+model NeighbourComplaintMessage {
+  id          String          @id @db.Uuid
+  tenantId    String          @map("tenant_id") @db.Uuid
+  complaintId String          @map("complaint_id") @db.Uuid
+  thread      NeighbourThread
+  senderId    String          @map("sender_account_id") @db.Uuid
+  senderSide  NeighbourSide   @map("sender_side")
+  /// Free text, may name people: never in the audit trail or a
+  /// notification. NULL once its sender is erased.
+  body        String?
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  erasedAt    DateTime?       @map("erased_at") @db.Timestamptz(3)
+
+  complaint   NeighbourComplaint             @relation(fields: [tenantId, complaintId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  sender      Account                        @relation("NeighbourComplaintMessageSender", fields: [tenantId, senderId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_complaint_messages_tenant_id_sender_fkey")
+  attachments NeighbourComplaintAttachment[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, complaintId, id], map: "neighbour_complaint_messages_complaint_message_key")
+  @@index([tenantId, complaintId, thread, createdAt, id], map: "neighbour_complaint_messages_thread_idx")
+  @@index([tenantId, senderId], map: "neighbour_complaint_messages_sender_idx")
+  @@map("neighbour_complaint_messages")
+}
+
+model NeighbourComplaintAttachment {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  complaintId  String   @map("complaint_id") @db.Uuid
+  messageId    String   @map("message_id") @db.Uuid
+  fileId       String   @unique @map("file_id") @db.Uuid
+  uploadedById String   @map("uploaded_by_account_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  message    NeighbourComplaintMessage @relation(fields: [tenantId, complaintId, messageId], references: [tenantId, complaintId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_complaint_attachments_message_fkey")
+  file       StoredFile                @relation("NeighbourComplaintAttachmentFile", fields: [tenantId, fileId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  uploadedBy Account                   @relation("NeighbourComplaintAttachmentUploader", fields: [tenantId, uploadedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_complaint_attachments_tenant_id_uploaded_by_fkey")
+
+  @@index([tenantId, messageId, createdAt, id], map: "neighbour_complaint_attachments_message_idx")
+  @@map("neighbour_complaint_attachments")
+}
+
+/// The notice to the unit complained about: at most one per complaint, in
+/// the staff's words. Append-only.
+model NeighbourComplaintNotice {
+  id            String                 @id @db.Uuid
+  tenantId      String                 @map("tenant_id") @db.Uuid
+  complaintId   String                 @map("complaint_id") @db.Uuid
+  /// The staff's text: the only words of the matter the unit ever reads.
+  body          String
+  recipientKind NeighbourRecipientKind @map("recipient_kind")
+  sentById      String                 @map("sent_by_account_id") @db.Uuid
+  createdAt     DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  complaint  NeighbourComplaint                  @relation(fields: [tenantId, complaintId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  sentBy     Account                             @relation("NeighbourNoticeSender", fields: [tenantId, sentById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_complaint_notices_tenant_id_sent_by_fkey")
+  recipients NeighbourComplaintNoticeRecipient[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, complaintId], map: "neighbour_complaint_notices_one_per_complaint")
+  @@map("neighbour_complaint_notices")
+}
+
+/// Who a notice went to, written down when it was sent. Append-only.
+model NeighbourComplaintNoticeRecipient {
+  tenantId  String @map("tenant_id") @db.Uuid
+  noticeId  String @map("notice_id") @db.Uuid
+  accountId String @map("account_id") @db.Uuid
+
+  notice  NeighbourComplaintNotice @relation(fields: [tenantId, noticeId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  account Account                  @relation("NeighbourNoticeRecipient", fields: [tenantId, accountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([tenantId, noticeId, accountId])
+  @@index([tenantId, accountId], map: "neighbour_complaint_notice_recipients_account_idx")
+  @@map("neighbour_complaint_notice_recipients")
 }

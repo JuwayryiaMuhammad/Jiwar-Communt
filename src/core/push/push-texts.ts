@@ -725,6 +725,87 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'حدّثت الإدارة اقتراحك. افتح التطبيق لمعرفة ما وصل إليه.',
     },
   },
+  // Neighbours (ADR 0042): a complaint's number only, never a unit or a name.
+  'neighbour_complaint.submitted': {
+    en: {
+      title: 'New complaint between units',
+      body: 'Complaint #{complaintNumber} was filed and is waiting for review.',
+    },
+    ar: {
+      title: 'شكوى جديدة بين الوحدات',
+      body: 'تم تقديم الشكوى رقم {complaintNumber} وهي بانتظار المراجعة.',
+    },
+  },
+  'neighbour_complaint.author_replied': {
+    en: {
+      title: 'New message on a complaint',
+      body: 'The resident wrote on complaint #{complaintNumber}.',
+    },
+    ar: {
+      title: 'رسالة جديدة على شكوى',
+      body: 'كتب الساكن على الشكوى رقم {complaintNumber}.',
+    },
+  },
+  'neighbour_complaint.withdrawn': {
+    en: {
+      title: 'Complaint withdrawn',
+      body: 'Complaint #{complaintNumber} was withdrawn by the resident.',
+    },
+    ar: {
+      title: 'تم سحب شكوى',
+      body: 'سحب الساكن الشكوى رقم {complaintNumber}.',
+    },
+  },
+  'neighbour_complaint.under_review': {
+    en: {
+      title: 'Complaint under review',
+      body: 'Management is reviewing your complaint #{complaintNumber}.',
+    },
+    ar: {
+      title: 'الشكوى قيد المراجعة',
+      body: 'تراجع الإدارة شكواك رقم {complaintNumber}.',
+    },
+  },
+  'neighbour_complaint.in_mediation': {
+    en: {
+      title: 'Complaint in mediation',
+      body: 'Management is mediating your complaint #{complaintNumber}.',
+    },
+    ar: {
+      title: 'الشكوى قيد الوساطة',
+      body: 'تتوسط الإدارة في شكواك رقم {complaintNumber}.',
+    },
+  },
+  'neighbour_complaint.resolved': {
+    en: {
+      title: 'Complaint resolved',
+      body: 'Your complaint #{complaintNumber} was resolved.',
+    },
+    ar: {
+      title: 'تم حل الشكوى',
+      body: 'تم حل شكواك رقم {complaintNumber}.',
+    },
+  },
+  'neighbour_complaint.dismissed': {
+    en: {
+      title: 'Complaint closed',
+      body: 'Management closed your complaint #{complaintNumber}. Open the app for details.',
+    },
+    ar: {
+      title: 'تم إغلاق الشكوى',
+      body: 'أغلقت الإدارة شكواك رقم {complaintNumber}. افتح التطبيق للتفاصيل.',
+    },
+  },
+  'neighbour_complaint.replied': {
+    en: {
+      title: 'New reply from management',
+      body: 'Management replied on your complaint #{complaintNumber}.',
+    },
+    ar: {
+      title: 'رد جديد من الإدارة',
+      body: 'ردّت الإدارة على شكواك رقم {complaintNumber}.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

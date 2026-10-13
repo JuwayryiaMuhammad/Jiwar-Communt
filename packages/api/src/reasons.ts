@@ -52,6 +52,9 @@ export const REASON_CODES = {
   managementAppointmentCancelByStaff: ['staff_unavailable', 'office_closed', 'other'],
   // Community life (ADR 0040): codes only, never text.
   communityEventCancel: ['weather', 'low_attendance', 'venue_unavailable', 'organizer_unavailable', 'other'],
+  // Neighbours (ADR 0042): codes only, never text.
+  neighbourComplaintDismiss: ['unfounded', 'duplicate', 'insufficient_evidence', 'out_of_scope'],
+  neighbourComplaintResolve: ['complied', 'mediated', 'no_further_action'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

@@ -483,6 +483,33 @@ export const AUDIT_ACTIONS = {
     target: 'neighbour_complaint_category',
     sensitive: ['nameAr', 'nameEn'],
   },
+  // metadata: complaintNumber, categoryKey, targetUnitId, withUnit. The
+  // actor is the complainant: staff read it; the unit never reads the trail.
+  'neighbour_complaint.created': {
+    log: 'tenant',
+    target: 'neighbour_complaint',
+  },
+  // metadata of every move: complaintNumber, from, to; reasonCode on an end.
+  'neighbour_complaint.review_started': {
+    log: 'tenant',
+    target: 'neighbour_complaint',
+  },
+  'neighbour_complaint.mediation_started': {
+    log: 'tenant',
+    target: 'neighbour_complaint',
+  },
+  'neighbour_complaint.resolved': {
+    log: 'tenant',
+    target: 'neighbour_complaint',
+  },
+  'neighbour_complaint.dismissed': {
+    log: 'tenant',
+    target: 'neighbour_complaint',
+  },
+  'neighbour_complaint.withdrawn': {
+    log: 'tenant',
+    target: 'neighbour_complaint',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

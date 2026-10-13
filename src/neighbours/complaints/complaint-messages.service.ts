@@ -19,6 +19,7 @@ import { dbNow } from '../db-clock';
 import { ComplaintAccess, type ComplaintAudience } from './complaint-access';
 import { ComplaintNotices } from './complaint-notices';
 import { assertCan, postAction } from './complaint-rules';
+import { NoticeNotices } from './notice-notices';
 
 export const COMPLAINT_MESSAGE_RESOURCE = 'neighbour_complaint_message';
 export const MESSAGE_LENGTH = { min: 1, max: 4000 } as const;
@@ -87,6 +88,7 @@ export class ComplaintMessagesService implements OnModuleInit {
     private readonly files: FilesService,
     private readonly idempotency: IdempotencyService,
     private readonly notices: ComplaintNotices,
+    private readonly unitNotices: NoticeNotices,
   ) {}
 
   onModuleInit(): void {
@@ -215,7 +217,8 @@ export class ComplaintMessagesService implements OnModuleInit {
         lock: true,
       });
       assertCan(complaint, postAction(into));
-      if (into === 'target') await this.requireNotice(tx, complaint.id);
+      const notice =
+        into === 'target' ? await this.requireNotice(tx, complaint.id) : null;
       const now = await dbNow(tx);
       const message = await this.write(
         tx,
@@ -243,25 +246,33 @@ export class ComplaintMessagesService implements OnModuleInit {
             'neighbour_complaint.author_replied',
           );
       }
+      // Staff wrote to the unit: whoever still answers for it is told.
+      if (notice)
+        await this.unitNotices.toRecipients(
+          tx,
+          { ...notice, complaint },
+          'neighbour_notice.replied',
+          now,
+        );
       return message;
     });
   }
 
   /** The unit's thread opens with its notice, never before. */
-  async requireNotice(
+  private async requireNotice(
     tx: TenantTxClient,
     complaintId: string,
-  ): Promise<string> {
+  ): Promise<{ id: string; recipientKind: 'household' | 'owners' }> {
     const notice = await tx.neighbourComplaintNotice.findFirst({
       where: { complaintId },
-      select: { id: true },
+      select: { id: true, recipientKind: true },
     });
     if (!notice)
       throw appError.conflict(
         ErrorCode.NEIGHBOUR_NOTICE_NOT_SENT,
         'The unit was not sent a notice',
       );
-    return notice.id;
+    return notice;
   }
 
   /** The trimmed body, or INVALID_LENGTH on `body`. */

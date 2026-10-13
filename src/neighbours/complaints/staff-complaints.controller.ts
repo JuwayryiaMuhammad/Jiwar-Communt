@@ -29,8 +29,10 @@ import { ComplaintsService } from './complaints.service';
 import {
   ComplaintReasonDto,
   PostComplaintMessageDto,
+  SendNoticeDto,
   StaffComplaintsQueryDto,
 } from './dto/complaints.dto';
+import { NoticesService } from './notices.service';
 import {
   StaffComplaintDetailView,
   StaffComplaintView,
@@ -40,6 +42,7 @@ import {
   ComplaintMessageCreatedView,
   StaffComplaintMessageView,
 } from './views/message.views';
+import { NoticeSentView } from './views/notice.views';
 
 /**
  * The staff side of complaints between units (ADR 0042): the inbox, a
@@ -55,6 +58,7 @@ export class StaffComplaintsController {
     private readonly complaints: ComplaintsService,
     private readonly messages: ComplaintMessagesService,
     private readonly status: ComplaintStatusService,
+    private readonly notices: NoticesService,
   ) {}
 
   @Get('complaints')
@@ -166,6 +170,22 @@ export class StaffComplaintsController {
     return ComplaintMessageCreatedView.from(
       await this.messages.post(id, 'staff', 'internal', dto),
     );
+  }
+
+  /**
+   * The one notice a complaint has: the category and this text are all the
+   * unit ever reads of the matter. Not idempotent by key: a second one is
+   * refused (NEIGHBOUR_NOTICE_ALREADY_SENT).
+   */
+  @Post('complaints/:id/notice')
+  @NoStore()
+  @ApiOperation({ summary: 'Send the notice to the unit complained about' })
+  @ApiCreatedResponse({ type: NoticeSentView })
+  async sendNotice(
+    @Param('id', parseId()) id: string,
+    @Body() dto: SendNoticeDto,
+  ): Promise<NoticeSentView> {
+    return NoticeSentView.from(await this.notices.send(id, dto.body));
   }
 
   @Post('complaints/:id/review')

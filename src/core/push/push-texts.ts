@@ -806,6 +806,47 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'ردّت الإدارة على شكواك رقم {complaintNumber}.',
     },
   },
+  'neighbour_complaint.notice_sent': {
+    en: {
+      title: 'Notice sent',
+      body: 'Management sent a notice about your complaint #{complaintNumber}.',
+    },
+    ar: {
+      title: 'تم إرسال إشعار',
+      body: 'أرسلت الإدارة إشعارًا بخصوص شكواك رقم {complaintNumber}.',
+    },
+  },
+  'neighbour_notice.unit_replied': {
+    en: {
+      title: 'A unit answered its notice',
+      body: 'The unit answered the notice on complaint #{complaintNumber}.',
+    },
+    ar: {
+      title: 'رد من وحدة على إشعار',
+      body: 'ردّت الوحدة على الإشعار الخاص بالشكوى رقم {complaintNumber}.',
+    },
+  },
+  // To the unit: nothing of the complaint, not even its number.
+  'neighbour_notice.received': {
+    en: {
+      title: 'Notice from management',
+      body: 'Management sent your unit a notice. Open the app to read it.',
+    },
+    ar: {
+      title: 'إشعار من الإدارة',
+      body: 'أرسلت الإدارة إشعارًا إلى وحدتك. افتح التطبيق لقراءته.',
+    },
+  },
+  'neighbour_notice.replied': {
+    en: {
+      title: 'New message from management',
+      body: 'Management wrote to your unit about a notice. Open the app to read it.',
+    },
+    ar: {
+      title: 'رسالة جديدة من الإدارة',
+      body: 'كتبت الإدارة إلى وحدتك بخصوص إشعار. افتح التطبيق لقراءتها.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

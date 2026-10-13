@@ -14,9 +14,9 @@ import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { MAX_ATTACHMENTS, MESSAGE_LENGTH } from '../complaint-messages.service';
 import { UNIT_CODE_LENGTH } from '../complaints.service';
+import { NOTICE_LENGTH } from '../notices.service';
 
 const BOOLEAN = ['true', 'false'] as const;
-export const NOTICE_LENGTH = { min: 1, max: 2000 } as const;
 
 function Attachments() {
   return (target: object, key: string) => {

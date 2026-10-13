@@ -13,8 +13,11 @@ import { ComplaintMessagesService } from './complaints/complaint-messages.servic
 import { ComplaintNotices } from './complaints/complaint-notices';
 import { ComplaintStatusService } from './complaints/complaint-status.service';
 import { ComplaintsService } from './complaints/complaints.service';
+import { NoticeNotices } from './complaints/notice-notices';
+import { NoticesService } from './complaints/notices.service';
 import { ResidentComplaintsController } from './complaints/resident-complaints.controller';
 import { StaffComplaintsController } from './complaints/staff-complaints.controller';
+import { UnitNoticesController } from './complaints/unit-notices.controller';
 import { NeighboursProvisioning } from './provisioning';
 import { NeighbourSettingsController } from './settings/neighbour-settings.controller';
 import { NeighbourSettingsService } from './settings/neighbour-settings.service';
@@ -28,6 +31,7 @@ import { NeighbourSettingsService } from './settings/neighbour-settings.service'
   controllers: [
     ResidentComplaintsController,
     StaffComplaintsController,
+    UnitNoticesController,
     ComplaintCategoriesController,
     ComplaintCategoryOptionsController,
     NeighbourSettingsController,
@@ -39,9 +43,11 @@ import { NeighbourSettingsService } from './settings/neighbour-settings.service'
     ComplaintCategoriesService,
     ComplaintAccess,
     ComplaintNotices,
+    NoticeNotices,
     ComplaintMessagesService,
     ComplaintsService,
     ComplaintStatusService,
+    NoticesService,
   ],
 })
 export class NeighboursModule {}

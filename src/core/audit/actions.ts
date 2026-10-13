@@ -494,6 +494,11 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'neighbour_complaint',
   },
+  // also: noticeId, recipientKind, recipients (a count). Never its text.
+  'neighbour_complaint.notice_sent': {
+    log: 'tenant',
+    target: 'neighbour_complaint',
+  },
   'neighbour_complaint.mediation_started': {
     log: 'tenant',
     target: 'neighbour_complaint',

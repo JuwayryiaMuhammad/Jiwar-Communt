@@ -782,6 +782,38 @@ export const NOTIFICATION_KINDS = {
     target: 'neighbour_complaint',
     params: { complaintNumber: {}, categoryKey: {} },
   },
+  /** The management sent the unit complained about its notice: to the author. */
+  'neighbour_complaint.notice_sent': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_complaint',
+    params: { complaintNumber: {}, categoryKey: {} },
+  },
+  /** The unit answered its notice: to the staff, on the complaint. */
+  'neighbour_notice.unit_replied': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_complaint',
+    params: { complaintNumber: {}, categoryKey: {} },
+  },
+  /** The management sent a unit a notice: to whoever answers for the unit. */
+  'neighbour_notice.received': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_notice',
+    params: { categoryKey: {} },
+  },
+  /** The management wrote to the unit again on its notice; never its body. */
+  'neighbour_notice.replied': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_notice',
+    params: { categoryKey: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

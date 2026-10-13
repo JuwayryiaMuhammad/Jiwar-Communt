@@ -318,6 +318,16 @@ export const ErrorCode = {
   NEIGHBOUR_COMPLAINT_LIMIT_REACHED: 'NEIGHBOUR_COMPLAINT_LIMIT_REACHED',
   /** The unit was not sent a notice: nobody writes in its thread yet (409). */
   NEIGHBOUR_NOTICE_NOT_SENT: 'NEIGHBOUR_NOTICE_NOT_SENT',
+  /** A complaint has one notice (409). */
+  NEIGHBOUR_NOTICE_ALREADY_SENT: 'NEIGHBOUR_NOTICE_ALREADY_SENT',
+  /** Nobody lives in the unit and nobody owns it: no one to send it to (409). */
+  NEIGHBOUR_NOTICE_NO_RECIPIENT: 'NEIGHBOUR_NOTICE_NO_RECIPIENT',
+  /**
+   * Unknown or another compound's; or not sent to the caller; or sent to
+   * them when they answered for the unit, which they no longer do: one
+   * answer.
+   */
+  NEIGHBOUR_NOTICE_NOT_FOUND: 'NEIGHBOUR_NOTICE_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

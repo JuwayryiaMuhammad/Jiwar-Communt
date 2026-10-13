@@ -2170,6 +2170,1853 @@
     {
       "item": [
         {
+          "name": "List the announcements put to me",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "announcements"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "kind",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: only what is pinned now.",
+                  "disabled": true,
+                  "key": "pinned",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/announcements"
+            }
+          }
+        },
+        {
+          "name": "Get one announcement put to me",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "announcements",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/announcements/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark an announcement as opened",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "announcements",
+                ":id",
+                "read"
+              ],
+              "raw": "{{baseUrl}}/api/v1/announcements/:id/read",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the announcements, drafts and archived included",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "announcements"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "kind",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/announcements"
+            }
+          }
+        },
+        {
+          "name": "Write an announcement, as a draft",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"general\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentFileIds` | string (uuid)[] |  | The files it shows from now on: ids it already shows (`attachments[].id`) to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). |\n| `audience` | object |  | Absent: the whole compound, everyone. May change only until the announcement is out. |\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  |  |\n| `expiresAt` | string (date-time) |  | No longer shown from then on. A general announcement’s only: works end by their own dates. |\n| `kind` | `general` \\| `works` | yes | `works`: works and closures, with `works`. Never changes. |\n| `pinnedUntil` | string (date-time) |  | Stays on top until then. Only when `important`. |\n| `priority` | `normal` \\| `important` |  | An `important` one tells its audience when it comes out, and may be pinned. |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | A language is whole or absent; at least one is there. |\n| `works` | object |  | Required for `works`, refused otherwise. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "announcements"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/announcements"
+            }
+          }
+        },
+        {
+          "name": "Get one announcement",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "announcements",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/announcements/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change an announcement; new words make a new version",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"attachmentFileIds\": [],\n  \"audience\": {\n    \"occupancy\": \"everyone\"\n  },\n  \"bodyAr\": \"\",\n  \"bodyEn\": \"\",\n  \"expiresAt\": \"2026-01-01T09:00:00.000Z\",\n  \"pinnedUntil\": \"2026-01-01T09:00:00.000Z\",\n  \"priority\": \"normal\",\n  \"titleAr\": \"\",\n  \"titleEn\": \"\",\n  \"works\": {\n    \"startsAt\": \"2026-01-01T09:00:00.000Z\",\n    \"endsAt\": \"2026-01-01T09:00:00.000Z\",\n    \"areaKind\": \"road\"\n  }\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentFileIds` | string (uuid)[] |  | The files it shows from now on: ids it already shows (`attachments[].id`) to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). |\n| `audience` | object |  | Absent: the whole compound, everyone. May change only until the announcement is out. |\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  |  |\n| `expiresAt` | string (date-time) |  | No longer shown from then on. A general announcement’s only: works end by their own dates. |\n| `pinnedUntil` | string (date-time) |  | Stays on top until then. Only when `important`. |\n| `priority` | `normal` \\| `important` |  | An `important` one tells its audience when it comes out, and may be pinned. |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | A language is whole or absent; at least one is there. |\n| `works` | object |  | Replaces the dates and the area of works as a whole. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "announcements",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/announcements/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Archive an announcement",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "announcements",
+                ":id",
+                "archive"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/announcements/:id/archive",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Publish an announcement now, or schedule it",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"publishAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `publishAt` | string (date-time) |  | When it comes out. Absent: now. Not in the past. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "announcements",
+                ":id",
+                "publish"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/announcements/:id/publish",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Count who opened an announcement",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "announcements",
+                ":id",
+                "reads"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/announcements/:id/reads",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Read what an announcement said, version by version",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "announcements",
+                ":id",
+                "versions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/announcements/:id/versions",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Count who an audience is right now",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"audience\": {\n    \"occupancy\": \"everyone\"\n  }\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `audience` | object | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "audience",
+                "preview"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/audience/preview"
+            }
+          }
+        },
+        {
+          "name": "List the buildings an audience may name",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "buildings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/buildings"
+            }
+          }
+        },
+        {
+          "name": "List the events",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "events"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/events"
+            }
+          }
+        },
+        {
+          "name": "Write an event",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"place\": \"\",\n  \"startsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"endsAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentFileIds` | string (uuid)[] |  | The files it shows from now on: ids it already shows to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). |\n| `audience` | object |  | Absent: the whole compound, everyone. Never changes. |\n| `capacity` | number |  | Seats in all, guests included. Null or absent: no limit. Never below the seats already taken. |\n| `descriptionAr` | string |  |  |\n| `descriptionEn` | string |  |  |\n| `endsAt` | string (date-time) | yes | After `startsAt` (ENDS_BEFORE_START). |\n| `place` | string | yes | Where, in the staff’s words. |\n| `startsAt` | string (date-time) | yes |  |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | A language is whole or absent; at least one is there. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "events"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/events"
+            }
+          }
+        },
+        {
+          "name": "Get one event",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "events",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/events/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change an event that has not started",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"attachmentFileIds\": [],\n  \"capacity\": 1,\n  \"descriptionAr\": \"\",\n  \"descriptionEn\": \"\",\n  \"endsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"place\": \"\",\n  \"startsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"titleAr\": \"\",\n  \"titleEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentFileIds` | string (uuid)[] |  | The files it shows from now on: ids it already shows to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). |\n| `capacity` | number |  | Seats in all, guests included. Null or absent: no limit. Never below the seats already taken. |\n| `descriptionAr` | string |  |  |\n| `descriptionEn` | string |  |  |\n| `endsAt` | string (date-time) |  |  |\n| `place` | string |  |  |\n| `startsAt` | string (date-time) |  |  |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | A language is whole or absent; at least one is there. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "events",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/events/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List who answered an event",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "events",
+                ":id",
+                "attendees"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "Absent: those who are going.",
+                  "disabled": true,
+                  "key": "response",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/events/:id/attendees",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel an event and tell those who are going",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `communityEventCancel`. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "events",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/events/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the polls",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "polls"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/polls"
+            }
+          }
+        },
+        {
+          "name": "Write a poll",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"options\": [\n    {\n      \"labelAr\": \"\",\n      \"labelEn\": \"\"\n    }\n  ],\n  \"closesAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `audience` | object |  | Whose units vote. Absent: the whole compound, everyone. A poll put to the `owners` is voted by a unit’s owner; any other by its primary occupant or a member given `polls_vote`. |\n| `closesAt` | string (date-time) | yes | When voting closes, by itself. After the opening, and ahead. |\n| `multiple` | boolean |  | Several options may be chosen. Absent: one. |\n| `opensAt` | string (date-time) |  | When voting opens. Absent: now. |\n| `options` | object[] | yes | In the order shown. |\n| `questionAr` | string |  |  |\n| `questionEn` | string |  | English, Arabic or both; at least one. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "polls"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/polls"
+            }
+          }
+        },
+        {
+          "name": "Get one poll and its counts",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "polls",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/polls/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change a poll before it opens, or its closing time while open",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"audience\": {\n    \"occupancy\": \"everyone\"\n  },\n  \"closesAt\": \"2026-01-01T09:00:00.000Z\",\n  \"multiple\": false,\n  \"opensAt\": \"2026-01-01T09:00:00.000Z\",\n  \"options\": [\n    {\n      \"labelAr\": \"\",\n      \"labelEn\": \"\"\n    }\n  ],\n  \"questionAr\": \"\",\n  \"questionEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `audience` | object |  | Whose units vote. Absent: the whole compound, everyone. A poll put to the `owners` is voted by a unit’s owner; any other by its primary occupant or a member given `polls_vote`. |\n| `closesAt` | string (date-time) |  |  |\n| `multiple` | boolean |  | Several options may be chosen. Absent: one. |\n| `opensAt` | string (date-time) |  |  |\n| `options` | object[] |  | Replaces the options as a whole. |\n| `questionAr` | string |  |  |\n| `questionEn` | string |  | English, Arabic or both; at least one. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "polls",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/polls/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Count the units a poll is put to",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "polls",
+                ":id",
+                "audience"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/polls/:id/audience",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel a poll: it ends with no result",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "polls",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/polls/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Close an open poll now",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "polls",
+                ":id",
+                "close"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/polls/:id/close",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get the community settings",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/settings"
+            }
+          }
+        },
+        {
+          "name": "Update the community settings",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"eventMaxGuests\": 0\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `eventMaxGuests` | number |  | Guests one \"going\" answer to an event may bring, at most. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/settings"
+            }
+          }
+        },
+        {
+          "name": "List suggestion topics",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "suggestion-topics"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/suggestion-topics"
+            }
+          }
+        },
+        {
+          "name": "Create a suggestion topic",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"key\": \"\",\n  \"nameAr\": \"\",\n  \"nameEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `key` | string | yes | Stable code, lowercase (e.g. `parking`). Never changes once created. |\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "suggestion-topics"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/suggestion-topics"
+            }
+          }
+        },
+        {
+          "name": "Update a suggestion topic",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"active\": false,\n  \"nameAr\": \"\",\n  \"nameEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `active` | boolean |  | False retires the topic: no new suggestion may use it. |\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "suggestion-topics",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/suggestion-topics/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the suggestions",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "suggestions"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "topicId",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: only those on the board; `false`: only those not.",
+                  "disabled": true,
+                  "key": "published",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/suggestions"
+            }
+          }
+        },
+        {
+          "name": "Get one suggestion",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "suggestions",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/suggestions/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Say what was done, with photos",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"attachmentFileIds\": [],\n  \"noteAr\": \"\",\n  \"noteEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentFileIds` | string (uuid)[] |  | The photos the note shows from now on: ids it already shows to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). |\n| `noteAr` | string |  |  |\n| `noteEn` | string |  | What was done. English, Arabic or both; at least one. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "suggestions",
+                ":id",
+                "done-note"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/suggestions/:id/done-note",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Put a suggestion on the board under a summary, without its author",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"textAr\": \"\",\n  \"textEn\": \"\",\n  \"titleAr\": \"\",\n  \"titleEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `textAr` | string |  |  |\n| `textEn` | string |  |  |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | A language is whole or absent; at least one is there. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "suggestions",
+                ":id",
+                "publish"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/suggestions/:id/publish",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Answer a suggestion",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"response\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `response` | string | yes | What the staff tell the author. Replaces an earlier answer. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "suggestions",
+                ":id",
+                "response"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/suggestions/:id/response",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Move a suggestion forward, with or without an answer",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"status\": \"received\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `response` | string |  | What the staff tell the author. Required to decline. Replaces an earlier answer. |\n| `status` | `received` \\| `under_review` \\| `planned` \\| `done` \\| `declined` | yes | A step forward: `under_review`, `planned`, `done`, or `declined`. `done` and `declined` are final. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "suggestions",
+                ":id",
+                "status"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/suggestions/:id/status",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Take a suggestion off the board",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "suggestions",
+                ":id",
+                "unpublish"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/suggestions/:id/unpublish",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the events put to me that are not over",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "events"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/events"
+            }
+          }
+        },
+        {
+          "name": "Get one event put to me",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "events",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/events/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Say whether I am going, and with how many guests",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"response\": \"going\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `guests` | number |  | People the caller brings, when going. At most the compound’s limit (INVALID_NUMBER, params.max). Absent: none. |\n| `response` | `going` \\| `not_going` | yes |  |\n| `unitId` | string (uuid) |  | The unit the caller answers from. Required only when the event is put to several of their units. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "events",
+                ":id",
+                "rsvp"
+              ],
+              "raw": "{{baseUrl}}/api/v1/events/:id/rsvp",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get my daily brief",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "daily-brief"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/daily-brief"
+            }
+          }
+        },
+        {
+          "name": "List the polls put to me",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "polls"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/polls"
+            }
+          }
+        },
+        {
+          "name": "Get one poll put to me",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "polls",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/polls/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cast or change my unit’s vote",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"optionIds\": [\n    \"\"\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `optionIds` | string (uuid)[] | yes | The unit’s choice from now on: one option, or several when the poll allows it. Replaces an earlier choice. |\n| `unitId` | string (uuid) |  | The unit whose vote this is. Required only when the caller casts the vote of several units in this poll. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "polls",
+                ":id",
+                "votes"
+              ],
+              "raw": "{{baseUrl}}/api/v1/polls/:id/votes",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the suggestions on the board",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suggestion-board"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "topicId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/suggestion-board"
+            }
+          }
+        },
+        {
+          "name": "List what was done: \"you said, we did\"",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suggestion-board",
+                "done"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/suggestion-board/done"
+            }
+          }
+        },
+        {
+          "name": "Support a suggestion on the board",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suggestion-board",
+                ":id",
+                "support"
+              ],
+              "raw": "{{baseUrl}}/api/v1/suggestion-board/:id/support",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Take my support back",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suggestion-board",
+                ":id",
+                "support"
+              ],
+              "raw": "{{baseUrl}}/api/v1/suggestion-board/:id/support",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the topics a suggestion may be written under",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suggestion-topics"
+              ],
+              "raw": "{{baseUrl}}/api/v1/suggestion-topics"
+            }
+          }
+        },
+        {
+          "name": "List my suggestions",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suggestions"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/suggestions"
+            }
+          }
+        },
+        {
+          "name": "Send a suggestion to the management",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"topicId\": \"\",\n  \"body\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `body` | string | yes | The suggestion, in the resident’s words. Private to its author and the staff. |\n| `topicId` | string (uuid) | yes | An active topic of the compound (TOPIC_NOT_AVAILABLE). |\n| `unitId` | string (uuid) |  | One of the author’s units, when the suggestion is about one. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suggestions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/suggestions"
+            }
+          }
+        },
+        {
+          "name": "Get one of my suggestions and what became of it",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suggestions",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/suggestions/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "name": "community"
+    },
+    {
+      "item": [
+        {
           "name": "List every consent and whether I granted it",
           "request": {
             "description": "**Responses:** 200",
@@ -2894,7 +4741,7 @@
               },
               "raw": "{\n  \"purpose\": \"worker_photo\",\n  \"contentType\": \"image/jpeg\",\n  \"size\": 1\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -7100,7 +8947,7 @@
               },
               "raw": "{\n  \"permission\": \"visitors_invite\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `capPerOperation` | object |  | Finance only, required there: the cap per operation (checked by the service). |\n| `permission` | `visitors_invite` \\| `bookings` \\| `tickets` \\| `finance` \\| `unit_security` | yes |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `capPerOperation` | object |  | Finance only, required there: the cap per operation (checked by the service). |\n| `permission` | `visitors_invite` \\| `bookings` \\| `tickets` \\| `finance` \\| `unit_security` \\| `polls_vote` | yes |  |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -7145,7 +8992,7 @@
               },
               "raw": "{\n  \"reasonCode\": \"\",\n  \"reason\": \"\",\n  \"permission\": \"visitors_invite\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `permission` | `visitors_invite` \\| `bookings` \\| `tickets` \\| `finance` \\| `unit_security` | yes |  |\n| `reason` | string | yes | What the person is told (at most 1000 characters). Never stored in the audit trail. |\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 204",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `permission` | `visitors_invite` \\| `bookings` \\| `tickets` \\| `finance` \\| `unit_security` \\| `polls_vote` | yes |  |\n| `reason` | string | yes | What the person is told (at most 1000 characters). Never stored in the audit trail. |\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 204",
             "header": [
               {
                 "description": "",
@@ -7235,7 +9082,7 @@
               },
               "raw": "{\n  \"reasonCode\": \"\",\n  \"reason\": \"\",\n  \"permission\": \"visitors_invite\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `permission` | `visitors_invite` \\| `bookings` \\| `tickets` \\| `finance` \\| `unit_security` \\| `all` | yes |  |\n| `reason` | string | yes | What the person is told (at most 1000 characters). Never stored in the audit trail. |\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 204",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `permission` | `visitors_invite` \\| `bookings` \\| `tickets` \\| `finance` \\| `unit_security` \\| `polls_vote` \\| `all` | yes |  |\n| `reason` | string | yes | What the person is told (at most 1000 characters). Never stored in the audit trail. |\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 204",
             "header": [
               {
                 "description": "",

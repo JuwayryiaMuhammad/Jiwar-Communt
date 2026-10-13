@@ -267,6 +267,343 @@
         ],
         "type": "object"
       },
+      "AnnouncementCreatedView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "AnnouncementKind": {
+        "enum": [
+          "general",
+          "works"
+        ],
+        "type": "string"
+      },
+      "AnnouncementListItemView": {
+        "properties": {
+          "attachmentCount": {
+            "description": "Files it shows.",
+            "type": "number"
+          },
+          "bodyAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "editedAt": {
+            "description": "When it was last edited after it came out. Null: never.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnouncementKind"
+              }
+            ]
+          },
+          "pinned": {
+            "description": "Pinned now.",
+            "type": "boolean"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnouncementPriority"
+              }
+            ]
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "read": {
+            "description": "The caller has opened it.",
+            "type": "boolean"
+          },
+          "titleAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "Written by the staff. A language is whole or absent; at least one is there.",
+            "nullable": true,
+            "type": "string"
+          },
+          "works": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorksView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "titleEn",
+          "bodyEn",
+          "titleAr",
+          "bodyAr",
+          "id",
+          "kind",
+          "priority",
+          "pinned",
+          "publishedAt",
+          "expiresAt",
+          "editedAt",
+          "works",
+          "attachmentCount",
+          "read"
+        ],
+        "type": "object"
+      },
+      "AnnouncementListItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AnnouncementListItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "AnnouncementPriority": {
+        "enum": [
+          "normal",
+          "important"
+        ],
+        "type": "string"
+      },
+      "AnnouncementReadCountsView": {
+        "properties": {
+          "accounts": {
+            "description": "Accounts that opened it.",
+            "type": "number"
+          },
+          "audienceAccounts": {
+            "description": "Accounts it is put to right now.",
+            "type": "number"
+          },
+          "audienceUnits": {
+            "description": "Units it is put to right now.",
+            "type": "number"
+          },
+          "units": {
+            "description": "Units at least one of whose people opened it.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "accounts",
+          "units",
+          "audienceAccounts",
+          "audienceUnits"
+        ],
+        "type": "object"
+      },
+      "AnnouncementVersionView": {
+        "properties": {
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/CommunityAttachmentView"
+            },
+            "type": "array"
+          },
+          "bodyAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "editedById": {
+            "description": "Who wrote it.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "titleAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "Written by the staff. A language is whole or absent; at least one is there.",
+            "nullable": true,
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "titleEn",
+          "bodyEn",
+          "titleAr",
+          "bodyAr",
+          "version",
+          "createdAt",
+          "editedById",
+          "attachments"
+        ],
+        "type": "object"
+      },
+      "AnnouncementVersionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AnnouncementVersionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "AnnouncementView": {
+        "properties": {
+          "attachmentCount": {
+            "description": "Files it shows.",
+            "type": "number"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/CommunityAttachmentView"
+            },
+            "type": "array"
+          },
+          "bodyAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "editedAt": {
+            "description": "When it was last edited after it came out. Null: never.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnouncementKind"
+              }
+            ]
+          },
+          "pinned": {
+            "description": "Pinned now.",
+            "type": "boolean"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnouncementPriority"
+              }
+            ]
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "read": {
+            "description": "The caller has opened it.",
+            "type": "boolean"
+          },
+          "titleAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "Written by the staff. A language is whole or absent; at least one is there.",
+            "nullable": true,
+            "type": "string"
+          },
+          "works": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorksView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "titleEn",
+          "bodyEn",
+          "titleAr",
+          "bodyAr",
+          "id",
+          "kind",
+          "priority",
+          "pinned",
+          "publishedAt",
+          "expiresAt",
+          "editedAt",
+          "works",
+          "attachmentCount",
+          "read",
+          "attachments"
+        ],
+        "type": "object"
+      },
       "AppointmentBookedView": {
         "properties": {
           "endsAt": {
@@ -701,6 +1038,156 @@
         ],
         "type": "object"
       },
+      "AttendeeView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "answeredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "guests": {
+            "type": "number"
+          },
+          "response": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EventRsvpResponse"
+              }
+            ]
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountId",
+          "fullName",
+          "unitId",
+          "unitCode",
+          "response",
+          "guests",
+          "answeredAt"
+        ],
+        "type": "object"
+      },
+      "AttendeeViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AttendeeView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "AudienceDto": {
+        "properties": {
+          "buildings": {
+            "description": "Buildings, as `GET /community/buildings` lists them. Null or absent: the whole compound.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "nullable": true,
+            "type": "array"
+          },
+          "occupancy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AudienceOccupancy"
+              }
+            ],
+            "description": "`owners`: the active owners of a unit, landlords included, and nobody else. `tenants`: the tenants and their households."
+          }
+        },
+        "required": [
+          "occupancy"
+        ],
+        "type": "object"
+      },
+      "AudienceOccupancy": {
+        "description": "`owners`: the active owners of a unit, landlords included, and nobody else. `tenants`: the tenants and their households.",
+        "enum": [
+          "everyone",
+          "owners",
+          "tenants"
+        ],
+        "type": "string"
+      },
+      "AudiencePreviewDto": {
+        "properties": {
+          "audience": {
+            "$ref": "#/components/schemas/AudienceDto"
+          }
+        },
+        "required": [
+          "audience"
+        ],
+        "type": "object"
+      },
+      "AudienceSizeView": {
+        "properties": {
+          "accounts": {
+            "description": "Accounts in the audience now.",
+            "type": "number"
+          },
+          "units": {
+            "description": "Units in the audience now.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "units",
+          "accounts"
+        ],
+        "type": "object"
+      },
+      "AudienceView": {
+        "properties": {
+          "buildings": {
+            "description": "Null: the whole compound.",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "occupancy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AudienceOccupancy"
+              }
+            ]
+          }
+        },
+        "required": [
+          "buildings",
+          "occupancy"
+        ],
+        "type": "object"
+      },
       "AuditActorType": {
         "enum": [
           "account",
@@ -865,6 +1352,219 @@
         ],
         "type": "object"
       },
+      "BoardSuggestionView": {
+        "properties": {
+          "done": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DoneNoteView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SuggestionStatus"
+              }
+            ]
+          },
+          "summary": {
+            "$ref": "#/components/schemas/PublicSummaryView"
+          },
+          "supported": {
+            "description": "The caller supports it.",
+            "type": "boolean"
+          },
+          "supports": {
+            "type": "number"
+          },
+          "topic": {
+            "$ref": "#/components/schemas/SuggestionTopicRefView"
+          }
+        },
+        "required": [
+          "id",
+          "topic",
+          "summary",
+          "status",
+          "publishedAt",
+          "supports",
+          "supported",
+          "done"
+        ],
+        "type": "object"
+      },
+      "BoardSuggestionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BoardSuggestionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "BriefAnnouncementsView": {
+        "properties": {
+          "new": {
+            "description": "Out in the last seven days and not opened by the caller, pinned ones aside.",
+            "items": {
+              "$ref": "#/components/schemas/AnnouncementListItemView"
+            },
+            "type": "array"
+          },
+          "pinned": {
+            "description": "Pinned now.",
+            "items": {
+              "$ref": "#/components/schemas/AnnouncementListItemView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "pinned",
+          "new"
+        ],
+        "type": "object"
+      },
+      "BriefGateView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "open": {
+            "description": "In service now.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "open"
+        ],
+        "type": "object"
+      },
+      "BriefLatestView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "example": "MT-000123",
+            "type": "string"
+          },
+          "status": {
+            "description": "The item’s own status: a TicketStatus for a ticket, a ManagementRequestStatus for a request.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "status"
+        ],
+        "type": "object"
+      },
+      "BriefPollView": {
+        "properties": {
+          "closesAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "pendingUnitIds": {
+            "description": "The units whose vote the caller casts and that have not voted.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "questionAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "questionEn": {
+            "description": "Written by the staff.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "questionEn",
+          "questionAr",
+          "closesAt",
+          "pendingUnitIds"
+        ],
+        "type": "object"
+      },
+      "BriefSummaryView": {
+        "properties": {
+          "latest": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BriefLatestView"
+              }
+            ],
+            "description": "The open one that moved last. Null: none is open.",
+            "nullable": true,
+            "type": "object"
+          },
+          "open": {
+            "description": "Not finished, or not closed.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "open",
+          "latest"
+        ],
+        "type": "object"
+      },
+      "BuildingsView": {
+        "properties": {
+          "buildings": {
+            "description": "The buildings the compound’s units name, in order.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "buildings"
+        ],
+        "type": "object"
+      },
       "CancelAppointmentByResidentDto": {
         "properties": {
           "reasonCode": {
@@ -881,6 +1581,18 @@
         "properties": {
           "reasonCode": {
             "description": "From the closed list `managementAppointmentCancelByStaff`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "CancelEventDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `communityEventCancel`.",
             "type": "string"
           }
         },
@@ -968,6 +1680,12 @@
           "parcels": {
             "type": "boolean"
           },
+          "pollsVote": {
+            "type": "boolean"
+          },
+          "pollsVoteAsOwner": {
+            "type": "boolean"
+          },
           "removeOccupant": {
             "type": "boolean"
           },
@@ -1018,6 +1736,8 @@
           "governanceVote",
           "governanceBudget",
           "governanceCandidacy",
+          "pollsVote",
+          "pollsVoteAsOwner",
           "ownershipCard",
           "closedUnitCard",
           "endLease",
@@ -1160,6 +1880,29 @@
         },
         "required": [
           "caseId"
+        ],
+        "type": "object"
+      },
+      "CastVoteDto": {
+        "properties": {
+          "optionIds": {
+            "description": "The unit’s choice from now on: one option, or several when the poll allows it. Replaces an earlier choice.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "unitId": {
+            "description": "The unit whose vote this is. Required only when the caller casts the vote of several units in this poll.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "optionIds"
         ],
         "type": "object"
       },
@@ -1422,6 +2165,35 @@
         },
         "required": [
           "closed"
+        ],
+        "type": "object"
+      },
+      "CommunityAttachmentView": {
+        "properties": {
+          "contentType": {
+            "description": "image/jpeg, image/png, image/webp or application/pdf.",
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "url": {
+            "description": "A presigned GET, valid until `expiresAt`. Null when gone.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "contentType",
+          "url",
+          "expiresAt"
         ],
         "type": "object"
       },
@@ -1803,6 +2575,92 @@
         ],
         "type": "object"
       },
+      "CreateAnnouncementDto": {
+        "properties": {
+          "attachmentFileIds": {
+            "description": "The files it shows from now on: ids it already shows (`attachments[].id`) to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE).",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AudienceDto"
+              }
+            ],
+            "description": "Absent: the whole compound, everyone. May change only until the announcement is out."
+          },
+          "bodyAr": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "expiresAt": {
+            "description": "No longer shown from then on. A general announcement’s only: works end by their own dates.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnouncementKind"
+              }
+            ],
+            "description": "`works`: works and closures, with `works`. Never changes."
+          },
+          "pinnedUntil": {
+            "description": "Stays on top until then. Only when `important`.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnouncementPriority"
+              }
+            ],
+            "description": "An `important` one tells its audience when it comes out, and may be pinned."
+          },
+          "titleAr": {
+            "maxLength": 150,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "A language is whole or absent; at least one is there.",
+            "maxLength": 150,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "works": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorksDto"
+              }
+            ],
+            "description": "Required for `works`, refused otherwise."
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "type": "object"
+      },
       "CreateCategoryDto": {
         "properties": {
           "commonAreaAllowed": {
@@ -1866,6 +2724,80 @@
         ],
         "type": "object"
       },
+      "CreateEventDto": {
+        "properties": {
+          "attachmentFileIds": {
+            "description": "The files it shows from now on: ids it already shows to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE).",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AudienceDto"
+              }
+            ],
+            "description": "Absent: the whole compound, everyone. Never changes."
+          },
+          "capacity": {
+            "description": "Seats in all, guests included. Null or absent: no limit. Never below the seats already taken.",
+            "maximum": 100000,
+            "minimum": 1,
+            "nullable": true,
+            "type": "number"
+          },
+          "descriptionAr": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "description": "After `startsAt` (ENDS_BEFORE_START).",
+            "format": "date-time",
+            "type": "string"
+          },
+          "place": {
+            "description": "Where, in the staff’s words.",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "titleAr": {
+            "maxLength": 150,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "A language is whole or absent; at least one is there.",
+            "maxLength": 150,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "place",
+          "startsAt",
+          "endsAt"
+        ],
+        "type": "object"
+      },
       "CreateGateDto": {
         "properties": {
           "kind": {
@@ -1918,6 +2850,59 @@
         },
         "required": [
           "kind"
+        ],
+        "type": "object"
+      },
+      "CreatePollDto": {
+        "properties": {
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AudienceDto"
+              }
+            ],
+            "description": "Whose units vote. Absent: the whole compound, everyone. A poll put to the `owners` is voted by a unit’s owner; any other by its primary occupant or a member given `polls_vote`."
+          },
+          "closesAt": {
+            "description": "When voting closes, by itself. After the opening, and ahead.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "multiple": {
+            "description": "Several options may be chosen. Absent: one.",
+            "type": "boolean"
+          },
+          "opensAt": {
+            "description": "When voting opens. Absent: now.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "options": {
+            "description": "In the order shown.",
+            "items": {
+              "$ref": "#/components/schemas/PollOptionDto"
+            },
+            "maxItems": 10,
+            "minItems": 2,
+            "type": "array"
+          },
+          "questionAr": {
+            "maxLength": 500,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "questionEn": {
+            "description": "English, Arabic or both; at least one.",
+            "maxLength": 500,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "options",
+          "closesAt"
         ],
         "type": "object"
       },
@@ -2179,6 +3164,56 @@
         "properties": {
           "key": {
             "description": "Stable code, lowercase (e.g. `hvac`). Never changes once created.",
+            "pattern": "^[a-z][a-z0-9_]{1,39}$",
+            "type": "string"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "nameAr",
+          "nameEn"
+        ],
+        "type": "object"
+      },
+      "CreateSuggestionDto": {
+        "properties": {
+          "body": {
+            "description": "The suggestion, in the resident’s words. Private to its author and the staff.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "topicId": {
+            "description": "An active topic of the compound (TOPIC_NOT_AVAILABLE).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitId": {
+            "description": "One of the author’s units, when the suggestion is about one.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "topicId",
+          "body"
+        ],
+        "type": "object"
+      },
+      "CreateSuggestionTopicDto": {
+        "properties": {
+          "key": {
+            "description": "Stable code, lowercase (e.g. `parking`). Never changes once created.",
             "pattern": "^[a-z][a-z0-9_]{1,39}$",
             "type": "string"
           },
@@ -2500,6 +3535,81 @@
           "id",
           "token",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "DailyBriefView": {
+        "properties": {
+          "announcements": {
+            "$ref": "#/components/schemas/BriefAnnouncementsView"
+          },
+          "date": {
+            "description": "The compound’s local day the brief is of.",
+            "format": "date",
+            "type": "string"
+          },
+          "events": {
+            "description": "Today’s events that are not over, the soonest first.",
+            "items": {
+              "$ref": "#/components/schemas/EventListItemView"
+            },
+            "type": "array"
+          },
+          "gates": {
+            "items": {
+              "$ref": "#/components/schemas/BriefGateView"
+            },
+            "type": "array"
+          },
+          "polls": {
+            "description": "Open polls closing within 48 hours in which the caller casts the vote of a unit that has not voted.",
+            "items": {
+              "$ref": "#/components/schemas/BriefPollView"
+            },
+            "type": "array"
+          },
+          "requests": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BriefSummaryView"
+              }
+            ],
+            "description": "The caller’s requests to the management. Null when their role does not write to it.",
+            "nullable": true,
+            "type": "object"
+          },
+          "tickets": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BriefSummaryView"
+              }
+            ],
+            "description": "The caller’s maintenance tickets. Null when their role does not open tickets.",
+            "nullable": true,
+            "type": "object"
+          },
+          "timeZone": {
+            "example": "Africa/Cairo",
+            "type": "string"
+          },
+          "works": {
+            "description": "Works and closures under way now.",
+            "items": {
+              "$ref": "#/components/schemas/AnnouncementListItemView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "date",
+          "timeZone",
+          "works",
+          "events",
+          "announcements",
+          "polls",
+          "tickets",
+          "requests",
+          "gates"
         ],
         "type": "object"
       },
@@ -3611,6 +4721,122 @@
         ],
         "type": "object"
       },
+      "DoneNoteDto": {
+        "properties": {
+          "attachmentFileIds": {
+            "description": "The photos the note shows from now on: ids it already shows to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE).",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "noteAr": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "noteEn": {
+            "description": "What was done. English, Arabic or both; at least one.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "DoneNoteView": {
+        "properties": {
+          "doneAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "noteAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "noteEn": {
+            "description": "Written by the staff.",
+            "nullable": true,
+            "type": "string"
+          },
+          "photoCount": {
+            "type": "number"
+          },
+          "photos": {
+            "description": "Empty where the list does not carry them.",
+            "items": {
+              "$ref": "#/components/schemas/CommunityAttachmentView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "doneAt",
+          "noteEn",
+          "noteAr",
+          "photoCount",
+          "photos"
+        ],
+        "type": "object"
+      },
+      "DoneSuggestionView": {
+        "properties": {
+          "done": {
+            "$ref": "#/components/schemas/DoneNoteView"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "summary": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PublicSummaryView"
+              }
+            ],
+            "description": "The staff’s summary, when the suggestion is on the board.",
+            "nullable": true,
+            "type": "object"
+          },
+          "supports": {
+            "type": "number"
+          },
+          "topic": {
+            "$ref": "#/components/schemas/SuggestionTopicRefView"
+          }
+        },
+        "required": [
+          "id",
+          "topic",
+          "summary",
+          "done",
+          "supports"
+        ],
+        "type": "object"
+      },
+      "DoneSuggestionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/DoneSuggestionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "DownloadView": {
         "properties": {
           "expiresAt": {
@@ -3771,6 +4997,18 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "EngagementSettingsResponse": {
+        "properties": {
+          "eventMaxGuests": {
+            "description": "Guests one \"going\" answer to an event may bring, at most.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "eventMaxGuests"
         ],
         "type": "object"
       },
@@ -4076,6 +5314,277 @@
         ],
         "type": "object"
       },
+      "EventCountsView": {
+        "properties": {
+          "going": {
+            "description": "Accounts that said they are going.",
+            "type": "number"
+          },
+          "notGoing": {
+            "type": "number"
+          },
+          "remaining": {
+            "description": "Seats left. Null: the event has no limit.",
+            "nullable": true,
+            "type": "number"
+          },
+          "seats": {
+            "description": "Seats taken: those going and their guests.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "going",
+          "notGoing",
+          "seats",
+          "remaining"
+        ],
+        "type": "object"
+      },
+      "EventCreatedView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "EventListItemView": {
+        "properties": {
+          "attachmentCount": {
+            "description": "Files it shows.",
+            "type": "number"
+          },
+          "cancelReason": {
+            "description": "From the closed list `communityEventCancel`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "capacity": {
+            "description": "Seats in all, guests included. Null: no limit.",
+            "nullable": true,
+            "type": "number"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/EventCountsView"
+          },
+          "descriptionAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "myRsvp": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MyRsvpView"
+              }
+            ],
+            "description": "Null: the caller has not answered.",
+            "nullable": true,
+            "type": "object"
+          },
+          "place": {
+            "description": "Where, in the staff’s words.",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "description": "From its dates, now. `cancelled` stays so.",
+            "enum": [
+              "upcoming",
+              "ongoing",
+              "ended",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "titleAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "Written by the staff. A language is whole or absent; at least one is there.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "titleEn",
+          "descriptionEn",
+          "titleAr",
+          "descriptionAr",
+          "place",
+          "startsAt",
+          "endsAt",
+          "capacity",
+          "counts",
+          "cancelledAt",
+          "cancelReason",
+          "attachmentCount",
+          "myRsvp"
+        ],
+        "type": "object"
+      },
+      "EventListItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/EventListItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "EventRsvpResponse": {
+        "enum": [
+          "going",
+          "not_going"
+        ],
+        "type": "string"
+      },
+      "EventView": {
+        "properties": {
+          "attachmentCount": {
+            "description": "Files it shows.",
+            "type": "number"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/CommunityAttachmentView"
+            },
+            "type": "array"
+          },
+          "cancelReason": {
+            "description": "From the closed list `communityEventCancel`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "capacity": {
+            "description": "Seats in all, guests included. Null: no limit.",
+            "nullable": true,
+            "type": "number"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/EventCountsView"
+          },
+          "descriptionAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "myRsvp": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MyRsvpView"
+              }
+            ],
+            "description": "Null: the caller has not answered.",
+            "nullable": true,
+            "type": "object"
+          },
+          "place": {
+            "description": "Where, in the staff’s words.",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "description": "From its dates, now. `cancelled` stays so.",
+            "enum": [
+              "upcoming",
+              "ongoing",
+              "ended",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "titleAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "Written by the staff. A language is whole or absent; at least one is there.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "titleEn",
+          "descriptionEn",
+          "titleAr",
+          "descriptionAr",
+          "place",
+          "startsAt",
+          "endsAt",
+          "capacity",
+          "counts",
+          "cancelledAt",
+          "cancelReason",
+          "attachmentCount",
+          "myRsvp",
+          "attachments"
+        ],
+        "type": "object"
+      },
       "ExportDownloadDto": {
         "properties": {
           "code": {
@@ -4176,7 +5685,8 @@
           "ticket_photo",
           "parcel_photo",
           "data_export",
-          "request_attachment"
+          "request_attachment",
+          "community_attachment"
         ],
         "type": "string"
       },
@@ -4800,7 +6310,8 @@
               "bookings",
               "tickets",
               "finance",
-              "unit_security"
+              "unit_security",
+              "polls_vote"
             ],
             "type": "string"
           }
@@ -5113,7 +6624,8 @@
                 "bookings",
                 "tickets",
                 "finance",
-                "unit_security"
+                "unit_security",
+                "polls_vote"
               ],
               "type": "string"
             },
@@ -6091,7 +7603,8 @@
               "bookings",
               "tickets",
               "finance",
-              "unit_security"
+              "unit_security",
+              "polls_vote"
             ],
             "type": "string"
           }
@@ -6109,7 +7622,8 @@
           "bookings",
           "tickets",
           "finance",
-          "unit_security"
+          "unit_security",
+          "polls_vote"
         ],
         "type": "string"
       },
@@ -6254,6 +7768,28 @@
         },
         "required": [
           "body"
+        ],
+        "type": "object"
+      },
+      "MoveSuggestionDto": {
+        "properties": {
+          "response": {
+            "description": "What the staff tell the author. Required to decline. Replaces an earlier answer.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SuggestionStatus"
+              }
+            ],
+            "description": "A step forward: `under_review`, `planned`, `done`, or `declined`. `done` and `declined` are final."
+          }
+        },
+        "required": [
+          "status"
         ],
         "type": "object"
       },
@@ -6477,6 +8013,215 @@
           "id",
           "key",
           "name"
+        ],
+        "type": "object"
+      },
+      "MyRsvpView": {
+        "properties": {
+          "guests": {
+            "type": "number"
+          },
+          "response": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EventRsvpResponse"
+              }
+            ]
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "response",
+          "guests",
+          "unitId"
+        ],
+        "type": "object"
+      },
+      "MySuggestionListItemView": {
+        "properties": {
+          "body": {
+            "description": "The caller’s own words.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "done": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DoneNoteView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "publicSummary": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PublicSummaryView"
+              }
+            ],
+            "description": "How it is shown on the board, when the staff put it there; never with the caller’s name or words. Null: it is not on the board.",
+            "nullable": true,
+            "type": "object"
+          },
+          "respondedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "response": {
+            "description": "The staff’s answer, as it stands now.",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SuggestionStatus"
+              }
+            ]
+          },
+          "supports": {
+            "description": "Accounts that support it on the board.",
+            "type": "number"
+          },
+          "topic": {
+            "$ref": "#/components/schemas/SuggestionTopicRefView"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "topic",
+          "unitId",
+          "body",
+          "status",
+          "response",
+          "respondedAt",
+          "publicSummary",
+          "supports",
+          "done",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "MySuggestionListItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MySuggestionListItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "MySuggestionView": {
+        "properties": {
+          "body": {
+            "description": "The caller’s own words.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "done": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DoneNoteView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "publicSummary": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PublicSummaryView"
+              }
+            ],
+            "description": "How it is shown on the board, when the staff put it there; never with the caller’s name or words. Null: it is not on the board.",
+            "nullable": true,
+            "type": "object"
+          },
+          "respondedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "response": {
+            "description": "The staff’s answer, as it stands now.",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SuggestionStatus"
+              }
+            ]
+          },
+          "supports": {
+            "description": "Accounts that support it on the board.",
+            "type": "number"
+          },
+          "topic": {
+            "$ref": "#/components/schemas/SuggestionTopicRefView"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "updates": {
+            "description": "Each move and each answer, the oldest first.",
+            "items": {
+              "$ref": "#/components/schemas/SuggestionUpdateView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "topic",
+          "unitId",
+          "body",
+          "status",
+          "response",
+          "respondedAt",
+          "publicSummary",
+          "supports",
+          "done",
+          "createdAt",
+          "updates"
         ],
         "type": "object"
       },
@@ -6859,7 +8604,8 @@
           "parcels",
           "household",
           "account_security",
-          "management"
+          "management",
+          "community"
         ],
         "type": "string"
       },
@@ -8014,6 +9760,220 @@
         ],
         "type": "object"
       },
+      "PollAudienceView": {
+        "properties": {
+          "units": {
+            "description": "Units the poll is put to right now: what a turnout is out of.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "units"
+        ],
+        "type": "object"
+      },
+      "PollCreatedView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "PollOptionDto": {
+        "properties": {
+          "labelAr": {
+            "maxLength": 200,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "labelEn": {
+            "description": "In the languages the question is written in.",
+            "maxLength": 200,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PollOptionView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "labelAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "labelEn": {
+            "description": "Written by the staff.",
+            "nullable": true,
+            "type": "string"
+          },
+          "position": {
+            "description": "Its place in the list, from 1.",
+            "type": "number"
+          },
+          "votes": {
+            "description": "Units that chose it. Null while the results are withheld (`resultsHidden`).",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "labelEn",
+          "labelAr",
+          "votes"
+        ],
+        "type": "object"
+      },
+      "PollUnitView": {
+        "properties": {
+          "choice": {
+            "description": "The unit’s choice now, to change it knowingly: only while the poll is open and only to those who cast its vote. Null otherwise, and always once the poll has ended: nothing keeps it.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "mayVote": {
+            "description": "The caller casts this unit’s vote in this poll.",
+            "type": "boolean"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "voted": {
+            "description": "The unit has voted.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "unitId",
+          "mayVote",
+          "voted",
+          "choice"
+        ],
+        "type": "object"
+      },
+      "PollView": {
+        "properties": {
+          "closesAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "multiple": {
+            "description": "Several options may be chosen.",
+            "type": "boolean"
+          },
+          "opensAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/PollOptionView"
+            },
+            "type": "array"
+          },
+          "questionAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "questionEn": {
+            "description": "Written by the staff.",
+            "nullable": true,
+            "type": "string"
+          },
+          "resultsHidden": {
+            "description": "Why the counts are withheld, or null when they are shown: `not_open`; `not_voted` (a resident sees an open poll’s counts once one of their units has voted); `few_votes` (fewer than five units have voted on an open poll: shown to nobody); `cancelled`. A closed poll shows everything to everyone.",
+            "enum": [
+              "not_open",
+              "not_voted",
+              "few_votes",
+              "cancelled"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "description": "`closed` from its closing time on, or when the staff closed it; `cancelled`: ended with no result.",
+            "enum": [
+              "scheduled",
+              "open",
+              "closed",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "turnout": {
+            "description": "Units that voted. Null while the results are withheld.",
+            "nullable": true,
+            "type": "number"
+          },
+          "units": {
+            "description": "The caller’s units the poll is put to.",
+            "items": {
+              "$ref": "#/components/schemas/PollUnitView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "questionEn",
+          "questionAr",
+          "multiple",
+          "opensAt",
+          "closesAt",
+          "options",
+          "turnout",
+          "resultsHidden",
+          "units"
+        ],
+        "type": "object"
+      },
+      "PollViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PollView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "PostRequestMessageDto": {
         "properties": {
           "attachmentFileIds": {
@@ -8281,6 +10241,74 @@
           "priority",
           "reasonCode"
         ],
+        "type": "object"
+      },
+      "PublicSummaryView": {
+        "properties": {
+          "textAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "textEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "Written by the staff.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "titleEn",
+          "textEn",
+          "titleAr",
+          "textAr"
+        ],
+        "type": "object"
+      },
+      "PublishAnnouncementDto": {
+        "properties": {
+          "publishAt": {
+            "description": "When it comes out. Absent: now. Not in the past.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PublishSuggestionDto": {
+        "properties": {
+          "textAr": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "textEn": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "titleAr": {
+            "maxLength": 150,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "A language is whole or absent; at least one is there.",
+            "maxLength": 150,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "PushPlatform": {
@@ -10230,6 +12258,20 @@
         ],
         "type": "object"
       },
+      "RespondSuggestionDto": {
+        "properties": {
+          "response": {
+            "description": "What the staff tell the author. Replaces an earlier answer.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "response"
+        ],
+        "type": "object"
+      },
       "ReviewDto": {
         "properties": {
           "birthDate": {
@@ -10436,6 +12478,7 @@
               "tickets",
               "finance",
               "unit_security",
+              "polls_vote",
               "all"
             ],
             "type": "string"
@@ -10564,6 +12607,32 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "RsvpDto": {
+        "properties": {
+          "guests": {
+            "description": "People the caller brings, when going. At most the compound’s limit (INVALID_NUMBER, params.max). Absent: none.",
+            "maximum": 20,
+            "minimum": 0,
+            "type": "number"
+          },
+          "response": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EventRsvpResponse"
+              }
+            ]
+          },
+          "unitId": {
+            "description": "The unit the caller answers from. Required only when the event is put to several of their units.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "response"
         ],
         "type": "object"
       },
@@ -11179,6 +13248,298 @@
         ],
         "type": "object"
       },
+      "StaffAnnouncementListItemView": {
+        "properties": {
+          "archivedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "attachmentCount": {
+            "type": "number"
+          },
+          "audience": {
+            "$ref": "#/components/schemas/AudienceView"
+          },
+          "bodyAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "editedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnouncementKind"
+              }
+            ]
+          },
+          "notifiedAt": {
+            "description": "When its audience was told (important ones only).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "pinned": {
+            "description": "Pinned now.",
+            "type": "boolean"
+          },
+          "pinnedUntil": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnouncementPriority"
+              }
+            ]
+          },
+          "publishAt": {
+            "description": "Null: a draft.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "description": "From its dates, now: `draft`, `scheduled`, `published`, `expired` (past its expiry), `ended` (works over) or `archived`.",
+            "enum": [
+              "draft",
+              "scheduled",
+              "published",
+              "expired",
+              "ended",
+              "archived"
+            ],
+            "type": "string"
+          },
+          "titleAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "Written by the staff. A language is whole or absent; at least one is there.",
+            "nullable": true,
+            "type": "string"
+          },
+          "version": {
+            "description": "The version it shows.",
+            "type": "number"
+          },
+          "works": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorksView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "titleEn",
+          "bodyEn",
+          "titleAr",
+          "bodyAr",
+          "id",
+          "kind",
+          "status",
+          "priority",
+          "pinned",
+          "pinnedUntil",
+          "publishAt",
+          "expiresAt",
+          "archivedAt",
+          "audience",
+          "version",
+          "editedAt",
+          "notifiedAt",
+          "works",
+          "attachmentCount",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StaffAnnouncementListItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffAnnouncementListItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffAnnouncementView": {
+        "properties": {
+          "archivedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "attachmentCount": {
+            "type": "number"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/CommunityAttachmentView"
+            },
+            "type": "array"
+          },
+          "audience": {
+            "$ref": "#/components/schemas/AudienceView"
+          },
+          "bodyAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "editedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnouncementKind"
+              }
+            ]
+          },
+          "notifiedAt": {
+            "description": "When its audience was told (important ones only).",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "pinned": {
+            "description": "Pinned now.",
+            "type": "boolean"
+          },
+          "pinnedUntil": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnouncementPriority"
+              }
+            ]
+          },
+          "publishAt": {
+            "description": "Null: a draft.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "description": "From its dates, now: `draft`, `scheduled`, `published`, `expired` (past its expiry), `ended` (works over) or `archived`.",
+            "enum": [
+              "draft",
+              "scheduled",
+              "published",
+              "expired",
+              "ended",
+              "archived"
+            ],
+            "type": "string"
+          },
+          "titleAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "Written by the staff. A language is whole or absent; at least one is there.",
+            "nullable": true,
+            "type": "string"
+          },
+          "version": {
+            "description": "The version it shows.",
+            "type": "number"
+          },
+          "works": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorksView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "titleEn",
+          "bodyEn",
+          "titleAr",
+          "bodyAr",
+          "id",
+          "kind",
+          "status",
+          "priority",
+          "pinned",
+          "pinnedUntil",
+          "publishAt",
+          "expiresAt",
+          "archivedAt",
+          "audience",
+          "version",
+          "editedAt",
+          "notifiedAt",
+          "works",
+          "attachmentCount",
+          "createdAt",
+          "attachments"
+        ],
+        "type": "object"
+      },
       "StaffAppointmentListItemView": {
         "properties": {
           "cancelReason": {
@@ -11313,6 +13674,222 @@
         ],
         "type": "object"
       },
+      "StaffEventListItemView": {
+        "properties": {
+          "attachmentCount": {
+            "description": "Files it shows.",
+            "type": "number"
+          },
+          "audience": {
+            "$ref": "#/components/schemas/AudienceView"
+          },
+          "cancelReason": {
+            "description": "From the closed list `communityEventCancel`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "capacity": {
+            "description": "Seats in all, guests included. Null: no limit.",
+            "nullable": true,
+            "type": "number"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/EventCountsView"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "descriptionAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "place": {
+            "description": "Where, in the staff’s words.",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "description": "From its dates, now. `cancelled` stays so.",
+            "enum": [
+              "upcoming",
+              "ongoing",
+              "ended",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "titleAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "Written by the staff. A language is whole or absent; at least one is there.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "titleEn",
+          "descriptionEn",
+          "titleAr",
+          "descriptionAr",
+          "place",
+          "startsAt",
+          "endsAt",
+          "capacity",
+          "counts",
+          "cancelledAt",
+          "cancelReason",
+          "attachmentCount",
+          "audience",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StaffEventListItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffEventListItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffEventView": {
+        "properties": {
+          "attachmentCount": {
+            "description": "Files it shows.",
+            "type": "number"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/CommunityAttachmentView"
+            },
+            "type": "array"
+          },
+          "audience": {
+            "$ref": "#/components/schemas/AudienceView"
+          },
+          "cancelReason": {
+            "description": "From the closed list `communityEventCancel`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "capacity": {
+            "description": "Seats in all, guests included. Null: no limit.",
+            "nullable": true,
+            "type": "number"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/EventCountsView"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "descriptionAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "place": {
+            "description": "Where, in the staff’s words.",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "description": "From its dates, now. `cancelled` stays so.",
+            "enum": [
+              "upcoming",
+              "ongoing",
+              "ended",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "titleAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "Written by the staff. A language is whole or absent; at least one is there.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "titleEn",
+          "descriptionEn",
+          "titleAr",
+          "descriptionAr",
+          "place",
+          "startsAt",
+          "endsAt",
+          "capacity",
+          "counts",
+          "cancelledAt",
+          "cancelReason",
+          "attachmentCount",
+          "audience",
+          "createdAt",
+          "attachments"
+        ],
+        "type": "object"
+      },
       "StaffMessageDto": {
         "properties": {
           "body": {
@@ -11328,6 +13905,120 @@
         },
         "required": [
           "body"
+        ],
+        "type": "object"
+      },
+      "StaffPollView": {
+        "properties": {
+          "audience": {
+            "$ref": "#/components/schemas/AudienceView"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "closesAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "multiple": {
+            "description": "Several options may be chosen.",
+            "type": "boolean"
+          },
+          "opensAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/PollOptionView"
+            },
+            "type": "array"
+          },
+          "questionAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "questionEn": {
+            "description": "Written by the staff.",
+            "nullable": true,
+            "type": "string"
+          },
+          "resultsHidden": {
+            "description": "Why the counts are withheld, or null when they are shown: `not_open`; `not_voted` (a resident sees an open poll’s counts once one of their units has voted); `few_votes` (fewer than five units have voted on an open poll: shown to nobody); `cancelled`. A closed poll shows everything to everyone.",
+            "enum": [
+              "not_open",
+              "not_voted",
+              "few_votes",
+              "cancelled"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "description": "`closed` from its closing time on, or when the staff closed it; `cancelled`: ended with no result.",
+            "enum": [
+              "scheduled",
+              "open",
+              "closed",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "turnout": {
+            "description": "Units that voted. Null while the results are withheld.",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "questionEn",
+          "questionAr",
+          "multiple",
+          "opensAt",
+          "closesAt",
+          "options",
+          "turnout",
+          "resultsHidden",
+          "audience",
+          "closedAt",
+          "cancelledAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StaffPollViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffPollView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -11872,6 +14563,255 @@
         ],
         "type": "object"
       },
+      "StaffSuggestionListItemView": {
+        "properties": {
+          "author": {
+            "$ref": "#/components/schemas/SuggestionAuthorView"
+          },
+          "body": {
+            "description": "The resident’s words. Null once their account was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "done": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DoneNoteView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "erased": {
+            "description": "The author’s account was erased.",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "publicSummary": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PublicSummaryView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "respondedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "response": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SuggestionStatus"
+              }
+            ]
+          },
+          "supports": {
+            "type": "number"
+          },
+          "topic": {
+            "$ref": "#/components/schemas/SuggestionTopicRefView"
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "topic",
+          "author",
+          "unitId",
+          "unitCode",
+          "body",
+          "erased",
+          "status",
+          "response",
+          "respondedAt",
+          "publishedAt",
+          "publicSummary",
+          "supports",
+          "done",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StaffSuggestionListItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffSuggestionListItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffSuggestionUpdateView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "byId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "response": {
+            "description": "What the staff answered then, if they did.",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SuggestionStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "response",
+          "at",
+          "byId"
+        ],
+        "type": "object"
+      },
+      "StaffSuggestionView": {
+        "properties": {
+          "author": {
+            "$ref": "#/components/schemas/SuggestionAuthorView"
+          },
+          "body": {
+            "description": "The resident’s words. Null once their account was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "done": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DoneNoteView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "erased": {
+            "description": "The author’s account was erased.",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "publicSummary": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PublicSummaryView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "respondedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "response": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SuggestionStatus"
+              }
+            ]
+          },
+          "supports": {
+            "type": "number"
+          },
+          "topic": {
+            "$ref": "#/components/schemas/SuggestionTopicRefView"
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "updates": {
+            "items": {
+              "$ref": "#/components/schemas/StaffSuggestionUpdateView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "topic",
+          "author",
+          "unitId",
+          "unitCode",
+          "body",
+          "erased",
+          "status",
+          "response",
+          "respondedAt",
+          "publishedAt",
+          "publicSummary",
+          "supports",
+          "done",
+          "createdAt",
+          "updates"
+        ],
+        "type": "object"
+      },
       "StartShiftDto": {
         "properties": {
           "gateId": {
@@ -11974,6 +14914,206 @@
         },
         "required": [
           "expiresAt"
+        ],
+        "type": "object"
+      },
+      "SuggestionAuthorView": {
+        "properties": {
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ],
+        "type": "object"
+      },
+      "SuggestionCreatedView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "SuggestionStatus": {
+        "enum": [
+          "received",
+          "under_review",
+          "planned",
+          "done",
+          "declined"
+        ],
+        "type": "string"
+      },
+      "SuggestionTopicOptionView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn"
+        ],
+        "type": "object"
+      },
+      "SuggestionTopicOptionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestionTopicOptionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "SuggestionTopicRefView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn"
+        ],
+        "type": "object"
+      },
+      "SuggestionTopicView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn",
+          "active",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "SuggestionTopicViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestionTopicView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "SuggestionUpdateView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "response": {
+            "description": "What the staff answered then, if they did.",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SuggestionStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "response",
+          "at"
         ],
         "type": "object"
       },
@@ -13593,6 +16733,81 @@
         ],
         "type": "object"
       },
+      "UpdateAnnouncementDto": {
+        "properties": {
+          "attachmentFileIds": {
+            "description": "The files it shows from now on: ids it already shows (`attachments[].id`) to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE).",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AudienceDto"
+              }
+            ],
+            "description": "Absent: the whole compound, everyone. May change only until the announcement is out."
+          },
+          "bodyAr": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "expiresAt": {
+            "description": "No longer shown from then on. A general announcement’s only: works end by their own dates.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "pinnedUntil": {
+            "description": "Stays on top until then. Only when `important`.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnouncementPriority"
+              }
+            ],
+            "description": "An `important` one tells its audience when it comes out, and may be pinned."
+          },
+          "titleAr": {
+            "maxLength": 150,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "A language is whole or absent; at least one is there.",
+            "maxLength": 150,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "works": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorksDto"
+              }
+            ],
+            "description": "Replaces the dates and the area of works as a whole."
+          }
+        },
+        "type": "object"
+      },
       "UpdateCategoryDto": {
         "properties": {
           "active": {
@@ -13663,6 +16878,76 @@
             "maximum": 100,
             "minimum": 0,
             "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateEngagementSettingsDto": {
+        "properties": {
+          "eventMaxGuests": {
+            "description": "Guests one \"going\" answer to an event may bring, at most.",
+            "maximum": 20,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateEventDto": {
+        "properties": {
+          "attachmentFileIds": {
+            "description": "The files it shows from now on: ids it already shows to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE).",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "capacity": {
+            "description": "Seats in all, guests included. Null or absent: no limit. Never below the seats already taken.",
+            "maximum": 100000,
+            "minimum": 1,
+            "nullable": true,
+            "type": "number"
+          },
+          "descriptionAr": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "place": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "titleAr": {
+            "maxLength": 150,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "A language is whole or absent; at least one is there.",
+            "maxLength": 150,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
           }
         },
         "type": "object"
@@ -13761,6 +17046,53 @@
             "maximum": 30,
             "minimum": 1,
             "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "UpdatePollDto": {
+        "properties": {
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AudienceDto"
+              }
+            ],
+            "description": "Whose units vote. Absent: the whole compound, everyone. A poll put to the `owners` is voted by a unit’s owner; any other by its primary occupant or a member given `polls_vote`."
+          },
+          "closesAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "multiple": {
+            "description": "Several options may be chosen. Absent: one.",
+            "type": "boolean"
+          },
+          "opensAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "options": {
+            "description": "Replaces the options as a whole.",
+            "items": {
+              "$ref": "#/components/schemas/PollOptionDto"
+            },
+            "maxItems": 10,
+            "minItems": 2,
+            "type": "array"
+          },
+          "questionAr": {
+            "maxLength": 500,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "questionEn": {
+            "description": "English, Arabic or both; at least one.",
+            "maxLength": 500,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
           }
         },
         "type": "object"
@@ -13902,6 +17234,25 @@
         "properties": {
           "active": {
             "description": "False retires it: it counts for no category and no technician.",
+            "type": "boolean"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateSuggestionTopicDto": {
+        "properties": {
+          "active": {
+            "description": "False retires the topic: no new suggestion may use it.",
             "type": "boolean"
           },
           "nameAr": {
@@ -14549,6 +17900,18 @@
         ],
         "type": "object"
       },
+      "VoteCastView": {
+        "properties": {
+          "pollId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pollId"
+        ],
+        "type": "object"
+      },
       "WageObligationKind": {
         "enum": [
           "pay_in_full",
@@ -14801,6 +18164,121 @@
         "required": [
           "from",
           "to"
+        ],
+        "type": "object"
+      },
+      "WorksAreaKind": {
+        "enum": [
+          "road",
+          "facility",
+          "gate"
+        ],
+        "type": "string"
+      },
+      "WorksDto": {
+        "properties": {
+          "areaKind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorksAreaKind"
+              }
+            ]
+          },
+          "endsAt": {
+            "description": "After `startsAt` (ENDS_BEFORE_START).",
+            "format": "date-time",
+            "type": "string"
+          },
+          "gateId": {
+            "description": "One of the compound’s gates; only with `areaKind: gate`.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "place": {
+            "description": "Where, in the staff’s words.",
+            "maxLength": 200,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "startsAt",
+          "endsAt",
+          "areaKind"
+        ],
+        "type": "object"
+      },
+      "WorksGateView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "open": {
+            "description": "In service now.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "open"
+        ],
+        "type": "object"
+      },
+      "WorksView": {
+        "properties": {
+          "active": {
+            "description": "Under way now: started and not ended.",
+            "type": "boolean"
+          },
+          "areaKind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorksAreaKind"
+              }
+            ]
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "gate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorksGateView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "place": {
+            "description": "Where, in the staff’s words.",
+            "nullable": true,
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "startsAt",
+          "endsAt",
+          "areaKind",
+          "gate",
+          "place",
+          "active"
         ],
         "type": "object"
       }
@@ -15636,6 +19114,146 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/announcements": {
+      "get": {
+        "operationId": "AnnouncementsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AnnouncementKind"
+            }
+          },
+          {
+            "description": "`true`: only what is pinned now.",
+            "in": "query",
+            "name": "pinned",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementListItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the announcements put to me",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/announcements/{id}": {
+      "get": {
+        "operationId": "AnnouncementsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one announcement put to me",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/announcements/{id}/read": {
+      "post": {
+        "operationId": "AnnouncementsController_read",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark an announcement as opened",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/audit": {
       "get": {
         "operationId": "AuditController_list",
@@ -16002,6 +19620,1497 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/community/announcements": {
+      "get": {
+        "operationId": "StaffAnnouncementsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "draft",
+                "scheduled",
+                "published",
+                "expired",
+                "ended",
+                "archived"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AnnouncementKind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffAnnouncementListItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the announcements, drafts and archived included",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffAnnouncementsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAnnouncementDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Write an announcement, as a draft",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/announcements/{id}": {
+      "get": {
+        "operationId": "StaffAnnouncementsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffAnnouncementView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one announcement",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "StaffAnnouncementsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAnnouncementDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change an announcement; new words make a new version",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/announcements/{id}/archive": {
+      "post": {
+        "operationId": "StaffAnnouncementsController_archive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Archive an announcement",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/announcements/{id}/publish": {
+      "post": {
+        "operationId": "StaffAnnouncementsController_publish",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishAnnouncementDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Publish an announcement now, or schedule it",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/announcements/{id}/reads": {
+      "get": {
+        "operationId": "StaffAnnouncementsController_reads",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementReadCountsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Count who opened an announcement",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/announcements/{id}/versions": {
+      "get": {
+        "operationId": "StaffAnnouncementsController_versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementVersionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read what an announcement said, version by version",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/audience/preview": {
+      "post": {
+        "operationId": "AudienceController_preview",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AudiencePreviewDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AudienceSizeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Count who an audience is right now",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/buildings": {
+      "get": {
+        "operationId": "AudienceController_buildings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the buildings an audience may name",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/events": {
+      "get": {
+        "operationId": "StaffEventsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "upcoming",
+                "ongoing",
+                "ended",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffEventListItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the events",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffEventsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEventDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Write an event",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/events/{id}": {
+      "get": {
+        "operationId": "StaffEventsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffEventView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one event",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "StaffEventsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEventDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change an event that has not started",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/events/{id}/attendees": {
+      "get": {
+        "operationId": "StaffEventsController_attendees",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "Absent: those who are going.",
+            "in": "query",
+            "name": "response",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/EventRsvpResponse"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendeeViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List who answered an event",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/events/{id}/cancel": {
+      "post": {
+        "operationId": "StaffEventsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelEventDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel an event and tell those who are going",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/polls": {
+      "get": {
+        "operationId": "StaffPollsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "scheduled",
+                "open",
+                "closed",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPollViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the polls",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffPollsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePollDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PollCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Write a poll",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/polls/{id}": {
+      "get": {
+        "operationId": "StaffPollsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPollView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one poll and its counts",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "StaffPollsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePollDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a poll before it opens, or its closing time while open",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/polls/{id}/audience": {
+      "get": {
+        "operationId": "StaffPollsController_audience",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PollAudienceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Count the units a poll is put to",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/polls/{id}/cancel": {
+      "post": {
+        "operationId": "StaffPollsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a poll: it ends with no result",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/polls/{id}/close": {
+      "post": {
+        "operationId": "StaffPollsController_close",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close an open poll now",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/settings": {
+      "get": {
+        "operationId": "EngagementSettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngagementSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the community settings",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "EngagementSettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEngagementSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngagementSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update the community settings",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/suggestion-topics": {
+      "get": {
+        "operationId": "SuggestionTopicsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionTopicViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List suggestion topics",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "SuggestionTopicsController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSuggestionTopicDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionTopicView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a suggestion topic",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/suggestion-topics/{id}": {
+      "patch": {
+        "operationId": "SuggestionTopicsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSuggestionTopicDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionTopicView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a suggestion topic",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/suggestions": {
+      "get": {
+        "operationId": "StaffSuggestionsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SuggestionStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "topicId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "`true`: only those on the board; `false`: only those not.",
+            "in": "query",
+            "name": "published",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffSuggestionListItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the suggestions",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/suggestions/{id}": {
+      "get": {
+        "operationId": "StaffSuggestionsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffSuggestionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one suggestion",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/suggestions/{id}/done-note": {
+      "put": {
+        "operationId": "StaffSuggestionsController_doneNote",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DoneNoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Say what was done, with photos",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/suggestions/{id}/publish": {
+      "post": {
+        "operationId": "StaffSuggestionsController_publish",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishSuggestionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Put a suggestion on the board under a summary, without its author",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/suggestions/{id}/response": {
+      "put": {
+        "operationId": "StaffSuggestionsController_respond",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespondSuggestionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Answer a suggestion",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/suggestions/{id}/status": {
+      "post": {
+        "operationId": "StaffSuggestionsController_move",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveSuggestionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move a suggestion forward, with or without an answer",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/suggestions/{id}/unpublish": {
+      "post": {
+        "operationId": "StaffSuggestionsController_unpublish",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take a suggestion off the board",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/compliance-cases": {
       "get": {
         "operationId": "WorkersController_cases",
@@ -16336,6 +21445,135 @@
         "tags": [
           "erasure"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/events": {
+      "get": {
+        "operationId": "EventsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventListItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the events put to me that are not over",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/events/{id}": {
+      "get": {
+        "operationId": "EventsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one event put to me",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/events/{id}/rsvp": {
+      "put": {
+        "operationId": "EventsController_rsvp",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RsvpDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Say whether I am going, and with how many guests",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -21707,6 +26945,35 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/me/daily-brief": {
+      "get": {
+        "operationId": "DailyBriefController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyBriefView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get my daily brief",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me/data-exports": {
       "get": {
         "operationId": "DataExportsController_mine",
@@ -24030,6 +29297,151 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/polls": {
+      "get": {
+        "operationId": "PollsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PollViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the polls put to me",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/polls/{id}": {
+      "get": {
+        "operationId": "PollsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PollView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one poll put to me",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/polls/{id}/votes": {
+      "post": {
+        "operationId": "PollsController_vote",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CastVoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoteCastView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cast or change my unit’s vote",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/preventive-services": {
       "get": {
         "operationId": "PreventiveServiceOptionsController_list",
@@ -25003,6 +30415,339 @@
         "tags": [
           "admin"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/suggestion-board": {
+      "get": {
+        "operationId": "SuggestionBoardController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "topicId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardSuggestionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the suggestions on the board",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/suggestion-board/done": {
+      "get": {
+        "operationId": "SuggestionBoardController_done",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DoneSuggestionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List what was done: \"you said, we did\"",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/suggestion-board/{id}/support": {
+      "delete": {
+        "operationId": "SuggestionBoardController_unsupport",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take my support back",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "put": {
+        "operationId": "SuggestionBoardController_support",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Support a suggestion on the board",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/suggestion-topics": {
+      "get": {
+        "operationId": "SuggestionTopicOptionsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionTopicOptionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the topics a suggestion may be written under",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/suggestions": {
+      "get": {
+        "operationId": "SuggestionsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MySuggestionListItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my suggestions",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "SuggestionsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSuggestionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send a suggestion to the management",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/suggestions/{id}": {
+      "get": {
+        "operationId": "SuggestionsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MySuggestionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one of my suggestions and what became of it",
+        "tags": [
+          "community"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

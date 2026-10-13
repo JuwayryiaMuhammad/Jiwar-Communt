@@ -264,6 +264,57 @@ export interface paths {
         patch: operations["AccountsController_updateStatus"];
         trace?: never;
     };
+    "/api/v1/announcements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the announcements put to me */
+        get: operations["AnnouncementsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/announcements/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one announcement put to me */
+        get: operations["AnnouncementsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/announcements/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark an announcement as opened */
+        post: operations["AnnouncementsController_read"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit": {
         parameters: {
             query?: never;
@@ -400,6 +451,473 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/community/announcements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the announcements, drafts and archived included */
+        get: operations["StaffAnnouncementsController_list"];
+        put?: never;
+        /** Write an announcement, as a draft */
+        post: operations["StaffAnnouncementsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/announcements/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one announcement */
+        get: operations["StaffAnnouncementsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change an announcement; new words make a new version */
+        patch: operations["StaffAnnouncementsController_update"];
+        trace?: never;
+    };
+    "/api/v1/community/announcements/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive an announcement */
+        post: operations["StaffAnnouncementsController_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/announcements/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish an announcement now, or schedule it */
+        post: operations["StaffAnnouncementsController_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/announcements/{id}/reads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Count who opened an announcement */
+        get: operations["StaffAnnouncementsController_reads"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/announcements/{id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read what an announcement said, version by version */
+        get: operations["StaffAnnouncementsController_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/audience/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Count who an audience is right now */
+        post: operations["AudienceController_preview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/buildings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the buildings an audience may name */
+        get: operations["AudienceController_buildings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the events */
+        get: operations["StaffEventsController_list"];
+        put?: never;
+        /** Write an event */
+        post: operations["StaffEventsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/events/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one event */
+        get: operations["StaffEventsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change an event that has not started */
+        patch: operations["StaffEventsController_update"];
+        trace?: never;
+    };
+    "/api/v1/community/events/{id}/attendees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List who answered an event */
+        get: operations["StaffEventsController_attendees"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/events/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an event and tell those who are going */
+        post: operations["StaffEventsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/polls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the polls */
+        get: operations["StaffPollsController_list"];
+        put?: never;
+        /** Write a poll */
+        post: operations["StaffPollsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/polls/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one poll and its counts */
+        get: operations["StaffPollsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change a poll before it opens, or its closing time while open */
+        patch: operations["StaffPollsController_update"];
+        trace?: never;
+    };
+    "/api/v1/community/polls/{id}/audience": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Count the units a poll is put to */
+        get: operations["StaffPollsController_audience"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/polls/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a poll: it ends with no result */
+        post: operations["StaffPollsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/polls/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close an open poll now */
+        post: operations["StaffPollsController_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the community settings */
+        get: operations["EngagementSettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update the community settings */
+        patch: operations["EngagementSettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/community/suggestion-topics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List suggestion topics */
+        get: operations["SuggestionTopicsController_list"];
+        put?: never;
+        /** Create a suggestion topic */
+        post: operations["SuggestionTopicsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/suggestion-topics/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a suggestion topic */
+        patch: operations["SuggestionTopicsController_update"];
+        trace?: never;
+    };
+    "/api/v1/community/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the suggestions */
+        get: operations["StaffSuggestionsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/suggestions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one suggestion */
+        get: operations["StaffSuggestionsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/suggestions/{id}/done-note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Say what was done, with photos */
+        put: operations["StaffSuggestionsController_doneNote"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/suggestions/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Put a suggestion on the board under a summary, without its author */
+        post: operations["StaffSuggestionsController_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/suggestions/{id}/response": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Answer a suggestion */
+        put: operations["StaffSuggestionsController_respond"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/suggestions/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Move a suggestion forward, with or without an answer */
+        post: operations["StaffSuggestionsController_move"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/suggestions/{id}/unpublish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take a suggestion off the board */
+        post: operations["StaffSuggestionsController_unpublish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/compliance-cases": {
         parameters: {
             query?: never;
@@ -529,6 +1047,57 @@ export interface paths {
         /** What an erasure removes and keeps, and the phrase to type */
         get: operations["ErasureController_scope"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the events put to me that are not over */
+        get: operations["EventsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one event put to me */
+        get: operations["EventsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/{id}/rsvp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Say whether I am going, and with how many guests */
+        put: operations["EventsController_rsvp"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2358,6 +2927,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/daily-brief": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get my daily brief */
+        get: operations["DailyBriefController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/data-exports": {
         parameters: {
             query?: never;
@@ -3233,6 +3819,57 @@ export interface paths {
         patch: operations["TenantsController_setStatus"];
         trace?: never;
     };
+    "/api/v1/polls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the polls put to me */
+        get: operations["PollsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/polls/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one poll put to me */
+        get: operations["PollsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/polls/{id}/votes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cast or change my unit’s vote */
+        post: operations["PollsController_vote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/preventive-services": {
         parameters: {
             query?: never;
@@ -3625,6 +4262,110 @@ export interface paths {
         head?: never;
         /** Update the compound's settings */
         patch: operations["SettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/suggestion-board": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the suggestions on the board */
+        get: operations["SuggestionBoardController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/suggestion-board/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List what was done: "you said, we did" */
+        get: operations["SuggestionBoardController_done"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/suggestion-board/{id}/support": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Support a suggestion on the board */
+        put: operations["SuggestionBoardController_support"];
+        post?: never;
+        /** Take my support back */
+        delete: operations["SuggestionBoardController_unsupport"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/suggestion-topics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the topics a suggestion may be written under */
+        get: operations["SuggestionTopicOptionsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List my suggestions */
+        get: operations["SuggestionsController_list"];
+        put?: never;
+        /** Send a suggestion to the management */
+        post: operations["SuggestionsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/suggestions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one of my suggestions and what became of it */
+        get: operations["SuggestionsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/technician/availability": {
@@ -5102,6 +5843,105 @@ export interface components {
         ActivationView: {
             missing: ("unitType" | "areaSqm" | "building")[];
         };
+        AnnouncementCreatedView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+        };
+        /** @enum {string} */
+        AnnouncementKind: "general" | "works";
+        AnnouncementListItemView: {
+            /** @description Files it shows. */
+            attachmentCount: number;
+            bodyAr: string | null;
+            bodyEn: string | null;
+            /**
+             * Format: date-time
+             * @description When it was last edited after it came out. Null: never.
+             */
+            editedAt: string | null;
+            /** Format: date-time */
+            expiresAt: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["AnnouncementKind"];
+            /** @description Pinned now. */
+            pinned: boolean;
+            priority: components["schemas"]["AnnouncementPriority"];
+            /** Format: date-time */
+            publishedAt: string;
+            /** @description The caller has opened it. */
+            read: boolean;
+            titleAr: string | null;
+            /** @description Written by the staff. A language is whole or absent; at least one is there. */
+            titleEn: string | null;
+            works: components["schemas"]["WorksView"] | null;
+        };
+        AnnouncementListItemViewList: {
+            data: components["schemas"]["AnnouncementListItemView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        AnnouncementPriority: "normal" | "important";
+        AnnouncementReadCountsView: {
+            /** @description Accounts that opened it. */
+            accounts: number;
+            /** @description Accounts it is put to right now. */
+            audienceAccounts: number;
+            /** @description Units it is put to right now. */
+            audienceUnits: number;
+            /** @description Units at least one of whose people opened it. */
+            units: number;
+        };
+        AnnouncementVersionView: {
+            attachments: components["schemas"]["CommunityAttachmentView"][];
+            bodyAr: string | null;
+            bodyEn: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: uuid
+             * @description Who wrote it.
+             */
+            editedById: string;
+            titleAr: string | null;
+            /** @description Written by the staff. A language is whole or absent; at least one is there. */
+            titleEn: string | null;
+            version: number;
+        };
+        AnnouncementVersionViewList: {
+            data: components["schemas"]["AnnouncementVersionView"][];
+            nextCursor: string | null;
+        };
+        AnnouncementView: {
+            /** @description Files it shows. */
+            attachmentCount: number;
+            attachments: components["schemas"]["CommunityAttachmentView"][];
+            bodyAr: string | null;
+            bodyEn: string | null;
+            /**
+             * Format: date-time
+             * @description When it was last edited after it came out. Null: never.
+             */
+            editedAt: string | null;
+            /** Format: date-time */
+            expiresAt: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["AnnouncementKind"];
+            /** @description Pinned now. */
+            pinned: boolean;
+            priority: components["schemas"]["AnnouncementPriority"];
+            /** Format: date-time */
+            publishedAt: string;
+            /** @description The caller has opened it. */
+            read: boolean;
+            titleAr: string | null;
+            /** @description Written by the staff. A language is whole or absent; at least one is there. */
+            titleEn: string | null;
+            works: components["schemas"]["WorksView"] | null;
+        };
         AppointmentBookedView: {
             /** Format: date-time */
             endsAt: string;
@@ -5229,6 +6069,47 @@ export interface components {
             to: string;
             totalDays: number;
         };
+        AttendeeView: {
+            /** Format: uuid */
+            accountId: string;
+            /** Format: date-time */
+            answeredAt: string;
+            fullName: string | null;
+            guests: number;
+            response: components["schemas"]["EventRsvpResponse"];
+            unitCode: string | null;
+            /** Format: uuid */
+            unitId: string;
+        };
+        AttendeeViewList: {
+            data: components["schemas"]["AttendeeView"][];
+            nextCursor: string | null;
+        };
+        AudienceDto: {
+            /** @description Buildings, as `GET /community/buildings` lists them. Null or absent: the whole compound. */
+            buildings?: string[] | null;
+            /** @description `owners`: the active owners of a unit, landlords included, and nobody else. `tenants`: the tenants and their households. */
+            occupancy: components["schemas"]["AudienceOccupancy"];
+        };
+        /**
+         * @description `owners`: the active owners of a unit, landlords included, and nobody else. `tenants`: the tenants and their households.
+         * @enum {string}
+         */
+        AudienceOccupancy: "everyone" | "owners" | "tenants";
+        AudiencePreviewDto: {
+            audience: components["schemas"]["AudienceDto"];
+        };
+        AudienceSizeView: {
+            /** @description Accounts in the audience now. */
+            accounts: number;
+            /** @description Units in the audience now. */
+            units: number;
+        };
+        AudienceView: {
+            /** @description Null: the whole compound. */
+            buildings: string[] | null;
+            occupancy: components["schemas"]["AudienceOccupancy"];
+        };
         /** @enum {string} */
         AuditActorType: "account" | "platform_admin" | "system";
         AuditEntryView: {
@@ -5276,12 +6157,76 @@ export interface components {
             /** Format: date */
             birthDate: string;
         };
+        BoardSuggestionView: {
+            done: components["schemas"]["DoneNoteView"] | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            publishedAt: string;
+            status: components["schemas"]["SuggestionStatus"];
+            summary: components["schemas"]["PublicSummaryView"];
+            /** @description The caller supports it. */
+            supported: boolean;
+            supports: number;
+            topic: components["schemas"]["SuggestionTopicRefView"];
+        };
+        BoardSuggestionViewList: {
+            data: components["schemas"]["BoardSuggestionView"][];
+            nextCursor: string | null;
+        };
+        BriefAnnouncementsView: {
+            /** @description Out in the last seven days and not opened by the caller, pinned ones aside. */
+            new: components["schemas"]["AnnouncementListItemView"][];
+            /** @description Pinned now. */
+            pinned: components["schemas"]["AnnouncementListItemView"][];
+        };
+        BriefGateView: {
+            /** Format: uuid */
+            id: string;
+            /** @description Written by the compound. */
+            name: string;
+            /** @description In service now. */
+            open: boolean;
+        };
+        BriefLatestView: {
+            /** Format: uuid */
+            id: string;
+            /** @example MT-000123 */
+            number: string;
+            /** @description The item’s own status: a TicketStatus for a ticket, a ManagementRequestStatus for a request. */
+            status: string;
+        };
+        BriefPollView: {
+            /** Format: date-time */
+            closesAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description The units whose vote the caller casts and that have not voted. */
+            pendingUnitIds: string[];
+            questionAr: string | null;
+            /** @description Written by the staff. */
+            questionEn: string | null;
+        };
+        BriefSummaryView: {
+            /** @description The open one that moved last. Null: none is open. */
+            latest: components["schemas"]["BriefLatestView"] | null;
+            /** @description Not finished, or not closed. */
+            open: number;
+        };
+        BuildingsView: {
+            /** @description The buildings the compound’s units name, in order. */
+            buildings: string[];
+        };
         CancelAppointmentByResidentDto: {
             /** @description From the closed list `managementAppointmentCancelByResident`. */
             reasonCode: string;
         };
         CancelAppointmentByStaffDto: {
             /** @description From the closed list `managementAppointmentCancelByStaff`. */
+            reasonCode: string;
+        };
+        CancelEventDto: {
+            /** @description From the closed list `communityEventCancel`. */
             reasonCode: string;
         };
         CancelVisitorPassDto: {
@@ -5311,6 +6256,8 @@ export interface components {
             landlordTenantFinance: boolean;
             ownershipCard: boolean;
             parcels: boolean;
+            pollsVote: boolean;
+            pollsVoteAsOwner: boolean;
             removeOccupant: boolean;
             tickets: boolean;
             transferOwnership: boolean;
@@ -5360,6 +6307,15 @@ export interface components {
         CaseCreatedView: {
             /** Format: uuid */
             caseId: string;
+        };
+        CastVoteDto: {
+            /** @description The unit’s choice from now on: one option, or several when the poll allows it. Replaces an earlier choice. */
+            optionIds: string[];
+            /**
+             * Format: uuid
+             * @description The unit whose vote this is. Required only when the caller casts the vote of several units in this poll.
+             */
+            unitId?: string;
         };
         CategoryChangeDto: {
             /**
@@ -5435,6 +6391,16 @@ export interface components {
         };
         ClosedModeDto: {
             closed: boolean;
+        };
+        CommunityAttachmentView: {
+            /** @description image/jpeg, image/png, image/webp or application/pdf. */
+            contentType: string;
+            /** Format: date-time */
+            expiresAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description A presigned GET, valid until `expiresAt`. Null when gone. */
+            url: string | null;
         };
         CompleteInviteDto: {
             code: string;
@@ -5556,6 +6522,33 @@ export interface components {
             roleKey?: string;
             type: components["schemas"]["AccountType"];
         };
+        CreateAnnouncementDto: {
+            /** @description The files it shows from now on: ids it already shows (`attachments[].id`) to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). */
+            attachmentFileIds?: string[];
+            /** @description Absent: the whole compound, everyone. May change only until the announcement is out. */
+            audience?: components["schemas"]["AudienceDto"];
+            bodyAr?: string | null;
+            bodyEn?: string | null;
+            /**
+             * Format: date-time
+             * @description No longer shown from then on. A general announcement’s only: works end by their own dates.
+             */
+            expiresAt?: string | null;
+            /** @description `works`: works and closures, with `works`. Never changes. */
+            kind: components["schemas"]["AnnouncementKind"];
+            /**
+             * Format: date-time
+             * @description Stays on top until then. Only when `important`.
+             */
+            pinnedUntil?: string | null;
+            /** @description An `important` one tells its audience when it comes out, and may be pinned. */
+            priority?: components["schemas"]["AnnouncementPriority"];
+            titleAr?: string | null;
+            /** @description A language is whole or absent; at least one is there. */
+            titleEn?: string | null;
+            /** @description Required for `works`, refused otherwise. */
+            works?: components["schemas"]["WorksDto"];
+        };
         CreateCategoryDto: {
             /** @default true */
             commonAreaAllowed: boolean;
@@ -5579,6 +6572,28 @@ export interface components {
             expiresAt: string;
             scopes: components["schemas"]["DelegationScope"][];
         };
+        CreateEventDto: {
+            /** @description The files it shows from now on: ids it already shows to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). */
+            attachmentFileIds?: string[];
+            /** @description Absent: the whole compound, everyone. Never changes. */
+            audience?: components["schemas"]["AudienceDto"];
+            /** @description Seats in all, guests included. Null or absent: no limit. Never below the seats already taken. */
+            capacity?: number | null;
+            descriptionAr?: string | null;
+            descriptionEn?: string | null;
+            /**
+             * Format: date-time
+             * @description After `startsAt` (ENDS_BEFORE_START).
+             */
+            endsAt: string;
+            /** @description Where, in the staff’s words. */
+            place: string;
+            /** Format: date-time */
+            startsAt: string;
+            titleAr?: string | null;
+            /** @description A language is whole or absent; at least one is there. */
+            titleEn?: string | null;
+        };
         CreateGateDto: {
             kind: components["schemas"]["GateKind"];
             name: string;
@@ -5596,6 +6611,27 @@ export interface components {
             unitCode?: string;
             /** @description As the visitor gives it; shown to the household only. */
             visitorName?: string;
+        };
+        CreatePollDto: {
+            /** @description Whose units vote. Absent: the whole compound, everyone. A poll put to the `owners` is voted by a unit’s owner; any other by its primary occupant or a member given `polls_vote`. */
+            audience?: components["schemas"]["AudienceDto"];
+            /**
+             * Format: date-time
+             * @description When voting closes, by itself. After the opening, and ahead.
+             */
+            closesAt: string;
+            /** @description Several options may be chosen. Absent: one. */
+            multiple?: boolean;
+            /**
+             * Format: date-time
+             * @description When voting opens. Absent: now.
+             */
+            opensAt?: string;
+            /** @description In the order shown. */
+            options: components["schemas"]["PollOptionDto"][];
+            questionAr?: string | null;
+            /** @description English, Arabic or both; at least one. */
+            questionEn?: string | null;
         };
         CreatePreventiveRequestDto: {
             /**
@@ -5704,6 +6740,26 @@ export interface components {
             nameAr: string;
             nameEn: string;
         };
+        CreateSuggestionDto: {
+            /** @description The suggestion, in the resident’s words. Private to its author and the staff. */
+            body: string;
+            /**
+             * Format: uuid
+             * @description An active topic of the compound (TOPIC_NOT_AVAILABLE).
+             */
+            topicId: string;
+            /**
+             * Format: uuid
+             * @description One of the author’s units, when the suggestion is about one.
+             */
+            unitId?: string;
+        };
+        CreateSuggestionTopicDto: {
+            /** @description Stable code, lowercase (e.g. `parking`). Never changes once created. */
+            key: string;
+            nameAr: string;
+            nameEn: string;
+        };
         CreateTenantDto: {
             manager: components["schemas"]["NewManagerDto"];
             name: string;
@@ -5804,6 +6860,27 @@ export interface components {
             id: string;
             /** @description Shown once; only its hash is stored. */
             token: string;
+        };
+        DailyBriefView: {
+            announcements: components["schemas"]["BriefAnnouncementsView"];
+            /**
+             * Format: date
+             * @description The compound’s local day the brief is of.
+             */
+            date: string;
+            /** @description Today’s events that are not over, the soonest first. */
+            events: components["schemas"]["EventListItemView"][];
+            gates: components["schemas"]["BriefGateView"][];
+            /** @description Open polls closing within 48 hours in which the caller casts the vote of a unit that has not voted. */
+            polls: components["schemas"]["BriefPollView"][];
+            /** @description The caller’s requests to the management. Null when their role does not write to it. */
+            requests: components["schemas"]["BriefSummaryView"] | null;
+            /** @description The caller’s maintenance tickets. Null when their role does not open tickets. */
+            tickets: components["schemas"]["BriefSummaryView"] | null;
+            /** @example Africa/Cairo */
+            timeZone: string;
+            /** @description Works and closures under way now. */
+            works: components["schemas"]["AnnouncementListItemView"][];
         };
         /** @enum {string} */
         DataExportStatus: "pending" | "building" | "ready" | "expired" | "failed";
@@ -6095,6 +7172,36 @@ export interface components {
             data: components["schemas"]["DispatchVisitView"][];
             nextCursor: string | null;
         };
+        DoneNoteDto: {
+            /** @description The photos the note shows from now on: ids it already shows to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). */
+            attachmentFileIds?: string[];
+            noteAr?: string | null;
+            /** @description What was done. English, Arabic or both; at least one. */
+            noteEn?: string | null;
+        };
+        DoneNoteView: {
+            /** Format: date-time */
+            doneAt: string;
+            noteAr: string | null;
+            /** @description Written by the staff. */
+            noteEn: string | null;
+            photoCount: number;
+            /** @description Empty where the list does not carry them. */
+            photos: components["schemas"]["CommunityAttachmentView"][];
+        };
+        DoneSuggestionView: {
+            done: components["schemas"]["DoneNoteView"];
+            /** Format: uuid */
+            id: string;
+            /** @description The staff’s summary, when the suggestion is on the board. */
+            summary: components["schemas"]["PublicSummaryView"] | null;
+            supports: number;
+            topic: components["schemas"]["SuggestionTopicRefView"];
+        };
+        DoneSuggestionViewList: {
+            data: components["schemas"]["DoneSuggestionView"][];
+            nextCursor: string | null;
+        };
         DownloadView: {
             /** Format: date-time */
             expiresAt: string;
@@ -6143,6 +7250,10 @@ export interface components {
         EngagementResponseList: {
             data: components["schemas"]["EngagementResponse"][];
             nextCursor: string | null;
+        };
+        EngagementSettingsResponse: {
+            /** @description Guests one "going" answer to an event may bring, at most. */
+            eventMaxGuests: number;
         };
         EntryCredentialView: {
             /** Format: date-time */
@@ -6226,6 +7337,90 @@ export interface components {
             /** @description The SLA's cycle (ADR 0034). */
             slaCycle: number;
         };
+        EventCountsView: {
+            /** @description Accounts that said they are going. */
+            going: number;
+            notGoing: number;
+            /** @description Seats left. Null: the event has no limit. */
+            remaining: number | null;
+            /** @description Seats taken: those going and their guests. */
+            seats: number;
+        };
+        EventCreatedView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+        };
+        EventListItemView: {
+            /** @description Files it shows. */
+            attachmentCount: number;
+            /** @description From the closed list `communityEventCancel`. */
+            cancelReason: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** @description Seats in all, guests included. Null: no limit. */
+            capacity: number | null;
+            counts: components["schemas"]["EventCountsView"];
+            descriptionAr: string | null;
+            descriptionEn: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description Null: the caller has not answered. */
+            myRsvp: components["schemas"]["MyRsvpView"] | null;
+            /** @description Where, in the staff’s words. */
+            place: string;
+            /** Format: date-time */
+            startsAt: string;
+            /**
+             * @description From its dates, now. `cancelled` stays so.
+             * @enum {string}
+             */
+            status: "upcoming" | "ongoing" | "ended" | "cancelled";
+            titleAr: string | null;
+            /** @description Written by the staff. A language is whole or absent; at least one is there. */
+            titleEn: string | null;
+        };
+        EventListItemViewList: {
+            data: components["schemas"]["EventListItemView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        EventRsvpResponse: "going" | "not_going";
+        EventView: {
+            /** @description Files it shows. */
+            attachmentCount: number;
+            attachments: components["schemas"]["CommunityAttachmentView"][];
+            /** @description From the closed list `communityEventCancel`. */
+            cancelReason: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** @description Seats in all, guests included. Null: no limit. */
+            capacity: number | null;
+            counts: components["schemas"]["EventCountsView"];
+            descriptionAr: string | null;
+            descriptionEn: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description Null: the caller has not answered. */
+            myRsvp: components["schemas"]["MyRsvpView"] | null;
+            /** @description Where, in the staff’s words. */
+            place: string;
+            /** Format: date-time */
+            startsAt: string;
+            /**
+             * @description From its dates, now. `cancelled` stays so.
+             * @enum {string}
+             */
+            status: "upcoming" | "ongoing" | "ended" | "cancelled";
+            titleAr: string | null;
+            /** @description Written by the staff. A language is whole or absent; at least one is there. */
+            titleEn: string | null;
+        };
         ExportDownloadDto: {
             /** @description The code sent to the account’s email for this link. */
             code: string;
@@ -6253,7 +7448,7 @@ export interface components {
             technicianRating: number | null;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -6429,7 +7624,7 @@ export interface components {
             /** @description Finance only. */
             capPerOperation: string | null;
             /** @enum {string} */
-            permission: "visitors_invite" | "bookings" | "tickets" | "finance" | "unit_security";
+            permission: "visitors_invite" | "bookings" | "tickets" | "finance" | "unit_security" | "polls_vote";
         };
         GuardGateView: {
             /** Format: uuid */
@@ -6521,7 +7716,7 @@ export interface components {
         HouseholdMemberItemView: {
             fullName: string | null;
             /** @description The management only (a manager account holding `residents.read`): the codes of the permissions the member holds, so a revocation names one they have. Never the finance cap. */
-            grantedPermissions?: ("visitors_invite" | "bookings" | "tickets" | "finance" | "unit_security")[];
+            grantedPermissions?: ("visitors_invite" | "bookings" | "tickets" | "finance" | "unit_security" | "polls_vote")[];
             /** Format: uuid */
             id: string;
             isMinor: boolean;
@@ -6809,10 +8004,10 @@ export interface components {
             /** Format: date-time */
             grantedAt: string;
             /** @enum {string} */
-            permission: "visitors_invite" | "bookings" | "tickets" | "finance" | "unit_security";
+            permission: "visitors_invite" | "bookings" | "tickets" | "finance" | "unit_security" | "polls_vote";
         };
         /** @enum {string} */
-        MemberPermission: "visitors_invite" | "bookings" | "tickets" | "finance" | "unit_security";
+        MemberPermission: "visitors_invite" | "bookings" | "tickets" | "finance" | "unit_security" | "polls_vote";
         MemberPermissionsResponse: {
             grants: components["schemas"]["MemberGrantResponse"][];
             /** Format: uuid */
@@ -6853,6 +8048,12 @@ export interface components {
         };
         MessageDto: {
             body: string;
+        };
+        MoveSuggestionDto: {
+            /** @description What the staff tell the author. Required to decline. Replaces an earlier answer. */
+            response?: string;
+            /** @description A step forward: `under_review`, `planned`, `done`, or `declined`. `done` and `declined` are final. */
+            status: components["schemas"]["SuggestionStatus"];
         };
         MyDelegationView: {
             /** @description The other side, by name only. */
@@ -6924,6 +8125,60 @@ export interface components {
             /** @description System roles are translated by key. */
             key: string;
             name: string | null;
+        };
+        MyRsvpView: {
+            guests: number;
+            response: components["schemas"]["EventRsvpResponse"];
+            /** Format: uuid */
+            unitId: string;
+        };
+        MySuggestionListItemView: {
+            /** @description The caller’s own words. */
+            body: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            done: components["schemas"]["DoneNoteView"] | null;
+            /** Format: uuid */
+            id: string;
+            /** @description How it is shown on the board, when the staff put it there; never with the caller’s name or words. Null: it is not on the board. */
+            publicSummary: components["schemas"]["PublicSummaryView"] | null;
+            /** Format: date-time */
+            respondedAt: string | null;
+            /** @description The staff’s answer, as it stands now. */
+            response: string | null;
+            status: components["schemas"]["SuggestionStatus"];
+            /** @description Accounts that support it on the board. */
+            supports: number;
+            topic: components["schemas"]["SuggestionTopicRefView"];
+            /** Format: uuid */
+            unitId: string | null;
+        };
+        MySuggestionListItemViewList: {
+            data: components["schemas"]["MySuggestionListItemView"][];
+            nextCursor: string | null;
+        };
+        MySuggestionView: {
+            /** @description The caller’s own words. */
+            body: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            done: components["schemas"]["DoneNoteView"] | null;
+            /** Format: uuid */
+            id: string;
+            /** @description How it is shown on the board, when the staff put it there; never with the caller’s name or words. Null: it is not on the board. */
+            publicSummary: components["schemas"]["PublicSummaryView"] | null;
+            /** Format: date-time */
+            respondedAt: string | null;
+            /** @description The staff’s answer, as it stands now. */
+            response: string | null;
+            status: components["schemas"]["SuggestionStatus"];
+            /** @description Accounts that support it on the board. */
+            supports: number;
+            topic: components["schemas"]["SuggestionTopicRefView"];
+            /** Format: uuid */
+            unitId: string | null;
+            /** @description Each move and each answer, the oldest first. */
+            updates: components["schemas"]["SuggestionUpdateView"][];
         };
         MyUnitView: {
             /**
@@ -7050,7 +8305,7 @@ export interface components {
             validUntil?: string;
         };
         /** @enum {string} */
-        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management";
+        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community";
         NotificationView: {
             /** Format: date-time */
             createdAt: string;
@@ -7383,6 +8638,74 @@ export interface components {
              */
             scope: "full" | "password_change";
         };
+        PollAudienceView: {
+            /** @description Units the poll is put to right now: what a turnout is out of. */
+            units: number;
+        };
+        PollCreatedView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+        };
+        PollOptionDto: {
+            labelAr?: string | null;
+            /** @description In the languages the question is written in. */
+            labelEn?: string | null;
+        };
+        PollOptionView: {
+            /** Format: uuid */
+            id: string;
+            labelAr: string | null;
+            /** @description Written by the staff. */
+            labelEn: string | null;
+            /** @description Its place in the list, from 1. */
+            position: number;
+            /** @description Units that chose it. Null while the results are withheld (`resultsHidden`). */
+            votes: number | null;
+        };
+        PollUnitView: {
+            /** @description The unit’s choice now, to change it knowingly: only while the poll is open and only to those who cast its vote. Null otherwise, and always once the poll has ended: nothing keeps it. */
+            choice: string[] | null;
+            /** @description The caller casts this unit’s vote in this poll. */
+            mayVote: boolean;
+            /** Format: uuid */
+            unitId: string;
+            /** @description The unit has voted. */
+            voted: boolean;
+        };
+        PollView: {
+            /** Format: date-time */
+            closesAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description Several options may be chosen. */
+            multiple: boolean;
+            /** Format: date-time */
+            opensAt: string;
+            options: components["schemas"]["PollOptionView"][];
+            questionAr: string | null;
+            /** @description Written by the staff. */
+            questionEn: string | null;
+            /**
+             * @description Why the counts are withheld, or null when they are shown: `not_open`; `not_voted` (a resident sees an open poll’s counts once one of their units has voted); `few_votes` (fewer than five units have voted on an open poll: shown to nobody); `cancelled`. A closed poll shows everything to everyone.
+             * @enum {string|null}
+             */
+            resultsHidden: "not_open" | "not_voted" | "few_votes" | "cancelled" | null;
+            /**
+             * @description `closed` from its closing time on, or when the staff closed it; `cancelled`: ended with no result.
+             * @enum {string}
+             */
+            status: "scheduled" | "open" | "closed" | "cancelled";
+            /** @description Units that voted. Null while the results are withheld. */
+            turnout: number | null;
+            /** @description The caller’s units the poll is put to. */
+            units: components["schemas"]["PollUnitView"][];
+        };
+        PollViewList: {
+            data: components["schemas"]["PollView"][];
+            nextCursor: string | null;
+        };
         PostRequestMessageDto: {
             /** @description The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). */
             attachmentFileIds?: string[];
@@ -7467,6 +8790,27 @@ export interface components {
             priority: components["schemas"]["TicketPriority"];
             /** @description From the closed list `ticketPriority`. */
             reasonCode: string;
+        };
+        PublicSummaryView: {
+            textAr: string | null;
+            textEn: string | null;
+            titleAr: string | null;
+            /** @description Written by the staff. */
+            titleEn: string | null;
+        };
+        PublishAnnouncementDto: {
+            /**
+             * Format: date-time
+             * @description When it comes out. Absent: now. Not in the past.
+             */
+            publishAt?: string;
+        };
+        PublishSuggestionDto: {
+            textAr?: string | null;
+            textEn?: string | null;
+            titleAr?: string | null;
+            /** @description A language is whole or absent; at least one is there. */
+            titleEn?: string | null;
         };
         /** @enum {string} */
         PushPlatform: "android" | "ios";
@@ -8042,6 +9386,10 @@ export interface components {
             data: components["schemas"]["ResidentVisitView"][];
             nextCursor: string | null;
         };
+        RespondSuggestionDto: {
+            /** @description What the staff tell the author. Replaces an earlier answer. */
+            response: string;
+        };
         ReviewDto: {
             /**
              * Format: date
@@ -8104,7 +9452,7 @@ export interface components {
         };
         RevokeByManagementDto: {
             /** @enum {string} */
-            permission: "visitors_invite" | "bookings" | "tickets" | "finance" | "unit_security" | "all";
+            permission: "visitors_invite" | "bookings" | "tickets" | "finance" | "unit_security" | "polls_vote" | "all";
             /** @description What the person is told (at most 1000 characters). Never stored in the audit trail. */
             reason: string;
             /** @description A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. */
@@ -8136,6 +9484,16 @@ export interface components {
         RoleViewList: {
             data: components["schemas"]["RoleView"][];
             nextCursor: string | null;
+        };
+        RsvpDto: {
+            /** @description People the caller brings, when going. At most the compound’s limit (INVALID_NUMBER, params.max). Absent: none. */
+            guests?: number;
+            response: components["schemas"]["EventRsvpResponse"];
+            /**
+             * Format: uuid
+             * @description The unit the caller answers from. Required only when the event is put to several of their units.
+             */
+            unitId?: string;
         };
         SecurityEventView: {
             /** Format: uuid */
@@ -8319,6 +9677,97 @@ export interface components {
             data: components["schemas"]["SpecialtyView"][];
             nextCursor: string | null;
         };
+        StaffAnnouncementListItemView: {
+            /** Format: date-time */
+            archivedAt: string | null;
+            attachmentCount: number;
+            audience: components["schemas"]["AudienceView"];
+            bodyAr: string | null;
+            bodyEn: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            editedAt: string | null;
+            /** Format: date-time */
+            expiresAt: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["AnnouncementKind"];
+            /**
+             * Format: date-time
+             * @description When its audience was told (important ones only).
+             */
+            notifiedAt: string | null;
+            /** @description Pinned now. */
+            pinned: boolean;
+            /** Format: date-time */
+            pinnedUntil: string | null;
+            priority: components["schemas"]["AnnouncementPriority"];
+            /**
+             * Format: date-time
+             * @description Null: a draft.
+             */
+            publishAt: string | null;
+            /**
+             * @description From its dates, now: `draft`, `scheduled`, `published`, `expired` (past its expiry), `ended` (works over) or `archived`.
+             * @enum {string}
+             */
+            status: "draft" | "scheduled" | "published" | "expired" | "ended" | "archived";
+            titleAr: string | null;
+            /** @description Written by the staff. A language is whole or absent; at least one is there. */
+            titleEn: string | null;
+            /** @description The version it shows. */
+            version: number;
+            works: components["schemas"]["WorksView"] | null;
+        };
+        StaffAnnouncementListItemViewList: {
+            data: components["schemas"]["StaffAnnouncementListItemView"][];
+            nextCursor: string | null;
+        };
+        StaffAnnouncementView: {
+            /** Format: date-time */
+            archivedAt: string | null;
+            attachmentCount: number;
+            attachments: components["schemas"]["CommunityAttachmentView"][];
+            audience: components["schemas"]["AudienceView"];
+            bodyAr: string | null;
+            bodyEn: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            editedAt: string | null;
+            /** Format: date-time */
+            expiresAt: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["AnnouncementKind"];
+            /**
+             * Format: date-time
+             * @description When its audience was told (important ones only).
+             */
+            notifiedAt: string | null;
+            /** @description Pinned now. */
+            pinned: boolean;
+            /** Format: date-time */
+            pinnedUntil: string | null;
+            priority: components["schemas"]["AnnouncementPriority"];
+            /**
+             * Format: date-time
+             * @description Null: a draft.
+             */
+            publishAt: string | null;
+            /**
+             * @description From its dates, now: `draft`, `scheduled`, `published`, `expired` (past its expiry), `ended` (works over) or `archived`.
+             * @enum {string}
+             */
+            status: "draft" | "scheduled" | "published" | "expired" | "ended" | "archived";
+            titleAr: string | null;
+            /** @description Written by the staff. A language is whole or absent; at least one is there. */
+            titleEn: string | null;
+            /** @description The version it shows. */
+            version: number;
+            works: components["schemas"]["WorksView"] | null;
+        };
         StaffAppointmentListItemView: {
             /** @description On a cancelled appointment: the reason code. */
             cancelReason: string | null;
@@ -8355,6 +9804,75 @@ export interface components {
             data: components["schemas"]["StaffAppointmentSlotView"][];
             nextCursor: string | null;
         };
+        StaffEventListItemView: {
+            /** @description Files it shows. */
+            attachmentCount: number;
+            audience: components["schemas"]["AudienceView"];
+            /** @description From the closed list `communityEventCancel`. */
+            cancelReason: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** @description Seats in all, guests included. Null: no limit. */
+            capacity: number | null;
+            counts: components["schemas"]["EventCountsView"];
+            /** Format: date-time */
+            createdAt: string;
+            descriptionAr: string | null;
+            descriptionEn: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description Where, in the staff’s words. */
+            place: string;
+            /** Format: date-time */
+            startsAt: string;
+            /**
+             * @description From its dates, now. `cancelled` stays so.
+             * @enum {string}
+             */
+            status: "upcoming" | "ongoing" | "ended" | "cancelled";
+            titleAr: string | null;
+            /** @description Written by the staff. A language is whole or absent; at least one is there. */
+            titleEn: string | null;
+        };
+        StaffEventListItemViewList: {
+            data: components["schemas"]["StaffEventListItemView"][];
+            nextCursor: string | null;
+        };
+        StaffEventView: {
+            /** @description Files it shows. */
+            attachmentCount: number;
+            attachments: components["schemas"]["CommunityAttachmentView"][];
+            audience: components["schemas"]["AudienceView"];
+            /** @description From the closed list `communityEventCancel`. */
+            cancelReason: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** @description Seats in all, guests included. Null: no limit. */
+            capacity: number | null;
+            counts: components["schemas"]["EventCountsView"];
+            /** Format: date-time */
+            createdAt: string;
+            descriptionAr: string | null;
+            descriptionEn: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description Where, in the staff’s words. */
+            place: string;
+            /** Format: date-time */
+            startsAt: string;
+            /**
+             * @description From its dates, now. `cancelled` stays so.
+             * @enum {string}
+             */
+            status: "upcoming" | "ongoing" | "ended" | "cancelled";
+            titleAr: string | null;
+            /** @description Written by the staff. A language is whole or absent; at least one is there. */
+            titleEn: string | null;
+        };
         StaffMessageDto: {
             body: string;
             /**
@@ -8362,6 +9880,43 @@ export interface components {
              * @default false
              */
             internal: boolean;
+        };
+        StaffPollView: {
+            audience: components["schemas"]["AudienceView"];
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: date-time */
+            closesAt: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description Several options may be chosen. */
+            multiple: boolean;
+            /** Format: date-time */
+            opensAt: string;
+            options: components["schemas"]["PollOptionView"][];
+            questionAr: string | null;
+            /** @description Written by the staff. */
+            questionEn: string | null;
+            /**
+             * @description Why the counts are withheld, or null when they are shown: `not_open`; `not_voted` (a resident sees an open poll’s counts once one of their units has voted); `few_votes` (fewer than five units have voted on an open poll: shown to nobody); `cancelled`. A closed poll shows everything to everyone.
+             * @enum {string|null}
+             */
+            resultsHidden: "not_open" | "not_voted" | "few_votes" | "cancelled" | null;
+            /**
+             * @description `closed` from its closing time on, or when the staff closed it; `cancelled`: ended with no result.
+             * @enum {string}
+             */
+            status: "scheduled" | "open" | "closed" | "cancelled";
+            /** @description Units that voted. Null while the results are withheld. */
+            turnout: number | null;
+        };
+        StaffPollViewList: {
+            data: components["schemas"]["StaffPollView"][];
+            nextCursor: string | null;
         };
         StaffRequestDetailView: {
             /** Format: date-time */
@@ -8544,6 +10099,68 @@ export interface components {
             /** @description The unit the request is about, when it names one. */
             unit: components["schemas"]["RequestUnitRefView"] | null;
         };
+        StaffSuggestionListItemView: {
+            author: components["schemas"]["SuggestionAuthorView"];
+            /** @description The resident’s words. Null once their account was erased. */
+            body: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            done: components["schemas"]["DoneNoteView"] | null;
+            /** @description The author’s account was erased. */
+            erased: boolean;
+            /** Format: uuid */
+            id: string;
+            publicSummary: components["schemas"]["PublicSummaryView"] | null;
+            /** Format: date-time */
+            publishedAt: string | null;
+            /** Format: date-time */
+            respondedAt: string | null;
+            response: string | null;
+            status: components["schemas"]["SuggestionStatus"];
+            supports: number;
+            topic: components["schemas"]["SuggestionTopicRefView"];
+            unitCode: string | null;
+            /** Format: uuid */
+            unitId: string | null;
+        };
+        StaffSuggestionListItemViewList: {
+            data: components["schemas"]["StaffSuggestionListItemView"][];
+            nextCursor: string | null;
+        };
+        StaffSuggestionUpdateView: {
+            /** Format: date-time */
+            at: string;
+            /** Format: uuid */
+            byId: string;
+            /** @description What the staff answered then, if they did. */
+            response: string | null;
+            status: components["schemas"]["SuggestionStatus"];
+        };
+        StaffSuggestionView: {
+            author: components["schemas"]["SuggestionAuthorView"];
+            /** @description The resident’s words. Null once their account was erased. */
+            body: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            done: components["schemas"]["DoneNoteView"] | null;
+            /** @description The author’s account was erased. */
+            erased: boolean;
+            /** Format: uuid */
+            id: string;
+            publicSummary: components["schemas"]["PublicSummaryView"] | null;
+            /** Format: date-time */
+            publishedAt: string | null;
+            /** Format: date-time */
+            respondedAt: string | null;
+            response: string | null;
+            status: components["schemas"]["SuggestionStatus"];
+            supports: number;
+            topic: components["schemas"]["SuggestionTopicRefView"];
+            unitCode: string | null;
+            /** Format: uuid */
+            unitId: string | null;
+            updates: components["schemas"]["StaffSuggestionUpdateView"][];
+        };
         StartShiftDto: {
             /** Format: uuid */
             gateId: string;
@@ -8571,6 +10188,66 @@ export interface components {
              * @description Until then, this session's next sensitive action may run.
              */
             expiresAt: string;
+        };
+        SuggestionAuthorView: {
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+        };
+        SuggestionCreatedView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+        };
+        /** @enum {string} */
+        SuggestionStatus: "received" | "under_review" | "planned" | "done" | "declined";
+        SuggestionTopicOptionView: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+        };
+        SuggestionTopicOptionViewList: {
+            data: components["schemas"]["SuggestionTopicOptionView"][];
+            nextCursor: string | null;
+        };
+        SuggestionTopicRefView: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+        };
+        SuggestionTopicView: {
+            active: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        SuggestionTopicViewList: {
+            data: components["schemas"]["SuggestionTopicView"][];
+            nextCursor: string | null;
+        };
+        SuggestionUpdateView: {
+            /** Format: date-time */
+            at: string;
+            /** @description What the staff answered then, if they did. */
+            response: string | null;
+            status: components["schemas"]["SuggestionStatus"];
         };
         /**
          * @description A technician who never set it is `unavailable`.
@@ -9028,6 +10705,31 @@ export interface components {
             /** @enum {string} */
             status: "active" | "inactive";
         };
+        UpdateAnnouncementDto: {
+            /** @description The files it shows from now on: ids it already shows (`attachments[].id`) to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). */
+            attachmentFileIds?: string[];
+            /** @description Absent: the whole compound, everyone. May change only until the announcement is out. */
+            audience?: components["schemas"]["AudienceDto"];
+            bodyAr?: string | null;
+            bodyEn?: string | null;
+            /**
+             * Format: date-time
+             * @description No longer shown from then on. A general announcement’s only: works end by their own dates.
+             */
+            expiresAt?: string | null;
+            /**
+             * Format: date-time
+             * @description Stays on top until then. Only when `important`.
+             */
+            pinnedUntil?: string | null;
+            /** @description An `important` one tells its audience when it comes out, and may be pinned. */
+            priority?: components["schemas"]["AnnouncementPriority"];
+            titleAr?: string | null;
+            /** @description A language is whole or absent; at least one is there. */
+            titleEn?: string | null;
+            /** @description Replaces the dates and the area of works as a whole. */
+            works?: components["schemas"]["WorksDto"];
+        };
         UpdateCategoryDto: {
             /** @description False retires it: no new ticket under it. */
             active?: boolean;
@@ -9051,6 +10753,26 @@ export interface components {
             weightInProgress?: number;
             /** @description Weight of a ticket on hold (0: it takes no time now). */
             weightOnHold?: number;
+        };
+        UpdateEngagementSettingsDto: {
+            /** @description Guests one "going" answer to an event may bring, at most. */
+            eventMaxGuests?: number;
+        };
+        UpdateEventDto: {
+            /** @description The files it shows from now on: ids it already shows to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). */
+            attachmentFileIds?: string[];
+            /** @description Seats in all, guests included. Null or absent: no limit. Never below the seats already taken. */
+            capacity?: number | null;
+            descriptionAr?: string | null;
+            descriptionEn?: string | null;
+            /** Format: date-time */
+            endsAt?: string;
+            place?: string;
+            /** Format: date-time */
+            startsAt?: string;
+            titleAr?: string | null;
+            /** @description A language is whole or absent; at least one is there. */
+            titleEn?: string | null;
         };
         UpdateGateDto: {
             kind?: components["schemas"]["GateKind"];
@@ -9080,6 +10802,21 @@ export interface components {
             parcelManagerDays?: number;
             /** @description Days a parcel is held before its residents are reminded, once. */
             parcelReminderDays?: number;
+        };
+        UpdatePollDto: {
+            /** @description Whose units vote. Absent: the whole compound, everyone. A poll put to the `owners` is voted by a unit’s owner; any other by its primary occupant or a member given `polls_vote`. */
+            audience?: components["schemas"]["AudienceDto"];
+            /** Format: date-time */
+            closesAt?: string;
+            /** @description Several options may be chosen. Absent: one. */
+            multiple?: boolean;
+            /** Format: date-time */
+            opensAt?: string;
+            /** @description Replaces the options as a whole. */
+            options?: components["schemas"]["PollOptionDto"][];
+            questionAr?: string | null;
+            /** @description English, Arabic or both; at least one. */
+            questionEn?: string | null;
         };
         UpdatePreferencesDto: {
             /** @description Each category at most once; absent switches keep their value. */
@@ -9132,6 +10869,12 @@ export interface components {
         };
         UpdateSpecialtyDto: {
             /** @description False retires it: it counts for no category and no technician. */
+            active?: boolean;
+            nameAr?: string;
+            nameEn?: string;
+        };
+        UpdateSuggestionTopicDto: {
+            /** @description False retires the topic: no new suggestion may use it. */
             active?: boolean;
             nameAr?: string;
             nameEn?: string;
@@ -9329,6 +11072,10 @@ export interface components {
             /** @description The fragment of the visitor link. Anything that is not a live link answers 404 VISITOR_PASS_NOT_FOUND. */
             token: string;
         };
+        VoteCastView: {
+            /** Format: uuid */
+            pollId: string;
+        };
         /** @enum {string} */
         WageObligationKind: "pay_in_full" | "settle_before_close";
         WagePaymentView: {
@@ -9408,6 +11155,45 @@ export interface components {
              * @example 14:00
              */
             to: string;
+        };
+        /** @enum {string} */
+        WorksAreaKind: "road" | "facility" | "gate";
+        WorksDto: {
+            areaKind: components["schemas"]["WorksAreaKind"];
+            /**
+             * Format: date-time
+             * @description After `startsAt` (ENDS_BEFORE_START).
+             */
+            endsAt: string;
+            /**
+             * Format: uuid
+             * @description One of the compound’s gates; only with `areaKind: gate`.
+             */
+            gateId?: string | null;
+            /** @description Where, in the staff’s words. */
+            place?: string | null;
+            /** Format: date-time */
+            startsAt: string;
+        };
+        WorksGateView: {
+            /** Format: uuid */
+            id: string;
+            /** @description Written by the compound. */
+            name: string;
+            /** @description In service now. */
+            open: boolean;
+        };
+        WorksView: {
+            /** @description Under way now: started and not ended. */
+            active: boolean;
+            areaKind: components["schemas"]["WorksAreaKind"];
+            /** Format: date-time */
+            endsAt: string;
+            gate: components["schemas"]["WorksGateView"] | null;
+            /** @description Where, in the staff’s words. */
+            place: string | null;
+            /** Format: date-time */
+            startsAt: string;
         };
     };
     responses: never;
@@ -9876,6 +11662,72 @@ export interface operations {
             };
         };
     };
+    AnnouncementsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                kind?: components["schemas"]["AnnouncementKind"];
+                /** @description `true`: only what is pinned now. */
+                pinned?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnouncementListItemViewList"];
+                };
+            };
+        };
+    };
+    AnnouncementsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnouncementView"];
+                };
+            };
+        };
+    };
+    AnnouncementsController_read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     AuditController_list: {
         parameters: {
             query?: {
@@ -10049,6 +11901,792 @@ export interface operations {
         };
     };
     WorkersController_closeIncident: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffAnnouncementsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "draft" | "scheduled" | "published" | "expired" | "ended" | "archived";
+                kind?: components["schemas"]["AnnouncementKind"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffAnnouncementListItemViewList"];
+                };
+            };
+        };
+    };
+    StaffAnnouncementsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAnnouncementDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnouncementCreatedView"];
+                };
+            };
+        };
+    };
+    StaffAnnouncementsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffAnnouncementView"];
+                };
+            };
+        };
+    };
+    StaffAnnouncementsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAnnouncementDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffAnnouncementsController_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffAnnouncementsController_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublishAnnouncementDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffAnnouncementsController_reads: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnouncementReadCountsView"];
+                };
+            };
+        };
+    };
+    StaffAnnouncementsController_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnouncementVersionViewList"];
+                };
+            };
+        };
+    };
+    AudienceController_preview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AudiencePreviewDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AudienceSizeView"];
+                };
+            };
+        };
+    };
+    AudienceController_buildings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildingsView"];
+                };
+            };
+        };
+    };
+    StaffEventsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "upcoming" | "ongoing" | "ended" | "cancelled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffEventListItemViewList"];
+                };
+            };
+        };
+    };
+    StaffEventsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEventDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventCreatedView"];
+                };
+            };
+        };
+    };
+    StaffEventsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffEventView"];
+                };
+            };
+        };
+    };
+    StaffEventsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateEventDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffEventsController_attendees: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description Absent: those who are going. */
+                response?: components["schemas"]["EventRsvpResponse"];
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttendeeViewList"];
+                };
+            };
+        };
+    };
+    StaffEventsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelEventDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffPollsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "scheduled" | "open" | "closed" | "cancelled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPollViewList"];
+                };
+            };
+        };
+    };
+    StaffPollsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePollDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PollCreatedView"];
+                };
+            };
+        };
+    };
+    StaffPollsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPollView"];
+                };
+            };
+        };
+    };
+    StaffPollsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePollDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffPollsController_audience: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PollAudienceView"];
+                };
+            };
+        };
+    };
+    StaffPollsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffPollsController_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    EngagementSettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EngagementSettingsResponse"];
+                };
+            };
+        };
+    };
+    EngagementSettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateEngagementSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EngagementSettingsResponse"];
+                };
+            };
+        };
+    };
+    SuggestionTopicsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestionTopicViewList"];
+                };
+            };
+        };
+    };
+    SuggestionTopicsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSuggestionTopicDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestionTopicView"];
+                };
+            };
+        };
+    };
+    SuggestionTopicsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateSuggestionTopicDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestionTopicView"];
+                };
+            };
+        };
+    };
+    StaffSuggestionsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["SuggestionStatus"];
+                topicId?: string;
+                /** @description `true`: only those on the board; `false`: only those not. */
+                published?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffSuggestionListItemViewList"];
+                };
+            };
+        };
+    };
+    StaffSuggestionsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffSuggestionView"];
+                };
+            };
+        };
+    };
+    StaffSuggestionsController_doneNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DoneNoteDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffSuggestionsController_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublishSuggestionDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffSuggestionsController_respond: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RespondSuggestionDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffSuggestionsController_move: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveSuggestionDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffSuggestionsController_unpublish: {
         parameters: {
             query?: never;
             header?: never;
@@ -10243,6 +12881,73 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErasureScopeView"];
                 };
+            };
+        };
+    };
+    EventsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventListItemViewList"];
+                };
+            };
+        };
+    };
+    EventsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventView"];
+                };
+            };
+        };
+    };
+    EventsController_rsvp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RsvpDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -13130,6 +15835,25 @@ export interface operations {
             };
         };
     };
+    DailyBriefController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyBriefView"];
+                };
+            };
+        };
+    };
     DataExportsController_mine: {
         parameters: {
             query?: never;
@@ -14423,6 +17147,78 @@ export interface operations {
             };
         };
     };
+    PollsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PollViewList"];
+                };
+            };
+        };
+    };
+    PollsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PollView"];
+                };
+            };
+        };
+    };
+    PollsController_vote: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CastVoteDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoteCastView"];
+                };
+            };
+        };
+    };
     PreventiveServiceOptionsController_list: {
         parameters: {
             query?: never;
@@ -14996,6 +17792,180 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SettingsView"];
+                };
+            };
+        };
+    };
+    SuggestionBoardController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                topicId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardSuggestionViewList"];
+                };
+            };
+        };
+    };
+    SuggestionBoardController_done: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoneSuggestionViewList"];
+                };
+            };
+        };
+    };
+    SuggestionBoardController_support: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SuggestionBoardController_unsupport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SuggestionTopicOptionsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestionTopicOptionViewList"];
+                };
+            };
+        };
+    };
+    SuggestionsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MySuggestionListItemViewList"];
+                };
+            };
+        };
+    };
+    SuggestionsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSuggestionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestionCreatedView"];
+                };
+            };
+        };
+    };
+    SuggestionsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MySuggestionView"];
                 };
             };
         };

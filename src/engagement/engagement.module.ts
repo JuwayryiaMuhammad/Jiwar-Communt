@@ -17,6 +17,11 @@ import {
   StaffEventsController,
 } from './events/events.controller';
 import { EventsService } from './events/events.service';
+import {
+  PollsController,
+  StaffPollsController,
+} from './polls/polls.controller';
+import { PollsService } from './polls/polls.service';
 import { OpaqueRefs } from './refs/opaque-refs';
 import { EngagementSettingsController } from './settings/engagement-settings.controller';
 import { EngagementSettingsService } from './settings/engagement-settings.service';
@@ -43,6 +48,8 @@ import { SuggestionTopicsService } from './topics/topics.service';
     AnnouncementsController,
     StaffEventsController,
     EventsController,
+    StaffPollsController,
+    PollsController,
   ],
   providers: [
     EngagementProvisioning,
@@ -54,6 +61,7 @@ import { SuggestionTopicsService } from './topics/topics.service';
     SuggestionTopicsService,
     AnnouncementsService,
     EventsService,
+    PollsService,
   ],
 })
 export class EngagementModule {}

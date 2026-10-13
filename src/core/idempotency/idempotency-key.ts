@@ -5,6 +5,12 @@ import { stableJson } from '../common/http/stable-json';
 export const IDEMPOTENCY_HEADER = 'Idempotency-Key';
 /** Set by `@Idempotent({ secret: true })`: the response is never stored. */
 export const IDEMPOTENT_SECRET = 'idempotent:secret';
+/**
+ * Set by `@Idempotent({ bodyless: true })`: the stored hash leaves the body
+ * out, because the body is something the database must not be able to tell
+ * (a ballot, ADR 0040).
+ */
+export const IDEMPOTENT_BODYLESS = 'idempotent:bodyless';
 /** How long a key is remembered (and its response replayed). */
 export const IDEMPOTENCY_TTL_MS = 24 * 3_600_000;
 

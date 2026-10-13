@@ -423,6 +423,27 @@ export const AUDIT_ACTIONS = {
   'community_event.cancelled': { log: 'tenant', target: 'community_event' },
   // The actor's own answer. metadata: response, guests, unitId, from.
   'community_event.rsvp_changed': { log: 'tenant', target: 'community_event' },
+  // Polls. Never a choice: no action here, and no field of one, says what
+  // a unit chose. changes: multiple, opensAt, closesAt, audienceOccupancy,
+  // audienceBuildings, options (a count) by value; the question as
+  // `{ changed: true }`; metadata of a change: optionsReplaced.
+  'poll.created': {
+    log: 'tenant',
+    target: 'poll',
+    sensitive: ['questionEn', 'questionAr'],
+  },
+  'poll.changed': {
+    log: 'tenant',
+    target: 'poll',
+    sensitive: ['questionEn', 'questionAr'],
+  },
+  // The staff's, or the sweep's at the closing time (actor: system).
+  // metadata: turnout, early.
+  'poll.closed': { log: 'tenant', target: 'poll' },
+  // metadata: fromStatus.
+  'poll.cancelled': { log: 'tenant', target: 'poll' },
+  // That a unit voted, and who cast it. metadata: unitId, changed.
+  'poll.vote_cast': { log: 'tenant', target: 'poll' },
   'suggestion_topic.created': {
     log: 'tenant',
     target: 'suggestion_topic',

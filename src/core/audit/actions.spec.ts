@@ -70,6 +70,7 @@ describe('audit catalog', () => {
         'suggestion_topic',
         'announcement',
         'community_event',
+        'poll',
       ]).toContain(def.target);
     }
   });

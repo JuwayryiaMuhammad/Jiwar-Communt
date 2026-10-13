@@ -282,6 +282,15 @@ export const ErrorCode = {
   COMMUNITY_EVENT_INVALID_STATE: 'COMMUNITY_EVENT_INVALID_STATE',
   /** No room for this answer and its guests (409, params.remaining). */
   COMMUNITY_EVENT_FULL: 'COMMUNITY_EVENT_FULL',
+  /**
+   * Unknown, another compound's, or for a resident not open yet or not put
+   * to them: one answer.
+   */
+  POLL_NOT_FOUND: 'POLL_NOT_FOUND',
+  /** Its state does not take the action (409, params.status). */
+  POLL_INVALID_STATE: 'POLL_INVALID_STATE',
+  /** The caller casts no unit's vote in this poll (403). */
+  POLL_VOTE_NOT_ALLOWED: 'POLL_VOTE_NOT_ALLOWED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

@@ -158,4 +158,7 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   event_attachments_file_id_key: null,
   // Written under the event's lock, one answer per account: a race.
   event_rsvps_one_per_account: null,
+  polls_tenant_id_id_key: null,
+  // Positions are the server's, written with the poll.
+  poll_options_position_key: null,
 };

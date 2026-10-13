@@ -499,6 +499,7 @@ model Tenant {
   suggestionTopics   SuggestionTopic[]
   announcements      Announcement[]
   communityEvents    CommunityEvent[]
+  polls              Poll[]
   specialties       Specialty[]
   dispatchSettings  MaintenanceDispatchSettings?
   slaSettings       MaintenanceSlaSettings?
@@ -892,6 +893,7 @@ model Account {
   communityEventsCreated     CommunityEvent[]              @relation("CommunityEventCreator")
   eventAttachments           EventAttachment[]             @relation("EventAttachmentUploader")
   eventRsvps                 EventRsvp[]                   @relation("EventRsvpAccount")
+  pollsCreated               Poll[]                        @relation("PollCreator")
   managementAppointments     ManagementAppointment[]       @relation("ManagementAppointmentProposer")
 
   @@unique([tenantId, type, email])
@@ -980,6 +982,7 @@ model Unit {
   parcels           Parcel[]
   managementRequests ManagementRequest[]
   eventRsvps         EventRsvp[]
+  pollParticipations PollParticipation[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -3565,4 +3568,80 @@ model EventRsvp {
   @@index([tenantId, eventId, createdAt, id], map: "event_rsvps_list_idx")
   @@index([tenantId, accountId], map: "event_rsvps_account_idx")
   @@map("event_rsvps")
+}
+
+/// A consultative poll (ADR 0040): one vote per unit, a secret ballot.
+/// `ballotSalt` lives while the poll is neither closed nor cancelled.
+model Poll {
+  id                String            @id @db.Uuid
+  tenantId          String            @map("tenant_id") @db.Uuid
+  questionEn        String?           @map("question_en")
+  questionAr        String?           @map("question_ar")
+  /// Several options may be chosen.
+  multiple          Boolean           @default(false)
+  opensAt           DateTime          @map("opens_at") @db.Timestamptz(3)
+  closesAt          DateTime          @map("closes_at") @db.Timestamptz(3)
+  audienceBuildings String[]          @default([]) @map("audience_buildings")
+  audienceOccupancy AudienceOccupancy @default(everyone) @map("audience_occupancy")
+  ballotSalt        Bytes?            @map("ballot_salt")
+  closedAt          DateTime?         @map("closed_at") @db.Timestamptz(3)
+  cancelledAt       DateTime?         @map("cancelled_at") @db.Timestamptz(3)
+  /// Units that voted, written at the close.
+  finalTurnout      Int?              @map("final_turnout")
+  createdById       String            @map("created_by_account_id") @db.Uuid
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant         Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  createdBy      Account             @relation("PollCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "polls_tenant_id_created_by_fkey")
+  options        PollOption[]
+  ballotBox      PollBallotBox?
+  participations PollParticipation[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, closesAt, id], map: "polls_closes_idx")
+  @@map("polls")
+}
+
+model PollOption {
+  id         String  @id @db.Uuid
+  tenantId   String  @map("tenant_id") @db.Uuid
+  pollId     String  @map("poll_id") @db.Uuid
+  position   Int
+  labelEn    String? @map("label_en")
+  labelAr    String? @map("label_ar")
+  /// Written once, when the poll closes.
+  finalCount Int?    @map("final_count")
+
+  poll Poll @relation(fields: [tenantId, pollId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, pollId, position], map: "poll_options_position_key")
+  @@map("poll_options")
+}
+
+/// Every ballot of an open poll, in one row: `{ <ballot reference>: [option
+/// ids] }`. No unit, no account, no time; deleted when the poll ends.
+model PollBallotBox {
+  tenantId String @map("tenant_id") @db.Uuid
+  pollId   String @map("poll_id") @db.Uuid
+  ballots  Json   @default("{}")
+
+  poll Poll @relation(fields: [tenantId, pollId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([tenantId, pollId])
+  @@map("poll_ballot_boxes")
+}
+
+/// A unit took part in a closed poll; never what it chose. Written at the
+/// close, for all units at once. Append-only.
+model PollParticipation {
+  tenantId String @map("tenant_id") @db.Uuid
+  pollId   String @map("poll_id") @db.Uuid
+  unitId   String @map("unit_id") @db.Uuid
+
+  poll Poll @relation(fields: [tenantId, pollId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  unit Unit @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([tenantId, pollId, unitId])
+  @@map("poll_participations")
 }

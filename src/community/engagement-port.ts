@@ -156,6 +156,15 @@ export class CommunityEngagementPort {
     return out;
   }
 
+  /** Every unit of the compound, by id. */
+  async unitIds(tx: TenantTxClient): Promise<string[]> {
+    const units = await tx.unit.findMany({
+      select: { id: true },
+      orderBy: { id: 'asc' },
+    });
+    return units.map((u) => u.id);
+  }
+
   /**
    * The unit's row, locked for the rest of the transaction: two members of
    * one household casting its vote at once go one after the other.

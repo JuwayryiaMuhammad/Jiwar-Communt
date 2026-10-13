@@ -1352,6 +1352,171 @@
         ],
         "type": "object"
       },
+      "BlockView": {
+        "properties": {
+          "building": {
+            "description": "The building the blocked resident wrote from.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "building",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "BlockViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BlockView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "BoardPostView": {
+        "properties": {
+          "author": {
+            "$ref": "#/components/schemas/PostAuthorLabelView"
+          },
+          "board": {
+            "enum": [
+              "lost_found",
+              "lending"
+            ],
+            "type": "string"
+          },
+          "body": {
+            "description": "Null once its author was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "claimable": {
+            "description": "A found item on its board, not the caller’s own: it may be claimed at the office.",
+            "type": "boolean"
+          },
+          "closeReason": {
+            "description": "Why it closed, on the caller’s own post alone.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourPostKind"
+              }
+            ]
+          },
+          "mine": {
+            "description": "The caller posted it.",
+            "type": "boolean"
+          },
+          "myClaim": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MyClaimRefView"
+              }
+            ],
+            "description": "The caller’s latest claim on it.",
+            "nullable": true,
+            "type": "object"
+          },
+          "occurredOn": {
+            "description": "The day it was lost or found.",
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/PostPhotoView"
+            },
+            "type": "array"
+          },
+          "place": {
+            "nullable": true,
+            "type": "string"
+          },
+          "state": {
+            "description": "`expired`: its day passed. A resident sees it only on their own posts.",
+            "enum": [
+              "open",
+              "expired",
+              "closed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "board",
+          "kind",
+          "body",
+          "place",
+          "occurredOn",
+          "photos",
+          "state",
+          "expiresAt",
+          "createdAt",
+          "author",
+          "mine",
+          "claimable",
+          "myClaim",
+          "closeReason"
+        ],
+        "type": "object"
+      },
+      "BoardPostViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BoardPostView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "BoardSuggestionView": {
         "properties": {
           "done": {
@@ -2133,10 +2298,47 @@
         ],
         "type": "object"
       },
+      "ClaimCreatedView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourClaimStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "createdAt"
+        ],
+        "type": "object"
+      },
       "ClearReviewFlagDto": {
         "properties": {
           "reasonCode": {
             "description": "From the closed list `reviewClear`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "CloseReportDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "What was done, from the closed list `neighbourReportOutcome`. `post_removed` takes the post down with the case.",
             "type": "string"
           }
         },
@@ -2194,6 +2396,359 @@
           "contentType",
           "url",
           "expiresAt"
+        ],
+        "type": "object"
+      },
+      "ComplaintAttachmentView": {
+        "properties": {
+          "contentType": {
+            "description": "image/jpeg, image/png, image/webp or application/pdf.",
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "url": {
+            "description": "A presigned GET, valid until `expiresAt`. Null when gone.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "contentType",
+          "url",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "ComplaintAuthorPatternView": {
+        "properties": {
+          "againstSameUnit": {
+            "description": "Against this same unit, this one included.",
+            "type": "number"
+          },
+          "dismissedUnfounded": {
+            "type": "number"
+          },
+          "open": {
+            "type": "number"
+          },
+          "total": {
+            "description": "Every complaint they filed.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "total",
+          "open",
+          "dismissedUnfounded",
+          "againstSameUnit"
+        ],
+        "type": "object"
+      },
+      "ComplaintCategoryOptionView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn"
+        ],
+        "type": "object"
+      },
+      "ComplaintCategoryOptionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ComplaintCategoryOptionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ComplaintCategoryView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameAr",
+          "nameEn",
+          "active",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "ComplaintCategoryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ComplaintCategoryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ComplaintCreatedView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "example": "NC-000123",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourComplaintStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "status",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ComplaintHistoryView": {
+        "properties": {
+          "actor": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "actorSide": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourSide"
+              }
+            ]
+          },
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "from": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourComplaintStatus"
+              }
+            ],
+            "description": "Null on the first row: the filing.",
+            "nullable": true
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "to": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourComplaintStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "actor",
+          "actorSide",
+          "reasonCode",
+          "at"
+        ],
+        "type": "object"
+      },
+      "ComplaintMessageCreatedView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ComplaintReasonDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "A code of the action’s list: `neighbourComplaintResolve` or `neighbourComplaintDismiss` (INVALID_REASON_CODE names the allowed ones).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "ComplaintStatusStepView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourComplaintStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "reasonCode",
+          "at"
+        ],
+        "type": "object"
+      },
+      "ComplaintUnitHistoryView": {
+        "properties": {
+          "dismissed": {
+            "type": "number"
+          },
+          "open": {
+            "type": "number"
+          },
+          "resolved": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "unfounded": {
+            "description": "Dismissed as unfounded.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "total",
+          "open",
+          "resolved",
+          "dismissed",
+          "unfounded"
+        ],
+        "type": "object"
+      },
+      "ComplaintUnitRefView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "building"
+        ],
+        "type": "object"
+      },
+      "ComplaintUnitTallyView": {
+        "properties": {
+          "open": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "total",
+          "open"
         ],
         "type": "object"
       },
@@ -2507,6 +3062,194 @@
         },
         "type": "object"
       },
+      "ConversationCreatedView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ConversationMessageDto": {
+        "properties": {
+          "body": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "ConversationMessageView": {
+        "properties": {
+          "body": {
+            "description": "Null once its sender was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "erased": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "mine": {
+            "description": "The caller wrote it.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "mine",
+          "body",
+          "erased",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ConversationMessageViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ConversationMessageView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ConversationPostRefView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourPostKind"
+              }
+            ]
+          },
+          "state": {
+            "enum": [
+              "open",
+              "expired",
+              "closed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "state"
+        ],
+        "type": "object"
+      },
+      "ConversationView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "iAgreed": {
+            "description": "The caller agreed to show names.",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastMessageAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "namesRevealed": {
+            "description": "Both agreed: names are shown.",
+            "type": "boolean"
+          },
+          "open": {
+            "description": "Something may still be written. False once it closed or its post left the board; never says which.",
+            "type": "boolean"
+          },
+          "other": {
+            "$ref": "#/components/schemas/MaskedPartyView"
+          },
+          "post": {
+            "$ref": "#/components/schemas/ConversationPostRefView"
+          },
+          "side": {
+            "description": "The caller’s side: the post’s `author`, or the `responder`.",
+            "enum": [
+              "author",
+              "responder"
+            ],
+            "type": "string"
+          },
+          "theyAgreed": {
+            "description": "The other side agreed.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "post",
+          "side",
+          "open",
+          "other",
+          "namesRevealed",
+          "iAgreed",
+          "theyAgreed",
+          "lastMessageAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ConversationViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ConversationView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ConvertToOwnerDto": {
         "properties": {
           "resides": {
@@ -2695,6 +3438,84 @@
           "key",
           "nameAr",
           "nameEn"
+        ],
+        "type": "object"
+      },
+      "CreateClaimDto": {
+        "properties": {
+          "note": {
+            "description": "For the staff alone: how they will know it is yours. Never shown to whoever posted the item.",
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CreateComplaintCategoryDto": {
+        "properties": {
+          "key": {
+            "description": "Stable code, lowercase (e.g. `noise`). Never changes once created.",
+            "pattern": "^[a-z][a-z0-9_]{1,39}$",
+            "type": "string"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "nameAr",
+          "nameEn"
+        ],
+        "type": "object"
+      },
+      "CreateComplaintDto": {
+        "properties": {
+          "attachmentFileIds": {
+            "description": "The caller’s own finalized `complaint_evidence` files: photos or PDF (FILE_NOT_AVAILABLE).",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "body": {
+            "description": "What the complaint says: it becomes its first message.",
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "categoryId": {
+            "description": "An active complaint category of the compound (CATEGORY_NOT_AVAILABLE).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "targetUnitCode": {
+            "description": "The code of the unit complained about (UNIT_CODE_UNKNOWN). Never one of the author’s own units (OWN_UNIT).",
+            "example": "B2-104",
+            "maxLength": 32,
+            "minLength": 1,
+            "type": "string"
+          },
+          "unitId": {
+            "description": "One of the author’s own units, when they have several.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "categoryId",
+          "targetUnitCode",
+          "body"
         ],
         "type": "object"
       },
@@ -2903,6 +3724,55 @@
         "required": [
           "options",
           "closesAt"
+        ],
+        "type": "object"
+      },
+      "CreatePostDto": {
+        "properties": {
+          "body": {
+            "description": "A few words: what it is.",
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourPostKind"
+              }
+            ],
+            "description": "`lost` or `found` on the lost-and-found board; `lend` (can lend) or `borrow` (wants to borrow) on the lending board. The staff post only `lost` and `found`."
+          },
+          "occurredOn": {
+            "description": "The day it was lost or found, not in the future. Not for a lending post (FIELD_NOT_ALLOWED).",
+            "example": "2026-10-19",
+            "format": "date",
+            "type": "string"
+          },
+          "photoFileIds": {
+            "description": "The caller’s own finalized `neighbour_post_photo` files (FILE_NOT_AVAILABLE).",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 3,
+            "type": "array"
+          },
+          "place": {
+            "description": "Where it was lost or found, or where to meet.",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "unitId": {
+            "description": "One of the author’s own units, when they have several: other residents see its building and nothing else. Not for the staff (FIELD_NOT_ALLOWED).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "body"
         ],
         "type": "object"
       },
@@ -5686,7 +6556,9 @@
           "parcel_photo",
           "data_export",
           "request_attachment",
-          "community_attachment"
+          "community_attachment",
+          "complaint_evidence",
+          "neighbour_post_photo"
         ],
         "type": "string"
       },
@@ -6420,6 +7292,21 @@
         ],
         "type": "object"
       },
+      "HandOverDto": {
+        "properties": {
+          "claimId": {
+            "description": "A pending claim on this item: it goes to its claimant.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "recipientAccountId": {
+            "description": "A resident who came without a claim (RECIPIENT_NOT_ELIGIBLE). Not with `claimId`.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "HandOverParcelDto": {
         "properties": {
           "code": {
@@ -6515,6 +7402,33 @@
           "returnedAt",
           "hasPhoto",
           "delegateName"
+        ],
+        "type": "object"
+      },
+      "HandoverView": {
+        "properties": {
+          "claimId": {
+            "description": "The claim it settled; null for someone who came without one.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "handedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "handedBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "recipient": {
+            "$ref": "#/components/schemas/AccountRefView"
+          }
+        },
+        "required": [
+          "claimId",
+          "recipient",
+          "handedBy",
+          "handedAt"
         ],
         "type": "object"
       },
@@ -7497,6 +8411,25 @@
         ],
         "type": "object"
       },
+      "MaskedPartyView": {
+        "properties": {
+          "building": {
+            "description": "The building they wrote from. Null when their unit names none.",
+            "nullable": true,
+            "type": "string"
+          },
+          "firstName": {
+            "description": "Their first name: only once BOTH sides agreed to show names. Null before.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "building",
+          "firstName"
+        ],
+        "type": "object"
+      },
       "MeView": {
         "properties": {
           "email": {
@@ -7790,6 +8723,93 @@
         },
         "required": [
           "status"
+        ],
+        "type": "object"
+      },
+      "MyClaimRefView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourClaimStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ],
+        "type": "object"
+      },
+      "MyClaimView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "declineReason": {
+            "description": "A code of `neighbourClaimDecline`, or the system’s `handed_to_another` or `post_closed`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "description": "What the claimant told the staff.",
+            "nullable": true,
+            "type": "string"
+          },
+          "postId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourClaimStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "postId",
+          "note",
+          "status",
+          "declineReason",
+          "decidedAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "MyClaimViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MyClaimView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -8321,6 +9341,99 @@
         ],
         "type": "object"
       },
+      "NeighbourClaimStatus": {
+        "enum": [
+          "pending",
+          "handed_over",
+          "declined",
+          "withdrawn"
+        ],
+        "type": "string"
+      },
+      "NeighbourComplaintStatus": {
+        "enum": [
+          "submitted",
+          "under_review",
+          "notice_sent",
+          "mediation",
+          "resolved",
+          "dismissed"
+        ],
+        "type": "string"
+      },
+      "NeighbourPostKind": {
+        "description": "`lost` or `found` on the lost-and-found board; `lend` (can lend) or `borrow` (wants to borrow) on the lending board. The staff post only `lost` and `found`.",
+        "enum": [
+          "lost",
+          "found",
+          "lend",
+          "borrow"
+        ],
+        "type": "string"
+      },
+      "NeighbourRecipientKind": {
+        "description": "`household`: the people answering for the household living there. `owners`: nobody lived there.",
+        "enum": [
+          "household",
+          "owners"
+        ],
+        "type": "string"
+      },
+      "NeighbourReportStatus": {
+        "enum": [
+          "open",
+          "closed"
+        ],
+        "type": "string"
+      },
+      "NeighbourSettingsResponse": {
+        "properties": {
+          "lendingExpiryDays": {
+            "description": "Days a lending post stays on the board.",
+            "type": "number"
+          },
+          "lostFoundExpiryDays": {
+            "description": "Days a lost or found post stays on the board.",
+            "type": "number"
+          },
+          "maxNewConversationsPerDay": {
+            "description": "Conversations one account may start in 24 hours.",
+            "type": "number"
+          },
+          "maxOpenComplaints": {
+            "description": "Complaints one author may have open at once.",
+            "type": "number"
+          },
+          "maxOpenPosts": {
+            "description": "Posts one author may have on the boards at once.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "maxOpenComplaints",
+          "lostFoundExpiryDays",
+          "lendingExpiryDays",
+          "maxOpenPosts",
+          "maxNewConversationsPerDay"
+        ],
+        "type": "object"
+      },
+      "NeighbourSide": {
+        "enum": [
+          "resident",
+          "staff"
+        ],
+        "type": "string"
+      },
+      "NeighbourThread": {
+        "description": "`complainant`: the author reads it. `target`: the unit complained about reads it. `internal`: a staff note nobody else reads.",
+        "enum": [
+          "complainant",
+          "target",
+          "internal"
+        ],
+        "type": "string"
+      },
       "NewInviteDto": {
         "properties": {
           "birthDate": {
@@ -8597,6 +9710,23 @@
         ],
         "type": "object"
       },
+      "NoticeSentView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "sentAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sentAt"
+        ],
+        "type": "object"
+      },
       "NotificationCategory": {
         "enum": [
           "maintenance",
@@ -8605,7 +9735,8 @@
           "household",
           "account_security",
           "management",
-          "community"
+          "community",
+          "neighbours"
         ],
         "type": "string"
       },
@@ -9974,6 +11105,122 @@
         ],
         "type": "object"
       },
+      "PostAuthorLabelView": {
+        "properties": {
+          "building": {
+            "description": "The building the resident posted from. Null for the management, and for a unit that names no building.",
+            "nullable": true,
+            "type": "string"
+          },
+          "kind": {
+            "description": "`management`: posted by the staff.",
+            "enum": [
+              "management",
+              "resident"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "building"
+        ],
+        "type": "object"
+      },
+      "PostComplaintMessageDto": {
+        "properties": {
+          "attachmentFileIds": {
+            "description": "The caller’s own finalized `complaint_evidence` files: photos or PDF (FILE_NOT_AVAILABLE).",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "body": {
+            "description": "The message.",
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "PostCreatedView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourPostKind"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "expiresAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "PostPhotoView": {
+        "properties": {
+          "contentType": {
+            "description": "image/jpeg, image/png or image/webp.",
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "url": {
+            "description": "A presigned GET, valid until `expiresAt`. Null when gone.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "contentType",
+          "url",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "PostReasonDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "A code of the action’s list: `neighbourPostClose` for the author, `neighbourPostRemove` or `neighbourClaimDecline` for the staff (INVALID_REASON_CODE names the allowed ones).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "PostRequestMessageDto": {
         "properties": {
           "attachmentFileIds": {
@@ -10025,6 +11272,27 @@
         },
         "required": [
           "body"
+        ],
+        "type": "object"
+      },
+      "PostUnitRefView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "building"
         ],
         "type": "object"
       },
@@ -10849,6 +12117,154 @@
         ],
         "type": "object"
       },
+      "ReportConversationDto": {
+        "properties": {
+          "note": {
+            "description": "For the staff alone.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "From the closed list `neighbourConversationReport` (INVALID_REASON_CODE names the allowed ones).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "ReportCreatedView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ReportPartyView": {
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "unitCode",
+          "building"
+        ],
+        "type": "object"
+      },
+      "ReportPostView": {
+        "properties": {
+          "body": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourPostKind"
+              }
+            ]
+          },
+          "state": {
+            "enum": [
+              "open",
+              "expired",
+              "closed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "body",
+          "state"
+        ],
+        "type": "object"
+      },
+      "ReportedMessageView": {
+        "properties": {
+          "body": {
+            "description": "Null once its sender was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "erased": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "sender": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "side": {
+            "enum": [
+              "author",
+              "responder"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sender",
+          "side",
+          "body",
+          "erased",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ReportedMessageViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ReportedMessageView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "RequestCreatedView": {
         "properties": {
           "createdAt": {
@@ -11048,6 +12464,231 @@
         },
         "required": [
           "resides"
+        ],
+        "type": "object"
+      },
+      "ResidentComplaintDetailView": {
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/ComplaintCategoryOptionView"
+          },
+          "closeReason": {
+            "description": "Why it ended: a code of `neighbourComplaintResolve` or `neighbourComplaintDismiss`, or `withdrawn`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/ComplaintStatusStepView"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastActivityAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "number": {
+            "example": "NC-000123",
+            "type": "string"
+          },
+          "open": {
+            "description": "Neither resolved nor dismissed.",
+            "type": "boolean"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourComplaintStatus"
+              }
+            ]
+          },
+          "targetUnitCode": {
+            "description": "The unit complained about.",
+            "type": "string"
+          },
+          "unitCode": {
+            "description": "The author’s own unit, when the complaint names one.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "category",
+          "status",
+          "open",
+          "closeReason",
+          "closedAt",
+          "lastActivityAt",
+          "createdAt",
+          "targetUnitCode",
+          "unitCode",
+          "history"
+        ],
+        "type": "object"
+      },
+      "ResidentComplaintMessageView": {
+        "properties": {
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/ComplaintAttachmentView"
+            },
+            "type": "array"
+          },
+          "body": {
+            "description": "Null once its sender was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "erased": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "sender": {
+            "$ref": "#/components/schemas/FirstNameRefView"
+          },
+          "senderSide": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourSide"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "sender",
+          "senderSide",
+          "body",
+          "erased",
+          "attachments",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ResidentComplaintMessageViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ResidentComplaintMessageView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ResidentComplaintView": {
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/ComplaintCategoryOptionView"
+          },
+          "closeReason": {
+            "description": "Why it ended: a code of `neighbourComplaintResolve` or `neighbourComplaintDismiss`, or `withdrawn`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastActivityAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "number": {
+            "example": "NC-000123",
+            "type": "string"
+          },
+          "open": {
+            "description": "Neither resolved nor dismissed.",
+            "type": "boolean"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourComplaintStatus"
+              }
+            ]
+          },
+          "targetUnitCode": {
+            "description": "The unit complained about.",
+            "type": "string"
+          },
+          "unitCode": {
+            "description": "The author’s own unit, when the complaint names one.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "category",
+          "status",
+          "open",
+          "closeReason",
+          "closedAt",
+          "lastActivityAt",
+          "createdAt",
+          "targetUnitCode",
+          "unitCode"
+        ],
+        "type": "object"
+      },
+      "ResidentComplaintViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ResidentComplaintView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -12738,6 +14379,20 @@
         ],
         "type": "object"
       },
+      "SendNoticeDto": {
+        "properties": {
+          "body": {
+            "description": "The management’s own words to the unit. The only text of the matter the unit ever reads: never the complaint’s.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
       "SessionView": {
         "properties": {
           "createdAt": {
@@ -13674,6 +15329,372 @@
         ],
         "type": "object"
       },
+      "StaffClaimView": {
+        "properties": {
+          "claimant": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "declineReason": {
+            "description": "A code of `neighbourClaimDecline`, or the system’s `handed_to_another` or `post_closed`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "description": "What the claimant told the staff.",
+            "nullable": true,
+            "type": "string"
+          },
+          "postId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourClaimStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "postId",
+          "note",
+          "status",
+          "declineReason",
+          "decidedAt",
+          "createdAt",
+          "claimant"
+        ],
+        "type": "object"
+      },
+      "StaffClaimViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffClaimView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffComplaintDetailView": {
+        "properties": {
+          "againstUnit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplaintUnitTallyView"
+              }
+            ],
+            "description": "Complaints against the same unit, this one included."
+          },
+          "author": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Who complained."
+          },
+          "authorPattern": {
+            "$ref": "#/components/schemas/ComplaintAuthorPatternView"
+          },
+          "authorUnit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplaintUnitRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "category": {
+            "$ref": "#/components/schemas/ComplaintCategoryOptionView"
+          },
+          "closeReason": {
+            "description": "Why it ended: a code of `neighbourComplaintResolve` or `neighbourComplaintDismiss`, or `withdrawn`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/ComplaintHistoryView"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastActivityAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "notice": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffNoticeView"
+              }
+            ],
+            "description": "Null until the unit is sent its notice.",
+            "nullable": true,
+            "type": "object"
+          },
+          "number": {
+            "example": "NC-000123",
+            "type": "string"
+          },
+          "open": {
+            "description": "Neither resolved nor dismissed.",
+            "type": "boolean"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourComplaintStatus"
+              }
+            ]
+          },
+          "targetUnit": {
+            "$ref": "#/components/schemas/ComplaintUnitRefView"
+          },
+          "unitHistory": {
+            "$ref": "#/components/schemas/ComplaintUnitHistoryView"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "category",
+          "status",
+          "open",
+          "closeReason",
+          "closedAt",
+          "lastActivityAt",
+          "createdAt",
+          "author",
+          "authorUnit",
+          "targetUnit",
+          "againstUnit",
+          "history",
+          "notice",
+          "unitHistory",
+          "authorPattern"
+        ],
+        "type": "object"
+      },
+      "StaffComplaintMessageView": {
+        "properties": {
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/ComplaintAttachmentView"
+            },
+            "type": "array"
+          },
+          "body": {
+            "description": "Null once its sender was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "erased": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "sender": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "senderSide": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourSide"
+              }
+            ]
+          },
+          "thread": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourThread"
+              }
+            ],
+            "description": "`complainant`: the author reads it. `target`: the unit complained about reads it. `internal`: a staff note nobody else reads."
+          }
+        },
+        "required": [
+          "id",
+          "thread",
+          "sender",
+          "senderSide",
+          "body",
+          "erased",
+          "attachments",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StaffComplaintMessageViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffComplaintMessageView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffComplaintView": {
+        "properties": {
+          "againstUnit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplaintUnitTallyView"
+              }
+            ],
+            "description": "Complaints against the same unit, this one included."
+          },
+          "author": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Who complained."
+          },
+          "authorUnit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplaintUnitRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "category": {
+            "$ref": "#/components/schemas/ComplaintCategoryOptionView"
+          },
+          "closeReason": {
+            "description": "Why it ended: a code of `neighbourComplaintResolve` or `neighbourComplaintDismiss`, or `withdrawn`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastActivityAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "number": {
+            "example": "NC-000123",
+            "type": "string"
+          },
+          "open": {
+            "description": "Neither resolved nor dismissed.",
+            "type": "boolean"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourComplaintStatus"
+              }
+            ]
+          },
+          "targetUnit": {
+            "$ref": "#/components/schemas/ComplaintUnitRefView"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "category",
+          "status",
+          "open",
+          "closeReason",
+          "closedAt",
+          "lastActivityAt",
+          "createdAt",
+          "author",
+          "authorUnit",
+          "targetUnit",
+          "againstUnit"
+        ],
+        "type": "object"
+      },
+      "StaffComplaintViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffComplaintView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StaffEventListItemView": {
         "properties": {
           "attachmentCount": {
@@ -13908,6 +15929,48 @@
         ],
         "type": "object"
       },
+      "StaffNoticeView": {
+        "properties": {
+          "body": {
+            "description": "The management’s own words.",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "recipientKind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourRecipientKind"
+              }
+            ],
+            "description": "`household`: the people answering for the household living there. `owners`: nobody lived there."
+          },
+          "recipients": {
+            "items": {
+              "$ref": "#/components/schemas/AccountRefView"
+            },
+            "type": "array"
+          },
+          "sentAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "sentBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          }
+        },
+        "required": [
+          "id",
+          "body",
+          "recipientKind",
+          "sentBy",
+          "recipients",
+          "sentAt"
+        ],
+        "type": "object"
+      },
       "StaffPollView": {
         "properties": {
           "audience": {
@@ -14008,6 +16071,262 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/StaffPollView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffPostView": {
+        "properties": {
+          "author": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "authorSide": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourSide"
+              }
+            ]
+          },
+          "authorUnit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostUnitRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "board": {
+            "enum": [
+              "lost_found",
+              "lending"
+            ],
+            "type": "string"
+          },
+          "body": {
+            "description": "Null once its author was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "closeReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "handover": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HandoverView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourPostKind"
+              }
+            ]
+          },
+          "occurredOn": {
+            "description": "The day it was lost or found.",
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "pendingClaims": {
+            "description": "Claims waiting for a decision.",
+            "type": "number"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/PostPhotoView"
+            },
+            "type": "array"
+          },
+          "place": {
+            "nullable": true,
+            "type": "string"
+          },
+          "state": {
+            "description": "`expired`: its day passed. A resident sees it only on their own posts.",
+            "enum": [
+              "open",
+              "expired",
+              "closed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "board",
+          "kind",
+          "body",
+          "place",
+          "occurredOn",
+          "photos",
+          "state",
+          "expiresAt",
+          "createdAt",
+          "author",
+          "authorSide",
+          "authorUnit",
+          "closeReason",
+          "closedAt",
+          "pendingClaims",
+          "handover"
+        ],
+        "type": "object"
+      },
+      "StaffPostViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffPostView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffReportView": {
+        "properties": {
+          "author": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportPartyView"
+              }
+            ],
+            "description": "Who posted."
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "conversationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "description": "What the reporter told the staff.",
+            "nullable": true,
+            "type": "string"
+          },
+          "outcome": {
+            "description": "A code of `neighbourReportOutcome`, once closed.",
+            "nullable": true,
+            "type": "string"
+          },
+          "post": {
+            "$ref": "#/components/schemas/ReportPostView"
+          },
+          "reasonCode": {
+            "description": "A code of `neighbourConversationReport`.",
+            "type": "string"
+          },
+          "reporter": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "reporterSide": {
+            "enum": [
+              "author",
+              "responder"
+            ],
+            "type": "string"
+          },
+          "responder": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportPartyView"
+              }
+            ],
+            "description": "Who wrote to them."
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NeighbourReportStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "reasonCode",
+          "note",
+          "reporter",
+          "reporterSide",
+          "conversationId",
+          "author",
+          "responder",
+          "post",
+          "outcome",
+          "closedBy",
+          "closedAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StaffReportViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffReportView"
             },
             "type": "array"
           },
@@ -16189,6 +18508,21 @@
         ],
         "type": "object"
       },
+      "UnitComplaintHistoryView": {
+        "properties": {
+          "history": {
+            "$ref": "#/components/schemas/ComplaintUnitHistoryView"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/ComplaintUnitRefView"
+          }
+        },
+        "required": [
+          "unit",
+          "history"
+        ],
+        "type": "object"
+      },
       "UnitDelegationView": {
         "properties": {
           "createdAt": {
@@ -16440,6 +18774,61 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/UnitNeedingReviewView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "UnitNoticeView": {
+        "properties": {
+          "body": {
+            "description": "Written by the management.",
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/ComplaintCategoryOptionView"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "open": {
+            "description": "The matter is still open: the unit may answer.",
+            "type": "boolean"
+          },
+          "sentAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "unitCode": {
+            "description": "The caller’s unit it was sent to.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "unitCode",
+          "body",
+          "open",
+          "sentAt"
+        ],
+        "type": "object"
+      },
+      "UnitNoticeViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/UnitNoticeView"
             },
             "type": "array"
           },
@@ -16837,6 +19226,25 @@
         },
         "type": "object"
       },
+      "UpdateComplaintCategoryDto": {
+        "properties": {
+          "active": {
+            "description": "False retires the category: no new complaint may use it.",
+            "type": "boolean"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateDispatchSettingsDto": {
         "properties": {
           "autoDispatchEnabled": {
@@ -17028,6 +19436,41 @@
             "description": "The length of a slot residents may pick.",
             "maximum": 240,
             "minimum": 15,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateNeighbourSettingsDto": {
+        "properties": {
+          "lendingExpiryDays": {
+            "description": "Days a lending post stays on the board.",
+            "maximum": 90,
+            "minimum": 1,
+            "type": "number"
+          },
+          "lostFoundExpiryDays": {
+            "description": "Days a lost or found post stays on the board.",
+            "maximum": 180,
+            "minimum": 1,
+            "type": "number"
+          },
+          "maxNewConversationsPerDay": {
+            "description": "Conversations one account may start in 24 hours.",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "number"
+          },
+          "maxOpenComplaints": {
+            "description": "Complaints one author may have open at once.",
+            "maximum": 50,
+            "minimum": 1,
+            "type": "number"
+          },
+          "maxOpenPosts": {
+            "description": "Posts one author may have on the boards at once.",
+            "maximum": 50,
+            "minimum": 1,
             "type": "number"
           }
         },
@@ -17289,6 +19732,57 @@
             "maximum": 720,
             "minimum": 1,
             "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateWelcomeTemplateDto": {
+        "properties": {
+          "emergencyAr": {
+            "description": "The emergency numbers, in Arabic.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "emergencyEn": {
+            "description": "The emergency numbers, in English.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "enabled": {
+            "description": "False: no household is greeted.",
+            "type": "boolean"
+          },
+          "officeHoursAr": {
+            "description": "The office hours, in Arabic.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "officeHoursEn": {
+            "description": "The office hours, in English.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "rulesAr": {
+            "description": "The compound’s rules, in Arabic.",
+            "maxLength": 4000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "rulesEn": {
+            "description": "The compound’s rules, in English.",
+            "maxLength": 4000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
           }
         },
         "type": "object"
@@ -17998,6 +20492,95 @@
         },
         "required": [
           "code"
+        ],
+        "type": "object"
+      },
+      "WelcomeTemplateView": {
+        "properties": {
+          "emergencyAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "emergencyEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "enabled": {
+            "description": "New households are greeted.",
+            "type": "boolean"
+          },
+          "officeHoursAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "officeHoursEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "rulesAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "rulesEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rulesEn",
+          "officeHoursEn",
+          "emergencyEn",
+          "rulesAr",
+          "officeHoursAr",
+          "emergencyAr",
+          "enabled",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "WelcomeView": {
+        "properties": {
+          "available": {
+            "description": "False: the compound has no welcome to show; every text is null.",
+            "type": "boolean"
+          },
+          "emergencyAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "emergencyEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "officeHoursAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "officeHoursEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "rulesAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "rulesEn": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "rulesEn",
+          "officeHoursEn",
+          "emergencyEn",
+          "rulesAr",
+          "officeHoursAr",
+          "emergencyAr",
+          "available"
         ],
         "type": "object"
       },
@@ -28281,6 +30864,2821 @@
         "summary": "List the maintenance visits coming to my unit",
         "tags": [
           "me"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-blocks": {
+      "get": {
+        "operationId": "BlocksController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlockViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the neighbours I blocked",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-blocks/{id}": {
+      "delete": {
+        "operationId": "BlocksController_unblock",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Unblock a neighbour",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-claims": {
+      "get": {
+        "operationId": "MyClaimsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyClaimViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my claims on found items",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-claims/{id}/withdraw": {
+      "post": {
+        "operationId": "MyClaimsController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw my claim on a found item",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-complaint-categories": {
+      "get": {
+        "operationId": "ComplaintCategoryOptionsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintCategoryOptionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the categories a complaint may be filed under",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-complaints": {
+      "get": {
+        "operationId": "ResidentComplaintsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/NeighbourComplaintStatus"
+            }
+          },
+          {
+            "description": "`true`: neither resolved nor dismissed. `false`: only those.",
+            "in": "query",
+            "name": "open",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentComplaintViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my complaints",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ResidentComplaintsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateComplaintDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Complain about another unit",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-complaints/{id}": {
+      "get": {
+        "operationId": "ResidentComplaintsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentComplaintDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one of my complaints",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-complaints/{id}/messages": {
+      "get": {
+        "operationId": "ResidentComplaintsController_thread",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentComplaintMessageViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read my conversation with management on my complaint",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ResidentComplaintsController_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostComplaintMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintMessageCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Write to management on my complaint",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-complaints/{id}/withdraw": {
+      "post": {
+        "operationId": "ResidentComplaintsController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw my complaint",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-conversations": {
+      "get": {
+        "operationId": "ConversationsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my conversations with neighbours",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-conversations/{id}": {
+      "get": {
+        "operationId": "ConversationsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one of my conversations",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-conversations/{id}/block": {
+      "post": {
+        "operationId": "ConversationsController_block",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Block the other side of a conversation",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-conversations/{id}/messages": {
+      "get": {
+        "operationId": "ConversationsController_thread",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationMessageViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read one of my conversations",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ConversationsController_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConversationMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Write in one of my conversations",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-conversations/{id}/report": {
+      "post": {
+        "operationId": "ConversationsController_report",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportConversationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Report a conversation to management",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-conversations/{id}/reveal": {
+      "delete": {
+        "operationId": "ConversationsController_unreveal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take back my agreement to show names",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ConversationsController_reveal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Agree to show names in a conversation",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-notices": {
+      "get": {
+        "operationId": "UnitNoticesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitNoticeViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the notices management sent to my unit",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-notices/{id}": {
+      "get": {
+        "operationId": "UnitNoticesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitNoticeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a notice management sent to my unit",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-notices/{id}/messages": {
+      "get": {
+        "operationId": "UnitNoticesController_thread",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentComplaintMessageViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read my unit’s conversation with management on a notice",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "UnitNoticesController_reply",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostComplaintMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintMessageCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Answer management on a notice",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-posts": {
+      "get": {
+        "operationId": "BoardController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`lost_found` or `lending`.",
+            "in": "query",
+            "name": "board",
+            "required": false,
+            "schema": {
+              "enum": [
+                "lost_found",
+                "lending"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/NeighbourPostKind"
+            }
+          },
+          {
+            "description": "`true`: my own posts, whatever their state, instead of the board.",
+            "in": "query",
+            "name": "mine",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardPostViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a board, or list my own posts",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "BoardController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePostDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Post on the lost-and-found or the lending board",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-posts/{id}": {
+      "get": {
+        "operationId": "BoardController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardPostView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a post on a board, or one of my own",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-posts/{id}/claims": {
+      "post": {
+        "operationId": "BoardController_claim",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClaimDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Claim a found item",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-posts/{id}/close": {
+      "post": {
+        "operationId": "BoardController_close",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take my post off its board",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-posts/{id}/conversations": {
+      "post": {
+        "operationId": "PostContactController_start",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConversationMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Write to whoever posted, without either name",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbour-welcome": {
+      "get": {
+        "operationId": "WelcomeController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WelcomeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the compound’s welcome",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/claims/{id}/decline": {
+      "post": {
+        "operationId": "StaffPostsController_decline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decline a claim on a found item",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/complaint-categories": {
+      "get": {
+        "operationId": "ComplaintCategoriesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintCategoryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List complaint categories",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ComplaintCategoriesController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateComplaintCategoryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintCategoryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a complaint category",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/complaint-categories/{id}": {
+      "patch": {
+        "operationId": "ComplaintCategoriesController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateComplaintCategoryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintCategoryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a complaint category",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/complaints": {
+      "get": {
+        "operationId": "StaffComplaintsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/NeighbourComplaintStatus"
+            }
+          },
+          {
+            "description": "`true`: neither resolved nor dismissed. `false`: only those.",
+            "in": "query",
+            "name": "open",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "categoryId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Complaints against this unit: its history.",
+            "in": "query",
+            "name": "targetUnitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Complaints filed by this account.",
+            "in": "query",
+            "name": "authorId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffComplaintViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List complaints between units",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/complaints/{id}": {
+      "get": {
+        "operationId": "StaffComplaintsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffComplaintDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a complaint with its history and its notice",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/complaints/{id}/dismiss": {
+      "post": {
+        "operationId": "StaffComplaintsController_dismiss",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComplaintReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Dismiss a complaint, as unfounded or otherwise",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/complaints/{id}/mediation": {
+      "post": {
+        "operationId": "StaffComplaintsController_mediate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Put a complaint in mediation",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/complaints/{id}/messages": {
+      "get": {
+        "operationId": "StaffComplaintsController_readAuthor",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffComplaintMessageViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the conversation with a complaint’s author",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffComplaintsController_writeAuthor",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostComplaintMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintMessageCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Write to a complaint’s author",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/complaints/{id}/notes": {
+      "get": {
+        "operationId": "StaffComplaintsController_readNotes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffComplaintMessageViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the staff notes on a complaint",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffComplaintsController_writeNotes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostComplaintMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintMessageCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a staff note to a complaint",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/complaints/{id}/notice": {
+      "post": {
+        "operationId": "StaffComplaintsController_sendNotice",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendNoticeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticeSentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send the notice to the unit complained about",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/complaints/{id}/resolve": {
+      "post": {
+        "operationId": "StaffComplaintsController_resolve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComplaintReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Resolve a complaint",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/complaints/{id}/review": {
+      "post": {
+        "operationId": "StaffComplaintsController_review",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take a complaint under review",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/complaints/{id}/unit-messages": {
+      "get": {
+        "operationId": "StaffComplaintsController_readUnit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffComplaintMessageViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the conversation with the unit complained about",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffComplaintsController_writeUnit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostComplaintMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintMessageCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Write to the unit complained about",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/posts": {
+      "get": {
+        "operationId": "StaffPostsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`lost_found` or `lending`.",
+            "in": "query",
+            "name": "board",
+            "required": false,
+            "schema": {
+              "enum": [
+                "lost_found",
+                "lending"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/NeighbourPostKind"
+            }
+          },
+          {
+            "description": "`open`: on its board. `expired`: its day passed and nobody closed it. `closed`.",
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "enum": [
+                "open",
+                "expired",
+                "closed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPostViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the posts of a board",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffPostsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePostDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Post a lost or found item as the management",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/posts/{id}": {
+      "get": {
+        "operationId": "StaffPostsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPostView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a post with its handover",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/posts/{id}/claims": {
+      "get": {
+        "operationId": "StaffPostsController_claimsOf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffClaimViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the claims on a found item",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/posts/{id}/handover": {
+      "post": {
+        "operationId": "StaffPostsController_handOver",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HandOverDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record the handover of a found item",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/posts/{id}/remove": {
+      "post": {
+        "operationId": "StaffPostsController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take a post off its board",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/reports": {
+      "get": {
+        "operationId": "StaffReportsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/NeighbourReportStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffReportViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List reported conversations",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/reports/{id}": {
+      "get": {
+        "operationId": "StaffReportsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a reported conversation’s case",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/reports/{id}/close": {
+      "post": {
+        "operationId": "StaffReportsController_close",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseReportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close a reported conversation’s case",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/reports/{id}/messages": {
+      "get": {
+        "operationId": "StaffReportsController_thread",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportedMessageViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the reported conversation of an open case",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/settings": {
+      "get": {
+        "operationId": "NeighbourSettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NeighbourSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the neighbours settings",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "NeighbourSettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNeighbourSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NeighbourSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update the neighbours settings",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/units/{unitId}/complaint-history": {
+      "get": {
+        "operationId": "StaffComplaintsController_unitHistory",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitComplaintHistoryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Count the complaints there have been against a unit",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/neighbours/welcome-template": {
+      "get": {
+        "operationId": "WelcomeTemplateController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WelcomeTemplateView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the welcome template",
+        "tags": [
+          "neighbours"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "put": {
+        "operationId": "WelcomeTemplateController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWelcomeTemplateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WelcomeTemplateView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Write the welcome template, or turn it off",
+        "tags": [
+          "neighbours"
         ],
         "x-no-store": true,
         "x-stability": "draft"

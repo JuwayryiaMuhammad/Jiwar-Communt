@@ -3494,6 +3494,852 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/neighbour-blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the neighbours I blocked */
+        get: operations["BlocksController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-blocks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Unblock a neighbour */
+        delete: operations["BlocksController_unblock"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-claims": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List my claims on found items */
+        get: operations["MyClaimsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-claims/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw my claim on a found item */
+        post: operations["MyClaimsController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-complaint-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the categories a complaint may be filed under */
+        get: operations["ComplaintCategoryOptionsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-complaints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List my complaints */
+        get: operations["ResidentComplaintsController_list"];
+        put?: never;
+        /** Complain about another unit */
+        post: operations["ResidentComplaintsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-complaints/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one of my complaints */
+        get: operations["ResidentComplaintsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-complaints/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read my conversation with management on my complaint */
+        get: operations["ResidentComplaintsController_thread"];
+        put?: never;
+        /** Write to management on my complaint */
+        post: operations["ResidentComplaintsController_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-complaints/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw my complaint */
+        post: operations["ResidentComplaintsController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-conversations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List my conversations with neighbours */
+        get: operations["ConversationsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-conversations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one of my conversations */
+        get: operations["ConversationsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-conversations/{id}/block": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Block the other side of a conversation */
+        post: operations["ConversationsController_block"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-conversations/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read one of my conversations */
+        get: operations["ConversationsController_thread"];
+        put?: never;
+        /** Write in one of my conversations */
+        post: operations["ConversationsController_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-conversations/{id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Report a conversation to management */
+        post: operations["ConversationsController_report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-conversations/{id}/reveal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Agree to show names in a conversation */
+        post: operations["ConversationsController_reveal"];
+        /** Take back my agreement to show names */
+        delete: operations["ConversationsController_unreveal"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-notices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the notices management sent to my unit */
+        get: operations["UnitNoticesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-notices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a notice management sent to my unit */
+        get: operations["UnitNoticesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-notices/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read my unit’s conversation with management on a notice */
+        get: operations["UnitNoticesController_thread"];
+        put?: never;
+        /** Answer management on a notice */
+        post: operations["UnitNoticesController_reply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read a board, or list my own posts */
+        get: operations["BoardController_list"];
+        put?: never;
+        /** Post on the lost-and-found or the lending board */
+        post: operations["BoardController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-posts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a post on a board, or one of my own */
+        get: operations["BoardController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-posts/{id}/claims": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Claim a found item */
+        post: operations["BoardController_claim"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-posts/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take my post off its board */
+        post: operations["BoardController_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-posts/{id}/conversations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Write to whoever posted, without either name */
+        post: operations["PostContactController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbour-welcome": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read the compound’s welcome */
+        get: operations["WelcomeController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/claims/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline a claim on a found item */
+        post: operations["StaffPostsController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/complaint-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List complaint categories */
+        get: operations["ComplaintCategoriesController_list"];
+        put?: never;
+        /** Create a complaint category */
+        post: operations["ComplaintCategoriesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/complaint-categories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a complaint category */
+        patch: operations["ComplaintCategoriesController_update"];
+        trace?: never;
+    };
+    "/api/v1/neighbours/complaints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List complaints between units */
+        get: operations["StaffComplaintsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/complaints/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a complaint with its history and its notice */
+        get: operations["StaffComplaintsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/complaints/{id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dismiss a complaint, as unfounded or otherwise */
+        post: operations["StaffComplaintsController_dismiss"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/complaints/{id}/mediation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Put a complaint in mediation */
+        post: operations["StaffComplaintsController_mediate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/complaints/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read the conversation with a complaint’s author */
+        get: operations["StaffComplaintsController_readAuthor"];
+        put?: never;
+        /** Write to a complaint’s author */
+        post: operations["StaffComplaintsController_writeAuthor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/complaints/{id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read the staff notes on a complaint */
+        get: operations["StaffComplaintsController_readNotes"];
+        put?: never;
+        /** Add a staff note to a complaint */
+        post: operations["StaffComplaintsController_writeNotes"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/complaints/{id}/notice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send the notice to the unit complained about */
+        post: operations["StaffComplaintsController_sendNotice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/complaints/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve a complaint */
+        post: operations["StaffComplaintsController_resolve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/complaints/{id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take a complaint under review */
+        post: operations["StaffComplaintsController_review"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/complaints/{id}/unit-messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read the conversation with the unit complained about */
+        get: operations["StaffComplaintsController_readUnit"];
+        put?: never;
+        /** Write to the unit complained about */
+        post: operations["StaffComplaintsController_writeUnit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the posts of a board */
+        get: operations["StaffPostsController_list"];
+        put?: never;
+        /** Post a lost or found item as the management */
+        post: operations["StaffPostsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/posts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a post with its handover */
+        get: operations["StaffPostsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/posts/{id}/claims": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the claims on a found item */
+        get: operations["StaffPostsController_claimsOf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/posts/{id}/handover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record the handover of a found item */
+        post: operations["StaffPostsController_handOver"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/posts/{id}/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take a post off its board */
+        post: operations["StaffPostsController_remove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List reported conversations */
+        get: operations["StaffReportsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/reports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a reported conversation’s case */
+        get: operations["StaffReportsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/reports/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close a reported conversation’s case */
+        post: operations["StaffReportsController_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/reports/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read the reported conversation of an open case */
+        get: operations["StaffReportsController_thread"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the neighbours settings */
+        get: operations["NeighbourSettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update the neighbours settings */
+        patch: operations["NeighbourSettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/neighbours/units/{unitId}/complaint-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Count the complaints there have been against a unit */
+        get: operations["StaffComplaintsController_unitHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/neighbours/welcome-template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the welcome template */
+        get: operations["WelcomeTemplateController_get"];
+        /** Write the welcome template, or turn it off */
+        put: operations["WelcomeTemplateController_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/occupancies/{id}/convert-to-owner": {
         parameters: {
             query?: never;
@@ -6157,6 +7003,56 @@ export interface components {
             /** Format: date */
             birthDate: string;
         };
+        BlockView: {
+            /** @description The building the blocked resident wrote from. */
+            building: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+        };
+        BlockViewList: {
+            data: components["schemas"]["BlockView"][];
+            nextCursor: string | null;
+        };
+        BoardPostView: {
+            author: components["schemas"]["PostAuthorLabelView"];
+            /** @enum {string} */
+            board: "lost_found" | "lending";
+            /** @description Null once its author was erased. */
+            body: string | null;
+            /** @description A found item on its board, not the caller’s own: it may be claimed at the office. */
+            claimable: boolean;
+            /** @description Why it closed, on the caller’s own post alone. */
+            closeReason: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["NeighbourPostKind"];
+            /** @description The caller posted it. */
+            mine: boolean;
+            /** @description The caller’s latest claim on it. */
+            myClaim: components["schemas"]["MyClaimRefView"] | null;
+            /**
+             * Format: date
+             * @description The day it was lost or found.
+             */
+            occurredOn: string | null;
+            photos: components["schemas"]["PostPhotoView"][];
+            place: string | null;
+            /**
+             * @description `expired`: its day passed. A resident sees it only on their own posts.
+             * @enum {string}
+             */
+            state: "open" | "expired" | "closed";
+        };
+        BoardPostViewList: {
+            data: components["schemas"]["BoardPostView"][];
+            nextCursor: string | null;
+        };
         BoardSuggestionView: {
             done: components["schemas"]["DoneNoteView"] | null;
             /** Format: uuid */
@@ -6381,8 +7277,19 @@ export interface components {
             /** @description At least 12 characters (checked by the service). */
             newPassword: string;
         };
+        ClaimCreatedView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            status: components["schemas"]["NeighbourClaimStatus"];
+        };
         ClearReviewFlagDto: {
             /** @description From the closed list `reviewClear`. */
+            reasonCode: string;
+        };
+        CloseReportDto: {
+            /** @description What was done, from the closed list `neighbourReportOutcome`. `post_removed` takes the post down with the case. */
             reasonCode: string;
         };
         CloseRequestDto: {
@@ -6401,6 +7308,108 @@ export interface components {
             id: string;
             /** @description A presigned GET, valid until `expiresAt`. Null when gone. */
             url: string | null;
+        };
+        ComplaintAttachmentView: {
+            /** @description image/jpeg, image/png, image/webp or application/pdf. */
+            contentType: string;
+            /** Format: date-time */
+            expiresAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description A presigned GET, valid until `expiresAt`. Null when gone. */
+            url: string | null;
+        };
+        ComplaintAuthorPatternView: {
+            /** @description Against this same unit, this one included. */
+            againstSameUnit: number;
+            dismissedUnfounded: number;
+            open: number;
+            /** @description Every complaint they filed. */
+            total: number;
+        };
+        ComplaintCategoryOptionView: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+        };
+        ComplaintCategoryOptionViewList: {
+            data: components["schemas"]["ComplaintCategoryOptionView"][];
+            nextCursor: string | null;
+        };
+        ComplaintCategoryView: {
+            active: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ComplaintCategoryViewList: {
+            data: components["schemas"]["ComplaintCategoryView"][];
+            nextCursor: string | null;
+        };
+        ComplaintCreatedView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @example NC-000123 */
+            number: string;
+            status: components["schemas"]["NeighbourComplaintStatus"];
+        };
+        ComplaintHistoryView: {
+            actor: components["schemas"]["AccountRefView"];
+            actorSide: components["schemas"]["NeighbourSide"];
+            /** Format: date-time */
+            at: string;
+            /** @description Null on the first row: the filing. */
+            from: components["schemas"]["NeighbourComplaintStatus"] | null;
+            reasonCode: string | null;
+            to: components["schemas"]["NeighbourComplaintStatus"];
+        };
+        ComplaintMessageCreatedView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+        };
+        ComplaintReasonDto: {
+            /** @description A code of the action’s list: `neighbourComplaintResolve` or `neighbourComplaintDismiss` (INVALID_REASON_CODE names the allowed ones). */
+            reasonCode: string;
+        };
+        ComplaintStatusStepView: {
+            /** Format: date-time */
+            at: string;
+            reasonCode: string | null;
+            status: components["schemas"]["NeighbourComplaintStatus"];
+        };
+        ComplaintUnitHistoryView: {
+            dismissed: number;
+            open: number;
+            resolved: number;
+            total: number;
+            /** @description Dismissed as unfounded. */
+            unfounded: number;
+        };
+        ComplaintUnitRefView: {
+            building: string | null;
+            code: string;
+            /** Format: uuid */
+            id: string;
+        };
+        ComplaintUnitTallyView: {
+            open: number;
+            total: number;
         };
         CompleteInviteDto: {
             code: string;
@@ -6498,6 +7507,64 @@ export interface components {
             email?: string;
             phone?: string;
         };
+        ConversationCreatedView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+        };
+        ConversationMessageDto: {
+            body: string;
+        };
+        ConversationMessageView: {
+            /** @description Null once its sender was erased. */
+            body: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            erased: boolean;
+            /** Format: uuid */
+            id: string;
+            /** @description The caller wrote it. */
+            mine: boolean;
+        };
+        ConversationMessageViewList: {
+            data: components["schemas"]["ConversationMessageView"][];
+            nextCursor: string | null;
+        };
+        ConversationPostRefView: {
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["NeighbourPostKind"];
+            /** @enum {string} */
+            state: "open" | "expired" | "closed";
+        };
+        ConversationView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** @description The caller agreed to show names. */
+            iAgreed: boolean;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            lastMessageAt: string;
+            /** @description Both agreed: names are shown. */
+            namesRevealed: boolean;
+            /** @description Something may still be written. False once it closed or its post left the board; never says which. */
+            open: boolean;
+            other: components["schemas"]["MaskedPartyView"];
+            post: components["schemas"]["ConversationPostRefView"];
+            /**
+             * @description The caller’s side: the post’s `author`, or the `responder`.
+             * @enum {string}
+             */
+            side: "author" | "responder";
+            /** @description The other side agreed. */
+            theyAgreed: boolean;
+        };
+        ConversationViewList: {
+            data: components["schemas"]["ConversationView"][];
+            nextCursor: string | null;
+        };
         ConvertToOwnerDto: {
             /** @description False: they let the unit (a landlord). */
             resides?: boolean;
@@ -6558,6 +7625,37 @@ export interface components {
             key: string;
             nameAr: string;
             nameEn: string;
+        };
+        CreateClaimDto: {
+            /** @description For the staff alone: how they will know it is yours. Never shown to whoever posted the item. */
+            note?: string;
+        };
+        CreateComplaintCategoryDto: {
+            /** @description Stable code, lowercase (e.g. `noise`). Never changes once created. */
+            key: string;
+            nameAr: string;
+            nameEn: string;
+        };
+        CreateComplaintDto: {
+            /** @description The caller’s own finalized `complaint_evidence` files: photos or PDF (FILE_NOT_AVAILABLE). */
+            attachmentFileIds?: string[];
+            /** @description What the complaint says: it becomes its first message. */
+            body: string;
+            /**
+             * Format: uuid
+             * @description An active complaint category of the compound (CATEGORY_NOT_AVAILABLE).
+             */
+            categoryId: string;
+            /**
+             * @description The code of the unit complained about (UNIT_CODE_UNKNOWN). Never one of the author’s own units (OWN_UNIT).
+             * @example B2-104
+             */
+            targetUnitCode: string;
+            /**
+             * Format: uuid
+             * @description One of the author’s own units, when they have several.
+             */
+            unitId?: string;
         };
         CreateDelegationDto: {
             /**
@@ -6632,6 +7730,27 @@ export interface components {
             questionAr?: string | null;
             /** @description English, Arabic or both; at least one. */
             questionEn?: string | null;
+        };
+        CreatePostDto: {
+            /** @description A few words: what it is. */
+            body: string;
+            /** @description `lost` or `found` on the lost-and-found board; `lend` (can lend) or `borrow` (wants to borrow) on the lending board. The staff post only `lost` and `found`. */
+            kind: components["schemas"]["NeighbourPostKind"];
+            /**
+             * Format: date
+             * @description The day it was lost or found, not in the future. Not for a lending post (FIELD_NOT_ALLOWED).
+             * @example 2026-10-19
+             */
+            occurredOn?: string;
+            /** @description The caller’s own finalized `neighbour_post_photo` files (FILE_NOT_AVAILABLE). */
+            photoFileIds?: string[];
+            /** @description Where it was lost or found, or where to meet. */
+            place?: string;
+            /**
+             * Format: uuid
+             * @description One of the author’s own units, when they have several: other residents see its building and nothing else. Not for the staff (FIELD_NOT_ALLOWED).
+             */
+            unitId?: string;
         };
         CreatePreventiveRequestDto: {
             /**
@@ -7448,7 +8567,7 @@ export interface components {
             technicianRating: number | null;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -7649,6 +8768,18 @@ export interface components {
             status: components["schemas"]["GateRequestStatus"];
             unitCode: string;
         };
+        HandOverDto: {
+            /**
+             * Format: uuid
+             * @description A pending claim on this item: it goes to its claimant.
+             */
+            claimId?: string;
+            /**
+             * Format: uuid
+             * @description A resident who came without a claim (RECIPIENT_NOT_ELIGIBLE). Not with `claimId`.
+             */
+            recipientAccountId?: string;
+        };
         HandOverParcelDto: {
             /** @description The 6 digits of a parcel’s code or a delegate’s. Or send `qr`. */
             code?: string;
@@ -7688,6 +8819,17 @@ export interface components {
             returnedAt: string | null;
             status: components["schemas"]["ParcelStatus"];
             unitCode: string;
+        };
+        HandoverView: {
+            /**
+             * Format: uuid
+             * @description The claim it settled; null for someone who came without one.
+             */
+            claimId: string | null;
+            /** Format: date-time */
+            handedAt: string;
+            handedBy: components["schemas"]["AccountRefView"];
+            recipient: components["schemas"]["AccountRefView"];
         };
         HoldDto: {
             holdReason: components["schemas"]["TicketHoldReason"];
@@ -7979,6 +9121,12 @@ export interface components {
             phone?: string | null;
             status?: components["schemas"]["AccountStatus"];
         };
+        MaskedPartyView: {
+            /** @description The building they wrote from. Null when their unit names none. */
+            building: string | null;
+            /** @description Their first name: only once BOTH sides agreed to show names. Null before. */
+            firstName: string | null;
+        };
         MeView: {
             email: string | null;
             fullName: string | null;
@@ -8054,6 +9202,30 @@ export interface components {
             response?: string;
             /** @description A step forward: `under_review`, `planned`, `done`, or `declined`. `done` and `declined` are final. */
             status: components["schemas"]["SuggestionStatus"];
+        };
+        MyClaimRefView: {
+            /** Format: uuid */
+            id: string;
+            status: components["schemas"]["NeighbourClaimStatus"];
+        };
+        MyClaimView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** @description A code of `neighbourClaimDecline`, or the system’s `handed_to_another` or `post_closed`. */
+            declineReason: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description What the claimant told the staff. */
+            note: string | null;
+            /** Format: uuid */
+            postId: string;
+            status: components["schemas"]["NeighbourClaimStatus"];
+        };
+        MyClaimViewList: {
+            data: components["schemas"]["MyClaimView"][];
+            nextCursor: string | null;
         };
         MyDelegationView: {
             /** @description The other side, by name only. */
@@ -8209,6 +9381,41 @@ export interface components {
             data: components["schemas"]["MyUnitView"][];
             nextCursor: string | null;
         };
+        /** @enum {string} */
+        NeighbourClaimStatus: "pending" | "handed_over" | "declined" | "withdrawn";
+        /** @enum {string} */
+        NeighbourComplaintStatus: "submitted" | "under_review" | "notice_sent" | "mediation" | "resolved" | "dismissed";
+        /**
+         * @description `lost` or `found` on the lost-and-found board; `lend` (can lend) or `borrow` (wants to borrow) on the lending board. The staff post only `lost` and `found`.
+         * @enum {string}
+         */
+        NeighbourPostKind: "lost" | "found" | "lend" | "borrow";
+        /**
+         * @description `household`: the people answering for the household living there. `owners`: nobody lived there.
+         * @enum {string}
+         */
+        NeighbourRecipientKind: "household" | "owners";
+        /** @enum {string} */
+        NeighbourReportStatus: "open" | "closed";
+        NeighbourSettingsResponse: {
+            /** @description Days a lending post stays on the board. */
+            lendingExpiryDays: number;
+            /** @description Days a lost or found post stays on the board. */
+            lostFoundExpiryDays: number;
+            /** @description Conversations one account may start in 24 hours. */
+            maxNewConversationsPerDay: number;
+            /** @description Complaints one author may have open at once. */
+            maxOpenComplaints: number;
+            /** @description Posts one author may have on the boards at once. */
+            maxOpenPosts: number;
+        };
+        /** @enum {string} */
+        NeighbourSide: "resident" | "staff";
+        /**
+         * @description `complainant`: the author reads it. `target`: the unit complained about reads it. `internal`: a staff note nobody else reads.
+         * @enum {string}
+         */
+        NeighbourThread: "complainant" | "target" | "internal";
         NewInviteDto: {
             /**
              * Format: date
@@ -8304,8 +9511,14 @@ export interface components {
              */
             validUntil?: string;
         };
+        NoticeSentView: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            sentAt: string;
+        };
         /** @enum {string} */
-        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community";
+        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community" | "neighbours";
         NotificationView: {
             /** Format: date-time */
             createdAt: string;
@@ -8706,6 +9919,44 @@ export interface components {
             data: components["schemas"]["PollView"][];
             nextCursor: string | null;
         };
+        PostAuthorLabelView: {
+            /** @description The building the resident posted from. Null for the management, and for a unit that names no building. */
+            building: string | null;
+            /**
+             * @description `management`: posted by the staff.
+             * @enum {string}
+             */
+            kind: "management" | "resident";
+        };
+        PostComplaintMessageDto: {
+            /** @description The caller’s own finalized `complaint_evidence` files: photos or PDF (FILE_NOT_AVAILABLE). */
+            attachmentFileIds?: string[];
+            /** @description The message. */
+            body: string;
+        };
+        PostCreatedView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["NeighbourPostKind"];
+        };
+        PostPhotoView: {
+            /** @description image/jpeg, image/png or image/webp. */
+            contentType: string;
+            /** Format: date-time */
+            expiresAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description A presigned GET, valid until `expiresAt`. Null when gone. */
+            url: string | null;
+        };
+        PostReasonDto: {
+            /** @description A code of the action’s list: `neighbourPostClose` for the author, `neighbourPostRemove` or `neighbourClaimDecline` for the staff (INVALID_REASON_CODE names the allowed ones). */
+            reasonCode: string;
+        };
         PostRequestMessageDto: {
             /** @description The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). */
             attachmentFileIds?: string[];
@@ -8725,6 +9976,12 @@ export interface components {
              * @default false
              */
             official: boolean;
+        };
+        PostUnitRefView: {
+            building: string | null;
+            code: string;
+            /** Format: uuid */
+            id: string;
         };
         PreferencesView: {
             categories: components["schemas"]["CategoryPreferenceView"][];
@@ -8982,6 +10239,47 @@ export interface components {
             /** @description The whole set; keys from GET /permissions. The manager role keeps roles.manage and residents.manage. */
             permissions: string[];
         };
+        ReportConversationDto: {
+            /** @description For the staff alone. */
+            note?: string;
+            /** @description From the closed list `neighbourConversationReport` (INVALID_REASON_CODE names the allowed ones). */
+            reasonCode: string;
+        };
+        ReportCreatedView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+        };
+        ReportPartyView: {
+            account: components["schemas"]["AccountRefView"];
+            building: string | null;
+            unitCode: string | null;
+        };
+        ReportPostView: {
+            body: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["NeighbourPostKind"];
+            /** @enum {string} */
+            state: "open" | "expired" | "closed";
+        };
+        ReportedMessageView: {
+            /** @description Null once its sender was erased. */
+            body: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            erased: boolean;
+            /** Format: uuid */
+            id: string;
+            sender: components["schemas"]["AccountRefView"];
+            /** @enum {string} */
+            side: "author" | "responder";
+        };
+        ReportedMessageViewList: {
+            data: components["schemas"]["ReportedMessageView"][];
+            nextCursor: string | null;
+        };
         RequestCreatedView: {
             /** Format: date-time */
             createdAt: string;
@@ -9045,6 +10343,71 @@ export interface components {
         };
         ResidenceDto: {
             resides: boolean;
+        };
+        ResidentComplaintDetailView: {
+            category: components["schemas"]["ComplaintCategoryOptionView"];
+            /** @description Why it ended: a code of `neighbourComplaintResolve` or `neighbourComplaintDismiss`, or `withdrawn`. */
+            closeReason: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            history: components["schemas"]["ComplaintStatusStepView"][];
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            lastActivityAt: string;
+            /** @example NC-000123 */
+            number: string;
+            /** @description Neither resolved nor dismissed. */
+            open: boolean;
+            status: components["schemas"]["NeighbourComplaintStatus"];
+            /** @description The unit complained about. */
+            targetUnitCode: string;
+            /** @description The author’s own unit, when the complaint names one. */
+            unitCode: string | null;
+        };
+        ResidentComplaintMessageView: {
+            attachments: components["schemas"]["ComplaintAttachmentView"][];
+            /** @description Null once its sender was erased. */
+            body: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            erased: boolean;
+            /** Format: uuid */
+            id: string;
+            sender: components["schemas"]["FirstNameRefView"];
+            senderSide: components["schemas"]["NeighbourSide"];
+        };
+        ResidentComplaintMessageViewList: {
+            data: components["schemas"]["ResidentComplaintMessageView"][];
+            nextCursor: string | null;
+        };
+        ResidentComplaintView: {
+            category: components["schemas"]["ComplaintCategoryOptionView"];
+            /** @description Why it ended: a code of `neighbourComplaintResolve` or `neighbourComplaintDismiss`, or `withdrawn`. */
+            closeReason: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            lastActivityAt: string;
+            /** @example NC-000123 */
+            number: string;
+            /** @description Neither resolved nor dismissed. */
+            open: boolean;
+            status: components["schemas"]["NeighbourComplaintStatus"];
+            /** @description The unit complained about. */
+            targetUnitCode: string;
+            /** @description The author’s own unit, when the complaint names one. */
+            unitCode: string | null;
+        };
+        ResidentComplaintViewList: {
+            data: components["schemas"]["ResidentComplaintView"][];
+            nextCursor: string | null;
         };
         ResidentDetailView: {
             /** Format: date */
@@ -9523,6 +10886,10 @@ export interface components {
             accountId: string;
             loginTicket: string;
         };
+        SendNoticeDto: {
+            /** @description The management’s own words to the unit. The only text of the matter the unit ever reads: never the complaint’s. */
+            body: string;
+        };
         SessionView: {
             /** Format: date-time */
             createdAt: string;
@@ -9804,6 +11171,101 @@ export interface components {
             data: components["schemas"]["StaffAppointmentSlotView"][];
             nextCursor: string | null;
         };
+        StaffClaimView: {
+            claimant: components["schemas"]["AccountRefView"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** @description A code of `neighbourClaimDecline`, or the system’s `handed_to_another` or `post_closed`. */
+            declineReason: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description What the claimant told the staff. */
+            note: string | null;
+            /** Format: uuid */
+            postId: string;
+            status: components["schemas"]["NeighbourClaimStatus"];
+        };
+        StaffClaimViewList: {
+            data: components["schemas"]["StaffClaimView"][];
+            nextCursor: string | null;
+        };
+        StaffComplaintDetailView: {
+            /** @description Complaints against the same unit, this one included. */
+            againstUnit: components["schemas"]["ComplaintUnitTallyView"];
+            /** @description Who complained. */
+            author: components["schemas"]["AccountRefView"];
+            authorPattern: components["schemas"]["ComplaintAuthorPatternView"];
+            authorUnit: components["schemas"]["ComplaintUnitRefView"] | null;
+            category: components["schemas"]["ComplaintCategoryOptionView"];
+            /** @description Why it ended: a code of `neighbourComplaintResolve` or `neighbourComplaintDismiss`, or `withdrawn`. */
+            closeReason: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            history: components["schemas"]["ComplaintHistoryView"][];
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            lastActivityAt: string;
+            /** @description Null until the unit is sent its notice. */
+            notice: components["schemas"]["StaffNoticeView"] | null;
+            /** @example NC-000123 */
+            number: string;
+            /** @description Neither resolved nor dismissed. */
+            open: boolean;
+            status: components["schemas"]["NeighbourComplaintStatus"];
+            targetUnit: components["schemas"]["ComplaintUnitRefView"];
+            unitHistory: components["schemas"]["ComplaintUnitHistoryView"];
+        };
+        StaffComplaintMessageView: {
+            attachments: components["schemas"]["ComplaintAttachmentView"][];
+            /** @description Null once its sender was erased. */
+            body: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            erased: boolean;
+            /** Format: uuid */
+            id: string;
+            sender: components["schemas"]["AccountRefView"];
+            senderSide: components["schemas"]["NeighbourSide"];
+            /** @description `complainant`: the author reads it. `target`: the unit complained about reads it. `internal`: a staff note nobody else reads. */
+            thread: components["schemas"]["NeighbourThread"];
+        };
+        StaffComplaintMessageViewList: {
+            data: components["schemas"]["StaffComplaintMessageView"][];
+            nextCursor: string | null;
+        };
+        StaffComplaintView: {
+            /** @description Complaints against the same unit, this one included. */
+            againstUnit: components["schemas"]["ComplaintUnitTallyView"];
+            /** @description Who complained. */
+            author: components["schemas"]["AccountRefView"];
+            authorUnit: components["schemas"]["ComplaintUnitRefView"] | null;
+            category: components["schemas"]["ComplaintCategoryOptionView"];
+            /** @description Why it ended: a code of `neighbourComplaintResolve` or `neighbourComplaintDismiss`, or `withdrawn`. */
+            closeReason: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            lastActivityAt: string;
+            /** @example NC-000123 */
+            number: string;
+            /** @description Neither resolved nor dismissed. */
+            open: boolean;
+            status: components["schemas"]["NeighbourComplaintStatus"];
+            targetUnit: components["schemas"]["ComplaintUnitRefView"];
+        };
+        StaffComplaintViewList: {
+            data: components["schemas"]["StaffComplaintView"][];
+            nextCursor: string | null;
+        };
         StaffEventListItemView: {
             /** @description Files it shows. */
             attachmentCount: number;
@@ -9881,6 +11343,18 @@ export interface components {
              */
             internal: boolean;
         };
+        StaffNoticeView: {
+            /** @description The management’s own words. */
+            body: string;
+            /** Format: uuid */
+            id: string;
+            /** @description `household`: the people answering for the household living there. `owners`: nobody lived there. */
+            recipientKind: components["schemas"]["NeighbourRecipientKind"];
+            recipients: components["schemas"]["AccountRefView"][];
+            /** Format: date-time */
+            sentAt: string;
+            sentBy: components["schemas"]["AccountRefView"];
+        };
         StaffPollView: {
             audience: components["schemas"]["AudienceView"];
             /** Format: date-time */
@@ -9916,6 +11390,74 @@ export interface components {
         };
         StaffPollViewList: {
             data: components["schemas"]["StaffPollView"][];
+            nextCursor: string | null;
+        };
+        StaffPostView: {
+            author: components["schemas"]["AccountRefView"];
+            authorSide: components["schemas"]["NeighbourSide"];
+            authorUnit: components["schemas"]["PostUnitRefView"] | null;
+            /** @enum {string} */
+            board: "lost_found" | "lending";
+            /** @description Null once its author was erased. */
+            body: string | null;
+            closeReason: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+            handover: components["schemas"]["HandoverView"] | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["NeighbourPostKind"];
+            /**
+             * Format: date
+             * @description The day it was lost or found.
+             */
+            occurredOn: string | null;
+            /** @description Claims waiting for a decision. */
+            pendingClaims: number;
+            photos: components["schemas"]["PostPhotoView"][];
+            place: string | null;
+            /**
+             * @description `expired`: its day passed. A resident sees it only on their own posts.
+             * @enum {string}
+             */
+            state: "open" | "expired" | "closed";
+        };
+        StaffPostViewList: {
+            data: components["schemas"]["StaffPostView"][];
+            nextCursor: string | null;
+        };
+        StaffReportView: {
+            /** @description Who posted. */
+            author: components["schemas"]["ReportPartyView"];
+            /** Format: date-time */
+            closedAt: string | null;
+            closedBy: components["schemas"]["AccountRefView"] | null;
+            /** Format: uuid */
+            conversationId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description What the reporter told the staff. */
+            note: string | null;
+            /** @description A code of `neighbourReportOutcome`, once closed. */
+            outcome: string | null;
+            post: components["schemas"]["ReportPostView"];
+            /** @description A code of `neighbourConversationReport`. */
+            reasonCode: string;
+            reporter: components["schemas"]["AccountRefView"];
+            /** @enum {string} */
+            reporterSide: "author" | "responder";
+            /** @description Who wrote to them. */
+            responder: components["schemas"]["ReportPartyView"];
+            status: components["schemas"]["NeighbourReportStatus"];
+        };
+        StaffReportViewList: {
+            data: components["schemas"]["StaffReportView"][];
             nextCursor: string | null;
         };
         StaffRequestDetailView: {
@@ -10556,6 +12098,10 @@ export interface components {
              */
             toAccountId: string;
         };
+        UnitComplaintHistoryView: {
+            history: components["schemas"]["ComplaintUnitHistoryView"];
+            unit: components["schemas"]["ComplaintUnitRefView"];
+        };
         UnitDelegationView: {
             /** Format: date-time */
             createdAt: string;
@@ -10631,6 +12177,23 @@ export interface components {
         };
         UnitNeedingReviewViewList: {
             data: components["schemas"]["UnitNeedingReviewView"][];
+            nextCursor: string | null;
+        };
+        UnitNoticeView: {
+            /** @description Written by the management. */
+            body: string;
+            category: components["schemas"]["ComplaintCategoryOptionView"];
+            /** Format: uuid */
+            id: string;
+            /** @description The matter is still open: the unit may answer. */
+            open: boolean;
+            /** Format: date-time */
+            sentAt: string;
+            /** @description The caller’s unit it was sent to. */
+            unitCode: string;
+        };
+        UnitNoticeViewList: {
+            data: components["schemas"]["UnitNoticeView"][];
             nextCursor: string | null;
         };
         UnitOccupantView: {
@@ -10738,6 +12301,12 @@ export interface components {
             nameAr?: string;
             nameEn?: string;
         };
+        UpdateComplaintCategoryDto: {
+            /** @description False retires the category: no new complaint may use it. */
+            active?: boolean;
+            nameAr?: string;
+            nameEn?: string;
+        };
         UpdateDispatchSettingsDto: {
             /** @description Assign tickets automatically. Off until the manager turns it on, after setting technicians’ specialties. */
             autoDispatchEnabled?: boolean;
@@ -10796,6 +12365,18 @@ export interface components {
             visitHoursStart?: number;
             /** @description The length of a slot residents may pick. */
             visitSlotMinutes?: number;
+        };
+        UpdateNeighbourSettingsDto: {
+            /** @description Days a lending post stays on the board. */
+            lendingExpiryDays?: number;
+            /** @description Days a lost or found post stays on the board. */
+            lostFoundExpiryDays?: number;
+            /** @description Conversations one account may start in 24 hours. */
+            maxNewConversationsPerDay?: number;
+            /** @description Complaints one author may have open at once. */
+            maxOpenComplaints?: number;
+            /** @description Posts one author may have on the boards at once. */
+            maxOpenPosts?: number;
         };
         UpdateParcelSettingsDto: {
             /** @description Days before the managers are told, once, and an unclaimed parcel may be returned. Always more than the reminder. */
@@ -10886,6 +12467,22 @@ export interface components {
             nameEn?: string;
             /** @description Applies to requests opened or reopened from now on; a running cycle keeps its due time. */
             targetResponseHours?: number;
+        };
+        UpdateWelcomeTemplateDto: {
+            /** @description The emergency numbers, in Arabic. */
+            emergencyAr?: string | null;
+            /** @description The emergency numbers, in English. */
+            emergencyEn?: string | null;
+            /** @description False: no household is greeted. */
+            enabled?: boolean;
+            /** @description The office hours, in Arabic. */
+            officeHoursAr?: string | null;
+            /** @description The office hours, in English. */
+            officeHoursEn?: string | null;
+            /** @description The compound’s rules, in Arabic. */
+            rulesAr?: string | null;
+            /** @description The compound’s rules, in English. */
+            rulesEn?: string | null;
         };
         UploadHeadersView: {
             "Content-Type": string;
@@ -11102,6 +12699,28 @@ export interface components {
         WarningView: {
             /** @enum {string} */
             code: "WORKER_SCHEDULE_CONFLICT";
+        };
+        WelcomeTemplateView: {
+            emergencyAr: string | null;
+            emergencyEn: string | null;
+            /** @description New households are greeted. */
+            enabled: boolean;
+            officeHoursAr: string | null;
+            officeHoursEn: string | null;
+            rulesAr: string | null;
+            rulesEn: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        WelcomeView: {
+            /** @description False: the compound has no welcome to show; every text is null. */
+            available: boolean;
+            emergencyAr: string | null;
+            emergencyEn: string | null;
+            officeHoursAr: string | null;
+            officeHoursEn: string | null;
+            rulesAr: string | null;
+            rulesEn: string | null;
         };
         WorkPhotoDto: {
             /**
@@ -16639,6 +18258,1445 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UnitVisitViewList"];
+                };
+            };
+        };
+    };
+    BlocksController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlockViewList"];
+                };
+            };
+        };
+    };
+    BlocksController_unblock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    MyClaimsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyClaimViewList"];
+                };
+            };
+        };
+    };
+    MyClaimsController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ComplaintCategoryOptionsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintCategoryOptionViewList"];
+                };
+            };
+        };
+    };
+    ResidentComplaintsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["NeighbourComplaintStatus"];
+                /** @description `true`: neither resolved nor dismissed. `false`: only those. */
+                open?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentComplaintViewList"];
+                };
+            };
+        };
+    };
+    ResidentComplaintsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateComplaintDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintCreatedView"];
+                };
+            };
+        };
+    };
+    ResidentComplaintsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentComplaintDetailView"];
+                };
+            };
+        };
+    };
+    ResidentComplaintsController_thread: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentComplaintMessageViewList"];
+                };
+            };
+        };
+    };
+    ResidentComplaintsController_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostComplaintMessageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintMessageCreatedView"];
+                };
+            };
+        };
+    };
+    ResidentComplaintsController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ConversationsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationViewList"];
+                };
+            };
+        };
+    };
+    ConversationsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationView"];
+                };
+            };
+        };
+    };
+    ConversationsController_block: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ConversationsController_thread: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationMessageViewList"];
+                };
+            };
+        };
+    };
+    ConversationsController_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConversationMessageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationCreatedView"];
+                };
+            };
+        };
+    };
+    ConversationsController_report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportConversationDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportCreatedView"];
+                };
+            };
+        };
+    };
+    ConversationsController_reveal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationView"];
+                };
+            };
+        };
+    };
+    ConversationsController_unreveal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationView"];
+                };
+            };
+        };
+    };
+    UnitNoticesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitNoticeViewList"];
+                };
+            };
+        };
+    };
+    UnitNoticesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitNoticeView"];
+                };
+            };
+        };
+    };
+    UnitNoticesController_thread: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentComplaintMessageViewList"];
+                };
+            };
+        };
+    };
+    UnitNoticesController_reply: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostComplaintMessageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintMessageCreatedView"];
+                };
+            };
+        };
+    };
+    BoardController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `lost_found` or `lending`. */
+                board?: "lost_found" | "lending";
+                kind?: components["schemas"]["NeighbourPostKind"];
+                /** @description `true`: my own posts, whatever their state, instead of the board. */
+                mine?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardPostViewList"];
+                };
+            };
+        };
+    };
+    BoardController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePostDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostCreatedView"];
+                };
+            };
+        };
+    };
+    BoardController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardPostView"];
+                };
+            };
+        };
+    };
+    BoardController_claim: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateClaimDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimCreatedView"];
+                };
+            };
+        };
+    };
+    BoardController_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostReasonDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PostContactController_start: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConversationMessageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationCreatedView"];
+                };
+            };
+        };
+    };
+    WelcomeController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WelcomeView"];
+                };
+            };
+        };
+    };
+    StaffPostsController_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostReasonDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ComplaintCategoriesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintCategoryViewList"];
+                };
+            };
+        };
+    };
+    ComplaintCategoriesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateComplaintCategoryDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintCategoryView"];
+                };
+            };
+        };
+    };
+    ComplaintCategoriesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateComplaintCategoryDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintCategoryView"];
+                };
+            };
+        };
+    };
+    StaffComplaintsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["NeighbourComplaintStatus"];
+                /** @description `true`: neither resolved nor dismissed. `false`: only those. */
+                open?: "true" | "false";
+                categoryId?: string;
+                /** @description Complaints against this unit: its history. */
+                targetUnitId?: string;
+                /** @description Complaints filed by this account. */
+                authorId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffComplaintViewList"];
+                };
+            };
+        };
+    };
+    StaffComplaintsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffComplaintDetailView"];
+                };
+            };
+        };
+    };
+    StaffComplaintsController_dismiss: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComplaintReasonDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffComplaintsController_mediate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffComplaintsController_readAuthor: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffComplaintMessageViewList"];
+                };
+            };
+        };
+    };
+    StaffComplaintsController_writeAuthor: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostComplaintMessageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintMessageCreatedView"];
+                };
+            };
+        };
+    };
+    StaffComplaintsController_readNotes: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffComplaintMessageViewList"];
+                };
+            };
+        };
+    };
+    StaffComplaintsController_writeNotes: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostComplaintMessageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintMessageCreatedView"];
+                };
+            };
+        };
+    };
+    StaffComplaintsController_sendNotice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendNoticeDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoticeSentView"];
+                };
+            };
+        };
+    };
+    StaffComplaintsController_resolve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComplaintReasonDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffComplaintsController_review: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffComplaintsController_readUnit: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffComplaintMessageViewList"];
+                };
+            };
+        };
+    };
+    StaffComplaintsController_writeUnit: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostComplaintMessageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintMessageCreatedView"];
+                };
+            };
+        };
+    };
+    StaffPostsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `lost_found` or `lending`. */
+                board?: "lost_found" | "lending";
+                kind?: components["schemas"]["NeighbourPostKind"];
+                /** @description `open`: on its board. `expired`: its day passed and nobody closed it. `closed`. */
+                state?: "open" | "expired" | "closed";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPostViewList"];
+                };
+            };
+        };
+    };
+    StaffPostsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePostDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostCreatedView"];
+                };
+            };
+        };
+    };
+    StaffPostsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPostView"];
+                };
+            };
+        };
+    };
+    StaffPostsController_claimsOf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffClaimViewList"];
+                };
+            };
+        };
+    };
+    StaffPostsController_handOver: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HandOverDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffPostsController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostReasonDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffReportsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["NeighbourReportStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffReportViewList"];
+                };
+            };
+        };
+    };
+    StaffReportsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffReportView"];
+                };
+            };
+        };
+    };
+    StaffReportsController_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseReportDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffReportsController_thread: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportedMessageViewList"];
+                };
+            };
+        };
+    };
+    NeighbourSettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NeighbourSettingsResponse"];
+                };
+            };
+        };
+    };
+    NeighbourSettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateNeighbourSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NeighbourSettingsResponse"];
+                };
+            };
+        };
+    };
+    StaffComplaintsController_unitHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitComplaintHistoryView"];
+                };
+            };
+        };
+    };
+    WelcomeTemplateController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WelcomeTemplateView"];
+                };
+            };
+        };
+    };
+    WelcomeTemplateController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateWelcomeTemplateDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WelcomeTemplateView"];
                 };
             };
         };

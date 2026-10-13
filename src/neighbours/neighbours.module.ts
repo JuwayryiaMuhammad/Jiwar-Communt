@@ -25,6 +25,15 @@ import { BoardController, MyClaimsController } from './posts/board.controller';
 import { PostVisibility } from './posts/post-visibility';
 import { PostsService } from './posts/posts.service';
 import { StaffPostsController } from './posts/staff-posts.controller';
+import { BlocksService } from './conversations/blocks.service';
+import {
+  BlocksController,
+  ConversationsController,
+  PostContactController,
+} from './conversations/conversations.controller';
+import { ConversationsService } from './conversations/conversations.service';
+import { ReportsService } from './conversations/reports.service';
+import { StaffReportsController } from './conversations/staff-reports.controller';
 import { NeighboursProvisioning } from './provisioning';
 import { NeighbourSettingsController } from './settings/neighbour-settings.controller';
 import { NeighbourSettingsService } from './settings/neighbour-settings.service';
@@ -42,6 +51,10 @@ import { NeighbourSettingsService } from './settings/neighbour-settings.service'
     BoardController,
     MyClaimsController,
     StaffPostsController,
+    PostContactController,
+    ConversationsController,
+    BlocksController,
+    StaffReportsController,
     ComplaintCategoriesController,
     ComplaintCategoryOptionsController,
     NeighbourSettingsController,
@@ -63,6 +76,9 @@ import { NeighbourSettingsService } from './settings/neighbour-settings.service'
     ClaimDecisions,
     PostsService,
     ClaimsService,
+    BlocksService,
+    ConversationsService,
+    ReportsService,
   ],
 })
 export class NeighboursModule {}

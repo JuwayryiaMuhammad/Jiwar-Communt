@@ -502,6 +502,7 @@ model Tenant {
   neighbourComplaintCounter    NeighbourComplaintCounter?
   neighbourComplaints          NeighbourComplaint[]
   neighbourPosts               NeighbourPost[]
+  neighbourConversations       NeighbourConversation[]
   announcements      Announcement[]
   communityEvents    CommunityEvent[]
   polls              Poll[]
@@ -914,6 +915,13 @@ model Account {
   neighbourClaims                NeighbourItemClaim[]                @relation("NeighbourClaimant")
   neighbourItemsReceived         NeighbourItemHandover[]             @relation("NeighbourHandoverRecipient")
   neighbourItemsHandedOver       NeighbourItemHandover[]             @relation("NeighbourHandoverStaff")
+  neighbourConversationsAuthored NeighbourConversation[]             @relation("NeighbourConversationAuthor")
+  neighbourConversationsStarted  NeighbourConversation[]             @relation("NeighbourConversationResponder")
+  neighbourConversationMessages  NeighbourConversationMessage[]      @relation("NeighbourConversationMessageSender")
+  neighbourBlocksMade            NeighbourBlock[]                    @relation("NeighbourBlocker")
+  neighbourBlocksReceived        NeighbourBlock[]                    @relation("NeighbourBlocked")
+  neighbourReportsMade           NeighbourConversationReport[]       @relation("NeighbourReporter")
+  neighbourReportsClosed         NeighbourConversationReport[]       @relation("NeighbourReportCloser")
   managementAppointments     ManagementAppointment[]       @relation("ManagementAppointmentProposer")
 
   @@unique([tenantId, type, email])
@@ -1007,6 +1015,7 @@ model Unit {
   neighbourComplaintsFrom    NeighbourComplaint[] @relation("NeighbourComplaintAuthorUnit")
   neighbourComplaintsAgainst NeighbourComplaint[] @relation("NeighbourComplaintTargetUnit")
   neighbourPosts             NeighbourPost[]
+  neighbourConversations     NeighbourConversation[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -4076,6 +4085,7 @@ model NeighbourPost {
   photos     NeighbourPostPhoto[]
   claims     NeighbourItemClaim[]
   handover   NeighbourItemHandover?
+  conversations NeighbourConversation[]
 
   @@unique([tenantId, id])
   @@index([tenantId, status, kind, createdAt(sort: Desc), id(sort: Desc)], map: "neighbour_posts_board_idx")
@@ -4142,4 +4152,114 @@ model NeighbourItemHandover {
   @@unique([tenantId, postId], map: "neighbour_item_handovers_one_per_post")
   @@unique([tenantId, claimId], map: "neighbour_item_handovers_claim_id_key")
   @@map("neighbour_item_handovers")
+}
+
+enum NeighbourReportStatus {
+  open
+  closed
+
+  @@map("neighbour_report_status")
+}
+
+/// A masked conversation on a board post, between the post's author and
+/// one responder. Names show only when both `*RevealAt` are set. Its
+/// parties never change (trigger).
+model NeighbourConversation {
+  id               String    @id @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  postId           String    @map("post_id") @db.Uuid
+  /// The post's author.
+  authorId         String    @map("author_account_id") @db.Uuid
+  responderId      String    @map("responder_account_id") @db.Uuid
+  /// The responder's own unit: only its building is ever shown.
+  responderUnitId  String?   @map("responder_unit_id") @db.Uuid
+  authorRevealAt   DateTime? @map("author_reveal_at") @db.Timestamptz(3)
+  responderRevealAt DateTime? @map("responder_reveal_at") @db.Timestamptz(3)
+  closedAt         DateTime? @map("closed_at") @db.Timestamptz(3)
+  /// Never shown to a participant: both read the same "closed".
+  closeReason      String?   @map("close_reason")
+  lastMessageAt    DateTime  @map("last_message_at") @db.Timestamptz(3)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant        Tenant                         @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  post          NeighbourPost                  @relation(fields: [tenantId, postId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  author        Account                        @relation("NeighbourConversationAuthor", fields: [tenantId, authorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_conversations_tenant_id_author_fkey")
+  responder     Account                        @relation("NeighbourConversationResponder", fields: [tenantId, responderId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_conversations_tenant_id_responder_fkey")
+  responderUnit Unit?                          @relation(fields: [tenantId, responderUnitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_conversations_tenant_id_responder_unit_fkey")
+  messages      NeighbourConversationMessage[]
+  blocks        NeighbourBlock[]
+  reports       NeighbourConversationReport[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, postId, responderId], map: "neighbour_conversations_one_per_responder")
+  @@index([tenantId, authorId, lastMessageAt(sort: Desc), id(sort: Desc)], map: "neighbour_conversations_author_idx")
+  @@index([tenantId, responderId, lastMessageAt(sort: Desc), id(sort: Desc)], map: "neighbour_conversations_responder_idx")
+  @@index([tenantId, responderId, createdAt], map: "neighbour_conversations_started_idx")
+  @@map("neighbour_conversations")
+}
+
+/// Text only. Never changes; an erasure clears its body.
+model NeighbourConversationMessage {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  conversationId String    @map("conversation_id") @db.Uuid
+  senderId       String    @map("sender_account_id") @db.Uuid
+  /// Free text between two residents: read by the staff only through an
+  /// open report. NULL once its sender is erased.
+  body           String?
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  erasedAt       DateTime? @map("erased_at") @db.Timestamptz(3)
+
+  conversation NeighbourConversation @relation(fields: [tenantId, conversationId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  sender       Account               @relation("NeighbourConversationMessageSender", fields: [tenantId, senderId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_conversation_messages_tenant_id_sender_fkey")
+
+  @@index([tenantId, conversationId, createdAt, id], map: "neighbour_conversation_messages_conversation_idx")
+  @@index([tenantId, senderId], map: "neighbour_conversation_messages_sender_idx")
+  @@map("neighbour_conversation_messages")
+}
+
+/// One account keeps another away. Deleted to undo it.
+model NeighbourBlock {
+  id             String   @id @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  blockerId      String   @map("blocker_account_id") @db.Uuid
+  blockedId      String   @map("blocked_account_id") @db.Uuid
+  /// Where it was made: the label on the blocker's list comes from it.
+  conversationId String   @map("conversation_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  blocker      Account               @relation("NeighbourBlocker", fields: [tenantId, blockerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_blocks_tenant_id_blocker_fkey")
+  blocked      Account               @relation("NeighbourBlocked", fields: [tenantId, blockedId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_blocks_tenant_id_blocked_fkey")
+  conversation NeighbourConversation @relation(fields: [tenantId, conversationId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, blockerId, blockedId], map: "neighbour_blocks_one_per_pair")
+  @@index([tenantId, blockedId], map: "neighbour_blocks_blocked_idx")
+  @@map("neighbour_blocks")
+}
+
+/// A participant asks the staff to look at one conversation.
+model NeighbourConversationReport {
+  id             String                @id @db.Uuid
+  tenantId       String                @map("tenant_id") @db.Uuid
+  conversationId String                @map("conversation_id") @db.Uuid
+  reporterId     String                @map("reporter_account_id") @db.Uuid
+  reasonCode     String                @map("reason_code")
+  /// Free text for the staff: NULL once its reporter is erased.
+  note           String?
+  status         NeighbourReportStatus @default(open)
+  outcome        String?
+  closedById     String?               @map("closed_by_account_id") @db.Uuid
+  closedAt       DateTime?             @map("closed_at") @db.Timestamptz(3)
+  createdAt      DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  conversation NeighbourConversation @relation(fields: [tenantId, conversationId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  reporter     Account               @relation("NeighbourReporter", fields: [tenantId, reporterId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_conversation_reports_tenant_id_reporter_fkey")
+  closedBy     Account?              @relation("NeighbourReportCloser", fields: [tenantId, closedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_conversation_reports_tenant_id_closed_by_fkey")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, conversationId, reporterId], map: "neighbour_conversation_reports_one_per_reporter")
+  @@index([tenantId, status, createdAt(sort: Desc), id(sort: Desc)], map: "neighbour_conversation_reports_status_idx")
+  @@map("neighbour_conversation_reports")
 }

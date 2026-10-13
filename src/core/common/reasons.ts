@@ -305,4 +305,22 @@ export const REASON_CODES = {
   // Written by the system only: the item went to someone else, or its post
   // closed.
   neighbourClaimSystemDecline: ['handed_to_another', 'post_closed'],
+  // Why a participant reports a masked conversation, and what the staff
+  // did about it (`post_removed` takes the post down with the case).
+  neighbourConversationReport: [
+    'harassment',
+    'spam',
+    'scam',
+    'inappropriate',
+    'other',
+  ],
+  neighbourReportOutcome: ['no_action', 'warned', 'post_removed'],
+  // Written by the system only: why a conversation closed. Never shown to
+  // a participant.
+  neighbourConversationSystemClose: [
+    'blocked',
+    'reported',
+    'participant_left',
+    'participant_erased',
+  ],
 } as const;

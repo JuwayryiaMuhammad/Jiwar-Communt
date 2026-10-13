@@ -345,6 +345,29 @@ export const ErrorCode = {
   NEIGHBOUR_CLAIM_EXISTS: 'NEIGHBOUR_CLAIM_EXISTS',
   /** The claim is no longer pending (409, params.status). */
   NEIGHBOUR_CLAIM_INVALID_STATE: 'NEIGHBOUR_CLAIM_INVALID_STATE',
+  /** The management's post, or the caller's own: nobody to write to (409). */
+  NEIGHBOUR_POST_NO_CONTACT: 'NEIGHBOUR_POST_NO_CONTACT',
+  /** Unknown, another compound's, or not one the caller is part of: one answer. */
+  NEIGHBOUR_CONVERSATION_NOT_FOUND: 'NEIGHBOUR_CONVERSATION_NOT_FOUND',
+  /** The caller already wrote about this post (409, params.conversationId). */
+  NEIGHBOUR_CONVERSATION_EXISTS: 'NEIGHBOUR_CONVERSATION_EXISTS',
+  /**
+   * Nothing more is written in it (409): it was closed, or its post left
+   * the board. Never says why.
+   */
+  NEIGHBOUR_CONVERSATION_CLOSED: 'NEIGHBOUR_CONVERSATION_CLOSED',
+  /** As many new conversations in 24 hours as the compound allows (409, params.max). */
+  NEIGHBOUR_CONVERSATION_LIMIT_REACHED: 'NEIGHBOUR_CONVERSATION_LIMIT_REACHED',
+  /** Both agreed: names are shown and stay shown (409). */
+  NEIGHBOUR_NAMES_ALREADY_REVEALED: 'NEIGHBOUR_NAMES_ALREADY_REVEALED',
+  /** Unknown, another compound's, or not the caller's own. */
+  NEIGHBOUR_BLOCK_NOT_FOUND: 'NEIGHBOUR_BLOCK_NOT_FOUND',
+  /** Unknown, or another compound's. */
+  NEIGHBOUR_REPORT_NOT_FOUND: 'NEIGHBOUR_REPORT_NOT_FOUND',
+  /** The caller already reported this conversation (409). */
+  NEIGHBOUR_REPORT_EXISTS: 'NEIGHBOUR_REPORT_EXISTS',
+  /** The case is closed: its conversation is no longer read, nor it closed again (409). */
+  NEIGHBOUR_REPORT_CLOSED: 'NEIGHBOUR_REPORT_CLOSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

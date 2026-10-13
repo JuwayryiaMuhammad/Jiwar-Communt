@@ -353,7 +353,7 @@ export class PostsService implements OnModuleInit {
           ? { authorId: me }
           : {
               ...stateWhere('open', now),
-              authorId: { notIn: await this.visibility.hiddenAuthors() },
+              authorId: { notIn: await this.visibility.hiddenAuthors(tx, me) },
             };
       const page = await this.rows(tx, { AND: [where, this.byKind(q)] }, q);
       return { ...page, items: await this.forResident(tx, page.items, now) };
@@ -385,7 +385,7 @@ export class PostsService implements OnModuleInit {
     if (!post) throw postNotFound();
     if (post.authorId === me) return post;
     if (!isLive(post, now)) throw postNotFound();
-    if ((await this.visibility.hiddenAuthors()).includes(post.authorId))
+    if ((await this.visibility.hiddenAuthors(tx, me)).includes(post.authorId))
       throw postNotFound();
     return post;
   }

@@ -526,6 +526,39 @@ export const AUDIT_ACTIONS = {
   'neighbour_claim.created': { log: 'tenant', target: 'neighbour_claim' },
   'neighbour_claim.withdrawn': { log: 'tenant', target: 'neighbour_claim' },
   'neighbour_claim.declined': { log: 'tenant', target: 'neighbour_claim' },
+  // Masked contact. A conversation's rows name the conversation and its
+  // post, never its other side: the trail does not say who talks to whom.
+  // metadata: postId, postKind.
+  'neighbour_conversation.started': {
+    log: 'tenant',
+    target: 'neighbour_conversation',
+  },
+  'neighbour_conversation.names_revealed': {
+    log: 'tenant',
+    target: 'neighbour_conversation',
+  },
+  // metadata: conversationsClosed (a count).
+  'neighbour_conversation.blocked': {
+    log: 'tenant',
+    target: 'neighbour_conversation',
+  },
+  'neighbour_conversation.unblocked': {
+    log: 'tenant',
+    target: 'neighbour_conversation',
+  },
+  // metadata: reportId, reasonCode. Never the reporter's note.
+  'neighbour_conversation.reported': {
+    log: 'tenant',
+    target: 'neighbour_conversation',
+  },
+  // A staff member read the reported conversation of an open case.
+  // metadata: conversationId.
+  'neighbour_report.conversation_read': {
+    log: 'tenant',
+    target: 'neighbour_report',
+  },
+  // metadata: conversationId, outcome, postRemoved (0 or 1).
+  'neighbour_report.closed': { log: 'tenant', target: 'neighbour_report' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

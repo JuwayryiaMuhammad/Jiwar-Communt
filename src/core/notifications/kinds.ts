@@ -847,6 +847,55 @@ export const NOTIFICATION_KINDS = {
     target: 'neighbour_post',
     params: { postKind: {} },
   },
+  // Masked contact: the post's kind at most, never a name or a building.
+  /** A neighbour wrote to the author about their post; never a word of it, nor who. */
+  'neighbour_conversation.started': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_conversation',
+    params: { postKind: {} },
+  },
+  /** The other side wrote in the conversation; never its body. */
+  'neighbour_conversation.message': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_conversation',
+    params: { postKind: {} },
+  },
+  /** The other side agreed to show names and waits for this one. */
+  'neighbour_conversation.reveal_requested': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_conversation',
+    params: { postKind: {} },
+  },
+  /** Both agreed: first names are shown. The name itself is read in the app. */
+  'neighbour_conversation.names_revealed': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_conversation',
+    params: { postKind: {} },
+  },
+  /** A participant reported a conversation: to the staff who handle them. */
+  'neighbour_conversation.reported': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_report',
+    params: {},
+  },
+  /** The staff looked at the reporter's report; never its outcome. */
+  'neighbour_report.closed': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_conversation',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

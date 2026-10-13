@@ -888,6 +888,67 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'أزالت الإدارة أحد منشوراتك من اللوحة.',
     },
   },
+  // Masked contact: no name, no building, no word of a message.
+  'neighbour_conversation.started': {
+    en: {
+      title: 'A neighbour wrote to you',
+      body: 'A neighbour wrote to you about one of your posts.',
+    },
+    ar: {
+      title: 'رسالة من أحد الجيران',
+      body: 'كتب إليك أحد الجيران بخصوص أحد منشوراتك.',
+    },
+  },
+  'neighbour_conversation.message': {
+    en: {
+      title: 'New message from a neighbour',
+      body: 'You have a new message in a conversation about a post.',
+    },
+    ar: {
+      title: 'رسالة جديدة من أحد الجيران',
+      body: 'لديك رسالة جديدة في محادثة بخصوص منشور.',
+    },
+  },
+  'neighbour_conversation.reveal_requested': {
+    en: {
+      title: 'A neighbour wants to share names',
+      body: 'A neighbour agreed to share first names. Names show only if you agree too.',
+    },
+    ar: {
+      title: 'أحد الجيران يود تبادل الأسماء',
+      body: 'وافق أحد الجيران على إظهار الاسم الأول. لن تظهر الأسماء إلا بموافقتك أيضًا.',
+    },
+  },
+  'neighbour_conversation.names_revealed': {
+    en: {
+      title: 'Names are now shown',
+      body: 'You and your neighbour both agreed. First names now show in the conversation.',
+    },
+    ar: {
+      title: 'الأسماء ظاهرة الآن',
+      body: 'وافقتما معًا. يظهر الاسم الأول الآن في المحادثة.',
+    },
+  },
+  'neighbour_conversation.reported': {
+    en: {
+      title: 'Conversation reported',
+      body: 'A resident reported a conversation. Open the case to review it.',
+    },
+    ar: {
+      title: 'بلاغ عن محادثة',
+      body: 'أبلغ أحد السكان عن محادثة. افتح البلاغ لمراجعته.',
+    },
+  },
+  'neighbour_report.closed': {
+    en: {
+      title: 'Your report was reviewed',
+      body: 'Management reviewed the conversation you reported.',
+    },
+    ar: {
+      title: 'تمت مراجعة بلاغك',
+      body: 'راجعت الإدارة المحادثة التي أبلغت عنها.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

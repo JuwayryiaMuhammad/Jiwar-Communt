@@ -57,6 +57,7 @@ export const REASON_CODES = {
   neighbourComplaintResolve: ['complied', 'mediated', 'no_further_action'],
   neighbourPostRemove: ['inappropriate', 'duplicate', 'not_allowed'],
   neighbourClaimDecline: ['not_the_owner', 'insufficient_proof'],
+  neighbourReportOutcome: ['no_action', 'warned', 'post_removed'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

@@ -28,6 +28,15 @@ API v0 is a draft (ADR 0025): it exposes every feature so it can be exercised en
 - Dispatchers (maintenance_supervisor) never see the reporter's phone; in an emergency they may need to call. Decide with the design whether emergency tickets show the reporter's phone to dispatchers.
 - Every dispatcher is told of every message on every ticket (`ticket.message`); per-account preferences come with the design.
 - A rejection's or reopen's note shows up as the reporter's message in the thread, not as a field of the ticket.
+- Community life (ADR 0040) has one route family per side: residents read `/announcements`, `/events`, `/polls`, `/suggestions`, `/suggestion-board` and `/me/daily-brief`; the staff write under `/community/...`. Every answer is `no-store`; every create answers a small "created" view and every other action 204, so the apps re-read.
+- Texts the staff write come in `…En` and `…Ar`; a language is whole or null and at least one is there. Nothing is translated: show the reader's language when it is there, the other one otherwise.
+- An audience is evaluated at each read. A list and a single read answer for the caller as they are now; an id that is not theirs to read is 404 with the resource's own code, the same as an unknown id.
+- `GET /announcements` is by publication, newest first; `?pinned=true` gives what is pinned now, for the top of the screen. Opening one is told with `POST /announcements/{id}/read`; `read` on an item is the caller's own.
+- A poll's `units[]` are the caller's units it is put to. `mayVote` says whether the caller casts that unit's vote; `choice` is the unit's current choice, only while the poll is open and only to those who cast its vote; it is null after the poll ends and cannot be shown again. `resultsHidden` says why counts are null (`not_voted`, `few_votes`, `not_open`, `cancelled`).
+- `POST /polls/{id}/votes` replaces the unit's choice. Its `Idempotency-Key` is remembered without the body: a retry replays, and the same key with another choice replays too (never 409).
+- `PUT /events/{id}/rsvp` needs `unitId` only when the event is put to several of the caller's units; 409 `COMMUNITY_EVENT_FULL` carries `params.remaining`.
+- The suggestion board shows the staff's summary; a suggestion's own text exists only on `GET /suggestions/{id}` for its author.
+- `GET /me/daily-brief` is computed per call and cheap to refetch on focus; `tickets` and `requests` are null when the caller's role does not use the feature.
 - Requests to the management (ADR 0039) have one route family per side (`/management-requests`, `/management/requests`); every answer is `no-store` and every action answers 204 or a small "created" view, so the apps re-read the request.
 - A request has no subject: the staff inbox shows a 120-character `preview` of its first message. The request screens decide whether a subject is wanted.
 - `GET /me/requests` is ordered by last activity, which moves: an item that changes between two pages may be seen twice or not at all. Its `status` is the item's own (a ticket's or a request's), a plain string.

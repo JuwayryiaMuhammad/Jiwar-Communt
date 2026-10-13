@@ -3,6 +3,8 @@ import { CommunityEngagementPortModule } from '../community';
 import { AccountsModule } from '../core/accounts/accounts.module';
 import { FilesModule } from '../core/files/files.module';
 import { GateStatusPortModule } from '../gate';
+import { MaintenanceModule } from '../maintenance';
+import { ManagementModule } from '../management';
 import { EngagementAccess } from './access';
 import {
   AnnouncementsController,
@@ -11,6 +13,8 @@ import {
 import { AnnouncementsService } from './announcements/announcements.service';
 import { AudienceCheck } from './audience/audience-check';
 import { AudienceController } from './audience/audience.controller';
+import { DailyBriefController } from './brief/daily-brief.controller';
+import { DailyBriefService } from './brief/daily-brief.service';
 import { CommunityAttachments } from './content/attachments';
 import { EngagementProvisioning } from './provisioning';
 import {
@@ -50,6 +54,8 @@ import { SuggestionTopicsService } from './topics/topics.service';
     CommunityEngagementPortModule,
     FilesModule,
     GateStatusPortModule,
+    MaintenanceModule,
+    ManagementModule,
   ],
   controllers: [
     EngagementSettingsController,
@@ -65,6 +71,7 @@ import { SuggestionTopicsService } from './topics/topics.service';
     SuggestionsController,
     SuggestionBoardController,
     StaffSuggestionsController,
+    DailyBriefController,
   ],
   providers: [
     EngagementProvisioning,
@@ -78,6 +85,7 @@ import { SuggestionTopicsService } from './topics/topics.service';
     EventsService,
     PollsService,
     SuggestionsService,
+    DailyBriefService,
   ],
 })
 export class EngagementModule {}

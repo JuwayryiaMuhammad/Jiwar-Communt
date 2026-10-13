@@ -12,6 +12,7 @@ import { AppointmentsService } from './appointments/appointments.service';
 import { ManagementExportSections } from './export/export-sections';
 import { MyRequestsController } from './feed/my-requests.controller';
 import { MyRequestsService } from './feed/my-requests.service';
+import { ResidentRequestSummary } from './feed/resident-request-summary';
 import { ManagementProvisioning } from './provisioning';
 import { RequestEscalation } from './requests/escalation.service';
 import { RequestHandlerRelease } from './requests/handler-release';
@@ -85,6 +86,8 @@ import { TopicsService } from './topics/topics.service';
     MyRequestsService,
     RequestHandlerRelease,
     ManagementExportSections,
+    ResidentRequestSummary,
   ],
+  exports: [ResidentRequestSummary],
 })
 export class ManagementModule {}

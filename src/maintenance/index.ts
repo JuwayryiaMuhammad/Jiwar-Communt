@@ -7,3 +7,8 @@ export {
   type FeedCursor,
   type FeedTicket,
 } from './tickets/resident-ticket-feed';
+// What the daily brief reads of them (ADR 0040).
+export {
+  ResidentTicketSummary,
+  type TicketSummary,
+} from './tickets/resident-ticket-summary';

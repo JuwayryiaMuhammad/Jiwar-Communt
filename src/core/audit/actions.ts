@@ -515,6 +515,17 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'neighbour_complaint',
   },
+  // The boards. metadata: kind, side, photos (a count); reasonCode on an
+  // end. Never a post's words or its place.
+  'neighbour_post.created': { log: 'tenant', target: 'neighbour_post' },
+  'neighbour_post.closed': { log: 'tenant', target: 'neighbour_post' },
+  'neighbour_post.removed': { log: 'tenant', target: 'neighbour_post' },
+  // also: claimId (or null for a walk-in), recipientAccountId.
+  'neighbour_item.handed_over': { log: 'tenant', target: 'neighbour_post' },
+  // metadata: postId; reasonCode when declined. Never the claimant's note.
+  'neighbour_claim.created': { log: 'tenant', target: 'neighbour_claim' },
+  'neighbour_claim.withdrawn': { log: 'tenant', target: 'neighbour_claim' },
+  'neighbour_claim.declined': { log: 'tenant', target: 'neighbour_claim' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

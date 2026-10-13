@@ -814,6 +814,39 @@ export const NOTIFICATION_KINDS = {
     target: 'neighbour_notice',
     params: { categoryKey: {} },
   },
+  // The boards: the post's kind only, never its words or a place.
+  /** A resident claimed a found item: to the staff at the desk. */
+  'neighbour_item.claimed': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_post',
+    params: { postKind: {} },
+  },
+  /** The office handed the found item to the recipient. */
+  'neighbour_item.handed_over': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_post',
+    params: { postKind: {} },
+  },
+  /** The claimant's claim on a found item was declined, or its item went elsewhere. */
+  'neighbour_claim.declined': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_post',
+    params: { postKind: {} },
+  },
+  /** The management took the author's post off its board. */
+  'neighbour_post.removed': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_post',
+    params: { postKind: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

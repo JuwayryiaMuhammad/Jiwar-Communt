@@ -847,6 +847,47 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'كتبت الإدارة إلى وحدتك بخصوص إشعار. افتح التطبيق لقراءتها.',
     },
   },
+  // The boards: nothing of a post's words.
+  'neighbour_item.claimed': {
+    en: {
+      title: 'Found item claimed',
+      body: 'A resident claimed a found item. Open the desk to review it.',
+    },
+    ar: {
+      title: 'مطالبة بغرض معثور عليه',
+      body: 'طالب أحد السكان بغرض معثور عليه. افتح المكتب لمراجعتها.',
+    },
+  },
+  'neighbour_item.handed_over': {
+    en: {
+      title: 'Item handed over',
+      body: 'The management office recorded that your item was handed to you.',
+    },
+    ar: {
+      title: 'تم تسليم الغرض',
+      body: 'سجّل مكتب الإدارة تسليم الغرض إليك.',
+    },
+  },
+  'neighbour_claim.declined': {
+    en: {
+      title: 'Claim closed',
+      body: 'Your claim on a found item was closed. Open the app for details.',
+    },
+    ar: {
+      title: 'تم إغلاق المطالبة',
+      body: 'أُغلقت مطالبتك بغرض معثور عليه. افتح التطبيق للتفاصيل.',
+    },
+  },
+  'neighbour_post.removed': {
+    en: {
+      title: 'Post removed',
+      body: 'Management removed one of your posts from the board.',
+    },
+    ar: {
+      title: 'تمت إزالة منشور',
+      body: 'أزالت الإدارة أحد منشوراتك من اللوحة.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

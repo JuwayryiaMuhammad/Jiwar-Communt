@@ -176,4 +176,11 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   neighbour_complaint_notices_tenant_id_id_key: null,
   // Decided under the complaint's lock; a violation is a race.
   neighbour_complaint_notices_one_per_complaint: null,
+  neighbour_posts_tenant_id_id_key: null,
+  neighbour_post_photos_file_id_key: null,
+  neighbour_item_claims_tenant_id_id_key: null,
+  // Decided under the post's lock; a violation is a race.
+  neighbour_item_claims_one_pending: null,
+  neighbour_item_handovers_one_per_post: null,
+  neighbour_item_handovers_claim_id_key: null,
 };

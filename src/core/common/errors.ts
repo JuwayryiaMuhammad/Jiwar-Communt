@@ -328,6 +328,23 @@ export const ErrorCode = {
    * answer.
    */
   NEIGHBOUR_NOTICE_NOT_FOUND: 'NEIGHBOUR_NOTICE_NOT_FOUND',
+  /**
+   * Unknown or another compound's; for a resident also one that left its
+   * board and is not theirs, or one they are kept from seeing: one answer.
+   */
+  NEIGHBOUR_POST_NOT_FOUND: 'NEIGHBOUR_POST_NOT_FOUND',
+  /** It is closed, or its day has passed (409, params.state). */
+  NEIGHBOUR_POST_NOT_OPEN: 'NEIGHBOUR_POST_NOT_OPEN',
+  /** The author has as many posts on the boards as the compound allows (409, params.max). */
+  NEIGHBOUR_POST_LIMIT_REACHED: 'NEIGHBOUR_POST_LIMIT_REACHED',
+  /** Not a found item, or the caller's own post (409). */
+  NEIGHBOUR_POST_NOT_CLAIMABLE: 'NEIGHBOUR_POST_NOT_CLAIMABLE',
+  /** Unknown, another compound's, or (for a resident) not their own. */
+  NEIGHBOUR_CLAIM_NOT_FOUND: 'NEIGHBOUR_CLAIM_NOT_FOUND',
+  /** The caller already has a pending claim on the item (409). */
+  NEIGHBOUR_CLAIM_EXISTS: 'NEIGHBOUR_CLAIM_EXISTS',
+  /** The claim is no longer pending (409, params.status). */
+  NEIGHBOUR_CLAIM_INVALID_STATE: 'NEIGHBOUR_CLAIM_INVALID_STATE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -418,6 +435,8 @@ export const FieldErrorCode = {
   UNIT_CODE_UNKNOWN: 'UNIT_CODE_UNKNOWN',
   /** A unit of the author's own: nobody complains about their own unit. */
   OWN_UNIT: 'OWN_UNIT',
+  /** Not an active resident or family account of the compound. */
+  RECIPIENT_NOT_ELIGIBLE: 'RECIPIENT_NOT_ELIGIBLE',
 } as const;
 
 export type FieldErrorCode =

@@ -501,6 +501,7 @@ model Tenant {
   neighbourComplaintCategories NeighbourComplaintCategory[]
   neighbourComplaintCounter    NeighbourComplaintCounter?
   neighbourComplaints          NeighbourComplaint[]
+  neighbourPosts               NeighbourPost[]
   announcements      Announcement[]
   communityEvents    CommunityEvent[]
   polls              Poll[]
@@ -909,6 +910,10 @@ model Account {
   neighbourComplaintAttachments  NeighbourComplaintAttachment[]      @relation("NeighbourComplaintAttachmentUploader")
   neighbourNoticesSent           NeighbourComplaintNotice[]          @relation("NeighbourNoticeSender")
   neighbourNoticesReceived       NeighbourComplaintNoticeRecipient[] @relation("NeighbourNoticeRecipient")
+  neighbourPosts                 NeighbourPost[]                     @relation("NeighbourPostAuthor")
+  neighbourClaims                NeighbourItemClaim[]                @relation("NeighbourClaimant")
+  neighbourItemsReceived         NeighbourItemHandover[]             @relation("NeighbourHandoverRecipient")
+  neighbourItemsHandedOver       NeighbourItemHandover[]             @relation("NeighbourHandoverStaff")
   managementAppointments     ManagementAppointment[]       @relation("ManagementAppointmentProposer")
 
   @@unique([tenantId, type, email])
@@ -1001,6 +1006,7 @@ model Unit {
   suggestions        Suggestion[]
   neighbourComplaintsFrom    NeighbourComplaint[] @relation("NeighbourComplaintAuthorUnit")
   neighbourComplaintsAgainst NeighbourComplaint[] @relation("NeighbourComplaintTargetUnit")
+  neighbourPosts             NeighbourPost[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -2049,6 +2055,7 @@ model StoredFile {
   eventAttachments EventAttachment[] @relation("EventAttachmentFile")
   suggestionAttachments SuggestionAttachment[] @relation("SuggestionAttachmentFile")
   neighbourComplaintAttachments NeighbourComplaintAttachment[] @relation("NeighbourComplaintAttachmentFile")
+  neighbourPostPhotos           NeighbourPostPhoto[]           @relation("NeighbourPostPhotoFile")
   owner    Account?           @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([tenantId, id])
@@ -4011,4 +4018,128 @@ model NeighbourComplaintNoticeRecipient {
   @@id([tenantId, noticeId, accountId])
   @@index([tenantId, accountId], map: "neighbour_complaint_notice_recipients_account_idx")
   @@map("neighbour_complaint_notice_recipients")
+}
+
+enum NeighbourPostKind {
+  lost
+  found
+  lend
+  borrow
+
+  @@map("neighbour_post_kind")
+}
+
+enum NeighbourPostStatus {
+  open
+  closed
+
+  @@map("neighbour_post_status")
+}
+
+enum NeighbourClaimStatus {
+  pending
+  handed_over
+  declined
+  withdrawn
+
+  @@map("neighbour_claim_status")
+}
+
+/// A post on one of the two boards: lost and found (`lost`, `found`), or
+/// lending (`lend`, `borrow`). It leaves the board at `expiresAt`, by the
+/// reader's clock. Its author, kind and dates never change (trigger).
+model NeighbourPost {
+  id           String              @id @db.Uuid
+  tenantId     String              @map("tenant_id") @db.Uuid
+  kind         NeighbourPostKind
+  authorId     String              @map("author_account_id") @db.Uuid
+  authorSide   NeighbourSide       @map("author_side")
+  /// The resident author's own unit: only its building is ever shown.
+  authorUnitId String?             @map("author_unit_id") @db.Uuid
+  /// Free text: never in the audit trail or a notification. NULL once its
+  /// author is erased.
+  body         String?
+  /// Free text, as `body`.
+  place        String?
+  occurredOn   DateTime?           @map("occurred_on") @db.Date
+  expiresAt    DateTime            @map("expires_at") @db.Timestamptz(3)
+  status       NeighbourPostStatus @default(open)
+  closedAt     DateTime?           @map("closed_at") @db.Timestamptz(3)
+  closeReason  String?             @map("close_reason")
+  createdAt    DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+  erasedAt     DateTime?           @map("erased_at") @db.Timestamptz(3)
+
+  tenant     Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  author     Account                @relation("NeighbourPostAuthor", fields: [tenantId, authorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_posts_tenant_id_author_fkey")
+  authorUnit Unit?                  @relation(fields: [tenantId, authorUnitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_posts_tenant_id_author_unit_fkey")
+  photos     NeighbourPostPhoto[]
+  claims     NeighbourItemClaim[]
+  handover   NeighbourItemHandover?
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, kind, createdAt(sort: Desc), id(sort: Desc)], map: "neighbour_posts_board_idx")
+  @@index([tenantId, authorId, createdAt(sort: Desc), id(sort: Desc)], map: "neighbour_posts_author_idx")
+  @@map("neighbour_posts")
+}
+
+/// Append-only.
+model NeighbourPostPhoto {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  fileId    String   @unique @map("file_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  post NeighbourPost @relation(fields: [tenantId, postId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  file StoredFile    @relation("NeighbourPostPhotoFile", fields: [tenantId, fileId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([tenantId, postId, createdAt, id], map: "neighbour_post_photos_post_idx")
+  @@map("neighbour_post_photos")
+}
+
+/// A resident's claim on a found item held at the office.
+model NeighbourItemClaim {
+  id            String               @id @db.Uuid
+  tenantId      String               @map("tenant_id") @db.Uuid
+  postId        String               @map("post_id") @db.Uuid
+  claimantId    String               @map("claimant_account_id") @db.Uuid
+  /// Free text for the staff: NULL once its claimant is erased.
+  note          String?
+  status        NeighbourClaimStatus @default(pending)
+  declineReason String?              @map("decline_reason")
+  decidedAt     DateTime?            @map("decided_at") @db.Timestamptz(3)
+  createdAt     DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  post     NeighbourPost          @relation(fields: [tenantId, postId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  claimant Account                @relation("NeighbourClaimant", fields: [tenantId, claimantId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_item_claims_tenant_id_claimant_fkey")
+  handover NeighbourItemHandover?
+
+  @@unique([tenantId, id])
+  @@index([tenantId, postId, createdAt, id], map: "neighbour_item_claims_post_idx")
+  @@index([tenantId, claimantId, createdAt(sort: Desc), id(sort: Desc)], map: "neighbour_item_claims_claimant_idx")
+  @@map("neighbour_item_claims")
+}
+
+/// A found item handed over at the office: to whom, by whom, when.
+/// Append-only.
+model NeighbourItemHandover {
+  id          String   @id @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  postId      String   @map("post_id") @db.Uuid
+  /// The claim it settled; none for someone who came without one.
+  claimId     String?  @map("claim_id") @db.Uuid
+  recipientId String   @map("recipient_account_id") @db.Uuid
+  handedById  String   @map("handed_by_account_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  post      NeighbourPost       @relation(fields: [tenantId, postId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  claim     NeighbourItemClaim? @relation(fields: [tenantId, claimId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  recipient Account             @relation("NeighbourHandoverRecipient", fields: [tenantId, recipientId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_item_handovers_tenant_id_recipient_fkey")
+  handedBy  Account             @relation("NeighbourHandoverStaff", fields: [tenantId, handedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_item_handovers_tenant_id_handed_by_fkey")
+
+  @@unique([tenantId, postId], map: "neighbour_item_handovers_one_per_post")
+  @@unique([tenantId, claimId], map: "neighbour_item_handovers_claim_id_key")
+  @@map("neighbour_item_handovers")
 }

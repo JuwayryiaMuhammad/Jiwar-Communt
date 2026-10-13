@@ -293,4 +293,16 @@ export const REASON_CODES = {
   neighbourComplaintResolve: ['complied', 'mediated', 'no_further_action'],
   // Written by the system only: the author's own withdrawal.
   neighbourComplaintSystemClose: ['withdrawn'],
+  // Why an author closes their own post on a board, and why the staff take
+  // one down.
+  neighbourPostClose: ['resolved', 'no_longer_needed'],
+  neighbourPostRemove: ['inappropriate', 'duplicate', 'not_allowed'],
+  // Written by the system only: the item was handed over, or its author
+  // left the compound or was erased.
+  neighbourPostSystemClose: ['handed_over', 'author_left', 'author_erased'],
+  // Why the staff decline a claim on a found item.
+  neighbourClaimDecline: ['not_the_owner', 'insufficient_proof'],
+  // Written by the system only: the item went to someone else, or its post
+  // closed.
+  neighbourClaimSystemDecline: ['handed_to_another', 'post_closed'],
 } as const;

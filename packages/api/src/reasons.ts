@@ -55,6 +55,8 @@ export const REASON_CODES = {
   // Neighbours (ADR 0042): codes only, never text.
   neighbourComplaintDismiss: ['unfounded', 'duplicate', 'insufficient_evidence', 'out_of_scope'],
   neighbourComplaintResolve: ['complied', 'mediated', 'no_further_action'],
+  neighbourPostRemove: ['inappropriate', 'duplicate', 'not_allowed'],
+  neighbourClaimDecline: ['not_the_owner', 'insufficient_proof'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

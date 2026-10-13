@@ -18,6 +18,13 @@ import { NoticesService } from './complaints/notices.service';
 import { ResidentComplaintsController } from './complaints/resident-complaints.controller';
 import { StaffComplaintsController } from './complaints/staff-complaints.controller';
 import { UnitNoticesController } from './complaints/unit-notices.controller';
+import { ClaimDecisions } from './claims/claim-decisions';
+import { ClaimsService } from './claims/claims.service';
+import { BoardNotices } from './posts/board-notices';
+import { BoardController, MyClaimsController } from './posts/board.controller';
+import { PostVisibility } from './posts/post-visibility';
+import { PostsService } from './posts/posts.service';
+import { StaffPostsController } from './posts/staff-posts.controller';
 import { NeighboursProvisioning } from './provisioning';
 import { NeighbourSettingsController } from './settings/neighbour-settings.controller';
 import { NeighbourSettingsService } from './settings/neighbour-settings.service';
@@ -32,6 +39,9 @@ import { NeighbourSettingsService } from './settings/neighbour-settings.service'
     ResidentComplaintsController,
     StaffComplaintsController,
     UnitNoticesController,
+    BoardController,
+    MyClaimsController,
+    StaffPostsController,
     ComplaintCategoriesController,
     ComplaintCategoryOptionsController,
     NeighbourSettingsController,
@@ -48,6 +58,11 @@ import { NeighbourSettingsService } from './settings/neighbour-settings.service'
     ComplaintsService,
     ComplaintStatusService,
     NoticesService,
+    BoardNotices,
+    PostVisibility,
+    ClaimDecisions,
+    PostsService,
+    ClaimsService,
   ],
 })
 export class NeighboursModule {}

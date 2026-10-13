@@ -190,4 +190,6 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   neighbour_blocks_one_per_pair: null,
   neighbour_conversation_reports_tenant_id_id_key: null,
   neighbour_conversation_reports_one_per_reporter: null,
+  // Skipped on conflict: a household is greeted once.
+  neighbour_welcomes_once_per_household: null,
 };

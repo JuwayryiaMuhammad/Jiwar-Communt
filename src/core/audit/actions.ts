@@ -559,6 +559,21 @@ export const AUDIT_ACTIONS = {
   },
   // metadata: conversationId, outcome, postRemoved (0 or 1).
   'neighbour_report.closed': { log: 'tenant', target: 'neighbour_report' },
+  // changes: enabled by value; each text as `{ changed: true }` only.
+  'neighbours.welcome_template_changed': {
+    log: 'tenant',
+    target: 'tenant',
+    sensitive: [
+      'rulesEn',
+      'officeHoursEn',
+      'emergencyEn',
+      'rulesAr',
+      'officeHoursAr',
+      'emergencyAr',
+    ],
+  },
+  // metadata: unitId, occupancyId, accountId.
+  'neighbour_welcome.sent': { log: 'tenant', target: 'neighbour_welcome' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

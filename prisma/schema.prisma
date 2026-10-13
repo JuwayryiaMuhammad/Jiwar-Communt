@@ -503,6 +503,7 @@ model Tenant {
   neighbourComplaints          NeighbourComplaint[]
   neighbourPosts               NeighbourPost[]
   neighbourConversations       NeighbourConversation[]
+  neighbourWelcomeTemplate     NeighbourWelcomeTemplate?
   announcements      Announcement[]
   communityEvents    CommunityEvent[]
   polls              Poll[]
@@ -922,6 +923,7 @@ model Account {
   neighbourBlocksReceived        NeighbourBlock[]                    @relation("NeighbourBlocked")
   neighbourReportsMade           NeighbourConversationReport[]       @relation("NeighbourReporter")
   neighbourReportsClosed         NeighbourConversationReport[]       @relation("NeighbourReportCloser")
+  neighbourWelcomes              NeighbourWelcome[]
   managementAppointments     ManagementAppointment[]       @relation("ManagementAppointmentProposer")
 
   @@unique([tenantId, type, email])
@@ -1016,6 +1018,7 @@ model Unit {
   neighbourComplaintsAgainst NeighbourComplaint[] @relation("NeighbourComplaintTargetUnit")
   neighbourPosts             NeighbourPost[]
   neighbourConversations     NeighbourConversation[]
+  neighbourWelcomes          NeighbourWelcome[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -1056,6 +1059,8 @@ model UnitOccupancy {
   convertedFrom UnitOccupancy?         @relation("OccupancyConversion", fields: [tenantId, convertedFromId], references: [tenantId, id], onUpdate: Restrict)
   convertedTo   UnitOccupancy[]        @relation("OccupancyConversion")
   registration  ResidentRegistration[]
+
+  neighbourWelcome NeighbourWelcome?
 
   @@unique([tenantId, id])
   @@index([tenantId, accountId])
@@ -4262,4 +4267,44 @@ model NeighbourConversationReport {
   @@unique([tenantId, conversationId, reporterId], map: "neighbour_conversation_reports_one_per_reporter")
   @@index([tenantId, status, createdAt(sort: Desc), id(sort: Desc)], map: "neighbour_conversation_reports_status_idx")
   @@map("neighbour_conversation_reports")
+}
+
+/// The compound's welcome text: one row per compound, created with it. A
+/// language is whole or absent.
+model NeighbourWelcomeTemplate {
+  tenantId      String   @id @map("tenant_id") @db.Uuid
+  /// Off: no household is greeted.
+  enabled       Boolean  @default(true)
+  rulesEn       String?  @map("rules_en")
+  officeHoursEn String?  @map("office_hours_en")
+  emergencyEn   String?  @map("emergency_en")
+  rulesAr       String?  @map("rules_ar")
+  officeHoursAr String?  @map("office_hours_ar")
+  emergencyAr   String?  @map("emergency_ar")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("neighbour_welcome_templates")
+}
+
+/// A welcome sent to a household's primary: once per household.
+/// Append-only.
+model NeighbourWelcome {
+  id          String   @id @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  /// The occupancy that began as its unit's primary: the household.
+  occupancyId String   @map("occupancy_id") @db.Uuid
+  unitId      String   @map("unit_id") @db.Uuid
+  accountId   String   @map("account_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  occupancy UnitOccupancy @relation(fields: [tenantId, occupancyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  unit      Unit          @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  account   Account       @relation(fields: [tenantId, accountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, occupancyId], map: "neighbour_welcomes_once_per_household")
+  @@index([tenantId, accountId], map: "neighbour_welcomes_account_idx")
+  @@map("neighbour_welcomes")
 }

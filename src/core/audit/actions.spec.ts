@@ -78,6 +78,7 @@ describe('audit catalog', () => {
         'neighbour_claim',
         'neighbour_conversation',
         'neighbour_report',
+        'neighbour_welcome',
       ]).toContain(def.target);
     }
   });

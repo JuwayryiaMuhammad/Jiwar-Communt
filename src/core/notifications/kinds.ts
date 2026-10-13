@@ -896,6 +896,14 @@ export const NOTIFICATION_KINDS = {
     target: 'neighbour_conversation',
     params: {},
   },
+  /** A household just moved in: its primary is pointed at the compound's welcome. */
+  'neighbours.welcome': {
+    priority: 'normal',
+    category: 'neighbours',
+    critical: false,
+    target: 'neighbour_welcome',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

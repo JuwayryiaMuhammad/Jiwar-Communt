@@ -949,6 +949,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'راجعت الإدارة المحادثة التي أبلغت عنها.',
     },
   },
+  'neighbours.welcome': {
+    en: {
+      title: 'Welcome to the compound',
+      body: 'Welcome. Open the app for the compound rules, office hours and emergency numbers.',
+    },
+    ar: {
+      title: 'مرحبًا بك في المجمع',
+      body: 'مرحبًا بك. افتح التطبيق للاطلاع على قواعد المجمع ومواعيد المكتب وأرقام الطوارئ.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

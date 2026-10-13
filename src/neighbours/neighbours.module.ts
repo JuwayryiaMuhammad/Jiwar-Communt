@@ -35,6 +35,12 @@ import { ConversationsService } from './conversations/conversations.service';
 import { ReportsService } from './conversations/reports.service';
 import { StaffReportsController } from './conversations/staff-reports.controller';
 import { NeighboursProvisioning } from './provisioning';
+import {
+  WelcomeController,
+  WelcomeTemplateController,
+} from './welcome/welcome.controller';
+import { WelcomeService } from './welcome/welcome.service';
+import { WelcomeTemplateService } from './welcome/welcome-template.service';
 import { NeighbourSettingsController } from './settings/neighbour-settings.controller';
 import { NeighbourSettingsService } from './settings/neighbour-settings.service';
 
@@ -55,6 +61,8 @@ import { NeighbourSettingsService } from './settings/neighbour-settings.service'
     ConversationsController,
     BlocksController,
     StaffReportsController,
+    WelcomeTemplateController,
+    WelcomeController,
     ComplaintCategoriesController,
     ComplaintCategoryOptionsController,
     NeighbourSettingsController,
@@ -79,6 +87,8 @@ import { NeighbourSettingsService } from './settings/neighbour-settings.service'
     BlocksService,
     ConversationsService,
     ReportsService,
+    WelcomeTemplateService,
+    WelcomeService,
   ],
 })
 export class NeighboursModule {}

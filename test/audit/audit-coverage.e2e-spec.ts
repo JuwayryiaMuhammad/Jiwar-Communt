@@ -28,6 +28,7 @@ import {
   FILES_COVERAGE,
   MAINTENANCE_COVERAGE,
   MANAGEMENT_COVERAGE,
+  NEIGHBOURS_COVERAGE,
   PARCELS_COVERAGE,
   PHASE_2_2_COVERAGE,
   PHASE_4_COVERAGE,
@@ -314,6 +315,8 @@ describe('Audit coverage', () => {
             'community.read',
             'household.delegate',
             'household.manage',
+            'neighbours.board',
+            'neighbours.complain',
             'profile.photo',
             'requests.create',
             'suggestions.create',
@@ -838,6 +841,7 @@ describe('Audit coverage', () => {
         ...RESIDENT_SCREENS_COVERAGE,
         ...MANAGEMENT_COVERAGE,
         ...ENGAGEMENT_COVERAGE,
+        ...NEIGHBOURS_COVERAGE,
       ];
       for (const key of elsewhere) expect(all).toContain(key);
       const mine = all.filter((k) => !elsewhere.includes(k)).sort();

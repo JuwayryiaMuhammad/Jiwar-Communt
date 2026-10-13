@@ -38,6 +38,12 @@ import {
   SUGGESTION_ROUTES,
 } from './engagement';
 import { ME_ROUTES } from './me';
+import {
+  NEIGHBOUR_BOARD_ROUTES,
+  NEIGHBOUR_COMPLAINT_ROUTES,
+  NEIGHBOUR_CONTACT_ROUTES,
+  NEIGHBOUR_SETUP_ROUTES,
+} from './neighbours';
 import { MEMBER_PERMISSIONS_ROUTES } from './member-permissions';
 import { NOTIFICATIONS_ROUTES } from './notifications';
 import {
@@ -110,4 +116,8 @@ export const ROUTES: Row[] = [
   ...POLL_ROUTES,
   ...SUGGESTION_ROUTES,
   ...BRIEF_ROUTES,
+  ...NEIGHBOUR_SETUP_ROUTES,
+  ...NEIGHBOUR_COMPLAINT_ROUTES,
+  ...NEIGHBOUR_BOARD_ROUTES,
+  ...NEIGHBOUR_CONTACT_ROUTES,
 ];

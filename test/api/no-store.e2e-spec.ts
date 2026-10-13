@@ -322,6 +322,130 @@ describe('API v0 — no-store', () => {
     payload?: object,
   ) => call(w, method, path, { token: w.a.tokens.owner, body: payload });
 
+  // Neighbours (ADR 0042): every response is no-store. The owner (home)
+  // and the tenant (rented) are each other's neighbours; the landlord and
+  // the family member are the pair the block calls use, so a block never
+  // stands between the other two.
+  const as = (
+    persona: 'owner' | 'tenant' | 'landlord' | 'family' | 'manager',
+    method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE',
+    path: string,
+    payload?: object,
+  ) => call(w, method, path, { token: w.a.tokens[persona], body: payload });
+  let limitsRaised: Promise<unknown> | null = null;
+  /** Limits out of the way: this suite files and posts many times. */
+  const raised = () =>
+    (limitsRaised ??= as('manager', 'PATCH', '/neighbours/settings', {
+      maxOpenComplaints: 50,
+      maxOpenPosts: 50,
+      maxNewConversationsPerDay: 100,
+    }).expect(200));
+  const complaintCategory = async () =>
+    (
+      await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.neighbourComplaintCategory.findFirstOrThrow({
+          where: { key: 'noise' },
+        }),
+      )
+    ).id;
+  const rentedCode = async () =>
+    (
+      await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.unit.findUniqueOrThrow({
+          where: { id: w.a.rentedUnitId },
+        }),
+      )
+    ).code;
+  const complaintBody = async () => ({
+    categoryId: await complaintCategory(),
+    targetUnitCode: await rentedCode(),
+    body: 'No-store',
+  });
+  /** A complaint of A's owner against the rented unit. */
+  async function aComplaint(): Promise<string> {
+    await raised();
+    return created(
+      '/neighbour-complaints',
+      w.a.tokens.owner,
+      await complaintBody(),
+    );
+  }
+  async function aReviewedComplaint(): Promise<string> {
+    const id = await aComplaint();
+    await as('manager', 'POST', `/neighbours/complaints/${id}/review`).expect(
+      204,
+    );
+    return id;
+  }
+  /** A complaint whose notice went to the tenant: both ids. */
+  async function aNotice(): Promise<{ complaintId: string; noticeId: string }> {
+    const complaintId = await aReviewedComplaint();
+    const res = await as(
+      'manager',
+      'POST',
+      `/neighbours/complaints/${complaintId}/notice`,
+      { body: 'No-store' },
+    ).expect(201);
+    return { complaintId, noticeId: body<{ id: string }>(res).id };
+  }
+  /** A post of `by` on a board. */
+  async function aPost(
+    kind = 'found',
+    by: 'owner' | 'family' = 'owner',
+  ): Promise<string> {
+    await raised();
+    return created('/neighbour-posts', w.a.tokens[by], {
+      kind,
+      body: 'No-store',
+    });
+  }
+  /** The tenant's claim on a found post of the owner: both ids. */
+  async function aClaim(): Promise<{ postId: string; claimId: string }> {
+    const postId = await aPost();
+    return {
+      postId,
+      claimId: await created(
+        `/neighbour-posts/${postId}/claims`,
+        w.a.tokens.tenant,
+        {},
+      ),
+    };
+  }
+  /** A conversation the tenant started on a lending post of the owner. */
+  async function aConversation(): Promise<string> {
+    const postId = await aPost('lend');
+    return created(
+      `/neighbour-posts/${postId}/conversations`,
+      w.a.tokens.tenant,
+      {
+        body: 'No-store',
+      },
+    );
+  }
+  /** The landlord's blocks, undone: the pair may meet again. */
+  async function unblocked(): Promise<void> {
+    const res = await as('landlord', 'GET', '/neighbour-blocks').expect(200);
+    for (const b of body<{ data: { id: string }[] }>(res).data)
+      await as('landlord', 'DELETE', `/neighbour-blocks/${b.id}`).expect(204);
+  }
+  /** A conversation the landlord started on a post of the family member. */
+  async function aPairConversation(): Promise<string> {
+    await unblocked();
+    const postId = await aPost('lend', 'family');
+    return created(
+      `/neighbour-posts/${postId}/conversations`,
+      w.a.tokens.landlord,
+      { body: 'No-store' },
+    );
+  }
+  /** An open report by the tenant on a conversation of theirs. */
+  async function aReport(): Promise<string> {
+    const id = await aConversation();
+    return created(`/neighbour-conversations/${id}/report`, w.a.tokens.tenant, {
+      reasonCode: 'spam',
+    });
+  }
+
   const CALLS: Record<string, () => Promise<Response>> = {
     // Community life (ADR 0040): every response is no-store.
     'GET /community/settings': () => asManager('GET', '/community/settings'),
@@ -1022,6 +1146,326 @@ describe('API v0 — no-store', () => {
         body: { token, code: await waitForOtp(email, since) },
       });
     },
+    // Neighbours (ADR 0042): every response is no-store.
+    'GET /neighbours/settings': () =>
+      as('manager', 'GET', '/neighbours/settings'),
+    'PATCH /neighbours/settings': () =>
+      as('manager', 'PATCH', '/neighbours/settings', { maxOpenComplaints: 50 }),
+    'GET /neighbours/complaint-categories': () =>
+      as('manager', 'GET', '/neighbours/complaint-categories'),
+    'POST /neighbours/complaint-categories': () =>
+      as('manager', 'POST', '/neighbours/complaint-categories', {
+        key: `nostore_${uniqueSuffix().toLowerCase()}`.slice(0, 40),
+        nameAr: 'بلا تخزين',
+        nameEn: 'No-store',
+      }),
+    'PATCH /neighbours/complaint-categories/{id}': async () =>
+      as(
+        'manager',
+        'PATCH',
+        `/neighbours/complaint-categories/${await complaintCategory()}`,
+        { nameEn: 'Noise' },
+      ),
+    'GET /neighbour-complaint-categories': () =>
+      as('owner', 'GET', '/neighbour-complaint-categories'),
+    'GET /neighbours/welcome-template': () =>
+      as('manager', 'GET', '/neighbours/welcome-template'),
+    'PUT /neighbours/welcome-template': () =>
+      as('manager', 'PUT', '/neighbours/welcome-template', { enabled: true }),
+    'GET /neighbour-welcome': () => as('family', 'GET', '/neighbour-welcome'),
+    'POST /neighbour-complaints': async () => {
+      await raised();
+      return as(
+        'owner',
+        'POST',
+        '/neighbour-complaints',
+        await complaintBody(),
+      );
+    },
+    'GET /neighbour-complaints': async () => {
+      await aComplaint();
+      return as('owner', 'GET', '/neighbour-complaints');
+    },
+    'GET /neighbour-complaints/{id}': async () =>
+      as('owner', 'GET', `/neighbour-complaints/${await aComplaint()}`),
+    'GET /neighbour-complaints/{id}/messages': async () =>
+      as(
+        'owner',
+        'GET',
+        `/neighbour-complaints/${await aComplaint()}/messages`,
+      ),
+    'POST /neighbour-complaints/{id}/messages': async () =>
+      as(
+        'owner',
+        'POST',
+        `/neighbour-complaints/${await aComplaint()}/messages`,
+        {
+          body: 'No-store',
+        },
+      ),
+    'POST /neighbour-complaints/{id}/withdraw': async () =>
+      as(
+        'owner',
+        'POST',
+        `/neighbour-complaints/${await aComplaint()}/withdraw`,
+      ),
+    'GET /neighbour-notices': async () => {
+      await aNotice();
+      return as('tenant', 'GET', '/neighbour-notices');
+    },
+    'GET /neighbour-notices/{id}': async () =>
+      as('tenant', 'GET', `/neighbour-notices/${(await aNotice()).noticeId}`),
+    'GET /neighbour-notices/{id}/messages': async () =>
+      as(
+        'tenant',
+        'GET',
+        `/neighbour-notices/${(await aNotice()).noticeId}/messages`,
+      ),
+    'POST /neighbour-notices/{id}/messages': async () =>
+      as(
+        'tenant',
+        'POST',
+        `/neighbour-notices/${(await aNotice()).noticeId}/messages`,
+        { body: 'No-store' },
+      ),
+    'GET /neighbours/complaints': async () => {
+      await aComplaint();
+      return as('manager', 'GET', '/neighbours/complaints');
+    },
+    'GET /neighbours/complaints/{id}': async () =>
+      as('manager', 'GET', `/neighbours/complaints/${await aComplaint()}`),
+    'GET /neighbours/complaints/{id}/messages': async () =>
+      as(
+        'manager',
+        'GET',
+        `/neighbours/complaints/${await aComplaint()}/messages`,
+      ),
+    'POST /neighbours/complaints/{id}/messages': async () =>
+      as(
+        'manager',
+        'POST',
+        `/neighbours/complaints/${await aComplaint()}/messages`,
+        {
+          body: 'No-store',
+        },
+      ),
+    'GET /neighbours/complaints/{id}/unit-messages': async () =>
+      as(
+        'manager',
+        'GET',
+        `/neighbours/complaints/${(await aNotice()).complaintId}/unit-messages`,
+      ),
+    'POST /neighbours/complaints/{id}/unit-messages': async () =>
+      as(
+        'manager',
+        'POST',
+        `/neighbours/complaints/${(await aNotice()).complaintId}/unit-messages`,
+        { body: 'No-store' },
+      ),
+    'GET /neighbours/complaints/{id}/notes': async () =>
+      as(
+        'manager',
+        'GET',
+        `/neighbours/complaints/${await aComplaint()}/notes`,
+      ),
+    'POST /neighbours/complaints/{id}/notes': async () =>
+      as(
+        'manager',
+        'POST',
+        `/neighbours/complaints/${await aComplaint()}/notes`,
+        {
+          body: 'No-store',
+        },
+      ),
+    'POST /neighbours/complaints/{id}/notice': async () =>
+      as(
+        'manager',
+        'POST',
+        `/neighbours/complaints/${await aReviewedComplaint()}/notice`,
+        { body: 'No-store' },
+      ),
+    'POST /neighbours/complaints/{id}/review': async () =>
+      as(
+        'manager',
+        'POST',
+        `/neighbours/complaints/${await aComplaint()}/review`,
+      ),
+    'POST /neighbours/complaints/{id}/mediation': async () =>
+      as(
+        'manager',
+        'POST',
+        `/neighbours/complaints/${await aReviewedComplaint()}/mediation`,
+      ),
+    'POST /neighbours/complaints/{id}/resolve': async () =>
+      as(
+        'manager',
+        'POST',
+        `/neighbours/complaints/${await aReviewedComplaint()}/resolve`,
+        { reasonCode: 'complied' },
+      ),
+    'POST /neighbours/complaints/{id}/dismiss': async () =>
+      as(
+        'manager',
+        'POST',
+        `/neighbours/complaints/${await aComplaint()}/dismiss`,
+        {
+          reasonCode: 'unfounded',
+        },
+      ),
+    'GET /neighbours/units/{unitId}/complaint-history': () =>
+      as(
+        'manager',
+        'GET',
+        `/neighbours/units/${w.a.rentedUnitId}/complaint-history`,
+      ),
+    'POST /neighbour-posts': async () => {
+      await raised();
+      return as('owner', 'POST', '/neighbour-posts', {
+        kind: 'lost',
+        body: 'No-store',
+      });
+    },
+    'GET /neighbour-posts': async () => {
+      await aPost();
+      return as('tenant', 'GET', '/neighbour-posts');
+    },
+    'GET /neighbour-posts/{id}': async () =>
+      as('tenant', 'GET', `/neighbour-posts/${await aPost()}`),
+    'POST /neighbour-posts/{id}/close': async () =>
+      as('owner', 'POST', `/neighbour-posts/${await aPost()}/close`, {
+        reasonCode: 'resolved',
+      }),
+    'POST /neighbour-posts/{id}/claims': async () =>
+      as('tenant', 'POST', `/neighbour-posts/${await aPost()}/claims`, {}),
+    'GET /neighbour-claims': async () => {
+      await aClaim();
+      return as('tenant', 'GET', '/neighbour-claims');
+    },
+    'POST /neighbour-claims/{id}/withdraw': async () =>
+      as(
+        'tenant',
+        'POST',
+        `/neighbour-claims/${(await aClaim()).claimId}/withdraw`,
+      ),
+    'GET /neighbours/posts': async () => {
+      await aPost();
+      return as('manager', 'GET', '/neighbours/posts');
+    },
+    'POST /neighbours/posts': () =>
+      as('manager', 'POST', '/neighbours/posts', {
+        kind: 'found',
+        body: 'No-store',
+      }),
+    'GET /neighbours/posts/{id}': async () =>
+      as('manager', 'GET', `/neighbours/posts/${await aPost()}`),
+    'POST /neighbours/posts/{id}/remove': async () =>
+      as('manager', 'POST', `/neighbours/posts/${await aPost()}/remove`, {
+        reasonCode: 'duplicate',
+      }),
+    'GET /neighbours/posts/{id}/claims': async () =>
+      as(
+        'manager',
+        'GET',
+        `/neighbours/posts/${(await aClaim()).postId}/claims`,
+      ),
+    'POST /neighbours/posts/{id}/handover': async () => {
+      const { postId, claimId } = await aClaim();
+      return as('manager', 'POST', `/neighbours/posts/${postId}/handover`, {
+        claimId,
+      });
+    },
+    'POST /neighbours/claims/{id}/decline': async () =>
+      as(
+        'manager',
+        'POST',
+        `/neighbours/claims/${(await aClaim()).claimId}/decline`,
+        { reasonCode: 'not_the_owner' },
+      ),
+    'POST /neighbour-posts/{id}/conversations': async () =>
+      as(
+        'tenant',
+        'POST',
+        `/neighbour-posts/${await aPost('lend')}/conversations`,
+        {
+          body: 'No-store',
+        },
+      ),
+    'GET /neighbour-conversations': async () => {
+      await aConversation();
+      return as('tenant', 'GET', '/neighbour-conversations');
+    },
+    'GET /neighbour-conversations/{id}': async () =>
+      as('tenant', 'GET', `/neighbour-conversations/${await aConversation()}`),
+    'GET /neighbour-conversations/{id}/messages': async () =>
+      as(
+        'owner',
+        'GET',
+        `/neighbour-conversations/${await aConversation()}/messages`,
+      ),
+    'POST /neighbour-conversations/{id}/messages': async () =>
+      as(
+        'owner',
+        'POST',
+        `/neighbour-conversations/${await aConversation()}/messages`,
+        { body: 'No-store' },
+      ),
+    'POST /neighbour-conversations/{id}/reveal': async () =>
+      as(
+        'tenant',
+        'POST',
+        `/neighbour-conversations/${await aConversation()}/reveal`,
+      ),
+    'DELETE /neighbour-conversations/{id}/reveal': async () => {
+      const id = await aConversation();
+      await as(
+        'tenant',
+        'POST',
+        `/neighbour-conversations/${id}/reveal`,
+      ).expect(200);
+      return as('tenant', 'DELETE', `/neighbour-conversations/${id}/reveal`);
+    },
+    'POST /neighbour-conversations/{id}/block': async () =>
+      as(
+        'landlord',
+        'POST',
+        `/neighbour-conversations/${await aPairConversation()}/block`,
+      ),
+    'POST /neighbour-conversations/{id}/report': async () =>
+      as(
+        'tenant',
+        'POST',
+        `/neighbour-conversations/${await aConversation()}/report`,
+        {
+          reasonCode: 'spam',
+        },
+      ),
+    'GET /neighbour-blocks': () => as('landlord', 'GET', '/neighbour-blocks'),
+    'DELETE /neighbour-blocks/{id}': async () => {
+      const id = await aPairConversation();
+      await as(
+        'landlord',
+        'POST',
+        `/neighbour-conversations/${id}/block`,
+      ).expect(204);
+      const mine = await as('landlord', 'GET', '/neighbour-blocks').expect(200);
+      return as(
+        'landlord',
+        'DELETE',
+        `/neighbour-blocks/${body<{ data: { id: string }[] }>(mine).data[0].id}`,
+      );
+    },
+    'GET /neighbours/reports': async () => {
+      await aReport();
+      return as('manager', 'GET', '/neighbours/reports');
+    },
+    'GET /neighbours/reports/{id}': async () =>
+      as('manager', 'GET', `/neighbours/reports/${await aReport()}`),
+    'GET /neighbours/reports/{id}/messages': async () =>
+      as('manager', 'GET', `/neighbours/reports/${await aReport()}/messages`),
+    'POST /neighbours/reports/{id}/close': async () =>
+      as('manager', 'POST', `/neighbours/reports/${await aReport()}/close`, {
+        reasonCode: 'no_action',
+      }),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

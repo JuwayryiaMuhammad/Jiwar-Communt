@@ -20,6 +20,14 @@ import { EventsService } from '../../src/engagement/events/events.service';
 import { PollsService } from '../../src/engagement/polls/polls.service';
 import { SuggestionsService } from '../../src/engagement/suggestions/suggestions.service';
 import { RequestsService } from '../../src/management/requests/requests.service';
+import { ClaimsService } from '../../src/neighbours/claims/claims.service';
+import { ComplaintStatusService } from '../../src/neighbours/complaints/complaint-status.service';
+import { ComplaintsService } from '../../src/neighbours/complaints/complaints.service';
+import { NoticesService } from '../../src/neighbours/complaints/notices.service';
+import { BlocksService } from '../../src/neighbours/conversations/blocks.service';
+import { ConversationsService } from '../../src/neighbours/conversations/conversations.service';
+import { ReportsService } from '../../src/neighbours/conversations/reports.service';
+import { PostsService } from '../../src/neighbours/posts/posts.service';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
 import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
 import { VisitsService } from '../../src/maintenance/visits/visits.service';
@@ -147,6 +155,19 @@ export interface World {
   /** One of A's, for valid preventive requests. */
   aPreventiveServiceId: string;
   /** A device B's owner logged in from (ADR 0036). */
+  /** B's neighbours data (ADR 0042): a seeded complaint category; a
+   * complaint of B's owner against B's rented unit and its notice to B's
+   * tenant; a found post of B's owner and B's tenant's claim on it; a
+   * conversation of the two on a lending post, reported by the tenant, who
+   * also blocked the owner. */
+  bComplaintCategoryId: string;
+  bComplaintId: string;
+  bNoticeId: string;
+  bPostId: string;
+  bClaimId: string;
+  bConversationId: string;
+  bBlockId: string;
+  bReportId: string;
   bDeviceId: string;
   /** A personal-data export B's owner asked for (ADR 0036). */
   bExportId: string;
@@ -518,6 +539,55 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       .get(SuggestionsService)
       .publish(bSuggestion.id, { titleEn: 'World', textEn: 'World' }),
   );
+  // Neighbours (ADR 0042).
+  const asBTenant = <T>(fn: () => Promise<T>) =>
+    helpers.as(b, { id: b.ids.tenant, type: 'resident' }, fn);
+  const bComplaintCategory = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.neighbourComplaintCategory.findFirstOrThrow({
+      where: { key: 'noise' },
+    }),
+  );
+  const bRentedUnit = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.unit.findUniqueOrThrow({
+      where: { id: b.rentedUnitId },
+    }),
+  );
+  const bComplaint = await asBOwner(() =>
+    h.moduleRef.get(ComplaintsService).create({
+      categoryId: bComplaintCategory.id,
+      targetUnitCode: bRentedUnit.code,
+      body: 'World',
+    }),
+  );
+  const bNotice = await helpers.asManager(b, async () => {
+    await h.moduleRef.get(ComplaintStatusService).review(bComplaint.id);
+    return h.moduleRef.get(NoticesService).send(bComplaint.id, 'World');
+  });
+  const bPost = await asBOwner(() =>
+    h.moduleRef.get(PostsService).create({ kind: 'found', body: 'World' }),
+  );
+  const bClaim = await asBTenant(() =>
+    h.moduleRef.get(ClaimsService).create(bPost.id, {}),
+  );
+  const bLendPost = await asBOwner(() =>
+    h.moduleRef.get(PostsService).create({ kind: 'lend', body: 'World' }),
+  );
+  const bConversation = await asBTenant(() =>
+    h.moduleRef
+      .get(ConversationsService)
+      .start(bLendPost.id, { body: 'World' }),
+  );
+  const bReport = await asBTenant(() =>
+    h.moduleRef
+      .get(ReportsService)
+      .report(bConversation.id, { reasonCode: 'spam' }),
+  );
+  await asBTenant(() => h.moduleRef.get(BlocksService).block(bConversation.id));
+  const bBlock = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.neighbourBlock.findFirstOrThrow({
+      where: { blockerId: b.ids.tenant },
+    }),
+  );
   const aCategory = await helpers.asManager(a, () =>
     helpers.prisma.tenant.ticketCategory.findFirstOrThrow({
       where: { key: 'plumbing' },
@@ -580,6 +650,14 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bPollId: bPoll.id,
     bPollOptionId: bPollOption.id,
     bSuggestionId: bSuggestion.id,
+    bComplaintCategoryId: bComplaintCategory.id,
+    bComplaintId: bComplaint.id,
+    bNoticeId: bNotice.id,
+    bPostId: bPost.id,
+    bClaimId: bClaim.id,
+    bConversationId: bConversation.id,
+    bBlockId: bBlock.id,
+    bReportId: bReport.id,
     bTicketId: bTicket.id,
     bVisitId: bVisit.id,
     bUnitId: b.homeUnitId,

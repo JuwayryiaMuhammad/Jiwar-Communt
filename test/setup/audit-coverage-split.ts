@@ -228,3 +228,36 @@ export const ENGAGEMENT_COVERAGE: readonly string[] = [
   'suggestion.supported',
   'suggestion.unsupported',
 ];
+
+/**
+ * Neighbours (ADR 0042), covered by
+ * test/neighbours/audit-coverage.e2e-spec.ts.
+ */
+export const NEIGHBOURS_COVERAGE: readonly string[] = [
+  'neighbours.settings_changed',
+  'neighbours.welcome_template_changed',
+  'neighbour_complaint_category.created',
+  'neighbour_complaint_category.updated',
+  'neighbour_complaint.created',
+  'neighbour_complaint.review_started',
+  'neighbour_complaint.notice_sent',
+  'neighbour_complaint.mediation_started',
+  'neighbour_complaint.resolved',
+  'neighbour_complaint.dismissed',
+  'neighbour_complaint.withdrawn',
+  'neighbour_post.created',
+  'neighbour_post.closed',
+  'neighbour_post.removed',
+  'neighbour_item.handed_over',
+  'neighbour_claim.created',
+  'neighbour_claim.withdrawn',
+  'neighbour_claim.declined',
+  'neighbour_conversation.started',
+  'neighbour_conversation.names_revealed',
+  'neighbour_conversation.blocked',
+  'neighbour_conversation.unblocked',
+  'neighbour_conversation.reported',
+  'neighbour_report.conversation_read',
+  'neighbour_report.closed',
+  'neighbour_welcome.sent',
+];

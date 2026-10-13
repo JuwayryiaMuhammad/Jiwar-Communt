@@ -765,6 +765,120 @@ describe('API v0 — PII leak scan', () => {
       body: { noteEn: 'PII-DONE-note' },
     }).expect(204);
 
+    // Neighbours (ADR 0042). The primary complains about the rented unit
+    // (its notice goes to the tenant); the tenant complains about the
+    // primary's home (its notice comes to the primary); a found post of the
+    // primary's with the tenant's claim and a conversation nobody reported;
+    // and a lending post with a conversation the primary reported.
+    await call(w, 'PATCH', '/neighbours/settings', {
+      token: a.tokens.manager,
+      body: { maxOpenComplaints: 50, maxOpenPosts: 50 },
+    }).expect(200);
+    const neighbourToken = await w.tokenFor(a, tenant.id, 'resident');
+    const noise = await manager(() =>
+      c.prisma.tenant.neighbourComplaintCategory.findFirstOrThrow({
+        where: { key: 'noise' },
+      }),
+    );
+    const idOf = async (
+      method: 'POST',
+      path: string,
+      token: string,
+      body: object,
+    ) =>
+      (
+        (await call(w, method, path, { token, body }).expect(201)).body as {
+          id: string;
+        }
+      ).id;
+    const piiComplaint = await idOf(
+      'POST',
+      '/neighbour-complaints',
+      primaryToken,
+      {
+        categoryId: noise.id,
+        targetUnitCode: rented.code,
+        body: 'PII-COMPLAINT-text',
+      },
+    );
+    await call(w, 'POST', `/neighbours/complaints/${piiComplaint}/review`, {
+      token: a.tokens.manager,
+    }).expect(204);
+    await idOf(
+      'POST',
+      `/neighbours/complaints/${piiComplaint}/notice`,
+      a.tokens.manager,
+      { body: 'PII-NOTICE-text' },
+    );
+    for (const [path, body] of [
+      ['messages', 'PII-COMPLAINT-reply'],
+      ['notes', 'PII-COMPLAINT-note'],
+      ['unit-messages', 'PII-COMPLAINT-to-unit'],
+    ])
+      await idOf(
+        'POST',
+        `/neighbours/complaints/${piiComplaint}/${path}`,
+        a.tokens.manager,
+        { body },
+      );
+    const piiAgainst = await idOf(
+      'POST',
+      '/neighbour-complaints',
+      neighbourToken,
+      {
+        categoryId: noise.id,
+        targetUnitCode: unit.code,
+        body: 'PII-AGAINST-text',
+      },
+    );
+    await call(w, 'POST', `/neighbours/complaints/${piiAgainst}/review`, {
+      token: a.tokens.manager,
+    }).expect(204);
+    const piiNotice = await idOf(
+      'POST',
+      `/neighbours/complaints/${piiAgainst}/notice`,
+      a.tokens.manager,
+      { body: 'PII-AGAINST-notice' },
+    );
+    await idOf(
+      'POST',
+      `/neighbour-notices/${piiNotice}/messages`,
+      primaryToken,
+      {
+        body: 'PII-AGAINST-reply',
+      },
+    );
+    const piiPost = await idOf('POST', '/neighbour-posts', primaryToken, {
+      kind: 'found',
+      body: 'PII-POST-body',
+      place: 'PII-POST-place',
+    });
+    await idOf('POST', `/neighbour-posts/${piiPost}/claims`, neighbourToken, {
+      note: 'PII-CLAIM-note',
+    });
+    const piiConversation = await idOf(
+      'POST',
+      `/neighbour-posts/${piiPost}/conversations`,
+      neighbourToken,
+      { body: 'PII-CONVERSATION-words' },
+    );
+    const piiLend = await idOf('POST', '/neighbour-posts', primaryToken, {
+      kind: 'lend',
+      body: 'PII-LEND-body',
+    });
+    const piiReported = await idOf(
+      'POST',
+      `/neighbour-posts/${piiLend}/conversations`,
+      neighbourToken,
+      { body: 'PII-REPORTED-words' },
+    );
+    const piiReport = await idOf(
+      'POST',
+      `/neighbour-conversations/${piiReported}/report`,
+      primaryToken,
+      { reasonCode: 'spam', note: 'PII-REPORT-note' },
+    );
+
     /** One id for every param of the path, or each param by name. */
     type Ids = string | Record<string, string>;
     const params: Record<string, Ids> = {
@@ -845,6 +959,24 @@ describe('API v0 — PII leak scan', () => {
       '/polls/{id}': piiPoll,
       '/suggestions/{id}': piiSuggestion,
       '/community/suggestions/{id}': piiSuggestion,
+      // ADR 0042: the primary's own complaint; the notice that came to their
+      // home; their post, its unreported conversation and a reported one.
+      '/neighbour-complaints/{id}': piiComplaint,
+      '/neighbour-complaints/{id}/messages': piiComplaint,
+      '/neighbour-notices/{id}': piiNotice,
+      '/neighbour-notices/{id}/messages': piiNotice,
+      '/neighbour-posts/{id}': piiPost,
+      '/neighbour-conversations/{id}': piiConversation,
+      '/neighbour-conversations/{id}/messages': piiConversation,
+      '/neighbours/complaints/{id}': piiComplaint,
+      '/neighbours/complaints/{id}/messages': piiComplaint,
+      '/neighbours/complaints/{id}/unit-messages': piiComplaint,
+      '/neighbours/complaints/{id}/notes': piiComplaint,
+      '/neighbours/posts/{id}': piiPost,
+      '/neighbours/posts/{id}/claims': piiPost,
+      '/neighbours/reports/{id}': piiReport,
+      '/neighbours/reports/{id}/messages': piiReport,
+      '/neighbours/units/{unitId}/complaint-history': unit.id,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented
@@ -1210,6 +1342,124 @@ describe('API v0 — PII leak scan', () => {
     expect(seen.get('family /events/{id}') ?? '').toContain('"seats":2');
     // The family member's own list of suggestions is empty: not the primary's.
     expect(seen.get('family /suggestions') ?? '').not.toContain(piiSuggestion);
+
+    // Neighbours (ADR 0042). A complaint's words are its author's and the
+    // staff's; a notice and the unit's thread are the unit's and the
+    // staff's; a staff note is the staff's alone; a conversation is its two
+    // sides' and, only through a report, the staff's.
+    const neighbourLeaks: string[] = [];
+    const tenantFirst = (tenant.fullName ?? '').split(' ')[0];
+    for (const [key, text] of seen) {
+      const [name, path] = key.split(' ');
+      const staff = name === 'manager';
+      const author = name === 'resident';
+      const mine = (words: string[], allowed: boolean, what: string) => {
+        if (!allowed)
+          for (const word of words)
+            if (text.includes(word)) neighbourLeaks.push(`${key}: ${what}`);
+      };
+      mine(
+        ['PII-COMPLAINT-text', 'PII-COMPLAINT-reply'],
+        staff || (author && path.startsWith('/neighbour-complaints')),
+        "the complaint's thread",
+      );
+      mine(['PII-COMPLAINT-note'], staff, 'a staff note');
+      // The other unit's notice and thread: never the complainant's.
+      mine(
+        ['PII-NOTICE-text', 'PII-COMPLAINT-to-unit'],
+        staff,
+        "the unit's notice",
+      );
+      // The complaint against the primary's home: its words are never theirs.
+      mine(['PII-AGAINST-text'], staff, 'the complaint behind a notice');
+      mine(
+        ['PII-AGAINST-notice', 'PII-AGAINST-reply'],
+        staff || (author && path.startsWith('/neighbour-notices')),
+        "a notice's thread",
+      );
+      mine(['PII-CLAIM-note'], staff, "a claimant's note");
+      mine(
+        ['PII-CONVERSATION-words'],
+        author && path.startsWith('/neighbour-conversations'),
+        'an unreported conversation',
+      );
+      mine(
+        ['PII-REPORTED-words'],
+        (staff && path === '/neighbours/reports/{id}/messages') ||
+          (author && path.startsWith('/neighbour-conversations')),
+        'a reported conversation outside its case',
+      );
+      mine(['PII-REPORT-note'], staff, "a reporter's note");
+      // What the unit complained about reads never names the complaint or
+      // who made it; a board and a conversation never name the other side.
+      if (
+        path.startsWith('/neighbour-notices') ||
+        path.startsWith('/neighbour-posts') ||
+        path.startsWith('/neighbour-conversations') ||
+        path === '/neighbour-claims' ||
+        path === '/neighbour-blocks'
+      )
+        for (const secret of [
+          tenant.id,
+          tenant.fullName,
+          piiAgainst,
+          ...(author ? [] : [primary.id, primary.fullName]),
+        ])
+          if (secret && text.includes(secret))
+            neighbourLeaks.push(`${key}: who is behind it`);
+      // The staff's counts against a unit and an author never reach a resident.
+      if (!staff)
+        for (const word of ['unitHistory', 'authorPattern', 'againstUnit'])
+          if (text.includes(word)) neighbourLeaks.push(`${key}: ${word}`);
+    }
+    expect(neighbourLeaks).toEqual([]);
+    expect(tenantFirst).not.toBe('');
+    // Positively: the scan saw each where it belongs.
+    const residentSaw = (path: string) => seen.get(`resident ${path}`) ?? '';
+    const managerSaw = (path: string) => seen.get(`manager ${path}`) ?? '';
+    expect(residentSaw('/neighbour-complaints/{id}/messages')).toContain(
+      'PII-COMPLAINT-reply',
+    );
+    expect(residentSaw('/neighbour-notices/{id}')).toContain(
+      'PII-AGAINST-notice',
+    );
+    expect(residentSaw('/neighbour-notices/{id}/messages')).toContain(
+      'PII-AGAINST-reply',
+    );
+    expect(residentSaw('/neighbour-conversations/{id}/messages')).toContain(
+      'PII-CONVERSATION-words',
+    );
+    expect(managerSaw('/neighbours/complaints/{id}/notes')).toContain(
+      'PII-COMPLAINT-note',
+    );
+    expect(managerSaw('/neighbours/complaints/{id}/unit-messages')).toContain(
+      'PII-COMPLAINT-to-unit',
+    );
+    expect(managerSaw('/neighbours/complaints/{id}')).toContain(
+      'PII-NOTICE-text',
+    );
+    expect(managerSaw('/neighbours/posts/{id}/claims')).toContain(
+      'PII-CLAIM-note',
+    );
+    expect(managerSaw('/neighbours/reports/{id}/messages')).toContain(
+      'PII-REPORTED-words',
+    );
+    expect(managerSaw('/neighbours/reports/{id}')).toContain('PII-REPORT-note');
+    // Everyone on the board reads the post; nobody but its author who posted it.
+    for (const name of ['landlord', 'family', 'plainMember'])
+      expect(seen.get(`${name} /neighbour-posts/{id}`) ?? '').toContain(
+        'PII-POST-body',
+      );
+    // The family member has none of the primary's: not their complaint, not
+    // the home's notice (they hold no delegation), not their conversation.
+    for (const path of [
+      '/neighbour-complaints',
+      '/neighbour-notices',
+      '/neighbour-conversations',
+    ])
+      expect(seen.get(`family ${path}`) ?? '').toBe(
+        '{"data":[],"nextCursor":null}',
+      );
 
     // Requests, positively: the scan saw the words where they belong.
     const asResident = (path: string) => seen.get(`resident ${path}`) ?? '';

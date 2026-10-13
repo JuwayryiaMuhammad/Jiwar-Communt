@@ -9,6 +9,7 @@ import { EngagementProvisioning } from '../../src/engagement/provisioning';
 import { ParcelProvisioning } from '../../src/gate/parcels/parcel-provisioning';
 import { MaintenanceProvisioning } from '../../src/maintenance/provisioning';
 import { ManagementProvisioning } from '../../src/management/provisioning';
+import { NeighboursProvisioning } from '../../src/neighbours/provisioning';
 import type { DbHarness } from './db-module';
 import { suiteSequence } from './id-blocks';
 
@@ -25,6 +26,7 @@ new MaintenanceProvisioning(tenantLifecycle).onModuleInit();
 new ParcelProvisioning(tenantLifecycle).onModuleInit();
 new ManagementProvisioning(tenantLifecycle).onModuleInit();
 new EngagementProvisioning(tenantLifecycle).onModuleInit();
+new NeighboursProvisioning(tenantLifecycle).onModuleInit();
 
 /**
  * Generated phones and national IDs live in a space hand-written test values

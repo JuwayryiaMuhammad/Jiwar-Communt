@@ -526,6 +526,87 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   // Settled by a manager (ADR 0037): nullable columns only under
   // IS [NOT] NULL.
   worker_wage_obligations_settled_shape: {},
+  // Neighbours (ADR 0042): no nullable column outside IS [NOT] NULL.
+  neighbour_settings_ranges: {},
+  neighbour_complaint_categories_key_shape: {},
+  neighbour_complaint_categories_names_length: {},
+  neighbour_complaint_counters_not_negative: {},
+  neighbour_complaints_number_positive: {},
+  neighbour_complaints_closed_shape: {},
+  neighbour_complaint_status_history_reason: {},
+  neighbour_complaint_messages_erased_shape: {},
+  neighbour_complaint_messages_internal_is_staff: {},
+  neighbour_complaint_notices_body_length: {},
+  neighbour_posts_expires_after_creation: {},
+  neighbour_conversations_two_people: {},
+  neighbour_conversation_messages_erased_shape: {},
+  neighbour_blocks_two_people: {},
+  neighbour_conversation_reports_reason: {},
+  neighbour_welcome_templates_whole_per_language: {},
+  // Neighbours: compare nullable columns.
+  neighbour_complaints_not_own_unit: {
+    guarded:
+      'author_unit_id IS NULL is tested first; the comparison runs only on ' +
+      'a value, and target_unit_id is NOT NULL',
+  },
+  neighbour_complaints_close_reason: {
+    guarded:
+      'close_reason IS NULL is tested first; the lists run only on a value, ' +
+      'and status is NOT NULL',
+  },
+  neighbour_complaints_close_reason_side: {
+    guarded:
+      'close_reason IS NULL and closed_by_side IS NULL are tested first; the ' +
+      'comparisons run only when both have a value',
+  },
+  neighbour_complaint_status_history_move: {
+    guarded:
+      'from_status is compared only in the branch that first tests ' +
+      'from_status IS NOT NULL; the other branch is from_status IS NULL',
+  },
+  neighbour_complaint_messages_body_length: {
+    guarded: 'body IS NULL is tested first; the length runs only on a value',
+  },
+  neighbour_posts_erased_shape: {},
+  neighbour_posts_text_length: {
+    guarded:
+      'body IS NULL and place IS NULL are tested first; each length runs ' +
+      'only on a value',
+  },
+  neighbour_posts_author_shape: {},
+  neighbour_posts_closed_shape: {
+    guarded:
+      'close_reason IS NULL is tested first; the list runs only on a value. ' +
+      'The other terms are IS [NOT] NULL tests and status, which is NOT NULL',
+  },
+  neighbour_item_claims_note_length: {
+    guarded: 'note IS NULL is tested first; the length runs only on a value',
+  },
+  neighbour_item_claims_decided_shape: {
+    guarded:
+      'decline_reason IS NULL is tested first; the list runs only on a ' +
+      'value. The other terms are IS [NOT] NULL tests and status, which is ' +
+      'NOT NULL',
+  },
+  neighbour_conversations_closed_shape: {
+    guarded:
+      'close_reason IS NULL is tested first; the list runs only on a value',
+  },
+  neighbour_conversation_messages_body_length: {
+    guarded: 'body IS NULL is tested first; the length runs only on a value',
+  },
+  neighbour_conversation_reports_note_length: {
+    guarded: 'note IS NULL is tested first; the length runs only on a value',
+  },
+  neighbour_conversation_reports_closed_shape: {
+    guarded:
+      'outcome IS NULL is tested first; the list runs only on a value. The ' +
+      'other terms are IS [NOT] NULL tests and status, which is NOT NULL',
+  },
+  neighbour_welcome_templates_text_length: {
+    guarded:
+      'each text IS NULL is tested first; its length runs only on a value',
+  },
 };
 
 interface Check {

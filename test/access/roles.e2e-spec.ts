@@ -92,6 +92,8 @@ describe('Roles', () => {
         'community.read',
         'household.delegate',
         'household.manage',
+        'neighbours.board',
+        'neighbours.complain',
         'profile.photo',
         'requests.create',
         'suggestions.create',
@@ -230,6 +232,8 @@ describe('Roles', () => {
         'requests.create',
         'community.read',
         'suggestions.create',
+        'neighbours.complain',
+        'neighbours.board',
       ]),
     );
     expect(await version()).toBe(before);

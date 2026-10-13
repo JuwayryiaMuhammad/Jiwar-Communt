@@ -1,0 +1,25 @@
+{
+  "name": "@jiwar/public",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3003",
+    "build": "next build",
+    "start": "next start --port 3003",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "node --test --experimental-strip-types lib/*.test.ts messages/*.test.ts"
+  },
+  "dependencies": {
+    "@jiwar/bff": "workspace:*",
+    "next": "^16.3.8",
+    "qrcode-generator": "^2.0.4",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "typescript": "^5.9.3"
+  }
+}

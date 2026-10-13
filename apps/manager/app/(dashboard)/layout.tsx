@@ -6,13 +6,17 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Building,
   CalendarClock,
+  CalendarDays,
   DoorOpen,
   HardHat,
   Inbox,
   LayoutDashboard,
+  Lightbulb,
+  ListChecks,
   Lock,
-  MessagesSquare,
+  Megaphone,
   MessageSquareMore,
+  MessagesSquare,
   Package,
   ScrollText,
   Settings,
@@ -21,6 +25,7 @@ import {
   UserCog,
   Users,
   UserX,
+  Vote,
   Wrench,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -74,6 +79,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     keys.managementRequests({ assignee: 'none', open: 'true' }),
     () => fetchers.managementRequests({ assignee: 'none', open: 'true' }, undefined, 100),
     can('requests.handle'),
+  );
+
+  // Suggestions nobody has looked at yet (ADR 0040).
+  const received = useQueueSize(
+    keys.suggestions({ status: 'received' }),
+    () => fetchers.suggestions({ status: 'received', topicId: '', published: '' }, undefined, 100),
+    can('community.suggestions'),
   );
 
   // Requests the system could not carry out by itself: a manager's to settle.
@@ -131,6 +143,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           show: can('requests.handle'),
         },
         { href: '/appointments', label: 'Appointments', icon: <CalendarClock aria-hidden />, show: can('requests.handle') },
+        { href: '/announcements', label: 'Announcements', icon: <Megaphone aria-hidden />, show: can('community.publish') },
+        { href: '/events', label: 'Events', icon: <CalendarDays aria-hidden />, show: can('community.publish') },
+        { href: '/polls', label: 'Polls', icon: <Vote aria-hidden />, show: can('community.publish') },
+        {
+          href: '/suggestions',
+          label: 'Suggestions',
+          icon: <Lightbulb aria-hidden />,
+          count: received,
+          show: can('community.suggestions'),
+        },
         { href: '/gate', label: 'Gate', icon: <DoorOpen aria-hidden />, show: can('gate.read') },
         { href: '/parcels', label: 'Parcels', icon: <Package aria-hidden />, show: can('parcels.manage') },
         { href: '/staff', label: 'Staff', icon: <UserCog aria-hidden />, show: can('accounts.read') },
@@ -152,6 +174,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           label: 'Requests setup',
           icon: <MessageSquareMore aria-hidden />,
           show: can('requests.manage'),
+        },
+        {
+          href: '/community-setup',
+          label: 'Community setup',
+          icon: <ListChecks aria-hidden />,
+          show: can('community.publish') || can('community.suggestions'),
         },
         {
           href: '/deletions',

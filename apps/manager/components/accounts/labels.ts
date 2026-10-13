@@ -22,6 +22,7 @@ export const NOTIFICATION_CATEGORY_TEXT: Record<string, string> = {
   household: 'Household',
   account_security: 'Account and security',
   management: 'Requests to the management',
+  community: 'Community: important announcements, cancelled events, suggestions',
 };
 
 /** Personal fields an erasure blanks, as the scope lists them. */

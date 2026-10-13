@@ -51,6 +51,19 @@ test('a link is offered only where the reader may open the page', () => {
   assert.equal(notificationHref(n('account.deletion_requested', {}, 'account_deletion_request', 'r1'), () => true), null);
 });
 
+test('a community notice says what happened and leads to its page only for whoever may open it', () => {
+  const important = n('community_announcement.important', {}, 'community_announcement', 'a-1');
+  assert.equal(notificationText(important), 'An important announcement was published');
+  assert.equal(notificationHref(important, (p) => p === 'community.publish'), '/announcements/a-1');
+  assert.equal(notificationHref(important, () => false), null);
+  const moved = n('community_suggestion.status_changed', { status: 'under_review', topicKey: 'events_activities' }, 'community_suggestion', 's-1');
+  assert.equal(notificationText(moved), 'Your suggestion about events activities is now under review');
+  assert.equal(notificationHref(moved, (p) => p === 'community.suggestions'), '/suggestions/s-1');
+  assert.equal(notificationHref(moved, (p) => p === 'community.publish'), null);
+  const cancelled = n('community_event.cancelled', {}, 'community_event', 'e-1');
+  assert.equal(notificationHref(cancelled, (p) => p === 'community.publish'), '/events/e-1');
+});
+
 test('a request to the management is named by its number and topic, and leads to its page for a handler', () => {
   const escalated = n('management_request.escalated', { requestNumber: 'MR-000012', topicKey: 'billing_fees' }, 'management_request', 'r-1');
   assert.equal(notificationText(escalated), 'Request MR-000012 (billing fees) is overdue: nobody has responded');

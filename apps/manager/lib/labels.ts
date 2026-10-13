@@ -44,4 +44,8 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'requests.create': 'Open requests to the management',
   'requests.handle': 'Answer, assign and close requests; run appointments',
   'requests.manage': 'Set up request topics, office hours and auto-close; see ratings',
+  'community.read': 'Read announcements, events and polls; answer and vote',
+  'suggestions.create': 'Send suggestions to the management',
+  'community.publish': 'Publish announcements, works and closures, events and polls',
+  'community.suggestions': 'Handle suggestions: answer, publish to the board, say what was done',
 };

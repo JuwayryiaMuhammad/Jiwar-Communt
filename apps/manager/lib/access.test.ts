@@ -16,10 +16,16 @@ test('a staff role that handles requests to the management enters', () => {
   assert.equal(mayEnter({ type: 'staff', permissions: ['gate.operate', 'requests.manage'] }), true);
 });
 
+test('a staff role that publishes to the community or handles its suggestions enters', () => {
+  assert.equal(mayEnter({ type: 'staff', permissions: ['community.publish'] }), true);
+  assert.equal(mayEnter({ type: 'staff', permissions: ['gate.operate', 'community.suggestions'] }), true);
+});
+
 test('a guard, a technician and a resident do not', () => {
   assert.equal(mayEnter({ type: 'staff', permissions: ['gate.operate', 'parcels.handle'] }), false);
   assert.equal(mayEnter({ type: 'staff', permissions: ['tickets.work'] }), false);
   assert.equal(mayEnter({ type: 'resident', permissions: ['tickets.create', 'requests.create', 'units.read'] }), false);
+  assert.equal(mayEnter({ type: 'resident', permissions: ['community.read', 'suggestions.create'] }), false);
 });
 
 test('an answer without permissions admits nobody but a manager', () => {

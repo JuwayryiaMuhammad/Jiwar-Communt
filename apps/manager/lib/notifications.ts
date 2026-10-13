@@ -128,6 +128,10 @@ const TEXT: Record<string, (p: P) => string> = {
   'management_appointment.countered': (p) => `${request(p)}: the management proposed another slot`,
   'management_appointment.confirmed': (p) => `${request(p)}: the appointment is confirmed`,
   'management_appointment.cancelled': (p) => `${request(p)}: the management cancelled the appointment`,
+  // Community life (ADR 0040): what happened, never a word anyone wrote.
+  'community_announcement.important': () => 'An important announcement was published',
+  'community_event.cancelled': () => 'An event you said you are going to was cancelled',
+  'community_suggestion.status_changed': (p) => `Your suggestion about ${words(p.topicKey)} is now ${words(p.status)}`,
 };
 
 export function notificationText(n: NotificationLike): string {
@@ -145,6 +149,11 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
   if (n.targetType === 'parcel' && n.targetId) return can('parcels.manage') ? `/parcels?parcel=${n.targetId}` : null;
   if (n.targetType === 'management_request' && n.targetId)
     return can('requests.handle') ? `/management-requests/${n.targetId}` : null;
+  if (n.targetType === 'community_announcement' && n.targetId)
+    return can('community.publish') ? `/announcements/${n.targetId}` : null;
+  if (n.targetType === 'community_event' && n.targetId) return can('community.publish') ? `/events/${n.targetId}` : null;
+  if (n.targetType === 'community_suggestion' && n.targetId)
+    return can('community.suggestions') ? `/suggestions/${n.targetId}` : null;
   if (n.kind === 'account.deletion_queued') return can('accounts.erase') ? '/deletions' : null;
   if (n.kind === 'account.new_device_login') return '/account';
   if (n.targetType === 'worker_engagement') return can('workers.review') ? '/workers?tab=all' : null;

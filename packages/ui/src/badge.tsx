@@ -60,6 +60,19 @@ const STATUS_TONE: Record<string, Tone> = {
   answered: 'green',
   requested: 'terracotta',
   superseded: 'beige',
+  // Community life (ADR 0040). `ended`, `closed`, `cancelled`, `open` and
+  // `done` are above.
+  draft: 'beige',
+  scheduled: 'terracotta',
+  published: 'green',
+  expired: 'beige',
+  archived: 'beige',
+  upcoming: 'terracotta',
+  ongoing: 'green',
+  received: 'terracotta',
+  under_review: 'terracotta',
+  planned: 'green',
+  declined: 'error',
 };
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {

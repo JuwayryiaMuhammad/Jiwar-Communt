@@ -58,6 +58,25 @@ export type ManagementRequest = Schema<'StaffRequestListItemView'>;
 export type ManagementRequestDetail = Schema<'StaffRequestDetailView'>;
 export type ManagementRequestStatus = Schema<'ManagementRequestStatus'>;
 export type ManagementRequestType = Schema<'ManagementRequestType'>;
+// Community life (ADR 0040).
+export type Announcement = Schema<'StaffAnnouncementListItemView'>;
+export type AnnouncementDetail = Schema<'StaffAnnouncementView'>;
+export type AnnouncementVersion = Schema<'AnnouncementVersionView'>;
+export type AnnouncementKind = Schema<'AnnouncementKind'>;
+export type Audience = Schema<'AudienceView'>;
+export type CommunityAttachment = Schema<'CommunityAttachmentView'>;
+export type CommunityEvent = Schema<'StaffEventListItemView'>;
+export type CommunityEventDetail = Schema<'StaffEventView'>;
+export type Attendee = Schema<'AttendeeView'>;
+export type Poll = Schema<'StaffPollView'>;
+export type Suggestion = Schema<'StaffSuggestionListItemView'>;
+export type SuggestionDetail = Schema<'StaffSuggestionView'>;
+export type SuggestionStatus = Schema<'SuggestionStatus'>;
+export type SuggestionTopic = Schema<'SuggestionTopicView'>;
+export type AnnouncementFilters = { status: Announcement['status'] | ''; kind: AnnouncementKind | '' };
+export type EventFilters = { status: CommunityEvent['status'] | '' };
+export type PollFilters = { status: Poll['status'] | '' };
+export type SuggestionFilters = { status: SuggestionStatus | ''; topicId: string; published: 'true' | 'false' | '' };
 export type RequestMessage = Schema<'StaffRequestMessageView'>;
 export type RequestTopic = Schema<'TopicView'>;
 export type RequestTopicOption = Schema<'TopicOptionView'>;
@@ -157,6 +176,24 @@ export const keys = {
   unreadCount: ['notifications', 'unread-count'] as const,
   mySessions: ['me', 'sessions'] as const,
   myPreferences: ['me', 'notification-preferences'] as const,
+  announcementsAll: ['announcements'] as const,
+  announcements: (filters: object) => ['announcements', 'list', filters] as const,
+  announcement: (id: string) => ['announcements', 'detail', id] as const,
+  announcementPart: (id: string, part: string) => ['announcements', 'detail', id, part] as const,
+  communityBuildings: ['community', 'buildings'] as const,
+  communitySettings: ['community', 'settings'] as const,
+  communityEventsAll: ['community-events'] as const,
+  communityEvents: (filters: object) => ['community-events', 'list', filters] as const,
+  communityEvent: (id: string) => ['community-events', 'detail', id] as const,
+  attendees: (id: string, response: string) => ['community-events', 'detail', id, 'attendees', response] as const,
+  pollsAll: ['polls'] as const,
+  polls: (filters: object) => ['polls', 'list', filters] as const,
+  poll: (id: string) => ['polls', 'detail', id] as const,
+  pollAudience: (id: string) => ['polls', 'detail', id, 'audience'] as const,
+  suggestionsAll: ['suggestions'] as const,
+  suggestions: (filters: object) => ['suggestions', 'list', filters] as const,
+  suggestion: (id: string) => ['suggestions', 'detail', id] as const,
+  suggestionTopics: ['suggestion-topics'] as const,
   managementAll: ['management-requests'] as const,
   managementRequests: (filters: object) => ['management-requests', 'list', filters] as const,
   managementRequest: (id: string) => ['management-requests', 'detail', id] as const,
@@ -236,6 +273,43 @@ export const fetchers = {
   unreadCount: () => unwrap(api.GET('/api/v1/me/notifications/unread-count')),
   mySessions: () => unwrap(api.GET('/api/v1/me/sessions')),
   myPreferences: () => unwrap(api.GET('/api/v1/me/notification-preferences')),
+  announcements: (filters: AnnouncementFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/community/announcements', {
+        params: { query: { ...(clean(filters) as { status?: Announcement['status']; kind?: AnnouncementKind }), cursor, limit } },
+      }),
+    ),
+  announcement: (id: string) => unwrap(api.GET('/api/v1/community/announcements/{id}', { params: { path: { id } } })),
+  announcementVersions: (id: string) =>
+    unwrap(api.GET('/api/v1/community/announcements/{id}/versions', { params: { path: { id } } })),
+  announcementReads: (id: string) => unwrap(api.GET('/api/v1/community/announcements/{id}/reads', { params: { path: { id } } })),
+  communityBuildings: () => unwrap(api.GET('/api/v1/community/buildings')),
+  communitySettings: () => unwrap(api.GET('/api/v1/community/settings')),
+  communityEvents: (filters: EventFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/community/events', {
+        params: { query: { ...(clean(filters) as { status?: CommunityEvent['status'] }), cursor, limit } },
+      }),
+    ),
+  communityEvent: (id: string) => unwrap(api.GET('/api/v1/community/events/{id}', { params: { path: { id } } })),
+  attendees: (id: string, response: Attendee['response'], cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/community/events/{id}/attendees', { params: { path: { id }, query: { response, cursor, limit } } })),
+  polls: (filters: PollFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/community/polls', { params: { query: { ...(clean(filters) as { status?: Poll['status'] }), cursor, limit } } }),
+    ),
+  poll: (id: string) => unwrap(api.GET('/api/v1/community/polls/{id}', { params: { path: { id } } })),
+  pollAudience: (id: string) => unwrap(api.GET('/api/v1/community/polls/{id}/audience', { params: { path: { id } } })),
+  suggestions: (filters: SuggestionFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/community/suggestions', {
+        params: {
+          query: { ...(clean(filters) as { status?: SuggestionStatus; topicId?: string; published?: 'true' | 'false' }), cursor, limit },
+        },
+      }),
+    ),
+  suggestion: (id: string) => unwrap(api.GET('/api/v1/community/suggestions/{id}', { params: { path: { id } } })),
+  suggestionTopics: () => unwrap(api.GET('/api/v1/community/suggestion-topics')),
   managementRequests: (filters: ManagementRequestFilters, cursor?: string, limit = 50) =>
     unwrap(
       api.GET('/api/v1/management/requests', {

@@ -198,7 +198,7 @@ describe('Community life — audiences are evaluated at read time', () => {
       await e.x.asManager(s.c, () =>
         h.moduleRef
           .get(ResidentsService)
-          .endOccupancy(occupancy.id, { code: 'moved_out' }),
+          .endOccupancy(occupancy.id, { code: 'moved_out', text: 'Moved out' }),
       );
 
       for (const path of ['/announcements', '/events', '/polls'])

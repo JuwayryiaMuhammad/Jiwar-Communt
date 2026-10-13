@@ -178,14 +178,14 @@ export const ANNOUNCEMENT_ROUTES: Row[] = [
       body: { ...draft(), kind: 'party', priority: 'urgent' },
       fields: [
         {
-          field: 'priority',
-          code: 'INVALID_VALUE',
-          params: { allowed: ['normal', 'important'] },
-        },
-        {
           field: 'kind',
           code: 'INVALID_VALUE',
           params: { allowed: ['general', 'works'] },
+        },
+        {
+          field: 'priority',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['normal', 'important'] },
         },
       ],
     },
@@ -369,16 +369,16 @@ export const EVENT_ROUTES: Row[] = [
       },
       fields: [
         {
-          field: 'capacity',
-          code: 'INVALID_NUMBER',
-          params: { min: 1, max: 100000 },
-        },
-        {
           field: 'place',
           code: 'INVALID_LENGTH',
           params: { min: 1, max: 200 },
         },
         { field: 'startsAt', code: 'INVALID_FORMAT' },
+        {
+          field: 'capacity',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 100000 },
+        },
       ],
     },
     noStore: true,
@@ -615,12 +615,12 @@ export const POLL_ROUTES: Row[] = [
     invalid: {
       body: { multiple: 'yes', options: [] },
       fields: [
-        { field: 'multiple', code: 'INVALID_TYPE' },
         {
           field: 'options',
           code: 'INVALID_LENGTH',
           params: { min: 2, max: 10 },
         },
+        { field: 'multiple', code: 'INVALID_TYPE' },
       ],
     },
     noStore: true,

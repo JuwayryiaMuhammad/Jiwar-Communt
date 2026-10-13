@@ -467,6 +467,22 @@ export const AUDIT_ACTIONS = {
     target: 'suggestion_topic',
     sensitive: ['nameAr', 'nameEn'],
   },
+  // neighbours (ADR 0042). Ids, keys, statuses and reason codes only: never
+  // a complaint's or a post's words, never who complained about whom.
+  // changes: maxOpenComplaints, lostFoundExpiryDays, lendingExpiryDays,
+  // maxOpenPosts, maxNewConversationsPerDay.
+  'neighbours.settings_changed': { log: 'tenant', target: 'tenant' },
+  // changes: key, active by value; the names as `{ changed: true }` only.
+  'neighbour_complaint_category.created': {
+    log: 'tenant',
+    target: 'neighbour_complaint_category',
+    sensitive: ['nameAr', 'nameEn'],
+  },
+  'neighbour_complaint_category.updated': {
+    log: 'tenant',
+    target: 'neighbour_complaint_category',
+    sensitive: ['nameAr', 'nameEn'],
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

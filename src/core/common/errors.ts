@@ -302,6 +302,10 @@ export const ErrorCode = {
    * that is not done, taking down one that is not on the board.
    */
   SUGGESTION_INVALID_STATE: 'SUGGESTION_INVALID_STATE',
+  // neighbours (ADR 0042)
+  /** Unknown, or another compound's. */
+  NEIGHBOUR_COMPLAINT_CATEGORY_NOT_FOUND:
+    'NEIGHBOUR_COMPLAINT_CATEGORY_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

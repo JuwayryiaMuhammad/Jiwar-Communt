@@ -31,7 +31,8 @@ export interface FilePurposeDefinition {
  * export's archive is the server's alone (ADR 0036). A management request
  * message's attachment comes from either side of the request (ADR 0039).
  * What is attached to an announcement, an event or a "we did" note is the
- * staff's (ADR 0040).
+ * staff's (ADR 0040). A complaint's evidence comes from whoever writes on
+ * the complaint, and a board post's photos from whoever posts (ADR 0042).
  */
 export const FILE_PURPOSES = {
   worker_photo: {
@@ -72,6 +73,19 @@ export const FILE_PURPOSES = {
     types: [...IMAGE_TYPES, 'application/pdf'],
     maxBytes: 10 * MB,
     uploaders: ['community.publish', 'community.suggestions'],
+  },
+  // A complaint's evidence (ADR 0042): photos and documents, never a video.
+  // Uploaded by whoever may write on a complaint or answer a notice.
+  complaint_evidence: {
+    types: [...IMAGE_TYPES, 'application/pdf'],
+    maxBytes: 10 * MB,
+    uploaders: ['neighbours.complain', 'neighbours.board', 'neighbours.handle'],
+  },
+  // A lost-and-found or lending post's photo (ADR 0042).
+  neighbour_post_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['neighbours.board', 'neighbours.handle'],
   },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.

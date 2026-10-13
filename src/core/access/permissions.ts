@@ -91,6 +91,15 @@ export const PERMISSIONS = {
   'suggestions.create': { kinds: ['resident', 'family'] },
   'community.publish': { kinds: ['staff', 'manager'] },
   'community.suggestions': { kinds: ['staff', 'manager'] },
+  // Neighbours (ADR 0042). Residents and family complain about another
+  // unit and follow their own complaints, and use the lost-and-found and
+  // lending boards with their masked contact; handlers (a staff member, or
+  // the manager) work the complaints, the desk and the reported
+  // conversations; the manager sets the categories, limits and welcome.
+  'neighbours.complain': { kinds: ['resident', 'family'] },
+  'neighbours.board': { kinds: ['resident', 'family'] },
+  'neighbours.handle': { kinds: ['staff', 'manager'] },
+  'neighbours.manage': { kinds: ['manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

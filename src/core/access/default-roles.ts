@@ -53,6 +53,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'requests.manage',
       'community.publish',
       'community.suggestions',
+      'neighbours.handle',
+      'neighbours.manage',
     ],
   },
   {
@@ -70,6 +72,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'requests.create',
       'community.read',
       'suggestions.create',
+      'neighbours.complain',
+      'neighbours.board',
     ],
   },
   {
@@ -87,6 +91,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'requests.create',
       'community.read',
       'suggestions.create',
+      'neighbours.complain',
+      'neighbours.board',
     ],
   },
   {

@@ -24,15 +24,21 @@ const DOMAINS = [
   'gate',
   'maintenance',
   'management',
+  'neighbours',
 ];
 
 /**
  * Domains a domain must not import at all, not even through the index:
  * maintenance reads community only (ADR 0032); management reads community
  * and maintenance (ADR 0039). Engagement reads all four through their
- * index.ts, and nothing imports it (ADR 0040).
+ * index.ts, and nothing imports it (ADR 0040). Neighbours reads community
+ * only, and nothing imports it (ADR 0042).
  */
-const NO_IMPORT = { maintenance: ['gate'], management: ['gate'] };
+const NO_IMPORT = {
+  maintenance: ['gate'],
+  management: ['gate'],
+  neighbours: ['engagement', 'gate', 'maintenance', 'management'],
+};
 
 const BASE_PRISMA = {
   group: ['**/base-prisma', '**/database/base-prisma'],
@@ -64,7 +70,7 @@ function otherDomainsInternals(domain) {
     banned.includes(d)
       ? {
           group: [`**/${d}`, `**/${d}/**`],
-          message: `${domain} must not import ${d} at all (ADR 0032, 0039).`,
+          message: `${domain} must not import ${d} at all (ADR 0032, 0039, 0042).`,
         }
       : {
           group: [`**/${d}/**`, `!**/${d}/index`],

@@ -163,4 +163,7 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   poll_options_position_key: null,
   suggestions_tenant_id_id_key: null,
   suggestion_attachments_file_id_key: null,
+  // Neighbours (ADR 0042). A category's key is the manager's input.
+  neighbour_complaint_categories_tenant_id_key_key: ['key'],
+  neighbour_complaint_categories_tenant_id_id_key: null,
 };

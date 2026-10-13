@@ -4,16 +4,12 @@ import { FILE_PURPOSES, FILE_TYPES } from './purposes';
 import { matchesSignature } from './signatures';
 
 const migrations = '../../../prisma/migrations';
-/** The size CHECK as it stands now (ADR 0036 recreated it). */
+/** Both CHECKs as they stand now (ADR 0042 recreated them). */
 const sizeCheck = readFileSync(
-  join(__dirname, migrations, '20261013090510_data_exports/migration.sql'),
+  join(__dirname, migrations, '20261020090100_neighbours_setup/migration.sql'),
   'utf8',
 );
-/** The content-type CHECK as it stands now (ADR 0040 recreated it). */
-const typeCheck = readFileSync(
-  join(__dirname, migrations, '20261019090200_engagement_setup/migration.sql'),
-  'utf8',
-);
+const typeCheck = sizeCheck;
 
 describe('file purposes', () => {
   it('match the CHECKs in the database', () => {
@@ -31,6 +27,9 @@ describe('file purposes', () => {
       `WHEN 'parcel_photo' THEN ${FILE_PURPOSES.parcel_photo.maxBytes}`,
     );
     expect(sizeCheck).toContain(
+      `WHEN 'neighbour_post_photo' THEN ${FILE_PURPOSES.neighbour_post_photo.maxBytes}`,
+    );
+    expect(sizeCheck).toContain(
       `WHEN 'data_export' THEN ${FILE_PURPOSES.data_export.maxBytes}`,
     );
     expect(sizeCheck).toContain(`ELSE ${FILE_PURPOSES.document.maxBytes} END`);
@@ -43,8 +42,13 @@ describe('file purposes', () => {
     expect(FILE_PURPOSES.community_attachment.maxBytes).toBe(
       FILE_PURPOSES.document.maxBytes,
     );
+    expect(sizeCheck).not.toContain(`WHEN 'complaint_evidence'`);
+    expect(FILE_PURPOSES.complaint_evidence.maxBytes).toBe(
+      FILE_PURPOSES.document.maxBytes,
+    );
     // files_content_type_for_purpose: images for every purpose, a PDF only
-    // as a document, a request's attachment or a community attachment.
+    // as a document, a request's attachment, a community attachment or a
+    // complaint's evidence.
     expect(FILE_PURPOSES.worker_photo.types).toEqual([
       'image/jpeg',
       'image/png',
@@ -69,12 +73,18 @@ describe('file purposes', () => {
     expect(FILE_PURPOSES.community_attachment.types).toEqual(
       FILE_PURPOSES.document.types,
     );
+    expect(FILE_PURPOSES.complaint_evidence.types).toEqual(
+      FILE_PURPOSES.document.types,
+    );
+    expect(FILE_PURPOSES.neighbour_post_photo.types).toEqual(
+      FILE_PURPOSES.worker_photo.types,
+    );
     expect(FILE_PURPOSES.data_export.types).toEqual(['application/zip']);
     expect(typeCheck).toContain(
       `("content_type" IN ('image/jpeg', 'image/png', 'image/webp') AND "purpose" <> 'data_export')`,
     );
     expect(typeCheck).toContain(
-      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment'))`,
+      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence'))`,
     );
     expect(typeCheck).toContain(
       `("content_type" = 'application/zip' AND "purpose" = 'data_export')`,

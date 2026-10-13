@@ -83,7 +83,10 @@ describe('audience columns (ADR 0040)', () => {
         },
       ],
     });
-    // Nobody's places: nothing matches.
-    expect(audienceWhere([])).toEqual({ OR: [] });
+    // Nobody's places: one branch nothing can meet, never an empty OR
+    // (which the query engine would drop, showing everything).
+    expect(audienceWhere([])).toEqual({
+      OR: [{ audienceOccupancy: { in: [] }, OR: [] }],
+    });
   });
 });

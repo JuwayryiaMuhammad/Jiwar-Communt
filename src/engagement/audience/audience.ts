@@ -118,7 +118,11 @@ export function placesIn(
  * `sees` as a query condition over the two audience columns: the content
  * put to at least one of the caller's places. Built from `inAudience`
  * itself, one capacity at a time, so the list and the single read never
- * disagree. Nobody's places: a condition nothing meets.
+ * disagree.
+ *
+ * Nobody's places must be a condition nothing meets, and an empty `OR` is
+ * not one: the query engine drops it, and the list would show everything
+ * to someone who left. So it is one branch that no row can satisfy.
  */
 export function audienceWhere(places: readonly CommunityPlace[]): {
   OR: {
@@ -126,6 +130,8 @@ export function audienceWhere(places: readonly CommunityPlace[]): {
     OR: { audienceBuildings: { isEmpty: true } | { has: string } }[];
   }[];
 } {
+  if (!places.length)
+    return { OR: [{ audienceOccupancy: { in: [] }, OR: [] }] };
   return {
     OR: places.map((place) => ({
       audienceOccupancy: {

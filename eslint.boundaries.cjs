@@ -18,12 +18,19 @@
 // pieces and each carries every pattern that applies to its files.
 
 /** Top-level domain folders under src/. The unit test keeps this in sync with the disk. */
-const DOMAINS = ['community', 'gate', 'maintenance', 'management'];
+const DOMAINS = [
+  'community',
+  'engagement',
+  'gate',
+  'maintenance',
+  'management',
+];
 
 /**
  * Domains a domain must not import at all, not even through the index:
  * maintenance reads community only (ADR 0032); management reads community
- * and maintenance (ADR 0039).
+ * and maintenance (ADR 0039). Engagement reads all four through their
+ * index.ts, and nothing imports it (ADR 0040).
  */
 const NO_IMPORT = { maintenance: ['gate'], management: ['gate'] };
 

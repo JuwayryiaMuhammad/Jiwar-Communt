@@ -366,6 +366,21 @@ export const AUDIT_ACTIONS = {
   'management.settings_changed': { log: 'tenant', target: 'tenant' },
   // changes: windows, each as `<weekday>:<startMinute>-<endMinute>`.
   'management.office_hours_changed': { log: 'tenant', target: 'tenant' },
+  // community life (ADR 0040). Ids, keys, dates and reason codes only:
+  // never a title, a text, a place or a choice.
+  // changes: eventMaxGuests.
+  'engagement.settings_changed': { log: 'tenant', target: 'tenant' },
+  // changes: key, active by value; the names as `{ changed: true }` only.
+  'suggestion_topic.created': {
+    log: 'tenant',
+    target: 'suggestion_topic',
+    sensitive: ['nameAr', 'nameEn'],
+  },
+  'suggestion_topic.updated': {
+    log: 'tenant',
+    target: 'suggestion_topic',
+    sensitive: ['nameAr', 'nameEn'],
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

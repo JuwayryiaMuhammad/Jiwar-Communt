@@ -310,10 +310,12 @@ describe('Audit coverage', () => {
       expect(row.changes).toEqual({
         permissions: {
           from: [
+            'community.read',
             'household.delegate',
             'household.manage',
             'profile.photo',
             'requests.create',
+            'suggestions.create',
             'tickets.create',
             'units.read',
             'visitors.invite',

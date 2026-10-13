@@ -240,9 +240,11 @@ describe('Permission sync', () => {
     expect(report.rolesCreated).toEqual(['family_member']);
     // units.read was offered long ago, yet the new role has it.
     expect((await role(t, 'family_member')).permissions).toEqual([
+      'community.read',
       'household.manage',
       'profile.photo',
       'requests.create',
+      'suggestions.create',
       'tickets.create',
       'units.read',
       'visitors.invite',
@@ -267,9 +269,11 @@ describe('Permission sync', () => {
         permissions: {
           from: [],
           to: [
+            'community.read',
             'household.manage',
             'profile.photo',
             'requests.create',
+            'suggestions.create',
             'tickets.create',
             'units.read',
             'visitors.invite',
@@ -530,6 +534,66 @@ describe('Permission sync', () => {
     expect((await sync(base, t)).added).toEqual([]);
     expect((await role(t, 'manager')).permissions).not.toContain(
       'requests.manage',
+    );
+  });
+
+  it('Phase R3 reaches an existing compound: community.read and suggestions.create for residents and family, publish and suggestions for the manager (ADR 0040)', async () => {
+    const r3 = [
+      'community.read',
+      'suggestions.create',
+      'community.publish',
+      'community.suggestions',
+    ];
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !r3.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !r3.includes(p)),
+      })),
+    };
+    expect(catalogProblems(before)).toEqual([]);
+    const t = newId();
+    await h.globalDb.tenant.create({
+      data: { id: t, name: `Sync R3 compound ${t}` },
+    });
+    await h.asTenant(t, () =>
+      h.tenantTx.withTenantTx(async (tx) => {
+        await new RoleProvisioner(before).provision(tx, t);
+        await tx.tenantSettings.create({ data: { tenantId: t } });
+        // The domains' rows, as the migrations' backfills gave it.
+        await tenantLifecycle.tenantCreated(tx, t);
+      }),
+    );
+
+    const report = await sync(base, t);
+    expect([...report.added].sort()).toEqual([...r3].sort());
+    for (const key of ['resident', 'family_member']) {
+      const { permissions } = await role(t, key);
+      expect(permissions).toEqual(
+        expect.arrayContaining(['community.read', 'suggestions.create']),
+      );
+      expect(permissions).not.toContain('community.publish');
+      expect(permissions).not.toContain('community.suggestions');
+    }
+    const manager = (await role(t, 'manager')).permissions;
+    expect(manager).toEqual(
+      expect.arrayContaining(['community.publish', 'community.suggestions']),
+    );
+    expect(manager).not.toContain('community.read');
+    expect(manager).not.toContain('suggestions.create');
+    // No staff role publishes or handles suggestions until a manager says so.
+    for (const key of ['guard', 'technician', 'maintenance_supervisor']) {
+      for (const permission of r3)
+        expect((await role(t, key)).permissions).not.toContain(permission);
+    }
+    // A manager who dropped it by hand keeps it dropped.
+    await removeByHand(t, 'manager', 'community.suggestions');
+    expect((await sync(base, t)).added).toEqual([]);
+    expect((await role(t, 'manager')).permissions).not.toContain(
+      'community.suggestions',
     );
   });
 

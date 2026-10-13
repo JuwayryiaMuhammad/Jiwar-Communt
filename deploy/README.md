@@ -138,6 +138,17 @@ code; changing it strands the codes of the parcels held at that moment, which
 can then only be handed over by the resident's entry QR (the ADR has the
 details), so change it in a quiet hour.
 
+`app.env` must set `ENGAGEMENT_REF_SECRET` (ADR 0040; the app refuses to boot
+without it, and says so): the key behind the opaque references of the
+community life, a unit's ballot while a poll is open and the marks that count
+an announcement's readers. Generate it with `openssl rand -base64 48`. The
+rule: **different per environment, and never equal to `IDENTIFIER_PEPPER`,
+`ENTRY_CREDENTIAL_KEY` or `PARCEL_TOKEN_KEY`** (boot refuses an equal value).
+It lives in `app.env` only, never in the repository or the database: it is
+what keeps a database dump from telling who chose what. Changing it while a
+poll is open orphans the ballots already cast (those units can vote again,
+and their first ballots stay counted), so change it only when no poll is open.
+
 Staging stores files on its own MinIO (`minio.env`, the `/jiwar/` nginx
 location). `app.env` must set `S3_*` (ADR 0029; the app refuses to boot
 without them): `S3_ENDPOINT=http://191.218.163.45` (the public address the

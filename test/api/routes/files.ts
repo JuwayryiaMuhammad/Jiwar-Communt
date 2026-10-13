@@ -31,6 +31,7 @@ export const FILES_ROUTES: Row[] = [
               'parcel_photo',
               'data_export',
               'request_attachment',
+              'community_attachment',
             ],
           },
         },

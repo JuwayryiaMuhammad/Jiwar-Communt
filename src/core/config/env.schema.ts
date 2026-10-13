@@ -156,6 +156,20 @@ export const envSchema = z
      * environment to environment.
      */
     PARCEL_TOKEN_KEY: secret,
+    /**
+     * Keys the opaque references of the community life (ADR 0040): which
+     * ballot is a unit's while a poll is open, and the marks that count an
+     * announcement's readers. The database holds no way from a unit to its
+     * choice without it. Rotating it while a poll is open orphans the
+     * ballots already cast, and readers are counted again. Must differ
+     * from the other keys, and from environment to environment.
+     */
+    ENGAGEMENT_REF_SECRET: z
+      .string({
+        error:
+          'is required (ADR 0040): generate one with `openssl rand -base64 48`',
+      })
+      .min(32, 'must be at least 32 characters'),
     OTP_TTL_SECONDS: positiveInt.default(300),
     OTP_MAX_ATTEMPTS: positiveInt.default(5),
     LOGIN_TICKET_TTL_SECONDS: positiveInt.default(300),
@@ -213,6 +227,21 @@ export const envSchema = z
         path: ['PARCEL_TOKEN_KEY'],
         message: 'must differ from ENTRY_CREDENTIAL_KEY',
       });
+    }
+    // The reference key hides who chose what (ADR 0040): it shares nothing
+    // with the keys that hash identifiers or derive codes.
+    for (const other of [
+      'IDENTIFIER_PEPPER',
+      'ENTRY_CREDENTIAL_KEY',
+      'PARCEL_TOKEN_KEY',
+    ] as const) {
+      if (env.ENGAGEMENT_REF_SECRET === env[other]) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['ENGAGEMENT_REF_SECRET'],
+          message: `must differ from ${other}`,
+        });
+      }
     }
     if (
       (env.SUPERADMIN_EMAIL === undefined) !==

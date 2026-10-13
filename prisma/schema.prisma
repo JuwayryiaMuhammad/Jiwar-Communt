@@ -493,6 +493,8 @@ model Tenant {
   managementOfficeHours ManagementOfficeHours[]
   managementCounter  ManagementRequestCounter?
   managementSlots    ManagementAppointmentSlot[]
+  engagementSettings EngagementSettings?
+  suggestionTopics   SuggestionTopic[]
   specialties       Specialty[]
   dispatchSettings  MaintenanceDispatchSettings?
   slaSettings       MaintenanceSlaSettings?
@@ -1555,6 +1557,8 @@ enum NotificationCategory {
   account_security
   /// Management requests and their appointments (ADR 0039).
   management
+  /// Important announcements, cancelled events, a suggestion's answer (ADR 0040).
+  community
 
   @@map("notification_category")
 }
@@ -1964,6 +1968,8 @@ enum FilePurpose {
   data_export
   /// A management request message's attachment (ADR 0039): image or PDF.
   request_attachment
+  /// An announcement's, an event's or a "we did" note's attachment (ADR 0040): image or PDF.
+  community_attachment
 
   @@map("file_purpose")
 }
@@ -3290,4 +3296,41 @@ model ManagementAppointmentSlot {
 
   @@id([tenantId, startsAt])
   @@map("management_appointment_slots")
+}
+
+// ============================================================================
+// Community life (ADR 0040): announcements, works and closures, events,
+// consultative polls, suggestions. The domain is src/engagement.
+// ============================================================================
+
+/// One row per compound, created with it.
+model EngagementSettings {
+  tenantId       String   @id @map("tenant_id") @db.Uuid
+  /// Guests one "going" answer to an event may bring, at most.
+  eventMaxGuests Int      @default(2) @map("event_max_guests")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("engagement_settings")
+}
+
+/// The compound's closed list of what a suggestion is about. Never deleted;
+/// retired with `active`.
+model SuggestionTopic {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  key       String
+  nameAr    String   @map("name_ar")
+  nameEn    String   @map("name_en")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, key])
+  @@map("suggestion_topics")
 }

@@ -266,6 +266,9 @@ export const ErrorCode = {
   MANAGEMENT_APPOINTMENT_INVALID_STATE: 'MANAGEMENT_APPOINTMENT_INVALID_STATE',
   /** Its start has passed: nothing left to confirm (409). */
   MANAGEMENT_APPOINTMENT_WINDOW_PASSED: 'MANAGEMENT_APPOINTMENT_WINDOW_PASSED',
+  // community life (ADR 0040)
+  /** Unknown, or another compound's. */
+  SUGGESTION_TOPIC_NOT_FOUND: 'SUGGESTION_TOPIC_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

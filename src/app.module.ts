@@ -13,6 +13,7 @@ import {
   UnitsModule,
   WorkersModule,
 } from './community';
+import { EngagementModule } from './engagement';
 import { GateModule } from './gate';
 import { MaintenanceModule } from './maintenance';
 import { ManagementModule } from './management';
@@ -122,6 +123,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     GateModule,
     MaintenanceModule,
     ManagementModule,
+    EngagementModule,
   ],
   controllers: [AppController],
   providers: [

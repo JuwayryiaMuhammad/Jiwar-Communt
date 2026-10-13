@@ -12,6 +12,9 @@ export const NOTIFICATION_CATEGORIES = [
   'account_security',
   // Management requests and their appointments (ADR 0039).
   'management',
+  // Important announcements, cancelled events, a suggestion's answer
+  // (ADR 0040).
+  'community',
 ] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 

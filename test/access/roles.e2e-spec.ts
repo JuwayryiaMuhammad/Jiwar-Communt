@@ -89,10 +89,12 @@ describe('Roles', () => {
       isSystem: true,
       name: null,
       permissions: [
+        'community.read',
         'household.delegate',
         'household.manage',
         'profile.photo',
         'requests.create',
+        'suggestions.create',
         'tickets.create',
         'units.read',
         'visitors.invite',
@@ -226,6 +228,8 @@ describe('Roles', () => {
         'profile.photo',
         'tickets.create',
         'requests.create',
+        'community.read',
+        'suggestions.create',
       ]),
     );
     expect(await version()).toBe(before);

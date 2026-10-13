@@ -44,6 +44,9 @@ export function applyTestEnv(): void {
   // The parcel key (ADR 0035): a test default, so a developer's .env from
   // before parcels still boots. Different from the pepper and the entry key.
   process.env.PARCEL_TOKEN_KEY ??= 'test-parcel-token-key-0123456789abcdef';
+  // The reference secret (ADR 0040): a test default, for the same reason.
+  process.env.ENGAGEMENT_REF_SECRET ??=
+    'test-engagement-ref-secret-0123456789abcdef';
   // The cooling-off the deletion suites count on (ADR 0036), whatever the
   // developer's .env still says.
   process.env.DELETION_GRACE_DAYS = '14';

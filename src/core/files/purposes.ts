@@ -30,6 +30,8 @@ export interface FilePurposeDefinition {
  * parcel's photos are the guard's (`parcels.handle`, ADR 0035). An
  * export's archive is the server's alone (ADR 0036). A management request
  * message's attachment comes from either side of the request (ADR 0039).
+ * What is attached to an announcement, an event or a "we did" note is the
+ * staff's (ADR 0040).
  */
 export const FILE_PURPOSES = {
   worker_photo: {
@@ -63,6 +65,13 @@ export const FILE_PURPOSES = {
     types: [...IMAGE_TYPES, 'application/pdf'],
     maxBytes: 10 * MB,
     uploaders: ['requests.create', 'requests.handle'],
+  },
+  // An announcement's, an event's or a "we did" note's attachment (ADR
+  // 0040): a photo or a document, uploaded by the staff who write them.
+  community_attachment: {
+    types: [...IMAGE_TYPES, 'application/pdf'],
+    maxBytes: 10 * MB,
+    uploaders: ['community.publish', 'community.suggestions'],
   },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.

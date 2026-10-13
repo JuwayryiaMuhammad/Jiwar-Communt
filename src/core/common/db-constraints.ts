@@ -146,4 +146,7 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // Decided under the request's lock; a violation is a race.
   management_request_escalations_once_per_cycle: null,
   management_appointments_one_live_per_request: null,
+  // Community life (ADR 0040). A topic's key is the staff's input.
+  suggestion_topics_tenant_id_key_key: ['key'],
+  suggestion_topics_tenant_id_id_key: null,
 };

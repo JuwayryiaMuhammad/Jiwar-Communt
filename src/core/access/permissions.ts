@@ -82,6 +82,15 @@ export const PERMISSIONS = {
   'requests.create': { kinds: ['resident', 'family'] },
   'requests.handle': { kinds: ['staff', 'manager'] },
   'requests.manage': { kinds: ['manager'] },
+  // Community life (ADR 0040). Residents and family read what is published
+  // to them, answer events, vote for their unit (capabilities.pollsVote
+  // decides per unit) and send suggestions; staff holding
+  // `community.publish` write announcements, works, events and polls, and
+  // those holding `community.suggestions` handle the suggestions.
+  'community.read': { kinds: ['resident', 'family'] },
+  'suggestions.create': { kinds: ['resident', 'family'] },
+  'community.publish': { kinds: ['staff', 'manager'] },
+  'community.suggestions': { kinds: ['staff', 'manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

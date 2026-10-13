@@ -9,13 +9,9 @@ const sizeCheck = readFileSync(
   join(__dirname, migrations, '20261013090510_data_exports/migration.sql'),
   'utf8',
 );
-/** The content-type CHECK as it stands now (ADR 0039 recreated it). */
+/** The content-type CHECK as it stands now (ADR 0040 recreated it). */
 const typeCheck = readFileSync(
-  join(
-    __dirname,
-    migrations,
-    '20261017090100_management_requests/migration.sql',
-  ),
+  join(__dirname, migrations, '20261019090200_engagement_setup/migration.sql'),
   'utf8',
 );
 
@@ -43,8 +39,12 @@ describe('file purposes', () => {
     expect(FILE_PURPOSES.request_attachment.maxBytes).toBe(
       FILE_PURPOSES.document.maxBytes,
     );
+    expect(sizeCheck).not.toContain(`WHEN 'community_attachment'`);
+    expect(FILE_PURPOSES.community_attachment.maxBytes).toBe(
+      FILE_PURPOSES.document.maxBytes,
+    );
     // files_content_type_for_purpose: images for every purpose, a PDF only
-    // as a document or a request's attachment.
+    // as a document, a request's attachment or a community attachment.
     expect(FILE_PURPOSES.worker_photo.types).toEqual([
       'image/jpeg',
       'image/png',
@@ -66,12 +66,15 @@ describe('file purposes', () => {
     expect(FILE_PURPOSES.request_attachment.types).toEqual(
       FILE_PURPOSES.document.types,
     );
+    expect(FILE_PURPOSES.community_attachment.types).toEqual(
+      FILE_PURPOSES.document.types,
+    );
     expect(FILE_PURPOSES.data_export.types).toEqual(['application/zip']);
     expect(typeCheck).toContain(
       `("content_type" IN ('image/jpeg', 'image/png', 'image/webp') AND "purpose" <> 'data_export')`,
     );
     expect(typeCheck).toContain(
-      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment'))`,
+      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment'))`,
     );
     expect(typeCheck).toContain(
       `("content_type" = 'application/zip' AND "purpose" = 'data_export')`,

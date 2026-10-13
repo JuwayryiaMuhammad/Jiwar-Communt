@@ -51,6 +51,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'parcels.manage',
       'requests.handle',
       'requests.manage',
+      'community.publish',
+      'community.suggestions',
     ],
   },
   {
@@ -66,6 +68,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'profile.photo',
       'tickets.create',
       'requests.create',
+      'community.read',
+      'suggestions.create',
     ],
   },
   {
@@ -81,6 +85,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'profile.photo',
       'tickets.create',
       'requests.create',
+      'community.read',
+      'suggestions.create',
     ],
   },
   {

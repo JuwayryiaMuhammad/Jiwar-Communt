@@ -16,6 +16,7 @@ const base = {
   IDENTIFIER_PEPPER: 'b'.repeat(32),
   ENTRY_CREDENTIAL_KEY: 'd'.repeat(32),
   PARCEL_TOKEN_KEY: 'e'.repeat(32),
+  ENGAGEMENT_REF_SECRET: 'f'.repeat(32),
   PLATFORM_JWT_SECRET: 'c'.repeat(32),
   PUBLIC_APP_URL: 'https://app.jiwar.test',
 };
@@ -142,6 +143,31 @@ describe('validateEnv', () => {
 
     it('limits code checks per guard per minute, 30 by default', () => {
       expect(validateEnv(base).PARCEL_CODE_RATE_LIMIT_PER_MINUTE).toBe(30);
+    });
+  });
+
+  describe('engagement reference secret (ADR 0040)', () => {
+    it('is required, with a message that says how to make one, at least 32 characters', () => {
+      const { ENGAGEMENT_REF_SECRET: _omit, ...without } = base;
+      void _omit;
+      expect(() => validateEnv(without)).toThrow(
+        /ENGAGEMENT_REF_SECRET[\s\S]*openssl rand|openssl rand[\s\S]*ENGAGEMENT_REF_SECRET/,
+      );
+      expect(() =>
+        validateEnv({ ...base, ENGAGEMENT_REF_SECRET: 'short' }),
+      ).toThrow(/ENGAGEMENT_REF_SECRET/);
+    });
+
+    it('must differ from the pepper, the entry credential key and the parcel key', () => {
+      for (const other of [
+        'IDENTIFIER_PEPPER',
+        'ENTRY_CREDENTIAL_KEY',
+        'PARCEL_TOKEN_KEY',
+      ] as const) {
+        expect(() =>
+          validateEnv({ ...base, ENGAGEMENT_REF_SECRET: base[other] }),
+        ).toThrow(new RegExp(`must differ from ${other}`));
+      }
     });
   });
 

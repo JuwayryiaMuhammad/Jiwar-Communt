@@ -31,6 +31,13 @@ export {
   type AudienceOccupancy,
   type CommunityPlace,
 } from './engagement-port';
+export { CommunityNeighboursPortModule } from './neighbours-port.module';
+export {
+  CommunityNeighboursPort,
+  type NeighbourUnit,
+  type NoticeRecipientKind,
+  type NoticeRecipients,
+} from './neighbours-port';
 export {
   capabilitiesFor,
   type Capabilities,

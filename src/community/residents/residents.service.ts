@@ -389,6 +389,20 @@ export class ResidentsService {
           where: { id: target.id },
           data: { isPrimary: true, primarySince: new Date() },
         });
+        // Nobody was primary and nobody else lives here: an owner who moved
+        // into their own empty unit. The household starts now (ADR 0042).
+        if (
+          !previous &&
+          (await tx.unitOccupancy.count({
+            where: { unitId, status: 'active', resides: true },
+          })) === 1
+        )
+          await this.lifecycle.householdStarted(tx, {
+            tenantId: target.tenantId,
+            unitId,
+            accountId,
+            occupancyId: target.id,
+          });
         await this.audit.record(tx, {
           action: 'occupancy.primary_changed',
           targetId: target.id,
@@ -1195,18 +1209,25 @@ export class ResidentsService {
     return o;
   }
 
-  private recordCreated(
+  /**
+   * A new occupancy, on the record. One that began as the unit's primary
+   * is a household starting (primaryFields: nobody lived there), and the
+   * domains that greet one are told (ADR 0042).
+   */
+  private async recordCreated(
     tx: TenantTxClient,
     o: {
       id: string;
+      tenantId: string;
       unitId: string;
       accountId: string;
       occupancyType: string;
       resides: boolean;
       status: string;
+      isPrimary: boolean;
     },
   ) {
-    return this.audit.record(tx, {
+    await this.audit.record(tx, {
       action: 'occupancy.created',
       targetId: o.id,
       changes: diffChanges(
@@ -1221,6 +1242,13 @@ export class ResidentsService {
         'occupancy.created',
       ),
     });
+    if (o.isPrimary)
+      await this.lifecycle.householdStarted(tx, {
+        tenantId: o.tenantId,
+        unitId: o.unitId,
+        accountId: o.accountId,
+        occupancyId: o.id,
+      });
   }
 
   /** The current resident's own profile, with his occupancies. */

@@ -15,6 +15,19 @@ export type AccountHandler = (
   account: { id: string; tenantId: string },
 ) => Promise<void>;
 
+/** A household that just began: its unit, its primary and their occupancy. */
+export interface HouseholdStart {
+  tenantId: string;
+  unitId: string;
+  accountId: string;
+  occupancyId: string;
+}
+
+export type HouseholdStartHandler = (
+  tx: TenantTxClient,
+  household: HouseholdStart,
+) => Promise<void>;
+
 /**
  * What keeps an account from being erased now (ADR 0036), as blocker codes;
  * read under the account's row lock, when a deletion is asked for and again
@@ -48,6 +61,7 @@ export class AccountLifecycle {
   private readonly erasure: DeactivationHandler[] = [];
   private readonly sessionsRevokedAll: AccountHandler[] = [];
   private readonly residence: AccountHandler[] = [];
+  private readonly householdStarts: HouseholdStartHandler[] = [];
   private readonly blockerChecks: DeletionBlockerCheck[] = [];
 
   /** A domain's reasons an account cannot be erased yet (ADR 0036). */
@@ -97,6 +111,23 @@ export class AccountLifecycle {
     account: { id: string; tenantId: string },
   ): Promise<void> {
     for (const handler of this.residence) await handler(tx, account);
+  }
+
+  /**
+   * A household just began in a unit nobody lived in (ADR 0042): its first
+   * residing occupant became its primary. Told once per household, in the
+   * transaction that made it so; a primary handed over inside a household
+   * that goes on is not a start.
+   */
+  onHouseholdStarted(handler: HouseholdStartHandler): void {
+    this.householdStarts.push(handler);
+  }
+
+  async householdStarted(
+    tx: TenantTxClient,
+    household: HouseholdStart,
+  ): Promise<void> {
+    for (const handler of this.householdStarts) await handler(tx, household);
   }
 
   /** Before an erasure: the domains end what hangs off the account. */

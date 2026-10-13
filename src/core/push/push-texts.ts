@@ -715,6 +715,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'أُلغيت فعالية كنت قد أكدت حضورها. افتح التطبيق للتفاصيل.',
     },
   },
+  'community_suggestion.status_changed': {
+    en: {
+      title: 'News about your suggestion',
+      body: 'The management updated your suggestion. Open the app to see where it stands.',
+    },
+    ar: {
+      title: 'جديد بخصوص اقتراحك',
+      body: 'حدّثت الإدارة اقتراحك. افتح التطبيق لمعرفة ما وصل إليه.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

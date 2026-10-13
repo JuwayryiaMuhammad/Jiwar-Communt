@@ -161,4 +161,6 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   polls_tenant_id_id_key: null,
   // Positions are the server's, written with the poll.
   poll_options_position_key: null,
+  suggestions_tenant_id_id_key: null,
+  suggestion_attachments_file_id_key: null,
 };

@@ -71,6 +71,7 @@ describe('audit catalog', () => {
         'announcement',
         'community_event',
         'poll',
+        'suggestion',
       ]).toContain(def.target);
     }
   });

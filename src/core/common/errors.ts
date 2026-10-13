@@ -291,6 +291,17 @@ export const ErrorCode = {
   POLL_INVALID_STATE: 'POLL_INVALID_STATE',
   /** The caller casts no unit's vote in this poll (403). */
   POLL_VOTE_NOT_ALLOWED: 'POLL_VOTE_NOT_ALLOWED',
+  /**
+   * Unknown or another compound's; for a resident also not their own, or
+   * (on the board) not published: one answer.
+   */
+  SUGGESTION_NOT_FOUND: 'SUGGESTION_NOT_FOUND',
+  /**
+   * It does not take the action as it stands (409, params.status,
+   * params.published): a move that is not a step forward, a note on one
+   * that is not done, taking down one that is not on the board.
+   */
+  SUGGESTION_INVALID_STATE: 'SUGGESTION_INVALID_STATE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

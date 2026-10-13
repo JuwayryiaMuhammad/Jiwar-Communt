@@ -703,6 +703,17 @@ export const NOTIFICATION_KINDS = {
     target: 'community_event',
     params: {},
   },
+  /**
+   * The staff moved the author's suggestion or answered it. `status` is
+   * where it stands; never a word of the suggestion or of the answer.
+   */
+  'community_suggestion.status_changed': {
+    priority: 'normal',
+    category: 'community',
+    critical: false,
+    target: 'community_suggestion',
+    params: { status: {}, topicKey: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

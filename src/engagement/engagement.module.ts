@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CommunityEngagementPortModule } from '../community';
+import { AccountsModule } from '../core/accounts/accounts.module';
 import { FilesModule } from '../core/files/files.module';
 import { GateStatusPortModule } from '../gate';
 import { EngagementAccess } from './access';
@@ -23,6 +24,12 @@ import {
 } from './polls/polls.controller';
 import { PollsService } from './polls/polls.service';
 import { OpaqueRefs } from './refs/opaque-refs';
+import {
+  StaffSuggestionsController,
+  SuggestionBoardController,
+  SuggestionsController,
+} from './suggestions/suggestions.controller';
+import { SuggestionsService } from './suggestions/suggestions.service';
 import { EngagementSettingsController } from './settings/engagement-settings.controller';
 import { EngagementSettingsService } from './settings/engagement-settings.service';
 import {
@@ -38,7 +45,12 @@ import { SuggestionTopicsService } from './topics/topics.service';
  * index.ts (ADR 0015); nothing imports it.
  */
 @Module({
-  imports: [CommunityEngagementPortModule, FilesModule, GateStatusPortModule],
+  imports: [
+    AccountsModule,
+    CommunityEngagementPortModule,
+    FilesModule,
+    GateStatusPortModule,
+  ],
   controllers: [
     EngagementSettingsController,
     SuggestionTopicsController,
@@ -50,6 +62,9 @@ import { SuggestionTopicsService } from './topics/topics.service';
     EventsController,
     StaffPollsController,
     PollsController,
+    SuggestionsController,
+    SuggestionBoardController,
+    StaffSuggestionsController,
   ],
   providers: [
     EngagementProvisioning,
@@ -62,6 +77,7 @@ import { SuggestionTopicsService } from './topics/topics.service';
     AnnouncementsService,
     EventsService,
     PollsService,
+    SuggestionsService,
   ],
 })
 export class EngagementModule {}

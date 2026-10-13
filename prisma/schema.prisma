@@ -500,6 +500,7 @@ model Tenant {
   announcements      Announcement[]
   communityEvents    CommunityEvent[]
   polls              Poll[]
+  suggestions        Suggestion[]
   specialties       Specialty[]
   dispatchSettings  MaintenanceDispatchSettings?
   slaSettings       MaintenanceSlaSettings?
@@ -894,6 +895,10 @@ model Account {
   eventAttachments           EventAttachment[]             @relation("EventAttachmentUploader")
   eventRsvps                 EventRsvp[]                   @relation("EventRsvpAccount")
   pollsCreated               Poll[]                        @relation("PollCreator")
+  suggestionsAuthored        Suggestion[]                  @relation("SuggestionAuthor")
+  suggestionUpdates          SuggestionUpdate[]            @relation("SuggestionUpdateBy")
+  suggestionAttachments      SuggestionAttachment[]        @relation("SuggestionAttachmentUploader")
+  suggestionSupports         SuggestionSupport[]           @relation("SuggestionSupporter")
   managementAppointments     ManagementAppointment[]       @relation("ManagementAppointmentProposer")
 
   @@unique([tenantId, type, email])
@@ -983,6 +988,7 @@ model Unit {
   managementRequests ManagementRequest[]
   eventRsvps         EventRsvp[]
   pollParticipations PollParticipation[]
+  suggestions        Suggestion[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -2023,6 +2029,7 @@ model StoredFile {
   managementAttachments ManagementRequestAttachment[] @relation("ManagementAttachmentFile")
   announcementAttachments AnnouncementAttachment[] @relation("AnnouncementAttachmentFile")
   eventAttachments EventAttachment[] @relation("EventAttachmentFile")
+  suggestionAttachments SuggestionAttachment[] @relation("SuggestionAttachmentFile")
   owner    Account?           @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([tenantId, id])
@@ -3345,7 +3352,8 @@ model SuggestionTopic {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  suggestions Suggestion[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, key])
@@ -3644,4 +3652,109 @@ model PollParticipation {
 
   @@id([tenantId, pollId, unitId])
   @@map("poll_participations")
+}
+
+enum SuggestionStatus {
+  received
+  under_review
+  planned
+  done
+  declined
+
+  @@map("suggestion_status")
+}
+
+/// A resident's suggestion (ADR 0040): private to its author and the
+/// staff. `body` is the resident's words; an erasure clears it and nothing
+/// else. On the board it is shown by the staff's public summary, never by
+/// the body or the author. A trigger keeps the author, topic and words.
+model Suggestion {
+  id                String           @id @db.Uuid
+  tenantId          String           @map("tenant_id") @db.Uuid
+  authorId          String           @map("author_account_id") @db.Uuid
+  unitId            String?          @map("unit_id") @db.Uuid
+  topicId           String           @map("topic_id") @db.Uuid
+  body              String?
+  erasedAt          DateTime?        @map("erased_at") @db.Timestamptz(3)
+  status            SuggestionStatus @default(received)
+  /// The staff's answer to the author, as it stands now.
+  response          String?
+  respondedAt       DateTime?        @map("responded_at") @db.Timestamptz(3)
+  publishedAt       DateTime?        @map("published_at") @db.Timestamptz(3)
+  publicTitleEn     String?          @map("public_title_en")
+  publicTextEn      String?          @map("public_text_en")
+  publicTitleAr     String?          @map("public_title_ar")
+  publicTextAr      String?          @map("public_text_ar")
+  doneAt            DateTime?        @map("done_at") @db.Timestamptz(3)
+  doneNoteEn        String?          @map("done_note_en")
+  doneNoteAr        String?          @map("done_note_ar")
+  /// The photos the "we did" note shows (suggestion_attachments ids).
+  doneAttachmentIds String[]         @default([]) @map("done_attachment_ids") @db.Uuid
+  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant      Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  author      Account                @relation("SuggestionAuthor", fields: [tenantId, authorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "suggestions_tenant_id_author_fkey")
+  unit        Unit?                  @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  topic       SuggestionTopic        @relation(fields: [tenantId, topicId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  updates     SuggestionUpdate[]
+  attachments SuggestionAttachment[]
+  supports    SuggestionSupport[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, authorId, createdAt, id], map: "suggestions_author_idx")
+  @@index([tenantId, createdAt, id], map: "suggestions_created_idx")
+  @@index([tenantId, publishedAt, id], map: "suggestions_board_idx")
+  @@index([tenantId, doneAt, id], map: "suggestions_done_idx")
+  @@map("suggestions")
+}
+
+/// Each move and each answer of a suggestion, in the staff's words.
+/// Append-only.
+model SuggestionUpdate {
+  id           String           @id @db.Uuid
+  tenantId     String           @map("tenant_id") @db.Uuid
+  suggestionId String           @map("suggestion_id") @db.Uuid
+  status       SuggestionStatus
+  response     String?
+  byId         String           @map("by_account_id") @db.Uuid
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  suggestion Suggestion @relation(fields: [tenantId, suggestionId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  by         Account    @relation("SuggestionUpdateBy", fields: [tenantId, byId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "suggestion_updates_tenant_id_by_fkey")
+
+  @@index([tenantId, suggestionId, createdAt, id], map: "suggestion_updates_suggestion_idx")
+  @@map("suggestion_updates")
+}
+
+/// A photo of what was done. Append-only.
+model SuggestionAttachment {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  suggestionId String   @map("suggestion_id") @db.Uuid
+  fileId       String   @unique @map("file_id") @db.Uuid
+  uploadedById String   @map("uploaded_by_account_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  suggestion Suggestion @relation(fields: [tenantId, suggestionId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  file       StoredFile @relation("SuggestionAttachmentFile", fields: [tenantId, fileId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  uploadedBy Account    @relation("SuggestionAttachmentUploader", fields: [tenantId, uploadedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "suggestion_attachments_tenant_id_uploaded_by_fkey")
+
+  @@index([tenantId, suggestionId, createdAt, id], map: "suggestion_attachments_suggestion_idx")
+  @@map("suggestion_attachments")
+}
+
+/// An account supports a published suggestion: one row, deleted to take it
+/// back.
+model SuggestionSupport {
+  tenantId     String @map("tenant_id") @db.Uuid
+  suggestionId String @map("suggestion_id") @db.Uuid
+  accountId    String @map("account_id") @db.Uuid
+
+  suggestion Suggestion @relation(fields: [tenantId, suggestionId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  account    Account    @relation("SuggestionSupporter", fields: [tenantId, accountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([tenantId, suggestionId, accountId])
+  @@index([tenantId, accountId], map: "suggestion_supports_account_idx")
+  @@map("suggestion_supports")
 }

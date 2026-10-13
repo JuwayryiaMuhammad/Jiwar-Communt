@@ -444,6 +444,19 @@ export const AUDIT_ACTIONS = {
   'poll.cancelled': { log: 'tenant', target: 'poll' },
   // That a unit voted, and who cast it. metadata: unitId, changed.
   'poll.vote_cast': { log: 'tenant', target: 'poll' },
+  // Suggestions. Never the resident's words, an answer, a summary or a
+  // note. metadata of each: topicKey, withUnit (created); from, to,
+  // withResponse (status_changed); status (responded); rewritten
+  // (published); photos, a count (done_noted). A support is its account's
+  // own act: the actor is the supporter.
+  'suggestion.created': { log: 'tenant', target: 'suggestion' },
+  'suggestion.status_changed': { log: 'tenant', target: 'suggestion' },
+  'suggestion.responded': { log: 'tenant', target: 'suggestion' },
+  'suggestion.published': { log: 'tenant', target: 'suggestion' },
+  'suggestion.unpublished': { log: 'tenant', target: 'suggestion' },
+  'suggestion.done_noted': { log: 'tenant', target: 'suggestion' },
+  'suggestion.supported': { log: 'tenant', target: 'suggestion' },
+  'suggestion.unsupported': { log: 'tenant', target: 'suggestion' },
   'suggestion_topic.created': {
     log: 'tenant',
     target: 'suggestion_topic',

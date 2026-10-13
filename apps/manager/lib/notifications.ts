@@ -35,6 +35,16 @@ function windowText(p: P): string {
 
 /** "MR-000012 (billing fees)": a request by its number and topic (ADR 0039). */
 const request = (p: P) => `Request ${p.requestNumber} (${words(p.topicKey)})`;
+/** "Complaint NC-000123 (noise)": a complaint by its number and category (ADR 0042). */
+const complaint = (p: P) => `Complaint ${p.complaintNumber} (${words(p.categoryKey)})`;
+/** The kind of a board post, in words; never its text. */
+const POST_TEXT: Record<string, string> = {
+  lost: 'lost item',
+  found: 'found item',
+  lend: 'lending offer',
+  borrow: 'request to borrow',
+};
+const post = (p: P) => POST_TEXT[String(p.postKind)] ?? 'post';
 const ticket = (p: P) => `Ticket ${p.ticketNumber}`;
 const aTicket = (p: P) => `ticket ${p.ticketNumber}`;
 const inUnit = (p: P) => (p.unitCode ? ` · unit ${p.unitCode}` : '');
@@ -132,6 +142,32 @@ const TEXT: Record<string, (p: P) => string> = {
   'community_announcement.important': () => 'An important announcement was published',
   'community_event.cancelled': () => 'An event you said you are going to was cancelled',
   'community_suggestion.status_changed': (p) => `Your suggestion about ${words(p.topicKey)} is now ${words(p.status)}`,
+  // Neighbours (ADR 0042): the number and the category, or the kind of a
+  // post; never a message, a notice's text, a unit or a name.
+  'neighbour_complaint.submitted': (p) => `${complaint(p)} is new`,
+  'neighbour_complaint.author_replied': (p) => `${complaint(p)}: the complainant wrote`,
+  'neighbour_complaint.withdrawn': (p) => `${complaint(p)} was withdrawn by the complainant`,
+  'neighbour_notice.unit_replied': (p) => `${complaint(p)}: the unit answered its notice`,
+  'neighbour_item.claimed': (p) => `A resident claimed a ${post(p)} at the desk`,
+  'neighbour_conversation.reported': () => 'A resident reported a conversation about a post',
+  // The residents' side: read here only by someone who is both.
+  'neighbour_complaint.under_review': (p) => `${complaint(p)} is under review`,
+  'neighbour_complaint.in_mediation': (p) => `${complaint(p)} is in mediation`,
+  'neighbour_complaint.resolved': (p) => `${complaint(p)} was resolved`,
+  'neighbour_complaint.dismissed': (p) => `${complaint(p)} was dismissed`,
+  'neighbour_complaint.replied': (p) => `${complaint(p)}: the management wrote`,
+  'neighbour_complaint.notice_sent': (p) => `${complaint(p)}: the management sent the unit a notice`,
+  'neighbour_notice.received': (p) => `The management sent your unit a notice about ${words(p.categoryKey)}`,
+  'neighbour_notice.replied': (p) => `The management wrote again on your unit’s notice about ${words(p.categoryKey)}`,
+  'neighbour_item.handed_over': (p) => `The ${post(p)} was handed over to you at the office`,
+  'neighbour_claim.declined': (p) => `Your claim on a ${post(p)} was declined`,
+  'neighbour_post.removed': (p) => `Your ${post(p)} was removed from its board by the management`,
+  'neighbour_conversation.started': (p) => `A neighbour wrote to you about your ${post(p)}`,
+  'neighbour_conversation.message': (p) => `New message in a conversation about a ${post(p)}`,
+  'neighbour_conversation.reveal_requested': (p) => `A neighbour agreed to show names in a conversation about a ${post(p)}`,
+  'neighbour_conversation.names_revealed': (p) => `Names are now shown in a conversation about a ${post(p)}`,
+  'neighbour_report.closed': () => 'Your report of a conversation was looked at',
+  'neighbours.welcome': () => 'Welcome: the compound’s rules, office hours and emergency numbers are ready to read',
 };
 
 export function notificationText(n: NotificationLike): string {
@@ -154,6 +190,12 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
   if (n.targetType === 'community_event' && n.targetId) return can('community.publish') ? `/events/${n.targetId}` : null;
   if (n.targetType === 'community_suggestion' && n.targetId)
     return can('community.suggestions') ? `/suggestions/${n.targetId}` : null;
+  // Neighbours (ADR 0042). A notice, a conversation and the welcome are the
+  // residents' own: nothing in this dashboard opens them.
+  if (n.targetType === 'neighbour_complaint' && n.targetId) return can('neighbours.handle') ? `/complaints/${n.targetId}` : null;
+  if (n.targetType === 'neighbour_post' && n.targetId) return can('neighbours.handle') ? `/lost-found/${n.targetId}` : null;
+  if (n.targetType === 'neighbour_report' && n.targetId)
+    return can('neighbours.handle') ? `/conversation-reports/${n.targetId}` : null;
   if (n.kind === 'account.deletion_queued') return can('accounts.erase') ? '/deletions' : null;
   if (n.kind === 'account.new_device_login') return '/account';
   if (n.targetType === 'worker_engagement') return can('workers.review') ? '/workers?tab=all' : null;

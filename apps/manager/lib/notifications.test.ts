@@ -74,3 +74,73 @@ test('a request to the management is named by its number and topic, and leads to
   assert.equal(notificationHref(escalated, (p) => p === 'requests.handle'), '/management-requests/r-1');
   assert.equal(notificationHref(escalated, (p) => p === 'tickets.dispatch'), null);
 });
+
+const NEIGHBOUR_KINDS = [
+  'neighbour_complaint.submitted',
+  'neighbour_complaint.author_replied',
+  'neighbour_complaint.withdrawn',
+  'neighbour_complaint.under_review',
+  'neighbour_complaint.in_mediation',
+  'neighbour_complaint.resolved',
+  'neighbour_complaint.dismissed',
+  'neighbour_complaint.replied',
+  'neighbour_complaint.notice_sent',
+  'neighbour_notice.unit_replied',
+  'neighbour_notice.received',
+  'neighbour_notice.replied',
+  'neighbour_item.claimed',
+  'neighbour_item.handed_over',
+  'neighbour_claim.declined',
+  'neighbour_post.removed',
+  'neighbour_conversation.started',
+  'neighbour_conversation.message',
+  'neighbour_conversation.reveal_requested',
+  'neighbour_conversation.names_revealed',
+  'neighbour_conversation.reported',
+  'neighbour_report.closed',
+  'neighbours.welcome',
+];
+
+test('every neighbours kind has its own sentence, never the fallback', () => {
+  const params = { complaintNumber: 'NC-000123', categoryKey: 'loud_noise', postKind: 'found' };
+  const texts = NEIGHBOUR_KINDS.map((kind) => {
+    const text = notificationText(n(kind, params));
+    const fallback = kind.replace(/[._]/g, ' ').replace(/^./, (c) => c.toUpperCase());
+    assert.notEqual(text, fallback, kind);
+    assert.doesNotMatch(text, /undefined/, kind);
+    return text;
+  });
+  assert.equal(new Set(texts).size, NEIGHBOUR_KINDS.length);
+});
+
+test('a complaint is named by its number and category, a post by its kind', () => {
+  const submitted = n('neighbour_complaint.submitted', { complaintNumber: 'NC-000123', categoryKey: 'loud_noise' }, 'neighbour_complaint', 'c-1');
+  assert.equal(notificationText(submitted), 'Complaint NC-000123 (loud noise) is new');
+  assert.equal(
+    notificationText(n('neighbour_notice.unit_replied', { complaintNumber: 'NC-000007', categoryKey: 'parking' })),
+    'Complaint NC-000007 (parking): the unit answered its notice',
+  );
+  assert.equal(notificationText(n('neighbour_item.claimed', { postKind: 'found' })), 'A resident claimed a found item at the desk');
+  assert.equal(notificationText(n('neighbour_post.removed', { postKind: 'borrow' })), 'Your request to borrow was removed from its board by the management');
+  assert.equal(notificationText(n('neighbour_post.removed', {})), 'Your post was removed from its board by the management');
+  assert.equal(notificationText(n('neighbour_notice.received', { categoryKey: 'loud_noise' })), 'The management sent your unit a notice about loud noise');
+});
+
+test('a neighbours notice leads to its page for a handler, and nowhere for what is the residents’ own', () => {
+  const handler = (p: string) => p === 'neighbours.handle';
+  const complaint = n('neighbour_notice.unit_replied', { complaintNumber: 'NC-000007', categoryKey: 'parking' }, 'neighbour_complaint', 'c-1');
+  assert.equal(notificationHref(complaint, handler), '/complaints/c-1');
+  assert.equal(notificationHref(complaint, (p) => p === 'requests.handle'), null);
+  assert.equal(notificationHref(n('neighbour_item.claimed', { postKind: 'found' }, 'neighbour_post', 'p-1'), handler), '/lost-found/p-1');
+  assert.equal(notificationHref(n('neighbour_item.claimed', { postKind: 'found' }, 'neighbour_post', 'p-1'), () => false), null);
+  assert.equal(notificationHref(n('neighbour_conversation.reported', {}, 'neighbour_report', 'r-1'), handler), '/conversation-reports/r-1');
+  assert.equal(notificationHref(n('neighbour_conversation.reported', {}, 'neighbour_report', 'r-1'), () => false), null);
+  for (const [kind, target] of [
+    ['neighbour_notice.received', 'neighbour_notice'],
+    ['neighbour_conversation.message', 'neighbour_conversation'],
+    ['neighbour_report.closed', 'neighbour_conversation'],
+    ['neighbours.welcome', 'neighbour_welcome'],
+  ] as const) {
+    assert.equal(notificationHref(n(kind, {}, target, 'x-1'), () => true), null, kind);
+  }
+});

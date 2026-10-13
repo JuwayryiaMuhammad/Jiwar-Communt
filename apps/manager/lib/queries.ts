@@ -88,6 +88,33 @@ export type AppointmentStatus = Schema<'ManagementAppointmentStatus'>;
 export type AppointmentMode = Schema<'ManagementAppointmentMode'>;
 export type AppointmentSlot = Schema<'StaffAppointmentSlotView'>;
 export type RequestRating = Schema<'RatingListItemView'>;
+// Neighbours (ADR 0042).
+export type Complaint = Schema<'StaffComplaintView'>;
+export type ComplaintDetail = Schema<'StaffComplaintDetailView'>;
+export type ComplaintStatus = Schema<'NeighbourComplaintStatus'>;
+export type ComplaintMessage = Schema<'StaffComplaintMessageView'>;
+export type ComplaintCategory = Schema<'ComplaintCategoryView'>;
+export type NeighbourPost = Schema<'StaffPostView'>;
+export type NeighbourPostKind = Schema<'NeighbourPostKind'>;
+export type NeighbourClaim = Schema<'StaffClaimView'>;
+export type ConversationReport = Schema<'StaffReportView'>;
+export type ReportedMessage = Schema<'ReportedMessageView'>;
+export type NeighbourSettings = Schema<'NeighbourSettingsResponse'>;
+export type WelcomeTemplate = Schema<'WelcomeTemplateView'>;
+
+export interface ComplaintFilters {
+  status?: ComplaintStatus | '';
+  open?: 'true' | 'false' | '';
+  categoryId?: string;
+  targetUnitId?: string;
+  authorId?: string;
+}
+type ComplaintQuery = { [K in keyof ComplaintFilters]?: Exclude<ComplaintFilters[K], ''> };
+
+export interface NeighbourPostFilters {
+  board: NeighbourPost['board'];
+  state: NeighbourPost['state'];
+}
 
 export interface ManagementRequestFilters {
   status?: ManagementRequestStatus | '';
@@ -207,6 +234,23 @@ export const keys = {
   appointments: (filters: object) => ['management-requests', 'appointments', filters] as const,
   appointmentSlots: (from: string, days: number) => ['management-requests', 'appointment-slots', from, days] as const,
   requestRatings: ['management-requests', 'ratings'] as const,
+  complaintsAll: ['neighbour-complaints'] as const,
+  complaints: (filters: object) => ['neighbour-complaints', 'list', filters] as const,
+  complaint: (id: string) => ['neighbour-complaints', 'detail', id] as const,
+  complaintPart: (id: string, part: string) => ['neighbour-complaints', 'detail', id, part] as const,
+  unitComplaintHistory: (unitId: string) => ['neighbour-complaints', 'unit-history', unitId] as const,
+  complaintCategories: ['neighbour-complaint-categories'] as const,
+  complaintCategoryOptions: ['neighbour-complaint-category-options'] as const,
+  neighbourPostsAll: ['neighbour-posts'] as const,
+  neighbourPosts: (filters: object) => ['neighbour-posts', 'list', filters] as const,
+  neighbourPost: (id: string) => ['neighbour-posts', 'detail', id] as const,
+  neighbourClaims: (postId: string) => ['neighbour-posts', 'detail', postId, 'claims'] as const,
+  conversationReportsAll: ['neighbour-reports'] as const,
+  conversationReports: (status: string) => ['neighbour-reports', 'list', status] as const,
+  conversationReport: (id: string) => ['neighbour-reports', 'detail', id] as const,
+  conversationReportMessages: (id: string) => ['neighbour-reports', 'detail', id, 'messages'] as const,
+  neighbourSettings: ['neighbour-settings'] as const,
+  welcomeTemplate: ['neighbour-welcome-template'] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -335,6 +379,23 @@ export const fetchers = {
   requestRating: (id: string) => unwrap(api.GET('/api/v1/management/requests/{id}/rating', { params: { path: { id } } })),
   requestRatings: (cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/management/request-ratings', { params: { query: { cursor, limit } } })),
+  complaints: (filters: ComplaintFilters, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/neighbours/complaints', { params: { query: { ...(clean(filters) as ComplaintQuery), cursor, limit } } })),
+  complaint: (id: string) => unwrap(api.GET('/api/v1/neighbours/complaints/{id}', { params: { path: { id } } })),
+  unitComplaintHistory: (unitId: string) =>
+    unwrap(api.GET('/api/v1/neighbours/units/{unitId}/complaint-history', { params: { path: { unitId } } })),
+  complaintCategories: () => unwrap(api.GET('/api/v1/neighbours/complaint-categories')),
+  /** The active ones, by name: what a handler may read without `neighbours.manage`. */
+  complaintCategoryOptions: () => unwrap(api.GET('/api/v1/neighbour-complaint-categories')),
+  neighbourPosts: (filters: NeighbourPostFilters, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/neighbours/posts', { params: { query: { ...filters, cursor, limit } } })),
+  neighbourPost: (id: string) => unwrap(api.GET('/api/v1/neighbours/posts/{id}', { params: { path: { id } } })),
+  neighbourClaims: (postId: string) => unwrap(api.GET('/api/v1/neighbours/posts/{id}/claims', { params: { path: { id: postId } } })),
+  conversationReports: (status: ConversationReport['status'], cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/neighbours/reports', { params: { query: { status, cursor, limit } } })),
+  conversationReport: (id: string) => unwrap(api.GET('/api/v1/neighbours/reports/{id}', { params: { path: { id } } })),
+  neighbourSettings: () => unwrap(api.GET('/api/v1/neighbours/settings')),
+  welcomeTemplate: () => unwrap(api.GET('/api/v1/neighbours/welcome-template')),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

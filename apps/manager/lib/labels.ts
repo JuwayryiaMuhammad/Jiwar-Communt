@@ -48,4 +48,8 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'suggestions.create': 'Send suggestions to the management',
   'community.publish': 'Publish announcements, works and closures, events and polls',
   'community.suggestions': 'Handle suggestions: answer, publish to the board, say what was done',
+  'neighbours.complain': 'Complain about another unit, and answer a notice sent to their own',
+  'neighbours.board': 'Post on the lost-and-found and lending boards, claim found items, write to a neighbour about a post',
+  'neighbours.handle': 'Handle complaints between units, the lost-and-found desk and reported conversations',
+  'neighbours.manage': 'Set up complaint categories, the boards’ limits and the welcome for new households',
 };

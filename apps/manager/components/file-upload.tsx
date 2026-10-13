@@ -29,6 +29,13 @@ const RULES: Partial<Record<Purpose, { types: readonly ContentType[]; maxBytes: 
     maxBytes: 10 * 1024 * 1024,
     what: 'An image or a PDF, up to 10 MB.',
   },
+  // Evidence on a complaint's message, and a photo of a lost or found item (ADR 0042).
+  complaint_evidence: {
+    types: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
+    maxBytes: 10 * 1024 * 1024,
+    what: 'An image or a PDF, up to 10 MB.',
+  },
+  neighbour_post_photo: { types: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 5 * 1024 * 1024, what: 'A JPEG, PNG or WebP image, up to 5 MB.' },
 };
 
 /**

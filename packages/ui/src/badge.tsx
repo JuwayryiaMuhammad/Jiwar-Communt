@@ -73,6 +73,14 @@ const STATUS_TONE: Record<string, Tone> = {
   under_review: 'terracotta',
   planned: 'green',
   declined: 'error',
+  // Neighbours (ADR 0042): complaints and claims. `under_review`, `open`,
+  // `expired`, `closed`, `pending`, `handed_over` and `declined` are above.
+  submitted: 'terracotta',
+  notice_sent: 'beige',
+  mediation: 'green',
+  resolved: 'green',
+  dismissed: 'beige',
+  withdrawn: 'beige',
 };
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {

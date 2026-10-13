@@ -8,7 +8,9 @@ import {
   CalendarClock,
   CalendarDays,
   DoorOpen,
+  Flag,
   HardHat,
+  Handshake,
   Inbox,
   LayoutDashboard,
   Lightbulb,
@@ -18,6 +20,8 @@ import {
   MessageSquareMore,
   MessagesSquare,
   Package,
+  PackageSearch,
+  Scale,
   ScrollText,
   Settings,
   ShieldCheck,
@@ -88,6 +92,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     can('community.suggestions'),
   );
 
+  // Complaints between units nobody has taken yet, and reported
+  // conversations still to be looked at (ADR 0042).
+  const complaints = useQueueSize(
+    keys.complaints({ status: 'submitted' }),
+    () => fetchers.complaints({ status: 'submitted' }, undefined, 100),
+    can('neighbours.handle'),
+  );
+  const reports = useQueueSize(
+    keys.conversationReports('open'),
+    () => fetchers.conversationReports('open', undefined, 100),
+    can('neighbours.handle'),
+  );
+
   // Requests the system could not carry out by itself: a manager's to settle.
   const erasures = useQuery({
     queryKey: [...keys.erasures, 'count'],
@@ -153,6 +170,21 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           count: received,
           show: can('community.suggestions'),
         },
+        {
+          href: '/complaints',
+          label: 'Complaints',
+          icon: <Scale aria-hidden />,
+          count: complaints,
+          show: can('neighbours.handle'),
+        },
+        { href: '/lost-found', label: 'Lost & found', icon: <PackageSearch aria-hidden />, show: can('neighbours.handle') },
+        {
+          href: '/conversation-reports',
+          label: 'Conversation reports',
+          icon: <Flag aria-hidden />,
+          count: reports,
+          show: can('neighbours.handle'),
+        },
         { href: '/gate', label: 'Gate', icon: <DoorOpen aria-hidden />, show: can('gate.read') },
         { href: '/parcels', label: 'Parcels', icon: <Package aria-hidden />, show: can('parcels.manage') },
         { href: '/staff', label: 'Staff', icon: <UserCog aria-hidden />, show: can('accounts.read') },
@@ -180,6 +212,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           label: 'Community setup',
           icon: <ListChecks aria-hidden />,
           show: can('community.publish') || can('community.suggestions'),
+        },
+        {
+          href: '/neighbours-setup',
+          label: 'Neighbours setup',
+          icon: <Handshake aria-hidden />,
+          show: can('neighbours.manage'),
         },
         {
           href: '/deletions',

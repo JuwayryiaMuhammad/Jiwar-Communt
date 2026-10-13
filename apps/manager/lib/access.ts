@@ -2,7 +2,8 @@
  * Who this dashboard is for: managers, and any account whose role holds a
  * maintenance permission (a maintenance supervisor dispatches from here) or
  * handles requests to the management (ADR 0039), publishes to the community
- * or handles its suggestions (ADR 0040).
+ * or handles its suggestions (ADR 0040), or handles complaints between
+ * units and the boards (ADR 0042).
  * Decided from `GET /me`, by the BFF at sign-in and by the shell on every
  * load; the API still checks each call.
  */
@@ -13,6 +14,7 @@ export const ENTRY_PERMISSIONS = [
   'requests.manage',
   'community.publish',
   'community.suggestions',
+  'neighbours.handle',
 ] as const;
 
 export function mayEnter(me: { type?: unknown; permissions?: unknown } | null | undefined): boolean {

@@ -104,7 +104,7 @@ A push is read on a lock screen before any app runs, so its text is written by t
 
 ### Configuration
 
-- `FCM_PROJECT_ID` and `FCM_SERVICE_ACCOUNT` (the service-account JSON, base64). Both or neither; the value is shape-checked at startup and never quoted in an error.
+- `FCM_PROJECT_ID`, `FCM_CLIENT_EMAIL` and `FCM_PRIVATE_KEY`: the three fields of the Firebase service-account JSON, the key as a PEM on one line with its newlines written as `\n` (converted when loaded). The same lines as our other project (Jiwar-Hub), so one set of env lines serves both. All three or none: with only some set the app refuses to start and names the missing ones. At startup the email must look like one and the key must parse as a private RSA key (`node:crypto`); no error ever quotes a value.
 - **Unset: push is off.** One startup line says so. Tokens are still accepted, so devices are ready when the keys arrive, but **no delivery rows are written**: nothing accumulates, and turning push on does not release a backlog of stale notifications.
 - Auth is the service account's RS256 JWT, signed with `node:crypto` and exchanged for an OAuth token that is cached until a minute before it expires. No SDK and no new dependency.
 - The transport is injected (`PUSH_TRANSPORT`). Tests use a fake; no test opens a socket. The test environment removes the FCM settings, so a developer's real project is never used.

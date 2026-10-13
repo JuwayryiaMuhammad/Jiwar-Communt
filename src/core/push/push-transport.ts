@@ -43,8 +43,8 @@ export interface PushTransport {
 }
 
 /**
- * The transport, or null when push is not configured (FCM_PROJECT_ID and
- * FCM_SERVICE_ACCOUNT unset): then nothing is queued and nothing is sent.
+ * The transport, or null when push is not configured (FCM_PROJECT_ID,
+ * FCM_CLIENT_EMAIL and FCM_PRIVATE_KEY unset): then nothing is queued and nothing is sent.
  * Tests put a fake here; nothing in a test opens a socket.
  */
 export const PUSH_TRANSPORT = Symbol('PUSH_TRANSPORT');

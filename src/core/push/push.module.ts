@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { AccountsModule } from '../accounts/accounts.module';
 import { AuthModule } from '../auth/auth.module';
 import type { Env } from '../config/env.schema';
-import { parseFcmServiceAccount } from '../config/fcm-service-account';
+import { fcmServiceAccount } from '../config/fcm-service-account';
 import { FcmTransport } from './fcm-transport';
 import { PushDevices } from './push-devices.service';
 import { PushOutbox } from './push-outbox';
@@ -25,11 +25,14 @@ import { PUSH_TRANSPORT, type PushTransport } from './push-transport';
       inject: [ConfigService],
       useFactory: (config: ConfigService<Env, true>): PushTransport | null => {
         const projectId = config.get('FCM_PROJECT_ID', { infer: true });
-        const encoded = config.get('FCM_SERVICE_ACCOUNT', { infer: true });
-        const account = encoded ? parseFcmServiceAccount(encoded) : null;
-        return projectId && account
-          ? new FcmTransport(projectId, account)
-          : null;
+        const clientEmail = config.get('FCM_CLIENT_EMAIL', { infer: true });
+        const privateKey = config.get('FCM_PRIVATE_KEY', { infer: true });
+        // All three or none: the env schema refused anything in between.
+        if (!projectId || !clientEmail || !privateKey) return null;
+        const account = fcmServiceAccount(clientEmail, privateKey);
+        return 'invalid' in account
+          ? null
+          : new FcmTransport(projectId, account);
       },
     },
     PushDevices,

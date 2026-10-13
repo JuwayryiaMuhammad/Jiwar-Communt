@@ -119,7 +119,7 @@ export class PushProcessor
   onApplicationBootstrap(): void {
     if (!this.transport) {
       this.logger.warn(
-        'Push delivery is disabled: FCM_PROJECT_ID / FCM_SERVICE_ACCOUNT are not set.',
+        'Push delivery is disabled: FCM_PROJECT_ID, FCM_CLIENT_EMAIL and FCM_PRIVATE_KEY are not set.',
       );
       return;
     }

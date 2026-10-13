@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { parseFcmServiceAccount } from './fcm-service-account';
+import { fcmServiceAccount } from './fcm-service-account';
 
 /** Unset and empty (`KEY=` in .env) mean the same thing: not configured. */
 const optional = <T extends z.ZodType>(schema: T) =>
@@ -89,11 +89,13 @@ export const envSchema = z
     OUTBOX_MAX_ATTEMPTS: positiveInt.default(8),
     OUTBOX_RETENTION_DAYS: positiveInt.default(30),
 
-    // Push notifications through Firebase Cloud Messaging (ADR 0041). Both
-    // unset: push is off, nothing is queued, everything else works.
+    // Push notifications through Firebase Cloud Messaging (ADR 0041), from
+    // the Firebase service account. All three unset: push is off, nothing is
+    // queued, everything else works.
     FCM_PROJECT_ID: optional(z.string().min(1)),
-    /** The service-account JSON, base64 encoded. A secret: never logged. */
-    FCM_SERVICE_ACCOUNT: optional(z.string().min(1)),
+    FCM_CLIENT_EMAIL: optional(z.string().min(1)),
+    /** The PEM, its newlines written as `\n`. A secret: never logged. */
+    FCM_PRIVATE_KEY: optional(z.string().min(1)),
     PUSH_ENABLED: z
       .enum(['true', 'false'])
       .default('true')
@@ -223,27 +225,42 @@ export const envSchema = z
           'SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD must be set together',
       });
     }
-    if (
-      (env.FCM_PROJECT_ID === undefined) !==
-      (env.FCM_SERVICE_ACCOUNT === undefined)
-    ) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['FCM_SERVICE_ACCOUNT'],
-        message: 'FCM_PROJECT_ID and FCM_SERVICE_ACCOUNT must be set together',
-      });
+    // Push is all of the service account or none of it. The messages name
+    // the variables and never quote a value: one of them is a private key.
+    const fcm = {
+      FCM_PROJECT_ID: env.FCM_PROJECT_ID,
+      FCM_CLIENT_EMAIL: env.FCM_CLIENT_EMAIL,
+      FCM_PRIVATE_KEY: env.FCM_PRIVATE_KEY,
+    };
+    const missing = Object.entries(fcm)
+      .filter(([, value]) => value === undefined)
+      .map(([name]) => name);
+    if (missing.length > 0 && missing.length < 3) {
+      for (const name of missing)
+        ctx.addIssue({
+          code: 'custom',
+          path: [name],
+          message:
+            'FCM_PROJECT_ID, FCM_CLIENT_EMAIL and FCM_PRIVATE_KEY must be set together (or none of them, to turn push off)',
+        });
     }
-    // The message never quotes the value: it is a private key.
     if (
-      env.FCM_SERVICE_ACCOUNT !== undefined &&
-      !parseFcmServiceAccount(env.FCM_SERVICE_ACCOUNT)
+      fcm.FCM_CLIENT_EMAIL !== undefined &&
+      fcm.FCM_PRIVATE_KEY !== undefined
     ) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['FCM_SERVICE_ACCOUNT'],
-        message:
-          'must be the base64 of a service-account JSON with client_email and private_key',
-      });
+      const account = fcmServiceAccount(
+        fcm.FCM_CLIENT_EMAIL,
+        fcm.FCM_PRIVATE_KEY,
+      );
+      if ('invalid' in account)
+        ctx.addIssue({
+          code: 'custom',
+          path: [account.invalid],
+          message:
+            account.invalid === 'FCM_CLIENT_EMAIL'
+              ? "must be the service account's email address"
+              : "must be the service account's private key: a PEM RSA key, its newlines written as \\n",
+        });
     }
     // A visitor's link carries a secret in its fragment: never over http.
     if (

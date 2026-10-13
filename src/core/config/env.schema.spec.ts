@@ -1,4 +1,6 @@
+import { generateKeyPairSync } from 'node:crypto';
 import { validateEnv } from './env.schema';
+import { fcmPrivateKeyPem, fcmServiceAccount } from './fcm-service-account';
 
 const base = {
   NODE_ENV: 'development',
@@ -172,60 +174,116 @@ describe('validateEnv', () => {
       ).toThrow(/set together/);
     });
 
-    it('push is off without FCM settings, and takes both together', () => {
-      const off = validateEnv(base);
-      expect(off.FCM_PROJECT_ID).toBeUndefined();
-      expect(off.FCM_SERVICE_ACCOUNT).toBeUndefined();
-      expect(
-        validateEnv({ ...base, FCM_PROJECT_ID: '' }).FCM_PROJECT_ID,
-      ).toBeUndefined();
-      const encoded = Buffer.from(
-        JSON.stringify({
-          client_email: 'push@jiwar-test.iam.gserviceaccount.com',
-          private_key:
-            '-----BEGIN PRIVATE KEY-----\nAAAA\n-----END PRIVATE KEY-----\n',
-        }),
-      ).toString('base64');
-      const on = validateEnv({
-        ...base,
+    describe('FCM (ADR 0041)', () => {
+      // A key made for this run, written the way an env line holds it.
+      const pem = generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+        privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+        publicKeyEncoding: { type: 'spki', format: 'pem' },
+      }).privateKey;
+      const escaped = pem.replace(/\n/g, '\\n');
+      const fcm = {
         FCM_PROJECT_ID: 'jiwar-test',
-        FCM_SERVICE_ACCOUNT: encoded,
-      });
-      expect(on.FCM_PROJECT_ID).toBe('jiwar-test');
-      expect(() =>
-        validateEnv({ ...base, FCM_PROJECT_ID: 'jiwar-test' }),
-      ).toThrow(/set together/);
-      expect(() =>
-        validateEnv({ ...base, FCM_SERVICE_ACCOUNT: encoded }),
-      ).toThrow(/set together/);
-    });
-
-    it('rejects an FCM service account that is not one, without quoting it', () => {
-      const bad = [
-        'not base64 at all!',
-        Buffer.from('not json').toString('base64'),
-        Buffer.from(JSON.stringify({ client_email: 'a@b.c' })).toString(
-          'base64',
-        ),
-        Buffer.from(
-          JSON.stringify({ client_email: 'a@b.c', private_key: 'secret-key' }),
-        ).toString('base64'),
-      ];
-      for (const value of bad) {
-        let message = '';
+        FCM_CLIENT_EMAIL: 'push@jiwar-test.iam.gserviceaccount.com',
+        FCM_PRIVATE_KEY: escaped,
+      };
+      const failure = (extra: Record<string, string>): string => {
         try {
-          validateEnv({
-            ...base,
-            FCM_PROJECT_ID: 'jiwar-test',
-            FCM_SERVICE_ACCOUNT: value,
-          });
+          validateEnv({ ...base, ...extra });
         } catch (error) {
-          message = (error as Error).message;
+          return (error as Error).message;
         }
-        expect(message).toMatch(/FCM_SERVICE_ACCOUNT/);
-        expect(message).not.toContain(value);
-        expect(message).not.toContain('secret-key');
-      }
+        return '';
+      };
+
+      it('push is off with none of the three; empty means unset', () => {
+        const off = validateEnv(base);
+        expect(off.FCM_PROJECT_ID).toBeUndefined();
+        expect(off.FCM_CLIENT_EMAIL).toBeUndefined();
+        expect(off.FCM_PRIVATE_KEY).toBeUndefined();
+        const empty = validateEnv({
+          ...base,
+          FCM_PROJECT_ID: '',
+          FCM_CLIENT_EMAIL: '',
+          FCM_PRIVATE_KEY: '',
+        });
+        expect(empty.FCM_PRIVATE_KEY).toBeUndefined();
+      });
+
+      it('takes all three, the key with its newlines written as \\n', () => {
+        expect(escaped).not.toContain('\n');
+        expect(validateEnv({ ...base, ...fcm })).toMatchObject({
+          FCM_PROJECT_ID: 'jiwar-test',
+          FCM_CLIENT_EMAIL: fcm.FCM_CLIENT_EMAIL,
+        });
+        // A loader that already expanded the newlines changes nothing.
+        expect(() =>
+          validateEnv({ ...base, ...fcm, FCM_PRIVATE_KEY: pem }),
+        ).not.toThrow();
+        expect(fcmPrivateKeyPem(escaped)).toBe(pem);
+        expect(fcmPrivateKeyPem(pem)).toBe(pem);
+        expect(fcmServiceAccount(fcm.FCM_CLIENT_EMAIL, escaped)).toEqual({
+          clientEmail: fcm.FCM_CLIENT_EMAIL,
+          privateKey: pem,
+        });
+      });
+
+      it('refuses only some of the three, naming the missing ones', () => {
+        const names = Object.keys(fcm) as (keyof typeof fcm)[];
+        for (const set of [
+          ['FCM_PROJECT_ID'],
+          ['FCM_CLIENT_EMAIL'],
+          ['FCM_PRIVATE_KEY'],
+          ['FCM_PROJECT_ID', 'FCM_CLIENT_EMAIL'],
+          ['FCM_PROJECT_ID', 'FCM_PRIVATE_KEY'],
+          ['FCM_CLIENT_EMAIL', 'FCM_PRIVATE_KEY'],
+        ] as (keyof typeof fcm)[][]) {
+          const message = failure(
+            Object.fromEntries(set.map((name) => [name, fcm[name]])),
+          );
+          expect(message).toMatch(/must be set together/);
+          for (const name of names) {
+            // "→ at NAME": the issue's path, which the missing ones get.
+            expect([set, name, message.includes(`at ${name}`)]).toEqual([
+              set,
+              name,
+              !set.includes(name),
+            ]);
+          }
+          expect(message).not.toContain(escaped);
+          expect(message).not.toContain('MII');
+        }
+      });
+
+      it('refuses an email that is not one and a key that is not a private RSA key, without quoting them', () => {
+        const email = failure({ ...fcm, FCM_CLIENT_EMAIL: 'not-an-email' });
+        expect(email).toMatch(/at FCM_CLIENT_EMAIL/);
+        expect(email).not.toContain('not-an-email');
+        expect(email).not.toContain(escaped);
+
+        const ec = generateKeyPairSync('ec', {
+          namedCurve: 'P-256',
+          privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+          publicKeyEncoding: { type: 'spki', format: 'pem' },
+        }).privateKey.replace(/\n/g, '\\n');
+        const publicOnly = generateKeyPairSync('rsa', {
+          modulusLength: 2048,
+          privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+          publicKeyEncoding: { type: 'spki', format: 'pem' },
+        }).publicKey.replace(/\n/g, '\\n');
+        for (const value of [
+          'secret-key-material',
+          '-----BEGIN PRIVATE KEY-----\\nAAAA\\n-----END PRIVATE KEY-----\\n',
+          escaped.slice(0, 200),
+          ec,
+          publicOnly,
+        ]) {
+          const message = failure({ ...fcm, FCM_PRIVATE_KEY: value });
+          expect(message).toMatch(/at FCM_PRIVATE_KEY/);
+          expect(message).not.toContain(value);
+          expect(message).not.toContain(value.slice(0, 40));
+        }
+      });
     });
 
     it('rejects a superadmin password shorter than 12 characters', () => {

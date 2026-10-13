@@ -56,7 +56,8 @@ export function applyTestEnv(): void {
   // these push is off; the push suites put a fake transport in its place
   // and drain explicitly.
   delete process.env.FCM_PROJECT_ID;
-  delete process.env.FCM_SERVICE_ACCOUNT;
+  delete process.env.FCM_CLIENT_EMAIL;
+  delete process.env.FCM_PRIVATE_KEY;
   process.env.PUSH_ENABLED = 'false';
   process.env.PUSH_MAX_ATTEMPTS = '5';
   // Same for the sweep: suites call SweepRunner.run(name, now) themselves.

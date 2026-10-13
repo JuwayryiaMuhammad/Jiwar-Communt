@@ -1,34 +1,39 @@
+import { createPrivateKey } from 'node:crypto';
+import { isEmail } from 'class-validator';
+
 export interface FcmServiceAccount {
   clientEmail: string;
-  /** PEM, PKCS#8. */
+  /** PEM, with real newlines. */
   privateKey: string;
 }
 
 /**
- * FCM_SERVICE_ACCOUNT: the service-account JSON Firebase hands out, base64
- * encoded so it fits one env line. Null when it is not that. Nothing here
- * ever puts the value, or a part of it, in a message.
+ * FCM_PRIVATE_KEY as the key itself: an env line holds the PEM with its
+ * newlines written as the two characters `\n` (the way Firebase's JSON
+ * has them); a loader that already turned them into newlines changes
+ * nothing here.
  */
-export function parseFcmServiceAccount(
-  encoded: string,
-): FcmServiceAccount | null {
+export function fcmPrivateKeyPem(value: string): string {
+  return value.replace(/\\n/g, '\n').trim() + '\n';
+}
+
+/**
+ * The service account behind FCM_CLIENT_EMAIL and FCM_PRIVATE_KEY, or what
+ * is wrong with them. Nothing here ever puts a value, or a part of one, in
+ * a message.
+ */
+export function fcmServiceAccount(
+  clientEmail: string,
+  privateKey: string,
+): FcmServiceAccount | { invalid: 'FCM_CLIENT_EMAIL' | 'FCM_PRIVATE_KEY' } {
+  if (!isEmail(clientEmail)) return { invalid: 'FCM_CLIENT_EMAIL' };
+  const pem = fcmPrivateKeyPem(privateKey);
   try {
-    if (!/^[A-Za-z0-9+/=_-]+$/.test(encoded.trim())) return null;
-    const json: unknown = JSON.parse(
-      Buffer.from(encoded.trim(), 'base64').toString('utf8'),
-    );
-    if (typeof json !== 'object' || json === null) return null;
-    const { client_email: clientEmail, private_key: privateKey } =
-      json as Record<string, unknown>;
-    if (typeof clientEmail !== 'string' || !clientEmail.includes('@'))
-      return null;
-    if (
-      typeof privateKey !== 'string' ||
-      !privateKey.includes('-----BEGIN PRIVATE KEY-----')
-    )
-      return null;
-    return { clientEmail, privateKey };
+    // RS256 signs with it: it must be a private RSA key.
+    if (createPrivateKey(pem).asymmetricKeyType !== 'rsa')
+      return { invalid: 'FCM_PRIVATE_KEY' };
   } catch {
-    return null;
+    return { invalid: 'FCM_PRIVATE_KEY' };
   }
+  return { clientEmail, privateKey: pem };
 }

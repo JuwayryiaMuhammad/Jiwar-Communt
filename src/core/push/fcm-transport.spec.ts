@@ -1,4 +1,5 @@
 import { createVerify, generateKeyPairSync } from 'node:crypto';
+import { fcmServiceAccount } from '../config/fcm-service-account';
 import {
   classify,
   FCM_SCOPE,
@@ -14,10 +15,14 @@ const { privateKey, publicKey } = generateKeyPairSync('rsa', {
   privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
   publicKeyEncoding: { type: 'spki', format: 'pem' },
 });
-const account = {
-  clientEmail: 'push@jiwar-test.iam.gserviceaccount.com',
-  privateKey,
-};
+// The key as an env line holds it: one line, its newlines written as \\n.
+const FCM_PRIVATE_KEY = privateKey.replace(/\n/g, '\\n');
+const loaded = fcmServiceAccount(
+  'push@jiwar-test.iam.gserviceaccount.com',
+  FCM_PRIVATE_KEY,
+);
+if ('invalid' in loaded) throw new Error(`test key refused: ${loaded.invalid}`);
+const account = loaded;
 const T0 = Date.UTC(2026, 9, 19, 9, 0, 0);
 
 const message: PushMessage = {
@@ -62,6 +67,8 @@ function decode(part: string): Record<string, unknown> {
 
 describe('FcmTransport (ADR 0041)', () => {
   it('signs a JWT Google can verify: header, claims, expiry and signature', () => {
+    expect(FCM_PRIVATE_KEY).not.toContain('\n');
+    expect(account.privateKey).toBe(privateKey);
     const transport = new FcmTransport('p', account, fetch, () => T0);
     const [head, claims, signature, ...rest] = transport.assertion().split('.');
     expect(rest).toEqual([]);

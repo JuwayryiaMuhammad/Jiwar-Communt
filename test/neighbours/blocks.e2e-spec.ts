@@ -95,19 +95,25 @@ describe('Neighbours — blocks', () => {
       for (const who of [ann, ben])
         expect((await view(who, id)).open).toBe(false);
     expect((await n.notifications(s.c, ben.id)).length).toBe(told);
-    // To Ben it reads as any conversation nothing more is written in.
-    expect(
-      (
-        await n
-          .http('post', `/neighbour-conversations/${one}/messages`, ben.token, {
-            body: 'Hello?',
-          })
-          .expect(409)
-      ).body,
-    ).toEqual({
-      message: expect.any(String) as string,
-      code: 'NEIGHBOUR_CONVERSATION_CLOSED',
-    });
+    // To Ben it reads as any conversation nothing more is written in: a
+    // code and a message, with no reason and no params.
+    const refused = (
+      await n
+        .http('post', `/neighbour-conversations/${one}/messages`, ben.token, {
+          body: 'Hello?',
+        })
+        .expect(409)
+    ).body as Record<string, unknown>;
+    expect(refused).toMatchObject({ code: 'NEIGHBOUR_CONVERSATION_CLOSED' });
+    expect(Object.keys(refused).sort()).toEqual([
+      'code',
+      'message',
+      'path',
+      'requestId',
+      'statusCode',
+      'timestamp',
+    ]);
+    expect(JSON.stringify(refused)).not.toMatch(/block/i);
     const text = JSON.stringify(await view(ben, one));
     expect(text).not.toMatch(/block/i);
     expect(text).not.toContain('closeReason');

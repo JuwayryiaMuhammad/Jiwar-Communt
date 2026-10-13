@@ -262,11 +262,15 @@ describe('Neighbours tables — CHECKs, triggers and privileges', () => {
       const english = `rules_en = 'Rules', office_hours_en = '9 to 5', emergency_en = '122'`;
       await template(english);
       await expect(
-        template(`${english}, emergency_en = repeat('x', 1001)`),
+        template(
+          `rules_en = 'Rules', office_hours_en = '9 to 5', emergency_en = repeat('x', 1001)`,
+        ),
       ).rejects.toThrow(/neighbour_welcome_templates_text_length/);
-      await expect(template(`${english}, rules_en = ''`)).rejects.toThrow(
-        /neighbour_welcome_templates_text_length/,
-      );
+      await expect(
+        template(
+          `rules_en = '', office_hours_en = '9 to 5', emergency_en = '122'`,
+        ),
+      ).rejects.toThrow(/neighbour_welcome_templates_text_length/);
     });
 
     it('a counter never goes below zero', async () => {

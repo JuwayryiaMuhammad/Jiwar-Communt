@@ -1831,5 +1831,6 @@ describe('API v0 — PII leak scan', () => {
       }
     }
     expect(leaks).toEqual([]);
-  });
+    // One test walks every GET as every persona: longer than the default.
+  }, 120_000);
 });

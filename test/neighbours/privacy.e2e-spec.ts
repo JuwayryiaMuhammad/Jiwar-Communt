@@ -470,10 +470,8 @@ describe('Neighbours — export, erasure and leaving', () => {
     });
 
     it('a staff member’s erasure leaves the notice they sent and the post they made as the management', async () => {
-      const temp = await n.staff(s.c, [
-        'neighbours.handle',
-        'neighbours.manage',
-      ]);
+      // Another account of the handlers' role.
+      const temp = await n.staff(s.c);
       const { id } = await n.complain(s.c, s.alice, s.homeB.code);
       await n.noticed(temp, id, 'ERASE-STAFF-NOTICE');
       const post = await n.staffPost(temp, { body: 'ERASE-STAFF-POST' });

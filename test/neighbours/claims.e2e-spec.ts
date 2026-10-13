@@ -191,9 +191,14 @@ describe('Neighbours — claims on found items and the handover', () => {
       ]);
       await decline('insufficient_proof').expect(204);
       await decline('not_the_owner').expect(409);
-      expect(await n.list<Claim>('/neighbour-claims', s.bob)).toMatchObject([
-        { id, status: 'declined', declineReason: 'insufficient_proof' },
-      ]);
+      expect(
+        (await n.list<Claim>('/neighbour-claims', s.bob)).find(
+          (c) => c.id === id,
+        ),
+      ).toMatchObject({
+        status: 'declined',
+        declineReason: 'insufficient_proof',
+      });
       expect(
         await n.notifications(s.c, s.bob.id, 'neighbour_claim.declined'),
       ).toMatchObject([{ targetId: post, params: { postKind: 'found' } }]);

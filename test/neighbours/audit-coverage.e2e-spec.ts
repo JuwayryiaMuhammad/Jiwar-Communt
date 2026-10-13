@@ -345,21 +345,24 @@ describe('Audit coverage — neighbours', () => {
     });
 
     it('neighbour_conversation.blocked / unblocked — a count, never who was blocked', async () => {
-      const id = await n.conversation(s.bob, await n.post(s.alice));
+      // Two residents with nothing else between them: one conversation.
+      const ann = await n.owner(s.c, (await n.unit(s.c, 'P')).id);
+      const ben = await n.owner(s.c, (await n.unit(s.c, 'Q')).id);
+      const id = await n.conversation(ben, await n.post(ann));
       await n
-        .http('post', `/neighbour-conversations/${id}/block`, s.bob.token)
+        .http('post', `/neighbour-conversations/${id}/block`, ben.token)
         .expect(204);
       const blocked = await single('neighbour_conversation.blocked', id);
-      expect(blocked).toMatchObject(by(s.bob, 'neighbour_conversation'));
+      expect(blocked).toMatchObject(by(ben, 'neighbour_conversation'));
       expect(blocked.metadata).toEqual({ conversationsClosed: 1 });
-      expect(JSON.stringify(blocked)).not.toContain(s.alice.id);
-      const [mine] = await n.list<{ id: string }>('/neighbour-blocks', s.bob);
+      expect(JSON.stringify(blocked)).not.toContain(ann.id);
+      const [mine] = await n.list<{ id: string }>('/neighbour-blocks', ben);
       await n
-        .http('delete', `/neighbour-blocks/${mine.id}`, s.bob.token)
+        .http('delete', `/neighbour-blocks/${mine.id}`, ben.token)
         .expect(204);
       const unblocked = await single('neighbour_conversation.unblocked', id);
-      expect(unblocked).toMatchObject(by(s.bob, 'neighbour_conversation'));
-      expect(JSON.stringify(unblocked)).not.toContain(s.alice.id);
+      expect(unblocked).toMatchObject(by(ben, 'neighbour_conversation'));
+      expect(JSON.stringify(unblocked)).not.toContain(ann.id);
     });
 
     it('neighbour_conversation.reported, neighbour_report.conversation_read / closed — the reason and the outcome, never the note', async () => {

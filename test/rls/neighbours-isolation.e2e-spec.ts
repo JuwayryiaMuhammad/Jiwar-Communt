@@ -310,9 +310,11 @@ const TABLES: Table[] = [
         data: {
           id,
           tenantId: own.tenantId,
+          // One active occupancy per unit and account: another unit of
+          // its own for the row that is linked across.
           occupancyId: await occupancyRow(tx, {
             tenantId: own.tenantId,
-            unitId: own.unitId,
+            unitId: own === link ? own.unitId : own.otherUnitId,
             accountId: own.accountId,
           }),
           unitId: link.unitId,

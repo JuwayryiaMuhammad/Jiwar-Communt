@@ -91,14 +91,22 @@ export class AccountSelfService {
 
   /** One of the caller's own sessions; anything else is "not found". */
   async revokeSession(sessionId: string): Promise<void> {
-    const { count } = await this.globalDb.session.updateMany({
-      where: {
-        id: sessionId,
-        accountId: this.ctx.accountId,
-        tenantId: this.ctx.tenantId,
-        revokedAt: null,
-      },
-      data: { revokedAt: new Date() },
+    const where = {
+      id: sessionId,
+      accountId: this.ctx.accountId,
+      tenantId: this.ctx.tenantId,
+    };
+    // The push token that session registered goes with it (ADR 0041).
+    const count = await this.globalDb.transaction(async (tx) => {
+      const { count } = await tx.session.updateMany({
+        where: { ...where, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      if (count)
+        await tx.pushDevice.deleteMany({
+          where: { sessionId, accountId: where.accountId },
+        });
+      return count;
     });
     if (count === 0) {
       throw appError.notFound(ErrorCode.SESSION_NOT_FOUND, 'Session not found');

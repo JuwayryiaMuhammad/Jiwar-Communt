@@ -39,6 +39,7 @@ import { NotificationsModule } from './core/notifications/notifications.module';
 import { SweepModule } from './core/sweep/sweep.module';
 import { PlatformModule } from './core/platform/platform.module';
 import { PreferencesModule } from './core/preferences/preferences.module';
+import { PushModule } from './core/push/push.module';
 import { RedisModule } from './core/redis/redis.module';
 import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.module';
 
@@ -100,6 +101,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     AuditModule,
     MailModule,
     PreferencesModule,
+    PushModule,
     ConsentsModule,
     SweepModule,
     TenantSettingsModule,

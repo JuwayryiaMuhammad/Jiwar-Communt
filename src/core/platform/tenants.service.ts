@@ -187,6 +187,9 @@ export class TenantsService {
                 })
               ).count
             : 0;
+        // No session left to receive on: the push tokens go too (ADR 0041).
+        if (status === 'suspended')
+          await global.pushDevice.deleteMany({ where: { tenantId } });
         if (before.status !== status) {
           await this.platformAudit.record(tx, {
             action: 'tenant.status_changed',

@@ -2720,6 +2720,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/push-tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Register this install's push token */
+        post: operations["PushTokensController_register"];
+        /** Remove this install's push token */
+        delete: operations["PushTokensController_remove"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/requests": {
         parameters: {
             query?: never;
@@ -5173,7 +5191,7 @@ export interface components {
         AssistPreferencesDto: {
             /** @description Each category at most once; absent switches keep their value. */
             categories?: components["schemas"]["CategorySwitchDto"][];
-            /** @description Pause everything that is not critical: held until the pause ends, never dropped. `null` ends a pause. */
+            /** @description Pause everything that is not critical: emails are held until the pause ends, never dropped; nothing is pushed during it. `null` ends a pause. */
             pause?: components["schemas"]["PauseChoice"] | null;
             /** @description Local times in the compound's time zone. `null` removes quiet hours. */
             quietHours?: components["schemas"]["QuietHoursDto"] | null;
@@ -5375,7 +5393,7 @@ export interface components {
         CategorySwitchDto: {
             category: components["schemas"]["NotificationCategory"];
             email?: boolean;
-            /** @description Stored now; read once push delivery exists. */
+            /** @description Off: notifications of this category are not pushed to the phone (critical ones still are). */
             push?: boolean;
         };
         CategoryView: {
@@ -7201,7 +7219,7 @@ export interface components {
             nextCursor: string | null;
         };
         /**
-         * @description Pause everything that is not critical: held until the pause ends, never dropped. `null` ends a pause.
+         * @description Pause everything that is not critical: emails are held until the pause ends, never dropped; nothing is pushed during it. `null` ends a pause.
          * @enum {string}
          */
         PauseChoice: "1h" | "8h" | "until_resumed";
@@ -7450,6 +7468,8 @@ export interface components {
             /** @description From the closed list `ticketPriority`. */
             reasonCode: string;
         };
+        /** @enum {string} */
+        PushPlatform: "android" | "ios";
         QuietHoursDto: {
             /**
              * @description Before `start`: the window runs past midnight.
@@ -7541,6 +7561,11 @@ export interface components {
         };
         RefreshTokenDto: {
             refreshToken: string;
+        };
+        RegisterPushTokenDto: {
+            platform: components["schemas"]["PushPlatform"];
+            /** @description The FCM registration token of this install (1–4096 characters). Stored to send to; never returned, logged or audited. */
+            token: string;
         };
         RegisteredView: {
             /** Format: uuid */
@@ -9059,7 +9084,7 @@ export interface components {
         UpdatePreferencesDto: {
             /** @description Each category at most once; absent switches keep their value. */
             categories?: components["schemas"]["CategorySwitchDto"][];
-            /** @description Pause everything that is not critical: held until the pause ends, never dropped. `null` ends a pause. */
+            /** @description Pause everything that is not critical: emails are held until the pause ends, never dropped; nothing is pushed during it. `null` ends a pause. */
             pause?: components["schemas"]["PauseChoice"] | null;
             /** @description Local times in the compound's time zone. `null` removes quiet hours. */
             quietHours?: components["schemas"]["QuietHoursDto"] | null;
@@ -13635,6 +13660,50 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PushTokensController_register: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The install id (a UUID made at install), the same one sent at login. Needed here: `INSTALL_ID_REQUIRED` without it. */
+                "x-jiwar-install-id"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterPushTokenDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PushTokensController_remove: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The install id (a UUID made at install), the same one sent at login. Needed here: `INSTALL_ID_REQUIRED` without it. */
+                "x-jiwar-install-id"?: string;
+            };
             path?: never;
             cookie?: never;
         };

@@ -37,6 +37,34 @@ export class DeliveryPreferences {
     };
   }
 
+  /** The same for several accounts at once (a fan-out), in three queries. */
+  async loadMany(
+    tx: TenantTxClient,
+    accountIds: readonly string[],
+  ): Promise<Map<string, DeliveryPrefs>> {
+    const ids = [...new Set(accountIds)];
+    const out = new Map<string, DeliveryPrefs>();
+    if (!ids.length) return out;
+    const settings = await tx.notificationSettings.findMany({
+      where: { accountId: { in: ids } },
+    });
+    const switches = await tx.notificationChannelPref.findMany({
+      where: { accountId: { in: ids } },
+      select: { accountId: true, category: true, channel: true, enabled: true },
+    });
+    const timeZone = await this.timeZone(tx);
+    for (const id of ids) {
+      const own = settings.find((s) => s.accountId === id) ?? null;
+      out.set(id, {
+        ...DEFAULT_PREFS(timeZone),
+        channels: channelsOf(switches.filter((s) => s.accountId === id)),
+        quietHours: quietOf(own),
+        pause: pauseOf(own),
+      });
+    }
+    return out;
+  }
+
   /** The compound's time zone, which quiet hours are read in. */
   async timeZone(tx: TenantTxClient): Promise<string> {
     const row = await tx.tenantSettings.findFirst({

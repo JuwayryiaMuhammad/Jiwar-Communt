@@ -17,13 +17,16 @@ type GlobalTables = Pick<
   | 'registrationLink'
   | 'visitorPassLink'
   | 'actionToken'
+  | 'pushDevice'
+  | 'pushDelivery'
 >;
 
 /**
  * The only path to the global (non-RLS) tables: tenants, login_identifiers,
  * otp_challenges, sessions, platform_admins, platform_sessions, the audit
  * tables, invite_tokens, registration_links, visitor_pass_links,
- * action_tokens and outbox_messages. Tenant tables are deliberately not exposed here.
+ * action_tokens, outbox_messages, push_devices and push_deliveries. Tenant
+ * tables are deliberately not exposed here.
  */
 @Injectable()
 export class GlobalDbService implements GlobalTables {
@@ -79,6 +82,14 @@ export class GlobalDbService implements GlobalTables {
 
   get actionToken() {
     return this.base.client.actionToken;
+  }
+
+  get pushDevice() {
+    return this.base.client.pushDevice;
+  }
+
+  get pushDelivery() {
+    return this.base.client.pushDelivery;
   }
 
   /**
@@ -187,6 +198,67 @@ export class GlobalDbService implements GlobalTables {
   }
 
   /**
+   * Claims up to `limit` due push deliveries (ADR 0041), in one statement,
+   * like `claimOutbox`: SKIP LOCKED, a lease, and the attempt counted in the
+   * claim. Unlike mail, an expired lease is never claimed again: see
+   * `retireExpiredPush`.
+   */
+  async claimPush(
+    limit: number,
+    leaseMs: number,
+    now: Date,
+  ): Promise<ClaimedPushDelivery[]> {
+    const leaseUntil = new Date(now.getTime() + leaseMs);
+    const rows = await this.base.client.$queryRaw<
+      {
+        id: string;
+        tenant_id: string;
+        notification_id: string;
+        device_id: string;
+        attempts: number;
+        locked_until: Date;
+      }[]
+    >`
+      WITH claimed AS (
+        UPDATE push_deliveries
+           SET status = 'processing',
+               attempts = attempts + 1,
+               locked_until = ${leaseUntil}::timestamptz
+         WHERE id IN (
+           SELECT id FROM push_deliveries
+            WHERE status = 'pending' AND next_attempt_at <= ${now}
+            ORDER BY next_attempt_at, id
+            LIMIT ${limit}
+            FOR UPDATE SKIP LOCKED)
+        RETURNING id, tenant_id, notification_id, device_id, attempts,
+                  locked_until, next_attempt_at)
+      SELECT * FROM claimed ORDER BY next_attempt_at, id`;
+    return rows.map((r) => ({
+      id: r.id,
+      tenantId: r.tenant_id,
+      notificationId: r.notification_id,
+      deviceId: r.device_id,
+      attempts: r.attempts,
+      lockedUntil: r.locked_until,
+    }));
+  }
+
+  /**
+   * A push whose lease ran out was being sent when its sender died: nobody
+   * knows whether it reached the phone. It is retired, never sent again
+   * (at most once, ADR 0041); the inbox still has the notification.
+   */
+  async retireExpiredPush(now: Date): Promise<string[]> {
+    const rows = await this.base.client.$queryRaw<{ id: string }[]>`
+      UPDATE push_deliveries
+         SET status = 'dead', locked_until = NULL,
+             last_error_code = 'LEASE_EXPIRED'
+       WHERE status = 'processing' AND locked_until < ${now}
+      RETURNING id`;
+    return rows.map((r) => r.id);
+  }
+
+  /**
    * The same tables through an open withTenantTx transaction, for writes that
    * must commit atomically with tenant rows (e.g. an account and its login
    * identifiers).
@@ -206,6 +278,8 @@ export class GlobalDbService implements GlobalTables {
       registrationLink: tx.registrationLink,
       visitorPassLink: tx.visitorPassLink,
       actionToken: tx.actionToken,
+      pushDevice: tx.pushDevice,
+      pushDelivery: tx.pushDelivery,
     };
   }
 
@@ -244,4 +318,15 @@ export interface ClaimedOutboxMessage {
    * Null on a dead claim.
    */
   lockedUntil: Date | null;
+}
+
+export interface ClaimedPushDelivery {
+  id: string;
+  tenantId: string;
+  notificationId: string;
+  deviceId: string;
+  /** Including the attempt this claim started. */
+  attempts: number;
+  /** The lease this claim holds; later updates only apply while it does. */
+  lockedUntil: Date;
 }

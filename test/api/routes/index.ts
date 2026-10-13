@@ -40,6 +40,7 @@ import {
 } from './parcels';
 import { PLATFORM_ROUTES } from './platform';
 import { PREFERENCES_ROUTES } from './preferences';
+import { PUSH_TOKENS_ROUTES } from './push-tokens';
 import { PUBLIC_ROUTES } from './public';
 import { REGISTRATION_ROUTES } from './registration';
 import { RESIDENTS_ROUTES } from './residents';
@@ -87,6 +88,7 @@ export const ROUTES: Row[] = [
   ...PREVENTIVE_ROUTES,
   ...VISIT_ROUTES,
   ...PREFERENCES_ROUTES,
+  ...PUSH_TOKENS_ROUTES,
   ...CONSENTS_ROUTES,
   ...SECURITY_ROUTES,
   ...EXPORTS_ROUTES,

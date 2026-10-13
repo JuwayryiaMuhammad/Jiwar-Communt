@@ -102,7 +102,9 @@ describe('notification catalog', () => {
         if (statSync(path).isDirectory()) return files(path);
         return name.endsWith('.ts') &&
           !name.endsWith('.spec.ts') &&
-          path !== join(__dirname, 'kinds.ts')
+          path !== join(__dirname, 'kinds.ts') &&
+          // The push texts name every kind too (ADR 0041): not a writer.
+          path !== join(root, 'core', 'push', 'push-texts.ts')
           ? [readFileSync(path, 'utf8')]
           : [];
       });

@@ -2133,7 +2133,7 @@
               },
               "raw": "{\n  \"reasonCode\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `categories` | object[] |  | Each category at most once; absent switches keep their value. |\n| `pause` | `1h` \\| `8h` \\| `until_resumed` |  | Pause everything that is not critical: held until the pause ends, never dropped. `null` ends a pause. |\n| `quietHours` | object |  | Local times in the compound's time zone. `null` removes quiet hours. |\n| `reasonCode` | string | yes | How the person asked: `in_person`, `phone_call` or `written_request` (INVALID_REASON_CODE otherwise). |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `categories` | object[] |  | Each category at most once; absent switches keep their value. |\n| `pause` | `1h` \\| `8h` \\| `until_resumed` |  | Pause everything that is not critical: emails are held until the pause ends, never dropped; nothing is pushed during it. `null` ends a pause. |\n| `quietHours` | object |  | Local times in the compound's time zone. `null` removes quiet hours. |\n| `reasonCode` | string | yes | How the person asked: `in_person`, `phone_call` or `written_request` (INVALID_REASON_CODE otherwise). |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -8015,7 +8015,7 @@
               },
               "raw": "{\n  \"categories\": [],\n  \"pause\": \"1h\",\n  \"quietHours\": {\n    \"start\": \"22:00\",\n    \"end\": \"07:00\"\n  }\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `categories` | object[] |  | Each category at most once; absent switches keep their value. |\n| `pause` | `1h` \\| `8h` \\| `until_resumed` |  | Pause everything that is not critical: held until the pause ends, never dropped. `null` ends a pause. |\n| `quietHours` | object |  | Local times in the compound's time zone. `null` removes quiet hours. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `categories` | object[] |  | Each category at most once; absent switches keep their value. |\n| `pause` | `1h` \\| `8h` \\| `until_resumed` |  | Pause everything that is not critical: emails are held until the pause ends, never dropped; nothing is pushed during it. `null` ends a pause. |\n| `quietHours` | object |  | Local times in the compound's time zone. `null` removes quiet hours. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -8277,6 +8277,77 @@
         }
       ],
       "name": "public"
+    },
+    {
+      "item": [
+        {
+          "name": "Register this install's push token",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"token\": \"\",\n  \"platform\": \"android\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `platform` | `android` \\| `ios` | yes |  |\n| `token` | string | yes | The FCM registration token of this install (1–4096 characters). Stored to send to; never returned, logged or audited. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "The install id (a UUID made at install), the same one sent at login. Needed here: `INSTALL_ID_REQUIRED` without it.",
+                "key": "x-jiwar-install-id",
+                "value": "{{installId}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "push-tokens"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/push-tokens"
+            }
+          }
+        },
+        {
+          "name": "Remove this install's push token",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [
+              {
+                "description": "The install id (a UUID made at install), the same one sent at login. Needed here: `INSTALL_ID_REQUIRED` without it.",
+                "key": "x-jiwar-install-id",
+                "value": "{{installId}}"
+              }
+            ],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "push-tokens"
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/push-tokens"
+            }
+          }
+        }
+      ],
+      "name": "push"
     },
     {
       "item": [

@@ -108,7 +108,7 @@ A server started before step 2 answers `403` on any endpoint that requires a per
 | `jiwar_migrator` | Prisma CLI only (`MIGRATOR_DATABASE_URL`, via `prisma.config.ts`) | Owns every table |
 | `jiwar_app` | The running app, the seed and `access:sync` (`DATABASE_URL`) | SELECT/INSERT/UPDATE/DELETE only (SELECT/INSERT on the audit tables). Not an owner, not a superuser, no `BYPASSRLS` |
 
-Every table with a `tenant_id` column has `ENABLE` + `FORCE ROW LEVEL SECURITY` with a `tenant_isolation` policy (hand-written SQL at the end of each migration, since Prisma cannot express it). A test fails if a new tenant table misses it. The only global tables that carry `tenant_id` are `login_identifiers`, `sessions` and `security_events`, and they are listed explicitly. Links between tenant tables use composite foreign keys that include `tenant_id`, because foreign-key checks bypass RLS. Changing the init script requires recreating the volume: `docker compose down -v`.
+Every table with a `tenant_id` column has `ENABLE` + `FORCE ROW LEVEL SECURITY` with a `tenant_isolation` policy (hand-written SQL at the end of each migration, since Prisma cannot express it). A test fails if a new tenant table misses it. The global tables that carry `tenant_id` as a pointer (`login_identifiers`, `sessions`, `security_events`, the outbox, the link and token tables, `push_devices`, `push_deliveries`) are listed explicitly in that test. Links between tenant tables use composite foreign keys that include `tenant_id`, because foreign-key checks bypass RLS. Changing the init script requires recreating the volume: `docker compose down -v`.
 
 ## Migrations
 
@@ -133,6 +133,8 @@ See `.env.example` for the full list with comments. The important ones:
 | `TEST_SMTP_HOST`, `TEST_SMTP_PORT`, `MAILPIT_API_URL` | e2e tests always send through Mailpit and read codes from its API, whatever `SMTP_*` points at |
 | `DB_POOL_MAX` | pg pool size |
 | `OUTBOX_ENABLED`, `OUTBOX_POLL_MS`, `OUTBOX_MAX_ATTEMPTS`, `OUTBOX_RETENTION_DAYS` | Email outbox (ADR 0019): the in-app poller (default on, every 5 s), attempts before a message is dead (8), and days before sent rows are deleted and dead rows stripped of recipient and params (30). Tests turn the poller off and drain explicitly |
+| `FCM_PROJECT_ID`, `FCM_SERVICE_ACCOUNT` | Push notifications through Firebase Cloud Messaging (ADR 0041): the Firebase project id and its service-account JSON, base64 encoded (`base64 -w0 service-account.json`). Set both or neither. Unset: push is off — one startup line says so, tokens are still accepted, nothing is queued or sent. The service account is a private key: never commit or log it. Tests remove both and use a fake transport |
+| `PUSH_ENABLED`, `PUSH_POLL_MS`, `PUSH_MAX_ATTEMPTS` | The push worker (ADR 0041): the in-app poller (default on, every 5 s) and the attempts before a push is given up (5). Tests turn the poller off and drain explicitly |
 | `SWEEP_ENABLED`, `SWEEP_INTERVAL_MS` | The in-app sweep (ADR 0021): majority notices, registration expiry, account deletions and exports. Default on, hourly. Every task is idempotent and safe on several instances; tests turn it off and call `SweepRunner.run(name, now)` |
 | `REGISTRATION_PENDING_DAYS` | A self-registration nobody decided expires and loses its personal data (default 30, ADR 0024) |
 | `DELETION_GRACE_DAYS` | Account deletion (ADR 0023, 0036): the cooling-off (default 14 days), during which the holder can undo; then the sweep erases the account, or queues the request for the managers when something blocks it |

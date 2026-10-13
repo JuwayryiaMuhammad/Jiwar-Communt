@@ -119,6 +119,13 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // violation is a race; server-generated ids.
   known_devices_tenant_id_account_id_device_hash_key: null,
   known_devices_tenant_id_id_key: null,
+  // Push (ADR 0041): a token is registered under the account's lock and a
+  // lock on the token, and a delivery is queued once with its notification,
+  // so a violation is a race; nothing here names a field, least of all a
+  // token.
+  push_devices_account_id_install_hash_key: null,
+  push_devices_token_hash_key: null,
+  push_deliveries_notification_id_device_id_key: null,
   // Personal-data export (ADR 0036): checked under the account's row lock
   // (DATA_EXPORT_ACTIVE first), so a violation is a race; server ids.
   data_exports_tenant_id_id_key: null,

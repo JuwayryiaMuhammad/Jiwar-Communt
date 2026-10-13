@@ -133,10 +133,18 @@ export class SessionService {
     });
   }
 
+  /**
+   * Ends one session, and with it the push token it registered (ADR 0041),
+   * in one transaction: a registration racing this either lands before and
+   * is deleted here, or finds the session ended.
+   */
   async revoke(sessionId: string): Promise<void> {
-    await this.globalDb.session.updateMany({
-      where: { id: sessionId, revokedAt: null },
-      data: { revokedAt: new Date() },
+    await this.globalDb.transaction(async (tx) => {
+      await tx.session.updateMany({
+        where: { id: sessionId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      await tx.pushDevice.deleteMany({ where: { sessionId } });
     });
   }
 

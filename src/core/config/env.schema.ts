@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { parseFcmServiceAccount } from './fcm-service-account';
 
 /** Unset and empty (`KEY=` in .env) mean the same thing: not configured. */
 const optional = <T extends z.ZodType>(schema: T) =>
@@ -87,6 +88,18 @@ export const envSchema = z
     OUTBOX_POLL_MS: positiveInt.default(5000),
     OUTBOX_MAX_ATTEMPTS: positiveInt.default(8),
     OUTBOX_RETENTION_DAYS: positiveInt.default(30),
+
+    // Push notifications through Firebase Cloud Messaging (ADR 0041). Both
+    // unset: push is off, nothing is queued, everything else works.
+    FCM_PROJECT_ID: optional(z.string().min(1)),
+    /** The service-account JSON, base64 encoded. A secret: never logged. */
+    FCM_SERVICE_ACCOUNT: optional(z.string().min(1)),
+    PUSH_ENABLED: z
+      .enum(['true', 'false'])
+      .default('true')
+      .transform((v) => v === 'true'),
+    PUSH_POLL_MS: positiveInt.default(5000),
+    PUSH_MAX_ATTEMPTS: positiveInt.default(5),
 
     // The in-app sweep (Phase 2.2): majority notices, registration expiry,
     // account deletions (ADR 0036).
@@ -208,6 +221,28 @@ export const envSchema = z
         path: ['SUPERADMIN_PASSWORD'],
         message:
           'SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD must be set together',
+      });
+    }
+    if (
+      (env.FCM_PROJECT_ID === undefined) !==
+      (env.FCM_SERVICE_ACCOUNT === undefined)
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['FCM_SERVICE_ACCOUNT'],
+        message: 'FCM_PROJECT_ID and FCM_SERVICE_ACCOUNT must be set together',
+      });
+    }
+    // The message never quotes the value: it is a private key.
+    if (
+      env.FCM_SERVICE_ACCOUNT !== undefined &&
+      !parseFcmServiceAccount(env.FCM_SERVICE_ACCOUNT)
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['FCM_SERVICE_ACCOUNT'],
+        message:
+          'must be the base64 of a service-account JSON with client_email and private_key',
       });
     }
     // A visitor's link carries a secret in its fragment: never over http.

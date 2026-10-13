@@ -580,7 +580,7 @@
                 "$ref": "#/components/schemas/PauseChoice"
               }
             ],
-            "description": "Pause everything that is not critical: held until the pause ends, never dropped. `null` ends a pause.",
+            "description": "Pause everything that is not critical: emails are held until the pause ends, never dropped; nothing is pushed during it. `null` ends a pause.",
             "nullable": true
           },
           "quietHours": {
@@ -1274,7 +1274,7 @@
             "type": "boolean"
           },
           "push": {
-            "description": "Stored now; read once push delivery exists.",
+            "description": "Off: notifications of this category are not pushed to the phone (critical ones still are).",
             "type": "boolean"
           }
         },
@@ -7452,7 +7452,7 @@
         "type": "object"
       },
       "PauseChoice": {
-        "description": "Pause everything that is not critical: held until the pause ends, never dropped. `null` ends a pause.",
+        "description": "Pause everything that is not critical: emails are held until the pause ends, never dropped; nothing is pushed during it. `null` ends a pause.",
         "enum": [
           "1h",
           "8h",
@@ -8283,6 +8283,13 @@
         ],
         "type": "object"
       },
+      "PushPlatform": {
+        "enum": [
+          "android",
+          "ios"
+        ],
+        "type": "string"
+      },
       "QuietHoursDto": {
         "properties": {
           "end": {
@@ -8545,6 +8552,26 @@
         },
         "required": [
           "refreshToken"
+        ],
+        "type": "object"
+      },
+      "RegisterPushTokenDto": {
+        "properties": {
+          "platform": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PushPlatform"
+              }
+            ]
+          },
+          "token": {
+            "description": "The FCM registration token of this install (1–4096 characters). Stored to send to; never returned, logged or audited.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "platform"
         ],
         "type": "object"
       },
@@ -13753,7 +13780,7 @@
                 "$ref": "#/components/schemas/PauseChoice"
               }
             ],
-            "description": "Pause everything that is not critical: held until the pause ends, never dropped. `null` ends a pause.",
+            "description": "Pause everything that is not critical: emails are held until the pause ends, never dropped; nothing is pushed during it. `null` ends a pause.",
             "nullable": true
           },
           "quietHours": {
@@ -22583,6 +22610,76 @@
         "summary": "Set or replace my photo",
         "tags": [
           "me"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/push-tokens": {
+      "delete": {
+        "operationId": "PushTokensController_remove",
+        "parameters": [
+          {
+            "description": "The install id (a UUID made at install), the same one sent at login. Needed here: `INSTALL_ID_REQUIRED` without it.",
+            "in": "header",
+            "name": "x-jiwar-install-id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove this install's push token",
+        "tags": [
+          "push"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "PushTokensController_register",
+        "parameters": [
+          {
+            "description": "The install id (a UUID made at install), the same one sent at login. Needed here: `INSTALL_ID_REQUIRED` without it.",
+            "in": "header",
+            "name": "x-jiwar-install-id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterPushTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register this install's push token",
+        "tags": [
+          "push"
         ],
         "x-stability": "draft"
       }

@@ -24,7 +24,8 @@ export class CategorySwitchDto {
   @ApiProperty({
     type: Boolean,
     required: false,
-    description: 'Stored now; read once push delivery exists.',
+    description:
+      'Off: notifications of this category are not pushed to the phone (critical ones still are).',
   })
   push?: boolean;
 }
@@ -77,7 +78,7 @@ export class UpdatePreferencesDto {
     required: false,
     nullable: true,
     description:
-      'Pause everything that is not critical: held until the pause ends, never dropped. `null` ends a pause.',
+      'Pause everything that is not critical: emails are held until the pause ends, never dropped; nothing is pushed during it. `null` ends a pause.',
   })
   @IsOptional()
   @IsIn(PAUSE_CHOICES, withParams({ allowed: [...PAUSE_CHOICES] }))

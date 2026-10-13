@@ -69,7 +69,8 @@ export default tseslint.config(
   // (ADR 0005, 0016); the sweep tasks walk every compound in turn (ADR 0021);
   // SweepRunner.forEachTenant does that for every later task (ADR 0027);
   // the visitor page resolves the compound from the link's global pointer,
-  // with no account at all (ADR 0030).
+  // with no account at all (ADR 0030); the push worker claims deliveries
+  // across compounds and reads each one's notification in its own (ADR 0041).
   {
     files: ['**/*.ts'],
     rules: {
@@ -92,6 +93,7 @@ export default tseslint.config(
       'src/community/households/majority-notices.ts',
       'src/community/residents/registration.service.ts',
       'src/core/accounts/account-deletion.service.ts',
+      'src/core/push/push-processor.ts',
       'src/core/sweep/sweep-runner.ts',
       'src/gate/visitors/visitor-page.service.ts',
       'prisma/seed.ts',

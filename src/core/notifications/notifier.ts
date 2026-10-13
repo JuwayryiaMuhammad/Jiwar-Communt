@@ -3,6 +3,7 @@ import { ClsService } from 'nestjs-cls';
 import type { AppClsStore } from '../common/cls/app-cls';
 import { newId } from '../common/uuid';
 import type { TenantTxClient } from '../database/tenant-tx.service';
+import { PushOutbox } from '../push/push-outbox';
 import {
   checkNotification,
   PERSONAL_PARAMS,
@@ -21,11 +22,15 @@ export interface NotificationInput {
  * Writes inbox rows (ADR 0027) in the caller's transaction, so a
  * notification exists exactly when the action that caused it committed.
  * The priority and target type come from the catalog, never the caller.
- * Push and SMS will read this table later; nothing is sent from here.
+ * Each row's pushes are queued in the same transaction (PushOutbox,
+ * ADR 0041); nothing is sent from here.
  */
 @Injectable()
 export class Notifier {
-  constructor(private readonly cls: ClsService<AppClsStore>) {}
+  constructor(
+    private readonly cls: ClsService<AppClsStore>,
+    private readonly push: PushOutbox,
+  ) {}
 
   async notify(
     tx: TenantTxClient,
@@ -40,11 +45,11 @@ export class Notifier {
       throw new Error('Notifier.notify must run inside a TenantTx transaction');
     const recipients = [...new Set(accountIds)];
     if (!recipients.length) return 0;
+    const rows = recipients.map((accountId) => ({ id: newId(), accountId }));
     const { count } = await tx.notification.createMany({
-      data: recipients.map((accountId) => ({
-        id: newId(),
+      data: rows.map((row) => ({
+        ...row,
         tenantId,
-        accountId,
         kind: input.kind,
         priority: spec.priority,
         params: input.params,
@@ -52,6 +57,7 @@ export class Notifier {
         targetId: input.targetId,
       })),
     });
+    await this.push.enqueue(tx, tenantId, rows, input.kind);
     return count;
   }
 

@@ -172,6 +172,62 @@ describe('validateEnv', () => {
       ).toThrow(/set together/);
     });
 
+    it('push is off without FCM settings, and takes both together', () => {
+      const off = validateEnv(base);
+      expect(off.FCM_PROJECT_ID).toBeUndefined();
+      expect(off.FCM_SERVICE_ACCOUNT).toBeUndefined();
+      expect(
+        validateEnv({ ...base, FCM_PROJECT_ID: '' }).FCM_PROJECT_ID,
+      ).toBeUndefined();
+      const encoded = Buffer.from(
+        JSON.stringify({
+          client_email: 'push@jiwar-test.iam.gserviceaccount.com',
+          private_key:
+            '-----BEGIN PRIVATE KEY-----\nAAAA\n-----END PRIVATE KEY-----\n',
+        }),
+      ).toString('base64');
+      const on = validateEnv({
+        ...base,
+        FCM_PROJECT_ID: 'jiwar-test',
+        FCM_SERVICE_ACCOUNT: encoded,
+      });
+      expect(on.FCM_PROJECT_ID).toBe('jiwar-test');
+      expect(() =>
+        validateEnv({ ...base, FCM_PROJECT_ID: 'jiwar-test' }),
+      ).toThrow(/set together/);
+      expect(() =>
+        validateEnv({ ...base, FCM_SERVICE_ACCOUNT: encoded }),
+      ).toThrow(/set together/);
+    });
+
+    it('rejects an FCM service account that is not one, without quoting it', () => {
+      const bad = [
+        'not base64 at all!',
+        Buffer.from('not json').toString('base64'),
+        Buffer.from(JSON.stringify({ client_email: 'a@b.c' })).toString(
+          'base64',
+        ),
+        Buffer.from(
+          JSON.stringify({ client_email: 'a@b.c', private_key: 'secret-key' }),
+        ).toString('base64'),
+      ];
+      for (const value of bad) {
+        let message = '';
+        try {
+          validateEnv({
+            ...base,
+            FCM_PROJECT_ID: 'jiwar-test',
+            FCM_SERVICE_ACCOUNT: value,
+          });
+        } catch (error) {
+          message = (error as Error).message;
+        }
+        expect(message).toMatch(/FCM_SERVICE_ACCOUNT/);
+        expect(message).not.toContain(value);
+        expect(message).not.toContain('secret-key');
+      }
+    });
+
     it('rejects a superadmin password shorter than 12 characters', () => {
       expect(() =>
         validateEnv({

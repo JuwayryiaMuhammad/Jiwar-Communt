@@ -15,6 +15,10 @@ import { newId } from '../../src/core/common/uuid';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import { TenantsService } from '../../src/core/platform/tenants.service';
+import {
+  PUSH_TRANSPORT,
+  type PushTransport,
+} from '../../src/core/push/push-transport';
 import { nationalIdFor, uniquePhone, uniqueSuffix } from './fixtures';
 
 export const API = '/api/v1';
@@ -42,13 +46,23 @@ export interface HttpHarness {
 
 /** The full AppModule, configured exactly like main.ts, without listening. */
 export async function createHttpHarness(
-  opts: { controllers?: Type[]; imports?: Type[] } = {},
+  opts: {
+    controllers?: Type[];
+    imports?: Type[];
+    /**
+     * Turns push on with this transport (ADR 0041). Without it push is off,
+     * as on a server with no FCM settings: nothing is queued or sent.
+     */
+    push?: PushTransport;
+  } = {},
 ): Promise<HttpHarness> {
-  const moduleRef = await Test.createTestingModule({
+  const builder = Test.createTestingModule({
     imports: [AppModule, ...(opts.imports ?? [])],
     // Test-only controllers, e.g. to exercise a guard before its routes exist.
     controllers: opts.controllers ?? [],
-  }).compile();
+  });
+  if (opts.push) builder.overrideProvider(PUSH_TRANSPORT).useValue(opts.push);
+  const moduleRef = await builder.compile();
   const app = moduleRef.createNestApplication({ logger: false });
   configureApp(app);
   await app.init();

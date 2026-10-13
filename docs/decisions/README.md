@@ -41,3 +41,4 @@
 | [0037](0037-resident-account-gaps.md) | The resident's unit and worker screens: the unit card, a worker's wage and its recorded payments, one of the unit's workers | Accepted |
 | [0038](0038-resident-ticket-gaps.md) | The resident's ticket screens: arrival confirmation, the technician on the way, visit slots, two ratings, where in the unit, overdue and escalation, preventive maintenance | Accepted |
 | [0039](0039-management-requests.md) | Talking to management: requests and their conversation, cycles and escalation, appointments with slot capacity, ratings, and one list of everything a resident asked for | Accepted |
+| [0041](0041-push-notifications.md) | Push notifications: device tokens, the push outbox, FCM | Accepted |

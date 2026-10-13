@@ -52,6 +52,13 @@ export function applyTestEnv(): void {
   // Tests drain the outbox explicitly (processDue), so a poller of one suite
   // never takes another suite's messages (ADR 0019).
   process.env.OUTBOX_ENABLED = 'false';
+  // Push (ADR 0041): never a developer's real Firebase project. Without
+  // these push is off; the push suites put a fake transport in its place
+  // and drain explicitly.
+  delete process.env.FCM_PROJECT_ID;
+  delete process.env.FCM_SERVICE_ACCOUNT;
+  process.env.PUSH_ENABLED = 'false';
+  process.env.PUSH_MAX_ATTEMPTS = '5';
   // Same for the sweep: suites call SweepRunner.run(name, now) themselves.
   process.env.SWEEP_ENABLED = 'false';
   // The locked-table test measures against the default cap.

@@ -15,7 +15,7 @@ export const NOTIFICATION_CATEGORIES = [
 ] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 
-/** `push` is stored from R1 on; nothing reads it until push delivery exists. */
+/** `push` decides whether a notification is also pushed to the phone (ADR 0041). */
 export const DELIVERY_CHANNELS = ['email', 'push'] as const;
 export type DeliveryChannel = (typeof DELIVERY_CHANNELS)[number];
 

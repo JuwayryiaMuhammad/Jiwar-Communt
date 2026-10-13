@@ -26,6 +26,12 @@ const GLOBAL_WITH_TENANT_ID = [
   // Resolves an email's action link before the tenant is known (ADR 0036);
   // ids only, no secret.
   'action_tokens',
+  // Push (ADR 0041): a token lives and dies with its session, and sessions
+  // are global (a logout runs with no compound set); a token is one row
+  // across compounds; the worker claims deliveries across compounds like
+  // the email outbox. Neither is ever returned by a route.
+  'push_devices',
+  'push_deliveries',
 ];
 
 const EXPECTED =

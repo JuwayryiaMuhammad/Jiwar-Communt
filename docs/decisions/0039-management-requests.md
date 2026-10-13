@@ -64,7 +64,7 @@ The rule is ADR 0038's — only when overdue, at most once per cycle — applied
 ### Assignment
 
 - A request is assigned to one active account holding `requests.handle`, or sits in the unassigned queue. The assignee is checked under its row lock. Both ways are audited.
-- **A handler who can no longer handle requests gives theirs back:** when the account is deactivated, frozen or erased, or its role loses `requests.handle`, its live requests return to the queue in the transaction of that change, audited as unassigned with a reason code. Closed requests keep the name of who handled them.
+- **A handler who can no longer handle requests gives theirs back:** when the account is deactivated, frozen or erased, or its role loses `requests.handle` — by a manager's edit of the role, or by `pnpm access:sync` revoking a grant its kind may no longer hold — its live requests return to the queue in the transaction of that change, audited as unassigned with a reason code. Closed requests keep the name of who handled them.
 
 ### On behalf
 
@@ -122,6 +122,5 @@ Every change of state is audited with ids, numbers, keys and reason codes: creat
 
 ## Open
 
-- A role that loses `requests.handle` through `pnpm access:sync` (a kind narrowed in the catalog) is not walked by the role hook; no default role is affected today.
 - An appointment whose time has passed stays `confirmed`: there is no "attended" or "no show" yet.
 - Slot lock rows are never removed. They are one row per slot ever booked.

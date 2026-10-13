@@ -13,7 +13,9 @@ export type ReleaseReason =
  * A handler who can no longer handle requests gives theirs back to the
  * unassigned queue (ADR 0039), in the transaction of that change: the
  * account was deactivated, frozen or erased, or its role lost
- * `requests.handle`. Each live request is audited as unassigned by whoever
+ * `requests.handle` — through the role editor or through `access:sync`
+ * revoking a grant the role's kind may no longer hold; both go through
+ * RoleLifecycle. Each live request is audited as unassigned by whoever
  * made the change, with the reason code. Closed requests keep the name of
  * who handled them.
  *

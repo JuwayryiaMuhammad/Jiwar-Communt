@@ -1,4 +1,15 @@
+import { ClsService } from 'nestjs-cls';
+import {
+  catalogProblems,
+  CODE_ACCESS_CATALOG,
+  type AccessCatalog,
+} from '../../src/core/access/access-catalog';
+import { RoleLifecycle } from '../../src/core/access/role-lifecycle';
 import { RolesService } from '../../src/core/access/roles.service';
+import { AuditService } from '../../src/core/audit/audit.service';
+import { GlobalDbService } from '../../src/core/database/global-db.service';
+import { TenantTx } from '../../src/core/database/tenant-tx.service';
+import { PermissionSyncService } from '../../src/core/platform/permission-sync.service';
 import { AccountsService } from '../../src/core/accounts/accounts.service';
 import { eraseNow } from '../setup/erasure';
 import { buildExports, readArchive, stepUp } from '../setup/exports';
@@ -503,6 +514,75 @@ describe('Management requests — export, erasure and handlers who leave', () =>
       );
       expect(told.map((n) => n.accountId)).not.toContain(who.id);
       // Put the permission back for the suites below.
+      await m.x.asManager(s.c, () =>
+        h.moduleRef
+          .get(RolesService)
+          .replacePermissions(role.id, ['requests.handle']),
+      );
+    });
+
+    it('access:sync narrows who may hold requests.handle: the revoked role’s requests go back too, by the system', async () => {
+      const who = await m.handler(s.c);
+      const ids = await assignedTo(who);
+      // The catalog of a later deploy: requests.handle is the manager's alone.
+      const narrowed: AccessCatalog = {
+        ...CODE_ACCESS_CATALOG,
+        permissions: {
+          ...CODE_ACCESS_CATALOG.permissions,
+          'requests.handle': { kinds: ['manager'] },
+        },
+      };
+      expect(catalogProblems(narrowed)).toEqual([]);
+      // The sync as a deploy runs it, on the app's own lifecycle hooks.
+      const report = await new PermissionSyncService(
+        narrowed,
+        h.moduleRef.get(GlobalDbService),
+        h.moduleRef.get(TenantTx),
+        h.moduleRef.get(AuditService),
+        h.moduleRef.get(RoleLifecycle),
+        h.moduleRef.get(ClsService),
+      ).syncTenant(s.c.tenantId);
+      expect(report.revoked).toEqual([
+        {
+          roleKey: 'maintenance_supervisor',
+          kind: 'staff',
+          permission: 'requests.handle',
+        },
+      ]);
+      await expectReleased(ids, who, 'role_lost');
+      const [audit] = await released(ids.live);
+      expect(audit).toMatchObject({ actorType: 'system', actorId: null });
+      // The manager still holds it, and still has what was theirs.
+      const mine = await m.open(s.c, s.owner);
+      await staff(
+        mine.id,
+        'assign',
+        { assigneeId: s.manager.id },
+        s.manager,
+      ).expect(204);
+      // A second run revokes nothing and releases nothing.
+      const again = await new PermissionSyncService(
+        narrowed,
+        h.moduleRef.get(GlobalDbService),
+        h.moduleRef.get(TenantTx),
+        h.moduleRef.get(AuditService),
+        h.moduleRef.get(RoleLifecycle),
+        h.moduleRef.get(ClsService),
+      ).syncTenant(s.c.tenantId);
+      expect(again.revoked).toEqual([]);
+      expect((await row(mine.id)).assigneeId).toBe(s.manager.id);
+      // Put the permission back for the suites below (the code's own catalog
+      // still allows it to a staff role).
+      const role = await m.x.asManager(s.c, () =>
+        m.x.prisma.tenant.role.findUniqueOrThrow({
+          where: {
+            tenantId_key: {
+              tenantId: s.c.tenantId,
+              key: 'maintenance_supervisor',
+            },
+          },
+        }),
+      );
       await m.x.asManager(s.c, () =>
         h.moduleRef
           .get(RolesService)

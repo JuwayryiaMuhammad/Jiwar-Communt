@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start --port 3003",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "node --test --experimental-strip-types lib/*.test.ts messages/*.test.ts"
+    "test": "node --test --experimental-strip-types lib/*.test.ts messages/*.test.ts",
+    "smoke": "playwright test --config e2e/playwright.config.ts"
   },
   "dependencies": {
     "@jiwar/bff": "workspace:*",
@@ -17,6 +18,7 @@
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
+    "playwright": "1.61.1",
     "@types/node": "^24.0.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",

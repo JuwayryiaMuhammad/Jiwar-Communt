@@ -39,7 +39,7 @@ Set the API's `PUBLIC_APP_URL=http://localhost:3003` so its links land here. Wit
 - **Registration has no ID document upload.** The API has no upload path for a registrant (`/files/*` needs a signed-in account; ADR 0024 defers documents). The form takes the ID type and number as text.
 - **The export download fails on staging** while storage is HTTP MinIO: the browser blocks an HTTP download from an HTTPS page, and the page cannot detect it, so it says the file service may be unavailable. It works once storage is HTTPS (`deploy/README.md`).
 - **The pass has no gate status** beyond `status`: the API returns none. "Not started yet" and "outside visiting hours" are worked out in the browser from the window and schedule, in the compound's time zone (`lib/pass-status.ts`).
-- **`start` answers the same for a dead invite or registration link**, so those pages say "if the link is valid, a code was sent".
+- **A dead invite or registration link is not told apart from a live one.** Both `start` routes answer the same, so the pages say "if the link is valid, a code was sent". A dead invite then refuses every code. A dead registration link still emails a code and answers "received" to it, writing nothing: the link is published (a QR at the gate), and the API deliberately says nothing about it (ADR 0024). The page can only repeat the API's answer.
 
 ## Tests
 
@@ -48,3 +48,16 @@ pnpm --filter @jiwar/public test        # node --test: fragment, proxy rules, st
 pnpm --filter @jiwar/public typecheck
 pnpm --filter @jiwar/public build
 ```
+
+The browser smoke (`e2e/`, Playwright) is local only, not in CI. It drives the built app against an API that `test/web-smoke/serve.web-smoke.ts` boots on the test database and seeds with one link of every kind:
+
+```bash
+# 1. the API (jest, like an e2e suite; needs the test database, Redis, MinIO and Mailpit)
+WEB_SMOKE_DIR=/tmp/web-smoke pnpm exec jest --config ./test/jest-e2e.json --runInBand --testRegex 'web-smoke/serve\.web-smoke\.ts$'
+# 2. once /tmp/web-smoke/seed.json exists
+pnpm --filter @jiwar/public build
+WEB_SMOKE_DIR=/tmp/web-smoke pnpm --filter @jiwar/public smoke
+touch /tmp/web-smoke/stop     # ends step 1
+```
+
+`playwright` is pinned to the version whose Chromium build is already installed on the development machine; `playwright install` is not part of the flow.

@@ -1,3 +1,4 @@
+import { AccountsService } from '../../src/core/accounts/accounts.service';
 import { eraseNow } from '../setup/erasure';
 import { buildExports, readArchive, stepUp } from '../setup/exports';
 import { API, createHttpHarness, type HttpHarness } from '../setup/http-app';
@@ -475,6 +476,12 @@ describe('Neighbours — export, erasure and leaving', () => {
       const { id } = await n.complain(s.c, s.alice, s.homeB.code);
       await n.noticed(temp, id, 'ERASE-STAFF-NOTICE');
       const post = await n.staffPost(temp, { body: 'ERASE-STAFF-POST' });
+      // A staff account is erased only once it no longer works here.
+      await n.x.asManager(s.c, () =>
+        h.moduleRef
+          .get(AccountsService)
+          .updateStatus(temp.id, { status: 'inactive' }),
+      );
       await eraseNow(h, s.c, temp.id);
       const rows = await n.x.asManager(s.c, async () => ({
         notice:

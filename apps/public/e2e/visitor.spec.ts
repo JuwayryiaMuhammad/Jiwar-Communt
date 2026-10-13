@@ -23,8 +23,19 @@ test('an active pass shows its QR, code and window; the token leaves the address
   expect(link.posts).toHaveLength(1);
 
   // Memory only: a reload has no token and asks for the link again.
+  // (The language choice is kept; the token is not.)
   await page.reload();
+  await expectInvalidLink(page, en);
+  expect(await page.evaluate(() => ({ ...localStorage }))).toEqual({ 'jiwar.locale': 'en' });
+});
+
+test('a second link opened in the same tab is read and stripped too', async ({ page }) => {
+  await openLink(page, '/v', unknownVisitorToken());
   await expectInvalidLink(page);
+  // Same path, new fragment: the browser loads nothing by itself.
+  const link = await openLink(page, '/v', s.visitor.cancelled);
+  await expect(page.getByRole('status').first()).toHaveText(ar['visitor.state.cancelled_host']);
+  await link.assertSecret();
 });
 
 test('an expired pass says so and shows no code', async ({ page }) => {

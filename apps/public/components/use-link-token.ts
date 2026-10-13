@@ -25,5 +25,15 @@ export function useLinkToken(kind: LinkKind): LinkToken {
     setLink(token ? { state: 'ready', token } : { state: 'missing' });
   }, [kind]);
 
+  // Another link opened in this tab changes only the fragment, which loads
+  // nothing. Reload, so the page starts again and reads (and strips) it.
+  useEffect(() => {
+    const onHashChange = () => {
+      if (window.location.hash) window.location.reload();
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
   return link;
 }

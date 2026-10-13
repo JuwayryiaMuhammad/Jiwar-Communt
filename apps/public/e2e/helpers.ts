@@ -61,8 +61,8 @@ export async function openLink(page: Page, path: string, token: string) {
   };
 }
 
-export async function expectInvalidLink(page: Page) {
-  await expect(page.getByRole('heading', { level: 1, name: ar['invalid.title'] })).toBeVisible();
+export async function expectInvalidLink(page: Page, messages: typeof ar = ar) {
+  await expect(page.getByRole('heading', { level: 1, name: messages['invalid.title'] })).toBeVisible();
 }
 
 /** The newest 6-digit code emailed to `to` after `since` (Mailpit). */

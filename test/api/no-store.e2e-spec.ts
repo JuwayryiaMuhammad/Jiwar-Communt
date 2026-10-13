@@ -244,7 +244,288 @@ describe('API v0 — no-store', () => {
     return body<{ link: string }>(pass).link.split('#')[1];
   }
 
+  // Community life (ADR 0040).
+  const day = (n: number) => new Date(Date.now() + n * 86_400_000);
+  const created = async (path: string, token: string, payload: object) =>
+    body<{ id: string }>(
+      await call(w, 'POST', path, { token, body: payload }).expect(201),
+    ).id;
+  /** A draft announcement of A's manager. */
+  const aDraft = () =>
+    created('/community/announcements', w.a.tokens.manager, {
+      kind: 'general',
+      titleEn: 'No-store',
+      bodyEn: 'No-store',
+    });
+  /** An announcement that is out, put to everyone. */
+  async function anAnnouncement(): Promise<string> {
+    const id = await aDraft();
+    await call(w, 'POST', `/community/announcements/${id}/publish`, {
+      token: w.a.tokens.manager,
+    }).expect(204);
+    return id;
+  }
+  const anEvent = () =>
+    created('/community/events', w.a.tokens.manager, {
+      titleEn: 'No-store',
+      descriptionEn: 'No-store',
+      place: 'No-store',
+      startsAt: day(2),
+      endsAt: day(3),
+    });
+  const aPoll = () =>
+    created('/community/polls', w.a.tokens.manager, {
+      questionEn: 'No-store?',
+      options: [{ labelEn: 'Yes' }, { labelEn: 'No' }],
+      closesAt: day(3),
+    });
+  const suggestionTopic = async () =>
+    (
+      await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.suggestionTopic.findFirstOrThrow({
+          where: { key: 'general' },
+        }),
+      )
+    ).id;
+  /** A suggestion of A's owner. */
+  const aSuggestion = async () =>
+    created('/suggestions', w.a.tokens.owner, {
+      topicId: await suggestionTopic(),
+      body: 'No-store',
+    });
+  /** One the staff put on the board. */
+  async function aPublishedSuggestion(): Promise<string> {
+    const id = await aSuggestion();
+    await call(w, 'POST', `/community/suggestions/${id}/publish`, {
+      token: w.a.tokens.manager,
+      body: { titleEn: 'No-store', textEn: 'No-store' },
+    }).expect(204);
+    return id;
+  }
+  /** One that was done. */
+  async function aDoneSuggestion(): Promise<string> {
+    const id = await aSuggestion();
+    await call(w, 'POST', `/community/suggestions/${id}/status`, {
+      token: w.a.tokens.manager,
+      body: { status: 'done' },
+    }).expect(204);
+    return id;
+  }
+  const asManager = (
+    method: 'GET' | 'POST' | 'PATCH' | 'PUT',
+    path: string,
+    payload?: object,
+  ) => call(w, method, path, { token: w.a.tokens.manager, body: payload });
+  const asOwner = (
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+    path: string,
+    payload?: object,
+  ) => call(w, method, path, { token: w.a.tokens.owner, body: payload });
+
   const CALLS: Record<string, () => Promise<Response>> = {
+    // Community life (ADR 0040): every response is no-store.
+    'GET /community/settings': () => asManager('GET', '/community/settings'),
+    'PATCH /community/settings': () =>
+      asManager('PATCH', '/community/settings', { eventMaxGuests: 3 }),
+    'GET /community/suggestion-topics': () =>
+      asManager('GET', '/community/suggestion-topics'),
+    'POST /community/suggestion-topics': () =>
+      asManager('POST', '/community/suggestion-topics', {
+        key: `nostore_${uniqueSuffix().toLowerCase()}`.slice(0, 40),
+        nameAr: 'بلا تخزين',
+        nameEn: 'No-store',
+      }),
+    'PATCH /community/suggestion-topics/{id}': async () =>
+      asManager(
+        'PATCH',
+        `/community/suggestion-topics/${await suggestionTopic()}`,
+        { nameEn: 'General' },
+      ),
+    'GET /suggestion-topics': () => asOwner('GET', '/suggestion-topics'),
+    'GET /community/buildings': () => asManager('GET', '/community/buildings'),
+    'POST /community/audience/preview': () =>
+      asManager('POST', '/community/audience/preview', {
+        audience: { occupancy: 'owners' },
+      }),
+    'GET /community/announcements': async () => {
+      await aDraft();
+      return asManager('GET', '/community/announcements');
+    },
+    'POST /community/announcements': () =>
+      asManager('POST', '/community/announcements', {
+        kind: 'general',
+        titleEn: 'No-store',
+        bodyEn: 'No-store',
+      }),
+    'GET /community/announcements/{id}': async () =>
+      asManager('GET', `/community/announcements/${await aDraft()}`),
+    'PATCH /community/announcements/{id}': async () =>
+      asManager('PATCH', `/community/announcements/${await aDraft()}`, {
+        bodyEn: 'No-store, again',
+      }),
+    'POST /community/announcements/{id}/publish': async () =>
+      asManager('POST', `/community/announcements/${await aDraft()}/publish`),
+    'POST /community/announcements/{id}/archive': async () =>
+      asManager(
+        'POST',
+        `/community/announcements/${await anAnnouncement()}/archive`,
+      ),
+    'GET /community/announcements/{id}/versions': async () =>
+      asManager('GET', `/community/announcements/${await aDraft()}/versions`),
+    'GET /community/announcements/{id}/reads': async () =>
+      asManager(
+        'GET',
+        `/community/announcements/${await anAnnouncement()}/reads`,
+      ),
+    'GET /announcements': async () => {
+      await anAnnouncement();
+      return asOwner('GET', '/announcements');
+    },
+    'GET /announcements/{id}': async () =>
+      asOwner('GET', `/announcements/${await anAnnouncement()}`),
+    'POST /announcements/{id}/read': async () =>
+      asOwner('POST', `/announcements/${await anAnnouncement()}/read`),
+    'GET /community/events': async () => {
+      await anEvent();
+      return asManager('GET', '/community/events');
+    },
+    'POST /community/events': () =>
+      asManager('POST', '/community/events', {
+        titleEn: 'No-store',
+        descriptionEn: 'No-store',
+        place: 'No-store',
+        startsAt: day(2),
+        endsAt: day(3),
+      }),
+    'GET /community/events/{id}': async () =>
+      asManager('GET', `/community/events/${await anEvent()}`),
+    'PATCH /community/events/{id}': async () =>
+      asManager('PATCH', `/community/events/${await anEvent()}`, {
+        capacity: 50,
+      }),
+    'POST /community/events/{id}/cancel': async () =>
+      asManager('POST', `/community/events/${await anEvent()}/cancel`, {
+        reasonCode: 'weather',
+      }),
+    'GET /community/events/{id}/attendees': async () =>
+      asManager('GET', `/community/events/${await anEvent()}/attendees`),
+    'GET /events': async () => {
+      await anEvent();
+      return asOwner('GET', '/events');
+    },
+    'GET /events/{id}': async () =>
+      asOwner('GET', `/events/${await anEvent()}`),
+    'PUT /events/{id}/rsvp': async () =>
+      asOwner('PUT', `/events/${await anEvent()}/rsvp`, {
+        response: 'going',
+        guests: 1,
+      }),
+    'GET /community/polls': async () => {
+      await aPoll();
+      return asManager('GET', '/community/polls');
+    },
+    'POST /community/polls': () =>
+      asManager('POST', '/community/polls', {
+        questionEn: 'No-store?',
+        options: [{ labelEn: 'Yes' }, { labelEn: 'No' }],
+        closesAt: day(3),
+      }),
+    'GET /community/polls/{id}': async () =>
+      asManager('GET', `/community/polls/${await aPoll()}`),
+    'GET /community/polls/{id}/audience': async () =>
+      asManager('GET', `/community/polls/${await aPoll()}/audience`),
+    'PATCH /community/polls/{id}': async () =>
+      asManager('PATCH', `/community/polls/${await aPoll()}`, {
+        closesAt: day(5),
+      }),
+    'POST /community/polls/{id}/close': async () =>
+      asManager('POST', `/community/polls/${await aPoll()}/close`),
+    'POST /community/polls/{id}/cancel': async () =>
+      asManager('POST', `/community/polls/${await aPoll()}/cancel`),
+    'GET /polls': async () => {
+      await aPoll();
+      return asOwner('GET', '/polls');
+    },
+    'GET /polls/{id}': async () => asOwner('GET', `/polls/${await aPoll()}`),
+    'POST /polls/{id}/votes': async () => {
+      const id = await aPoll();
+      const poll = body<{ options: { id: string }[] }>(
+        await asOwner('GET', `/polls/${id}`).expect(200),
+      );
+      return asOwner('POST', `/polls/${id}/votes`, {
+        optionIds: [poll.options[0].id],
+      });
+    },
+    'GET /suggestions': async () => {
+      await aSuggestion();
+      return asOwner('GET', '/suggestions');
+    },
+    'POST /suggestions': async () =>
+      asOwner('POST', '/suggestions', {
+        topicId: await suggestionTopic(),
+        body: 'No-store',
+      }),
+    'GET /suggestions/{id}': async () =>
+      asOwner('GET', `/suggestions/${await aSuggestion()}`),
+    'GET /suggestion-board': async () => {
+      await aPublishedSuggestion();
+      return asOwner('GET', '/suggestion-board');
+    },
+    'GET /suggestion-board/done': () =>
+      asOwner('GET', '/suggestion-board/done'),
+    'PUT /suggestion-board/{id}/support': async () =>
+      asOwner(
+        'PUT',
+        `/suggestion-board/${await aPublishedSuggestion()}/support`,
+      ),
+    'DELETE /suggestion-board/{id}/support': async () =>
+      asOwner(
+        'DELETE',
+        `/suggestion-board/${await aPublishedSuggestion()}/support`,
+      ),
+    'GET /community/suggestions': async () => {
+      await aSuggestion();
+      return asManager('GET', '/community/suggestions');
+    },
+    'GET /community/suggestions/{id}': async () =>
+      asManager('GET', `/community/suggestions/${await aSuggestion()}`),
+    'POST /community/suggestions/{id}/status': async () =>
+      asManager(
+        'POST',
+        `/community/suggestions/${await aSuggestion()}/status`,
+        {
+          status: 'under_review',
+        },
+      ),
+    'PUT /community/suggestions/{id}/response': async () =>
+      asManager(
+        'PUT',
+        `/community/suggestions/${await aSuggestion()}/response`,
+        {
+          response: 'No-store',
+        },
+      ),
+    'POST /community/suggestions/{id}/publish': async () =>
+      asManager(
+        'POST',
+        `/community/suggestions/${await aSuggestion()}/publish`,
+        {
+          titleEn: 'No-store',
+          textEn: 'No-store',
+        },
+      ),
+    'POST /community/suggestions/{id}/unpublish': async () =>
+      asManager(
+        'POST',
+        `/community/suggestions/${await aPublishedSuggestion()}/unpublish`,
+      ),
+    'PUT /community/suggestions/{id}/done-note': async () =>
+      asManager(
+        'PUT',
+        `/community/suggestions/${await aDoneSuggestion()}/done-note`,
+        { noteEn: 'No-store' },
+      ),
+    'GET /me/daily-brief': () => asOwner('GET', '/me/daily-brief'),
     // Requests to the management (ADR 0039): every response is no-store.
     'POST /management-requests': async () =>
       call(w, 'POST', '/management-requests', {

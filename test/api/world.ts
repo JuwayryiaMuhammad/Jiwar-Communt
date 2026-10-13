@@ -15,6 +15,10 @@ import { LoginAlerts } from '../../src/core/auth/login-alerts';
 import { Notifier } from '../../src/core/notifications/notifier';
 import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
 import { ApprovalsService } from '../../src/gate/approvals/approvals.service';
+import { AnnouncementsService } from '../../src/engagement/announcements/announcements.service';
+import { EventsService } from '../../src/engagement/events/events.service';
+import { PollsService } from '../../src/engagement/polls/polls.service';
+import { SuggestionsService } from '../../src/engagement/suggestions/suggestions.service';
 import { RequestsService } from '../../src/management/requests/requests.service';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
 import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
@@ -121,6 +125,15 @@ export interface World {
   bManagementTopicId: string;
   /** A request B's owner opened to B's management. */
   bManagementRequestId: string;
+  /** B's community life (ADR 0040): a seeded suggestion topic; an
+   * announcement that is out; an upcoming event; an open poll and one of
+   * its options; a suggestion of B's owner, on B's board. */
+  bSuggestionTopicId: string;
+  bAnnouncementId: string;
+  bEventId: string;
+  bPollId: string;
+  bPollOptionId: string;
+  bSuggestionId: string;
   /** A ticket B's owner opened on B's home, assigned to B's technician. */
   bTicketId: string;
   /** A visit B's technician proposed on that ticket (ADR 0034). */
@@ -459,6 +472,52 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       body: 'World',
     }),
   );
+  const bSuggestionTopic = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.suggestionTopic.findFirstOrThrow({
+      where: { key: 'general' },
+    }),
+  );
+  const bAnnouncement = await helpers.asManager(b, async () => {
+    const announcements = h.moduleRef.get(AnnouncementsService);
+    const created = await announcements.create({
+      kind: 'general',
+      titleEn: 'World',
+      bodyEn: 'World',
+    });
+    await announcements.publish(created.id, undefined);
+    return created;
+  });
+  const bEvent = await helpers.asManager(b, () =>
+    h.moduleRef.get(EventsService).create({
+      titleEn: 'World',
+      descriptionEn: 'World',
+      place: 'World',
+      startsAt: new Date(Date.now() + 86_400_000),
+      endsAt: new Date(Date.now() + 86_400_000 + 3_600_000),
+    }),
+  );
+  const bPoll = await helpers.asManager(b, () =>
+    h.moduleRef.get(PollsService).create({
+      questionEn: 'World?',
+      options: [{ labelEn: 'Yes' }, { labelEn: 'No' }],
+      closesAt: new Date(Date.now() + 7 * 86_400_000),
+    }),
+  );
+  const bPollOption = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.pollOption.findFirstOrThrow({
+      where: { pollId: bPoll.id },
+    }),
+  );
+  const bSuggestion = await asBOwner(() =>
+    h.moduleRef
+      .get(SuggestionsService)
+      .create({ topicId: bSuggestionTopic.id, body: 'World' }),
+  );
+  await helpers.asManager(b, () =>
+    h.moduleRef
+      .get(SuggestionsService)
+      .publish(bSuggestion.id, { titleEn: 'World', textEn: 'World' }),
+  );
   const aCategory = await helpers.asManager(a, () =>
     helpers.prisma.tenant.ticketCategory.findFirstOrThrow({
       where: { key: 'plumbing' },
@@ -515,6 +574,12 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bCategoryId: bCategory.id,
     bManagementTopicId: bManagementTopic.id,
     bManagementRequestId: bManagementRequest.id,
+    bSuggestionTopicId: bSuggestionTopic.id,
+    bAnnouncementId: bAnnouncement.id,
+    bEventId: bEvent.id,
+    bPollId: bPoll.id,
+    bPollOptionId: bPollOption.id,
+    bSuggestionId: bSuggestion.id,
     bTicketId: bTicket.id,
     bVisitId: bVisit.id,
     bUnitId: b.homeUnitId,

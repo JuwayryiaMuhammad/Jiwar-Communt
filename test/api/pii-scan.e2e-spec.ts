@@ -694,6 +694,77 @@ describe('API v0 — PII leak scan', () => {
       body: { rating: 2, comment: 'PII-REQUEST-comment' },
     }).expect(201);
 
+    // Community life (ADR 0040): an announcement that is out; an event the
+    // primary is going to; a poll their home voted in; and a suggestion of
+    // theirs, answered, on the board under the staff's summary, and done.
+    const staffPost = async (path: string, body: object) =>
+      (
+        (
+          await call(w, 'POST', path, {
+            token: a.tokens.manager,
+            body,
+          }).expect(201)
+        ).body as { id: string }
+      ).id;
+    const piiAnnouncement = await staffPost('/community/announcements', {
+      kind: 'general',
+      titleEn: 'PII-ANNOUNCEMENT-title',
+      bodyEn: 'PII-ANNOUNCEMENT-body',
+    });
+    await call(
+      w,
+      'POST',
+      `/community/announcements/${piiAnnouncement}/publish`,
+      {
+        token: a.tokens.manager,
+      },
+    ).expect(204);
+    const piiEvent = await staffPost('/community/events', {
+      titleEn: 'PII-EVENT-title',
+      descriptionEn: 'PII-EVENT-description',
+      place: 'PII-EVENT-place',
+      startsAt: new Date(Date.now() + 86_400_000),
+      endsAt: new Date(Date.now() + 90_000_000),
+    });
+    await call(w, 'PUT', `/events/${piiEvent}/rsvp`, {
+      token: primaryToken,
+      body: { response: 'going', guests: 1, unitId: unit.id },
+    }).expect(204);
+    const piiPoll = await staffPost('/community/polls', {
+      questionEn: 'PII-POLL-question?',
+      options: [{ labelEn: 'Yes' }, { labelEn: 'No' }],
+      closesAt: new Date(Date.now() + 86_400_000),
+    });
+    const piiSuggestionTopic = await manager(() =>
+      c.prisma.tenant.suggestionTopic.findFirstOrThrow({
+        where: { key: 'general' },
+      }),
+    );
+    const piiSuggestion = (
+      (
+        await call(w, 'POST', '/suggestions', {
+          token: primaryToken,
+          body: {
+            topicId: piiSuggestionTopic.id,
+            body: 'PII-SUGGESTION-text',
+            unitId: unit.id,
+          },
+        }).expect(201)
+      ).body as { id: string }
+    ).id;
+    await call(w, 'POST', `/community/suggestions/${piiSuggestion}/status`, {
+      token: a.tokens.manager,
+      body: { status: 'done', response: 'PII-SUGGESTION-answer' },
+    }).expect(204);
+    await call(w, 'POST', `/community/suggestions/${piiSuggestion}/publish`, {
+      token: a.tokens.manager,
+      body: { titleEn: 'PII-SUMMARY-title', textEn: 'PII-SUMMARY-text' },
+    }).expect(204);
+    await call(w, 'PUT', `/community/suggestions/${piiSuggestion}/done-note`, {
+      token: a.tokens.manager,
+      body: { noteEn: 'PII-DONE-note' },
+    }).expect(204);
+
     /** One id for every param of the path, or each param by name. */
     type Ids = string | Record<string, string>;
     const params: Record<string, Ids> = {
@@ -761,6 +832,19 @@ describe('API v0 — PII leak scan', () => {
       '/management/requests/{id}/messages': mgmtRequest,
       '/management/requests/{id}/rating': mgmtRequest,
       '/management/units/{unitId}/request-authors': unit.id,
+      // ADR 0040.
+      '/community/announcements/{id}': piiAnnouncement,
+      '/community/announcements/{id}/versions': piiAnnouncement,
+      '/community/announcements/{id}/reads': piiAnnouncement,
+      '/announcements/{id}': piiAnnouncement,
+      '/community/events/{id}': piiEvent,
+      '/community/events/{id}/attendees': piiEvent,
+      '/events/{id}': piiEvent,
+      '/community/polls/{id}': piiPoll,
+      '/community/polls/{id}/audience': piiPoll,
+      '/polls/{id}': piiPoll,
+      '/suggestions/{id}': piiSuggestion,
+      '/community/suggestions/{id}': piiSuggestion,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented
@@ -1070,6 +1154,62 @@ describe('API v0 — PII leak scan', () => {
       }
     }
     expect(leaks).toEqual([]);
+
+    // Community life (ADR 0040). A suggestion's words are its author's and
+    // the staff's: nobody else reads them anywhere, and the board never
+    // shows them, the author or the unit, to anyone.
+    const communityLeaks: string[] = [];
+    for (const [key, text] of seen) {
+      const [name, path] = key.split(' ');
+      const board = path.startsWith('/suggestion-board');
+      if (
+        text.includes('PII-SUGGESTION-text') &&
+        (board || (name !== 'resident' && name !== 'manager'))
+      )
+        communityLeaks.push(`${key}: the suggestion's words`);
+      if (
+        text.includes('PII-SUGGESTION-answer') &&
+        (board || (name !== 'resident' && name !== 'manager'))
+      )
+        communityLeaks.push(`${key}: the staff's answer to the author`);
+      if (board && (text.includes(primary.id) || text.includes(unit.id)))
+        communityLeaks.push(`${key}: the suggestion's author or unit`);
+      // Who is coming to an event is the staff's list: a resident's view of
+      // an event names nobody.
+      if (
+        (path === '/events' || path === '/events/{id}') &&
+        primary.fullName &&
+        text.includes(primary.fullName)
+      )
+        communityLeaks.push(`${key}: an attendee's name`);
+      if (path === '/me/daily-brief' && name !== 'resident')
+        for (const s of [primary.id, 'PII-SUGGESTION', 'PII-REQUEST'])
+          if (text.includes(s)) communityLeaks.push(`${key}: ${s}`);
+    }
+    expect(communityLeaks).toEqual([]);
+    // Positively: the scan saw each where it belongs.
+    expect(seen.get('resident /suggestions/{id}') ?? '').toContain(
+      'PII-SUGGESTION-text',
+    );
+    expect(seen.get('manager /community/suggestions/{id}') ?? '').toContain(
+      'PII-SUGGESTION-answer',
+    );
+    for (const name of ['resident', 'family', 'landlord'])
+      expect(seen.get(`${name} /suggestion-board`) ?? '').toContain(
+        'PII-SUMMARY-title',
+      );
+    expect(seen.get('family /suggestion-board/done') ?? '').toContain(
+      'PII-DONE-note',
+    );
+    expect(seen.get('family /announcements/{id}') ?? '').toContain(
+      'PII-ANNOUNCEMENT-body',
+    );
+    expect(
+      seen.get('manager /community/events/{id}/attendees') ?? '',
+    ).toContain(primary.id);
+    expect(seen.get('family /events/{id}') ?? '').toContain('"seats":2');
+    // The family member's own list of suggestions is empty: not the primary's.
+    expect(seen.get('family /suggestions') ?? '').not.toContain(piiSuggestion);
 
     // Requests, positively: the scan saw the words where they belong.
     const asResident = (path: string) => seen.get(`resident ${path}`) ?? '';

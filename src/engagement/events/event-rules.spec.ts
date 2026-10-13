@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { REASON_CODES } from '../../core/common/reasons';
 import { eventStatus, fits, seatsOf } from './event-rules';
 
 const NOW = new Date('2026-10-20T10:00:00.000Z');
@@ -23,5 +26,23 @@ describe('event rules (ADR 0040)', () => {
     expect(fits(10, 8, 3)).toBe(false);
     expect(fits(10, 10, 0)).toBe(true);
     expect(fits(null, 100000, 21)).toBe(true);
+  });
+
+  it('the reasons to cancel are one list in three places: the service, the dashboards and the CHECK', () => {
+    const codes = [...REASON_CODES.communityEventCancel];
+    const quoted = codes.map((c) => `'${c}'`).join(', ');
+    const dashboards = readFileSync(
+      join(__dirname, '../../../packages/api/src/reasons.ts'),
+      'utf8',
+    );
+    expect(dashboards).toContain(`communityEventCancel: [${quoted}]`);
+    const migration = readFileSync(
+      join(
+        __dirname,
+        '../../../prisma/migrations/20261019090500_events/migration.sql',
+      ),
+      'utf8',
+    ).replace(/\s+/g, ' ');
+    expect(migration).toContain(`"cancel_reason" IN (${quoted})`);
   });
 });

@@ -195,3 +195,36 @@ export const MANAGEMENT_COVERAGE: readonly string[] = [
   'management_appointment.confirmed',
   'management_appointment.cancelled',
 ];
+
+/**
+ * Community life (ADR 0040), covered by
+ * test/engagement/audit-coverage.e2e-spec.ts.
+ */
+export const ENGAGEMENT_COVERAGE: readonly string[] = [
+  'engagement.settings_changed',
+  'suggestion_topic.created',
+  'suggestion_topic.updated',
+  'announcement.created',
+  'announcement.changed',
+  'announcement.edited',
+  'announcement.published',
+  'announcement.archived',
+  'announcement.announced',
+  'community_event.created',
+  'community_event.changed',
+  'community_event.cancelled',
+  'community_event.rsvp_changed',
+  'poll.created',
+  'poll.changed',
+  'poll.closed',
+  'poll.cancelled',
+  'poll.vote_cast',
+  'suggestion.created',
+  'suggestion.status_changed',
+  'suggestion.responded',
+  'suggestion.published',
+  'suggestion.unpublished',
+  'suggestion.done_noted',
+  'suggestion.supported',
+  'suggestion.unsupported',
+];

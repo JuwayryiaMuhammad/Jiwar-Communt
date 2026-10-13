@@ -29,6 +29,14 @@ import {
   MANAGEMENT_SETUP_ROUTES,
   MANAGEMENT_STAFF_ROUTES,
 } from './management';
+import {
+  ANNOUNCEMENT_ROUTES,
+  BRIEF_ROUTES,
+  ENGAGEMENT_SETUP_ROUTES,
+  EVENT_ROUTES,
+  POLL_ROUTES,
+  SUGGESTION_ROUTES,
+} from './engagement';
 import { ME_ROUTES } from './me';
 import { MEMBER_PERMISSIONS_ROUTES } from './member-permissions';
 import { NOTIFICATIONS_ROUTES } from './notifications';
@@ -96,4 +104,10 @@ export const ROUTES: Row[] = [
   ...MANAGEMENT_SETUP_ROUTES,
   ...MANAGEMENT_RESIDENT_ROUTES,
   ...MANAGEMENT_STAFF_ROUTES,
+  ...ENGAGEMENT_SETUP_ROUTES,
+  ...ANNOUNCEMENT_ROUTES,
+  ...EVENT_ROUTES,
+  ...POLL_ROUTES,
+  ...SUGGESTION_ROUTES,
+  ...BRIEF_ROUTES,
 ];

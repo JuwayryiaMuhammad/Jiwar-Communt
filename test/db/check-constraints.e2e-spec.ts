@@ -310,6 +310,95 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'The other terms are IS [NOT] NULL tests and status, which is NOT NULL',
   },
   management_appointments_confirmed_at: {},
+  // Community life (ADR 0040).
+  engagement_settings_ranges: {},
+  suggestion_topics_key_shape: {},
+  suggestion_topics_names_length: {},
+  announcements_version_positive: {},
+  announcements_pin_is_important: {},
+  announcements_expiry: {
+    guarded:
+      'expires_at IS NULL is tested first, and publish_at IS NULL before the ' +
+      'two are compared',
+  },
+  announcements_works_shape: {},
+  announcements_works_window: {
+    guarded:
+      'works_starts_at IS NULL and works_ends_at IS NULL are tested first; ' +
+      'the comparison runs only on two values',
+  },
+  announcements_works_gate: {
+    guarded:
+      'works_gate_id IS NULL is tested first, and works_area_kind IS NOT NULL ' +
+      'before it is compared',
+  },
+  announcements_works_place_length: {
+    guarded:
+      'works_place IS NULL is tested first; the length runs only on a value',
+  },
+  announcements_audience_buildings: {},
+  announcements_out_first: {},
+  announcement_versions_version_positive: {},
+  announcement_versions_languages: {},
+  announcement_versions_lengths: {
+    guarded: 'each text IS NULL is tested first; a length runs only on a value',
+  },
+  announcement_versions_attachments: {},
+  announcement_read_marks_ref_length: {},
+  community_events_languages: {},
+  community_events_lengths: {
+    guarded:
+      'each nullable text IS NULL is tested first; a length runs only on a ' +
+      'value. place is NOT NULL',
+  },
+  community_events_window: {},
+  community_events_capacity: {
+    guarded: 'capacity IS NULL is tested first; the range runs only on a value',
+  },
+  community_events_audience_buildings: {},
+  community_events_attachments: {},
+  community_events_cancelled: {
+    guarded:
+      'cancel_reason IS NULL is tested first; the list runs only on a value. ' +
+      'The other term compares two IS NULL tests',
+  },
+  event_rsvps_guests: {},
+  polls_question: {
+    guarded:
+      'each question IS NULL is tested first; a length runs only on a value',
+  },
+  polls_window: {},
+  polls_audience_buildings: {},
+  polls_end_shape: {
+    guarded:
+      'final_turnout IS NULL is tested first; the comparison runs only on a ' +
+      'value. The other terms are IS [NOT] NULL tests',
+  },
+  polls_salt_length: {
+    guarded:
+      'ballot_salt IS NULL is tested first; the length runs only on a value',
+  },
+  poll_options_label: {
+    guarded:
+      'each label IS NULL is tested first; a length runs only on a value',
+  },
+  poll_options_position: {},
+  poll_options_final_count: {
+    guarded:
+      'final_count IS NULL is tested first; the comparison runs only on a value',
+  },
+  poll_ballot_boxes_is_object: {},
+  suggestions_body_or_erased: {},
+  suggestions_lengths: {
+    guarded: 'each text IS NULL is tested first; a length runs only on a value',
+  },
+  suggestions_response_time: {},
+  suggestions_published_summary: {},
+  suggestions_done_shape: {},
+  suggestion_updates_response_length: {
+    guarded:
+      'response IS NULL is tested first; the length runs only on a value',
+  },
   // Dispatch: compares nullable columns.
   technician_availability_history_from_shape: {
     guarded:

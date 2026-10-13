@@ -16,6 +16,7 @@ import { AudienceController } from './audience/audience.controller';
 import { DailyBriefController } from './brief/daily-brief.controller';
 import { DailyBriefService } from './brief/daily-brief.service';
 import { CommunityAttachments } from './content/attachments';
+import { EngagementExportSections } from './export/export-sections';
 import { EngagementProvisioning } from './provisioning';
 import {
   EventsController,
@@ -86,6 +87,7 @@ import { SuggestionTopicsService } from './topics/topics.service';
     PollsService,
     SuggestionsService,
     DailyBriefService,
+    EngagementExportSections,
   ],
 })
 export class EngagementModule {}

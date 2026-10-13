@@ -683,24 +683,32 @@ export class PollsService implements OnModuleInit {
   }
 
   /**
-   * Whether each unit voted in each poll, for a personal-data export:
-   * "voted: yes or no", and never anything else. Open polls are answered
-   * from the ballot box, closed ones from the participations.
+   * Whether each of the account's units voted in each poll put to it, for
+   * a personal-data export: "voted: yes or no", and never anything else.
+   * An open poll is answered from the ballot box, an ended one from the
+   * participations. Inside the export's transaction.
    */
-  async participation(
+  async participationOf(
     tx: TenantTxClient,
-    unitIds: readonly string[],
+    accountId: string,
   ): Promise<{ poll: Poll; unitId: string; voted: boolean }[]> {
-    if (!unitIds.length) return [];
+    const places = await this.community.places(tx, accountId);
+    if (!places.length) return [];
     const now = await dbNow(tx);
     const polls = await tx.poll.findMany({
-      where: { cancelledAt: null, opensAt: { lte: now } },
-      orderBy: byCreation.orderBy,
+      where: {
+        AND: [
+          { cancelledAt: null, opensAt: { lte: now } },
+          audienceWhere(places),
+        ],
+      },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
     const out: { poll: Poll; unitId: string; voted: boolean }[] = [];
     for (const poll of polls) {
-      const ballots = await this.ballotsOf(tx, poll, unitIds);
-      for (const unitId of unitIds)
+      const mine = placesIn(places, poll).map((p) => p.unitId);
+      const ballots = await this.ballotsOf(tx, poll, mine);
+      for (const unitId of mine)
         out.push({ poll, unitId, voted: ballots.has(unitId) });
     }
     return out;

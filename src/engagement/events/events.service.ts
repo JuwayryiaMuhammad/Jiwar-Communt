@@ -6,6 +6,7 @@ import type {
   Prisma,
 } from '@prisma/client';
 import { CommunityEngagementPort, type Audience } from '../../community';
+import { AccountLifecycle } from '../../core/accounts/account-lifecycle';
 import { AuditService } from '../../core/audit/audit.service';
 import { diffChanges } from '../../core/audit/diff';
 import { RequestContext } from '../../core/common/cls/request-context';
@@ -181,6 +182,7 @@ export class EventsService implements OnModuleInit {
     private readonly audit: AuditService,
     private readonly notifier: Notifier,
     private readonly idempotency: IdempotencyService,
+    private readonly lifecycle: AccountLifecycle,
   ) {}
 
   onModuleInit(): void {
@@ -190,6 +192,13 @@ export class EventsService implements OnModuleInit {
         return { id: e.id, createdAt: e.createdAt };
       }),
     );
+    // Erasure (ADR 0023, 0040): the account's answers go, and the seats
+    // they held with them. An answer in flight took a share lock on the
+    // account's row first, so none is written after this.
+    this.lifecycle.onErasing(async (tx, account) => {
+      await tx.eventRsvp.deleteMany({ where: { accountId: account.id } });
+      return [];
+    });
   }
 
   // --------------------------------------------------------------------------
@@ -610,6 +619,22 @@ export class EventsService implements OnModuleInit {
       take: 50,
     });
     return this.reads(tx, rows, now, accountId);
+  }
+
+  /**
+   * The account's own answers, each with the event it is to, for a
+   * personal-data export. Inside the export's transaction.
+   */
+  async answersOf(
+    tx: TenantTxClient,
+    accountId: string,
+  ): Promise<{ rsvp: EventRsvp; event: CommunityEvent }[]> {
+    const rsvps = await tx.eventRsvp.findMany({
+      where: { accountId },
+      include: { event: true },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+    return rsvps.map(({ event, ...rsvp }) => ({ rsvp, event }));
   }
 
   // --------------------------------------------------------------------------

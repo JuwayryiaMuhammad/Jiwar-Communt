@@ -4,7 +4,9 @@ import { ErrorAlert } from '@jiwar/api/react';
 import { AppShell, Button, EmptyState, SkeletonRows, type NavGroup, type NavItem } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import {
+  Ban,
   Building,
+  CalendarCheck,
   CalendarClock,
   CalendarDays,
   DoorOpen,
@@ -21,6 +23,8 @@ import {
   MessagesSquare,
   Package,
   PackageSearch,
+  ClipboardCheck,
+  Dumbbell,
   Scale,
   ScrollText,
   Settings,
@@ -105,6 +109,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     can('neighbours.handle'),
   );
 
+  // Bookings waiting for approval (ADR 0044).
+  const approvals = useQueueSize(
+    keys.bookings({ status: 'pending' }),
+    () => fetchers.bookings({ status: 'pending' }, undefined, 100),
+    can('bookings.handle'),
+  );
+
   // Requests the system could not carry out by itself: a manager's to settle.
   const erasures = useQuery({
     queryKey: [...keys.erasures, 'count'],
@@ -185,6 +196,21 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           count: reports,
           show: can('neighbours.handle'),
         },
+        {
+          href: '/facilities',
+          label: 'Facilities',
+          icon: <Dumbbell aria-hidden />,
+          show: can('facilities.manage') || can('bookings.handle'),
+        },
+        { href: '/bookings', label: 'Bookings', icon: <CalendarCheck aria-hidden />, exact: true, show: can('bookings.handle') },
+        {
+          href: '/bookings/approvals',
+          label: 'Approvals',
+          icon: <ClipboardCheck aria-hidden />,
+          count: approvals,
+          show: can('bookings.handle'),
+        },
+        { href: '/booking-suspensions', label: 'Suspensions', icon: <Ban aria-hidden />, show: can('bookings.handle') },
         { href: '/gate', label: 'Gate', icon: <DoorOpen aria-hidden />, show: can('gate.read') },
         { href: '/parcels', label: 'Parcels', icon: <Package aria-hidden />, show: can('parcels.manage') },
         { href: '/staff', label: 'Staff', icon: <UserCog aria-hidden />, show: can('accounts.read') },

@@ -168,6 +168,15 @@ const TEXT: Record<string, (p: P) => string> = {
   'neighbour_conversation.names_revealed': (p) => `Names are now shown in a conversation about a ${post(p)}`,
   'neighbour_report.closed': () => 'Your report of a conversation was looked at',
   'neighbours.welcome': () => 'Welcome: the compound’s rules, office hours and emergency numbers are ready to read',
+  // Bookings and the club (ADR 0044): to residents.
+  'booking.approved': () => 'Your booking was approved',
+  'booking.rejected': (p) => `Your booking was not approved (${words(p.reason)})`,
+  'booking.approval_expired': () => 'Your booking request was not approved in time',
+  'booking.cancelled_by_staff': (p) => `The management cancelled your booking (${words(p.reason)})`,
+  'booking.cancelled_by_closure': (p) => `Your booking was cancelled: the facility is closed (${words(p.reason)})`,
+  'booking.reminder': () => 'Your booking starts in about two hours',
+  'booking_suspension.started': () => 'Your unit cannot make new bookings for a while',
+  'club_membership.expiring': () => 'Your club membership ends within a week',
 };
 
 export function notificationText(n: NotificationLike): string {

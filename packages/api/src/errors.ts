@@ -194,6 +194,31 @@ const ERROR_TEXT: Record<string, string> = {
   VISIT_WINDOW_PASSED: 'That visit window has already passed.',
   VISITS_NOT_ALLOWED: 'Visits are not allowed on this ticket.',
   PREVENTIVE_SERVICE_NOT_FOUND: 'Preventive service not found.',
+  // Facilities and bookings, the club (ADR 0044).
+  FACILITY_NOT_FOUND: 'This facility does not exist.',
+  FACILITY_NOT_BOOKABLE: 'This facility is walk-in: it takes no booking and has no peak times.',
+  FACILITY_CLOSED: 'The facility is closed at that time.',
+  FACILITY_CLOSURE_NOT_FOUND: 'This closure does not exist.',
+  FACILITY_CLOSURE_LIFTED: 'This closure was lifted already.',
+  BOOKING_NOT_FOUND: 'This booking does not exist.',
+  BOOKINGS_NOT_ALLOWED: 'This person may not book for this unit.',
+  BOOKINGS_SUSPENDED: 'This unit is suspended from booking for now.',
+  BOOKING_SLOT_FULL: 'The slot has no room left.',
+  BOOKING_ALREADY_HELD: 'The unit already holds this slot.',
+  BOOKING_QUOTA_REACHED: 'The unit has as many bookings here as a week allows.',
+  BOOKING_INVALID_TRANSITION: 'The booking has moved on, so this is no longer possible. Refresh to see where it stands.',
+  BOOKING_CANCEL_CUTOFF_PASSED: 'Too late to cancel this booking.',
+  BOOKING_WINDOW_PASSED: 'The booking’s time has passed.',
+  BOOKING_NOT_OVER: 'The slot has not ended yet: nobody can tell it was a no-show.',
+  BOOKING_NO_SHOW_TOO_LATE: 'A no-show is marked within three days of the slot.',
+  BOOKING_SUSPENSION_NOT_FOUND: 'This suspension does not exist.',
+  BOOKING_SUSPENSION_NOT_IN_FORCE: 'This suspension is over or was lifted already.',
+  CLUB_MEMBERSHIP_REQUIRED: 'This facility is for club members.',
+  CLUB_PLAN_NOT_FOUND: 'This plan does not exist.',
+  CLUB_MEMBERSHIP_NOT_FOUND: 'This membership does not exist.',
+  CLUB_MEMBERSHIP_EXISTS: 'This unit already has a membership.',
+  CLUB_PAYMENT_NOT_FOUND: 'This payment does not exist.',
+  CLUB_PAYMENT_ALREADY_REVERSED: 'This payment was reversed already.',
 };
 
 const FIELD_TEXT: Record<string, string> = {
@@ -244,6 +269,20 @@ const FIELD_TEXT: Record<string, string> = {
   WAGE_PERIOD_IN_FUTURE: 'That month has not started yet.',
   WAGE_PERIOD_BEFORE_ENGAGEMENT: 'That month is before the worker was registered.',
   SLA_RESPONSE_AFTER_RESOLUTION: 'The response target cannot be longer than the resolution target.',
+  // Facilities and bookings, the club (ADR 0044).
+  WINDOW_OVERLAP: 'Overlaps another window of the same day.',
+  PEAK_OUTSIDE_HOURS: 'A peak time must lie inside the opening hours.',
+  PEAK_QUOTA_ABOVE_WEEKLY: 'At most the weekly quota.',
+  BOOKING_SLOT_NOT_OFFERED: 'Not one of the facility’s slots.',
+  BOOKING_TOO_SOON: 'Too soon for this facility.',
+  BOOKING_TOO_FAR: 'Too far ahead for this facility.',
+  BOOKING_TOO_MANY_GUESTS: 'More guests than the facility takes.',
+  BOOKING_PARTY_TOO_LARGE: 'More people than a slot takes.',
+  CLOSURE_TOO_LONG: 'A closure lasts at most 366 days.',
+  CLOSURE_ENDED: 'That time has already passed.',
+  PLAN_NOT_AVAILABLE: 'Pick an active plan.',
+  PAID_ON_OUT_OF_RANGE: 'Not in the future, and at most 90 days ago.',
+  PERSON_NOT_OF_UNIT: 'Not one of the unit’s people now.',
 };
 
 export function errorText(error: unknown): string {

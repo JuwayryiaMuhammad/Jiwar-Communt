@@ -101,6 +101,30 @@ export type ConversationReport = Schema<'StaffReportView'>;
 export type ReportedMessage = Schema<'ReportedMessageView'>;
 export type NeighbourSettings = Schema<'NeighbourSettingsResponse'>;
 export type WelcomeTemplate = Schema<'WelcomeTemplateView'>;
+// Facilities and bookings, the club (ADR 0044).
+export type Facility = Schema<'StaffFacilityView'>;
+export type FacilityRules = Schema<'FacilityRulesView'>;
+export type FacilityWindow = Schema<'FacilityWindowView'>;
+export type FacilityMode = Schema<'FacilityMode'>;
+export type CapacityUnit = Schema<'FacilityCapacityUnit'>;
+export type StaffBooking = Schema<'StaffBookingView'>;
+export type BookingStatus = Schema<'BookingStatus'>;
+export type FacilityDay = Schema<'FacilityDayView'>;
+export type FacilityClosure = Schema<'FacilityClosureView'>;
+export type BookingSuspension = Schema<'BookingSuspensionView'>;
+export type FacilitySettings = Schema<'FacilitySettingsResponse'>;
+export type ClubPlan = Schema<'ClubPlanView'>;
+export type ClubMembership = Schema<'ClubMembershipView'>;
+export type ClubMembershipDetail = Schema<'ClubMembershipDetailView'>;
+export type ClubPayment = Schema<'ClubPaymentView'>;
+export type ClubPerson = Schema<'ClubPersonView'>;
+export type ClubUnit = Schema<'ClubUnitView'>;
+export type ClubMembershipState = Schema<'ClubMembershipState'>;
+
+export interface StaffBookingFilters {
+  status?: BookingStatus | '';
+  facilityId?: string;
+}
 
 export interface ComplaintFilters {
   status?: ComplaintStatus | '';
@@ -251,6 +275,21 @@ export const keys = {
   conversationReportMessages: (id: string) => ['neighbour-reports', 'detail', id, 'messages'] as const,
   neighbourSettings: ['neighbour-settings'] as const,
   welcomeTemplate: ['neighbour-welcome-template'] as const,
+  facilitiesAll: ['facilities'] as const,
+  facilities: ['facilities', 'list'] as const,
+  facility: (id: string) => ['facilities', 'detail', id] as const,
+  facilityClosures: (id: string) => ['facilities', 'detail', id, 'closures'] as const,
+  facilityDay: (id: string, date: string) => ['facilities', 'detail', id, 'day', date] as const,
+  facilitySettings: ['facility-settings'] as const,
+  bookingsAll: ['staff-bookings'] as const,
+  bookings: (filters: object) => ['staff-bookings', 'list', filters] as const,
+  suspensions: (inForce: string) => ['booking-suspensions', inForce] as const,
+  suspensionsAll: ['booking-suspensions'] as const,
+  clubPlans: ['club-plans'] as const,
+  clubAll: ['club-memberships'] as const,
+  clubMemberships: (state: string) => ['club-memberships', 'list', state] as const,
+  clubMembership: (id: string) => ['club-memberships', 'detail', id] as const,
+  clubUnitPeople: (unitId: string) => ['club-memberships', 'people', unitId] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -396,6 +435,28 @@ export const fetchers = {
   conversationReport: (id: string) => unwrap(api.GET('/api/v1/neighbours/reports/{id}', { params: { path: { id } } })),
   neighbourSettings: () => unwrap(api.GET('/api/v1/neighbours/settings')),
   welcomeTemplate: () => unwrap(api.GET('/api/v1/neighbours/welcome-template')),
+  facilities: () => unwrap(api.GET('/api/v1/staff/facilities')),
+  facility: (id: string) => unwrap(api.GET('/api/v1/staff/facilities/{id}', { params: { path: { id } } })),
+  facilityClosures: (id: string, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/facilities/{id}/closures', { params: { path: { id }, query: { cursor, limit } } })),
+  facilityDay: (id: string, date: string) =>
+    unwrap(api.GET('/api/v1/staff/facilities/{id}/day', { params: { path: { id }, query: { date } } })),
+  facilitySettings: () => unwrap(api.GET('/api/v1/staff/facility-settings')),
+  bookings: (filters: StaffBookingFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/bookings', {
+        params: { query: { ...(clean(filters) as { status?: BookingStatus; facilityId?: string }), cursor, limit } },
+      }),
+    ),
+  suspensions: (inForce: 'true' | 'false', cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/booking-suspensions', { params: { query: { inForce, cursor, limit } } })),
+  clubPlans: () => unwrap(api.GET('/api/v1/staff/club-plans')),
+  clubMemberships: (state: ClubMembershipState | '') =>
+    unwrap(api.GET('/api/v1/staff/club-memberships', { params: { query: state ? { state } : {} } })),
+  clubMembership: (id: string) => unwrap(api.GET('/api/v1/staff/club-memberships/{id}', { params: { path: { id } } })),
+  clubUnit: (code: string) => unwrap(api.GET('/api/v1/staff/club/units', { params: { query: { code } } })),
+  clubUnitPeople: (unitId: string) =>
+    unwrap(api.GET('/api/v1/staff/club/units/{unitId}/people', { params: { path: { unitId } } })),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

@@ -6,6 +6,7 @@ import {
   FacilitySlotsController,
   UnitBookingsController,
 } from './bookings/bookings.controller';
+import { BookingReminders } from './bookings/booking-reminders';
 import { BookingsService } from './bookings/bookings.service';
 import {
   FacilityDayController,
@@ -62,6 +63,7 @@ import { FacilitiesService } from './setup/facilities.service';
     FacilitiesProvisioning,
     FacilitySettingsService,
     SuspensionsService,
+    BookingReminders,
   ],
 })
 export class FacilitiesModule {}

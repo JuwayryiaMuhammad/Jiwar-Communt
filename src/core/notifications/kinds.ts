@@ -960,6 +960,14 @@ export const NOTIFICATION_KINDS = {
     target: 'booking_suspension',
     params: {},
   },
+  /** A confirmed booking starts in about two hours: to its booker, once. */
+  'booking.reminder': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'booking',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

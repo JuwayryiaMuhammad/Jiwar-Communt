@@ -1021,6 +1021,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'لا يمكن لوحدتك إجراء حجوزات جديدة لفترة. افتح التطبيق لمعرفة تاريخ الانتهاء.',
     },
   },
+  'booking.reminder': {
+    en: {
+      title: 'Booking soon',
+      body: 'Your facility booking starts in about two hours.',
+    },
+    ar: {
+      title: 'حجزك قريب',
+      body: 'يبدأ حجزك للمرفق بعد ساعتين تقريباً.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

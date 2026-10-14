@@ -239,6 +239,7 @@ export function facilitiesHelpers(h: HttpHarness) {
       startsAt: Date;
       minutes?: number;
       status?: 'pending' | 'confirmed';
+      createdAt?: Date;
     },
   ): Promise<string> {
     const id = newId();
@@ -258,6 +259,7 @@ export function facilitiesHelpers(h: HttpHarness) {
           partySize: 1,
           peak: false,
           status: input.status ?? 'confirmed',
+          ...(input.createdAt ? { createdAt: input.createdAt } : {}),
         },
       }),
     );

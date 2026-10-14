@@ -26,12 +26,19 @@ test('a staff role that handles complaints between units and the boards enters',
   assert.equal(mayEnter({ type: 'staff', permissions: ['gate.operate', 'neighbours.handle'] }), true);
 });
 
+test('a staff role that sets up facilities, works bookings or keeps the club enters: the accountant too', () => {
+  assert.equal(mayEnter({ type: 'staff', permissions: ['facilities.manage'] }), true);
+  assert.equal(mayEnter({ type: 'staff', permissions: ['gate.operate', 'bookings.handle'] }), true);
+  assert.equal(mayEnter({ type: 'staff', permissions: ['club.billing'] }), true);
+});
+
 test('a guard, a technician and a resident do not', () => {
   assert.equal(mayEnter({ type: 'staff', permissions: ['gate.operate', 'parcels.handle'] }), false);
   assert.equal(mayEnter({ type: 'staff', permissions: ['tickets.work'] }), false);
   assert.equal(mayEnter({ type: 'resident', permissions: ['tickets.create', 'requests.create', 'units.read'] }), false);
   assert.equal(mayEnter({ type: 'resident', permissions: ['community.read', 'suggestions.create'] }), false);
   assert.equal(mayEnter({ type: 'resident', permissions: ['neighbours.complain', 'neighbours.board'] }), false);
+  assert.equal(mayEnter({ type: 'resident', permissions: ['facilities.book'] }), false);
 });
 
 test('an answer without permissions admits nobody but a manager', () => {

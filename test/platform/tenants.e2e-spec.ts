@@ -78,6 +78,7 @@ describe('TenantsService', () => {
       ]),
     );
     expect(roles.map((r) => [r.key, r.kind, r.isSystem, r.name])).toEqual([
+      ['accountant', 'staff', true, null],
       ['family_member', 'family', true, null],
       ['guard', 'staff', true, null],
       ['maintenance_supervisor', 'staff', true, null],

@@ -16,7 +16,7 @@ describe('access catalog', () => {
     }
   });
 
-  it('one kind default per kind: guard for staff, beside the maintenance roles', () => {
+  it('one kind default per kind: guard for staff, beside the maintenance roles and the accountant', () => {
     const staff = CODE_ACCESS_CATALOG.defaultRoles.filter(
       (r) => r.kind === 'staff',
     );
@@ -24,6 +24,7 @@ describe('access catalog', () => {
       'guard',
       'technician',
       'maintenance_supervisor',
+      'accountant',
     ]);
     expect(defaultRoleKey(CODE_ACCESS_CATALOG, 'staff')).toBe('guard');
     expect(defaultRoleKey(CODE_ACCESS_CATALOG, 'family')).toBe('family_member');

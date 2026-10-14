@@ -241,6 +241,7 @@ describe('Permission sync', () => {
     // units.read was offered long ago, yet the new role has it.
     expect((await role(t, 'family_member')).permissions).toEqual([
       'community.read',
+      'facilities.book',
       'household.manage',
       'neighbours.board',
       'neighbours.complain',
@@ -272,6 +273,7 @@ describe('Permission sync', () => {
           from: [],
           to: [
             'community.read',
+            'facilities.book',
             'household.manage',
             'neighbours.board',
             'neighbours.complain',
@@ -384,6 +386,7 @@ describe('Permission sync', () => {
       'guard',
       'technician',
       'maintenance_supervisor',
+      'accountant',
     ]);
     expect((await role(t, 'guard')).permissions).toEqual([
       'gate.operate',
@@ -659,6 +662,70 @@ describe('Permission sync', () => {
     expect((await role(t, 'manager')).permissions).not.toContain(
       'neighbours.manage',
     );
+  });
+
+  it('Phase R5 reaches an existing compound: facilities.book for residents and family, the three facilities permissions for the manager, and the accountant role (ADR 0044)', async () => {
+    const r5 = [
+      'facilities.book',
+      'facilities.manage',
+      'bookings.handle',
+      'club.billing',
+    ];
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !r5.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles
+        .filter((r) => r.key !== 'accountant')
+        .map((r) => ({
+          ...r,
+          permissions: r.permissions.filter((p) => !r5.includes(p)),
+        })),
+    };
+    expect(catalogProblems(before)).toEqual([]);
+    const t = newId();
+    await h.globalDb.tenant.create({
+      data: { id: t, name: `Sync R5 compound ${t}` },
+    });
+    await h.asTenant(t, () =>
+      h.tenantTx.withTenantTx(async (tx) => {
+        await new RoleProvisioner(before).provision(tx, t);
+        await tx.tenantSettings.create({ data: { tenantId: t } });
+        // The domains' rows, as the migrations' backfills gave it.
+        await tenantLifecycle.tenantCreated(tx, t);
+      }),
+    );
+
+    const report = await sync(base, t);
+    expect([...report.added].sort()).toEqual([...r5].sort());
+    expect(report.rolesCreated).toEqual(['accountant']);
+    expect((await role(t, 'accountant')).permissions).toEqual(['club.billing']);
+    for (const key of ['resident', 'family_member']) {
+      const { permissions } = await role(t, key);
+      expect(permissions).toContain('facilities.book');
+      for (const p of ['facilities.manage', 'bookings.handle', 'club.billing'])
+        expect(permissions).not.toContain(p);
+    }
+    const manager = (await role(t, 'manager')).permissions;
+    expect(manager).toEqual(
+      expect.arrayContaining([
+        'facilities.manage',
+        'bookings.handle',
+        'club.billing',
+      ]),
+    );
+    expect(manager).not.toContain('facilities.book');
+    // No other staff role works bookings or the club until a manager says so.
+    for (const key of ['guard', 'technician', 'maintenance_supervisor']) {
+      for (const permission of r5)
+        expect((await role(t, key)).permissions).not.toContain(permission);
+    }
+    expect(await sync(base, t)).toMatchObject({
+      added: [],
+      rolesCreated: [],
+      rolesChanged: 0,
+    });
   });
 
   it('Phase 5.1 reaches an existing compound: ticket permissions and the two maintenance roles (ADR 0032)', async () => {

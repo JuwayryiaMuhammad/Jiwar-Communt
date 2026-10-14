@@ -17,7 +17,7 @@ export interface DefaultRole {
  * Copied into every new compound (ADR 0010). A new account gets the
  * `kindDefault` role of its kind; a staff account may name another
  * staff-kind role of its compound instead (`roleKey`): a technician or a
- * maintenance supervisor (ADR 0032).
+ * maintenance supervisor (ADR 0032), an accountant (ADR 0044).
  */
 export const DEFAULT_ROLES: readonly DefaultRole[] = [
   {
@@ -55,6 +55,9 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'community.suggestions',
       'neighbours.handle',
       'neighbours.manage',
+      'facilities.manage',
+      'bookings.handle',
+      'club.billing',
     ],
   },
   {
@@ -74,6 +77,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'suggestions.create',
       'neighbours.complain',
       'neighbours.board',
+      'facilities.book',
     ],
   },
   {
@@ -93,6 +97,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'suggestions.create',
       'neighbours.complain',
       'neighbours.board',
+      'facilities.book',
     ],
   },
   {
@@ -116,6 +121,14 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
     kind: 'staff',
     kindDefault: false,
     permissions: ['tickets.dispatch'],
+  },
+  {
+    // The club's accountant (ADR 0044): memberships and the offline
+    // payments that keep them, and nothing else of the compound.
+    key: 'accountant',
+    kind: 'staff',
+    kindDefault: false,
+    permissions: ['club.billing'],
   },
 ];
 

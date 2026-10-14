@@ -100,6 +100,17 @@ export const PERMISSIONS = {
   'neighbours.board': { kinds: ['resident', 'family'] },
   'neighbours.handle': { kinds: ['staff', 'manager'] },
   'neighbours.manage': { kinds: ['manager'] },
+  // Facilities and bookings (ADR 0044). Residents and family see the
+  // facilities and book for a unit (capabilities.bookings decides per
+  // unit); `facilities.manage` sets up facilities, their rules, hours,
+  // peaks and closures, and the club's plans; `bookings.handle` works the
+  // bookings (approvals, no-shows, cancellations, suspensions);
+  // `club.billing` keeps the memberships and records offline payments (the
+  // accountant).
+  'facilities.book': { kinds: ['resident', 'family'] },
+  'facilities.manage': { kinds: ['staff', 'manager'] },
+  'bookings.handle': { kinds: ['staff', 'manager'] },
+  'club.billing': { kinds: ['staff', 'manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

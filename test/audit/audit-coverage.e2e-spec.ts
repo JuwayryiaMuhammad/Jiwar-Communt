@@ -313,6 +313,7 @@ describe('Audit coverage', () => {
         permissions: {
           from: [
             'community.read',
+            'facilities.book',
             'household.delegate',
             'household.manage',
             'neighbours.board',

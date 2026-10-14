@@ -90,6 +90,7 @@ describe('Roles', () => {
       name: null,
       permissions: [
         'community.read',
+        'facilities.book',
         'household.delegate',
         'household.manage',
         'neighbours.board',
@@ -234,6 +235,7 @@ describe('Roles', () => {
         'suggestions.create',
         'neighbours.complain',
         'neighbours.board',
+        'facilities.book',
       ]),
     );
     expect(await version()).toBe(before);

@@ -858,7 +858,6 @@ describe('Neighbours tables — CHECKs, triggers and privileges', () => {
       () => `notice_id = '${noticeId}'`,
       'account_id = account_id',
     ],
-    ['neighbour_post_photos', () => `id = '${photoId}'`, 'created_at = now()'],
     [
       'neighbour_item_handovers',
       () => `post_id = '${handoverPostId}'`,
@@ -889,6 +888,44 @@ describe('Neighbours tables — CHECKs, triggers and privileges', () => {
     });
   });
 
+  it('a post photo is never updated, and deleted only once its file is marked deleted', async () => {
+    expect(await privileges('neighbour_post_photos')).toEqual({
+      select: true,
+      insert: true,
+      update: false,
+      delete: true,
+      truncate: false,
+    });
+    for (const client of [app, migrator]) {
+      await expect(
+        attempt(
+          client,
+          `DELETE FROM neighbour_post_photos WHERE id = '${photoId}'`,
+        ),
+      ).rejects.toThrow(/a photo goes only with its deleted file/);
+      await expect(
+        attempt(
+          migrator,
+          `UPDATE neighbour_post_photos SET created_at = now() WHERE id = '${photoId}'`,
+        ),
+      ).rejects.toThrow(/append-only/);
+    }
+    await expect(
+      attempt(migrator, 'TRUNCATE neighbour_post_photos'),
+    ).rejects.toThrow(/append-only|cannot truncate/);
+    // Its file marked deleted (what an erasure does): the row goes with it,
+    // and then the file's row can go too.
+    const gone = await asApp(
+      `UPDATE files SET deleted_at = now()
+        WHERE id = (SELECT file_id FROM neighbour_post_photos WHERE id = '${photoId}')`,
+      `DELETE FROM neighbour_post_photos WHERE id = '${photoId}'`,
+      `DELETE FROM files WHERE deleted_at IS NOT NULL
+        AND id NOT IN (SELECT file_id FROM neighbour_post_photos)
+        AND id NOT IN (SELECT file_id FROM neighbour_complaint_attachments)`,
+    );
+    expect(gone!.rowCount).toBe(1);
+  });
+
   it('a household is welcomed once', async () => {
     await expect(
       asApp(
@@ -899,7 +936,7 @@ describe('Neighbours tables — CHECKs, triggers and privileges', () => {
     ).rejects.toThrow(/neighbour_welcomes_once_per_household/);
   });
 
-  it('nothing of the neighbours domain is deleted by the app, but a block', async () => {
+  it('nothing of the neighbours domain is deleted by the app, but a block and an erased photo', async () => {
     const deletable: string[] = [];
     for (const table of [
       'neighbour_settings',
@@ -930,6 +967,6 @@ describe('Neighbours tables — CHECKs, triggers and privileges', () => {
       });
       if (p.delete) deletable.push(table);
     }
-    expect(deletable).toEqual(['neighbour_blocks']);
+    expect(deletable).toEqual(['neighbour_post_photos', 'neighbour_blocks']);
   });
 });

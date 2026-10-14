@@ -21,7 +21,7 @@ import { PostsService } from '../posts/posts.service';
  * - the bodies of the messages they sent, on complaints and in masked
  *   conversations (the one UPDATE those tables' triggers let through);
  * - the words and the place of the posts they wrote as a resident, which
- *   close, and those posts' photos, deleted;
+ *   close, and those posts' photos: the files and their photo rows;
  * - the notes they gave the staff on a claim or a report; their pending
  *   claims are taken back;
  * - their conversations close, and their blocks, either way, are deleted.
@@ -85,13 +85,13 @@ export class NeighboursLifecycle implements OnModuleInit {
     await tx.neighbourBlock.deleteMany({
       where: { OR: [{ blockerId: accountId }, { blockedId: accountId }] },
     });
-    // The photos of their posts: marked now, the objects after the commit.
+    // The photos of their posts: each file marked deleted and its photo row
+    // gone with it, now; the objects and the file rows after the commit. A
+    // photo row left behind would keep its file's row from ever being
+    // deleted (the files sweep would try again on every run).
     const photos = await tx.neighbourPostPhoto.findMany({
-      where: {
-        post: { authorId: accountId, authorSide: 'resident' },
-        file: { deletedAt: null },
-      },
-      select: { fileId: true },
+      where: { post: { authorId: accountId, authorSide: 'resident' } },
+      select: { id: true, fileId: true },
       orderBy: { fileId: 'asc' },
     });
     for (const p of photos)
@@ -100,6 +100,10 @@ export class NeighboursLifecycle implements OnModuleInit {
         { id: p.fileId, purpose: 'neighbour_post_photo' },
         'erasure',
       );
+    if (photos.length)
+      await tx.neighbourPostPhoto.deleteMany({
+        where: { id: { in: photos.map((p) => p.id) } },
+      });
     return photos.map((p) => async () => {
       await this.files.purge(p.fileId);
     });

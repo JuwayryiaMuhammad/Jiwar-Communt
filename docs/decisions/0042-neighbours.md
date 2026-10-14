@@ -91,7 +91,7 @@ One new category, `neighbours`; twenty-three kinds; nothing critical. Params are
 ### Privacy and audit
 
 - Audit rows carry ids, keys, statuses, counts and reason codes. Never a complaint's or a post's words, a notice's text, a note or a message; a conversation's rows name the conversation and its post, never its other side.
-- **Erasure**, as in R2: the person's words go and the rows stay — the bodies of their complaint and conversation messages; the words, place and photos of the posts they wrote as a resident, which close; their notes on a claim or a report. Their conversations close and their blocks are deleted. What the staff wrote stays, and so does a complaint's evidence.
+- **Erasure**, as in R2: the person's words go and the rows stay — the bodies of their complaint and conversation messages; the words, place and photos of the posts they wrote as a resident, which close; their notes on a claim or a report. A photo's row goes with its file, so nothing is left for the files sweep to retry. Their conversations close and their blocks are deleted. What the staff wrote stays, and so does a complaint's evidence.
 - **Leaving:** someone with no place left in the compound has no post on a board and no open conversation. Their complaints stay with the staff.
 - **Export** (`neighbours`): the account's complaints with its own thread, the notices it still answers for, its posts, claims, blocks and its side of each conversation. A sender is `mine` or not; the other side's messages are a count; no first name, even once shown.
 
@@ -99,7 +99,7 @@ One new category, `neighbours`; twenty-three kinds; nothing critical. Params are
 
 - A sixth domain, with `neighbours` in the lint boundaries; it may import community only.
 - Four permissions; existing compounds get them from `pnpm access:sync`, as before.
-- Nineteen tables in six migrations (`20261020090000` to `20261020090500`); 62 routes.
+- Nineteen tables in seven migrations (`20261020090000` to `20261020090600`); 62 routes. The seventh lets an erased post photo's row go with its file: left behind, it kept the file's row from ever being deleted, and the files sweep then walked every compound twice on every run.
 - Core gains `onHouseholdStarted`, and the two-language text rule moves from engagement to `src/core/common/localized.ts`.
 - `files_content_type_for_purpose` and `files_size_for_purpose` are recreated for the two purposes.
 - The manager dashboard gains complaints, the lost-and-found desk, reported conversations and the neighbours setup.

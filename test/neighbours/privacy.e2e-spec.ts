@@ -279,10 +279,11 @@ describe('Neighbours — export, erasure and leaving', () => {
         'ERASE-MY-REPLY',
       );
 
+      const photoFileId = await n.file(p, 'neighbour_post_photo');
       const post = await n.post(p, {
         body: 'ERASE-POST',
         place: 'ERASE-PLACE',
-        photoFileIds: [await n.file(p, 'neighbour_post_photo')],
+        photoFileIds: [photoFileId],
       });
       const waiting = await n.claim(other, post, 'ERASE-KEPT-OTHER-CLAIM');
       const claimed = await n.claim(
@@ -398,8 +399,23 @@ describe('Neighbours — export, erasure and leaving', () => {
           body: null,
           place: null,
         });
-      expect(db.photos).toHaveLength(1);
-      expect(db.photos[0].file?.deletedAt ?? 'purged').not.toBeNull();
+      // Their photo: its row went with its file, and its file's row is gone
+      // too, so the files sweep has nothing left to retry.
+      expect(db.photos).toEqual([]);
+      expect(
+        await n.x.asManager(s.c, () =>
+          n.x.prisma.tenant.storedFile.count({
+            where: { id: photoFileId },
+          }),
+        ),
+      ).toBe(0);
+      expect(
+        await n.x.asManager(s.c, () =>
+          n.x.prisma.tenant.storedFile.count({
+            where: { deletedAt: { not: null } },
+          }),
+        ),
+      ).toBe(0);
       // The claim on their post is declined; their own is taken back, noteless.
       expect(
         Object.fromEntries(db.claims.map((c) => [c.id, [c.status, c.note]])),

@@ -4098,7 +4098,7 @@ model NeighbourPost {
   @@map("neighbour_posts")
 }
 
-/// Append-only.
+/// Never updated; deleted only with its file, by an erasure (trigger).
 model NeighbourPostPhoto {
   id        String   @id @db.Uuid
   tenantId  String   @map("tenant_id") @db.Uuid

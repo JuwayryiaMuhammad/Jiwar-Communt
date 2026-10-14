@@ -25,6 +25,8 @@ import {
   PackageSearch,
   ClipboardCheck,
   Dumbbell,
+  IdCard,
+  Receipt,
   Scale,
   ScrollText,
   Settings,
@@ -214,6 +216,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/gate', label: 'Gate', icon: <DoorOpen aria-hidden />, show: can('gate.read') },
         { href: '/parcels', label: 'Parcels', icon: <Package aria-hidden />, show: can('parcels.manage') },
         { href: '/staff', label: 'Staff', icon: <UserCog aria-hidden />, show: can('accounts.read') },
+      ],
+    },
+    {
+      label: 'Club',
+      items: [
+        { href: '/club/memberships', label: 'Memberships', icon: <IdCard aria-hidden />, show: can('club.billing') },
+        { href: '/club/plans', label: 'Plans', icon: <Receipt aria-hidden />, show: can('facilities.manage') || can('club.billing') },
       ],
     },
     {

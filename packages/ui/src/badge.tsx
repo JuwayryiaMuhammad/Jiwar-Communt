@@ -81,6 +81,10 @@ const STATUS_TONE: Record<string, Tone> = {
   resolved: 'green',
   dismissed: 'beige',
   withdrawn: 'beige',
+  // Bookings and the club (ADR 0044). `confirmed`, `expired` and the others
+  // are above.
+  no_show: 'error',
+  expiring: 'terracotta',
 };
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {

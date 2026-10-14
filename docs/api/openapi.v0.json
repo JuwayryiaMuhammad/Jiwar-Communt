@@ -4298,10 +4298,10 @@
           "schedule": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/VisitScheduleDto"
+                "$ref": "#/components/schemas/VisitorScheduleDto"
               }
             ],
-            "description": "Recurring passes only; checked by the service."
+            "description": "Recurring passes only: the days of the week and the times of day (compound time zone) the code opens the gate, between `validFrom` and `validUntil`."
           },
           "validFrom": {
             "format": "date-time",
@@ -4552,21 +4552,6 @@
         "required": [
           "data",
           "nextCursor"
-        ],
-        "type": "object"
-      },
-      "DecideDto": {
-        "properties": {
-          "decision": {
-            "enum": [
-              "approve",
-              "deny"
-            ],
-            "type": "string"
-          }
-        },
-        "required": [
-          "decision"
         ],
         "type": "object"
       },
@@ -6720,6 +6705,21 @@
         ],
         "type": "object"
       },
+      "GateDecisionDto": {
+        "properties": {
+          "decision": {
+            "enum": [
+              "approve",
+              "deny"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "type": "object"
+      },
       "GateDecisionSource": {
         "enum": [
           "household",
@@ -7896,7 +7896,7 @@
           "schedule": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/VisitScheduleDto"
+                "$ref": "#/components/schemas/VisitorScheduleDto"
               }
             ],
             "nullable": true,
@@ -10266,7 +10266,7 @@
           "schedule": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/VisitScheduleDto"
+                "$ref": "#/components/schemas/VisitorScheduleDto"
               }
             ],
             "nullable": true,
@@ -10626,6 +10626,31 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "PermissionDecisionDto": {
+        "properties": {
+          "decision": {
+            "enum": [
+              "approve",
+              "decline"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "description": "What the person is told (at most 1000 characters). Never stored in the audit trail.",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode",
+          "reason",
+          "decision"
         ],
         "type": "object"
       },
@@ -12314,6 +12339,23 @@
           "cycle",
           "dueAt",
           "escalatedAt"
+        ],
+        "type": "object"
+      },
+      "RequestMessageCreatedView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -20173,28 +20215,6 @@
         ],
         "type": "object"
       },
-      "VisitScheduleDto": {
-        "properties": {
-          "days": {
-            "description": "0 (Sunday) … 6.",
-            "items": {
-              "type": "number"
-            },
-            "type": "array"
-          },
-          "windows": {
-            "items": {
-              "$ref": "#/components/schemas/VisitWindowDto"
-            },
-            "type": "array"
-          }
-        },
-        "required": [
-          "days",
-          "windows"
-        ],
-        "type": "object"
-      },
       "VisitSide": {
         "enum": [
           "technician",
@@ -20311,7 +20331,7 @@
           "schedule": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/VisitScheduleDto"
+                "$ref": "#/components/schemas/VisitorScheduleDto"
               }
             ],
             "nullable": true,
@@ -20382,6 +20402,32 @@
         ],
         "type": "string"
       },
+      "VisitorScheduleDto": {
+        "properties": {
+          "days": {
+            "description": "Days of the week the windows apply: 0 (Sunday) … 6. Checked by the service (`INVALID_VALUE` with `min`, `max`).",
+            "example": [
+              2,
+              4
+            ],
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/VisitorWindowDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "days",
+          "windows"
+        ],
+        "type": "object"
+      },
       "VisitorTokenDto": {
         "properties": {
           "token": {
@@ -20391,6 +20437,27 @@
         },
         "required": [
           "token"
+        ],
+        "type": "object"
+      },
+      "VisitorWindowDto": {
+        "properties": {
+          "from": {
+            "description": "`HH:mm`, a time of day in the compound's time zone.",
+            "example": "18:00",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "type": "string"
+          },
+          "to": {
+            "description": "`HH:mm`. Before `from`: an overnight window (22:00–02:00 ends the next morning). Never equal to `from`.",
+            "example": "23:00",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
         ],
         "type": "object"
       },
@@ -23812,7 +23879,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DecideDto"
+                "$ref": "#/components/schemas/PermissionDecisionDto"
               }
             }
           },
@@ -24319,7 +24386,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DecideDto"
+                "$ref": "#/components/schemas/GateDecisionDto"
               }
             }
           },
@@ -28149,7 +28216,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MessageCreatedView"
+                  "$ref": "#/components/schemas/RequestMessageCreatedView"
                 }
               }
             },
@@ -29268,7 +29335,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MessageCreatedView"
+                  "$ref": "#/components/schemas/RequestMessageCreatedView"
                 }
               }
             },

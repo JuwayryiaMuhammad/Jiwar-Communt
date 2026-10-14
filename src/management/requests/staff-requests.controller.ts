@@ -36,7 +36,7 @@ import { MessagesService } from './messages.service';
 import { RatingService } from './rating.service';
 import { RequestsService } from './requests.service';
 import {
-  MessageCreatedView,
+  RequestMessageCreatedView,
   StaffRequestMessageView,
 } from './views/message.views';
 import {
@@ -145,12 +145,14 @@ export class StaffRequestsController {
   @NoStore()
   @ApiOperation({ summary: 'Reply to a request, or add a staff note' })
   @Idempotent()
-  @ApiCreatedResponse({ type: MessageCreatedView })
+  @ApiCreatedResponse({ type: RequestMessageCreatedView })
   async post(
     @Param('id', parseId()) id: string,
     @Body() dto: PostStaffRequestMessageDto,
-  ): Promise<MessageCreatedView> {
-    return MessageCreatedView.from(await this.messages.post(id, 'staff', dto));
+  ): Promise<RequestMessageCreatedView> {
+    return RequestMessageCreatedView.from(
+      await this.messages.post(id, 'staff', dto),
+    );
   }
 
   /** Taken in hand without a message: a response, the clock stops. */

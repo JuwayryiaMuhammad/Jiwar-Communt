@@ -26,7 +26,7 @@ import {
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import {
-  BoardQueryDto,
+  SuggestionBoardQueryDto,
   CreateSuggestionDto,
   DoneNoteDto,
   MoveSuggestionDto,
@@ -102,7 +102,7 @@ export class SuggestionBoardController {
   @ApiOperation({ summary: 'List the suggestions on the board' })
   @ApiOkResponse({ type: ListOf(BoardSuggestionView) })
   async list(
-    @Query() q: BoardQueryDto,
+    @Query() q: SuggestionBoardQueryDto,
   ): Promise<ListResponse<BoardSuggestionView>> {
     return toList(await this.suggestions.board(q), (s) =>
       BoardSuggestionView.from(s),

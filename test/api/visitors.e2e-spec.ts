@@ -266,6 +266,68 @@ describe('API v0 — visitors (ADR 0028)', () => {
     ]);
   });
 
+  it("the mobile team's recurring body: windows are times of day", async () => {
+    // Their exact body, dated from now. It followed the contract as it was
+    // published: the schedule's window took a maintenance visit's schema
+    // (two classes named VisitWindowDto), so it sent `startsAt`/`endsAt`.
+    const from = new Date(Date.now() + 3_600_000);
+    const mobile = {
+      kind: 'recurring',
+      partySize: 4,
+      validFrom: from.toISOString(),
+      validUntil: new Date(from.getTime() + 30 * DAY).toISOString(),
+      schedule: {
+        days: [2, 4],
+        windows: [
+          {
+            startsAt: from.toISOString(),
+            endsAt: new Date(from.getTime() + 2 * 3_600_000).toISOString(),
+          },
+        ],
+      },
+      visitorName: 'Family visit',
+    };
+    const refused = await create(owner(), mobile);
+    expect(status(refused)).toEqual({ status: 400, code: 'VALIDATION_FAILED' });
+    expect(err(refused).fields).toEqual([
+      { field: 'schedule.windows.0.startsAt', code: 'FIELD_NOT_ALLOWED' },
+      { field: 'schedule.windows.0.endsAt', code: 'FIELD_NOT_ALLOWED' },
+      { field: 'schedule.windows.0.from', code: 'FIELD_REQUIRED' },
+      { field: 'schedule.windows.0.to', code: 'FIELD_REQUIRED' },
+    ]);
+
+    const fixed = {
+      ...mobile,
+      schedule: { days: [2, 4], windows: [{ from: '16:00', to: '18:00' }] },
+    };
+    const created = await create(owner(), fixed).expect(201);
+    expect(created.body).toMatchObject({
+      kind: 'recurring',
+      partySize: 4,
+      schedule: fixed.schedule,
+      status: 'active',
+    });
+    // An overnight window stays allowed; a malformed time names its field.
+    await create(
+      owner(),
+      passBody({
+        ...RECURRING,
+        schedule: { days: [5], windows: [{ from: '22:00', to: '02:00' }] },
+      }),
+    ).expect(201);
+    expect(
+      err(
+        await create(
+          owner(),
+          passBody({
+            ...RECURRING,
+            schedule: { days: [5], windows: [{ from: '7pm', to: '23:00' }] },
+          }),
+        ),
+      ).fields,
+    ).toEqual([{ field: 'schedule.windows.0.from', code: 'INVALID_FORMAT' }]);
+  });
+
   it('the compound caps active passes per unit', async () => {
     const fresh = await w.helpers.unit(w.a);
     const host = await w.helpers.resident(w.a, [fresh.id]);

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { VisitorPassKind } from '@prisma/client';
-import { VisitScheduleDto } from '../dto/visitors.dto';
+import { VisitorScheduleDto } from '../dto/visitors.dto';
 import type { VisitorPage } from '../visitor-page.service';
 import type { PassStatus } from '../visitor-passes.service';
 
@@ -34,8 +34,8 @@ export class VisitorPageView {
   })
   timeZone: string;
 
-  @ApiProperty({ type: VisitScheduleDto, nullable: true })
-  schedule: VisitScheduleDto | null;
+  @ApiProperty({ type: VisitorScheduleDto, nullable: true })
+  schedule: VisitorScheduleDto | null;
 
   @ApiProperty({ enum: ['active', 'used', 'cancelled', 'expired'] })
   status: PassStatus;

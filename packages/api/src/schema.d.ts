@@ -7939,8 +7939,8 @@ export interface components {
         CreateVisitorPassDto: {
             kind: components["schemas"]["VisitorPassKind"];
             partySize: number;
-            /** @description Recurring passes only; checked by the service. */
-            schedule?: components["schemas"]["VisitScheduleDto"];
+            /** @description Recurring passes only: the days of the week and the times of day (compound time zone) the code opens the gate, between `validFrom` and `validUntil`. */
+            schedule?: components["schemas"]["VisitorScheduleDto"];
             /** Format: date-time */
             validFrom: string;
             /**
@@ -8022,10 +8022,6 @@ export interface components {
         DataExportViewList: {
             data: components["schemas"]["DataExportView"][];
             nextCursor: string | null;
-        };
-        DecideDto: {
-            /** @enum {string} */
-            decision: "approve" | "deny";
         };
         DecisionResponse: {
             decisionSource: components["schemas"]["GateDecisionSource"] | null;
@@ -8626,6 +8622,10 @@ export interface components {
              */
             flagId: string;
         };
+        GateDecisionDto: {
+            /** @enum {string} */
+            decision: "approve" | "deny";
+        };
         /** @enum {string} */
         GateDecisionSource: "household" | "standing_instruction" | "timeout" | "guard";
         /** @enum {string} */
@@ -8965,7 +8965,7 @@ export interface components {
              * @example JWR1.q3Jz…
              */
             qrPayload: string | null;
-            schedule: components["schemas"]["VisitScheduleDto"] | null;
+            schedule: components["schemas"]["VisitorScheduleDto"] | null;
             /** @enum {string} */
             status: "active" | "used" | "cancelled" | "expired";
             /** Format: date-time */
@@ -9672,7 +9672,7 @@ export interface components {
             /** @description The caller is the host. */
             mine: boolean;
             partySize: number;
-            schedule: components["schemas"]["VisitScheduleDto"] | null;
+            schedule: components["schemas"]["VisitorScheduleDto"] | null;
             /** @enum {string} */
             status: "active" | "used" | "cancelled" | "expired";
             /** Format: date-time */
@@ -9777,6 +9777,14 @@ export interface components {
         PendingRegistrationViewList: {
             data: components["schemas"]["PendingRegistrationView"][];
             nextCursor: string | null;
+        };
+        PermissionDecisionDto: {
+            /** @enum {string} */
+            decision: "approve" | "decline";
+            /** @description What the person is told (at most 1000 characters). Never stored in the audit trail. */
+            reason: string;
+            /** @description A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. */
+            reasonCode: string;
         };
         PermissionView: {
             key: string;
@@ -10298,6 +10306,12 @@ export interface components {
             dueAt: string;
             /** Format: date-time */
             escalatedAt: string;
+        };
+        RequestMessageCreatedView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
         };
         RequestOtpDto: {
             /** @description Email or phone (local Egyptian format or international). */
@@ -12599,11 +12613,6 @@ export interface components {
              */
             startsAt: string;
         };
-        VisitScheduleDto: {
-            /** @description 0 (Sunday) … 6. */
-            days: number[];
-            windows: components["schemas"]["VisitWindowDto"][];
-        };
         /** @enum {string} */
         VisitSide: "technician" | "resident" | "system";
         VisitSlotView: {
@@ -12642,7 +12651,7 @@ export interface components {
             partySize: number;
             /** @description What the QR encodes (`JWR1.<token>`). Only while active. */
             qrPayload: string | null;
-            schedule: components["schemas"]["VisitScheduleDto"] | null;
+            schedule: components["schemas"]["VisitorScheduleDto"] | null;
             /** @enum {string} */
             status: "active" | "used" | "cancelled" | "expired";
             /**
@@ -12665,9 +12674,32 @@ export interface components {
         };
         /** @enum {string} */
         VisitorPassKind: "one_time" | "recurring";
+        VisitorScheduleDto: {
+            /**
+             * @description Days of the week the windows apply: 0 (Sunday) … 6. Checked by the service (`INVALID_VALUE` with `min`, `max`).
+             * @example [
+             *       2,
+             *       4
+             *     ]
+             */
+            days: number[];
+            windows: components["schemas"]["VisitorWindowDto"][];
+        };
         VisitorTokenDto: {
             /** @description The fragment of the visitor link. Anything that is not a live link answers 404 VISITOR_PASS_NOT_FOUND. */
             token: string;
+        };
+        VisitorWindowDto: {
+            /**
+             * @description `HH:mm`, a time of day in the compound's time zone.
+             * @example 18:00
+             */
+            from: string;
+            /**
+             * @description `HH:mm`. Before `from`: an overnight window (22:00–02:00 ends the next morning). Never equal to `from`.
+             * @example 23:00
+             */
+            to: string;
         };
         VoteCastView: {
             /** Format: uuid */
@@ -14382,7 +14414,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DecideDto"];
+                "application/json": components["schemas"]["PermissionDecisionDto"];
             };
         };
         responses: {
@@ -14665,7 +14697,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DecideDto"];
+                "application/json": components["schemas"]["GateDecisionDto"];
             };
         };
         responses: {
@@ -16741,7 +16773,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MessageCreatedView"];
+                    "application/json": components["schemas"]["RequestMessageCreatedView"];
                 };
             };
         };
@@ -17304,7 +17336,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MessageCreatedView"];
+                    "application/json": components["schemas"]["RequestMessageCreatedView"];
                 };
             };
         };

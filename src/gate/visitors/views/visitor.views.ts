@@ -10,7 +10,7 @@ import type {
   PassListItem,
   PassStatus,
 } from '../visitor-passes.service';
-import { VisitScheduleDto } from '../dto/visitors.dto';
+import { VisitorScheduleDto } from '../dto/visitors.dto';
 
 const STATUSES = ['active', 'used', 'cancelled', 'expired'];
 
@@ -55,8 +55,8 @@ export class IssuedPassView {
   @ApiProperty({ type: String, format: 'date-time' })
   validUntil: Date;
 
-  @ApiProperty({ type: VisitScheduleDto, nullable: true })
-  schedule: VisitScheduleDto | null;
+  @ApiProperty({ type: VisitorScheduleDto, nullable: true })
+  schedule: VisitorScheduleDto | null;
 
   @ApiProperty({ enum: STATUSES })
   status: PassStatus;
@@ -93,8 +93,8 @@ export class PassView {
   @ApiProperty({ type: String, format: 'date-time' })
   validUntil: Date;
 
-  @ApiProperty({ type: VisitScheduleDto, nullable: true })
-  schedule: VisitScheduleDto | null;
+  @ApiProperty({ type: VisitorScheduleDto, nullable: true })
+  schedule: VisitorScheduleDto | null;
 
   @ApiProperty({ enum: STATUSES })
   status: PassStatus;

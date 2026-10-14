@@ -34,7 +34,7 @@ import { MessagesService } from './messages.service';
 import { RatingService } from './rating.service';
 import { RequestsService } from './requests.service';
 import {
-  MessageCreatedView,
+  RequestMessageCreatedView,
   ResidentRequestMessageView,
 } from './views/message.views';
 import {
@@ -108,12 +108,12 @@ export class ResidentRequestsController {
   @NoStore()
   @ApiOperation({ summary: 'Write on my request' })
   @Idempotent()
-  @ApiCreatedResponse({ type: MessageCreatedView })
+  @ApiCreatedResponse({ type: RequestMessageCreatedView })
   async post(
     @Param('id', parseId()) id: string,
     @Body() dto: PostRequestMessageDto,
-  ): Promise<MessageCreatedView> {
-    return MessageCreatedView.from(
+  ): Promise<RequestMessageCreatedView> {
+    return RequestMessageCreatedView.from(
       await this.messages.post(id, 'resident', dto),
     );
   }

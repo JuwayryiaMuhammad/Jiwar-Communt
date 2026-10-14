@@ -8,7 +8,7 @@ import {
 } from '../../../core/common/http/personal';
 import type { AttachmentRead, MessageRead } from '../messages.service';
 
-export class MessageCreatedView {
+export class RequestMessageCreatedView {
   @ApiProperty({ type: String, format: 'uuid' })
   id: string;
   @ApiProperty({ type: String, format: 'date-time' })
@@ -17,7 +17,7 @@ export class MessageCreatedView {
   /** No body: the stored replay of a post holds no free text. */
   static from(
     m: Pick<ManagementRequestMessage, 'id' | 'createdAt'>,
-  ): MessageCreatedView {
+  ): RequestMessageCreatedView {
     return { id: m.id, createdAt: m.createdAt };
   }
 }

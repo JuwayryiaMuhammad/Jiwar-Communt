@@ -6,6 +6,7 @@ import {
 } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsDate,
   IsEnum,
   IsInt,
@@ -13,30 +14,57 @@ import {
   IsOptional,
   IsString,
   Length,
+  Matches,
   Max,
   Min,
+  ValidateNested,
 } from 'class-validator';
 import { IsPhone } from '../../../core/common/validation/is-phone';
 import { withParams } from '../../../core/common/validation/validation-errors';
 
 const PARTY = { min: 1, max: 50 };
 
-export class VisitWindowDto {
-  @ApiProperty({ type: String, example: '18:00' })
-  from: string;
+/** A time of day in the compound's time zone (ADR 0028), like a worker's. */
+const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+export class VisitorWindowDto {
   @ApiProperty({
     type: String,
-    example: '23:00',
-    description: 'Before `from`: an overnight window.',
+    pattern: '^([01]\\d|2[0-3]):[0-5]\\d$',
+    example: '18:00',
+    description: "`HH:mm`, a time of day in the compound's time zone.",
   })
+  @IsString()
+  @Matches(TIME)
+  from: string;
+
+  @ApiProperty({
+    type: String,
+    pattern: '^([01]\\d|2[0-3]):[0-5]\\d$',
+    example: '23:00',
+    description:
+      '`HH:mm`. Before `from`: an overnight window (22:00–02:00 ends the next morning). Never equal to `from`.',
+  })
+  @IsString()
+  @Matches(TIME)
   to: string;
 }
 
-export class VisitScheduleDto {
-  @ApiProperty({ type: [Number], description: '0 (Sunday) … 6.' })
+export class VisitorScheduleDto {
+  @ApiProperty({
+    type: [Number],
+    example: [2, 4],
+    description:
+      'Days of the week the windows apply: 0 (Sunday) … 6. Checked by the service (`INVALID_VALUE` with `min`, `max`).',
+  })
+  @IsArray()
   days: number[];
-  @ApiProperty({ type: [VisitWindowDto] })
-  windows: VisitWindowDto[];
+
+  @ApiProperty({ type: [VisitorWindowDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => VisitorWindowDto)
+  windows: VisitorWindowDto[];
 }
 
 export class CreateVisitorPassDto {
@@ -69,13 +97,16 @@ export class CreateVisitorPassDto {
   validUntil: Date;
 
   @ApiProperty({
-    type: VisitScheduleDto,
+    type: VisitorScheduleDto,
     required: false,
-    description: 'Recurring passes only; checked by the service.',
+    description:
+      'Recurring passes only: the days of the week and the times of day (compound time zone) the code opens the gate, between `validFrom` and `validUntil`.',
   })
   @IsOptional()
   @IsObject()
-  schedule?: VisitScheduleDto;
+  @ValidateNested()
+  @Type(() => VisitorScheduleDto)
+  schedule?: VisitorScheduleDto;
 
   @ApiProperty({
     type: String,

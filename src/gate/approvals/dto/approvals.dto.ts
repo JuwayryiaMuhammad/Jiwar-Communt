@@ -73,7 +73,7 @@ export class CreateGateRequestDto {
 
 const DECISIONS = ['approve', 'deny'] as const;
 
-export class DecideDto {
+export class GateDecisionDto {
   @ApiProperty({ enum: DECISIONS })
   @IsIn(DECISIONS, withParams({ allowed: [...DECISIONS] }))
   decision: (typeof DECISIONS)[number];

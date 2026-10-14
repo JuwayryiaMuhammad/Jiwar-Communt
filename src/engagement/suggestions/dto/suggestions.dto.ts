@@ -182,7 +182,7 @@ export class StaffSuggestionsQueryDto extends PageQueryDto {
   published?: 'true' | 'false';
 }
 
-export class BoardQueryDto extends PageQueryDto {
+export class SuggestionBoardQueryDto extends PageQueryDto {
   @ApiProperty({ type: String, format: 'uuid', required: false })
   @IsOptional()
   @IsUUID()

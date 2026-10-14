@@ -24,7 +24,7 @@ import { ReasonDto, reasonOf } from '../../core/common/http/reason.dto';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { MemberGrantResponse } from '../residents/views/me-units.views';
 import {
-  DecideDto,
+  PermissionDecisionDto,
   GrantDto,
   RevokeByManagementDto,
   RevokeDto,
@@ -137,7 +137,7 @@ export class MemberPermissionsController {
   @ApiNoContentResponse()
   async decide(
     @Param('id', parseId()) id: string,
-    @Body() dto: DecideDto,
+    @Body() dto: PermissionDecisionDto,
   ): Promise<void> {
     await this.permissions.decideDeferredAction(
       id,

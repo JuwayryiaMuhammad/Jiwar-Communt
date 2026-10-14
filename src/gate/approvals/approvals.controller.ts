@@ -23,7 +23,7 @@ import {
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import { ApprovalsService, type NewRequest } from './approvals.service';
-import { CreateGateRequestDto, DecideDto } from './dto/approvals.dto';
+import { CreateGateRequestDto, GateDecisionDto } from './dto/approvals.dto';
 import {
   DecisionResponse,
   GuardRequestResponse,
@@ -90,7 +90,7 @@ export class HostApprovalsController {
   @ApiOkResponse({ type: DecisionResponse })
   decide(
     @Param('id', parseId()) id: string,
-    @Body() dto: DecideDto,
+    @Body() dto: GateDecisionDto,
   ): Promise<DecisionResponse> {
     return this.approvals.decide(id, dto.decision);
   }

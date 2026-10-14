@@ -37,7 +37,7 @@ export class RevokeByManagementDto extends ReasonDto {
 }
 
 /** A decline needs a reason; an approval takes none. */
-export class DecideDto extends ReasonDto {
+export class PermissionDecisionDto extends ReasonDto {
   @ApiProperty({ enum: DECISIONS })
   @IsIn(DECISIONS, withParams({ allowed: [...DECISIONS] }))
   decision: (typeof DECISIONS)[number];

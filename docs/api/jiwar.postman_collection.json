@@ -8873,9 +8873,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"decision\": \"approve\"\n}"
+              "raw": "{\n  \"reasonCode\": \"\",\n  \"reason\": \"\",\n  \"decision\": \"approve\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `decision` | `approve` \\| `deny` | yes |  |\n\n**Responses:** 204",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `decision` | `approve` \\| `decline` | yes |  |\n| `reason` | string | yes | What the person is told (at most 1000 characters). Never stored in the audit trail. |\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 204",
             "header": [
               {
                 "description": "",
@@ -15699,7 +15699,7 @@
               },
               "raw": "{\n  \"kind\": \"one_time\",\n  \"partySize\": 1,\n  \"validFrom\": \"2026-01-01T09:00:00.000Z\",\n  \"validUntil\": \"2026-01-01T09:00:00.000Z\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `kind` | `one_time` \\| `recurring` | yes |  |\n| `partySize` | number | yes |  |\n| `schedule` | object |  | Recurring passes only; checked by the service. |\n| `validFrom` | string (date-time) | yes |  |\n| `validUntil` | string (date-time) | yes | At most 7 days after `validFrom` (one-time), 180 (recurring). |\n| `visitorName` | string |  | Shown to the host only; deleted 30 days after the pass ends. |\n| `visitorPhone` | string |  | Never returned after creation; deleted with the name. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `kind` | `one_time` \\| `recurring` | yes |  |\n| `partySize` | number | yes |  |\n| `schedule` | object |  | Recurring passes only: the days of the week and the times of day (compound time zone) the code opens the gate, between `validFrom` and `validUntil`. |\n| `validFrom` | string (date-time) | yes |  |\n| `validUntil` | string (date-time) | yes | At most 7 days after `validFrom` (one-time), 180 (recurring). |\n| `visitorName` | string |  | Shown to the host only; deleted 30 days after the pass ends. |\n| `visitorPhone` | string |  | Never returned after creation; deleted with the name. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",

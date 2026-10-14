@@ -140,3 +140,87 @@ export async function suspensionRow(
   });
   return id;
 }
+
+/** A monthly club plan. */
+export async function clubPlanRow(
+  tx: TenantTxClient,
+  tenantId: string,
+): Promise<string> {
+  const id = newId();
+  await tx.clubPlan.create({
+    data: {
+      id,
+      tenantId,
+      nameEn: 'Monthly',
+      nameAr: 'شهري',
+      durationKind: 'monthly',
+      price: 500,
+    },
+  });
+  return id;
+}
+
+/** The unit's club membership. */
+export async function membershipRow(
+  tx: TenantTxClient,
+  input: { tenantId: string; unitId: string; createdById: string },
+): Promise<string> {
+  const id = newId();
+  await tx.clubMembership.create({ data: { id, ...input } });
+  return id;
+}
+
+/** Someone a membership covers: an occupancy. */
+export async function coveredRow(
+  tx: TenantTxClient,
+  input: {
+    tenantId: string;
+    membershipId: string;
+    occupancyId: string;
+    addedById: string;
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.clubMembershipPerson.create({ data: { id, ...input } });
+  return id;
+}
+
+/** A payment for the membership, today. */
+export async function paymentRow(
+  tx: TenantTxClient,
+  input: {
+    tenantId: string;
+    membershipId: string;
+    planId: string;
+    recordedById: string;
+  },
+): Promise<string> {
+  const id = newId();
+  const today = new Date(new Date().toISOString().slice(0, 10));
+  await tx.clubPaymentRecord.create({
+    data: {
+      id,
+      ...input,
+      kind: 'payment',
+      amount: 500,
+      currency: 'EGP',
+      receiptNumber: `R-${id.slice(-12)}`,
+      paidOn: today,
+      periodStartsOn: today,
+      periodEndsOn: new Date(today.getTime() + 30 * 86_400_000),
+    },
+  });
+  return id;
+}
+
+/** A reminder before the membership ends. */
+export async function reminderRow(
+  tx: TenantTxClient,
+  input: { tenantId: string; membershipId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.clubExpiryReminder.create({
+    data: { id, ...input, endsOn: new Date('2031-01-01') },
+  });
+  return id;
+}

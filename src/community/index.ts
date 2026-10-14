@@ -41,6 +41,7 @@ export {
 export { CommunityFacilitiesPortModule } from './facilities-port.module';
 export {
   CommunityFacilitiesPort,
+  type ClubPerson,
   type FacilityAccount,
 } from './facilities-port';
 export {

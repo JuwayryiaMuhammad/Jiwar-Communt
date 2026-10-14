@@ -968,6 +968,17 @@ export const NOTIFICATION_KINDS = {
     target: 'booking',
     params: {},
   },
+  /**
+   * The unit's club membership ends within a week: to the people it covers
+   * who have an account, once per end date.
+   */
+  'club_membership.expiring': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'club_membership',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

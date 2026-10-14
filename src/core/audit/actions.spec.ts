@@ -84,6 +84,9 @@ describe('audit catalog', () => {
         'booking',
         'facility_closure',
         'booking_suspension',
+        'club_plan',
+        'club_membership',
+        'club_payment',
       ]).toContain(def.target);
     }
   });

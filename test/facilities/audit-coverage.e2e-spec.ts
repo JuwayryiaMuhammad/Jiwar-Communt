@@ -362,6 +362,107 @@ describe('Audit coverage — facilities', () => {
     });
   });
 
+  describe('the club', () => {
+    it('club_plan.created and .updated — duration and price by value, names as changed', async () => {
+      const res = await f
+        .http('post', '/staff/club-plans', s.manager.token, {
+          nameEn: `${MARKER} monthly`,
+          nameAr: `${MARKER} شهري`,
+          durationKind: 'monthly',
+          price: '500',
+        })
+        .expect(201);
+      const id = (res.body as { id: string }).id;
+      const created = await single('club_plan.created', id);
+      expect(created).toMatchObject(by(s.manager, 'club_plan'));
+      expect(created.changes).toMatchObject({
+        durationKind: { from: null, to: 'monthly' },
+        price: { from: null, to: '500.00' },
+        nameEn: { changed: true },
+        nameAr: { changed: true },
+      });
+      await f
+        .http('patch', `/staff/club-plans/${id}`, s.manager.token, {
+          price: '550',
+          nameEn: `${MARKER} m`,
+        })
+        .expect(200);
+      const updated = await single('club_plan.updated', id);
+      expect(updated.changes).toEqual({
+        price: { from: '500.00', to: '550.00' },
+        nameEn: { changed: true },
+      });
+    });
+
+    it('club_membership.created, .people_changed, club_payment.recorded and .reversed — ids, counts, amounts, codes', async () => {
+      const accountant = await f.accountant(s.c);
+      const plan = await f.plan(s.c, s.manager);
+      const res = await f
+        .http('post', '/staff/club-memberships', accountant.token, {
+          unitId: s.homeA.id,
+          people: [],
+        })
+        .expect(201);
+      const id = (res.body as { id: string }).id;
+      const created = await single('club_membership.created', id);
+      expect(created).toMatchObject(by(accountant, 'club_membership'));
+      expect(created.metadata).toEqual({ unitId: s.homeA.id, people: 0 });
+
+      const people = await f.people(s.c, accountant, s.homeA.id);
+      await f
+        .http('put', `/staff/club-memberships/${id}/people`, accountant.token, {
+          people: [{ occupancyId: people[0].id }],
+        })
+        .expect(200);
+      const changed = await single('club_membership.people_changed', id);
+      expect(changed.metadata).toEqual({
+        unitId: s.homeA.id,
+        added: 1,
+        removed: 0,
+      });
+
+      const paid = await f
+        .pay(accountant, id, plan, { receiptNumber: 'R-AUDIT-1' })
+        .expect(201);
+      const payment = paid.body as {
+        id: string;
+        periodStartsOn: string;
+        periodEndsOn: string;
+      };
+      const recorded = await single('club_payment.recorded', payment.id);
+      expect(recorded).toMatchObject(by(accountant, 'club_payment'));
+      expect(recorded.metadata).toEqual({
+        membershipId: id,
+        unitId: s.homeA.id,
+        planId: plan,
+        amount: '500.00',
+        currency: 'EGP',
+        receiptNumber: 'R-AUDIT-1',
+        paidOn: day(0),
+        periodStartsOn: payment.periodStartsOn,
+        periodEndsOn: payment.periodEndsOn,
+      });
+      const reversal = await f
+        .http(
+          'post',
+          `/staff/club-payments/${payment.id}/reverse`,
+          accountant.token,
+          { reasonCode: 'refunded' },
+        )
+        .expect(201);
+      const reversed = await single(
+        'club_payment.reversed',
+        (reversal.body as { id: string }).id,
+      );
+      expect(reversed.metadata).toEqual({
+        membershipId: id,
+        unitId: s.homeA.id,
+        reversesId: payment.id,
+        reasonCode: 'refunded',
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every facilities entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

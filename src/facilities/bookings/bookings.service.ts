@@ -29,6 +29,7 @@ import {
   FacilitiesService,
   facilityNotFound,
 } from '../setup/facilities.service';
+import { ClubService } from '../club/club.service';
 import { SuspensionsService } from '../suspensions/suspensions.service';
 import { assertCan, COUNTED, HOLDING } from './booking-rules';
 import {
@@ -112,6 +113,7 @@ export class BookingsService implements OnModuleInit {
     private readonly access: FacilitiesAccess,
     private readonly facilities: FacilitiesService,
     private readonly suspensions: SuspensionsService,
+    private readonly club: ClubService,
   ) {}
 
   onModuleInit(): void {
@@ -348,6 +350,19 @@ export class BookingsService implements OnModuleInit {
           },
         ]);
 
+      if (
+        rules.requiresMembership &&
+        !(await this.club.covers(
+          tx,
+          unitId,
+          this.ctx.accountId,
+          localDate(slot.startsAt, cal.timeZone),
+        ))
+      )
+        throw appError.forbidden(
+          ErrorCode.CLUB_MEMBERSHIP_REQUIRED,
+          'This facility is for club members',
+        );
       if (await closedOver(tx, facility.id, slot))
         throw appError.conflict(
           ErrorCode.FACILITY_CLOSED,

@@ -632,6 +632,29 @@ export const AUDIT_ACTIONS = {
   },
   // changes: the no-show rules by value.
   'facility.settings_changed': { log: 'tenant', target: 'tenant' },
+  // changes: duration, price and state by value; names as changed only.
+  'club_plan.created': {
+    log: 'tenant',
+    target: 'club_plan',
+    sensitive: ['nameEn', 'nameAr'],
+  },
+  'club_plan.updated': {
+    log: 'tenant',
+    target: 'club_plan',
+    sensitive: ['nameEn', 'nameAr'],
+  },
+  // metadata: unitId, people (a count).
+  'club_membership.created': { log: 'tenant', target: 'club_membership' },
+  // metadata: unitId, added and removed (counts). Never who.
+  'club_membership.people_changed': {
+    log: 'tenant',
+    target: 'club_membership',
+  },
+  // metadata: membershipId, unitId, planId, amount, currency, receiptNumber,
+  // paidOn, periodStartsOn, periodEndsOn.
+  'club_payment.recorded': { log: 'tenant', target: 'club_payment' },
+  // metadata: membershipId, unitId, reversesId, reasonCode.
+  'club_payment.reversed': { log: 'tenant', target: 'club_payment' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

@@ -422,6 +422,21 @@ export const ErrorCode = {
   BOOKING_SUSPENSION_NOT_FOUND: 'BOOKING_SUSPENSION_NOT_FOUND',
   /** It is over, or lifted already (409). */
   BOOKING_SUSPENSION_NOT_IN_FORCE: 'BOOKING_SUSPENSION_NOT_IN_FORCE',
+  /**
+   * The facility is for club members: the unit's membership is not active
+   * on the slot's day, or does not cover the booker (403).
+   */
+  CLUB_MEMBERSHIP_REQUIRED: 'CLUB_MEMBERSHIP_REQUIRED',
+  /** Unknown, or another compound's. */
+  CLUB_PLAN_NOT_FOUND: 'CLUB_PLAN_NOT_FOUND',
+  /** Unknown, or another compound's. */
+  CLUB_MEMBERSHIP_NOT_FOUND: 'CLUB_MEMBERSHIP_NOT_FOUND',
+  /** The unit has a membership already (409, params.membershipId). */
+  CLUB_MEMBERSHIP_EXISTS: 'CLUB_MEMBERSHIP_EXISTS',
+  /** Unknown, another compound's, or not a payment. */
+  CLUB_PAYMENT_NOT_FOUND: 'CLUB_PAYMENT_NOT_FOUND',
+  /** It was reversed already (409). */
+  CLUB_PAYMENT_ALREADY_REVERSED: 'CLUB_PAYMENT_ALREADY_REVERSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -535,6 +550,12 @@ export const FieldErrorCode = {
   CLOSURE_TOO_LONG: 'CLOSURE_TOO_LONG',
   /** A closure that has already ended. */
   CLOSURE_ENDED: 'CLOSURE_ENDED',
+  /** Not an active plan of the club. */
+  PLAN_NOT_AVAILABLE: 'PLAN_NOT_AVAILABLE',
+  /** Paid in the future, or longer ago than params.min. */
+  PAID_ON_OUT_OF_RANGE: 'PAID_ON_OUT_OF_RANGE',
+  /** Not one of the unit's residing occupancies or household members now. */
+  PERSON_NOT_OF_UNIT: 'PERSON_NOT_OF_UNIT',
 } as const;
 
 export type FieldErrorCode =

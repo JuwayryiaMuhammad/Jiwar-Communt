@@ -518,6 +518,8 @@ model Tenant {
   bookings                     Booking[]
   facilitySettings             FacilitySettings?
   bookingSuspensions           BookingSuspension[]
+  clubPlans                    ClubPlan[]
+  clubMemberships              ClubMembership[]
   announcements      Announcement[]
   communityEvents    CommunityEvent[]
   polls              Poll[]
@@ -939,6 +941,10 @@ model Account {
   facilityClosuresMade           FacilityClosure[]                   @relation("FacilityClosureCreator")
   facilityClosuresLifted         FacilityClosure[]                   @relation("FacilityClosureLifter")
   bookingSuspensionsLifted       BookingSuspension[]                 @relation("BookingSuspensionLifter")
+  clubMembershipsCreated         ClubMembership[]                    @relation("ClubMembershipCreator")
+  clubPeopleAdded                ClubMembershipPerson[]              @relation("ClubPersonAdder")
+  clubPeopleRemoved              ClubMembershipPerson[]              @relation("ClubPersonRemover")
+  clubPaymentsRecorded           ClubPaymentRecord[]                 @relation("ClubPaymentRecorder")
   neighbourConversationsAuthored NeighbourConversation[]             @relation("NeighbourConversationAuthor")
   neighbourConversationsStarted  NeighbourConversation[]             @relation("NeighbourConversationResponder")
   neighbourConversationMessages  NeighbourConversationMessage[]      @relation("NeighbourConversationMessageSender")
@@ -1045,6 +1051,7 @@ model Unit {
   neighbourWelcomes          NeighbourWelcome[]
   bookings                   Booking[]
   bookingSuspensions         BookingSuspension[]
+  clubMembership             ClubMembership?
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -1087,6 +1094,7 @@ model UnitOccupancy {
   registration  ResidentRegistration[]
 
   neighbourWelcome NeighbourWelcome?
+  clubCoverage ClubMembershipPerson[]
 
   @@unique([tenantId, id])
   @@index([tenantId, accountId])
@@ -1154,6 +1162,7 @@ model HouseholdMember {
   grants          HouseholdMemberGrant[]
   majorityInvites HouseholdInvite[]
   deferredActions HouseholdDeferredAction[]
+  clubCoverage ClubMembershipPerson[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, id, isMinor])
@@ -4623,4 +4632,138 @@ model BookingSuspension {
   @@index([tenantId, unitId, startsAt, id], map: "booking_suspensions_unit_idx")
   @@index([tenantId, startsAt, id], map: "booking_suspensions_starts_idx")
   @@map("booking_suspensions")
+}
+
+// ----------------------------------------------------------------------------
+// The club (ADR 0044): plans, a unit's membership and who it covers, and
+// the payments made at the office that keep it.
+// ----------------------------------------------------------------------------
+
+enum ClubDurationKind {
+  monthly
+  quarterly
+  annual
+  /// `duration_days` days.
+  custom
+
+  @@map("club_duration_kind")
+}
+
+enum ClubPaymentKind {
+  payment
+  reversal
+
+  @@map("club_payment_kind")
+}
+
+/// A plan the management offers. Never deleted; retired with `active`.
+model ClubPlan {
+  id           String           @id @db.Uuid
+  tenantId     String           @map("tenant_id") @db.Uuid
+  nameEn       String           @map("name_en")
+  nameAr       String           @map("name_ar")
+  durationKind ClubDurationKind @map("duration_kind")
+  durationDays Int?             @map("duration_days")
+  /// What the plan costs, in EGP: shown, not enforced.
+  price        Decimal          @db.Decimal(10, 2)
+  active       Boolean          @default(true)
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant   Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  payments ClubPaymentRecord[]
+
+  @@unique([tenantId, id])
+  @@map("club_plans")
+}
+
+/// A unit's membership: one per unit, created on its first use. Its rows
+/// of payments say when it is active; its people, whom it covers.
+model ClubMembership {
+  id          String   @id @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  unitId      String   @map("unit_id") @db.Uuid
+  createdById String   @map("created_by_account_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant    Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  unit      Unit                   @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  createdBy Account                @relation("ClubMembershipCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "club_memberships_tenant_id_created_by_fkey")
+  people    ClubMembershipPerson[]
+  payments  ClubPaymentRecord[]
+  reminders ClubExpiryReminder[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, unitId], map: "club_memberships_one_per_unit")
+  @@map("club_memberships")
+}
+
+/// Someone a membership covers: one of the unit's occupancies or household
+/// members (a minor too). Added, and later removed; never deleted. Covered
+/// only while that occupancy or membership of the household is active.
+model ClubMembershipPerson {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  membershipId      String    @map("membership_id") @db.Uuid
+  occupancyId       String?   @map("occupancy_id") @db.Uuid
+  householdMemberId String?   @map("household_member_id") @db.Uuid
+  addedById         String    @map("added_by_account_id") @db.Uuid
+  addedAt           DateTime  @default(now()) @map("added_at") @db.Timestamptz(3)
+  removedAt         DateTime? @map("removed_at") @db.Timestamptz(3)
+  removedById       String?   @map("removed_by_account_id") @db.Uuid
+
+  membership ClubMembership   @relation(fields: [tenantId, membershipId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  occupancy  UnitOccupancy?   @relation(fields: [tenantId, occupancyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "club_membership_people_tenant_id_occupancy_id_fkey")
+  member     HouseholdMember? @relation(fields: [tenantId, householdMemberId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "club_membership_people_tenant_id_household_member_id_fkey")
+  addedBy    Account          @relation("ClubPersonAdder", fields: [tenantId, addedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "club_membership_people_tenant_id_added_by_fkey")
+  removedBy  Account?         @relation("ClubPersonRemover", fields: [tenantId, removedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "club_membership_people_tenant_id_removed_by_fkey")
+
+  @@index([tenantId, membershipId, addedAt, id], map: "club_membership_people_membership_idx")
+  @@map("club_membership_people")
+}
+
+/// A payment made at the office, or the reversal of one (ADR 0044).
+/// Append-only: a wrong record is reversed by a new one, never edited.
+model ClubPaymentRecord {
+  id             String          @id @db.Uuid
+  tenantId       String          @map("tenant_id") @db.Uuid
+  membershipId   String          @map("membership_id") @db.Uuid
+  kind           ClubPaymentKind
+  planId         String?         @map("plan_id") @db.Uuid
+  amount         Decimal?        @db.Decimal(10, 2)
+  currency       String?
+  receiptNumber  String?         @map("receipt_number")
+  paidOn         DateTime?       @map("paid_on") @db.Date
+  /// The local days it pays for, the end excluded.
+  periodStartsOn DateTime?       @map("period_starts_on") @db.Date
+  periodEndsOn   DateTime?       @map("period_ends_on") @db.Date
+  reversesId     String?         @map("reverses_id") @db.Uuid
+  reasonCode     String?         @map("reason_code")
+  recordedById   String          @map("recorded_by_account_id") @db.Uuid
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  membership ClubMembership     @relation(fields: [tenantId, membershipId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  plan       ClubPlan?          @relation(fields: [tenantId, planId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "club_payment_records_tenant_id_plan_id_fkey")
+  reverses   ClubPaymentRecord? @relation("ClubReversal", fields: [tenantId, reversesId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "club_payment_records_tenant_id_reverses_id_fkey")
+  reversedBy ClubPaymentRecord? @relation("ClubReversal")
+  recordedBy Account            @relation("ClubPaymentRecorder", fields: [tenantId, recordedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "club_payment_records_tenant_id_recorded_by_fkey")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, reversesId], map: "club_payment_records_one_reversal")
+  @@index([tenantId, membershipId, createdAt, id], map: "club_payment_records_membership_idx")
+  @@map("club_payment_records")
+}
+
+/// A membership's reminder before it ends: once per end date. Append-only.
+model ClubExpiryReminder {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  membershipId String   @map("membership_id") @db.Uuid
+  endsOn       DateTime @map("ends_on") @db.Date
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  membership ClubMembership @relation(fields: [tenantId, membershipId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, membershipId, endsOn], map: "club_expiry_reminders_once")
+  @@map("club_expiry_reminders")
 }

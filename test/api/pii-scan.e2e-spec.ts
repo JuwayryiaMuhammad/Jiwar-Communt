@@ -888,6 +888,27 @@ describe('API v0 — PII leak scan', () => {
       primaryToken,
       { reasonCode: 'spam', note: 'PII-REPORT-note' },
     );
+    // The club (ADR 0044): the primary's home's membership, paid for.
+    const piiMembership = await idOf(
+      'POST',
+      '/staff/club-memberships',
+      a.tokens.manager,
+      {
+        unitId: unit.id,
+        people: [],
+      },
+    );
+    await idOf(
+      'POST',
+      `/staff/club-memberships/${piiMembership}/payments`,
+      a.tokens.manager,
+      {
+        planId: w.aClubPlanId,
+        amount: '500',
+        receiptNumber: `R-PII-${uniqueSuffix()}`,
+        paidOn: day(0),
+      },
+    );
     // Facilities (ADR 0044): the primary's booking of A's roomy facility.
     const piiBooking = await idOf(
       'POST',
@@ -1006,6 +1027,9 @@ describe('API v0 — PII leak scan', () => {
       '/staff/facilities/{id}/day': w.aFacilityId,
       '/staff/facilities/{id}/closures': w.aFacilityId,
       '/units/{unitId}/booking-standing': unit.id,
+      '/units/{unitId}/club-membership': unit.id,
+      '/staff/club/units/{unitId}/people': unit.id,
+      '/staff/club-memberships/{id}': piiMembership,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

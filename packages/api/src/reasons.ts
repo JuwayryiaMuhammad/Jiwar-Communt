@@ -66,6 +66,7 @@ export const REASON_CODES = {
   facilityClosure: ['maintenance', 'cleaning', 'private_event', 'weather', 'other'],
   facilityClosureLift: ['reopened_early', 'created_in_error', 'other'],
   bookingSuspensionLift: ['staff_error', 'exception_granted', 'other'],
+  clubPaymentReverse: ['entered_in_error', 'duplicate', 'refunded', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

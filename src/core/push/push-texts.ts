@@ -1031,6 +1031,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'يبدأ حجزك للمرفق بعد ساعتين تقريباً.',
     },
   },
+  'club_membership.expiring': {
+    en: {
+      title: 'Membership ends soon',
+      body: 'Your club membership ends within a week.',
+    },
+    ar: {
+      title: 'اشتراك النادي ينتهي قريباً',
+      body: 'ينتهي اشتراكك في النادي خلال أسبوع.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

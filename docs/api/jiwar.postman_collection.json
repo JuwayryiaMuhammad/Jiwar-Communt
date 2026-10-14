@@ -2764,6 +2764,458 @@
     {
       "item": [
         {
+          "name": "List the club’s plans",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "club",
+                "plans"
+              ],
+              "raw": "{{baseUrl}}/api/v1/club/plans"
+            }
+          }
+        },
+        {
+          "name": "List the club memberships, by state",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "club-memberships"
+              ],
+              "query": [
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "state",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/club-memberships"
+            }
+          }
+        },
+        {
+          "name": "Create a unit’s club membership",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"people\": [],\n  \"unitId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `people` | object[] | yes | Whom it covers: the unit’s people now (PERSON_NOT_OF_UNIT). |\n| `unitId` | string (uuid) | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "club-memberships"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/club-memberships"
+            }
+          }
+        },
+        {
+          "name": "Get a club membership with its payments",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "club-memberships",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/club-memberships/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record a payment made at the office",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"planId\": \"\",\n  \"amount\": \"\",\n  \"receiptNumber\": \"\",\n  \"paidOn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | What was paid, EGP. |\n| `currency` | `EGP` |  |  |\n| `paidOn` | string | yes | The local day it was paid: not in the future, at most 90 days ago (PAID_ON_OUT_OF_RANGE). |\n| `planId` | string (uuid) | yes | An active plan (PLAN_NOT_AVAILABLE). |\n| `receiptNumber` | string | yes | Once per compound (DUPLICATE_VALUE). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "club-memberships",
+                ":id",
+                "payments"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/club-memberships/:id/payments",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Replace whom a club membership covers",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"people\": []\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `people` | object[] | yes | Whom it covers: the unit’s people now (PERSON_NOT_OF_UNIT). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "club-memberships",
+                ":id",
+                "people"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/club-memberships/:id/people",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reverse a payment, once, with a reason code",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `clubPaymentReverse`. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "club-payments",
+                ":id",
+                "reverse"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/club-payments/:id/reverse",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List every club plan, retired ones included",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "club-plans"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/club-plans"
+            }
+          }
+        },
+        {
+          "name": "Create a club plan",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"nameEn\": \"\",\n  \"nameAr\": \"\",\n  \"durationKind\": \"monthly\",\n  \"price\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `durationDays` | number |  | A custom plan’s days; for it alone. |\n| `durationKind` | `monthly` \\| `quarterly` \\| `annual` \\| `custom` | yes | Never changes. |\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n| `price` | string | yes | EGP, e.g. `1500` or `1500.50`. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "club-plans"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/club-plans"
+            }
+          }
+        },
+        {
+          "name": "Update a club plan",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"active\": false,\n  \"nameAr\": \"\",\n  \"nameEn\": \"\",\n  \"price\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `active` | boolean |  | False retires the plan. |\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n| `price` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "club-plans",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/club-plans/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Find a unit by its code, with its membership if any",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "club",
+                "units"
+              ],
+              "query": [
+                {
+                  "description": "(required) The unit’s code, exactly.",
+                  "key": "code",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/club/units?code="
+            }
+          }
+        },
+        {
+          "name": "List the unit’s people a membership may cover",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "club",
+                "units",
+                ":unitId",
+                "people"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/club/units/:unitId/people",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get the unit’s club membership",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "club-membership"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/club-membership",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "name": "club"
+    },
+    {
+      "item": [
+        {
           "name": "List the announcements put to me",
           "request": {
             "description": "**Responses:** 200",

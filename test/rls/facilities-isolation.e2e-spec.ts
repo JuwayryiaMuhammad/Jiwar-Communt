@@ -1,9 +1,15 @@
+import { newId } from '../../src/core/common/uuid';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import {
   bookingRow,
   closureRow,
+  clubPlanRow,
+  coveredRow,
+  membershipRow,
+  paymentRow,
+  reminderRow,
   suspensionRow,
   facilityRow,
   facilityWindowRow,
@@ -17,6 +23,9 @@ interface Side {
   accountId: string;
   facilityId: string;
   bookingId: string;
+  occupancyId: string;
+  planId: string;
+  membershipId: string;
 }
 
 /**
@@ -116,6 +125,60 @@ const TABLES: Table[] = [
       }),
   },
   {
+    table: 'club_plans',
+    linked: false,
+    insert: (tx, own) => clubPlanRow(tx, own.tenantId),
+  },
+  {
+    // One per unit: a fresh unit of the compound's own.
+    table: 'club_memberships',
+    insert: async (tx, own, link) =>
+      membershipRow(tx, {
+        tenantId: own.tenantId,
+        unitId:
+          own === link
+            ? (
+                await tx.unit.create({
+                  data: {
+                    id: newId(),
+                    tenantId: own.tenantId,
+                    code: `U-${newId().slice(0, 8)}`,
+                  },
+                })
+              ).id
+            : link.unitId,
+        createdById: link.accountId,
+      }),
+  },
+  {
+    table: 'club_membership_people',
+    insert: (tx, own, link) =>
+      coveredRow(tx, {
+        tenantId: own.tenantId,
+        membershipId: link.membershipId,
+        occupancyId: link.occupancyId,
+        addedById: link.accountId,
+      }),
+  },
+  {
+    table: 'club_payment_records',
+    insert: (tx, own, link) =>
+      paymentRow(tx, {
+        tenantId: own.tenantId,
+        membershipId: link.membershipId,
+        planId: link.planId,
+        recordedById: link.accountId,
+      }),
+  },
+  {
+    table: 'club_expiry_reminders',
+    insert: (tx, own, link) =>
+      reminderRow(tx, {
+        tenantId: own.tenantId,
+        membershipId: link.membershipId,
+      }),
+  },
+  {
     table: 'facility_closures',
     insert: (tx, own, link) =>
       closureRow(tx, {
@@ -145,6 +208,9 @@ describe('RLS isolation — facilities tables', () => {
       accountId: (await createAccountRow(h, tenantId)).id,
       facilityId: '',
       bookingId: '',
+      occupancyId: '',
+      planId: '',
+      membershipId: '',
     };
     await inTenant(s, async (tx) => {
       s.facilityId = await facilityRow(tx, tenantId);
@@ -153,6 +219,24 @@ describe('RLS isolation — facilities tables', () => {
         facilityId: s.facilityId,
         unitId: s.unitId,
         bookedById: s.accountId,
+      });
+      s.occupancyId = (
+        await tx.unitOccupancy.create({
+          data: {
+            id: newId(),
+            tenantId,
+            unitId: s.unitId,
+            accountId: s.accountId,
+            occupancyType: 'owner',
+            createdById: s.accountId,
+          },
+        })
+      ).id;
+      s.planId = await clubPlanRow(tx, tenantId);
+      s.membershipId = await membershipRow(tx, {
+        tenantId,
+        unitId: s.unitId,
+        createdById: s.accountId,
       });
     });
     return s;

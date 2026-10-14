@@ -2652,6 +2652,471 @@
         ],
         "type": "object"
       },
+      "ClubCoveredPersonView": {
+        "properties": {
+          "firstName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "me": {
+            "description": "The caller.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "firstName",
+          "me"
+        ],
+        "type": "object"
+      },
+      "ClubDurationKind": {
+        "enum": [
+          "monthly",
+          "quarterly",
+          "annual",
+          "custom"
+        ],
+        "type": "string"
+      },
+      "ClubMembershipDetailView": {
+        "properties": {
+          "activeThrough": {
+            "description": "The last day it is active, `YYYY-MM-DD`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "payments": {
+            "description": "Every payment and reversal, oldest first.",
+            "items": {
+              "$ref": "#/components/schemas/ClubPaymentView"
+            },
+            "type": "array"
+          },
+          "people": {
+            "description": "Whom it covers, still the unit’s.",
+            "items": {
+              "$ref": "#/components/schemas/ClubPersonView"
+            },
+            "type": "array"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClubMembershipState"
+              }
+            ],
+            "description": "`expiring`: active, ending within seven days. `none`: never paid for."
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "unitCode",
+          "state",
+          "activeThrough",
+          "people",
+          "createdAt",
+          "payments"
+        ],
+        "type": "object"
+      },
+      "ClubMembershipState": {
+        "enum": [
+          "active",
+          "expiring",
+          "expired",
+          "none"
+        ],
+        "type": "string"
+      },
+      "ClubMembershipView": {
+        "properties": {
+          "activeThrough": {
+            "description": "The last day it is active, `YYYY-MM-DD`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "people": {
+            "description": "Whom it covers, still the unit’s.",
+            "items": {
+              "$ref": "#/components/schemas/ClubPersonView"
+            },
+            "type": "array"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClubMembershipState"
+              }
+            ],
+            "description": "`expiring`: active, ending within seven days. `none`: never paid for."
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "unitCode",
+          "state",
+          "activeThrough",
+          "people",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ClubMembershipViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ClubMembershipView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ClubPaymentKind": {
+        "enum": [
+          "payment",
+          "reversal"
+        ],
+        "type": "string"
+      },
+      "ClubPaymentView": {
+        "properties": {
+          "amount": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "description": "EGP.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClubPaymentKind"
+              }
+            ]
+          },
+          "paidOn": {
+            "description": "`YYYY-MM-DD`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "periodEndsOn": {
+            "description": "The day after the last it pays for.",
+            "nullable": true,
+            "type": "string"
+          },
+          "periodStartsOn": {
+            "description": "The first day it pays for.",
+            "nullable": true,
+            "type": "string"
+          },
+          "planId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A reversal: a code of `clubPaymentReverse`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "receiptNumber": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reversed": {
+            "description": "A payment: a reversal reversed it.",
+            "type": "boolean"
+          },
+          "reversesId": {
+            "description": "A reversal: the payment it reverses.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "planId",
+          "amount",
+          "currency",
+          "receiptNumber",
+          "paidOn",
+          "periodStartsOn",
+          "periodEndsOn",
+          "reversesId",
+          "reasonCode",
+          "reversed",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ClubPersonKind": {
+        "enum": [
+          "occupancy",
+          "member"
+        ],
+        "type": "string"
+      },
+      "ClubPersonRefDto": {
+        "properties": {
+          "memberId": {
+            "description": "One of the unit’s household members (a minor too).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "occupancyId": {
+            "description": "One of the unit’s occupancies; or `memberId`.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ClubPersonView": {
+        "properties": {
+          "fullName": {
+            "description": "Null once erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "description": "The occupancy’s id, or the household member’s.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "isMinor": {
+            "type": "boolean"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClubPersonKind"
+              }
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "fullName",
+          "isMinor"
+        ],
+        "type": "object"
+      },
+      "ClubPersonViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ClubPersonView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ClubPlanOptionView": {
+        "properties": {
+          "durationDays": {
+            "description": "Days, for a custom plan.",
+            "nullable": true,
+            "type": "number"
+          },
+          "durationKind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClubDurationKind"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "price": {
+            "description": "EGP, two decimals: what the plan costs at the office.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr",
+          "durationKind",
+          "durationDays",
+          "price"
+        ],
+        "type": "object"
+      },
+      "ClubPlanOptionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ClubPlanOptionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ClubPlanView": {
+        "properties": {
+          "active": {
+            "description": "False: retired, takes no new payment.",
+            "type": "boolean"
+          },
+          "durationDays": {
+            "description": "Days, for a custom plan.",
+            "nullable": true,
+            "type": "number"
+          },
+          "durationKind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClubDurationKind"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "price": {
+            "description": "EGP, two decimals: what the plan costs at the office.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr",
+          "durationKind",
+          "durationDays",
+          "price",
+          "active"
+        ],
+        "type": "object"
+      },
+      "ClubPlanViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ClubPlanView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ClubUnitView": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "membershipId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "membershipId"
+        ],
+        "type": "object"
+      },
       "CommunityAttachmentView": {
         "properties": {
           "contentType": {
@@ -3778,6 +4243,67 @@
           "startsAt",
           "endsAt",
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "CreateClubMembershipDto": {
+        "properties": {
+          "people": {
+            "description": "Whom it covers: the unit’s people now (PERSON_NOT_OF_UNIT).",
+            "items": {
+              "$ref": "#/components/schemas/ClubPersonRefDto"
+            },
+            "maxItems": 30,
+            "type": "array"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "people",
+          "unitId"
+        ],
+        "type": "object"
+      },
+      "CreateClubPlanDto": {
+        "properties": {
+          "durationDays": {
+            "description": "A custom plan’s days; for it alone.",
+            "maximum": 730,
+            "minimum": 1,
+            "type": "number"
+          },
+          "durationKind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClubDurationKind"
+              }
+            ],
+            "description": "Never changes."
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "price": {
+            "description": "EGP, e.g. `1500` or `1500.50`.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameEn",
+          "nameAr",
+          "durationKind",
+          "price"
         ],
         "type": "object"
       },
@@ -9963,6 +10489,60 @@
         ],
         "type": "object"
       },
+      "MyClubMembershipView": {
+        "properties": {
+          "activeThrough": {
+            "nullable": true,
+            "type": "string"
+          },
+          "payments": {
+            "description": "Null unless the caller sees the unit’s money (`financeView`).",
+            "items": {
+              "$ref": "#/components/schemas/ClubPaymentView"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "people": {
+            "items": {
+              "$ref": "#/components/schemas/ClubCoveredPersonView"
+            },
+            "type": "array"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClubMembershipState"
+              }
+            ]
+          }
+        },
+        "required": [
+          "state",
+          "activeThrough",
+          "people",
+          "payments"
+        ],
+        "type": "object"
+      },
+      "MyClubView": {
+        "properties": {
+          "membership": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MyClubMembershipView"
+              }
+            ],
+            "description": "Null: the unit has no membership.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "membership"
+        ],
+        "type": "object"
+      },
       "MyDelegationView": {
         "properties": {
           "counterpart": {
@@ -13118,6 +13698,44 @@
         ],
         "type": "object"
       },
+      "RecordClubPaymentDto": {
+        "properties": {
+          "amount": {
+            "description": "What was paid, EGP.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "currency": {
+            "default": "EGP",
+            "enum": [
+              "EGP"
+            ],
+            "type": "string"
+          },
+          "paidOn": {
+            "description": "The local day it was paid: not in the future, at most 90 days ago (PAID_ON_OUT_OF_RANGE).",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "planId": {
+            "description": "An active plan (PLAN_NOT_AVAILABLE).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "receiptNumber": {
+            "description": "Once per compound (DUPLICATE_VALUE).",
+            "pattern": "^[A-Za-z0-9/-]{1,40}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "planId",
+          "amount",
+          "receiptNumber",
+          "paidOn"
+        ],
+        "type": "object"
+      },
       "RecordEntryDto": {
         "properties": {
           "direction": {
@@ -13422,6 +14040,22 @@
         },
         "required": [
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "ReplaceClubPeopleDto": {
+        "properties": {
+          "people": {
+            "description": "Whom it covers: the unit’s people now (PERSON_NOT_OF_UNIT).",
+            "items": {
+              "$ref": "#/components/schemas/ClubPersonRefDto"
+            },
+            "maxItems": 30,
+            "type": "array"
+          }
+        },
+        "required": [
+          "people"
         ],
         "type": "object"
       },
@@ -15282,6 +15916,18 @@
         },
         "required": [
           "response"
+        ],
+        "type": "object"
+      },
+      "ReverseClubPaymentDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `clubPaymentReverse`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -20910,6 +21556,29 @@
         },
         "type": "object"
       },
+      "UpdateClubPlanDto": {
+        "properties": {
+          "active": {
+            "description": "False retires the plan.",
+            "type": "boolean"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "price": {
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateComplaintCategoryDto": {
         "properties": {
           "active": {
@@ -24163,6 +24832,35 @@
         "tags": [
           "workers"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/club/plans": {
+      "get": {
+        "operationId": "ResidentClubController_plans",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubPlanOptionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the club’s plans",
+        "tags": [
+          "club"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -38344,6 +39042,499 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/club-memberships": {
+      "get": {
+        "operationId": "ClubMembershipsController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "enum": [
+                "active",
+                "expiring",
+                "expired",
+                "none"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubMembershipViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the club memberships, by state",
+        "tags": [
+          "club"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ClubMembershipsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClubMembershipDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubMembershipDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a unit’s club membership",
+        "tags": [
+          "club"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/club-memberships/{id}": {
+      "get": {
+        "operationId": "ClubMembershipsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubMembershipDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a club membership with its payments",
+        "tags": [
+          "club"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/club-memberships/{id}/payments": {
+      "post": {
+        "description": "Pays for a period of the plan from the day it was paid, or from where the last period paid for ends.",
+        "operationId": "ClubMembershipsController_record",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordClubPaymentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubPaymentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a payment made at the office",
+        "tags": [
+          "club"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/club-memberships/{id}/people": {
+      "put": {
+        "operationId": "ClubMembershipsController_replacePeople",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceClubPeopleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubMembershipDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Replace whom a club membership covers",
+        "tags": [
+          "club"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/club-payments/{id}/reverse": {
+      "post": {
+        "operationId": "ClubMembershipsController_reverse",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseClubPaymentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubPaymentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reverse a payment, once, with a reason code",
+        "tags": [
+          "club"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/club-plans": {
+      "get": {
+        "operationId": "ClubPlansController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubPlanViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List every club plan, retired ones included",
+        "tags": [
+          "club"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ClubPlansController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClubPlanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubPlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a club plan",
+        "tags": [
+          "club"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/club-plans/{id}": {
+      "patch": {
+        "operationId": "ClubPlansController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClubPlanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubPlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a club plan",
+        "tags": [
+          "club"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/club/units": {
+      "get": {
+        "operationId": "ClubMembershipsController_unit",
+        "parameters": [
+          {
+            "description": "The unit’s code, exactly.",
+            "in": "query",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubUnitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find a unit by its code, with its membership if any",
+        "tags": [
+          "club"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/club/units/{unitId}/people": {
+      "get": {
+        "operationId": "ClubMembershipsController_people",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubPersonViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the unit’s people a membership may cover",
+        "tags": [
+          "club"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/facilities": {
       "get": {
         "operationId": "StaffFacilitiesController_list",
@@ -41954,6 +43145,45 @@
         "summary": "Book a facility’s slot for the unit",
         "tags": [
           "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/club-membership": {
+      "get": {
+        "description": "Whoever sees the household; its payments for whoever sees the unit’s money.",
+        "operationId": "ResidentClubController_mine",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyClubView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the unit’s club membership",
+        "tags": [
+          "club"
         ],
         "x-no-store": true,
         "x-stability": "draft"

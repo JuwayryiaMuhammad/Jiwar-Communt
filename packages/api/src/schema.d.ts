@@ -488,6 +488,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/club/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the club’s plans */
+        get: operations["ResidentClubController_plans"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/community/announcements": {
         parameters: {
             query?: never;
@@ -5366,6 +5383,164 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/club-memberships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the club memberships, by state */
+        get: operations["ClubMembershipsController_list"];
+        put?: never;
+        /** Create a unit’s club membership */
+        post: operations["ClubMembershipsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/club-memberships/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a club membership with its payments */
+        get: operations["ClubMembershipsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/club-memberships/{id}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record a payment made at the office
+         * @description Pays for a period of the plan from the day it was paid, or from where the last period paid for ends.
+         */
+        post: operations["ClubMembershipsController_record"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/club-memberships/{id}/people": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace whom a club membership covers */
+        put: operations["ClubMembershipsController_replacePeople"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/club-payments/{id}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverse a payment, once, with a reason code */
+        post: operations["ClubMembershipsController_reverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/club-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List every club plan, retired ones included */
+        get: operations["ClubPlansController_list"];
+        put?: never;
+        /** Create a club plan */
+        post: operations["ClubPlansController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/club-plans/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a club plan */
+        patch: operations["ClubPlansController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/club/units": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Find a unit by its code, with its membership if any */
+        get: operations["ClubMembershipsController_unit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/club/units/{unitId}/people": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the unit’s people a membership may cover */
+        get: operations["ClubMembershipsController_people"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/facilities": {
         parameters: {
             query?: never;
@@ -6540,6 +6715,26 @@ export interface paths {
         put?: never;
         /** Book a facility’s slot for the unit */
         post: operations["UnitBookingsController_book"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/club-membership": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the unit’s club membership
+         * @description Whoever sees the household; its payments for whoever sees the unit’s money.
+         */
+        get: operations["ResidentClubController_mine"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -7883,6 +8078,149 @@ export interface components {
         ClosedModeDto: {
             closed: boolean;
         };
+        ClubCoveredPersonView: {
+            firstName: string | null;
+            /** @description The caller. */
+            me: boolean;
+        };
+        /** @enum {string} */
+        ClubDurationKind: "monthly" | "quarterly" | "annual" | "custom";
+        ClubMembershipDetailView: {
+            /** @description The last day it is active, `YYYY-MM-DD`. */
+            activeThrough: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description Every payment and reversal, oldest first. */
+            payments: components["schemas"]["ClubPaymentView"][];
+            /** @description Whom it covers, still the unit’s. */
+            people: components["schemas"]["ClubPersonView"][];
+            /** @description `expiring`: active, ending within seven days. `none`: never paid for. */
+            state: components["schemas"]["ClubMembershipState"];
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        /** @enum {string} */
+        ClubMembershipState: "active" | "expiring" | "expired" | "none";
+        ClubMembershipView: {
+            /** @description The last day it is active, `YYYY-MM-DD`. */
+            activeThrough: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description Whom it covers, still the unit’s. */
+            people: components["schemas"]["ClubPersonView"][];
+            /** @description `expiring`: active, ending within seven days. `none`: never paid for. */
+            state: components["schemas"]["ClubMembershipState"];
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        ClubMembershipViewList: {
+            data: components["schemas"]["ClubMembershipView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        ClubPaymentKind: "payment" | "reversal";
+        ClubPaymentView: {
+            amount: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description EGP. */
+            currency: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["ClubPaymentKind"];
+            /** @description `YYYY-MM-DD`. */
+            paidOn: string | null;
+            /** @description The day after the last it pays for. */
+            periodEndsOn: string | null;
+            /** @description The first day it pays for. */
+            periodStartsOn: string | null;
+            /** Format: uuid */
+            planId: string | null;
+            /** @description A reversal: a code of `clubPaymentReverse`. */
+            reasonCode: string | null;
+            receiptNumber: string | null;
+            /** @description A payment: a reversal reversed it. */
+            reversed: boolean;
+            /**
+             * Format: uuid
+             * @description A reversal: the payment it reverses.
+             */
+            reversesId: string | null;
+        };
+        /** @enum {string} */
+        ClubPersonKind: "occupancy" | "member";
+        ClubPersonRefDto: {
+            /**
+             * Format: uuid
+             * @description One of the unit’s household members (a minor too).
+             */
+            memberId?: string;
+            /**
+             * Format: uuid
+             * @description One of the unit’s occupancies; or `memberId`.
+             */
+            occupancyId?: string;
+        };
+        ClubPersonView: {
+            /** @description Null once erased. */
+            fullName: string | null;
+            /**
+             * Format: uuid
+             * @description The occupancy’s id, or the household member’s.
+             */
+            id: string;
+            isMinor: boolean;
+            kind: components["schemas"]["ClubPersonKind"];
+        };
+        ClubPersonViewList: {
+            data: components["schemas"]["ClubPersonView"][];
+            nextCursor: string | null;
+        };
+        ClubPlanOptionView: {
+            /** @description Days, for a custom plan. */
+            durationDays: number | null;
+            durationKind: components["schemas"]["ClubDurationKind"];
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+            /** @description EGP, two decimals: what the plan costs at the office. */
+            price: string;
+        };
+        ClubPlanOptionViewList: {
+            data: components["schemas"]["ClubPlanOptionView"][];
+            nextCursor: string | null;
+        };
+        ClubPlanView: {
+            /** @description False: retired, takes no new payment. */
+            active: boolean;
+            /** @description Days, for a custom plan. */
+            durationDays: number | null;
+            durationKind: components["schemas"]["ClubDurationKind"];
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+            /** @description EGP, two decimals: what the plan costs at the office. */
+            price: string;
+        };
+        ClubPlanViewList: {
+            data: components["schemas"]["ClubPlanView"][];
+            nextCursor: string | null;
+        };
+        ClubUnitView: {
+            code: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            membershipId: string | null;
+        };
         CommunityAttachmentView: {
             /** @description image/jpeg, image/png, image/webp or application/pdf. */
             contentType: string;
@@ -8235,6 +8573,22 @@ export interface components {
             reasonCode: string;
             /** Format: date-time */
             startsAt: string;
+        };
+        CreateClubMembershipDto: {
+            /** @description Whom it covers: the unit’s people now (PERSON_NOT_OF_UNIT). */
+            people: components["schemas"]["ClubPersonRefDto"][];
+            /** Format: uuid */
+            unitId: string;
+        };
+        CreateClubPlanDto: {
+            /** @description A custom plan’s days; for it alone. */
+            durationDays?: number;
+            /** @description Never changes. */
+            durationKind: components["schemas"]["ClubDurationKind"];
+            nameAr: string;
+            nameEn: string;
+            /** @description EGP, e.g. `1500` or `1500.50`. */
+            price: string;
         };
         CreateComplaintCategoryDto: {
             /** @description Stable code, lowercase (e.g. `noise`). Never changes once created. */
@@ -10124,6 +10478,17 @@ export interface components {
             data: components["schemas"]["MyClaimView"][];
             nextCursor: string | null;
         };
+        MyClubMembershipView: {
+            activeThrough: string | null;
+            /** @description Null unless the caller sees the unit’s money (`financeView`). */
+            payments: components["schemas"]["ClubPaymentView"][] | null;
+            people: components["schemas"]["ClubCoveredPersonView"][];
+            state: components["schemas"]["ClubMembershipState"];
+        };
+        MyClubView: {
+            /** @description Null: the unit has no membership. */
+            membership: components["schemas"]["MyClubMembershipView"] | null;
+        };
         MyDelegationView: {
             /** @description The other side, by name only. */
             counterpart: components["schemas"]["AccountRefView"];
@@ -11118,6 +11483,24 @@ export interface components {
             /** @description The unit the parcel is for. */
             unitCode: string;
         };
+        RecordClubPaymentDto: {
+            /** @description What was paid, EGP. */
+            amount: string;
+            /**
+             * @default EGP
+             * @enum {string}
+             */
+            currency: "EGP";
+            /** @description The local day it was paid: not in the future, at most 90 days ago (PAID_ON_OUT_OF_RANGE). */
+            paidOn: string;
+            /**
+             * Format: uuid
+             * @description An active plan (PLAN_NOT_AVAILABLE).
+             */
+            planId: string;
+            /** @description Once per compound (DUPLICATE_VALUE). */
+            receiptNumber: string;
+        };
         RecordEntryDto: {
             direction: components["schemas"]["GateDirection"];
             /**
@@ -11214,6 +11597,10 @@ export interface components {
         RejectParcelDto: {
             /** @description From the closed list `parcelReject`: not_ours, not_expected, other. */
             reasonCode: string;
+        };
+        ReplaceClubPeopleDto: {
+            /** @description Whom it covers: the unit’s people now (PERSON_NOT_OF_UNIT). */
+            people: components["schemas"]["ClubPersonRefDto"][];
         };
         ReplaceFacilityWindowsDto: {
             /** @description The whole week. Windows of one weekday may touch, never overlap (WINDOW_OVERLAP). An empty list: no hours (the facility offers no slot), or no peak times. */
@@ -11746,6 +12133,10 @@ export interface components {
         RespondSuggestionDto: {
             /** @description What the staff tell the author. Replaces an earlier answer. */
             response: string;
+        };
+        ReverseClubPaymentDto: {
+            /** @description From the closed list `clubPaymentReverse`. */
+            reasonCode: string;
         };
         ReviewDto: {
             /**
@@ -13390,6 +13781,13 @@ export interface components {
             nameAr?: string;
             nameEn?: string;
         };
+        UpdateClubPlanDto: {
+            /** @description False retires the plan. */
+            active?: boolean;
+            nameAr?: string;
+            nameEn?: string;
+            price?: string;
+        };
         UpdateComplaintCategoryDto: {
             /** @description False retires the category: no new complaint may use it. */
             active?: boolean;
@@ -14755,6 +15153,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    ResidentClubController_plans: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClubPlanOptionViewList"];
+                };
             };
         };
     };
@@ -22351,6 +22768,268 @@ export interface operations {
             };
         };
     };
+    ClubMembershipsController_list: {
+        parameters: {
+            query?: {
+                state?: "active" | "expiring" | "expired" | "none";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClubMembershipViewList"];
+                };
+            };
+        };
+    };
+    ClubMembershipsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateClubMembershipDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClubMembershipDetailView"];
+                };
+            };
+        };
+    };
+    ClubMembershipsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClubMembershipDetailView"];
+                };
+            };
+        };
+    };
+    ClubMembershipsController_record: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordClubPaymentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClubPaymentView"];
+                };
+            };
+        };
+    };
+    ClubMembershipsController_replacePeople: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceClubPeopleDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClubMembershipDetailView"];
+                };
+            };
+        };
+    };
+    ClubMembershipsController_reverse: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseClubPaymentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClubPaymentView"];
+                };
+            };
+        };
+    };
+    ClubPlansController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClubPlanViewList"];
+                };
+            };
+        };
+    };
+    ClubPlansController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateClubPlanDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClubPlanView"];
+                };
+            };
+        };
+    };
+    ClubPlansController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateClubPlanDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClubPlanView"];
+                };
+            };
+        };
+    };
+    ClubMembershipsController_unit: {
+        parameters: {
+            query: {
+                /** @description The unit’s code, exactly. */
+                code: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClubUnitView"];
+                };
+            };
+        };
+    };
+    ClubMembershipsController_people: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClubPersonViewList"];
+                };
+            };
+        };
+    };
     StaffFacilitiesController_list: {
         parameters: {
             query?: never;
@@ -24252,6 +24931,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BookingView"];
+                };
+            };
+        };
+    };
+    ResidentClubController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyClubView"];
                 };
             };
         };

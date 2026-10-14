@@ -30,6 +30,7 @@ import { ReportsService } from '../../src/neighbours/conversations/reports.servi
 import { PostsService } from '../../src/neighbours/posts/posts.service';
 import { BookingsService } from '../../src/facilities/bookings/bookings.service';
 import { ClosuresService } from '../../src/facilities/closures/closures.service';
+import { ClubService } from '../../src/facilities/club/club.service';
 import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
 import { ALL_WEEK, at, day } from '../setup/facilities';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
@@ -180,6 +181,12 @@ export interface World {
   bClosureId: string;
   /** A suspension of B's home, in force. */
   bSuspensionId: string;
+  /** B's club: a plan, a membership of B's home and a payment for it. */
+  bClubPlanId: string;
+  bMembershipId: string;
+  bPaymentId: string;
+  /** One of A's plans, for valid payment bodies. */
+  aClubPlanId: string;
   /** One of A's, open every day, roomy, for valid bookings. */
   aFacilityId: string;
   bDeviceId: string;
@@ -710,7 +717,33 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       },
     });
   });
+  const clubOf = (c: typeof a) =>
+    helpers.asManager(c, () =>
+      h.moduleRef.get(ClubService).createPlan({
+        nameEn: 'Monthly',
+        nameAr: 'شهري',
+        durationKind: 'monthly',
+        price: '500',
+      }),
+    );
+  const bClubPlan = await clubOf(b);
+  const aClubPlan = await clubOf(a);
+  const bClub = await helpers.asManager(b, async () => {
+    const club = h.moduleRef.get(ClubService);
+    const membership = await club.create(b.homeUnitId, []);
+    const payment = await club.record(membership.membership.id, {
+      planId: bClubPlan.id,
+      amount: '500',
+      receiptNumber: `R-WORLD-${b.tenantId.slice(0, 8)}`,
+      paidOn: day(0),
+    });
+    return { membershipId: membership.membership.id, paymentId: payment.id };
+  });
   return {
+    bClubPlanId: bClubPlan.id,
+    aClubPlanId: aClubPlan.id,
+    bMembershipId: bClub.membershipId,
+    bPaymentId: bClub.paymentId,
     bSuspensionId,
     bClosureId: bClosure.closure.id,
     bFacilityId: bFacility.id,

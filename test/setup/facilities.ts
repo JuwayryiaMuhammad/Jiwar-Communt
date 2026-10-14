@@ -266,6 +266,81 @@ export function facilitiesHelpers(h: HttpHarness) {
     return id;
   }
 
+  /** A club plan of the compound, as the manager: its id. */
+  async function plan(
+    c: Compound,
+    manager: Who,
+    over: Record<string, unknown> = {},
+  ): Promise<string> {
+    const res = await http('post', '/staff/club-plans', manager.token, {
+      nameEn: 'Monthly',
+      nameAr: 'شهري',
+      durationKind: 'monthly',
+      price: '500',
+      ...over,
+    }).expect(201);
+    return (res.body as { id: string }).id;
+  }
+
+  /** The unit's people a membership may cover, as the accountant sees them. */
+  async function people(c: Compound, as: Who, unitId: string) {
+    const res = await http(
+      'get',
+      `/staff/club/units/${unitId}/people`,
+      as.token,
+    ).expect(200);
+    return (
+      res.body as {
+        data: {
+          kind: 'occupancy' | 'member';
+          id: string;
+          fullName: string | null;
+          isMinor: boolean;
+        }[];
+      }
+    ).data;
+  }
+
+  /** A membership of the unit covering everyone in it now: its id. */
+  async function membership(
+    c: Compound,
+    as: Who,
+    unitId: string,
+  ): Promise<string> {
+    const everyone = (await people(c, as, unitId)).map((p) =>
+      p.kind === 'occupancy' ? { occupancyId: p.id } : { memberId: p.id },
+    );
+    const res = await http('post', '/staff/club-memberships', as.token, {
+      unitId,
+      people: everyone,
+    }).expect(201);
+    return (res.body as { id: string }).id;
+  }
+
+  let receipts = 0;
+  /** `POST /staff/club-memberships/:id/payments`: the response. */
+  function pay(
+    as: Who,
+    membershipId: string,
+    planId: string,
+    over: Record<string, unknown> = {},
+    headers: Record<string, string> = {},
+  ) {
+    return http(
+      'post',
+      `/staff/club-memberships/${membershipId}/payments`,
+      as.token,
+      {
+        planId,
+        amount: '500',
+        receiptNumber: `R-${Date.now()}-${receipts++}`,
+        paidOn: day(0),
+        ...over,
+      },
+      headers,
+    );
+  }
+
   return {
     ...e,
     x,
@@ -290,6 +365,10 @@ export function facilitiesHelpers(h: HttpHarness) {
     revokeBookings,
     sweep,
     rawBooking,
+    plan,
+    people,
+    membership,
+    pay,
   };
 }
 

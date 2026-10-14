@@ -354,4 +354,6 @@ export const REASON_CODES = {
   facilityClosureLift: ['reopened_early', 'created_in_error', 'other'],
   // Why the staff lift a unit's suspension from booking.
   bookingSuspensionLift: ['staff_error', 'exception_granted', 'other'],
+  // Why the accountant reverses a club payment recorded by mistake.
+  clubPaymentReverse: ['entered_in_error', 'duplicate', 'refunded', 'other'],
 } as const;

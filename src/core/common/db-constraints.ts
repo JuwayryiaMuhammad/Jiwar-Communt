@@ -206,4 +206,18 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   booking_suspensions_tenant_id_id_key: null,
   // A no-show is marked once (its row lock): a race.
   booking_suspensions_trigger_booking_id_key: null,
+  club_plans_tenant_id_id_key: null,
+  club_memberships_tenant_id_id_key: null,
+  // Inserted with ON CONFLICT DO NOTHING and answered CLUB_MEMBERSHIP_EXISTS.
+  club_memberships_one_per_unit: null,
+  // Coverage is replaced under the membership's lock: a race.
+  club_membership_people_one_open_occupancy: null,
+  club_membership_people_one_open_member: null,
+  club_payment_records_tenant_id_id_key: null,
+  // Checked under the membership's lock first: a race.
+  club_payment_records_one_reversal: null,
+  // A receipt is recorded once in the compound.
+  club_payment_records_receipt_key: ['receiptNumber'],
+  // Inserted with ON CONFLICT DO NOTHING.
+  club_expiry_reminders_once: null,
 };

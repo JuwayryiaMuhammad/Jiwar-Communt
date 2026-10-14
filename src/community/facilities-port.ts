@@ -12,6 +12,19 @@ export interface FacilityAccount {
 }
 
 /**
+ * Someone a club membership may cover (ADR 0044): one of the unit's
+ * residing occupancies, or one of its household members (a minor too).
+ */
+export interface ClubPerson {
+  kind: 'occupancy' | 'member';
+  /** The occupancy's id, or the household member's. */
+  id: string;
+  accountId: string | null;
+  fullName: string | null;
+  isMinor: boolean;
+}
+
+/**
  * What the facilities domain reads from the community domain (ADR 0015,
  * 0044), and nothing else: what someone may do on a unit (capabilitiesFor's
  * `bookings`), who a unit's primary is, whether its household is under a
@@ -61,6 +74,84 @@ export class CommunityFacilitiesPort {
   /** The units the account may book for now. */
   bookingUnits(tx: TenantTxClient, accountId: string): Promise<string[]> {
     return this.capabilities.unitsWhere(tx, accountId, 'bookings');
+  }
+
+  /**
+   * The unit's people now, as a club membership names them: its residing
+   * occupancies and its active household members. Erased people have no
+   * name.
+   */
+  async clubPeople(tx: TenantTxClient, unitId: string): Promise<ClubPerson[]> {
+    const occupancies = await tx.unitOccupancy.findMany({
+      where: { unitId, status: 'active', resides: true },
+      select: {
+        id: true,
+        accountId: true,
+        account: { select: { fullName: true, status: true } },
+      },
+      orderBy: [{ startedAt: 'asc' }, { id: 'asc' }],
+    });
+    const members = await tx.householdMember.findMany({
+      where: { unitId, status: 'active' },
+      select: {
+        id: true,
+        accountId: true,
+        fullName: true,
+        isMinor: true,
+        account: { select: { fullName: true, status: true } },
+      },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+    return [
+      ...occupancies.map((o) => ({
+        kind: 'occupancy' as const,
+        id: o.id,
+        accountId: o.accountId,
+        fullName: o.account.status === 'erased' ? null : o.account.fullName,
+        isMinor: false,
+      })),
+      ...members.map((m) => ({
+        kind: 'member' as const,
+        id: m.id,
+        accountId: m.accountId,
+        fullName:
+          m.account?.status === 'erased'
+            ? null
+            : (m.fullName ?? m.account?.fullName ?? null),
+        isMinor: m.isMinor,
+      })),
+    ];
+  }
+
+  /** The account's places on the unit now, by id: what a membership covers. */
+  async placeIds(
+    tx: TenantTxClient,
+    accountId: string,
+    unitId: string,
+  ): Promise<{ occupancyIds: string[]; memberIds: string[] }> {
+    const occupancies = await tx.unitOccupancy.findMany({
+      where: { unitId, accountId, status: 'active' },
+      select: { id: true },
+    });
+    const members = await tx.householdMember.findMany({
+      where: { unitId, accountId, status: 'active' },
+      select: { id: true },
+    });
+    return {
+      occupancyIds: occupancies.map((o) => o.id),
+      memberIds: members.map((m) => m.id),
+    };
+  }
+
+  /** A unit by its code, or null. */
+  unitByCode(
+    tx: TenantTxClient,
+    code: string,
+  ): Promise<{ id: string; code: string } | null> {
+    return tx.unit.findFirst({
+      where: { code },
+      select: { id: true, code: true },
+    });
   }
 
   async unitCodes(

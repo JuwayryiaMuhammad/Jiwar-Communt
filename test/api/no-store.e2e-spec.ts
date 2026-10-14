@@ -561,6 +561,30 @@ describe('API v0 — no-store', () => {
       (x) => x.unitId === w.a.rentedUnitId,
     )!.id;
   };
+  let homeMembership: Promise<string> | null = null;
+  /** The owner's home's club membership, made once. */
+  const aMembership = () =>
+    (homeMembership ??= (async () =>
+      body<{ id: string }>(
+        await as('manager', 'POST', '/staff/club-memberships', {
+          unitId: w.a.homeUnitId,
+          people: [],
+        }).expect(201),
+      ).id)());
+  let receiptsMade = 0;
+  /** A payment for it. */
+  const aPayment = async () =>
+    as(
+      'manager',
+      'POST',
+      `/staff/club-memberships/${await aMembership()}/payments`,
+      {
+        planId: w.aClubPlanId,
+        amount: '500',
+        receiptNumber: `R-NS-${uniqueSuffix()}-${receiptsMade++}`,
+        paidOn: localDay(0),
+      },
+    );
   const FACILITY_CALLS = (): Record<string, () => Promise<Response>> => ({
     'GET /staff/bookings': () => as('manager', 'GET', '/staff/bookings'),
     'GET /staff/bookings/{id}': async () =>
@@ -606,6 +630,64 @@ describe('API v0 — no-store', () => {
       as('manager', 'PATCH', '/staff/facility-settings', {
         suspensionDays: 14,
       }),
+    'GET /club/plans': () => as('owner', 'GET', '/club/plans'),
+    'GET /units/{unitId}/club-membership': () =>
+      as('owner', 'GET', `/units/${w.a.homeUnitId}/club-membership`),
+    'GET /staff/club-plans': () => as('manager', 'GET', '/staff/club-plans'),
+    'POST /staff/club-plans': () =>
+      as('manager', 'POST', '/staff/club-plans', {
+        nameEn: 'No-store',
+        nameAr: 'شهري',
+        durationKind: 'monthly',
+        price: '1',
+      }),
+    'PATCH /staff/club-plans/{id}': () =>
+      as('manager', 'PATCH', `/staff/club-plans/${w.aClubPlanId}`, {
+        price: '500',
+      }),
+    'GET /staff/club/units': async () => {
+      const unit = await w.helpers.unitRow(w.a, w.a.homeUnitId);
+      return call(w, 'GET', '/staff/club/units', {
+        token: w.a.tokens.manager,
+        query: { code: unit.code },
+      });
+    },
+    'GET /staff/club/units/{unitId}/people': () =>
+      as('manager', 'GET', `/staff/club/units/${w.a.homeUnitId}/people`),
+    'GET /staff/club-memberships': () =>
+      as('manager', 'GET', '/staff/club-memberships'),
+    'GET /staff/club-memberships/{id}': async () =>
+      as('manager', 'GET', `/staff/club-memberships/${await aMembership()}`),
+    'POST /staff/club-memberships': async () => {
+      const unit = await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.unit.create({
+          data: {
+            id: newId(),
+            tenantId: w.a.tenantId,
+            code: `NS-${uniqueSuffix()}`,
+          },
+        }),
+      );
+      return as('manager', 'POST', '/staff/club-memberships', {
+        unitId: unit.id,
+        people: [],
+      });
+    },
+    'PUT /staff/club-memberships/{id}/people': async () =>
+      as(
+        'manager',
+        'PUT',
+        `/staff/club-memberships/${await aMembership()}/people`,
+        { people: [] },
+      ),
+    'POST /staff/club-memberships/{id}/payments': async () => aPayment(),
+    'POST /staff/club-payments/{id}/reverse': async () =>
+      as(
+        'manager',
+        'POST',
+        `/staff/club-payments/${body<{ id: string }>(await aPayment()).id}/reverse`,
+        { reasonCode: 'other' },
+      ),
     'GET /staff/facilities/{id}/day': () =>
       as('manager', 'GET', `/staff/facilities/${w.aFacilityId}/day`),
     'GET /facilities': () => as('owner', 'GET', '/facilities'),

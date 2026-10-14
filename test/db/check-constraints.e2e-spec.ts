@@ -675,6 +675,36 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'lift_reason_code IS NULL is tested first; the list runs only on a value',
   },
+  club_plans_names_length: {},
+  club_plans_duration: {},
+  club_plans_duration_days: {
+    guarded:
+      'duration_days IS NULL is tested first; the range runs only on a value',
+  },
+  club_plans_price: {},
+  club_membership_people_one_person: {},
+  club_membership_people_removed_shape: {},
+  // Nullable columns only under IS [NOT] NULL; kind is NOT NULL.
+  club_payment_records_kind_shape: {},
+  club_payment_records_amount: {
+    guarded: 'amount IS NULL is tested first; the range runs only on a value',
+  },
+  club_payment_records_currency: {
+    guarded:
+      'currency IS NULL is tested first; the comparison runs only on a value',
+  },
+  club_payment_records_receipt_shape: {
+    guarded:
+      'receipt_number IS NULL is tested first; the pattern runs only on a value',
+  },
+  club_payment_records_period: {
+    guarded:
+      'period_starts_on IS NULL and period_ends_on IS NULL are tested first; the comparison runs only on two values',
+  },
+  club_payment_records_reason: {
+    guarded:
+      'reason_code IS NULL is tested first; the list runs only on a value',
+  },
 };
 
 interface Check {

@@ -19,6 +19,12 @@ import {
   FacilityClosuresController,
 } from './closures/closures.controller';
 import { ClosuresService } from './closures/closures.service';
+import {
+  ClubMembershipsController,
+  ClubPlansController,
+  ResidentClubController,
+} from './club/club.controller';
+import { ClubService } from './club/club.service';
 import { FacilitiesProvisioning } from './provisioning';
 import { FacilitySettingsController } from './settings/facility-settings.controller';
 import { FacilitySettingsService } from './settings/facility-settings.service';
@@ -52,6 +58,9 @@ import { FacilitiesService } from './setup/facilities.service';
     FacilitySettingsController,
     BookingStandingController,
     BookingSuspensionsController,
+    ResidentClubController,
+    ClubPlansController,
+    ClubMembershipsController,
   ],
   providers: [
     FacilitiesAccess,
@@ -64,6 +73,7 @@ import { FacilitiesService } from './setup/facilities.service';
     FacilitySettingsService,
     SuspensionsService,
     BookingReminders,
+    ClubService,
   ],
 })
 export class FacilitiesModule {}

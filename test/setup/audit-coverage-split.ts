@@ -284,4 +284,10 @@ export const FACILITIES_COVERAGE: readonly string[] = [
   'booking.no_show',
   'booking_suspension.started',
   'booking_suspension.lifted',
+  'club_plan.created',
+  'club_plan.updated',
+  'club_membership.created',
+  'club_membership.people_changed',
+  'club_payment.recorded',
+  'club_payment.reversed',
 ];

@@ -16,7 +16,7 @@ import { TenantSettingsService } from '../../core/tenant-settings/tenant-setting
 import { parseEntryQr } from '../entry/entry-secrets';
 import { ResidentVerifier } from '../entry/resident-verifier';
 import { ShiftsService } from '../shifts/shifts.service';
-import { EntriesService } from './entries.service';
+import { capacityOf, EntriesService } from './entries.service';
 import { GateSubjects, type GateSubject, type Refusal } from './subjects';
 
 export interface VerifyDisplay {
@@ -47,6 +47,10 @@ export interface VerifyDisplay {
    * data lasts; null otherwise.
    */
   vehiclePlate: string | null;
+  /** A one-time pass: how many of its group came in (ADR 0043). */
+  entriesUsed: number | null;
+  /** A visitor pass: how many on it are inside now. */
+  insideCount: number | null;
 }
 
 export interface VerifyResult {
@@ -128,12 +132,22 @@ export class VerifyService {
           : await this.byCode(tx, tenantId, (input.code ?? '').trim());
       if (!subject) return { ...UNKNOWN };
       const tz = (await this.settings.inTx(tx, tenantId)).timezone;
-      const inside = await this.entries.isInside(tx, subject.type, subject.id);
-      // Someone inside may always leave; coming in is checked now.
-      const refusal = inside
-        ? null
-        : await this.subjects.refusal(tx, subject, new Date(), tz);
+      const inside = await this.entries.insideCount(
+        tx,
+        subject.type,
+        subject.id,
+      );
+      // Coming in is checked now, while there is room on the subject (a
+      // group pass: one person per entry, ADR 0043). Otherwise someone
+      // inside may always leave.
+      const entryRefusal =
+        inside < capacityOf(subject)
+          ? await this.subjects.refusal(tx, subject, new Date(), tz)
+          : null;
+      const canEnter = inside < capacityOf(subject) && entryRefusal === null;
+      const refusal = canEnter || inside > 0 ? null : entryRefusal;
       const isWorker = subject.type === 'worker_engagement';
+      const pass = subject.pass;
       return {
         result: refusal ? 'invalid' : 'valid',
         subject: isWorker ? 'worker' : 'visitor',
@@ -142,7 +156,7 @@ export class VerifyService {
           !refusal || (isWorker && refusal === 'outside_schedule')
             ? subject.id
             : null,
-        next: refusal ? null : inside ? 'out' : 'in',
+        next: refusal ? null : canEnter ? 'in' : 'out',
         display: {
           unitCode: subject.unitCode,
           passKind: isWorker ? null : subject.kind,
@@ -152,6 +166,8 @@ export class VerifyService {
           firstName: null,
           unitCodes: null,
           photoUrl: null,
+          entriesUsed: pass?.kind === 'one_time' ? pass.entriesUsed : null,
+          insideCount: pass ? inside : null,
           vehiclePlate:
             !isWorker && !refusal && subject.visitorDetailsId
               ? ((

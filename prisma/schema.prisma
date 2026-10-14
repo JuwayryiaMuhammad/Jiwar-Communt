@@ -1913,6 +1913,8 @@ model VisitorPass {
   /// The live token's sequence number (ADR 0043): the token is derived from
   /// VISITOR_PASS_TOKEN_KEY, the pass and this. NULL on passes issued before.
   tokenSeq         Int?              @map("token_seq")
+  /// One-time passes (ADR 0043): people who came in; `used` at `partySize`.
+  entriesUsed      Int               @default(0) @map("entries_used")
   visitorDetailsId String?           @map("visitor_details_id") @db.Uuid
   usedAt           DateTime?         @map("used_at") @db.Timestamptz(3)
   cancelledAt      DateTime?         @map("cancelled_at") @db.Timestamptz(3)

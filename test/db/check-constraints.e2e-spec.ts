@@ -90,6 +90,8 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   gate_approval_requests_expiry_after_creation: {},
   // Phase 4.1 (ADR 0030)
   visitor_passes_token_only_with_code: {},
+  visitor_passes_entries_used_range: {},
+  visitor_passes_used_when_full: {},
   visitor_passes_token_seq_range: {
     guarded:
       'token_seq IS NULL is tested first; the range runs only on a value',

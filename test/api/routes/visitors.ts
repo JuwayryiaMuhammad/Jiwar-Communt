@@ -1,9 +1,9 @@
 import type { Row } from '../registry';
 
-/** A valid one-time pass starting now. */
+/** A valid one-time pass for one visitor, starting now. */
 export const passBody = (over: object = {}) => ({
   kind: 'one_time',
-  partySize: 2,
+  partySize: 1,
   validFrom: new Date().toISOString(),
   validUntil: new Date(Date.now() + 4 * 3_600_000).toISOString(),
   ...over,

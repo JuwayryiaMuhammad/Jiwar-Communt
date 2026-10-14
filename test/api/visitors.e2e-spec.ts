@@ -32,6 +32,7 @@ const ISSUED = [
 const LISTED = [
   'createdAt',
   'enteredAt',
+  'entriesUsed',
   'exitedAt',
   'id',
   'kind',

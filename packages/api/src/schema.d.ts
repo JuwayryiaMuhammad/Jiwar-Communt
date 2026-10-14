@@ -7955,6 +7955,7 @@ export interface components {
         };
         CreateVisitorPassDto: {
             kind: components["schemas"]["VisitorPassKind"];
+            /** @description How many people the code lets in (ADR 0043). One-time: one per entry, at any gate, until all came in or `validUntil`. Recurring: how many may be inside at once, on every visit. */
             partySize: number;
             /** @description Recurring passes only: the days of the week and the times of day (compound time zone) the code opens the gate, between `validFrom` and `validUntil`. */
             schedule?: components["schemas"]["VisitorScheduleDto"];
@@ -8929,6 +8930,8 @@ export interface components {
             /** Format: date-time */
             enteredAt: string;
             gateName: string;
+            /** @description How many on this subject are inside now: a group pass lets in one person per entry (ADR 0043); 1 for everyone else. */
+            insideCount: number;
             /** @description The pass kind, the worker capacity or the request kind. */
             kind: string;
             partySize: number;
@@ -9701,6 +9704,8 @@ export interface components {
              * @description The latest entry through the gate on this pass.
              */
             enteredAt: string | null;
+            /** @description One-time passes: how many of the `partySize` people came in, one per entry (ADR 0043). The pass is `used` when it reaches `partySize`. Null on a recurring pass, whose `partySize` caps how many are inside at once. */
+            entriesUsed: number | null;
             /**
              * Format: date-time
              * @description The latest exit, once everyone who came in on the pass has left; null while anyone is inside.
@@ -9752,6 +9757,8 @@ export interface components {
              * @description The latest entry through the gate on this pass.
              */
             enteredAt: string | null;
+            /** @description One-time passes: how many of the `partySize` people came in, one per entry (ADR 0043). The pass is `used` when it reaches `partySize`. Null on a recurring pass, whose `partySize` caps how many are inside at once. */
+            entriesUsed: number | null;
             /**
              * Format: date-time
              * @description The latest exit, once everyone who came in on the pass has left; null while anyone is inside.
@@ -12613,8 +12620,12 @@ export interface components {
         };
         VerifyDisplayView: {
             capacity: string | null;
+            /** @description A one-time pass: how many of its `partySize` came in (ADR 0043). The code lets the rest in until it reaches `partySize` or the pass ends. Null otherwise. */
+            entriesUsed: number | null;
             /** @description A valid resident: the first word of their name, never the full name (ADR 0031). Null otherwise. */
             firstName: string | null;
+            /** @description A visitor pass: how many on it are inside now. `next` is `in` while there is room and the pass is valid, else `out` while anyone is inside. Null otherwise. */
+            insideCount: number | null;
             partySize: number | null;
             passKind: string | null;
             /** @description A valid worker's photo, to compare the face (ADR 0029); null otherwise. */

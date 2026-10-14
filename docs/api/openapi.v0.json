@@ -4295,6 +4295,7 @@
             ]
           },
           "partySize": {
+            "description": "How many people the code lets in (ADR 0043). One-time: one per entry, at any gate, until all came in or `validUntil`. Recurring: how many may be inside at once, on every visit.",
             "maximum": 50,
             "minimum": 1,
             "type": "number"
@@ -7737,6 +7738,10 @@
           "gateName": {
             "type": "string"
           },
+          "insideCount": {
+            "description": "How many on this subject are inside now: a group pass lets in one person per entry (ADR 0043); 1 for everyone else.",
+            "type": "number"
+          },
           "kind": {
             "description": "The pass kind, the worker capacity or the request kind.",
             "type": "string"
@@ -7765,6 +7770,7 @@
           "unitCode",
           "kind",
           "partySize",
+          "insideCount",
           "gateName",
           "enteredAt"
         ],
@@ -10268,6 +10274,11 @@
             "nullable": true,
             "type": "string"
           },
+          "entriesUsed": {
+            "description": "One-time passes: how many of the `partySize` people came in, one per entry (ADR 0043). The pass is `used` when it reaches `partySize`. Null on a recurring pass, whose `partySize` caps how many are inside at once.",
+            "nullable": true,
+            "type": "number"
+          },
           "exitedAt": {
             "description": "The latest exit, once everyone who came in on the pass has left; null while anyone is inside.",
             "format": "date-time",
@@ -10357,6 +10368,7 @@
           "mine",
           "visitorName",
           "vehiclePlate",
+          "entriesUsed",
           "enteredAt",
           "exitedAt",
           "createdAt",
@@ -10379,6 +10391,11 @@
             "format": "date-time",
             "nullable": true,
             "type": "string"
+          },
+          "entriesUsed": {
+            "description": "One-time passes: how many of the `partySize` people came in, one per entry (ADR 0043). The pass is `used` when it reaches `partySize`. Null on a recurring pass, whose `partySize` caps how many are inside at once.",
+            "nullable": true,
+            "type": "number"
           },
           "exitedAt": {
             "description": "The latest exit, once everyone who came in on the pass has left; null while anyone is inside.",
@@ -10451,6 +10468,7 @@
           "mine",
           "visitorName",
           "vehiclePlate",
+          "entriesUsed",
           "enteredAt",
           "exitedAt",
           "createdAt"
@@ -20034,10 +20052,20 @@
             "nullable": true,
             "type": "string"
           },
+          "entriesUsed": {
+            "description": "A one-time pass: how many of its `partySize` came in (ADR 0043). The code lets the rest in until it reaches `partySize` or the pass ends. Null otherwise.",
+            "nullable": true,
+            "type": "number"
+          },
           "firstName": {
             "description": "A valid resident: the first word of their name, never the full name (ADR 0031). Null otherwise.",
             "nullable": true,
             "type": "string"
+          },
+          "insideCount": {
+            "description": "A visitor pass: how many on it are inside now. `next` is `in` while there is room and the pass is valid, else `out` while anyone is inside. Null otherwise.",
+            "nullable": true,
+            "type": "number"
           },
           "partySize": {
             "nullable": true,
@@ -20095,7 +20123,9 @@
           "firstName",
           "unitCodes",
           "photoUrl",
-          "vehiclePlate"
+          "vehiclePlate",
+          "entriesUsed",
+          "insideCount"
         ],
         "type": "object"
       },

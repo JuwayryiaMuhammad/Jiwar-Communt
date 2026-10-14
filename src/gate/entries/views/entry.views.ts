@@ -83,6 +83,22 @@ export class VerifyDisplayView {
   })
   vehiclePlate: string | null;
 
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description:
+      'A one-time pass: how many of its `partySize` came in (ADR 0043). The code lets the rest in until it reaches `partySize` or the pass ends. Null otherwise.',
+  })
+  entriesUsed: number | null;
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description:
+      'A visitor pass: how many on it are inside now. `next` is `in` while there is room and the pass is valid, else `out` while anyone is inside. Null otherwise.',
+  })
+  insideCount: number | null;
+
   static from(d: VerifyDisplay): VerifyDisplayView {
     return {
       unitCode: d.unitCode,
@@ -95,6 +111,8 @@ export class VerifyDisplayView {
       unitCodes: d.unitCodes,
       photoUrl: d.photoUrl,
       vehiclePlate: d.vehiclePlate,
+      entriesUsed: d.entriesUsed,
+      insideCount: d.insideCount,
     };
   }
 }
@@ -233,6 +251,12 @@ export class InsideView {
   kind: string;
   @ApiProperty({ type: Number })
   partySize: number;
+  @ApiProperty({
+    type: Number,
+    description:
+      'How many on this subject are inside now: a group pass lets in one person per entry (ADR 0043); 1 for everyone else.',
+  })
+  insideCount: number;
   @ApiProperty({ type: String })
   gateName: string;
   @ApiProperty({ type: String, format: 'date-time' })
@@ -245,6 +269,7 @@ export class InsideView {
       unitCode: i.unitCode,
       kind: i.kind,
       partySize: i.partySize,
+      insideCount: i.insideCount,
       gateName: i.gateName,
       enteredAt: i.enteredAt,
     };

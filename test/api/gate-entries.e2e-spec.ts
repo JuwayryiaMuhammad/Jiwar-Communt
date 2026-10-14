@@ -15,8 +15,12 @@ import { buildWorld, type World } from './world';
 const VERIFY = [
   'display',
   'display.capacity',
+  // A one-time pass's entries (ADR 0043).
+  'display.entriesUsed',
   // A valid resident (ADR 0031); null for visitors and workers.
   'display.firstName',
+  // A pass's people inside (ADR 0043).
+  'display.insideCount',
   'display.partySize',
   'display.passKind',
   // Null but for a valid worker with a photo (ADR 0029).
@@ -24,6 +28,8 @@ const VERIFY = [
   'display.photoUrl',
   'display.unitCode',
   'display.unitCodes',
+  // A valid pass's plate (ADR 0043).
+  'display.vehiclePlate',
   'display.workerName',
   'next',
   'reason',
@@ -44,6 +50,7 @@ const ENTRY = [
 const INSIDE = [
   'enteredAt',
   'gateName',
+  'insideCount',
   'kind',
   'partySize',
   'subjectId',
@@ -131,8 +138,10 @@ describe('API v0 — verify, entries, inside (ADR 0028)', () => {
     };
   }
 
-  it('a one-time pass: verify, in, inside, out — then the code is gone', async () => {
+  it('a group pass: one code, one entry per person, until all came in', async () => {
     const pass = await newPass({ visitorName: 'Inside Guest', partySize: 3 });
+    const io = (direction: 'in' | 'out') =>
+      record({ subjectType: 'visitor_pass', subjectId: pass.id, direction });
     const checked = await verify(pass.code).expect(200);
     expect(keyPaths(checked.body)).toEqual(VERIFY);
     expect(checked.body).toEqual({
@@ -152,27 +161,39 @@ describe('API v0 — verify, entries, inside (ADR 0028)', () => {
         firstName: null,
         unitCodes: null,
         photoUrl: null,
+        vehiclePlate: null,
+        entriesUsed: 0,
+        insideCount: 0,
       },
     });
-    const entered = await record({
-      subjectType: 'visitor_pass',
-      subjectId: pass.id,
-      direction: 'in',
-    }).expect(201);
+    const entered = await io('in').expect(201);
     expect(keyPaths(entered.body)).toEqual(ENTRY);
     expect(entered.body).toMatchObject({ method: 'code', direction: 'in' });
+    // One of three: the same code still lets the others in.
+    expect((await verify(pass.code).expect(200)).body).toMatchObject({
+      result: 'valid',
+      next: 'in',
+      display: { entriesUsed: 1, insideCount: 1 },
+    });
+    await io('in').expect(201);
+    await io('out').expect(201); // the first one leaves
+    await io('in').expect(201); // the third comes in: the pass is used
 
-    // Used: the code no longer opens anything.
+    // Used: the code no longer opens anything, and no fourth comes in.
     expect((await verify(pass.code).expect(200)).body).toMatchObject({
       result: 'invalid',
       reason: 'unknown_code',
     });
-    const again = await record({
-      subjectType: 'visitor_pass',
-      subjectId: pass.id,
-      direction: 'in',
-    });
-    expect(status(again)).toEqual({ status: 409, code: 'ALREADY_INSIDE' });
+    const fourth = await io('in');
+    expect(status(fourth)).toEqual({ status: 409, code: 'GATE_ENTRY_REFUSED' });
+    expect(err(fourth).params).toEqual({ reason: 'used' });
+    expect(
+      (
+        await call(w, 'GET', `/visitor-passes/${pass.id}`, {
+          token: w.a.tokens.owner,
+        }).expect(200)
+      ).body,
+    ).toMatchObject({ status: 'used', entriesUsed: 3, exitedAt: null });
 
     const inside = await call(w, 'GET', '/gate/inside', {
       token: guard(),
@@ -187,25 +208,58 @@ describe('API v0 — verify, entries, inside (ADR 0028)', () => {
       subjectType: 'visitor_pass',
       kind: 'one_time',
       partySize: 3,
+      insideCount: 2,
       gateName: w.a.gateName,
     });
 
-    await record({
-      subjectType: 'visitor_pass',
-      subjectId: pass.id,
-      direction: 'out',
-    }).expect(201);
+    await io('out').expect(201);
+    await io('out').expect(201);
     const after = await call(w, 'GET', '/gate/inside', {
       token: guard(),
       query: { limit: '100' },
     }).expect(200);
     expect(JSON.stringify(after.body)).not.toContain(pass.id);
-    const twice = await record({
-      subjectType: 'visitor_pass',
-      subjectId: pass.id,
-      direction: 'out',
+    const extra = await io('out');
+    expect(status(extra)).toEqual({ status: 409, code: 'NOT_INSIDE' });
+    expect(
+      (
+        await call(w, 'GET', `/visitor-passes/${pass.id}`, {
+          token: w.a.tokens.owner,
+        }).expect(200)
+      ).body,
+    ).toMatchObject({ exitedAt: expect.any(String) as string });
+  });
+
+  it('a recurring pass: partySize inside at once, no count', async () => {
+    const pass = await newPass({
+      kind: 'recurring',
+      partySize: 2,
+      validUntil: new Date(Date.now() + 30 * 86_400_000).toISOString(),
+      schedule: ALWAYS,
     });
-    expect(status(twice)).toEqual({ status: 409, code: 'NOT_INSIDE' });
+    const io = (direction: 'in' | 'out') =>
+      record({ subjectType: 'visitor_pass', subjectId: pass.id, direction });
+    await io('in').expect(201);
+    await io('in').expect(201);
+    expect(status(await io('in'))).toEqual({
+      status: 409,
+      code: 'ALREADY_INSIDE',
+    });
+    // Full: verify says the next is an exit.
+    expect((await verify(pass.code).expect(200)).body).toMatchObject({
+      result: 'valid',
+      next: 'out',
+      display: { entriesUsed: null, insideCount: 2 },
+    });
+    await io('out').expect(201);
+    await io('in').expect(201);
+    expect(
+      (
+        await call(w, 'GET', `/visitor-passes/${pass.id}`, {
+          token: w.a.tokens.owner,
+        }).expect(200)
+      ).body,
+    ).toMatchObject({ status: 'active', entriesUsed: null });
   });
 
   it('an unknown code and another compound’s code get the same answer', async () => {
@@ -523,6 +577,14 @@ describe('API v0 — verify, entries, inside (ADR 0028)', () => {
       subjectId: pass.id,
       direction: 'in',
     }).expect(201);
+    // A group of two still inside: one exit each (ADR 0043).
+    const group = await newPass({ partySize: 2 });
+    for (let i = 0; i < 2; i++)
+      await record({
+        subjectType: 'visitor_pass',
+        subjectId: group.id,
+        direction: 'in',
+      }).expect(201);
     const liveIn = await worker(undefined, 'live_in');
     await record({
       subjectType: 'worker_engagement',
@@ -551,6 +613,13 @@ describe('API v0 — verify, entries, inside (ADR 0028)', () => {
       guardAccountId: null,
       shiftId: null,
     });
+    const groupEntries = await entries(group.id);
+    expect(groupEntries.map((e) => [e.direction, e.method])).toEqual([
+      ['in', 'code'],
+      ['in', 'code'],
+      ['out', 'system'],
+      ['out', 'system'],
+    ]);
     expect(await entries(liveIn.engagementId)).toHaveLength(1);
     const log = await call(w, 'GET', '/gate/entries', {
       token: w.a.tokens.manager,

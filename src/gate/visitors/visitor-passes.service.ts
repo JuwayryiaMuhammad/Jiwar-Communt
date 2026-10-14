@@ -75,6 +75,8 @@ export interface PassListItem {
   visitorName: string | null;
   /** The caller's own passes only. */
   vehiclePlate: string | null;
+  /** One-time passes: how many of the group came in (ADR 0043). */
+  entriesUsed: number | null;
   /** The latest entry through the gate. */
   enteredAt: Date | null;
   /** The latest exit, once nobody on the pass is inside. */
@@ -118,8 +120,9 @@ export const passNotFound = () =>
 /**
  * Visitor passes (ADR 0028). A host who may invite visitors on a unit
  * (capabilities.visitorsInvite) creates a pass and gets a 6-digit code,
- * stored only as an HMAC. One-time passes are used by their
- * first entry; recurring ones follow a weekly schedule in the compound's
+ * stored only as an HMAC. A one-time pass lets its group in one person per
+ * entry and is used when all `partySize` came in (ADR 0043); recurring ones
+ * follow a weekly schedule in the compound's
  * time zone. A pass is valid only while its host still may invite on the
  * unit: the gate checks that at every use, and a host who is deactivated,
  * frozen or erased has their active passes cancelled.
@@ -522,6 +525,7 @@ export class VisitorPassesService implements OnModuleInit {
       mine,
       visitorName: mine ? (p.visitorDetails?.fullName ?? null) : null,
       vehiclePlate: mine ? (p.visitorDetails?.vehiclePlate ?? null) : null,
+      entriesUsed: p.kind === 'one_time' ? p.entriesUsed : null,
       enteredAt: times?.enteredAt ?? null,
       exitedAt: times?.exitedAt ?? null,
       createdAt: p.createdAt,

@@ -111,6 +111,47 @@ describe('Gate concurrency', () => {
     }
   });
 
+  it('a group pass at two gates at once: never more entries than people', async () => {
+    // A second guard on duty at another gate (ADR 0043).
+    const other = await gateHelpers(h).onDuty(w.a);
+    const otherToken = await w.tokenFor(w.a, other.guardId, 'staff');
+    for (let i = 0; i < ROUNDS; i++) {
+      const pass = (
+        await call(w, 'POST', `/units/${w.a.homeUnitId}/visitor-passes`, {
+          token: w.a.tokens.owner,
+          body: passBody({ partySize: 3 }),
+        }).expect(201)
+      ).body as { id: string };
+      // Five of the group at once, at both gates: three come in.
+      const results = await Promise.all(
+        [0, 1, 2, 3, 4].map((n) =>
+          enter('visitor_pass', pass.id, n % 2 ? otherToken : guard()),
+        ),
+      );
+      expect(results.filter((r) => r.status === 201)).toHaveLength(3);
+      for (const r of results.filter((r) => r.status !== 201)) {
+        expect(r.status).toBe(409);
+        expect(err(r)).toMatchObject({
+          code: 'GATE_ENTRY_REFUSED',
+          params: { reason: 'used' },
+        });
+      }
+      expect(await entries(pass.id)).toBe(3);
+      expect(
+        await w.helpers.asManager(w.a, () =>
+          w.helpers.prisma.tenant.visitorPass.findUniqueOrThrow({
+            where: { id: pass.id },
+          }),
+        ),
+      ).toMatchObject({
+        entriesUsed: 3,
+        status: 'used',
+        codeHash: null,
+        qrTokenHash: null,
+      });
+    }
+  });
+
   it('the pass cap holds under concurrent creation', async () => {
     const unit = await w.helpers.unit(w.a);
     const host = await w.helpers.resident(w.a, [unit.id]);

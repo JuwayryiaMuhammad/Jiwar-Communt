@@ -77,7 +77,13 @@ export class CreateVisitorPassDto {
   )
   kind: VisitorPassKind;
 
-  @ApiProperty({ type: Number, minimum: PARTY.min, maximum: PARTY.max })
+  @ApiProperty({
+    type: Number,
+    minimum: PARTY.min,
+    maximum: PARTY.max,
+    description:
+      'How many people the code lets in (ADR 0043). One-time: one per entry, at any gate, until all came in or `validUntil`. Recurring: how many may be inside at once, on every visit.',
+  })
   @IsInt(withParams(PARTY))
   @Min(PARTY.min, withParams(PARTY))
   @Max(PARTY.max, withParams(PARTY))

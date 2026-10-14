@@ -141,7 +141,7 @@ describe('Gate — the visitor page (ADR 0030)', () => {
       compoundName: tenant.name,
       unitCode: unit.code,
       kind: 'one_time',
-      partySize: 2,
+      partySize: 1,
       validFrom: row.validFrom.toISOString(),
       validUntil: row.validUntil.toISOString(),
       timeZone: 'Africa/Cairo',

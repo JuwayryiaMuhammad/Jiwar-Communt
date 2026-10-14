@@ -131,6 +131,14 @@ export class PassView {
   vehiclePlate: string | null;
 
   @ApiProperty({
+    type: Number,
+    nullable: true,
+    description:
+      'One-time passes: how many of the `partySize` people came in, one per entry (ADR 0043). The pass is `used` when it reaches `partySize`. Null on a recurring pass, whose `partySize` caps how many are inside at once.',
+  })
+  entriesUsed: number | null;
+
+  @ApiProperty({
     type: String,
     format: 'date-time',
     nullable: true,
@@ -162,6 +170,7 @@ export class PassView {
       mine: p.mine,
       visitorName: p.visitorName,
       vehiclePlate: p.vehiclePlate,
+      entriesUsed: p.entriesUsed,
       enteredAt: p.enteredAt,
       exitedAt: p.exitedAt,
       createdAt: p.createdAt,

@@ -72,6 +72,8 @@ export interface InsideItem {
   unitCode: string;
   kind: string;
   partySize: number;
+  /** How many on this subject are inside now (a group pass: one per entry). */
+  insideCount: number;
   gateName: string;
   enteredAt: Date;
 }
@@ -83,6 +85,31 @@ export interface EntryFilters {
   direction?: GateDirection;
   from?: Date;
   to?: Date;
+}
+
+/**
+ * Every subject with someone inside, one row each: its latest `in` (where
+ * and when the last of them came in) and how many are inside (`in`s less
+ * `out`s, ADR 0043). Exits close entries first in, first out, so a subject
+ * whose counts are equal has nobody inside.
+ */
+const OPEN_SUBJECTS = Prisma.sql`
+  SELECT * FROM (
+    SELECT DISTINCT ON (subject_type, subject_id)
+           id, subject_type, subject_id, unit_id, gate_id, occurred_at,
+           visitor_details_id, approval_request_id,
+           (count(*) FILTER (WHERE direction = 'in') OVER s
+            - count(*) FILTER (WHERE direction = 'out') OVER s)::int AS inside
+      FROM gate_entries
+    WINDOW s AS (PARTITION BY subject_type, subject_id)
+     ORDER BY subject_type, subject_id, (direction = 'in') DESC,
+              occurred_at DESC, recorded_at DESC, id DESC
+  ) latest
+  WHERE inside > 0`;
+
+/** How many may be inside at once on a subject (ADR 0043). */
+export function capacityOf(s: GateSubject): number {
+  return s.type === 'visitor_pass' ? s.partySize : 1;
 }
 
 const refused = (reason: string) =>
@@ -97,9 +124,14 @@ export const subjectNotFound = () =>
  * The gate log (ADR 0028): append-only `gate_entries`, written by a guard
  * inside a shift (or by the system for an unconfirmed exit) and never
  * changed. An `in` is checked again at the moment it happened (a guard may
- * record up to 24 h late, offline), a one-time pass is used by it, and an
- * `out` needs the subject to be inside. Entries of one subject are
- * serialized by a row lock on the subject.
+ * record up to 24 h late, offline), and an `out` needs someone on the
+ * subject to be inside. Entries of one subject are serialized by a row lock
+ * on the subject.
+ *
+ * A visitor pass lets in one person per entry (ADR 0043): up to `partySize`
+ * inside at once; a one-time pass counts its entries and is used when the
+ * count reaches `partySize`. Everyone else (a worker, an approval) is one
+ * person, in or out.
  */
 @Injectable()
 export class EntriesService implements OnModuleInit {
@@ -206,15 +238,22 @@ export class EntriesService implements OnModuleInit {
       }
       if (!subject) throw subjectNotFound();
       await this.lockSubject(tx, subject.type, subject.id);
-      const last = await this.lastOf(tx, subject.type, subject.id);
-      const inside = last?.direction === 'in';
+      const inside = await this.insideCount(tx, subject.type, subject.id);
       let method: GateEntryMethod;
       if (input.direction === 'in') {
-        if (inside)
+        if (inside >= capacityOf(subject)) {
+          // A one-time group all in: the pass is used, say so.
+          if (
+            subject.type === 'visitor_pass' &&
+            (await tx.visitorPass.findUnique({ where: { id: subject.id } }))
+              ?.status === 'used'
+          )
+            throw refused('used');
           throw appError.conflict(
             ErrorCode.ALREADY_INSIDE,
             'Record their exit before another entry',
           );
+        }
         const tz = (await this.settings.inTx(tx, tenantId)).timezone;
         if (approval) {
           await this.checkApproval(tx, approval, subject, occurredAt, tz);
@@ -231,16 +270,23 @@ export class EntriesService implements OnModuleInit {
               ? 'not_approved'
               : await this.subjects.refusal(tx, fresh, occurredAt, tz);
           if (refusal) throw refused(refusal);
-          if (fresh.pass?.kind === 'one_time')
+          if (fresh.pass?.kind === 'one_time') {
+            // One more of the group; the last one uses the pass.
+            const entriesUsed = fresh.pass.entriesUsed + 1;
             await tx.visitorPass.update({
               where: { id: fresh.id },
-              data: {
-                status: 'used',
-                usedAt: occurredAt,
-                codeHash: null,
-                qrTokenHash: null,
-              },
+              data:
+                entriesUsed < fresh.pass.partySize
+                  ? { entriesUsed }
+                  : {
+                      entriesUsed,
+                      status: 'used',
+                      usedAt: occurredAt,
+                      codeHash: null,
+                      qrTokenHash: null,
+                    },
             });
+          }
           method = input.via === 'qr' ? 'qr' : 'code';
         }
       } else {
@@ -249,7 +295,22 @@ export class EntriesService implements OnModuleInit {
             ErrorCode.NOT_INSIDE,
             'There is no entry to close for them',
           );
-        if (occurredAt < last.occurredAt)
+        // First in, first out: this exit closes the oldest open entry,
+        // the `inside`-th latest `in`.
+        const closes = await tx.gateEntry.findFirst({
+          where: {
+            subjectType: subject.type,
+            subjectId: subject.id,
+            direction: 'in',
+          },
+          orderBy: [
+            { occurredAt: 'desc' },
+            { recordedAt: 'desc' },
+            { id: 'desc' },
+          ],
+          skip: inside - 1,
+        });
+        if (closes && occurredAt < closes.occurredAt)
           throw appError.badRequest(
             ErrorCode.VALIDATION_FAILED,
             'An exit cannot precede the entry',
@@ -385,17 +446,13 @@ export class EntriesService implements OnModuleInit {
           unit_id: string;
           gate_name: string;
           occurred_at: Date;
+          inside: number;
         }[]
       >`
-        SELECT e.id, e.subject_type, e.subject_id, e.unit_id, g.name AS gate_name, e.occurred_at
-          FROM (
-            SELECT DISTINCT ON (subject_type, subject_id) *
-              FROM gate_entries
-             ORDER BY subject_type, subject_id, occurred_at DESC, recorded_at DESC, id DESC
-          ) e
+        SELECT e.id, e.subject_type, e.subject_id, e.unit_id, g.name AS gate_name, e.occurred_at, e.inside
+          FROM (${OPEN_SUBJECTS}) e
           JOIN gates g ON g.id = e.gate_id
-         WHERE e.direction = 'in'
-           AND (${after?.at ?? null}::timestamptz IS NULL
+         WHERE (${after?.at ?? null}::timestamptz IS NULL
                 OR (e.occurred_at, e.id) < (${after?.at ?? null}::timestamptz, ${after?.id ?? null}::uuid))
          ORDER BY e.occurred_at DESC, e.id DESC
          LIMIT ${limit + 1}`;
@@ -413,6 +470,7 @@ export class EntriesService implements OnModuleInit {
             s?.unitCode ?? (await this.community.unitCode(tx, r.unit_id)),
           kind: s?.kind ?? r.subject_type,
           partySize: s?.partySize ?? 1,
+          insideCount: r.inside,
           gateName: r.gate_name,
           enteredAt: r.occurred_at,
         });
@@ -443,13 +501,20 @@ export class EntriesService implements OnModuleInit {
     }
   }
 
-  /** Whether the subject is inside now (its last entry is an `in`). */
-  async isInside(
+  /** How many on the subject are inside now: its `in`s less its `out`s. */
+  async insideCount(
     tx: TenantTxClient,
     type: GateSubjectType,
     id: string,
-  ): Promise<boolean> {
-    return (await this.lastOf(tx, type, id))?.direction === 'in';
+  ): Promise<number> {
+    const rows = await tx.gateEntry.groupBy({
+      by: ['direction'],
+      where: { subjectType: type, subjectId: id },
+      _count: { _all: true },
+    });
+    const of = (d: GateDirection) =>
+      rows.find((r) => r.direction === d)?._count._all ?? 0;
+    return of('in') - of('out');
   }
 
   /** For the approvals and the sweep: an entry row, never changed after. */
@@ -503,13 +568,6 @@ export class EntriesService implements OnModuleInit {
       await tx.$queryRaw`SELECT id FROM gate_approval_requests WHERE id = ${id}::uuid FOR UPDATE`;
   }
 
-  private lastOf(tx: TenantTxClient, type: GateSubjectType, id: string) {
-    return tx.gateEntry.findFirst({
-      where: { subjectType: type, subjectId: id },
-      orderBy: [{ occurredAt: 'desc' }, { recordedAt: 'desc' }, { id: 'desc' }],
-    });
-  }
-
   private async render(tx: TenantTxClient, e: GateEntry): Promise<EntryRecord> {
     return {
       id: e.id,
@@ -543,12 +601,8 @@ export class EntriesService implements OnModuleInit {
         }[]
       >`
         SELECT subject_type, subject_id, unit_id, gate_id, visitor_details_id, approval_request_id
-          FROM (
-            SELECT DISTINCT ON (subject_type, subject_id) *
-              FROM gate_entries
-             ORDER BY subject_type, subject_id, occurred_at DESC, recorded_at DESC, id DESC
-          ) last
-         WHERE direction = 'in' AND occurred_at < ${before}`;
+          FROM (${OPEN_SUBJECTS}) open
+         WHERE occurred_at < ${before}`;
       const liveIn = new Set(
         await this.community.liveInEngagements(
           tx,
@@ -564,24 +618,39 @@ export class EntriesService implements OnModuleInit {
         // The guard's lock: an exit recorded meanwhile (or another sweep
         // instance) wins, and this one finds nothing left to close.
         await this.lockSubject(tx, o.subject_type, o.subject_id);
-        const last = await this.lastOf(tx, o.subject_type, o.subject_id);
-        if (last?.direction !== 'in' || last.occurredAt >= before) continue;
-        await tx.gateEntry.create({
-          data: {
-            id: newId(),
-            tenantId,
-            gateId: o.gate_id,
+        // Everyone still inside on it, one exit each (ADR 0043), unless
+        // someone came in since: then the group is still about.
+        const inside = await this.insideCount(tx, o.subject_type, o.subject_id);
+        const lastIn = await tx.gateEntry.findFirst({
+          where: {
             subjectType: o.subject_type,
             subjectId: o.subject_id,
-            unitId: o.unit_id,
-            direction: 'out',
-            method: 'system',
-            approvalRequestId: o.approval_request_id,
-            occurredAt: now,
-            unconfirmed: true,
-            visitorDetailsId: o.visitor_details_id,
+            direction: 'in',
           },
+          orderBy: [
+            { occurredAt: 'desc' },
+            { recordedAt: 'desc' },
+            { id: 'desc' },
+          ],
         });
+        if (inside <= 0 || !lastIn || lastIn.occurredAt >= before) continue;
+        for (let i = 0; i < inside; i++)
+          await tx.gateEntry.create({
+            data: {
+              id: newId(),
+              tenantId,
+              gateId: o.gate_id,
+              subjectType: o.subject_type,
+              subjectId: o.subject_id,
+              unitId: o.unit_id,
+              direction: 'out',
+              method: 'system',
+              approvalRequestId: o.approval_request_id,
+              occurredAt: now,
+              unconfirmed: true,
+              visitorDetailsId: o.visitor_details_id,
+            },
+          });
         closed++;
       }
       return closed;

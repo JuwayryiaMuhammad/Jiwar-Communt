@@ -7771,6 +7771,11 @@ export interface components {
         CreateGateDto: {
             kind: components["schemas"]["GateKind"];
             name: string;
+            /**
+             * @description The gate’s own phone (ADR 0043), stored E.164: a household asked about a visitor can call it.
+             * @example +20225550100
+             */
+            phone?: string;
         };
         CreateGateRequestDto: {
             /**
@@ -7781,6 +7786,11 @@ export interface components {
             kind: components["schemas"]["GateRequestKind"];
             /** @default 1 */
             partySize: number;
+            /**
+             * Format: uuid
+             * @description Any kind: the photo of whoever waits (ADR 0043), uploaded by this guard first (`POST /files`, purpose `gate_request_photo`, then finalize). The household asked and the guards see it; deleted 7 days after the decision.
+             */
+            photoFileId?: string;
             /** @description Visitors and deliveries: the unit they came for. */
             unitCode?: string;
             /** @description As the visitor gives it; shown to the household only. */
@@ -8659,7 +8669,7 @@ export interface components {
             technicianRating: number | null;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -8802,6 +8812,8 @@ export interface components {
             name: string;
             /** @description The gate is in service (its status is `active`). */
             open: boolean;
+            /** @description The gate’s phone, E.164, or null (ADR 0043). */
+            phone: string | null;
         };
         GateStatusViewList: {
             data: components["schemas"]["GateStatusView"][];
@@ -8816,6 +8828,8 @@ export interface components {
             id: string;
             kind: components["schemas"]["GateKind"];
             name: string;
+            /** @description E.164, or null (ADR 0043). */
+            phone: string | null;
             status: components["schemas"]["GateStatus"];
         };
         GateViewList: {
@@ -8876,6 +8890,8 @@ export interface components {
             id: string;
             kind: components["schemas"]["GateRequestKind"];
             partySize: number;
+            /** @description The guard's photo of whoever waits: a presigned URL valid for minutes (ADR 0043). Null without one, and 7 days after the decision. */
+            photoUrl: string | null;
             /** @description A waiting visitor or delivery: the unit's standing instructions whose author may still invite there (ADR 0043). Empty once decided, and for a worker. */
             standingInstructions: components["schemas"]["GuardInstructionView"][];
             status: components["schemas"]["GateRequestStatus"];
@@ -8953,10 +8969,14 @@ export interface components {
             /** Format: date-time */
             expiresAt: string;
             gateName: string;
+            /** @description The gate’s phone, E.164, to call the guard (ADR 0043). Null when the manager set none. */
+            gatePhone: string | null;
             /** Format: uuid */
             id: string;
             kind: components["schemas"]["GateRequestKind"];
             partySize: number;
+            /** @description The guard's photo of whoever waits: a presigned URL valid for minutes (ADR 0043); fetch it again with the list when it expires. Null without one. */
+            photoUrl: string | null;
             unitCode: string;
             /** Format: uuid */
             unitId: string;
@@ -12586,6 +12606,11 @@ export interface components {
         UpdateGateDto: {
             kind?: components["schemas"]["GateKind"];
             name?: string;
+            /**
+             * @description Stored E.164; `null` removes it (ADR 0043).
+             * @example +20225550100
+             */
+            phone?: string | null;
             /** @description Inactive ends the shifts open at the gate. */
             status?: components["schemas"]["GateStatus"];
         };

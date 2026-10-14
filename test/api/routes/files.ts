@@ -34,6 +34,7 @@ export const FILES_ROUTES: Row[] = [
               'community_attachment',
               'complaint_evidence',
               'neighbour_post_photo',
+              'gate_request_photo',
             ],
           },
         },

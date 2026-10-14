@@ -69,6 +69,17 @@ export class CreateGateRequestDto {
   @IsOptional()
   @IsUUID()
   engagementId?: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'Any kind: the photo of whoever waits (ADR 0043), uploaded by this guard first (`POST /files`, purpose `gate_request_photo`, then finalize). The household asked and the guards see it; deleted 7 days after the decision.',
+  })
+  @IsOptional()
+  @IsUUID()
+  photoFileId?: string;
 }
 
 /** The guard applies one of the unit's standing instructions (ADR 0043). */

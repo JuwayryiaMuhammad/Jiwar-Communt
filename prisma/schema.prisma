@@ -1855,6 +1855,8 @@ model Gate {
   name      String
   kind      GateKind
   status    GateStatus @default(active)
+  /// E.164 (ADR 0043): the household calls the gate from a request.
+  phone     String?
   createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -2038,9 +2040,12 @@ model GateApprovalRequest {
   decisionSource   GateDecisionSource? @map("decision_source")
   expiresAt        DateTime            @map("expires_at") @db.Timestamptz(3)
   createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// The guard's photo of the visitor (ADR 0043); gone 7 days after the decision.
+  photoFileId      String?             @map("photo_file_id") @db.Uuid
 
   unit           Unit              @relation(fields: [tenantId, unitId], references: [tenantId, id], onUpdate: Restrict)
   gate           Gate              @relation(fields: [tenantId, gateId], references: [tenantId, id], onUpdate: Restrict)
+  photo          StoredFile?       @relation("GateRequestPhoto", fields: [tenantId, photoFileId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "gate_approval_requests_tenant_id_photo_file_fkey")
   shift          GuardShift        @relation(fields: [tenantId, shiftId], references: [tenantId, id], onUpdate: Restrict)
   requestedBy    Account           @relation("RequestRequestedBy", fields: [tenantId, requestedById], references: [tenantId, id], onUpdate: Restrict)
   decidedBy      Account?          @relation("RequestDecidedBy", fields: [tenantId, decidedById], references: [tenantId, id], onUpdate: Restrict)
@@ -2074,6 +2079,7 @@ enum FilePurpose {
   complaint_evidence
   /// A lost-and-found or lending post's photo (ADR 0042).
   neighbour_post_photo
+  gate_request_photo
 
   @@map("file_purpose")
 }
@@ -2108,6 +2114,7 @@ model StoredFile {
   exports  DataExport[]       @relation("DataExportFile")
   tickets  TicketAttachment[] @relation("AttachmentFile")
   parcelPhotos         Parcel[]           @relation("ParcelPhoto")
+  gateRequestPhotos    GateApprovalRequest[] @relation("GateRequestPhoto")
   parcelHandoverPhotos Parcel[]           @relation("ParcelHandoverPhoto")
   managementAttachments ManagementRequestAttachment[] @relation("ManagementAttachmentFile")
   announcementAttachments AnnouncementAttachment[] @relation("AnnouncementAttachmentFile")

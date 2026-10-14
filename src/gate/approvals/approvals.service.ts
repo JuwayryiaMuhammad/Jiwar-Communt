@@ -10,12 +10,13 @@ import { CommunityGatePort } from '../../community';
 import { AuditService } from '../../core/audit/audit.service';
 import type { AppClsStore } from '../../core/common/cls/app-cls';
 import { RequestContext } from '../../core/common/cls/request-context';
-import { appError, ErrorCode } from '../../core/common/errors';
+import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import { newId } from '../../core/common/uuid';
 import {
   TenantTx,
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
+import { FilesService } from '../../core/files/files.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { Notifier } from '../../core/notifications/notifier';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
@@ -31,16 +32,23 @@ import { VISITOR_DATA_DAYS } from '../visitors/visitor-passes.service';
 
 export const REQUEST_RESOURCE = 'gate_approval_request';
 export const REQUEST_TIMEOUTS_SWEEP = 'gate.request_timeouts';
+export const REQUEST_PHOTOS_SWEEP = 'gate.request_photos';
+/** How long the guard's photo of a visitor outlives the decision (ADR 0043). */
+export const REQUEST_PHOTO_DAYS = 7;
 const DAY = 86_400_000;
 
-export type NewRequest =
+export type NewRequest = (
   | {
       kind: 'uninvited_visitor' | 'delivery';
       unitCode: string;
       partySize?: number;
       visitorName?: string;
     }
-  | { kind: 'worker_off_schedule'; engagementId: string };
+  | { kind: 'worker_off_schedule'; engagementId: string }
+) & {
+  /** The guard's photo of whoever waits (ADR 0043), uploaded first. */
+  photoFileId?: string;
+};
 
 /** What the guard sees: never who decided, never a resident. */
 export interface GuardRequestView {
@@ -52,6 +60,8 @@ export interface GuardRequestView {
   decisionSource: GateDecisionSource | null;
   expiresAt: Date;
   createdAt: Date;
+  /** The guard's photo, presigned and short-lived (ADR 0043). */
+  photoUrl: string | null;
   /**
    * While a visitor or a delivery waits: the unit's standing instructions,
    * words and action (ADR 0043). Empty otherwise.
@@ -69,6 +79,10 @@ export interface HostRequestView {
   partySize: number;
   visitorName: string | null;
   workerName: string | null;
+  /** The guard's photo of whoever waits, presigned and short-lived. */
+  photoUrl: string | null;
+  /** The gate's phone, E.164, to call the guard back (ADR 0043). */
+  gatePhone: string | null;
   expiresAt: Date;
   createdAt: Date;
 }
@@ -109,6 +123,7 @@ export class ApprovalsService implements OnModuleInit {
     private readonly idempotency: IdempotencyService,
     private readonly sweep: SweepRunner,
     private readonly standing: StandingInstructionsService,
+    private readonly files: FilesService,
   ) {}
 
   onModuleInit(): void {
@@ -128,6 +143,20 @@ export class ApprovalsService implements OnModuleInit {
         });
         let done = 0;
         for (const r of due) if (await this.resolveDue(tx, r.id, now)) done++;
+        return done;
+      }),
+    );
+    // The photo goes 7 days after the decision: the pointer first, then the
+    // file (the files sweep removes the object).
+    this.sweep.register(REQUEST_PHOTOS_SWEEP, (now) =>
+      this.sweep.forEachTenant(async (tx) => {
+        const cutoff = new Date(now.getTime() - REQUEST_PHOTO_DAYS * DAY);
+        const due = await tx.gateApprovalRequest.findMany({
+          where: { photoFileId: { not: null }, decidedAt: { lte: cutoff } },
+          select: { id: true },
+        });
+        let done = 0;
+        for (const r of due) if (await this.dropPhoto(tx, r.id, cutoff)) done++;
         return done;
       }),
     );
@@ -190,6 +219,20 @@ export class ApprovalsService implements OnModuleInit {
         partySize = input.partySize ?? 1;
         visitorName = input.visitorName?.trim() || null;
       }
+      // The photo, uploaded by this guard and ready, becomes the request's.
+      const photo = input.photoFileId
+        ? await this.files.claim(tx, input.photoFileId, 'gate_request_photo')
+        : null;
+      if (input.photoFileId && !photo)
+        throw appError.badRequest(
+          ErrorCode.VALIDATION_FAILED,
+          'The photo is not available',
+          {
+            fields: [
+              { field: 'photoFileId', code: FieldErrorCode.FILE_NOT_AVAILABLE },
+            ],
+          },
+        );
       let detailsId: string | null = null;
       if (visitorName) {
         detailsId = newId();
@@ -216,13 +259,21 @@ export class ApprovalsService implements OnModuleInit {
           partySize,
           engagementId,
           visitorDetailsId: detailsId,
+          photoFileId: photo?.id ?? null,
           expiresAt: new Date(now.getTime() + timeout * 1000),
         },
       });
+      if (photo) await this.files.attach(tx, photo);
       await this.audit.record(tx, {
         action: 'gate.approval_requested',
         targetId: id,
-        metadata: { unitId, kind: input.kind, partySize, gateId: shift.gateId },
+        metadata: {
+          unitId,
+          kind: input.kind,
+          partySize,
+          gateId: shift.gateId,
+          photo: photo !== null,
+        },
       });
       const holders = await this.community.holders(
         tx,
@@ -355,7 +406,7 @@ export class ApprovalsService implements OnModuleInit {
           expiresAt: { gt: new Date() },
         },
         include: {
-          gate: { select: { name: true } },
+          gate: { select: { name: true, phone: true } },
           visitorDetails: { select: { fullName: true } },
         },
         orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
@@ -378,6 +429,8 @@ export class ApprovalsService implements OnModuleInit {
           partySize: r.partySize,
           visitorName: r.visitorDetails?.fullName ?? null,
           workerName: worker?.workerName ?? null,
+          photoUrl: (await this.files.readUrl(tx, r.photoFileId))?.url ?? null,
+          gatePhone: r.gate.phone,
           expiresAt: r.expiresAt,
           createdAt: r.createdAt,
         });
@@ -518,6 +571,27 @@ export class ApprovalsService implements OnModuleInit {
     return true;
   }
 
+  /** Under the request's lock: a decided request past the cutoff loses its photo. */
+  private async dropPhoto(
+    tx: TenantTxClient,
+    id: string,
+    cutoff: Date,
+  ): Promise<boolean> {
+    await tx.$queryRaw`SELECT id FROM gate_approval_requests WHERE id = ${id}::uuid FOR UPDATE`;
+    const r = await tx.gateApprovalRequest.findUnique({ where: { id } });
+    if (!r?.photoFileId || !r.decidedAt || r.decidedAt > cutoff) return false;
+    await tx.gateApprovalRequest.update({
+      where: { id },
+      data: { photoFileId: null },
+    });
+    await this.files.markDeleted(
+      tx,
+      { id: r.photoFileId, purpose: 'gate_request_photo' },
+      'retention',
+    );
+    return true;
+  }
+
   private async guardView(
     tx: TenantTxClient,
     r: GateApprovalRequest,
@@ -532,6 +606,7 @@ export class ApprovalsService implements OnModuleInit {
       decisionSource: r.decisionSource,
       expiresAt: r.expiresAt,
       createdAt: r.createdAt,
+      photoUrl: (await this.files.readUrl(tx, r.photoFileId))?.url ?? null,
       standingInstructions:
         r.status === 'pending' && r.kind !== 'worker_off_schedule'
           ? await this.standing.forGuard(tx, r.unitId)

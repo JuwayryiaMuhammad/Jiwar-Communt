@@ -10,8 +10,8 @@ import { keyPaths, listKeys } from './keys';
 import { call, err } from './request';
 import { buildWorld, type World } from './world';
 
-const GATE = ['createdAt', 'id', 'kind', 'name', 'status'];
-const GATE_STATUS = ['id', 'name', 'open'];
+const GATE = ['createdAt', 'id', 'kind', 'name', 'phone', 'status'];
+const GATE_STATUS = ['id', 'name', 'open', 'phone'];
 const SHIFT = ['endedAt', 'gateId', 'gateName', 'id', 'startedAt'];
 
 describe('API v0 — gates and shifts (ADR 0028)', () => {
@@ -138,6 +138,8 @@ describe('API v0 — gates and shifts (ADR 0028)', () => {
         id: w.a.gateId,
         name: w.a.gateName,
         open: true,
+        // Set by the manager (ADR 0043); none here.
+        phone: null,
       });
       expect(gates.find((x) => x.id === unmannedId)?.open).toBe(true);
       expect(gates.find((x) => x.id === closedId)?.open).toBe(false);

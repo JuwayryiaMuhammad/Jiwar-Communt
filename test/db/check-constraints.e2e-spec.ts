@@ -92,6 +92,9 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   visitor_passes_token_only_with_code: {},
   visitor_passes_entries_used_range: {},
   unit_standing_instructions_description_length: {},
+  gates_phone_e164: {
+    guarded: 'phone IS NULL is tested first; the pattern runs only on a value',
+  },
   visitor_passes_used_when_full: {},
   visitor_passes_token_seq_range: {
     guarded:

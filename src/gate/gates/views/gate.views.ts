@@ -14,6 +14,13 @@ export class GateView {
   @ApiProperty({ enum: GateStatus, enumName: 'GateStatus' })
   status: GateStatus;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'E.164, or null (ADR 0043).',
+  })
+  phone: string | null;
+
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
@@ -23,6 +30,7 @@ export class GateView {
       name: g.name,
       kind: g.kind,
       status: g.status,
+      phone: g.phone,
       createdAt: g.createdAt,
     };
   }
@@ -42,8 +50,22 @@ export class GateStatusView {
   })
   open: boolean;
 
-  static from(g: Pick<Gate, 'id' | 'name' | 'status'>): GateStatusView {
-    return { id: g.id, name: g.name, open: g.status === 'active' };
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'The gate’s phone, E.164, or null (ADR 0043).',
+  })
+  phone: string | null;
+
+  static from(
+    g: Pick<Gate, 'id' | 'name' | 'status' | 'phone'>,
+  ): GateStatusView {
+    return {
+      id: g.id,
+      name: g.name,
+      open: g.status === 'active',
+      phone: g.phone,
+    };
   }
 }
 

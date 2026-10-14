@@ -4741,7 +4741,7 @@
               },
               "raw": "{\n  \"purpose\": \"worker_photo\",\n  \"contentType\": \"image/jpeg\",\n  \"size\": 1\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -4863,7 +4863,7 @@
               },
               "raw": "{\n  \"kind\": \"uninvited_visitor\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `engagementId` | string (uuid) |  | worker_off_schedule: the engagement verify returned. |\n| `kind` | `uninvited_visitor` \\| `delivery` \\| `worker_off_schedule` | yes |  |\n| `partySize` | number |  |  |\n| `unitCode` | string |  | Visitors and deliveries: the unit they came for. |\n| `visitorName` | string |  | As the visitor gives it; shown to the household only. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `engagementId` | string (uuid) |  | worker_off_schedule: the engagement verify returned. |\n| `kind` | `uninvited_visitor` \\| `delivery` \\| `worker_off_schedule` | yes |  |\n| `partySize` | number |  |  |\n| `photoFileId` | string (uuid) |  | Any kind: the photo of whoever waits (ADR 0043), uploaded by this guard first (`POST /files`, purpose `gate_request_photo`, then finalize). The household asked and the guards see it; deleted 7 days after the decision. |\n| `unitCode` | string |  | Visitors and deliveries: the unit they came for. |\n| `visitorName` | string |  | As the visitor gives it; shown to the household only. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -5395,7 +5395,7 @@
               },
               "raw": "{\n  \"name\": \"\",\n  \"kind\": \"pedestrian\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `kind` | `pedestrian` \\| `vehicle` \\| `mixed` | yes |  |\n| `name` | string | yes |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `kind` | `pedestrian` \\| `vehicle` \\| `mixed` | yes |  |\n| `name` | string | yes |  |\n| `phone` | string |  | The gate’s own phone (ADR 0043), stored E.164: a household asked about a visitor can call it. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -5447,9 +5447,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"kind\": \"pedestrian\",\n  \"name\": \"\",\n  \"status\": \"active\"\n}"
+              "raw": "{\n  \"kind\": \"pedestrian\",\n  \"name\": \"\",\n  \"phone\": \"+20225550100\",\n  \"status\": \"active\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `kind` | `pedestrian` \\| `vehicle` \\| `mixed` |  |  |\n| `name` | string |  |  |\n| `status` | `active` \\| `inactive` |  | Inactive ends the shifts open at the gate. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `kind` | `pedestrian` \\| `vehicle` \\| `mixed` |  |  |\n| `name` | string |  |  |\n| `phone` | string |  | Stored E.164; `null` removes it (ADR 0043). |\n| `status` | `active` \\| `inactive` |  | Inactive ends the shifts open at the gate. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",

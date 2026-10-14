@@ -51,6 +51,13 @@ export class GuardRequestResponse {
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
   @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      "The guard's photo of whoever waits: a presigned URL valid for minutes (ADR 0043). Null without one, and 7 days after the decision.",
+  })
+  photoUrl: string | null;
+  @ApiProperty({
     type: [GuardInstructionView],
     description:
       "A waiting visitor or delivery: the unit's standing instructions whose author may still invite there (ADR 0043). Empty once decided, and for a worker.",
@@ -67,6 +74,7 @@ export class GuardRequestResponse {
       decisionSource: r.decisionSource,
       expiresAt: r.expiresAt,
       createdAt: r.createdAt,
+      photoUrl: r.photoUrl,
       standingInstructions: r.standingInstructions.map((i) => ({
         id: i.id,
         description: i.description,
@@ -98,6 +106,20 @@ export class HostRequestResponse {
   visitorName: string | null;
   @ApiProperty({ type: String, nullable: true })
   workerName: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      "The guard's photo of whoever waits: a presigned URL valid for minutes (ADR 0043); fetch it again with the list when it expires. Null without one.",
+  })
+  photoUrl: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'The gate’s phone, E.164, to call the guard (ADR 0043). Null when the manager set none.',
+  })
+  gatePhone: string | null;
   @ApiProperty({ type: String, format: 'date-time' })
   expiresAt: Date;
   @ApiProperty({ type: String, format: 'date-time' })
@@ -113,6 +135,8 @@ export class HostRequestResponse {
       partySize: r.partySize,
       visitorName: r.visitorName,
       workerName: r.workerName,
+      photoUrl: r.photoUrl,
+      gatePhone: r.gatePhone,
       expiresAt: r.expiresAt,
       createdAt: r.createdAt,
     };

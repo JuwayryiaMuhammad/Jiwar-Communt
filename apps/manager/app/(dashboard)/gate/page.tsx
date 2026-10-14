@@ -157,11 +157,18 @@ function GateDialog({ gate, open, onClose }: { gate: Gate | null; open: boolean;
   const toast = useToast();
   const [name, setName] = useState(gate?.name ?? '');
   const [kind, setKind] = useState<GateKind>(gate?.kind ?? 'mixed');
+  const [phone, setPhone] = useState(gate?.phone ?? '');
   const save = useAction(
     () =>
       gate
-        ? unwrap(api.PATCH('/api/v1/gates/{id}', { params: { path: { id: gate.id } }, body: { name: name.trim(), kind } }))
-        : unwrap(api.POST('/api/v1/gates', { body: { name: name.trim(), kind } })),
+        ? unwrap(
+            api.PATCH('/api/v1/gates/{id}', {
+              params: { path: { id: gate.id } },
+              // Empty removes the phone.
+              body: { name: name.trim(), kind, phone: phone.trim() || null },
+            }),
+          )
+        : unwrap(api.POST('/api/v1/gates', { body: { name: name.trim(), kind, ...(phone.trim() ? { phone: phone.trim() } : {}) } })),
     {
       invalidate: [keys.gates],
       onDone: (g) => {
@@ -197,6 +204,13 @@ function GateDialog({ gate, open, onClose }: { gate: Gate | null; open: boolean;
               <option value="vehicle">Vehicles</option>
             </Select>
           )}
+        </Field>
+        <Field
+          label="Gate phone"
+          hint="Optional. Residents asked about a visitor can call the gate on it."
+          error={fieldError(save.error, 'phone')}
+        >
+          {(p) => <Input {...p} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />}
         </Field>
         <ErrorAlert error={save.error} />
       </div>
@@ -240,6 +254,11 @@ function Gates({ query }: { query: { data?: { data: Gate[] }; isPending: boolean
             columns={[
               { key: 'name', header: 'Gate', cell: (g) => <span className="table__primary">{g.name}</span> },
               { key: 'kind', header: 'Kind', cell: (g) => humanize(g.kind) },
+              {
+                key: 'phone',
+                header: 'Phone',
+                cell: (g) => (g.phone ? <span className="t-num">{g.phone}</span> : <span className="t-secondary">—</span>),
+              },
               { key: 'status', header: 'Status', cell: (g) => <StatusBadge status={g.status} /> },
               {
                 key: 'actions',

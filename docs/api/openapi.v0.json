@@ -3649,6 +3649,11 @@
             "maxLength": 80,
             "minLength": 1,
             "type": "string"
+          },
+          "phone": {
+            "description": "The gate’s own phone (ADR 0043), stored E.164: a household asked about a visitor can call it.",
+            "example": "+20225550100",
+            "type": "string"
           }
         },
         "required": [
@@ -3676,6 +3681,11 @@
             "maximum": 50,
             "minimum": 1,
             "type": "number"
+          },
+          "photoFileId": {
+            "description": "Any kind: the photo of whoever waits (ADR 0043), uploaded by this guard first (`POST /files`, purpose `gate_request_photo`, then finalize). The household asked and the guards see it; deleted 7 days after the decision.",
+            "format": "uuid",
+            "type": "string"
           },
           "unitCode": {
             "description": "Visitors and deliveries: the unit they came for.",
@@ -6591,7 +6601,8 @@
           "request_attachment",
           "community_attachment",
           "complaint_evidence",
-          "neighbour_post_photo"
+          "neighbour_post_photo",
+          "gate_request_photo"
         ],
         "type": "string"
       },
@@ -7077,12 +7088,18 @@
           "open": {
             "description": "The gate is in service (its status is `active`).",
             "type": "boolean"
+          },
+          "phone": {
+            "description": "The gate’s phone, E.164, or null (ADR 0043).",
+            "nullable": true,
+            "type": "string"
           }
         },
         "required": [
           "id",
           "name",
-          "open"
+          "open",
+          "phone"
         ],
         "type": "object"
       },
@@ -7133,6 +7150,11 @@
           "name": {
             "type": "string"
           },
+          "phone": {
+            "description": "E.164, or null (ADR 0043).",
+            "nullable": true,
+            "type": "string"
+          },
           "status": {
             "allOf": [
               {
@@ -7146,6 +7168,7 @@
           "name",
           "kind",
           "status",
+          "phone",
           "createdAt"
         ],
         "type": "object"
@@ -7343,6 +7366,11 @@
           "partySize": {
             "type": "number"
           },
+          "photoUrl": {
+            "description": "The guard's photo of whoever waits: a presigned URL valid for minutes (ADR 0043). Null without one, and 7 days after the decision.",
+            "nullable": true,
+            "type": "string"
+          },
           "standingInstructions": {
             "description": "A waiting visitor or delivery: the unit's standing instructions whose author may still invite there (ADR 0043). Empty once decided, and for a worker.",
             "items": {
@@ -7370,6 +7398,7 @@
           "decisionSource",
           "expiresAt",
           "createdAt",
+          "photoUrl",
           "standingInstructions"
         ],
         "type": "object"
@@ -7542,6 +7571,11 @@
           "gateName": {
             "type": "string"
           },
+          "gatePhone": {
+            "description": "The gate’s phone, E.164, to call the guard (ADR 0043). Null when the manager set none.",
+            "nullable": true,
+            "type": "string"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -7555,6 +7589,11 @@
           },
           "partySize": {
             "type": "number"
+          },
+          "photoUrl": {
+            "description": "The guard's photo of whoever waits: a presigned URL valid for minutes (ADR 0043); fetch it again with the list when it expires. Null without one.",
+            "nullable": true,
+            "type": "string"
           },
           "unitCode": {
             "type": "string"
@@ -7582,6 +7621,8 @@
           "partySize",
           "visitorName",
           "workerName",
+          "photoUrl",
+          "gatePhone",
           "expiresAt",
           "createdAt"
         ],
@@ -19730,6 +19771,12 @@
             "minLength": 1,
             "type": "string"
           },
+          "phone": {
+            "description": "Stored E.164; `null` removes it (ADR 0043).",
+            "example": "+20225550100",
+            "nullable": true,
+            "type": "string"
+          },
           "status": {
             "allOf": [
               {
@@ -24816,6 +24863,7 @@
         "tags": [
           "gate"
         ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -24853,6 +24901,7 @@
         "tags": [
           "gate"
         ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -24909,6 +24958,7 @@
         "tags": [
           "gate"
         ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -24955,6 +25005,7 @@
         "tags": [
           "gate"
         ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -30400,6 +30451,7 @@
         "tags": [
           "gate-requests"
         ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

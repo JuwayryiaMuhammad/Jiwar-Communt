@@ -1,5 +1,9 @@
 import { SweepRunner } from '../../src/core/sweep/sweep-runner';
-import { REQUEST_TIMEOUTS_SWEEP } from '../../src/gate/approvals/approvals.service';
+import {
+  REQUEST_PHOTOS_SWEEP,
+  REQUEST_TIMEOUTS_SWEEP,
+} from '../../src/gate/approvals/approvals.service';
+import { fileHelpers } from '../setup/files';
 import { VISITOR_DATA_SWEEP } from '../../src/gate/visitors/visitor-data.sweep';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { keyPaths, listKeys } from './keys';
@@ -14,6 +18,9 @@ const GUARD_VIEW = [
   'id',
   'kind',
   'partySize',
+  // ADR 0043.
+  'photoUrl',
+  'standingInstructions',
   'status',
   'unitCode',
 ];
@@ -21,9 +28,12 @@ const HOST_VIEW = [
   'createdAt',
   'expiresAt',
   'gateName',
+  // ADR 0043.
+  'gatePhone',
   'id',
   'kind',
   'partySize',
+  'photoUrl',
   'unitCode',
   'unitId',
   'visitorName',
@@ -142,6 +152,97 @@ describe('API v0 — approvals at the gate (ADR 0028)', () => {
     }
     // The guard never sees who is told or who decides.
     expect(JSON.stringify(res.body)).not.toContain(w.a.ids.owner);
+  });
+
+  it("the guard's photo and the gate's phone reach the household; the photo goes 7 days after the decision", async () => {
+    await call(w, 'PATCH', `/gates/${w.a.gateId}`, {
+      token: w.a.tokens.manager,
+      body: { phone: '+20 2 2555 0100' },
+    }).expect(200);
+    try {
+      const files = fileHelpers(h);
+      const photoFileId = await files.ready(guard(), 'gate_request_photo');
+      const res = await ask({ photoFileId }).expect(201);
+      expect(res.headers['cache-control']).toBe('no-store');
+      const id = (res.body as { id: string }).id;
+      expect((res.body as { photoUrl: string }).photoUrl).toContain(
+        photoFileId,
+      );
+      const mine = await call(w, 'GET', '/me/gate-requests', {
+        token: w.a.tokens.owner,
+      }).expect(200);
+      expect(mine.headers['cache-control']).toBe('no-store');
+      const row = (
+        mine.body as {
+          data: { id: string; photoUrl: string; gatePhone: string }[];
+        }
+      ).data.find((r) => r.id === id)!;
+      expect(row.gatePhone).toBe('+20225550100');
+      // A presigned URL the household can fetch.
+      const image = await fetch(row.photoUrl);
+      expect(image.status).toBe(200);
+      // The file is the request's now: the guard can no longer use it.
+      expect(status(await ask({ photoFileId }))).toEqual({
+        status: 400,
+        code: 'VALIDATION_FAILED',
+      });
+      // Another account's upload is not the guard's to attach.
+      const notMine = await files.ready(w.a.tokens.owner, 'resident_photo');
+      expect(err(await ask({ photoFileId: notMine })).fields).toEqual([
+        { field: 'photoFileId', code: 'FILE_NOT_AVAILABLE' },
+      ]);
+
+      await decide(id, w.a.tokens.owner, 'deny').expect(200);
+      const sweep = h.moduleRef.get(SweepRunner);
+      await sweep.run(
+        REQUEST_PHOTOS_SWEEP,
+        new Date(Date.now() + 6 * 86_400_000),
+      );
+      const after = (when: number) =>
+        sweep.run(REQUEST_PHOTOS_SWEEP, new Date(Date.now() + when));
+      expect(
+        (
+          await call(w, 'GET', `/gate/approval-requests/${id}`, {
+            token: guard(),
+          }).expect(200)
+        ).body,
+      ).toMatchObject({ photoUrl: expect.any(String) as string });
+      await after(7 * 86_400_000 + 60_000);
+      const gone = await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.gateApprovalRequest.findUniqueOrThrow({
+          where: { id },
+        }),
+      );
+      expect(gone.photoFileId).toBeNull();
+      const file = await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.storedFile.findUnique({
+          where: { id: photoFileId },
+        }),
+      );
+      expect(file === null || file.deletedAt !== null).toBe(true);
+      expect(
+        (
+          await call(w, 'GET', `/gate/approval-requests/${id}`, {
+            token: guard(),
+          }).expect(200)
+        ).body,
+      ).toMatchObject({ photoUrl: null });
+
+      // Residents see the gate's phone with its status.
+      const gates = await call(w, 'GET', '/gates/status', {
+        token: w.a.tokens.owner,
+      }).expect(200);
+      expect(
+        (
+          gates.body as { data: { id: string; phone: string | null }[] }
+        ).data.find((g) => g.id === w.a.gateId),
+      ).toMatchObject({ phone: '+20225550100' });
+    } finally {
+      await call(w, 'PATCH', `/gates/${w.a.gateId}`, {
+        token: w.a.tokens.manager,
+        body: { phone: null },
+      }).expect(200);
+    }
   });
 
   it('the first decision wins under concurrency', async () => {

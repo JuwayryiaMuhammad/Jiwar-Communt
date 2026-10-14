@@ -14,7 +14,7 @@ import {
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
-import { ApiArea } from '../../core/common/http/decorators';
+import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
   bounded,
   ListOf,
@@ -43,6 +43,7 @@ export class GuardApprovalsController {
 
   @Post()
   @ApiOperation({ summary: 'Ask a household to approve a visitor at the gate' })
+  @NoStore()
   @Idempotent()
   @ApiCreatedResponse({ type: GuardRequestResponse })
   async create(
@@ -56,6 +57,7 @@ export class GuardApprovalsController {
   /** Polled while waiting; applies a due timeout. */
   @Get(':id')
   @ApiOperation({ summary: 'Get an approval request (poll while waiting)' })
+  @NoStore()
   @ApiOkResponse({ type: GuardRequestResponse })
   async get(@Param('id', parseId()) id: string): Promise<GuardRequestResponse> {
     return GuardRequestResponse.from(await this.approvals.forGuard(id));
@@ -63,6 +65,7 @@ export class GuardApprovalsController {
 
   @Post(':id/withdraw')
   @ApiOperation({ summary: 'Withdraw an approval request' })
+  @NoStore()
   @HttpCode(HttpStatus.OK)
   @Idempotent()
   @ApiOkResponse({ type: GuardRequestResponse })
@@ -78,6 +81,7 @@ export class GuardApprovalsController {
     summary:
       "Decide a waiting request by one of the unit's standing instructions",
   })
+  @NoStore()
   @HttpCode(HttpStatus.OK)
   @Idempotent()
   @ApiOkResponse({ type: GuardRequestResponse })
@@ -99,6 +103,7 @@ export class HostApprovalsController {
 
   @Get('me/gate-requests')
   @ApiOperation({ summary: "List the gate's requests waiting for my answer" })
+  @NoStore()
   @ApiOkResponse({ type: ListOf(HostRequestResponse) })
   async mine(): Promise<ListResponse<HostRequestResponse>> {
     return bounded(await this.approvals.mine(), (r) =>
@@ -145,11 +150,16 @@ function toRequest(dto: CreateGateRequestDto): NewRequest {
       fields,
     });
   return dto.kind === 'worker_off_schedule'
-    ? { kind: dto.kind, engagementId: dto.engagementId! }
+    ? {
+        kind: dto.kind,
+        engagementId: dto.engagementId!,
+        photoFileId: dto.photoFileId,
+      }
     : {
         kind: dto.kind,
         unitCode: dto.unitCode!,
         partySize: dto.partySize,
         visitorName: dto.visitorName,
+        photoFileId: dto.photoFileId,
       };
 }

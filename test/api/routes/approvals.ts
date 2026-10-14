@@ -6,6 +6,7 @@ export const APPROVALS_ROUTES: Row[] = [
     method: 'POST',
     path: '/gate/approval-requests',
     auth: 'tenant',
+    noStore: true,
     as: 'guard',
     denied: 'manager',
     foreign: {
@@ -38,6 +39,7 @@ export const APPROVALS_ROUTES: Row[] = [
     method: 'GET',
     path: '/gate/approval-requests/{id}',
     auth: 'tenant',
+    noStore: true,
     as: 'guard',
     denied: 'manager',
     foreign: {
@@ -50,6 +52,7 @@ export const APPROVALS_ROUTES: Row[] = [
     method: 'POST',
     path: '/gate/approval-requests/{id}/withdraw',
     auth: 'tenant',
+    noStore: true,
     as: 'guard',
     denied: 'owner',
     foreign: {
@@ -62,6 +65,7 @@ export const APPROVALS_ROUTES: Row[] = [
     method: 'POST',
     path: '/gate/approval-requests/{id}/apply-instruction',
     auth: 'tenant',
+    noStore: true,
     as: 'guard',
     denied: 'owner',
     foreign: {
@@ -78,6 +82,7 @@ export const APPROVALS_ROUTES: Row[] = [
     method: 'GET',
     path: '/me/gate-requests',
     auth: 'tenant',
+    noStore: true,
     as: 'owner',
     denied: 'none',
     foreign: 'none',

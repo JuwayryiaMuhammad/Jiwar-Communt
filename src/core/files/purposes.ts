@@ -33,6 +33,7 @@ export interface FilePurposeDefinition {
  * What is attached to an announcement, an event or a "we did" note is the
  * staff's (ADR 0040). A complaint's evidence comes from whoever writes on
  * the complaint, and a board post's photos from whoever posts (ADR 0042).
+ * The photo of a visitor waiting at the gate is the guard's (ADR 0043).
  */
 export const FILE_PURPOSES = {
   worker_photo: {
@@ -86,6 +87,12 @@ export const FILE_PURPOSES = {
     types: IMAGE_TYPES,
     maxBytes: 5 * MB,
     uploaders: ['neighbours.board', 'neighbours.handle'],
+  },
+  // A visitor waiting at the gate, for the household asked (ADR 0043).
+  gate_request_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['gate.operate'],
   },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.

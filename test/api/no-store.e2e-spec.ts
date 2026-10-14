@@ -244,6 +244,20 @@ describe('API v0 — no-store', () => {
     return body<{ link: string }>(pass).link.split('#')[1];
   }
 
+  /** A waiting gate request for A's home unit (ADR 0043: no-store). */
+  async function askHome(): Promise<string> {
+    const unit = await w.helpers.asManager(w.a, () =>
+      w.helpers.prisma.tenant.unit.findUniqueOrThrow({
+        where: { id: w.a.homeUnitId },
+      }),
+    );
+    const res = await call(w, 'POST', '/gate/approval-requests', {
+      token: w.a.tokens.guard,
+      body: { kind: 'uninvited_visitor', unitCode: unit.code },
+    }).expect(201);
+    return body<{ id: string }>(res).id;
+  }
+
   // Community life (ADR 0040).
   const day = (n: number) => new Date(Date.now() + n * 86_400_000);
   const created = async (path: string, token: string, payload: object) =>
@@ -999,6 +1013,50 @@ describe('API v0 — no-store', () => {
           token: w.a.tokens.owner,
         },
       );
+    },
+    // The gate's requests carry a presigned photo URL (ADR 0043).
+    'POST /gate/approval-requests': async () => {
+      const unit = await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.unit.findUniqueOrThrow({
+          where: { id: w.a.homeUnitId },
+        }),
+      );
+      return call(w, 'POST', '/gate/approval-requests', {
+        token: w.a.tokens.guard,
+        body: { kind: 'uninvited_visitor', unitCode: unit.code },
+      });
+    },
+    'GET /gate/approval-requests/{id}': async () =>
+      call(w, 'GET', `/gate/approval-requests/${await askHome()}`, {
+        token: w.a.tokens.guard,
+      }),
+    'POST /gate/approval-requests/{id}/withdraw': async () =>
+      call(w, 'POST', `/gate/approval-requests/${await askHome()}/withdraw`, {
+        token: w.a.tokens.guard,
+      }),
+    'POST /gate/approval-requests/{id}/apply-instruction': async () => {
+      const made = await call(
+        w,
+        'POST',
+        `/units/${w.a.homeUnitId}/standing-instructions`,
+        {
+          token: w.a.tokens.owner,
+          body: { description: 'No-store test', action: 'never_allow' },
+        },
+      ).expect(201);
+      return call(
+        w,
+        'POST',
+        `/gate/approval-requests/${await askHome()}/apply-instruction`,
+        {
+          token: w.a.tokens.guard,
+          body: { instructionId: body<{ id: string }>(made).id },
+        },
+      );
+    },
+    'GET /me/gate-requests': async () => {
+      await askHome();
+      return call(w, 'GET', '/me/gate-requests', { token: w.a.tokens.owner });
     },
     'POST /visitor-passes/{id}/reissue-link': async () => {
       const pass = await call(

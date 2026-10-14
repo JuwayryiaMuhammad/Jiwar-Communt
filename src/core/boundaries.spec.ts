@@ -272,6 +272,59 @@ describe('import boundaries', () => {
     );
   });
 
+  it('the facilities domain imports core and community only, and nothing reaches inside it (ADR 0044)', async () => {
+    const facilities = 'src/facilities/bookings/x.ts';
+    expect(
+      await problems(
+        facilities,
+        "import { A } from '../../core/audit/audit.service';",
+      ),
+    ).toEqual([]);
+    expect(
+      await problems(facilities, "import { A } from '../../community';"),
+    ).toEqual([]);
+    const port = await problems(
+      facilities,
+      "import { A } from '../../community/facilities-port';",
+    );
+    expect(port).toHaveLength(1);
+    expect(port[0]).toContain(
+      'Import community only through its public index.ts',
+    );
+    for (const domain of [
+      'engagement',
+      'gate',
+      'maintenance',
+      'management',
+      'neighbours',
+    ]) {
+      for (const path of [`../../${domain}`, `../../${domain}/index`]) {
+        const found = await problems(
+          facilities,
+          `import { A } from '${path}';`,
+        );
+        expect(found).toHaveLength(1);
+        expect(found[0]).toContain(
+          `facilities must not import ${domain} at all`,
+        );
+      }
+    }
+    const fromCore = await problems(
+      'src/core/sweep/x.ts',
+      "import { A } from '../../facilities';",
+    );
+    expect(fromCore).toHaveLength(1);
+    expect(fromCore[0]).toContain('src/core must not import a domain');
+    const deep = await problems(
+      'src/community/residents/x.ts',
+      "import { A } from '../../facilities/bookings/bookings.service';",
+    );
+    expect(deep).toHaveLength(1);
+    expect(deep[0]).toContain(
+      'Import facilities only through its public index.ts',
+    );
+  });
+
   it('other domains reach maintenance only through its index.ts; maintenance never the base client, the port file or the gate index (ADR 0032)', async () => {
     for (const from of [
       'src/community/residents/x.ts',

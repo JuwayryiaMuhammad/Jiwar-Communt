@@ -194,4 +194,9 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   neighbour_conversation_reports_one_per_reporter: null,
   // Skipped on conflict: a household is greeted once.
   neighbour_welcomes_once_per_household: null,
+  // Facilities (ADR 0044). A window set is checked for overlaps before it
+  // is written, so a duplicate window is a race.
+  facilities_tenant_id_id_key: null,
+  facility_hours_window_key: null,
+  facility_peak_windows_window_key: null,
 };

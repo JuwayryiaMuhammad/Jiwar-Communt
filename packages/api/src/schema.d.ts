@@ -1105,6 +1105,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/facilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the facilities */
+        get: operations["FacilitiesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facilities/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a facility */
+        get: operations["FacilitiesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/files/uploads": {
         parameters: {
             query?: never;
@@ -5127,6 +5161,76 @@ export interface paths {
         patch: operations["SettingsController_update"];
         trace?: never;
     };
+    "/api/v1/staff/facilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List every facility, retired ones included */
+        get: operations["StaffFacilitiesController_list"];
+        put?: never;
+        /** Create a facility */
+        post: operations["StaffFacilitiesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/facilities/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a facility with its rules */
+        get: operations["StaffFacilitiesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a facility: names, order, state, rules */
+        patch: operations["StaffFacilitiesController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/facilities/{id}/hours": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace a facility’s opening hours */
+        put: operations["StaffFacilitiesController_replaceHours"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/facilities/{id}/peak-windows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace a bookable facility’s peak times */
+        put: operations["StaffFacilitiesController_replacePeaks"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/suggestion-board": {
         parameters: {
             query?: never;
@@ -7768,6 +7872,42 @@ export interface components {
             /** @description A language is whole or absent; at least one is there. */
             titleEn?: string | null;
         };
+        CreateFacilityDto: {
+            /** @description A resident cancels a confirmed booking at least this many minutes before it starts. Default 120. */
+            cancelCutoffMinutes?: number;
+            /** @description What a slot takes, in `capacityUnit`. Required to create a bookable facility. */
+            capacity?: number;
+            /** @description Default `bookings`. */
+            capacityUnit?: components["schemas"]["FacilityCapacityUnit"];
+            /** @description Optional, per language. On an update, null clears it. */
+            descriptionAr?: string | null;
+            /** @description Optional, per language. On an update, null clears it. */
+            descriptionEn?: string | null;
+            /** @description How many local days ahead a slot may be booked. Default 14. */
+            maxDaysAhead?: number;
+            /** @description Guests a booking may bring beside its booker. Default 0. */
+            maxGuests?: number;
+            /** @description A booking starts at least this many minutes from now. Default 60. */
+            minMinutesBefore?: number;
+            /** @description Never changes. A walk-in facility takes no rule field (FIELD_NOT_ALLOWED). */
+            mode: components["schemas"]["FacilityMode"];
+            /** @description Both languages are required; surrounding spaces are trimmed. */
+            nameAr: string;
+            /** @description Both languages are required; surrounding spaces are trimmed. */
+            nameEn: string;
+            /** @description Peak-time bookings a unit may hold here in any 7 days; at most `weeklyQuota`. Default 1. */
+            peakQuota?: number;
+            /** @description Order in the compound’s list. Default 0. */
+            position?: number;
+            /** @description Default false. */
+            requiresApproval?: boolean;
+            /** @description Default false. */
+            requiresMembership?: boolean;
+            /** @description Length of a slot. Required to create a bookable facility. */
+            slotMinutes?: number;
+            /** @description Bookings a unit may hold here in any 7 days. Default 2. */
+            weeklyQuota?: number;
+        };
         CreateGateDto: {
             kind: components["schemas"]["GateKind"];
             name: string;
@@ -8651,6 +8791,89 @@ export interface components {
         ExportLinkDto: {
             /** @description Anything that is not a live link answers 404 ACTION_TOKEN_INVALID. */
             token: string;
+        };
+        FacilityBookingRulesView: {
+            /** @description A confirmed booking is cancelled by the resident at least this many minutes before its start. */
+            cancelCutoffMinutes: number;
+            /** @description How many local days ahead a slot may be booked. */
+            maxDaysAhead: number;
+            /** @description Guests a booking may bring, beside the booker. */
+            maxGuests: number;
+            /** @description A booking starts at least this many minutes from now. */
+            minMinutesBefore: number;
+            /** @description Peak-time bookings a unit may hold here in any 7 days. */
+            peakQuota: number;
+            /** @description A booking waits for the management’s approval. */
+            requiresApproval: boolean;
+            /** @description Only for units with an active club membership, for the people it covers. */
+            requiresMembership: boolean;
+            slotMinutes: number;
+            /** @description Bookings a unit may hold here in any 7 days. */
+            weeklyQuota: number;
+        };
+        /**
+         * @description `bookings`: a slot takes `capacity` bookings. `people`: a slot takes `capacity` people, each booking its booker and guests.
+         * @enum {string}
+         */
+        FacilityCapacityUnit: "bookings" | "people";
+        /** @enum {string} */
+        FacilityMode: "bookable" | "walk_in";
+        FacilityRulesView: {
+            /** @description A confirmed booking is cancelled by the resident at least this many minutes before its start. */
+            cancelCutoffMinutes: number;
+            capacity: number;
+            /** @description `bookings`: a slot takes `capacity` bookings. `people`: a slot takes `capacity` people, each booking its booker and guests. */
+            capacityUnit: components["schemas"]["FacilityCapacityUnit"];
+            /** @description How many local days ahead a slot may be booked. */
+            maxDaysAhead: number;
+            /** @description Guests a booking may bring, beside the booker. */
+            maxGuests: number;
+            /** @description A booking starts at least this many minutes from now. */
+            minMinutesBefore: number;
+            /** @description Peak-time bookings a unit may hold here in any 7 days. */
+            peakQuota: number;
+            /** @description A booking waits for the management’s approval. */
+            requiresApproval: boolean;
+            /** @description Only for units with an active club membership, for the people it covers. */
+            requiresMembership: boolean;
+            slotMinutes: number;
+            /** @description Bookings a unit may hold here in any 7 days. */
+            weeklyQuota: number;
+        };
+        FacilityView: {
+            descriptionAr: string | null;
+            descriptionEn: string | null;
+            /** @description Opening hours, by weekday then start. */
+            hours: components["schemas"]["FacilityWindowView"][];
+            /** Format: uuid */
+            id: string;
+            mode: components["schemas"]["FacilityMode"];
+            /** @description Written by the compound. */
+            nameAr: string;
+            /** @description Written by the compound. */
+            nameEn: string;
+            /** @description Peak times, inside the hours. Empty for a walk-in facility. */
+            peakWindows: components["schemas"]["FacilityWindowView"][];
+            /** @description Null for a walk-in facility (the pool, the gym): nothing to book. */
+            rules: components["schemas"]["FacilityBookingRulesView"] | null;
+        };
+        FacilityViewList: {
+            data: components["schemas"]["FacilityView"][];
+            nextCursor: string | null;
+        };
+        FacilityWindowDto: {
+            endMinute: number;
+            /** @description Minutes after local midnight, in the compound’s time zone. */
+            startMinute: number;
+            /** @description 0 is Sunday. */
+            weekday: number;
+        };
+        FacilityWindowView: {
+            endMinute: number;
+            /** @description Minutes after local midnight, in the compound’s time zone. */
+            startMinute: number;
+            /** @description 0 is Sunday. */
+            weekday: number;
         };
         FeedbackView: {
             author: components["schemas"]["AccountRefView"];
@@ -10454,6 +10677,10 @@ export interface components {
             /** @description From the closed list `parcelReject`: not_ours, not_expected, other. */
             reasonCode: string;
         };
+        ReplaceFacilityWindowsDto: {
+            /** @description The whole week. Windows of one weekday may touch, never overlap (WINDOW_OVERLAP). An empty list: no hours (the facility offers no slot), or no peak times. */
+            windows: components["schemas"]["FacilityWindowDto"][];
+        };
         ReplaceOfficeHoursDto: {
             /** @description The whole week. Windows of one weekday may touch, never overlap (OFFICE_HOURS_OVERLAP). An empty list closes the office. */
             windows: components["schemas"]["OfficeWindowDto"][];
@@ -11566,6 +11793,29 @@ export interface components {
             /** @description Written by the staff. A language is whole or absent; at least one is there. */
             titleEn: string | null;
         };
+        StaffFacilityView: {
+            /** @description False: retired, takes no new booking and is not listed to residents. */
+            active: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            descriptionAr: string | null;
+            descriptionEn: string | null;
+            hours: components["schemas"]["FacilityWindowView"][];
+            /** Format: uuid */
+            id: string;
+            mode: components["schemas"]["FacilityMode"];
+            nameAr: string;
+            nameEn: string;
+            peakWindows: components["schemas"]["FacilityWindowView"][];
+            position: number;
+            rules: components["schemas"]["FacilityRulesView"] | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        StaffFacilityViewList: {
+            data: components["schemas"]["StaffFacilityView"][];
+            nextCursor: string | null;
+        };
         StaffMessageDto: {
             body: string;
             /**
@@ -12602,6 +12852,41 @@ export interface components {
             titleAr?: string | null;
             /** @description A language is whole or absent; at least one is there. */
             titleEn?: string | null;
+        };
+        UpdateFacilityDto: {
+            /** @description False retires the facility: no new booking, not listed to residents. Bookings already made stay. */
+            active?: boolean;
+            /** @description A resident cancels a confirmed booking at least this many minutes before it starts. Default 120. */
+            cancelCutoffMinutes?: number;
+            /** @description What a slot takes, in `capacityUnit`. Required to create a bookable facility. */
+            capacity?: number;
+            /** @description Default `bookings`. */
+            capacityUnit?: components["schemas"]["FacilityCapacityUnit"];
+            /** @description Optional, per language. On an update, null clears it. */
+            descriptionAr?: string | null;
+            /** @description Optional, per language. On an update, null clears it. */
+            descriptionEn?: string | null;
+            /** @description How many local days ahead a slot may be booked. Default 14. */
+            maxDaysAhead?: number;
+            /** @description Guests a booking may bring beside its booker. Default 0. */
+            maxGuests?: number;
+            /** @description A booking starts at least this many minutes from now. Default 60. */
+            minMinutesBefore?: number;
+            /** @description Both languages are required; surrounding spaces are trimmed. */
+            nameAr?: string;
+            /** @description Both languages are required; surrounding spaces are trimmed. */
+            nameEn?: string;
+            /** @description Peak-time bookings a unit may hold here in any 7 days; at most `weeklyQuota`. Default 1. */
+            peakQuota?: number;
+            position?: number;
+            /** @description Default false. */
+            requiresApproval?: boolean;
+            /** @description Default false. */
+            requiresMembership?: boolean;
+            /** @description Length of a slot. Required to create a bookable facility. */
+            slotMinutes?: number;
+            /** @description Bookings a unit may hold here in any 7 days. Default 2. */
+            weeklyQuota?: number;
         };
         UpdateGateDto: {
             kind?: components["schemas"]["GateKind"];
@@ -14871,6 +15156,46 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    FacilitiesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilityViewList"];
+                };
+            };
+        };
+    };
+    FacilitiesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilityView"];
+                };
             };
         };
     };
@@ -21182,6 +21507,147 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SettingsView"];
+                };
+            };
+        };
+    };
+    StaffFacilitiesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFacilityViewList"];
+                };
+            };
+        };
+    };
+    StaffFacilitiesController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateFacilityDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFacilityView"];
+                };
+            };
+        };
+    };
+    StaffFacilitiesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFacilityView"];
+                };
+            };
+        };
+    };
+    StaffFacilitiesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateFacilityDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFacilityView"];
+                };
+            };
+        };
+    };
+    StaffFacilitiesController_replaceHours: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceFacilityWindowsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFacilityView"];
+                };
+            };
+        };
+    };
+    StaffFacilitiesController_replacePeaks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceFacilityWindowsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFacilityView"];
                 };
             };
         };

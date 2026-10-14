@@ -621,6 +621,25 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'each text IS NULL is tested first; its length runs only on a value',
   },
+  // Facilities (ADR 0044).
+  facilities_names_length: {},
+  facilities_position_range: {},
+  // Nullable rules only under IS [NOT] NULL; mode and the two flags are NOT NULL.
+  facilities_rules_shape: {},
+  facilities_descriptions_length: {
+    guarded:
+      'each description IS NULL is tested first; its length runs only on a value',
+  },
+  facilities_rules_ranges: {
+    guarded:
+      'each rule IS NULL is tested first; its range runs only on a value',
+  },
+  facilities_peak_quota_within_weekly: {
+    guarded:
+      'peak_quota IS NULL and weekly_quota IS NULL are tested first; the comparison runs only on two values',
+  },
+  facility_hours_window: {},
+  facility_peak_windows_window: {},
 };
 
 interface Check {

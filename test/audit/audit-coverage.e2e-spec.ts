@@ -25,6 +25,7 @@ import { auditReaders } from '../setup/audit';
 import {
   COMMUNITY_COVERAGE,
   ENGAGEMENT_COVERAGE,
+  FACILITIES_COVERAGE,
   FILES_COVERAGE,
   MAINTENANCE_COVERAGE,
   MANAGEMENT_COVERAGE,
@@ -843,6 +844,7 @@ describe('Audit coverage', () => {
         ...MANAGEMENT_COVERAGE,
         ...ENGAGEMENT_COVERAGE,
         ...NEIGHBOURS_COVERAGE,
+        ...FACILITIES_COVERAGE,
       ];
       for (const key of elsewhere) expect(all).toContain(key);
       const mine = all.filter((k) => !elsewhere.includes(k)).sort();

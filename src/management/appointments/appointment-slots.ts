@@ -12,11 +12,10 @@ import {
   addDays,
   localDate,
   overlaps,
-  slotsOfDay,
-  weekdayOf,
   type LocalDate,
   type Slot,
 } from '../../core/common/slots/day-slots';
+import { weeklySlotsOfDay } from '../../core/common/slots/weekly-windows';
 import type { OfficeWindow } from '../settings/defaults';
 
 const MINUTE = 60_000;
@@ -44,21 +43,7 @@ export interface OpenSlot extends Slot {
 
 /** The slots of one local day: its weekday's windows, each cut. */
 export function officeSlotsOfDay(date: LocalDate, cal: OfficeCalendar): Slot[] {
-  const weekday = weekdayOf(date);
-  return cal.windows
-    .filter((w) => w.weekday === weekday)
-    .sort((a, b) => a.startMinute - b.startMinute)
-    .flatMap((w) =>
-      slotsOfDay(
-        date,
-        {
-          startMinute: w.startMinute,
-          endMinute: w.endMinute,
-          slotMinutes: cal.slotMinutes,
-        },
-        cal.timeZone,
-      ),
-    );
+  return weeklySlotsOfDay(date, cal.windows, cal.slotMinutes, cal.timeZone);
 }
 
 /** Not too soon and not too far, by `now`. */

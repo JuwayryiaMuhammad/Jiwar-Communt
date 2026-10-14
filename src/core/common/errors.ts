@@ -379,6 +379,11 @@ export const ErrorCode = {
   NEIGHBOUR_REPORT_EXISTS: 'NEIGHBOUR_REPORT_EXISTS',
   /** The case is closed: its conversation is no longer read, nor it closed again (409). */
   NEIGHBOUR_REPORT_CLOSED: 'NEIGHBOUR_REPORT_CLOSED',
+  // facilities and bookings, the club (ADR 0044)
+  /** Unknown or another compound's; for a resident also a retired one: one answer. */
+  FACILITY_NOT_FOUND: 'FACILITY_NOT_FOUND',
+  /** A walk-in facility (the pool, the gym): nothing to book, no peak times (409). */
+  FACILITY_NOT_BOOKABLE: 'FACILITY_NOT_BOOKABLE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -471,6 +476,13 @@ export const FieldErrorCode = {
   OWN_UNIT: 'OWN_UNIT',
   /** Not an active resident or family account of the compound. */
   RECIPIENT_NOT_ELIGIBLE: 'RECIPIENT_NOT_ELIGIBLE',
+  // facilities and bookings, the club (ADR 0044)
+  /** Overlaps an earlier window of the same weekday; params.other is its index. */
+  WINDOW_OVERLAP: 'WINDOW_OVERLAP',
+  /** A peak time outside the facility's opening hours. */
+  PEAK_OUTSIDE_HOURS: 'PEAK_OUTSIDE_HOURS',
+  /** More peak bookings than bookings in a week; params.max is the weekly quota. */
+  PEAK_QUOTA_ABOVE_WEEKLY: 'PEAK_QUOTA_ABOVE_WEEKLY',
 } as const;
 
 export type FieldErrorCode =

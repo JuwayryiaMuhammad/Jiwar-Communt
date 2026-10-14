@@ -514,6 +514,7 @@ model Tenant {
   neighbourPosts               NeighbourPost[]
   neighbourConversations       NeighbourConversation[]
   neighbourWelcomeTemplate     NeighbourWelcomeTemplate?
+  facilities                   Facility[]
   announcements      Announcement[]
   communityEvents    CommunityEvent[]
   polls              Poll[]
@@ -4359,4 +4360,96 @@ model NeighbourWelcome {
   @@unique([tenantId, occupancyId], map: "neighbour_welcomes_once_per_household")
   @@index([tenantId, accountId], map: "neighbour_welcomes_account_idx")
   @@map("neighbour_welcomes")
+}
+
+// ============================================================================
+// Facilities and bookings, the club (ADR 0044). The domain is src/facilities.
+// ============================================================================
+
+enum FacilityMode {
+  /// Courts, the hall, the barbecue area: slots, capacity, bookings.
+  bookable
+  /// The pool, the gym: what it is and when it is open, no booking.
+  walk_in
+
+  @@map("facility_mode")
+}
+
+enum FacilityCapacityUnit {
+  /// A slot takes so many bookings (a court: one).
+  bookings
+  /// A slot takes so many people, each booking its booker and guests.
+  people
+
+  @@map("facility_capacity_unit")
+}
+
+/// One of the compound's facilities. Never deleted (bookings point at it);
+/// retired with `active`. Its mode never changes (trigger). The rules are
+/// set exactly when it is bookable (CHECK facilities_rules_shape).
+model Facility {
+  id                  String                @id @db.Uuid
+  tenantId            String                @map("tenant_id") @db.Uuid
+  mode                FacilityMode
+  nameEn              String                @map("name_en")
+  nameAr              String                @map("name_ar")
+  descriptionEn       String?               @map("description_en")
+  descriptionAr       String?               @map("description_ar")
+  active              Boolean               @default(true)
+  /// The order the compound lists its facilities in.
+  position            Int                   @default(0)
+  slotMinutes         Int?                  @map("slot_minutes")
+  capacity            Int?
+  capacityUnit        FacilityCapacityUnit? @map("capacity_unit")
+  maxDaysAhead        Int?                  @map("max_days_ahead")
+  minMinutesBefore    Int?                  @map("min_minutes_before")
+  cancelCutoffMinutes Int?                  @map("cancel_cutoff_minutes")
+  maxGuests           Int?                  @map("max_guests")
+  requiresApproval    Boolean               @default(false) @map("requires_approval")
+  requiresMembership  Boolean               @default(false) @map("requires_membership")
+  weeklyQuota         Int?                  @map("weekly_quota")
+  peakQuota           Int?                  @map("peak_quota")
+  createdAt           DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant      Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  hours       FacilityHours[]
+  peakWindows FacilityPeakWindow[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, position, id], map: "facilities_position_idx")
+  @@map("facilities")
+}
+
+/// A facility's opening hours: weekly windows in the compound's time zone
+/// (weekday 0 is Sunday; minutes after local midnight), replaced as a whole
+/// under the facility's row lock.
+model FacilityHours {
+  id          String @id @db.Uuid
+  tenantId    String @map("tenant_id") @db.Uuid
+  facilityId  String @map("facility_id") @db.Uuid
+  weekday     Int
+  startMinute Int    @map("start_minute")
+  endMinute   Int    @map("end_minute")
+
+  facility Facility @relation(fields: [tenantId, facilityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, facilityId, weekday, startMinute], map: "facility_hours_window_key")
+  @@map("facility_hours")
+}
+
+/// A bookable facility's peak times, inside its hours: a slot that
+/// overlaps one is a peak slot, with its own quota.
+model FacilityPeakWindow {
+  id          String @id @db.Uuid
+  tenantId    String @map("tenant_id") @db.Uuid
+  facilityId  String @map("facility_id") @db.Uuid
+  weekday     Int
+  startMinute Int    @map("start_minute")
+  endMinute   Int    @map("end_minute")
+
+  facility Facility @relation(fields: [tenantId, facilityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, facilityId, weekday, startMinute], map: "facility_peak_windows_window_key")
+  @@map("facility_peak_windows")
 }

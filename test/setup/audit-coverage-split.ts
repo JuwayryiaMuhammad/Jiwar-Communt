@@ -263,3 +263,14 @@ export const NEIGHBOURS_COVERAGE: readonly string[] = [
   'neighbour_report.closed',
   'neighbour_welcome.sent',
 ];
+
+/**
+ * Facilities and bookings, the club (ADR 0044), covered by
+ * test/facilities/audit-coverage.e2e-spec.ts.
+ */
+export const FACILITIES_COVERAGE: readonly string[] = [
+  'facility.created',
+  'facility.updated',
+  'facility.hours_changed',
+  'facility.peaks_changed',
+];

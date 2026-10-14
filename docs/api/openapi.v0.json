@@ -3636,6 +3636,120 @@
         ],
         "type": "object"
       },
+      "CreateFacilityDto": {
+        "properties": {
+          "cancelCutoffMinutes": {
+            "description": "A resident cancels a confirmed booking at least this many minutes before it starts. Default 120.",
+            "maximum": 10080,
+            "minimum": 0,
+            "type": "number"
+          },
+          "capacity": {
+            "description": "What a slot takes, in `capacityUnit`. Required to create a bookable facility.",
+            "maximum": 500,
+            "minimum": 1,
+            "type": "number"
+          },
+          "capacityUnit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FacilityCapacityUnit"
+              }
+            ],
+            "description": "Default `bookings`."
+          },
+          "descriptionAr": {
+            "description": "Optional, per language. On an update, null clears it.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "description": "Optional, per language. On an update, null clears it.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "maxDaysAhead": {
+            "description": "How many local days ahead a slot may be booked. Default 14.",
+            "maximum": 90,
+            "minimum": 1,
+            "type": "number"
+          },
+          "maxGuests": {
+            "description": "Guests a booking may bring beside its booker. Default 0.",
+            "maximum": 50,
+            "minimum": 0,
+            "type": "number"
+          },
+          "minMinutesBefore": {
+            "description": "A booking starts at least this many minutes from now. Default 60.",
+            "maximum": 10080,
+            "minimum": 0,
+            "type": "number"
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FacilityMode"
+              }
+            ],
+            "description": "Never changes. A walk-in facility takes no rule field (FIELD_NOT_ALLOWED)."
+          },
+          "nameAr": {
+            "description": "Both languages are required; surrounding spaces are trimmed.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Both languages are required; surrounding spaces are trimmed.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "peakQuota": {
+            "description": "Peak-time bookings a unit may hold here in any 7 days; at most `weeklyQuota`. Default 1.",
+            "maximum": 20,
+            "minimum": 1,
+            "type": "number"
+          },
+          "position": {
+            "description": "Order in the compound’s list. Default 0.",
+            "maximum": 1000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "requiresApproval": {
+            "description": "Default false.",
+            "type": "boolean"
+          },
+          "requiresMembership": {
+            "description": "Default false.",
+            "type": "boolean"
+          },
+          "slotMinutes": {
+            "description": "Length of a slot. Required to create a bookable facility.",
+            "maximum": 480,
+            "minimum": 15,
+            "type": "number"
+          },
+          "weeklyQuota": {
+            "description": "Bookings a unit may hold here in any 7 days. Default 2.",
+            "maximum": 20,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "mode",
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
       "CreateGateDto": {
         "properties": {
           "kind": {
@@ -6525,6 +6639,276 @@
         },
         "required": [
           "token"
+        ],
+        "type": "object"
+      },
+      "FacilityBookingRulesView": {
+        "properties": {
+          "cancelCutoffMinutes": {
+            "description": "A confirmed booking is cancelled by the resident at least this many minutes before its start.",
+            "type": "number"
+          },
+          "maxDaysAhead": {
+            "description": "How many local days ahead a slot may be booked.",
+            "type": "number"
+          },
+          "maxGuests": {
+            "description": "Guests a booking may bring, beside the booker.",
+            "type": "number"
+          },
+          "minMinutesBefore": {
+            "description": "A booking starts at least this many minutes from now.",
+            "type": "number"
+          },
+          "peakQuota": {
+            "description": "Peak-time bookings a unit may hold here in any 7 days.",
+            "type": "number"
+          },
+          "requiresApproval": {
+            "description": "A booking waits for the management’s approval.",
+            "type": "boolean"
+          },
+          "requiresMembership": {
+            "description": "Only for units with an active club membership, for the people it covers.",
+            "type": "boolean"
+          },
+          "slotMinutes": {
+            "type": "number"
+          },
+          "weeklyQuota": {
+            "description": "Bookings a unit may hold here in any 7 days.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "slotMinutes",
+          "maxDaysAhead",
+          "minMinutesBefore",
+          "cancelCutoffMinutes",
+          "maxGuests",
+          "requiresApproval",
+          "requiresMembership",
+          "weeklyQuota",
+          "peakQuota"
+        ],
+        "type": "object"
+      },
+      "FacilityCapacityUnit": {
+        "description": "`bookings`: a slot takes `capacity` bookings. `people`: a slot takes `capacity` people, each booking its booker and guests.",
+        "enum": [
+          "bookings",
+          "people"
+        ],
+        "type": "string"
+      },
+      "FacilityMode": {
+        "enum": [
+          "bookable",
+          "walk_in"
+        ],
+        "type": "string"
+      },
+      "FacilityRulesView": {
+        "properties": {
+          "cancelCutoffMinutes": {
+            "description": "A confirmed booking is cancelled by the resident at least this many minutes before its start.",
+            "type": "number"
+          },
+          "capacity": {
+            "type": "number"
+          },
+          "capacityUnit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FacilityCapacityUnit"
+              }
+            ],
+            "description": "`bookings`: a slot takes `capacity` bookings. `people`: a slot takes `capacity` people, each booking its booker and guests."
+          },
+          "maxDaysAhead": {
+            "description": "How many local days ahead a slot may be booked.",
+            "type": "number"
+          },
+          "maxGuests": {
+            "description": "Guests a booking may bring, beside the booker.",
+            "type": "number"
+          },
+          "minMinutesBefore": {
+            "description": "A booking starts at least this many minutes from now.",
+            "type": "number"
+          },
+          "peakQuota": {
+            "description": "Peak-time bookings a unit may hold here in any 7 days.",
+            "type": "number"
+          },
+          "requiresApproval": {
+            "description": "A booking waits for the management’s approval.",
+            "type": "boolean"
+          },
+          "requiresMembership": {
+            "description": "Only for units with an active club membership, for the people it covers.",
+            "type": "boolean"
+          },
+          "slotMinutes": {
+            "type": "number"
+          },
+          "weeklyQuota": {
+            "description": "Bookings a unit may hold here in any 7 days.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "slotMinutes",
+          "maxDaysAhead",
+          "minMinutesBefore",
+          "cancelCutoffMinutes",
+          "maxGuests",
+          "requiresApproval",
+          "requiresMembership",
+          "weeklyQuota",
+          "peakQuota",
+          "capacity",
+          "capacityUnit"
+        ],
+        "type": "object"
+      },
+      "FacilityView": {
+        "properties": {
+          "descriptionAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "hours": {
+            "description": "Opening hours, by weekday then start.",
+            "items": {
+              "$ref": "#/components/schemas/FacilityWindowView"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FacilityMode"
+              }
+            ]
+          },
+          "nameAr": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Written by the compound.",
+            "type": "string"
+          },
+          "peakWindows": {
+            "description": "Peak times, inside the hours. Empty for a walk-in facility.",
+            "items": {
+              "$ref": "#/components/schemas/FacilityWindowView"
+            },
+            "type": "array"
+          },
+          "rules": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FacilityBookingRulesView"
+              }
+            ],
+            "description": "Null for a walk-in facility (the pool, the gym): nothing to book.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "mode",
+          "nameEn",
+          "nameAr",
+          "descriptionEn",
+          "descriptionAr",
+          "hours",
+          "peakWindows",
+          "rules"
+        ],
+        "type": "object"
+      },
+      "FacilityViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/FacilityView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "FacilityWindowDto": {
+        "properties": {
+          "endMinute": {
+            "maximum": 1440,
+            "minimum": 1,
+            "type": "number"
+          },
+          "startMinute": {
+            "description": "Minutes after local midnight, in the compound’s time zone.",
+            "maximum": 1439,
+            "minimum": 0,
+            "type": "number"
+          },
+          "weekday": {
+            "description": "0 is Sunday.",
+            "maximum": 6,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "weekday",
+          "startMinute",
+          "endMinute"
+        ],
+        "type": "object"
+      },
+      "FacilityWindowView": {
+        "properties": {
+          "endMinute": {
+            "maximum": 1440,
+            "minimum": 1,
+            "type": "number"
+          },
+          "startMinute": {
+            "description": "Minutes after local midnight, in the compound’s time zone.",
+            "maximum": 1439,
+            "minimum": 0,
+            "type": "number"
+          },
+          "weekday": {
+            "description": "0 is Sunday.",
+            "maximum": 6,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "weekday",
+          "startMinute",
+          "endMinute"
         ],
         "type": "object"
       },
@@ -12389,6 +12773,22 @@
         ],
         "type": "object"
       },
+      "ReplaceFacilityWindowsDto": {
+        "properties": {
+          "windows": {
+            "description": "The whole week. Windows of one weekday may touch, never overlap (WINDOW_OVERLAP). An empty list: no hours (the facility offers no slot), or no peak times.",
+            "items": {
+              "$ref": "#/components/schemas/FacilityWindowDto"
+            },
+            "maxItems": 28,
+            "type": "array"
+          }
+        },
+        "required": [
+          "windows"
+        ],
+        "type": "object"
+      },
       "ReplaceOfficeHoursDto": {
         "properties": {
           "windows": {
@@ -16236,6 +16636,106 @@
         ],
         "type": "object"
       },
+      "StaffFacilityView": {
+        "properties": {
+          "active": {
+            "description": "False: retired, takes no new booking and is not listed to residents.",
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "descriptionAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "hours": {
+            "items": {
+              "$ref": "#/components/schemas/FacilityWindowView"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FacilityMode"
+              }
+            ]
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "peakWindows": {
+            "items": {
+              "$ref": "#/components/schemas/FacilityWindowView"
+            },
+            "type": "array"
+          },
+          "position": {
+            "type": "number"
+          },
+          "rules": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FacilityRulesView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "mode",
+          "nameEn",
+          "nameAr",
+          "descriptionEn",
+          "descriptionAr",
+          "active",
+          "position",
+          "hours",
+          "peakWindows",
+          "rules",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "StaffFacilityViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffFacilityView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StaffMessageDto": {
         "properties": {
           "body": {
@@ -19753,6 +20253,110 @@
             "minLength": 1,
             "nullable": true,
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateFacilityDto": {
+        "properties": {
+          "active": {
+            "description": "False retires the facility: no new booking, not listed to residents. Bookings already made stay.",
+            "type": "boolean"
+          },
+          "cancelCutoffMinutes": {
+            "description": "A resident cancels a confirmed booking at least this many minutes before it starts. Default 120.",
+            "maximum": 10080,
+            "minimum": 0,
+            "type": "number"
+          },
+          "capacity": {
+            "description": "What a slot takes, in `capacityUnit`. Required to create a bookable facility.",
+            "maximum": 500,
+            "minimum": 1,
+            "type": "number"
+          },
+          "capacityUnit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FacilityCapacityUnit"
+              }
+            ],
+            "description": "Default `bookings`."
+          },
+          "descriptionAr": {
+            "description": "Optional, per language. On an update, null clears it.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "description": "Optional, per language. On an update, null clears it.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "maxDaysAhead": {
+            "description": "How many local days ahead a slot may be booked. Default 14.",
+            "maximum": 90,
+            "minimum": 1,
+            "type": "number"
+          },
+          "maxGuests": {
+            "description": "Guests a booking may bring beside its booker. Default 0.",
+            "maximum": 50,
+            "minimum": 0,
+            "type": "number"
+          },
+          "minMinutesBefore": {
+            "description": "A booking starts at least this many minutes from now. Default 60.",
+            "maximum": 10080,
+            "minimum": 0,
+            "type": "number"
+          },
+          "nameAr": {
+            "description": "Both languages are required; surrounding spaces are trimmed.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Both languages are required; surrounding spaces are trimmed.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "peakQuota": {
+            "description": "Peak-time bookings a unit may hold here in any 7 days; at most `weeklyQuota`. Default 1.",
+            "maximum": 20,
+            "minimum": 1,
+            "type": "number"
+          },
+          "position": {
+            "maximum": 1000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "requiresApproval": {
+            "description": "Default false.",
+            "type": "boolean"
+          },
+          "requiresMembership": {
+            "description": "Default false.",
+            "type": "boolean"
+          },
+          "slotMinutes": {
+            "description": "Length of a slot. Required to create a bookable facility.",
+            "maximum": 480,
+            "minimum": 15,
+            "type": "number"
+          },
+          "weeklyQuota": {
+            "description": "Bookings a unit may hold here in any 7 days. Default 2.",
+            "maximum": 20,
+            "minimum": 1,
+            "type": "number"
           }
         },
         "type": "object"
@@ -24624,6 +25228,73 @@
         "summary": "Say whether I am going, and with how many guests",
         "tags": [
           "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/facilities": {
+      "get": {
+        "operationId": "FacilitiesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacilityViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the facilities",
+        "tags": [
+          "facilities"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/facilities/{id}": {
+      "get": {
+        "operationId": "FacilitiesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacilityView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a facility",
+        "tags": [
+          "facilities"
         ],
         "x-no-store": true,
         "x-stability": "draft"
@@ -36343,6 +37014,262 @@
         "tags": [
           "admin"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/facilities": {
+      "get": {
+        "operationId": "StaffFacilitiesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFacilityViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List every facility, retired ones included",
+        "tags": [
+          "facilities"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffFacilitiesController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFacilityDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFacilityView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a facility",
+        "tags": [
+          "facilities"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/facilities/{id}": {
+      "get": {
+        "operationId": "StaffFacilitiesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFacilityView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a facility with its rules",
+        "tags": [
+          "facilities"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "StaffFacilitiesController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFacilityDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFacilityView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a facility: names, order, state, rules",
+        "tags": [
+          "facilities"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/facilities/{id}/hours": {
+      "put": {
+        "operationId": "StaffFacilitiesController_replaceHours",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceFacilityWindowsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFacilityView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Replace a facility’s opening hours",
+        "tags": [
+          "facilities"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/facilities/{id}/peak-windows": {
+      "put": {
+        "operationId": "StaffFacilitiesController_replacePeaks",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceFacilityWindowsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFacilityView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Replace a bookable facility’s peak times",
+        "tags": [
+          "facilities"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

@@ -3,6 +3,7 @@ import { auditReaders } from '../setup/audit';
 import {
   COMMUNITY_COVERAGE,
   ENGAGEMENT_COVERAGE,
+  FACILITIES_COVERAGE,
   FILES_COVERAGE,
   MAINTENANCE_COVERAGE,
   MANAGEMENT_COVERAGE,
@@ -494,6 +495,7 @@ describe('Audit coverage — neighbours', () => {
           ...RESIDENT_SCREENS_COVERAGE,
           ...MANAGEMENT_COVERAGE,
           ...ENGAGEMENT_COVERAGE,
+          ...FACILITIES_COVERAGE,
         ]).not.toContain(key);
       }
       expect([...covered].sort()).toEqual([...NEIGHBOURS_COVERAGE].sort());

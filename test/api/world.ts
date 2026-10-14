@@ -28,6 +28,7 @@ import { BlocksService } from '../../src/neighbours/conversations/blocks.service
 import { ConversationsService } from '../../src/neighbours/conversations/conversations.service';
 import { ReportsService } from '../../src/neighbours/conversations/reports.service';
 import { PostsService } from '../../src/neighbours/posts/posts.service';
+import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
 import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
 import { VisitsService } from '../../src/maintenance/visits/visits.service';
@@ -168,6 +169,8 @@ export interface World {
   bConversationId: string;
   bBlockId: string;
   bReportId: string;
+  /** B's facilities data (ADR 0044): a bookable facility. */
+  bFacilityId: string;
   bDeviceId: string;
   /** A personal-data export B's owner asked for (ADR 0036). */
   bExportId: string;
@@ -634,7 +637,18 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     );
   const bPreventiveService = await service(b);
   const aPreventiveService = await service(a);
+  // Facilities (ADR 0044).
+  const bFacility = await helpers.asManager(b, () =>
+    h.moduleRef.get(FacilitiesService).create({
+      mode: 'bookable',
+      nameEn: 'World court',
+      nameAr: 'ملعب',
+      slotMinutes: 60,
+      capacity: 1,
+    }),
+  );
   return {
+    bFacilityId: bFacility.id,
     bPreventiveServiceId: bPreventiveService.id,
     aPreventiveServiceId: aPreventiveService.id,
     bSpecialtyId: bSpecialty.id,

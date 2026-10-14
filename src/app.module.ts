@@ -17,6 +17,7 @@ import { EngagementModule } from './engagement';
 import { GateModule } from './gate';
 import { MaintenanceModule } from './maintenance';
 import { ManagementModule } from './management';
+import { FacilitiesModule } from './facilities';
 import { NeighboursModule } from './neighbours';
 import { AccessModule } from './core/access/access.module';
 import { PermissionsGuard } from './core/access/permissions.guard';
@@ -126,6 +127,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     ManagementModule,
     EngagementModule,
     NeighboursModule,
+    FacilitiesModule,
   ],
   controllers: [AppController],
   providers: [

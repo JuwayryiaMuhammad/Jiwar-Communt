@@ -585,6 +585,22 @@ export const AUDIT_ACTIONS = {
   },
   // metadata: unitId, occupancyId, accountId.
   'neighbour_welcome.sent': { log: 'tenant', target: 'neighbour_welcome' },
+  // Facilities and bookings, the club (ADR 0044).
+  // changes: mode, state, position and rules by value; names and
+  // descriptions as `{ changed: true }` only.
+  'facility.created': {
+    log: 'tenant',
+    target: 'facility',
+    sensitive: ['nameEn', 'nameAr', 'descriptionEn', 'descriptionAr'],
+  },
+  'facility.updated': {
+    log: 'tenant',
+    target: 'facility',
+    sensitive: ['nameEn', 'nameAr', 'descriptionEn', 'descriptionAr'],
+  },
+  // changes: windows as `weekday:start-end` codes.
+  'facility.hours_changed': { log: 'tenant', target: 'facility' },
+  'facility.peaks_changed': { log: 'tenant', target: 'facility' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

@@ -80,6 +80,7 @@ describe('audit catalog', () => {
         'neighbour_conversation',
         'neighbour_report',
         'neighbour_welcome',
+        'facility',
       ]).toContain(def.target);
     }
   });

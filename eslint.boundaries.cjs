@@ -21,6 +21,7 @@
 const DOMAINS = [
   'community',
   'engagement',
+  'facilities',
   'gate',
   'maintenance',
   'management',
@@ -32,9 +33,11 @@ const DOMAINS = [
  * maintenance reads community only (ADR 0032); management reads community
  * and maintenance (ADR 0039). Engagement reads all four through their
  * index.ts, and nothing imports it (ADR 0040). Neighbours reads community
- * only, and nothing imports it (ADR 0042).
+ * only, and nothing imports it (ADR 0042). Facilities reads community only,
+ * and nothing imports it (ADR 0044).
  */
 const NO_IMPORT = {
+  facilities: ['engagement', 'gate', 'maintenance', 'management', 'neighbours'],
   maintenance: ['gate'],
   management: ['gate'],
   neighbours: ['engagement', 'gate', 'maintenance', 'management'],
@@ -70,7 +73,7 @@ function otherDomainsInternals(domain) {
     banned.includes(d)
       ? {
           group: [`**/${d}`, `**/${d}/**`],
-          message: `${domain} must not import ${d} at all (ADR 0032, 0039, 0042).`,
+          message: `${domain} must not import ${d} at all (ADR 0032, 0039, 0042, 0044).`,
         }
       : {
           group: [`**/${d}/**`, `!**/${d}/index`],

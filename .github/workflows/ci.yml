@@ -1,6 +1,12 @@
 # Continuous integration (ADR 0026). The same steps as a local run, against
 # the same images as docker-compose.yml. Every value below is a test value
 # from .env.example; the workflow needs no secret.
+#
+# Three jobs at once: `static` (everything but e2e), `e2e` (four shards,
+# each with its own database, Redis, Mailpit and MinIO), and `ci`, which
+# passes only when all of them did: the one check for branch protection.
+# The deploy workflow runs on this workflow's success, which also means
+# every job passed.
 name: CI
 
 on:
@@ -16,9 +22,103 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  static:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 30
+
+    # For the deploy order below; nothing else here needs a service.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_dev
+          POSTGRES_DB: postgres
+        ports:
+          - 5435:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Service containers start before the checkout, so init.sql cannot be
+      # mounted; it runs inside the container instead, where psql 17 reads
+      # the role passwords with \getenv exactly as docker-compose does.
+      - name: Create database roles (docker/postgres/init.sql)
+        run: >-
+          docker exec -i
+          -e JIWAR_MIGRATOR_PASSWORD=jiwar_migrator_dev
+          -e JIWAR_APP_PASSWORD=jiwar_app_dev
+          ${{ job.services.postgres.id }}
+          psql -U postgres -v ON_ERROR_STOP=1 -f - < docker/postgres/init.sql
+
+      - name: Environment (test values only)
+        run: cp .env.example .env
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install (runs prisma generate)
+        run: pnpm install --frozen-lockfile
+
+      # The deploy order from the README, against the dev database.
+      - name: Migrate as the migrator
+        run: pnpm db:migrate
+      - name: Permission sync
+        run: pnpm access:sync
+
+      - name: Prisma schema is valid
+        run: pnpm exec prisma validate
+      - name: Lint (no --fix)
+        run: pnpm lint:check
+      # The build compiles src/ only; this also checks test/ and prisma/.
+      - name: Type-check
+        run: pnpm exec tsc --noEmit -p tsconfig.json
+      - name: Build
+        run: pnpm build
+      - name: Unit tests
+        run: pnpm test:unit
+
+      - name: OpenAPI contract is current
+        run: |
+          pnpm openapi:export
+          git diff --exit-code docs/api/openapi.v0.json
+
+      # The dashboards (apps/, packages/): their client types must match the
+      # contract above, and they must type-check against it.
+      - name: Dashboard client types are current
+        run: |
+          pnpm api:generate
+          git diff --exit-code packages/api/src/schema.d.ts
+      - name: Dashboards type-check and tests
+        run: pnpm dashboards:typecheck && pnpm dashboards:test
+      # A production build catches what tsc does not: server/client boundaries,
+      # route exports, and pages that fail to prerender.
+      - name: Build the admin dashboard
+        run: pnpm --filter @jiwar/admin build
+      - name: Build the manager dashboard
+        run: pnpm --filter @jiwar/manager build
+      - name: Build the public web pages
+        run: pnpm --filter @jiwar/public build
+
+  e2e:
+    name: e2e (${{ matrix.shard }}/4)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      # Every shard reports, so one failure does not hide another.
+      fail-fast: false
+      matrix:
+        # Split by suite duration (test/setup/shard-sequencer.js).
+        shard: [1, 2, 3, 4]
 
     services:
       postgres:
@@ -50,11 +150,9 @@ jobs:
           - 8025:8025
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      # Service containers start before the checkout, so init.sql cannot be
-      # mounted; it runs inside the container instead, where psql 17 reads
-      # the role passwords with \getenv exactly as docker-compose does.
+      # As in `static`: init.sql runs inside the service container.
       - name: Create database roles (docker/postgres/init.sql)
         run: >-
           docker exec -i
@@ -72,7 +170,7 @@ jobs:
             -e MINIO_ROOT_USER=jiwar_minio \
             -e MINIO_ROOT_PASSWORD=jiwar_minio_dev \
             pgsty/minio:RELEASE.2026-08-04T00-00-00Z minio server /data
-          for i in $(seq 1 30); do
+          for _ in $(seq 1 30); do
             curl -sf http://127.0.0.1:9005/minio/health/live && exit 0
             sleep 1
           done
@@ -82,9 +180,9 @@ jobs:
       - name: Environment (test values only)
         run: cp .env.example .env
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -92,39 +190,22 @@ jobs:
       - name: Install (runs prisma generate)
         run: pnpm install --frozen-lockfile
 
-      # The deploy order from the README, against the dev database.
-      - name: Migrate as the migrator
-        run: pnpm db:migrate
-      - name: Permission sync
-        run: pnpm access:sync
+      # Global setup migrates the test database as the migrator and runs
+      # the permission sync, like a deploy.
+      - name: E2E tests (shard ${{ matrix.shard }} of 4)
+        run: pnpm test:e2e --shard=${{ matrix.shard }}/4
 
-      - name: Lint (no --fix)
-        run: pnpm lint:check
-      - name: Build
-        run: pnpm build
-      - name: Unit tests
-        run: pnpm test:unit
-      - name: E2E tests
-        run: pnpm test:e2e
-
-      - name: OpenAPI contract is current
+  ci:
+    needs: [static, e2e]
+    # Without always() a failure upstream would skip this job, and branch
+    # protection counts a skipped check as passed.
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Every job passed
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
         run: |
-          pnpm openapi:export
-          git diff --exit-code docs/api/openapi.v0.json
-
-      # The dashboards (apps/, packages/): their client types must match the
-      # contract above, and they must type-check against it.
-      - name: Dashboard client types are current
-        run: |
-          pnpm api:generate
-          git diff --exit-code packages/api/src/schema.d.ts
-      - name: Dashboards type-check and tests
-        run: pnpm dashboards:typecheck && pnpm dashboards:test
-      # A production build catches what tsc does not: server/client boundaries,
-      # route exports, and pages that fail to prerender.
-      - name: Build the admin dashboard
-        run: pnpm --filter @jiwar/admin build
-      - name: Build the manager dashboard
-        run: pnpm --filter @jiwar/manager build
-      - name: Build the public web pages
-        run: pnpm --filter @jiwar/public build
+          echo "$RESULTS"
+          jq -e 'all(. == "success")' <<<"$RESULTS"

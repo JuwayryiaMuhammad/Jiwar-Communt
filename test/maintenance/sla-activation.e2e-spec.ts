@@ -33,6 +33,20 @@ describe('Maintenance — turning the SLA on in a large compound', () => {
     h = await createHttpHarness();
     d = dispatchHelpers(h);
     s = await d.setUp(1);
+    // The sweep walks every compound in the database (two transactions
+    // each per run), and the shared test database holds every other suite's
+    // compounds: about 12 ms each per run, so six runs grew with the whole
+    // e2e run instead of with this compound. The runner sees this suite's
+    // compound only; the sweep's own code is unchanged. Throws if the
+    // runner's compound list is renamed.
+    jest
+      .spyOn(
+        h.moduleRef.get<SweepRunner, { tenantIds(): Promise<string[]> }>(
+          SweepRunner,
+        ),
+        'tenantIds',
+      )
+      .mockResolvedValue([s.c.tenantId]);
     // Straight into the table: tickets that existed before (setup, not a test).
     const categoryId = await d.categoryId(s.c, 'general');
     await d.inTenant(s.c, async (tx) => {

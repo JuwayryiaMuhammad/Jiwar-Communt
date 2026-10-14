@@ -10,6 +10,7 @@
   "moduleNameMapper": {
     "^src/(.*)$": "<rootDir>/src/$1"
   },
+  "testSequencer": "<rootDir>/test/setup/shard-sequencer.js",
   "globalSetup": "<rootDir>/test/setup/global-setup.ts",
   "globalTeardown": "<rootDir>/test/setup/global-teardown.ts",
   "setupFiles": ["<rootDir>/test/setup/env.ts"],

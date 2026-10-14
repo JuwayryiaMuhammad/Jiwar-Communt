@@ -4,6 +4,7 @@ import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import {
   bookingRow,
   closureRow,
+  suspensionRow,
   facilityRow,
   facilityWindowRow,
   slotLockRow,
@@ -15,6 +16,7 @@ interface Side {
   unitId: string;
   accountId: string;
   facilityId: string;
+  bookingId: string;
 }
 
 /**
@@ -84,6 +86,36 @@ const TABLES: Table[] = [
       }),
   },
   {
+    table: 'facility_settings',
+    key: 'tenant_id',
+    linked: false,
+    insert: async (tx, own) => {
+      await tx.facilitySettings.upsert({
+        where: { tenantId: own.tenantId },
+        create: { tenantId: own.tenantId },
+        update: {},
+      });
+      return own.tenantId;
+    },
+  },
+  {
+    table: 'booking_suspensions',
+    insert: async (tx, own, link) =>
+      suspensionRow(tx, {
+        tenantId: own.tenantId,
+        unitId: link.unitId,
+        triggerBookingId:
+          own === link
+            ? await bookingRow(tx, {
+                tenantId: own.tenantId,
+                facilityId: own.facilityId,
+                unitId: own.unitId,
+                bookedById: own.accountId,
+              })
+            : link.bookingId,
+      }),
+  },
+  {
     table: 'facility_closures',
     insert: (tx, own, link) =>
       closureRow(tx, {
@@ -112,9 +144,16 @@ describe('RLS isolation — facilities tables', () => {
       unitId: (await createUnit(h, tenantId)).id,
       accountId: (await createAccountRow(h, tenantId)).id,
       facilityId: '',
+      bookingId: '',
     };
     await inTenant(s, async (tx) => {
       s.facilityId = await facilityRow(tx, tenantId);
+      s.bookingId = await bookingRow(tx, {
+        tenantId,
+        facilityId: s.facilityId,
+        unitId: s.unitId,
+        bookedById: s.accountId,
+      });
     });
     return s;
   };

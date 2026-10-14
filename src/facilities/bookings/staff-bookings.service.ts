@@ -20,11 +20,15 @@ import { dbNow } from '../db-clock';
 import { BookingNotices } from '../notices/booking-notices';
 import { rulesOf, type FacilityRules } from '../setup/facility-rules';
 import { FacilitiesService } from '../setup/facilities.service';
+import { SuspensionsService } from '../suspensions/suspensions.service';
 import { assertCan, HOLDING } from './booking-rules';
 import { BookingsService, bookingNotFound } from './bookings.service';
 import { slotsOfDate, type FacilitySlot } from './facility-slots';
 
 export const BOOKING_EXPIRE_SWEEP = 'bookings.expire_pending';
+/** A no-show is marked within three days of the slot's end. */
+export const NO_SHOW_HOURS = 72;
+const HOUR = 3_600_000;
 const BATCH = 500;
 
 /** A booking with what a staff view names: the unit's code and the booker. */
@@ -84,6 +88,7 @@ export class StaffBookingsService implements OnModuleInit {
     private readonly facilities: FacilitiesService,
     private readonly bookings: BookingsService,
     private readonly notices: BookingNotices,
+    private readonly suspensions: SuspensionsService,
   ) {}
 
   onModuleInit(): void {
@@ -324,6 +329,44 @@ export class StaffBookingsService implements OnModuleInit {
         { reason },
         this.ctx.accountId,
       );
+    });
+  }
+
+  /**
+   * Nobody came: a confirmed booking is marked a no-show after its slot
+   * ended, within three days. Final. Under the unit's lock, the unit's
+   * no-shows may then start its suspension.
+   */
+  markNoShow(id: string): Promise<void> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const booking = await this.lockForStaff(tx, id);
+      assertCan(booking, 'mark_no_show');
+      const now = await dbNow(tx);
+      if (booking.endsAt.getTime() > now.getTime())
+        throw appError.conflict(
+          ErrorCode.BOOKING_NOT_OVER,
+          'The booking’s slot has not ended',
+        );
+      if (now.getTime() - booking.endsAt.getTime() > NO_SHOW_HOURS * HOUR)
+        throw appError.conflict(
+          ErrorCode.BOOKING_NO_SHOW_TOO_LATE,
+          'Too late to mark this booking a no-show',
+          { params: { hours: NO_SHOW_HOURS } },
+        );
+      const marked = await tx.booking.update({
+        where: { id },
+        data: {
+          status: 'no_show',
+          noShowMarkedById: this.ctx.accountId,
+          noShowMarkedAt: now,
+        },
+      });
+      await this.audit.record(tx, {
+        action: 'booking.no_show',
+        targetId: id,
+        metadata: { facilityId: booking.facilityId, unitId: booking.unitId },
+      });
+      await this.suspensions.afterNoShow(tx, marked, now);
     });
   }
 

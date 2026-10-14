@@ -122,3 +122,21 @@ export async function closureRow(
   });
   return id;
 }
+
+/** A suspension of the unit, started by the booking (a no-show). */
+export async function suspensionRow(
+  tx: TenantTxClient,
+  input: { tenantId: string; unitId: string; triggerBookingId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.bookingSuspension.create({
+    data: {
+      id,
+      ...input,
+      startsAt: new Date(),
+      endsAt: new Date(Date.now() + 86_400_000),
+      noShowCount: 3,
+    },
+  });
+  return id;
+}

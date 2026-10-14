@@ -5215,6 +5215,43 @@ export interface paths {
         patch: operations["SettingsController_update"];
         trace?: never;
     };
+    "/api/v1/staff/booking-suspensions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the suspensions, latest first */
+        get: operations["BookingSuspensionsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/booking-suspensions/{id}/lift": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Lift a suspension in force, with a reason code
+         * @description BOOKING_SUSPENSION_NOT_IN_FORCE once it is over or lifted.
+         */
+        post: operations["BookingSuspensionsController_lift"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/bookings": {
         parameters: {
             query?: never;
@@ -5286,6 +5323,26 @@ export interface paths {
          * @description A pending or confirmed booking that has not ended, whatever the facility’s cutoff.
          */
         post: operations["StaffBookingsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/bookings/{id}/no-show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark a confirmed booking a no-show
+         * @description After its slot ended (BOOKING_NOT_OVER) and within 72 hours (BOOKING_NO_SHOW_TOO_LATE). Final. Enough no-shows suspend the unit from booking.
+         */
+        post: operations["StaffBookingsController_noShow"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5435,6 +5492,24 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/facility-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the facility settings */
+        get: operations["FacilitySettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update the facility settings */
+        patch: operations["FacilitySettingsController_update"];
         trace?: never;
     };
     "/api/v1/suggestion-board": {
@@ -6427,6 +6502,23 @@ export interface paths {
         put?: never;
         /** Transfer the unit's ownership */
         post: operations["UnitStatesController_transferOwnership"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/booking-standing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get whether the unit may book, or until when it may not */
+        get: operations["BookingStandingController_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -7486,8 +7578,49 @@ export interface components {
         };
         /** @enum {string} */
         BookingSide: "resident" | "staff" | "system";
+        BookingStandingView: {
+            /** @description The suspension in force, or null: the unit may book. */
+            suspension: components["schemas"]["BookingSuspensionNoticeView"] | null;
+        };
         /** @enum {string} */
         BookingStatus: "pending" | "confirmed" | "rejected" | "cancelled" | "no_show";
+        BookingSuspensionNoticeView: {
+            /**
+             * Format: date-time
+             * @description No new booking until then.
+             */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            startsAt: string;
+        };
+        BookingSuspensionView: {
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description A code of `bookingSuspensionLift`. */
+            liftReasonCode: string | null;
+            /** Format: date-time */
+            liftedAt: string | null;
+            /** @description The no-shows that started it. */
+            noShowCount: number;
+            /** Format: date-time */
+            startsAt: string;
+            /**
+             * Format: uuid
+             * @description The no-show that reached the threshold.
+             */
+            triggerBookingId: string;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        BookingSuspensionViewList: {
+            data: components["schemas"]["BookingSuspensionView"][];
+            nextCursor: string | null;
+        };
         BookingView: {
             /** @description A code of `bookingResidentCancel`, `bookingStaffCancel` or `bookingSystemCancel`, by side. */
             cancelReason: string | null;
@@ -9201,6 +9334,14 @@ export interface components {
             /** @description Bookings a unit may hold here in any 7 days. */
             weeklyQuota: number;
         };
+        FacilitySettingsResponse: {
+            /** @description No-shows within the window that suspend a unit. */
+            noShowThreshold: number;
+            /** @description Days the no-shows are counted over. */
+            noShowWindowDays: number;
+            /** @description Days a suspension lasts. */
+            suspensionDays: number;
+        };
         /**
          * @description `closed`: a closure of the facility covers it.
          * @enum {string}
@@ -9740,6 +9881,10 @@ export interface components {
         };
         LiftClosureDto: {
             /** @description From the closed list `facilityClosureLift`. */
+            reasonCode: string;
+        };
+        LiftSuspensionDto: {
+            /** @description From the closed list `bookingSuspensionLift`. */
             reasonCode: string;
         };
         /** @enum {string} */
@@ -13321,6 +13466,14 @@ export interface components {
             slotMinutes?: number;
             /** @description Bookings a unit may hold here in any 7 days. Default 2. */
             weeklyQuota?: number;
+        };
+        UpdateFacilitySettingsDto: {
+            /** @description No-shows within the window that suspend a unit. */
+            noShowThreshold?: number;
+            /** @description Days the no-shows are counted over. */
+            noShowWindowDays?: number;
+            /** @description Days a suspension lasts. */
+            suspensionDays?: number;
         };
         UpdateGateDto: {
             kind?: components["schemas"]["GateKind"];
@@ -22015,6 +22168,54 @@ export interface operations {
             };
         };
     };
+    BookingSuspensionsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `true`: only those in force. */
+                inForce?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingSuspensionViewList"];
+                };
+            };
+        };
+    };
+    BookingSuspensionsController_lift: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LiftSuspensionDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     StaffBookingsController_list: {
         parameters: {
             query?: {
@@ -22099,6 +22300,25 @@ export interface operations {
                 "application/json": components["schemas"]["StaffCancelBookingDto"];
             };
         };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffBookingsController_noShow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             204: {
                 headers: {
@@ -22369,6 +22589,48 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    FacilitySettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilitySettingsResponse"];
+                };
+            };
+        };
+    };
+    FacilitySettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateFacilitySettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilitySettingsResponse"];
+                };
             };
         };
     };
@@ -23914,6 +24176,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OccupancyResponse"];
+                };
+            };
+        };
+    };
+    BookingStandingController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingStandingView"];
                 };
             };
         };

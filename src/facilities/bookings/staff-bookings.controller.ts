@@ -78,6 +78,19 @@ export class StaffBookingsController {
     await this.bookings.reject(id, dto.reasonCode);
   }
 
+  @Post(':id/no-show')
+  @HttpCode(204)
+  @NoStore()
+  @ApiOperation({
+    summary: 'Mark a confirmed booking a no-show',
+    description:
+      'After its slot ended (BOOKING_NOT_OVER) and within 72 hours (BOOKING_NO_SHOW_TOO_LATE). Final. Enough no-shows suspend the unit from booking.',
+  })
+  @ApiNoContentResponse()
+  async noShow(@Param('id', parseId()) id: string): Promise<void> {
+    await this.bookings.markNoShow(id);
+  }
+
   @Post(':id/cancel')
   @HttpCode(204)
   @NoStore()

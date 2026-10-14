@@ -280,4 +280,8 @@ export const FACILITIES_COVERAGE: readonly string[] = [
   'booking.expired',
   'facility_closure.created',
   'facility_closure.lifted',
+  'facility.settings_changed',
+  'booking.no_show',
+  'booking_suspension.started',
+  'booking_suspension.lifted',
 ];

@@ -2282,6 +2282,90 @@
           }
         },
         {
+          "name": "List the suspensions, latest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "booking-suspensions"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: only those in force.",
+                  "disabled": true,
+                  "key": "inForce",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/booking-suspensions"
+            }
+          }
+        },
+        {
+          "name": "Lift a suspension in force, with a reason code",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `bookingSuspensionLift`. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "booking-suspensions",
+                ":id",
+                "lift"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/booking-suspensions/:id/lift",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the compound’s bookings",
           "request": {
             "description": "**Responses:** 200",
@@ -2441,6 +2525,35 @@
           }
         },
         {
+          "name": "Mark a confirmed booking a no-show",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "bookings",
+                ":id",
+                "no-show"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/bookings/:id/no-show",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Reject a pending booking, with a reason code",
           "request": {
             "body": {
@@ -2515,6 +2628,34 @@
                 {
                   "description": "",
                   "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get whether the unit may book, or until when it may not",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "booking-standing"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/booking-standing",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
                   "value": ""
                 }
               ]
@@ -5580,6 +5721,61 @@
                   "value": ""
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "Get the facility settings",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "facility-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/facility-settings"
+            }
+          }
+        },
+        {
+          "name": "Update the facility settings",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"noShowThreshold\": 1,\n  \"noShowWindowDays\": 7,\n  \"suspensionDays\": 1\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `noShowThreshold` | number |  | No-shows within the window that suspend a unit. |\n| `noShowWindowDays` | number |  | Days the no-shows are counted over. |\n| `suspensionDays` | number |  | Days a suspension lasts. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "facility-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/facility-settings"
             }
           }
         }

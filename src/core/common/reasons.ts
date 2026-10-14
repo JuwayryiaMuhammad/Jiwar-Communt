@@ -352,4 +352,6 @@ export const REASON_CODES = {
     'other',
   ],
   facilityClosureLift: ['reopened_early', 'created_in_error', 'other'],
+  // Why the staff lift a unit's suspension from booking.
+  bookingSuspensionLift: ['staff_error', 'exception_granted', 'other'],
 } as const;

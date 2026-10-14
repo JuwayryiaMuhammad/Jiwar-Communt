@@ -516,6 +516,8 @@ model Tenant {
   neighbourWelcomeTemplate     NeighbourWelcomeTemplate?
   facilities                   Facility[]
   bookings                     Booking[]
+  facilitySettings             FacilitySettings?
+  bookingSuspensions           BookingSuspension[]
   announcements      Announcement[]
   communityEvents    CommunityEvent[]
   polls              Poll[]
@@ -936,6 +938,7 @@ model Account {
   bookingsMarkedNoShow           Booking[]                           @relation("BookingNoShowMarker")
   facilityClosuresMade           FacilityClosure[]                   @relation("FacilityClosureCreator")
   facilityClosuresLifted         FacilityClosure[]                   @relation("FacilityClosureLifter")
+  bookingSuspensionsLifted       BookingSuspension[]                 @relation("BookingSuspensionLifter")
   neighbourConversationsAuthored NeighbourConversation[]             @relation("NeighbourConversationAuthor")
   neighbourConversationsStarted  NeighbourConversation[]             @relation("NeighbourConversationResponder")
   neighbourConversationMessages  NeighbourConversationMessage[]      @relation("NeighbourConversationMessageSender")
@@ -1041,6 +1044,7 @@ model Unit {
   neighbourConversations     NeighbourConversation[]
   neighbourWelcomes          NeighbourWelcome[]
   bookings                   Booking[]
+  bookingSuspensions         BookingSuspension[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -4543,6 +4547,7 @@ model Booking {
   cancelledBy Account? @relation("BookingCanceller", fields: [tenantId, cancelledById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_cancelled_by_fkey")
   noShowBy    Account? @relation("BookingNoShowMarker", fields: [tenantId, noShowMarkedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_no_show_by_fkey")
   closure     FacilityClosure? @relation(fields: [tenantId, closureId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_closure_id_fkey")
+  suspension  BookingSuspension?
 
   @@unique([tenantId, id])
   @@index([tenantId, unitId, startsAt, id], map: "bookings_unit_idx")
@@ -4576,4 +4581,46 @@ model FacilityClosure {
   @@unique([tenantId, id])
   @@index([tenantId, facilityId, startsAt, id], map: "facility_closures_facility_idx")
   @@map("facility_closures")
+}
+
+/// The compound's no-show rules (ADR 0044): one row per compound.
+model FacilitySettings {
+  tenantId          String   @id @map("tenant_id") @db.Uuid
+  noShowThreshold   Int      @default(3) @map("no_show_threshold")
+  noShowWindowDays  Int      @default(30) @map("no_show_window_days")
+  suspensionDays    Int      @default(14) @map("suspension_days")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("facility_settings")
+}
+
+/// A unit suspended from booking after too many no-shows (ADR 0044). In
+/// force while not lifted and not over. Only the lift changes it, once.
+model BookingSuspension {
+  id               String    @id @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  unitId           String    @map("unit_id") @db.Uuid
+  startsAt         DateTime  @map("starts_at") @db.Timestamptz(3)
+  endsAt           DateTime  @map("ends_at") @db.Timestamptz(3)
+  /// The no-show that reached the threshold.
+  triggerBookingId String    @map("trigger_booking_id") @db.Uuid
+  noShowCount      Int       @map("no_show_count")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  liftedAt         DateTime? @map("lifted_at") @db.Timestamptz(3)
+  liftedById       String?   @map("lifted_by_account_id") @db.Uuid
+  liftReasonCode   String?   @map("lift_reason_code")
+
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  unit           Unit     @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  triggerBooking Booking  @relation(fields: [tenantId, triggerBookingId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "booking_suspensions_tenant_id_trigger_booking_id_fkey")
+  liftedBy       Account? @relation("BookingSuspensionLifter", fields: [tenantId, liftedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "booking_suspensions_tenant_id_lifted_by_fkey")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, triggerBookingId], map: "booking_suspensions_trigger_booking_id_key")
+  @@index([tenantId, unitId, startsAt, id], map: "booking_suspensions_unit_idx")
+  @@index([tenantId, startsAt, id], map: "booking_suspensions_starts_idx")
+  @@map("booking_suspensions")
 }

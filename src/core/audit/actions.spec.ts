@@ -83,6 +83,7 @@ describe('audit catalog', () => {
         'facility',
         'booking',
         'facility_closure',
+        'booking_suspension',
       ]).toContain(def.target);
     }
   });

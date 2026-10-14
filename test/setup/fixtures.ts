@@ -6,6 +6,7 @@ import { egyptToday } from '../../src/core/common/egyptian-national-id';
 import { newId } from '../../src/core/common/uuid';
 import { TenantLifecycle } from '../../src/core/tenant-settings/tenant-lifecycle';
 import { EngagementProvisioning } from '../../src/engagement/provisioning';
+import { FacilitiesProvisioning } from '../../src/facilities/provisioning';
 import { ParcelProvisioning } from '../../src/gate/parcels/parcel-provisioning';
 import { MaintenanceProvisioning } from '../../src/maintenance/provisioning';
 import { ManagementProvisioning } from '../../src/management/provisioning';
@@ -27,6 +28,7 @@ new ParcelProvisioning(tenantLifecycle).onModuleInit();
 new ManagementProvisioning(tenantLifecycle).onModuleInit();
 new EngagementProvisioning(tenantLifecycle).onModuleInit();
 new NeighboursProvisioning(tenantLifecycle).onModuleInit();
+new FacilitiesProvisioning(tenantLifecycle).onModuleInit();
 
 /**
  * Generated phones and national IDs live in a space hand-written test values

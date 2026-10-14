@@ -293,6 +293,75 @@ describe('Audit coverage — facilities', () => {
     });
   });
 
+  describe('no-shows and suspensions', () => {
+    it('facility.settings_changed — the rules by value', async () => {
+      await f
+        .http('patch', '/staff/facility-settings', s.manager.token, {
+          noShowThreshold: 2,
+        })
+        .expect(200);
+      const row = await single('facility.settings_changed', s.c.tenantId);
+      expect(row).toMatchObject(by(s.manager, 'tenant'));
+      expect(row.changes).toEqual({ noShowThreshold: { from: 3, to: 2 } });
+    });
+
+    it('booking.no_show, booking_suspension.started and .lifted — ids, counts, codes', async () => {
+      const court = await f.facility(s.c, s.manager);
+      const ended = () =>
+        f.rawBooking(s.c, {
+          facilityId: court,
+          unitId: s.homeB.id,
+          bookedById: s.bob.id,
+          startsAt: new Date(Date.now() - 2 * 3_600_000),
+        });
+      const first = await ended();
+      await f
+        .http('post', `/staff/bookings/${first}/no-show`, s.handler.token)
+        .expect(204);
+      const marked = await single('booking.no_show', first);
+      expect(marked).toMatchObject(by(s.handler, 'booking'));
+      expect(marked.metadata).toEqual({
+        facilityId: court,
+        unitId: s.homeB.id,
+      });
+
+      const second = await ended();
+      await f
+        .http('post', `/staff/bookings/${second}/no-show`, s.handler.token)
+        .expect(204);
+      const suspension = await f.inTx(s.c, (tx) =>
+        tx.bookingSuspension.findFirstOrThrow({
+          where: { unitId: s.homeB.id },
+        }),
+      );
+      const started = await single('booking_suspension.started', suspension.id);
+      expect(started).toMatchObject(by(s.handler, 'booking_suspension'));
+      expect(started.metadata).toEqual({
+        unitId: s.homeB.id,
+        triggerBookingId: second,
+        noShowCount: 2,
+        endsAt: suspension.endsAt.toISOString(),
+      });
+
+      await f
+        .http(
+          'post',
+          `/staff/booking-suspensions/${suspension.id}/lift`,
+          s.handler.token,
+          {
+            reasonCode: 'staff_error',
+          },
+        )
+        .expect(204);
+      const lifted = await single('booking_suspension.lifted', suspension.id);
+      expect(lifted).toMatchObject(by(s.handler, 'booking_suspension'));
+      expect(lifted.metadata).toEqual({
+        unitId: s.homeB.id,
+        reasonCode: 'staff_error',
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every facilities entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

@@ -667,6 +667,14 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'lift_reason_code IS NULL is tested first; the list runs only on a value',
   },
+  facility_settings_ranges: {},
+  booking_suspensions_window: {},
+  booking_suspensions_count: {},
+  booking_suspensions_lifted_shape: {},
+  booking_suspensions_lift_reason: {
+    guarded:
+      'lift_reason_code IS NULL is tested first; the list runs only on a value',
+  },
 };
 
 interface Check {

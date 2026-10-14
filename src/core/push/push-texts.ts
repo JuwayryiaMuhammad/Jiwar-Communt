@@ -1011,6 +1011,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'أُلغي حجزك لأن المرفق مغلق في ذلك الوقت.',
     },
   },
+  'booking_suspension.started': {
+    en: {
+      title: 'Bookings paused',
+      body: 'Your unit cannot make new bookings for a while. Open the app for the end date.',
+    },
+    ar: {
+      title: 'إيقاف الحجوزات مؤقتاً',
+      body: 'لا يمكن لوحدتك إجراء حجوزات جديدة لفترة. افتح التطبيق لمعرفة تاريخ الانتهاء.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

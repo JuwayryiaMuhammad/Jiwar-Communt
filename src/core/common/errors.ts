@@ -412,6 +412,16 @@ export const ErrorCode = {
   FACILITY_CLOSURE_NOT_FOUND: 'FACILITY_CLOSURE_NOT_FOUND',
   /** It was lifted already (409). */
   FACILITY_CLOSURE_LIFTED: 'FACILITY_CLOSURE_LIFTED',
+  /** The unit is suspended from booking until params.until, after no-shows (403). */
+  BOOKINGS_SUSPENDED: 'BOOKINGS_SUSPENDED',
+  /** Its slot has not ended: nobody can tell yet it was a no-show (409). */
+  BOOKING_NOT_OVER: 'BOOKING_NOT_OVER',
+  /** A no-show is marked within params.hours of the slot's end (409). */
+  BOOKING_NO_SHOW_TOO_LATE: 'BOOKING_NO_SHOW_TOO_LATE',
+  /** Unknown, or another compound's. */
+  BOOKING_SUSPENSION_NOT_FOUND: 'BOOKING_SUSPENSION_NOT_FOUND',
+  /** It is over, or lifted already (409). */
+  BOOKING_SUSPENSION_NOT_IN_FORCE: 'BOOKING_SUSPENSION_NOT_IN_FORCE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

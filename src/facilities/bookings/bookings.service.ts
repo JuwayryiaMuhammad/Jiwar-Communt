@@ -29,6 +29,7 @@ import {
   FacilitiesService,
   facilityNotFound,
 } from '../setup/facilities.service';
+import { SuspensionsService } from '../suspensions/suspensions.service';
 import { assertCan, COUNTED, HOLDING } from './booking-rules';
 import {
   bookableWhen,
@@ -110,6 +111,7 @@ export class BookingsService implements OnModuleInit {
     private readonly community: CommunityFacilitiesPort,
     private readonly access: FacilitiesAccess,
     private readonly facilities: FacilitiesService,
+    private readonly suspensions: SuspensionsService,
   ) {}
 
   onModuleInit(): void {
@@ -285,6 +287,17 @@ export class BookingsService implements OnModuleInit {
         throw appError.forbidden(
           ErrorCode.BOOKINGS_NOT_ALLOWED,
           'This person may not book for this unit',
+        );
+      const suspended = await this.suspensions.current(
+        tx,
+        unitId,
+        await dbNow(tx),
+      );
+      if (suspended)
+        throw appError.forbidden(
+          ErrorCode.BOOKINGS_SUSPENDED,
+          'The unit may not book for now',
+          { params: { until: suspended.endsAt.toISOString() } },
         );
       const facility = await this.facilities.lock(
         tx,

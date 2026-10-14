@@ -1631,6 +1631,24 @@
         ],
         "type": "string"
       },
+      "BookingStandingView": {
+        "properties": {
+          "suspension": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BookingSuspensionNoticeView"
+              }
+            ],
+            "description": "The suspension in force, or null: the unit may book.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "suspension"
+        ],
+        "type": "object"
+      },
       "BookingStatus": {
         "enum": [
           "pending",
@@ -1640,6 +1658,102 @@
           "no_show"
         ],
         "type": "string"
+      },
+      "BookingSuspensionNoticeView": {
+        "properties": {
+          "endsAt": {
+            "description": "No new booking until then.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "startsAt",
+          "endsAt"
+        ],
+        "type": "object"
+      },
+      "BookingSuspensionView": {
+        "properties": {
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "liftReasonCode": {
+            "description": "A code of `bookingSuspensionLift`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "liftedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "noShowCount": {
+            "description": "The no-shows that started it.",
+            "type": "number"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "triggerBookingId": {
+            "description": "The no-show that reached the threshold.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "startsAt",
+          "endsAt",
+          "unitId",
+          "unitCode",
+          "noShowCount",
+          "triggerBookingId",
+          "liftedAt",
+          "liftReasonCode"
+        ],
+        "type": "object"
+      },
+      "BookingSuspensionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BookingSuspensionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
       },
       "BookingView": {
         "properties": {
@@ -7179,6 +7293,28 @@
         ],
         "type": "object"
       },
+      "FacilitySettingsResponse": {
+        "properties": {
+          "noShowThreshold": {
+            "description": "No-shows within the window that suspend a unit.",
+            "type": "number"
+          },
+          "noShowWindowDays": {
+            "description": "Days the no-shows are counted over.",
+            "type": "number"
+          },
+          "suspensionDays": {
+            "description": "Days a suspension lasts.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "noShowThreshold",
+          "noShowWindowDays",
+          "suspensionDays"
+        ],
+        "type": "object"
+      },
       "FacilitySlotState": {
         "description": "`closed`: a closure of the facility covers it.",
         "enum": [
@@ -8985,6 +9121,18 @@
         "properties": {
           "reasonCode": {
             "description": "From the closed list `facilityClosureLift`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "LiftSuspensionDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `bookingSuspensionLift`.",
             "type": "string"
           }
         },
@@ -20994,6 +21142,29 @@
           "weeklyQuota": {
             "description": "Bookings a unit may hold here in any 7 days. Default 2.",
             "maximum": 20,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateFacilitySettingsDto": {
+        "properties": {
+          "noShowThreshold": {
+            "description": "No-shows within the window that suspend a unit.",
+            "maximum": 10,
+            "minimum": 1,
+            "type": "number"
+          },
+          "noShowWindowDays": {
+            "description": "Days the no-shows are counted over.",
+            "maximum": 90,
+            "minimum": 7,
+            "type": "number"
+          },
+          "suspensionDays": {
+            "description": "Days a suspension lasts.",
+            "maximum": 90,
             "minimum": 1,
             "type": "number"
           }
@@ -37794,6 +37965,111 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/booking-suspensions": {
+      "get": {
+        "operationId": "BookingSuspensionsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`true`: only those in force.",
+            "in": "query",
+            "name": "inForce",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingSuspensionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the suspensions, latest first",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/booking-suspensions/{id}/lift": {
+      "post": {
+        "description": "BOOKING_SUSPENSION_NOT_IN_FORCE once it is over or lifted.",
+        "operationId": "BookingSuspensionsController_lift",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiftSuspensionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lift a suspension in force, with a reason code",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/bookings": {
       "get": {
         "description": "Soonest first. `status=pending` is the approvals queue.",
@@ -37988,6 +38264,38 @@
           }
         ],
         "summary": "Cancel a booking, with a reason code",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/bookings/{id}/no-show": {
+      "post": {
+        "description": "After its slot ended (BOOKING_NOT_OVER) and within 72 hours (BOOKING_NO_SHOW_TOO_LATE). Final. Enough no-shows suspend the unit from booking.",
+        "operationId": "StaffBookingsController_noShow",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a confirmed booking a no-show",
         "tags": [
           "bookings"
         ],
@@ -38489,6 +38797,72 @@
           }
         ],
         "summary": "Lift a closure, with a reason code",
+        "tags": [
+          "facilities"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/facility-settings": {
+      "get": {
+        "operationId": "FacilitySettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacilitySettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the facility settings",
+        "tags": [
+          "facilities"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "FacilitySettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFacilitySettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacilitySettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update the facility settings",
         "tags": [
           "facilities"
         ],
@@ -41416,6 +41790,44 @@
         "tags": [
           "unit-states"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/booking-standing": {
+      "get": {
+        "operationId": "BookingStandingController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingStandingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get whether the unit may book, or until when it may not",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

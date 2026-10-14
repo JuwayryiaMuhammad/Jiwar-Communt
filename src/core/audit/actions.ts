@@ -618,6 +618,20 @@ export const AUDIT_ACTIONS = {
   'facility_closure.created': { log: 'tenant', target: 'facility_closure' },
   // metadata: facilityId, reasonCode (the lift's).
   'facility_closure.lifted': { log: 'tenant', target: 'facility_closure' },
+  // metadata: facilityId, unitId.
+  'booking.no_show': { log: 'tenant', target: 'booking' },
+  // metadata: unitId, triggerBookingId, noShowCount, endsAt.
+  'booking_suspension.started': {
+    log: 'tenant',
+    target: 'booking_suspension',
+  },
+  // metadata: unitId, reasonCode.
+  'booking_suspension.lifted': {
+    log: 'tenant',
+    target: 'booking_suspension',
+  },
+  // changes: the no-show rules by value.
+  'facility.settings_changed': { log: 'tenant', target: 'tenant' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

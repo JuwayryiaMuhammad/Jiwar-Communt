@@ -522,6 +522,45 @@ describe('API v0 — no-store', () => {
       },
     );
   };
+  /** A confirmed booking of the tenant's unit whose slot just ended. */
+  const anEnded = async () => {
+    const id = newId();
+    await w.helpers.asManager(w.a, () =>
+      w.helpers.prisma.tenant.booking.create({
+        data: {
+          id,
+          tenantId: w.a.tenantId,
+          facilityId: w.aFacilityId,
+          unitId: w.a.rentedUnitId,
+          bookedById: w.a.ids.tenant,
+          startsAt: new Date(Date.now() - 2 * 3_600_000),
+          endsAt: new Date(Date.now() - 3_600_000),
+          guests: 0,
+          partySize: 1,
+          peak: false,
+          status: 'confirmed',
+        },
+      }),
+    );
+    return id;
+  };
+  /** A suspension of the tenant's unit in force: three no-shows marked. */
+  const aSuspension = async () => {
+    for (let i = 0; i < 3; i++)
+      await as(
+        'manager',
+        'POST',
+        `/staff/bookings/${await anEnded()}/no-show`,
+      ).expect(204);
+    const list = await as(
+      'manager',
+      'GET',
+      '/staff/booking-suspensions?inForce=true',
+    ).expect(200);
+    return body<{ data: { id: string; unitId: string }[] }>(list).data.find(
+      (x) => x.unitId === w.a.rentedUnitId,
+    )!.id;
+  };
   const FACILITY_CALLS = (): Record<string, () => Promise<Response>> => ({
     'GET /staff/bookings': () => as('manager', 'GET', '/staff/bookings'),
     'GET /staff/bookings/{id}': async () =>
@@ -546,6 +585,27 @@ describe('API v0 — no-store', () => {
         `/staff/facility-closures/${body<{ id: string }>(await aClosure()).id}/lift`,
         { reasonCode: 'other' },
       ),
+    'POST /staff/bookings/{id}/no-show': async () =>
+      as('manager', 'POST', `/staff/bookings/${await anEnded()}/no-show`),
+    'GET /units/{unitId}/booking-standing': () =>
+      as('owner', 'GET', `/units/${w.a.homeUnitId}/booking-standing`),
+    'GET /staff/booking-suspensions': () =>
+      as('manager', 'GET', '/staff/booking-suspensions'),
+    'POST /staff/booking-suspensions/{id}/lift': async () =>
+      as(
+        'manager',
+        'POST',
+        `/staff/booking-suspensions/${await aSuspension()}/lift`,
+        {
+          reasonCode: 'other',
+        },
+      ),
+    'GET /staff/facility-settings': () =>
+      as('manager', 'GET', '/staff/facility-settings'),
+    'PATCH /staff/facility-settings': () =>
+      as('manager', 'PATCH', '/staff/facility-settings', {
+        suspensionDays: 14,
+      }),
     'GET /staff/facilities/{id}/day': () =>
       as('manager', 'GET', `/staff/facilities/${w.aFacilityId}/day`),
     'GET /facilities': () => as('owner', 'GET', '/facilities'),

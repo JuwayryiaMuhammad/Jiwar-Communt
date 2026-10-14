@@ -949,6 +949,17 @@ export const NOTIFICATION_KINDS = {
     target: 'booking',
     params: { reason: {} },
   },
+  /**
+   * The unit's no-shows suspended it from booking: to everyone who books
+   * for it. The end is read on the suspension.
+   */
+  'booking_suspension.started': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'booking_suspension',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

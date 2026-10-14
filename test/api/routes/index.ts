@@ -15,6 +15,7 @@ import {
   CLOSURE_ROUTES,
   FACILITY_SETUP_ROUTES,
   STAFF_BOOKING_ROUTES,
+  SUSPENSION_ROUTES,
 } from './facilities';
 import { FILES_ROUTES } from './files';
 import { GATE_ROUTES } from './gate';
@@ -130,4 +131,5 @@ export const ROUTES: Row[] = [
   ...BOOKING_ROUTES,
   ...STAFF_BOOKING_ROUTES,
   ...CLOSURE_ROUTES,
+  ...SUSPENSION_ROUTES,
 ];

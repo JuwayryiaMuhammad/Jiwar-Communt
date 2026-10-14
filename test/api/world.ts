@@ -178,6 +178,8 @@ export interface World {
   bBookingId: string;
   /** A closure of B's facility, a month ahead. */
   bClosureId: string;
+  /** A suspension of B's home, in force. */
+  bSuspensionId: string;
   /** One of A's, open every day, roomy, for valid bookings. */
   aFacilityId: string;
   bDeviceId: string;
@@ -676,7 +678,40 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       reasonCode: 'maintenance',
     }),
   );
+  const bSuspensionId = newId();
+  await helpers.asManager(b, async () => {
+    const ended = newId();
+    await helpers.prisma.tenant.booking.create({
+      data: {
+        id: ended,
+        tenantId: b.tenantId,
+        facilityId: bFacility.id,
+        unitId: b.homeUnitId,
+        bookedById: b.ids.owner,
+        startsAt: new Date(Date.now() - 2 * 3_600_000),
+        endsAt: new Date(Date.now() - 3_600_000),
+        guests: 0,
+        partySize: 1,
+        peak: false,
+        status: 'no_show',
+        noShowMarkedAt: new Date(),
+        noShowMarkedById: b.ids.manager,
+      },
+    });
+    await helpers.prisma.tenant.bookingSuspension.create({
+      data: {
+        id: bSuspensionId,
+        tenantId: b.tenantId,
+        unitId: b.homeUnitId,
+        startsAt: new Date(),
+        endsAt: new Date(Date.now() + 86_400_000),
+        triggerBookingId: ended,
+        noShowCount: 3,
+      },
+    });
+  });
   return {
+    bSuspensionId,
     bClosureId: bClosure.closure.id,
     bFacilityId: bFacility.id,
     bBookingId: bBooking.id,

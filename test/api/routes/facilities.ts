@@ -397,3 +397,98 @@ export const CLOSURE_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** No-shows, suspensions and the compound's settings (ADR 0044). */
+export const SUSPENSION_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/staff/bookings/{id}/no-show',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bBookingId }),
+      code: 'BOOKING_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/units/{unitId}/booking-standing',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.bUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/booking-suspensions',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { inForce: 'yes' },
+      fields: [
+        {
+          field: 'inForce',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['true', 'false'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/booking-suspensions/{id}/lift',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bSuspensionId }),
+      code: 'BOOKING_SUSPENSION_NOT_FOUND',
+      body: () => ({ reasonCode: 'other' }),
+    },
+    invalid: {
+      body: {},
+      fields: [{ field: 'reasonCode', code: 'FIELD_REQUIRED' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/facility-settings',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'PATCH',
+    path: '/staff/facility-settings',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: { suspensionDays: 91 },
+      fields: [
+        {
+          field: 'suspensionDays',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 90 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+];

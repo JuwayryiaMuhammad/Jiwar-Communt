@@ -44,3 +44,4 @@
 | [0040](0040-community-engagement.md) | Community life: announcements with audiences read at read time, works and closures, events with a capacity that holds, consultative polls with a ballot secret against the database, suggestions and their public board, the daily brief | Accepted |
 | [0041](0041-push-notifications.md) | Push notifications: device tokens, the push outbox, FCM | Accepted |
 | [0042](0042-neighbours.md) | Neighbours: complaints against a unit with three private threads and one notice to the unit, lost and found with claims and the handover, the lending board, masked contact with blocks and reported cases, and the welcome | Accepted |
+| [0043](0043-gate-card-visitors.md) | The gate card's visitors: a pass read again (derived tokens), group passes one person per entry, standing instructions, the guard's photo and the gate's phone | Accepted |

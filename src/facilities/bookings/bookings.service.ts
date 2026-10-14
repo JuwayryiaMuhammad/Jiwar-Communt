@@ -259,6 +259,16 @@ export class BookingsService implements OnModuleInit {
     });
   }
 
+  /** Every booking the caller made, whatever the unit, oldest first: the export's. */
+  mine(): Promise<Booking[]> {
+    return this.tenantTx.withTenantTx((tx) =>
+      tx.booking.findMany({
+        where: { bookedById: this.ctx.accountId },
+        orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
+      }),
+    );
+  }
+
   /** One booking the caller sees (see `visible`). */
   get(id: string): Promise<Booking> {
     return this.tenantTx.withTenantTx((tx) => this.visible(tx, id));

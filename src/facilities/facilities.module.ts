@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CommunityFacilitiesPortModule } from '../community';
+import { AccountsModule } from '../core/accounts/accounts.module';
 import { FacilitiesAccess } from './access';
 import {
   BookingsController,
@@ -25,6 +26,8 @@ import {
   ResidentClubController,
 } from './club/club.controller';
 import { ClubService } from './club/club.service';
+import { FacilitiesExportSections } from './export/export-sections';
+import { FacilitiesLifecycle } from './privacy/facilities-lifecycle';
 import { FacilitiesProvisioning } from './provisioning';
 import { FacilitySettingsController } from './settings/facility-settings.controller';
 import { FacilitySettingsService } from './settings/facility-settings.service';
@@ -44,7 +47,7 @@ import { FacilitiesService } from './setup/facilities.service';
  * its index and nothing else; nothing imports it.
  */
 @Module({
-  imports: [CommunityFacilitiesPortModule],
+  imports: [AccountsModule, CommunityFacilitiesPortModule],
   controllers: [
     FacilitiesController,
     StaffFacilitiesController,
@@ -74,6 +77,8 @@ import { FacilitiesService } from './setup/facilities.service';
     SuspensionsService,
     BookingReminders,
     ClubService,
+    FacilitiesLifecycle,
+    FacilitiesExportSections,
   ],
 })
 export class FacilitiesModule {}

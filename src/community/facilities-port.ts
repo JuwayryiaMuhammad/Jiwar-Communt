@@ -71,6 +71,11 @@ export class CommunityFacilitiesPort {
     return this.capabilities.holders(tx, unitId, 'bookings');
   }
 
+  /** The units the account has a place in now. */
+  places(tx: TenantTxClient, accountId: string): Promise<string[]> {
+    return this.capabilities.unitsWhere(tx, accountId, 'unitView');
+  }
+
   /** The units the account may book for now. */
   bookingUnits(tx: TenantTxClient, accountId: string): Promise<string[]> {
     return this.capabilities.unitsWhere(tx, accountId, 'bookings');

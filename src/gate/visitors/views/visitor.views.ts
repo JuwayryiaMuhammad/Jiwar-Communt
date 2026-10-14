@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   DeliveryInstruction,
+  StandingInstructionAction,
   VisitorInstruction,
   VisitorPassKind,
 } from '@prisma/client';
@@ -12,7 +13,8 @@ import type {
   PassListItem,
   PassStatus,
 } from '../visitor-passes.service';
-import { VisitorScheduleDto } from '../dto/visitors.dto';
+import type { StandingInstructionItem } from '../standing-instructions.service';
+import { STANDING_ACTION_DOC, VisitorScheduleDto } from '../dto/visitors.dto';
 
 const STATUSES: PassStatus[] = ['active', 'used', 'cancelled', 'expired'];
 
@@ -252,6 +254,47 @@ export class GateInstructionsView {
       uninvitedVisitor: i.uninvitedVisitor,
       delivery: i.delivery,
       updatedAt: i.updatedAt,
+    };
+  }
+}
+
+/** A standing instruction as the household reads it (ADR 0043). */
+export class StandingInstructionView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+
+  @ApiProperty({ type: String })
+  description: string;
+
+  @ApiProperty({
+    enum: StandingInstructionAction,
+    enumName: 'StandingInstructionAction',
+    description: STANDING_ACTION_DOC,
+  })
+  action: StandingInstructionAction;
+
+  @ApiProperty({
+    enum: StandingInstructionAction,
+    enumName: 'StandingInstructionAction',
+    description:
+      'What the guard is shown: `call_first` for an `always_allow` while the compound does not allow it (`allowAlwaysAllow`), else `action`.',
+  })
+  effectiveAction: StandingInstructionAction;
+
+  @ApiProperty({ type: AccountRefView })
+  createdBy: AccountRefView;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: Date;
+
+  static from(i: StandingInstructionItem): StandingInstructionView {
+    return {
+      id: i.id,
+      description: i.description,
+      action: i.action,
+      effectiveAction: i.effectiveAction,
+      createdBy: accountRef(i.createdBy),
+      createdAt: i.createdAt,
     };
   }
 }

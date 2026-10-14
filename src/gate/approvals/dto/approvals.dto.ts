@@ -71,6 +71,17 @@ export class CreateGateRequestDto {
   engagementId?: string;
 }
 
+/** The guard applies one of the unit's standing instructions (ADR 0043). */
+export class ApplyInstructionDto {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    description: 'One of `standingInstructions` on the request.',
+  })
+  @IsUUID()
+  instructionId: string;
+}
+
 const DECISIONS = ['approve', 'deny'] as const;
 
 export class GateDecisionDto {

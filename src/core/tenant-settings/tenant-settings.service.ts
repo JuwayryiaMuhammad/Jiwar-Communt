@@ -21,6 +21,8 @@ export interface TenantSettingsView {
   visitorDirections: string | null;
   /** E.164; on the visitor page and the worker card (ADR 0030). */
   emergencyPhone: string | null;
+  /** Whether households may write `always_allow` instructions (ADR 0043). */
+  allowAlwaysAllow: boolean;
 }
 
 /** Absent keeps a value; `null` clears the two optional texts. */
@@ -136,6 +138,7 @@ export class TenantSettingsService {
           gateRequestTimeoutSeconds: input.gateRequestTimeoutSeconds,
           visitorDirections: directions,
           emergencyPhone: phone,
+          allowAlwaysAllow: input.allowAlwaysAllow,
         },
       });
       const changes = diffChanges(
@@ -164,6 +167,7 @@ function view(row: TenantSettings): TenantSettingsView {
     gateRequestTimeoutSeconds: row.gateRequestTimeoutSeconds,
     visitorDirections: row.visitorDirections,
     emergencyPhone: row.emergencyPhone,
+    allowAlwaysAllow: row.allowAlwaysAllow,
   };
 }
 

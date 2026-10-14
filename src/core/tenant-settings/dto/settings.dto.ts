@@ -23,6 +23,16 @@ export class UpdateSettingsDto {
   @IsBoolean()
   familyJoinRequiresApproval?: boolean;
 
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    description:
+      'Whether households may write `always_allow` standing instructions (ADR 0043).',
+  })
+  @IsOptional()
+  @IsBoolean()
+  allowAlwaysAllow?: boolean;
+
   @ApiProperty({ type: Number, required: false, minimum: 1, maximum: 100 })
   @IsOptional()
   @IsInt(withParams({ ...MAX_HOUSEHOLD_MEMBERS }))

@@ -43,6 +43,7 @@ import { VisitorDataSweep } from './visitors/visitor-data.sweep';
 import { VisitorPageController } from './visitors/visitor-page.controller';
 import { VisitorPageService } from './visitors/visitor-page.service';
 import { PassTokens } from './visitors/pass-tokens';
+import { StandingInstructionsService } from './visitors/standing-instructions.service';
 import { VisitorPassesService } from './visitors/visitor-passes.service';
 import { VisitorsController } from './visitors/visitors.controller';
 
@@ -78,6 +79,7 @@ import { VisitorsController } from './visitors/visitors.controller';
     ShiftsService,
     VisitorPassesService,
     PassTokens,
+    StandingInstructionsService,
     VisitorPageService,
     InstructionsService,
     VisitorDataSweep,

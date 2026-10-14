@@ -16,6 +16,7 @@ type Form = {
   maxHouseholdMembers: string;
   maxActiveVisitorPasses: string;
   gateRequestTimeoutSeconds: string;
+  allowAlwaysAllow: boolean;
 };
 
 function toForm(s: Settings): Form {
@@ -27,6 +28,7 @@ function toForm(s: Settings): Form {
     maxHouseholdMembers: String(s.maxHouseholdMembers),
     maxActiveVisitorPasses: String(s.maxActiveVisitorPasses),
     gateRequestTimeoutSeconds: String(s.gateRequestTimeoutSeconds),
+    allowAlwaysAllow: s.allowAlwaysAllow,
   };
 }
 
@@ -37,6 +39,7 @@ function diff(s: Settings, f: Form) {
   if ((f.emergencyPhone.trim() || null) !== s.emergencyPhone) out.emergencyPhone = f.emergencyPhone.trim() || null;
   if ((f.visitorDirections.trim() || null) !== s.visitorDirections) out.visitorDirections = f.visitorDirections.trim() || null;
   if (f.familyJoinRequiresApproval !== s.familyJoinRequiresApproval) out.familyJoinRequiresApproval = f.familyJoinRequiresApproval;
+  if (f.allowAlwaysAllow !== s.allowAlwaysAllow) out.allowAlwaysAllow = f.allowAlwaysAllow;
   for (const key of ['maxHouseholdMembers', 'maxActiveVisitorPasses', 'gateRequestTimeoutSeconds'] as const) {
     if (Number(f[key]) !== s[key]) out[key] = Number(f[key]);
   }
@@ -151,7 +154,7 @@ export default function SettingsPage() {
                     </Field>
                     <Field
                       label="Gate approval timeout (seconds)"
-                      hint="How long a household has to answer the gate before its standing instruction applies (30–1800)."
+                      hint="How long a household has to answer the gate before its gate instructions apply (30–1800)."
                       error={err('gateRequestTimeoutSeconds')}
                     >
                       {(p) => (
@@ -165,6 +168,15 @@ export default function SettingsPage() {
                         />
                       )}
                     </Field>
+                    <Checkbox
+                      label="Households may tell the gate to always let someone in"
+                      checked={form.allowAlwaysAllow}
+                      onChange={(e) => set('allowAlwaysAllow', e.target.checked)}
+                    />
+                    <p className="field__hint" style={{ margin: 0 }}>
+                      When off, no new “always allow” instruction can be added, and the guard treats existing ones as
+                      “call first”. The guard logs every entry either way.
+                    </p>
                   </div>
                 </CardBody>
               </Card>

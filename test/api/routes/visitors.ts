@@ -139,4 +139,65 @@ export const VISITORS_ROUTES: Row[] = [
       ],
     },
   },
+  {
+    method: 'GET',
+    path: '/units/{unitId}/standing-instructions',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/units/{unitId}/standing-instructions',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      body: () => ({ description: 'Someone', action: 'call_first' }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      body: { description: '', action: 'sometimes' },
+      fields: [
+        {
+          field: 'description',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 140 },
+        },
+        {
+          field: 'action',
+          code: 'INVALID_VALUE',
+          params: {
+            allowed: [
+              'always_allow',
+              'never_allow',
+              'call_first',
+              'leave_at_gate',
+            ],
+          },
+        },
+      ],
+    },
+  },
+  {
+    method: 'DELETE',
+    path: '/units/{unitId}/standing-instructions/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({
+        unitId: w.b.homeUnitId,
+        id: '00000000-0000-7000-8000-000000000000',
+      }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
 ];

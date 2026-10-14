@@ -604,6 +604,19 @@
         ],
         "type": "object"
       },
+      "ApplyInstructionDto": {
+        "properties": {
+          "instructionId": {
+            "description": "One of `standingInstructions` on the request.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instructionId"
+        ],
+        "type": "object"
+      },
       "AppointmentBookedView": {
         "properties": {
           "endsAt": {
@@ -4059,6 +4072,30 @@
         ],
         "type": "object"
       },
+      "CreateStandingInstructionDto": {
+        "properties": {
+          "action": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StandingInstructionAction"
+              }
+            ],
+            "description": "- `always_allow`: the guard lets them in and logs the entry.\n- `never_allow`: the guard turns them away.\n- `call_first`: the guard asks the household (the gate request) before letting them in.\n- `leave_at_gate`: what they bring is left at the gate; they do not come in."
+          },
+          "description": {
+            "description": "Who it is about, in a few words (spaces tidied). Personal: shown to the household and to the guard, never in a notification or the audit trail; deleted with its author.",
+            "example": "My mother, Hoda, grey Toyota",
+            "maxLength": 140,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "description",
+          "action"
+        ],
+        "type": "object"
+      },
       "CreateSuggestionDto": {
         "properties": {
           "body": {
@@ -7248,6 +7285,32 @@
         ],
         "type": "object"
       },
+      "GuardInstructionView": {
+        "properties": {
+          "action": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StandingInstructionAction"
+              }
+            ],
+            "description": "- `always_allow`: the guard lets them in and logs the entry.\n- `never_allow`: the guard turns them away.\n- `call_first`: the guard asks the household (the gate request) before letting them in.\n- `leave_at_gate`: what they bring is left at the gate; they do not come in.\n\nAn `always_allow` the compound does not allow reads `call_first`."
+          },
+          "description": {
+            "description": "As the household wrote it. Personal: shown while the request waits.",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "action"
+        ],
+        "type": "object"
+      },
       "GuardRequestResponse": {
         "properties": {
           "createdAt": {
@@ -7280,6 +7343,13 @@
           "partySize": {
             "type": "number"
           },
+          "standingInstructions": {
+            "description": "A waiting visitor or delivery: the unit's standing instructions whose author may still invite there (ADR 0043). Empty once decided, and for a worker.",
+            "items": {
+              "$ref": "#/components/schemas/GuardInstructionView"
+            },
+            "type": "array"
+          },
           "status": {
             "allOf": [
               {
@@ -7299,7 +7369,8 @@
           "status",
           "decisionSource",
           "expiresAt",
-          "createdAt"
+          "createdAt",
+          "standingInstructions"
         ],
         "type": "object"
       },
@@ -14723,6 +14794,10 @@
       },
       "SettingsView": {
         "properties": {
+          "allowAlwaysAllow": {
+            "description": "Whether households may write `always_allow` standing instructions (ADR 0043). Off: none is created (ALWAYS_ALLOW_DISABLED) and the guard sees those that exist as `call_first`.",
+            "type": "boolean"
+          },
           "emergencyPhone": {
             "description": "E.164; on the visitor page and the worker card.",
             "nullable": true,
@@ -14759,7 +14834,8 @@
           "maxActiveVisitorPasses",
           "gateRequestTimeoutSeconds",
           "visitorDirections",
-          "emergencyPhone"
+          "emergencyPhone",
+          "allowAlwaysAllow"
         ],
         "type": "object"
       },
@@ -17339,6 +17415,78 @@
         ],
         "type": "object"
       },
+      "StandingInstructionAction": {
+        "description": "- `always_allow`: the guard lets them in and logs the entry.\n- `never_allow`: the guard turns them away.\n- `call_first`: the guard asks the household (the gate request) before letting them in.\n- `leave_at_gate`: what they bring is left at the gate; they do not come in.",
+        "enum": [
+          "always_allow",
+          "never_allow",
+          "call_first",
+          "leave_at_gate"
+        ],
+        "type": "string"
+      },
+      "StandingInstructionView": {
+        "properties": {
+          "action": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StandingInstructionAction"
+              }
+            ],
+            "description": "- `always_allow`: the guard lets them in and logs the entry.\n- `never_allow`: the guard turns them away.\n- `call_first`: the guard asks the household (the gate request) before letting them in.\n- `leave_at_gate`: what they bring is left at the gate; they do not come in."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "description": {
+            "type": "string"
+          },
+          "effectiveAction": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StandingInstructionAction"
+              }
+            ],
+            "description": "What the guard is shown: `call_first` for an `always_allow` while the compound does not allow it (`allowAlwaysAllow`), else `action`."
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "action",
+          "effectiveAction",
+          "createdBy",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StandingInstructionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StandingInstructionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StartShiftDto": {
         "properties": {
           "gateId": {
@@ -19832,6 +19980,10 @@
       },
       "UpdateSettingsDto": {
         "properties": {
+          "allowAlwaysAllow": {
+            "description": "Whether households may write `always_allow` standing instructions (ADR 0043).",
+            "type": "boolean"
+          },
           "emergencyPhone": {
             "description": "Stored in E.164; on the visitor page and the worker card. `null` clears it.",
             "example": "+201000000000",
@@ -24698,6 +24850,62 @@
           }
         ],
         "summary": "Get an approval request (poll while waiting)",
+        "tags": [
+          "gate"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/approval-requests/{id}/apply-instruction": {
+      "post": {
+        "operationId": "GuardApprovalsController_applyInstruction",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyInstructionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardRequestResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decide a waiting request by one of the unit's standing instructions",
         "tags": [
           "gate"
         ],
@@ -39375,6 +39583,135 @@
         "summary": "List minors who turned 18",
         "tags": [
           "household"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/standing-instructions": {
+      "get": {
+        "operationId": "VisitorsController_listStanding",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandingInstructionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the unit's standing instructions",
+        "tags": [
+          "visitors"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "VisitorsController_createStanding",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStandingInstructionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandingInstructionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a standing instruction for the gate",
+        "tags": [
+          "visitors"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/standing-instructions/{id}": {
+      "delete": {
+        "operationId": "VisitorsController_deleteStanding",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a standing instruction",
+        "tags": [
+          "visitors"
         ],
         "x-stability": "draft"
       }

@@ -91,6 +91,7 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   // Phase 4.1 (ADR 0030)
   visitor_passes_token_only_with_code: {},
   visitor_passes_entries_used_range: {},
+  unit_standing_instructions_description_length: {},
   visitor_passes_used_when_full: {},
   visitor_passes_token_seq_range: {
     guarded:

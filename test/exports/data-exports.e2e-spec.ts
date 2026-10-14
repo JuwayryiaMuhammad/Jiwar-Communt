@@ -259,6 +259,7 @@ describe('Personal-data export', () => {
         'wage-payments.json',
         'visitor-passes.json',
         'entry-credentials.json',
+        'standing-instructions.json',
         'files/photo.png',
       ]),
     );

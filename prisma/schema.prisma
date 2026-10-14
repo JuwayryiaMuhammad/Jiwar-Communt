@@ -65,6 +65,16 @@ enum VisitorInstruction {
   @@map("visitor_instruction")
 }
 
+/// What the guard does with someone a standing instruction describes (ADR 0043).
+enum StandingInstructionAction {
+  always_allow
+  never_allow
+  call_first
+  leave_at_gate
+
+  @@map("standing_instruction_action")
+}
+
 enum DeliveryInstruction {
   ask
   allow
@@ -513,6 +523,7 @@ model Tenant {
   slaSettings       MaintenanceSlaSettings?
 
   @@map("tenants")
+  standingInstructions UnitStandingInstruction[]
 }
 
 /// Global login lookup: identifier → accounts, across tenants. No PII: the
@@ -879,6 +890,7 @@ model Account {
   hostedPasses          VisitorPass[]             @relation("PassHost")
   cancelledPasses       VisitorPass[]             @relation("PassCancelledBy")
   gateInstructions      UnitGateInstruction[]     @relation("InstructionsUpdatedBy")
+  standingInstructions  UnitStandingInstruction[] @relation("StandingInstructionAuthor")
   gateRequestsMade      GateApprovalRequest[]     @relation("RequestRequestedBy")
   gateRequestsDecided   GateApprovalRequest[]     @relation("RequestDecidedBy")
   files                 StoredFile[]              @relation("FileOwner")
@@ -1007,6 +1019,7 @@ model Unit {
   deferredActions   HouseholdDeferredAction[]
   visitorPasses     VisitorPass[]
   gateInstructions  UnitGateInstruction[]
+  standingInstructions UnitStandingInstruction[]
   gateRequests      GateApprovalRequest[]
   tickets           Ticket[]
   parcels           Parcel[]
@@ -1083,6 +1096,8 @@ model TenantSettings {
   visitorDirections          String?  @map("visitor_directions")
   /// E.164; on the visitor page and the worker card.
   emergencyPhone             String?  @map("emergency_phone")
+  /// Whether households may write `always_allow` instructions (ADR 0043).
+  allowAlwaysAllow           Boolean  @default(true) @map("allow_always_allow")
   createdAt                  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt                  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -1956,6 +1971,29 @@ model UnitGateInstruction {
 /// INSERT only for jiwar_app; triggers reject UPDATE, DELETE and TRUNCATE.
 /// No foreign keys on purpose (see the migration): ids are resolved by the
 /// service in its tenant transaction.
+/// A household's standing instruction for the gate (ADR 0043): a few words
+/// about someone who may come uninvited and what the guard does then.
+/// Created and deleted, never updated; the author's erasure deletes it.
+model UnitStandingInstruction {
+  id          String                    @id @db.Uuid
+  tenantId    String                    @map("tenant_id") @db.Uuid
+  unitId      String                    @map("unit_id") @db.Uuid
+  /// Personal free text: never audited, never in a notification.
+  description String
+  action      StandingInstructionAction
+  createdById String                    @map("created_by") @db.Uuid
+  createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  unit      Unit    @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "unit_standing_instructions_tenant_id_unit_fkey")
+  createdBy Account @relation("StandingInstructionAuthor", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "unit_standing_instructions_tenant_id_created_by_fkey")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, unitId, createdAt, id], map: "unit_standing_instructions_unit_idx")
+  @@index([tenantId, createdById], map: "unit_standing_instructions_author_idx")
+  @@map("unit_standing_instructions")
+}
+
 model GateEntry {
   id                String          @id @db.Uuid
   tenantId          String          @map("tenant_id") @db.Uuid

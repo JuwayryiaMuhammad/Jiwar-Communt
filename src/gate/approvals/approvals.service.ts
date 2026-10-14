@@ -23,6 +23,10 @@ import { TenantSettingsService } from '../../core/tenant-settings/tenant-setting
 import { GateSubjects } from '../entries/subjects';
 import { ShiftsService } from '../shifts/shifts.service';
 import { InstructionsService } from '../visitors/instructions.service';
+import {
+  StandingInstructionsService,
+  type GuardInstruction,
+} from '../visitors/standing-instructions.service';
 import { VISITOR_DATA_DAYS } from '../visitors/visitor-passes.service';
 
 export const REQUEST_RESOURCE = 'gate_approval_request';
@@ -48,6 +52,11 @@ export interface GuardRequestView {
   decisionSource: GateDecisionSource | null;
   expiresAt: Date;
   createdAt: Date;
+  /**
+   * While a visitor or a delivery waits: the unit's standing instructions,
+   * words and action (ADR 0043). Empty otherwise.
+   */
+  standingInstructions: GuardInstruction[];
 }
 
 /** What the household sees: never the guard. */
@@ -99,6 +108,7 @@ export class ApprovalsService implements OnModuleInit {
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
     private readonly sweep: SweepRunner,
+    private readonly standing: StandingInstructionsService,
   ) {}
 
   onModuleInit(): void {
@@ -262,6 +272,67 @@ export class ApprovalsService implements OnModuleInit {
       await this.audit.record(tx, {
         action: 'gate.approval_withdrawn',
         targetId: id,
+      });
+      return this.guardView(tx, updated);
+    });
+  }
+
+  /**
+   * The guard found the visitor in one of the unit's standing instructions
+   * (ADR 0043): the request is decided by it, as by a household — approved
+   * (`always_allow`), denied (`never_allow`) or left at the gate
+   * (`leave_at_gate`), source `standing_instruction`; the entry is then
+   * recorded on the request as always. `call_first` decides nothing (the
+   * household answers), nor does an instruction on a worker off schedule.
+   */
+  applyInstruction(
+    id: string,
+    instructionId: string,
+  ): Promise<GuardRequestView> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.shifts.requireOpen(tx);
+      const found = await tx.gateApprovalRequest.findUnique({ where: { id } });
+      if (!found) throw requestNotFound();
+      await this.idempotency.claim(tx, { type: REQUEST_RESOURCE, id });
+      const request = await this.lockedResolved(tx, id);
+      if (request.status !== 'pending') throw decided(request.status);
+      if (request.kind === 'worker_off_schedule')
+        throw appError.conflict(
+          ErrorCode.STANDING_INSTRUCTION_NOT_APPLICABLE,
+          'A worker off schedule is the household’s to answer',
+        );
+      const rule = await this.standing.applicable(
+        tx,
+        request.unitId,
+        instructionId,
+      );
+      if (rule.action === 'call_first')
+        throw appError.conflict(
+          ErrorCode.STANDING_INSTRUCTION_CALL_FIRST,
+          'Ask the household first',
+        );
+      const status: GateRequestStatus =
+        rule.action === 'always_allow'
+          ? 'approved'
+          : rule.action === 'never_allow'
+            ? 'denied'
+            : 'leave_at_gate';
+      const updated = await tx.gateApprovalRequest.update({
+        where: { id },
+        data: {
+          status,
+          decidedAt: new Date(),
+          decisionSource: 'standing_instruction',
+        },
+      });
+      await this.audit.record(tx, {
+        action: 'gate.approval_decided',
+        targetId: id,
+        metadata: {
+          decision: status,
+          decisionSource: 'standing_instruction',
+          instructionId,
+        },
       });
       return this.guardView(tx, updated);
     });
@@ -461,6 +532,10 @@ export class ApprovalsService implements OnModuleInit {
       decisionSource: r.decisionSource,
       expiresAt: r.expiresAt,
       createdAt: r.createdAt,
+      standingInstructions:
+        r.status === 'pending' && r.kind !== 'worker_off_schedule'
+          ? await this.standing.forGuard(tx, r.unitId)
+          : [],
     };
   }
 }

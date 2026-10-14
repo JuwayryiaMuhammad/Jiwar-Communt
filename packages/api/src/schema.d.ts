@@ -1208,6 +1208,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/approval-requests/{id}/apply-instruction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide a waiting request by one of the unit's standing instructions */
+        post: operations["GuardApprovalsController_applyInstruction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/approval-requests/{id}/withdraw": {
         parameters: {
             query?: never;
@@ -6227,6 +6244,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/standing-instructions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the unit's standing instructions */
+        get: operations["VisitorsController_listStanding"];
+        put?: never;
+        /** Add a standing instruction for the gate */
+        post: operations["VisitorsController_createStanding"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/standing-instructions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a standing instruction */
+        delete: operations["VisitorsController_deleteStanding"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/visitor-passes": {
         parameters: {
             query?: never;
@@ -6804,6 +6856,13 @@ export interface components {
             /** @description Written by the staff. A language is whole or absent; at least one is there. */
             titleEn: string | null;
             works: components["schemas"]["WorksView"] | null;
+        };
+        ApplyInstructionDto: {
+            /**
+             * Format: uuid
+             * @description One of `standingInstructions` on the request.
+             */
+            instructionId: string;
         };
         AppointmentBookedView: {
             /** Format: date-time */
@@ -7876,6 +7935,20 @@ export interface components {
             nameAr: string;
             nameEn: string;
         };
+        CreateStandingInstructionDto: {
+            /**
+             * @description - `always_allow`: the guard lets them in and logs the entry.
+             *     - `never_allow`: the guard turns them away.
+             *     - `call_first`: the guard asks the household (the gate request) before letting them in.
+             *     - `leave_at_gate`: what they bring is left at the gate; they do not come in.
+             */
+            action: components["schemas"]["StandingInstructionAction"];
+            /**
+             * @description Who it is about, in a few words (spaces tidied). Personal: shown to the household and to the guard, never in a notification or the audit trail; deleted with its author.
+             * @example My mother, Hoda, grey Toyota
+             */
+            description: string;
+        };
         CreateSuggestionDto: {
             /** @description The suggestion, in the resident’s words. Private to its author and the staff. */
             body: string;
@@ -8778,6 +8851,21 @@ export interface components {
             data: components["schemas"]["GuardGateView"][];
             nextCursor: string | null;
         };
+        GuardInstructionView: {
+            /**
+             * @description - `always_allow`: the guard lets them in and logs the entry.
+             *     - `never_allow`: the guard turns them away.
+             *     - `call_first`: the guard asks the household (the gate request) before letting them in.
+             *     - `leave_at_gate`: what they bring is left at the gate; they do not come in.
+             *
+             *     An `always_allow` the compound does not allow reads `call_first`.
+             */
+            action: components["schemas"]["StandingInstructionAction"];
+            /** @description As the household wrote it. Personal: shown while the request waits. */
+            description: string;
+            /** Format: uuid */
+            id: string;
+        };
         GuardRequestResponse: {
             /** Format: date-time */
             createdAt: string;
@@ -8788,6 +8876,8 @@ export interface components {
             id: string;
             kind: components["schemas"]["GateRequestKind"];
             partySize: number;
+            /** @description A waiting visitor or delivery: the unit's standing instructions whose author may still invite there (ADR 0043). Empty once decided, and for a worker. */
+            standingInstructions: components["schemas"]["GuardInstructionView"][];
             status: components["schemas"]["GateRequestStatus"];
             unitCode: string;
         };
@@ -11047,6 +11137,8 @@ export interface components {
             monthlyWage: (string | number) | null;
         };
         SettingsView: {
+            /** @description Whether households may write `always_allow` standing instructions (ADR 0043). Off: none is created (ALWAYS_ALLOW_DISABLED) and the guard sees those that exist as `call_first`. */
+            allowAlwaysAllow: boolean;
             /** @description E.164; on the visitor page and the worker card. */
             emergencyPhone: string | null;
             familyJoinRequiresApproval: boolean;
@@ -11822,6 +11914,35 @@ export interface components {
             unitId: string | null;
             updates: components["schemas"]["StaffSuggestionUpdateView"][];
         };
+        /**
+         * @description - `always_allow`: the guard lets them in and logs the entry.
+         *     - `never_allow`: the guard turns them away.
+         *     - `call_first`: the guard asks the household (the gate request) before letting them in.
+         *     - `leave_at_gate`: what they bring is left at the gate; they do not come in.
+         * @enum {string}
+         */
+        StandingInstructionAction: "always_allow" | "never_allow" | "call_first" | "leave_at_gate";
+        StandingInstructionView: {
+            /**
+             * @description - `always_allow`: the guard lets them in and logs the entry.
+             *     - `never_allow`: the guard turns them away.
+             *     - `call_first`: the guard asks the household (the gate request) before letting them in.
+             *     - `leave_at_gate`: what they bring is left at the gate; they do not come in.
+             */
+            action: components["schemas"]["StandingInstructionAction"];
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: components["schemas"]["AccountRefView"];
+            description: string;
+            /** @description What the guard is shown: `call_first` for an `always_allow` while the compound does not allow it (`allowAlwaysAllow`), else `action`. */
+            effectiveAction: components["schemas"]["StandingInstructionAction"];
+            /** Format: uuid */
+            id: string;
+        };
+        StandingInstructionViewList: {
+            data: components["schemas"]["StandingInstructionView"][];
+            nextCursor: string | null;
+        };
         StartShiftDto: {
             /** Format: uuid */
             gateId: string;
@@ -12544,6 +12665,8 @@ export interface components {
             autoCloseDays?: number;
         };
         UpdateSettingsDto: {
+            /** @description Whether households may write `always_allow` standing instructions (ADR 0043). */
+            allowAlwaysAllow?: boolean;
             /**
              * @description Stored in E.164; on the visitor page and the worker card. `null` clears it.
              * @example +201000000000
@@ -14871,6 +14994,34 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardRequestResponse"];
+                };
+            };
+        };
+    };
+    GuardApprovalsController_applyInstruction: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplyInstructionDto"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -22758,6 +22909,75 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HouseholdMemberResponseList"];
                 };
+            };
+        };
+    };
+    VisitorsController_listStanding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StandingInstructionViewList"];
+                };
+            };
+        };
+    };
+    VisitorsController_createStanding: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStandingInstructionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StandingInstructionView"];
+                };
+            };
+        };
+    };
+    VisitorsController_deleteStanding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

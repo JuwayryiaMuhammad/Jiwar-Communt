@@ -59,6 +59,22 @@ export const APPROVALS_ROUTES: Row[] = [
     invalid: 'none',
   },
   {
+    method: 'POST',
+    path: '/gate/approval-requests/{id}/apply-instruction',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bRequestId }),
+      body: () => ({ instructionId: '00000000-0000-7000-8000-000000000000' }),
+      code: 'GATE_REQUEST_NOT_FOUND',
+    },
+    invalid: {
+      body: { instructionId: 'nope' },
+      fields: [{ field: 'instructionId', code: 'INVALID_UUID' }],
+    },
+  },
+  {
     method: 'GET',
     path: '/me/gate-requests',
     auth: 'tenant',

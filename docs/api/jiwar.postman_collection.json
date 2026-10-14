@@ -1762,9 +1762,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"emergencyPhone\": \"+201000000000\",\n  \"familyJoinRequiresApproval\": false,\n  \"gateRequestTimeoutSeconds\": 30,\n  \"maxActiveVisitorPasses\": 1,\n  \"maxHouseholdMembers\": 1,\n  \"timezone\": \"Africa/Cairo\",\n  \"visitorDirections\": \"\"\n}"
+              "raw": "{\n  \"allowAlwaysAllow\": false,\n  \"emergencyPhone\": \"+201000000000\",\n  \"familyJoinRequiresApproval\": false,\n  \"gateRequestTimeoutSeconds\": 30,\n  \"maxActiveVisitorPasses\": 1,\n  \"maxHouseholdMembers\": 1,\n  \"timezone\": \"Africa/Cairo\",\n  \"visitorDirections\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `emergencyPhone` | string |  | Stored in E.164; on the visitor page and the worker card. `null` clears it. |\n| `familyJoinRequiresApproval` | boolean |  |  |\n| `gateRequestTimeoutSeconds` | number |  | Seconds a household has to answer the gate before its standing instruction applies. |\n| `maxActiveVisitorPasses` | number |  | Active visitor passes per unit. |\n| `maxHouseholdMembers` | number |  |  |\n| `timezone` | string |  | IANA time zone. |\n| `visitorDirections` | string |  | What the compound tells its visitors on the public pass page (ADR 0030). `null` clears it. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `allowAlwaysAllow` | boolean |  | Whether households may write `always_allow` standing instructions (ADR 0043). |\n| `emergencyPhone` | string |  | Stored in E.164; on the visitor page and the worker card. `null` clears it. |\n| `familyJoinRequiresApproval` | boolean |  |  |\n| `gateRequestTimeoutSeconds` | number |  | Seconds a household has to answer the gate before its standing instruction applies. |\n| `maxActiveVisitorPasses` | number |  | Active visitor passes per unit. |\n| `maxHouseholdMembers` | number |  |  |\n| `timezone` | string |  | IANA time zone. |\n| `visitorDirections` | string |  | What the compound tells its visitors on the public pass page (ADR 0030). `null` clears it. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -4909,6 +4909,55 @@
                 ":id"
               ],
               "raw": "{{baseUrl}}/api/v1/gate/approval-requests/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Decide a waiting request by one of the unit's standing instructions",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"instructionId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `instructionId` | string (uuid) | yes | One of `standingInstructions` on the request. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "approval-requests",
+                ":id",
+                "apply-instruction"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/approval-requests/:id/apply-instruction",
               "variable": [
                 {
                   "description": "",
@@ -15639,6 +15688,116 @@
                 {
                   "description": "",
                   "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the unit's standing instructions",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "standing-instructions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/standing-instructions",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add a standing instruction for the gate",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"description\": \"My mother, Hoda, grey Toyota\",\n  \"action\": \"always_allow\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `action` | `always_allow` \\| `never_allow` \\| `call_first` \\| `leave_at_gate` | yes | - `always_allow`: the guard lets them in and logs the entry. - `never_allow`: the guard turns them away. - `call_first`: the guard asks the household (the gate request) before letting them in. - `leave_at_gate`: what they bring is left at the gate; they do not come in. |\n| `description` | string | yes | Who it is about, in a few words (spaces tidied). Personal: shown to the household and to the guard, never in a notification or the audit trail; deleted with its author. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "standing-instructions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/standing-instructions",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete a standing instruction",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "standing-instructions",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/standing-instructions/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "id",
                   "value": ""
                 }
               ]

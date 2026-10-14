@@ -14,6 +14,9 @@ import {
  *   `createdAt`, `visitorName` and `vehiclePlate` (what the account typed,
  *   while the pass's visitor details still exist, ADR 0028, 0043) — never
  *   a code, a QR, or the visitor's phone;
+ * - `standing-instructions.json`: the standing instructions the account
+ *   wrote (ADR 0043): `id`, `unitCode`, `description`, `action`,
+ *   `createdAt`;
  * - `entry-credentials.json`: the phones the account registered for its
  *   entry QR: `id`, `deviceName` (while live), `createdAt`, `revokedAt`,
  *   `revokeReason` — never a secret.
@@ -28,6 +31,9 @@ export class GateExportSections implements OnModuleInit {
   onModuleInit(): void {
     this.sections.register('visitor_passes', (s) => this.passes(s));
     this.sections.register('entry_credentials', (s) => this.credentials(s));
+    this.sections.register('standing_instructions', (s) =>
+      this.standingInstructions(s),
+    );
   }
 
   private async *passes(s: ExportSubject): AsyncIterable<ExportEntry> {
@@ -69,6 +75,34 @@ export class GateExportSections implements OnModuleInit {
         createdAt: p.createdAt,
         visitorName: p.visitorDetails?.fullName ?? null,
         vehiclePlate: p.visitorDetails?.vehiclePlate ?? null,
+      })),
+    };
+  }
+
+  private async *standingInstructions(
+    s: ExportSubject,
+  ): AsyncIterable<ExportEntry> {
+    const rows = await this.tenantTx.withTenantTx((tx) =>
+      tx.unitStandingInstruction.findMany({
+        where: { createdById: s.accountId },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        select: {
+          id: true,
+          description: true,
+          action: true,
+          createdAt: true,
+          unit: { select: { code: true } },
+        },
+      }),
+    );
+    yield {
+      path: 'standing-instructions.json',
+      json: rows.map((r) => ({
+        id: r.id,
+        unitCode: r.unit.code,
+        description: r.description,
+        action: r.action,
+        createdAt: r.createdAt,
       })),
     };
   }

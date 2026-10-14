@@ -140,6 +140,17 @@ export const ErrorCode = {
   GATE_REQUEST_DECIDED: 'GATE_REQUEST_DECIDED',
   /** The worker may come in on their schedule: nothing to ask. */
   GATE_REQUEST_NOT_NEEDED: 'GATE_REQUEST_NOT_NEEDED',
+  // standing instructions (ADR 0043)
+  /** Unknown, another unit's, or its author may no longer invite there. */
+  STANDING_INSTRUCTION_NOT_FOUND: 'STANDING_INSTRUCTION_NOT_FOUND',
+  /** The unit has as many as allowed (params.max). */
+  STANDING_INSTRUCTION_LIMIT_REACHED: 'STANDING_INSTRUCTION_LIMIT_REACHED',
+  /** The compound's manager turned `always_allow` off. */
+  ALWAYS_ALLOW_DISABLED: 'ALWAYS_ALLOW_DISABLED',
+  /** `call_first`: the household answers, not the instruction. */
+  STANDING_INSTRUCTION_CALL_FIRST: 'STANDING_INSTRUCTION_CALL_FIRST',
+  /** A worker off schedule is the household's to answer. */
+  STANDING_INSTRUCTION_NOT_APPLICABLE: 'STANDING_INSTRUCTION_NOT_APPLICABLE',
   // parcels (ADR 0035)
   /** Unknown, another compound's, or not the caller's to see: one answer. */
   PARCEL_NOT_FOUND: 'PARCEL_NOT_FOUND',

@@ -9,6 +9,7 @@ import { ParcelTokens } from '../../src/gate/parcels/parcel-tokens';
 import { ConsentsService } from '../../src/core/consents/consents.service';
 import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
 import { ApprovalsService } from '../../src/gate/approvals/approvals.service';
+import { StandingInstructionsService } from '../../src/gate/visitors/standing-instructions.service';
 import { AvailabilityService } from '../../src/maintenance/dispatch/availability.service';
 import { SpecialtiesService } from '../../src/maintenance/specialties/specialties.service';
 import { ConfirmationService } from '../../src/maintenance/tickets/confirmation.service';
@@ -397,6 +398,14 @@ describe('API v0 — PII leak scan', () => {
         c.prisma.tenant.unit.findUniqueOrThrow({ where: { id: unit.id } }),
       )
     ).code;
+    // A standing instruction (ADR 0043): the household's inviters and the
+    // guard handling a visitor for the unit read it; nobody else does.
+    await c.as(a, { id: primary.id, type: 'resident' }, () =>
+      h.moduleRef.get(StandingInstructionsService).create(unit.id, {
+        description: 'PII-INSTRUCTION-text',
+        action: 'call_first',
+      }),
+    );
     const asked = await c.as(a, { id: a.ids.guard, type: 'staff' }, () =>
       h.moduleRef.get(ApprovalsService).request({
         kind: 'uninvited_visitor',
@@ -918,6 +927,7 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0043: the family member's pass, read by every member of the unit.
       '/visitor-passes/{id}': visit.id,
       '/units/{unitId}/gate-instructions': unit.id,
+      '/units/{unitId}/standing-instructions': unit.id,
       '/gate/approval-requests/{id}': asked.id,
       '/gate/parcels/{id}': parcel.id,
       '/me/parcels/{id}': parcel.id,
@@ -1684,6 +1694,22 @@ describe('API v0 — PII leak scan', () => {
       if (hostViews.has(key)) continue;
       if (text.includes('PII-VISITOR-name')) leaks.push(`${key}: visitor name`);
     }
+    // A standing instruction: the unit's inviters, and the guard on a
+    // waiting request for the unit (ADR 0043).
+    const instructionReaders = new Set([
+      'resident /units/{unitId}/standing-instructions',
+      'family /units/{unitId}/standing-instructions',
+      'plainMember /units/{unitId}/standing-instructions',
+      'guard /gate/approval-requests/{id}',
+    ]);
+    for (const [key, text] of seen)
+      if (!instructionReaders.has(key) && text.includes('PII-INSTRUCTION-text'))
+        leaks.push(`${key}: standing instruction`);
+    // (The guard's positive case is the standing-instructions suite's: the
+    // request here may have timed out by the time the scan reads it.)
+    expect(
+      seen.get('resident /units/{unitId}/standing-instructions'),
+    ).toContain('PII-INSTRUCTION-text');
     // The household's request list and its own notifications about it.
     const household = new Set([
       'resident /me/gate-requests',

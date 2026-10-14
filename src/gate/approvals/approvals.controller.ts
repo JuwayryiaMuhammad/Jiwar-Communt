@@ -23,7 +23,11 @@ import {
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import { ApprovalsService, type NewRequest } from './approvals.service';
-import { CreateGateRequestDto, GateDecisionDto } from './dto/approvals.dto';
+import {
+  ApplyInstructionDto,
+  CreateGateRequestDto,
+  GateDecisionDto,
+} from './dto/approvals.dto';
 import {
   DecisionResponse,
   GuardRequestResponse,
@@ -66,6 +70,24 @@ export class GuardApprovalsController {
     @Param('id', parseId()) id: string,
   ): Promise<GuardRequestResponse> {
     return GuardRequestResponse.from(await this.approvals.withdraw(id));
+  }
+
+  /** The visitor is one of the unit's standing instructions (ADR 0043). */
+  @Post(':id/apply-instruction')
+  @ApiOperation({
+    summary:
+      "Decide a waiting request by one of the unit's standing instructions",
+  })
+  @HttpCode(HttpStatus.OK)
+  @Idempotent()
+  @ApiOkResponse({ type: GuardRequestResponse })
+  async applyInstruction(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ApplyInstructionDto,
+  ): Promise<GuardRequestResponse> {
+    return GuardRequestResponse.from(
+      await this.approvals.applyInstruction(id, dto.instructionId),
+    );
   }
 }
 

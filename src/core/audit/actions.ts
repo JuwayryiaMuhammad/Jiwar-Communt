@@ -190,8 +190,19 @@ export const AUDIT_ACTIONS = {
   // secret, never the device name. A resident's scan is not audited at all.
   'entry_credential.issued': { log: 'tenant', target: 'entry_credential' },
   'entry_credential.revoked': { log: 'tenant', target: 'entry_credential' },
+  // A household's standing instructions (ADR 0043): the unit and the action,
+  // never the description; a deletion says why (deleted, author_erased).
+  'standing_instruction.created': {
+    log: 'tenant',
+    target: 'standing_instruction',
+  },
+  'standing_instruction.deleted': {
+    log: 'tenant',
+    target: 'standing_instruction',
+  },
   'gate.approval_requested': { log: 'tenant', target: 'gate_approval_request' },
-  // metadata.decisionSource: household, standing_instruction or timeout.
+  // metadata.decisionSource: household, standing_instruction or timeout; a
+  // standing instruction the guard applied adds metadata.instructionId.
   'gate.approval_decided': { log: 'tenant', target: 'gate_approval_request' },
   'gate.approval_reversed': { log: 'tenant', target: 'gate_approval_request' },
   'gate.approval_withdrawn': { log: 'tenant', target: 'gate_approval_request' },

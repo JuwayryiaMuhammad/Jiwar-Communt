@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   DeliveryInstruction,
+  StandingInstructionAction,
   VisitorInstruction,
   VisitorPassKind,
 } from '@prisma/client';
@@ -22,6 +23,7 @@ import {
 import { IsPhone } from '../../../core/common/validation/is-phone';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import { DESCRIPTION_LENGTH } from '../standing-instructions.service';
 import { PLATE_MAX } from '../vehicle-plate';
 
 const PARTY = { min: 1, max: 50 };
@@ -175,4 +177,41 @@ export class GateInstructionsDto {
     withParams({ allowed: Object.values(DeliveryInstruction) }),
   )
   delivery: DeliveryInstruction;
+}
+
+/** The values, each said once for every view (ADR 0043). */
+export const STANDING_ACTION_DOC = [
+  '- `always_allow`: the guard lets them in and logs the entry.',
+  '- `never_allow`: the guard turns them away.',
+  '- `call_first`: the guard asks the household (the gate request) before letting them in.',
+  '- `leave_at_gate`: what they bring is left at the gate; they do not come in.',
+].join('\n');
+
+export class CreateStandingInstructionDto {
+  @ApiProperty({
+    type: String,
+    minLength: DESCRIPTION_LENGTH.min,
+    maxLength: DESCRIPTION_LENGTH.max,
+    example: 'My mother, Hoda, grey Toyota',
+    description:
+      'Who it is about, in a few words (spaces tidied). Personal: shown to the household and to the guard, never in a notification or the audit trail; deleted with its author.',
+  })
+  @IsString()
+  @Length(
+    DESCRIPTION_LENGTH.min,
+    DESCRIPTION_LENGTH.max,
+    withParams({ ...DESCRIPTION_LENGTH }),
+  )
+  description: string;
+
+  @ApiProperty({
+    enum: StandingInstructionAction,
+    enumName: 'StandingInstructionAction',
+    description: STANDING_ACTION_DOC,
+  })
+  @IsEnum(
+    StandingInstructionAction,
+    withParams({ allowed: Object.values(StandingInstructionAction) }),
+  )
+  action: StandingInstructionAction;
 }

@@ -4,7 +4,29 @@ import {
   GateRequestKind,
   GateRequestStatus,
 } from '@prisma/client';
+import { StandingInstructionAction } from '@prisma/client';
 import type { GuardRequestView, HostRequestView } from '../approvals.service';
+import { STANDING_ACTION_DOC } from '../../visitors/dto/visitors.dto';
+
+/** What the guard sees of a standing instruction (ADR 0043). */
+export class GuardInstructionView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({
+    type: String,
+    description:
+      'As the household wrote it. Personal: shown while the request waits.',
+  })
+  description: string;
+  @ApiProperty({
+    enum: StandingInstructionAction,
+    enumName: 'StandingInstructionAction',
+    description:
+      STANDING_ACTION_DOC +
+      '\n\nAn `always_allow` the compound does not allow reads `call_first`.',
+  })
+  action: StandingInstructionAction;
+}
 
 /** For the guard: never who decided, never a resident. */
 export class GuardRequestResponse {
@@ -28,6 +50,12 @@ export class GuardRequestResponse {
   expiresAt: Date;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
+  @ApiProperty({
+    type: [GuardInstructionView],
+    description:
+      "A waiting visitor or delivery: the unit's standing instructions whose author may still invite there (ADR 0043). Empty once decided, and for a worker.",
+  })
+  standingInstructions: GuardInstructionView[];
 
   static from(r: GuardRequestView): GuardRequestResponse {
     return {
@@ -39,6 +67,11 @@ export class GuardRequestResponse {
       decisionSource: r.decisionSource,
       expiresAt: r.expiresAt,
       createdAt: r.createdAt,
+      standingInstructions: r.standingInstructions.map((i) => ({
+        id: i.id,
+        description: i.description,
+        action: i.action,
+      })),
     };
   }
 }

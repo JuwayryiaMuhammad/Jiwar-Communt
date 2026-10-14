@@ -3,6 +3,7 @@ import { ApprovalsService } from '../../src/gate/approvals/approvals.service';
 import { GatesService } from '../../src/gate/gates/gates.service';
 import { ShiftsService } from '../../src/gate/shifts/shifts.service';
 import { InstructionsService } from '../../src/gate/visitors/instructions.service';
+import { StandingInstructionsService } from '../../src/gate/visitors/standing-instructions.service';
 import { VisitorPassesService } from '../../src/gate/visitors/visitor-passes.service';
 import { auditReaders } from '../setup/audit';
 import {
@@ -134,6 +135,39 @@ describe('Audit coverage — the gate', () => {
         again.code!,
       ])
         expect(trail).not.toContain(secret);
+    });
+
+    it('standing_instruction.created and .deleted — never the description', async () => {
+      const c = await x.compound();
+      const unit = await x.unit(c);
+      const host = await x.resident(c, [unit.id]);
+      const standing = h.moduleRef.get(StandingInstructionsService);
+      const asHost = <T>(fn: () => Promise<T>) =>
+        x.as(c, { id: host.id, type: 'resident' }, fn);
+      const made = await asHost(() =>
+        standing.create(unit.id, {
+          description: 'Audit Aunt Samira',
+          action: 'call_first',
+        }),
+      );
+      const created = await single(c, 'standing_instruction.created', made.id);
+      expect(created).toMatchObject({
+        actorType: 'account',
+        actorId: host.id,
+        targetType: 'standing_instruction',
+        metadata: { unitId: unit.id, action: 'call_first' },
+      });
+      await asHost(() => standing.delete(unit.id, made.id));
+      const deleted = await single(c, 'standing_instruction.deleted', made.id);
+      expect(deleted).toMatchObject({
+        actorId: host.id,
+        metadata: {
+          unitId: unit.id,
+          action: 'call_first',
+          reasonCode: 'deleted',
+        },
+      });
+      expect(JSON.stringify([created, deleted])).not.toContain('Samira');
     });
 
     it('gate.instructions_changed — by the primary, on the unit', async () => {

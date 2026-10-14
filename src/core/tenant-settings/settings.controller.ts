@@ -38,6 +38,12 @@ export class SettingsView {
     description: 'E.164; on the visitor page and the worker card.',
   })
   emergencyPhone: string | null;
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'Whether households may write `always_allow` standing instructions (ADR 0043). Off: none is created (ALWAYS_ALLOW_DISABLED) and the guard sees those that exist as `call_first`.',
+  })
+  allowAlwaysAllow: boolean;
 
   static from(s: TenantSettingsView): SettingsView {
     return {
@@ -48,6 +54,7 @@ export class SettingsView {
       gateRequestTimeoutSeconds: s.gateRequestTimeoutSeconds,
       visitorDirections: s.visitorDirections,
       emergencyPhone: s.emergencyPhone,
+      allowAlwaysAllow: s.allowAlwaysAllow,
     };
   }
 }

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -22,6 +23,7 @@ import {
   RequestHeader,
 } from '../../core/common/http/decorators';
 import {
+  bounded,
   ListOf,
   PageQueryDto,
   toList,
@@ -38,16 +40,19 @@ import {
 } from '../../core/idempotency/idempotent.decorator';
 import {
   CancelVisitorPassDto,
+  CreateStandingInstructionDto,
   CreateVisitorPassDto,
   GateInstructionsDto,
 } from './dto/visitors.dto';
 import { InstructionsService } from './instructions.service';
+import { StandingInstructionsService } from './standing-instructions.service';
 import { VisitorPassesService } from './visitor-passes.service';
 import {
   GateInstructionsView,
   IssuedPassView,
   PassDetailView,
   PassView,
+  StandingInstructionView,
 } from './views/visitor.views';
 
 /** Visitor passes and a household's gate instructions (ADR 0028). */
@@ -57,6 +62,7 @@ export class VisitorsController {
   constructor(
     private readonly passes: VisitorPassesService,
     private readonly instructions: InstructionsService,
+    private readonly standing: StandingInstructionsService,
   ) {}
 
   /** A retry with the same key gets a fresh code; the first one dies. */
@@ -147,5 +153,45 @@ export class VisitorsController {
     @Body() dto: GateInstructionsDto,
   ): Promise<GateInstructionsView> {
     return GateInstructionsView.from(await this.instructions.set(unitId, dto));
+  }
+
+  /** Those who may invite visitors on the unit (ADR 0043). */
+  @RequirePermissions('visitors.invite')
+  @Get('units/:unitId/standing-instructions')
+  @ApiOperation({ summary: "List the unit's standing instructions" })
+  @ApiOkResponse({ type: ListOf(StandingInstructionView) })
+  async listStanding(
+    @Param('unitId', parseId('unitId')) unitId: string,
+  ): Promise<ListResponse<StandingInstructionView>> {
+    return bounded(await this.standing.list(unitId), (i) =>
+      StandingInstructionView.from(i),
+    );
+  }
+
+  @RequirePermissions('visitors.invite')
+  @Post('units/:unitId/standing-instructions')
+  @ApiOperation({ summary: 'Add a standing instruction for the gate' })
+  @Idempotent()
+  @ApiCreatedResponse({ type: StandingInstructionView })
+  async createStanding(
+    @Param('unitId', parseId('unitId')) unitId: string,
+    @Body() dto: CreateStandingInstructionDto,
+  ): Promise<StandingInstructionView> {
+    return StandingInstructionView.from(
+      await this.standing.create(unitId, dto),
+    );
+  }
+
+  /** Its author, or the unit's primary. */
+  @RequirePermissions('visitors.invite')
+  @Delete('units/:unitId/standing-instructions/:id')
+  @ApiOperation({ summary: 'Delete a standing instruction' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  async deleteStanding(
+    @Param('unitId', parseId('unitId')) unitId: string,
+    @Param('id', parseId()) id: string,
+  ): Promise<void> {
+    await this.standing.delete(unitId, id);
   }
 }

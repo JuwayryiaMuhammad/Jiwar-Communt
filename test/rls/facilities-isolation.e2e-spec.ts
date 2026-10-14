@@ -3,6 +3,7 @@ import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 import {
   bookingRow,
+  closureRow,
   facilityRow,
   facilityWindowRow,
   slotLockRow,
@@ -80,6 +81,15 @@ const TABLES: Table[] = [
         facilityId: link.facilityId,
         unitId: link.unitId,
         bookedById: link.accountId,
+      }),
+  },
+  {
+    table: 'facility_closures',
+    insert: (tx, own, link) =>
+      closureRow(tx, {
+        tenantId: own.tenantId,
+        facilityId: link.facilityId,
+        createdById: link.accountId,
       }),
   },
 ];

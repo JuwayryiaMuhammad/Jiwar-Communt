@@ -73,8 +73,12 @@ export class FacilitySlotView {
   endsAt: Date;
   @ApiProperty({ type: Boolean })
   peak: boolean;
-  @ApiProperty({ enum: ['free', 'full'], enumName: 'FacilitySlotState' })
-  state: 'free' | 'full';
+  @ApiProperty({
+    enum: ['free', 'full', 'closed'],
+    enumName: 'FacilitySlotState',
+    description: '`closed`: a closure of the facility covers it.',
+  })
+  state: 'free' | 'full' | 'closed';
   @ApiProperty({
     type: Boolean,
     description: 'The unit asked about (`unitId`) holds this slot.',

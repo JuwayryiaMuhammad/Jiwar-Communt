@@ -3,7 +3,9 @@ import {
   FacilityCapacityUnit,
   FacilityMode,
   type Facility,
+  type FacilityClosure,
 } from '@prisma/client';
+import { FacilityClosureNoticeView } from '../../closures/views/closure.views';
 import type { WeeklyWindow } from '../../../core/common/slots/weekly-windows';
 import { rulesOf } from '../facility-rules';
 
@@ -117,8 +119,13 @@ export class FacilityView {
       'Null for a walk-in facility (the pool, the gym): nothing to book.',
   })
   rules: FacilityBookingRulesView | null;
+  @ApiProperty({
+    type: [FacilityClosureNoticeView],
+    description: 'Closures not lifted and not over, soonest first.',
+  })
+  closures: FacilityClosureNoticeView[];
 
-  static from(f: FacilityWithWindows): FacilityView {
+  static from(f: ResidentFacility): FacilityView {
     const rules = rulesOf(f);
     return {
       id: f.id,
@@ -129,6 +136,7 @@ export class FacilityView {
       descriptionAr: f.descriptionAr,
       hours: f.hours.map((w) => FacilityWindowView.from(w)),
       peakWindows: f.peakWindows.map((w) => FacilityWindowView.from(w)),
+      closures: f.closures.map((c) => FacilityClosureNoticeView.from(c)),
       rules: rules && {
         slotMinutes: rules.slotMinutes,
         maxDaysAhead: rules.maxDaysAhead,
@@ -212,4 +220,9 @@ export class StaffFacilityView {
 export type FacilityWithWindows = Facility & {
   hours: WeeklyWindow[];
   peakWindows: WeeklyWindow[];
+};
+
+/** A facility as residents are shown it: with its upcoming closures. */
+export type ResidentFacility = FacilityWithWindows & {
+  closures: FacilityClosure[];
 };

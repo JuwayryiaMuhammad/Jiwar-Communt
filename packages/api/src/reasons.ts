@@ -63,6 +63,8 @@ export const REASON_CODES = {
   // Facilities and bookings (ADR 0044): codes only, never text.
   bookingStaffCancel: ['facility_unavailable', 'rules_violation', 'resident_request', 'other'],
   bookingReject: ['slot_unavailable', 'not_eligible', 'rules_violation', 'other'],
+  facilityClosure: ['maintenance', 'cleaning', 'private_event', 'weather', 'other'],
+  facilityClosureLift: ['reopened_early', 'created_in_error', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

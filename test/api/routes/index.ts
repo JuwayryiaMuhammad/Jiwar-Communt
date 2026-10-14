@@ -12,6 +12,7 @@ import { ERASURE_ROUTES } from './erasure';
 import { EXPORTS_ROUTES } from './exports';
 import {
   BOOKING_ROUTES,
+  CLOSURE_ROUTES,
   FACILITY_SETUP_ROUTES,
   STAFF_BOOKING_ROUTES,
 } from './facilities';
@@ -128,4 +129,5 @@ export const ROUTES: Row[] = [
   ...FACILITY_SETUP_ROUTES,
   ...BOOKING_ROUTES,
   ...STAFF_BOOKING_ROUTES,
+  ...CLOSURE_ROUTES,
 ];

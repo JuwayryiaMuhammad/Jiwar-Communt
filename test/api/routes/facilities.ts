@@ -329,3 +329,71 @@ export const STAFF_BOOKING_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** Closures (ADR 0044). */
+export const CLOSURE_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/staff/facilities/{id}/closures',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bFacilityId }),
+      code: 'FACILITY_NOT_FOUND',
+    },
+    invalid: {
+      query: { limit: '0' },
+      fields: [
+        {
+          field: 'limit',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 100 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/facilities/{id}/closures',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bFacilityId }),
+      code: 'FACILITY_NOT_FOUND',
+      body: () => ({
+        startsAt: at(day(30), 10).toISOString(),
+        endsAt: at(day(30), 11).toISOString(),
+        reasonCode: 'other',
+      }),
+    },
+    invalid: {
+      body: {
+        startsAt: 'soon',
+        endsAt: at(day(30), 11).toISOString(),
+        reasonCode: 'other',
+      },
+      fields: [{ field: 'startsAt', code: 'INVALID_FORMAT' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/facility-closures/{id}/lift',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bClosureId }),
+      code: 'FACILITY_CLOSURE_NOT_FOUND',
+      body: () => ({ reasonCode: 'other' }),
+    },
+    invalid: {
+      body: { reasonCode: 1 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+];

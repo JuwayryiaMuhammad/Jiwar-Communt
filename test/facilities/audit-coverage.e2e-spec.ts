@@ -251,6 +251,48 @@ describe('Audit coverage — facilities', () => {
     });
   });
 
+  describe('closures', () => {
+    it('facility_closure.created and .lifted — the window, the codes, how many it cancelled', async () => {
+      const court = await f.facility(s.c, s.manager);
+      const b = await f.book(s.alice, s.homeA.id, court, at(day(4), 10));
+      const res = await f
+        .http('post', `/staff/facilities/${court}/closures`, s.manager.token, {
+          startsAt: at(day(4), 9).toISOString(),
+          endsAt: at(day(4), 12).toISOString(),
+          reasonCode: 'weather',
+        })
+        .expect(201);
+      const id = (res.body as { id: string }).id;
+      const created = await single('facility_closure.created', id);
+      expect(created).toMatchObject(by(s.manager, 'facility_closure'));
+      expect(created.metadata).toEqual({
+        facilityId: court,
+        reasonCode: 'weather',
+        startsAt: at(day(4), 9).toISOString(),
+        endsAt: at(day(4), 12).toISOString(),
+        cancelledCount: 1,
+      });
+      const [cancelled] = await rows('booking.cancelled', b.id);
+      expect(cancelled).toMatchObject({ actorId: s.manager.id });
+      expect(cancelled.metadata).toMatchObject({
+        side: 'system',
+        reasonCode: 'facility_closed',
+        closureId: id,
+      });
+      await f
+        .http('post', `/staff/facility-closures/${id}/lift`, s.manager.token, {
+          reasonCode: 'reopened_early',
+        })
+        .expect(204);
+      const lifted = await single('facility_closure.lifted', id);
+      expect(lifted).toMatchObject(by(s.manager, 'facility_closure'));
+      expect(lifted.metadata).toEqual({
+        facilityId: court,
+        reasonCode: 'reopened_early',
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every facilities entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

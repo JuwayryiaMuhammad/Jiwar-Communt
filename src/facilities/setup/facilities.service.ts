@@ -21,9 +21,12 @@ import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { TenantTx } from '../../core/database/tenant-tx.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { rulesOf, withDefaults, type FacilityRules } from './facility-rules';
+import { upcomingClosures } from '../closures/closure-reads';
+import { dbNow } from '../db-clock';
 import {
   StaffFacilityView,
   type FacilityWithWindows,
+  type ResidentFacility,
 } from './views/facility.views';
 
 export const FACILITY_RESOURCE = 'facility';
@@ -177,19 +180,35 @@ export class FacilitiesService implements OnModuleInit {
   }
 
   /** The active facilities: what a resident sees. */
-  residentList(): Promise<FacilityWithWindows[]> {
-    return this.tenantTx.withTenantTx((tx) =>
-      this.listIn(tx, { active: true }),
+  residentList(): Promise<ResidentFacility[]> {
+    return this.tenantTx.withTenantTx(async (tx) =>
+      this.withClosures(tx, await this.listIn(tx, { active: true })),
     );
   }
 
   /** A retired facility is not found for a resident. */
-  residentGet(id: string): Promise<FacilityWithWindows> {
+  residentGet(id: string): Promise<ResidentFacility> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const facility = await this.inTx(tx, id);
       if (!facility.active) throw facilityNotFound();
-      return facility;
+      return (await this.withClosures(tx, [facility]))[0];
     });
+  }
+
+  /** Each facility with its closures not lifted and not over. */
+  private async withClosures(
+    tx: TenantTxClient,
+    facilities: FacilityWithWindows[],
+  ): Promise<ResidentFacility[]> {
+    const closures = await upcomingClosures(
+      tx,
+      facilities.map((f) => f.id),
+      await dbNow(tx),
+    );
+    return facilities.map((f) => ({
+      ...f,
+      closures: closures.filter((c) => c.facilityId === f.id),
+    }));
   }
 
   private listIn(

@@ -354,6 +354,7 @@ describe('Facilities: set-up (ADR 0044)', () => {
         'weeklyQuota',
       ]);
       expect(Object.keys(seen).sort()).toEqual([
+        'closures',
         'descriptionAr',
         'descriptionEn',
         'hours',

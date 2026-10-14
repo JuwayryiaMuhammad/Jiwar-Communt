@@ -91,9 +91,7 @@ describe('Bookings: the staff decide and cancel (ADR 0044)', () => {
       rejectReason: 'slot_unavailable',
     });
     const told = await f.notifications(s.c, s.bob.id, 'booking.rejected');
-    expect(told.map((n) => n.params)).toEqual([
-      { reason: 'slot_unavailable' },
-    ]);
+    expect(told.map((n) => n.params)).toEqual([{ reason: 'slot_unavailable' }]);
     expect(await kinds(s.handler.id)).toEqual([]);
   });
 

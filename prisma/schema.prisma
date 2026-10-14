@@ -934,6 +934,8 @@ model Account {
   bookingsDecided                Booking[]                           @relation("BookingDecider")
   bookingsCancelled              Booking[]                           @relation("BookingCanceller")
   bookingsMarkedNoShow           Booking[]                           @relation("BookingNoShowMarker")
+  facilityClosuresMade           FacilityClosure[]                   @relation("FacilityClosureCreator")
+  facilityClosuresLifted         FacilityClosure[]                   @relation("FacilityClosureLifter")
   neighbourConversationsAuthored NeighbourConversation[]             @relation("NeighbourConversationAuthor")
   neighbourConversationsStarted  NeighbourConversation[]             @relation("NeighbourConversationResponder")
   neighbourConversationMessages  NeighbourConversationMessage[]      @relation("NeighbourConversationMessageSender")
@@ -4425,6 +4427,7 @@ model Facility {
   peakWindows FacilityPeakWindow[]
   slotLocks   FacilitySlotLock[]
   bookings    Booking[]
+  closures    FacilityClosure[]
 
   @@unique([tenantId, id])
   @@index([tenantId, position, id], map: "facilities_position_idx")
@@ -4527,6 +4530,8 @@ model Booking {
   noShowMarkedAt    DateTime?      @map("no_show_marked_at") @db.Timestamptz(3)
   /// The reminder before the slot was sent (once).
   remindedAt        DateTime?      @map("reminded_at") @db.Timestamptz(3)
+  /// The closure that cancelled it.
+  closureId         String?        @map("closure_id") @db.Uuid
   createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -4537,6 +4542,7 @@ model Booking {
   decidedBy   Account? @relation("BookingDecider", fields: [tenantId, decidedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_decided_by_fkey")
   cancelledBy Account? @relation("BookingCanceller", fields: [tenantId, cancelledById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_cancelled_by_fkey")
   noShowBy    Account? @relation("BookingNoShowMarker", fields: [tenantId, noShowMarkedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_no_show_by_fkey")
+  closure     FacilityClosure? @relation(fields: [tenantId, closureId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_closure_id_fkey")
 
   @@unique([tenantId, id])
   @@index([tenantId, unitId, startsAt, id], map: "bookings_unit_idx")
@@ -4544,4 +4550,30 @@ model Booking {
   @@index([tenantId, facilityId, startsAt, id], map: "bookings_facility_idx")
   @@index([tenantId, status, startsAt, id], map: "bookings_status_idx")
   @@map("bookings")
+}
+
+/// A facility closed for a time, with a reason code (ADR 0044). Creating
+/// one cancels the future bookings it overlaps. Only lifting it changes it,
+/// once (trigger); it is never deleted. Lifting restores nothing.
+model FacilityClosure {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  facilityId     String    @map("facility_id") @db.Uuid
+  startsAt       DateTime  @map("starts_at") @db.Timestamptz(3)
+  endsAt         DateTime  @map("ends_at") @db.Timestamptz(3)
+  reasonCode     String    @map("reason_code")
+  createdById    String    @map("created_by_account_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  liftedAt       DateTime? @map("lifted_at") @db.Timestamptz(3)
+  liftedById     String?   @map("lifted_by_account_id") @db.Uuid
+  liftReasonCode String?   @map("lift_reason_code")
+
+  facility  Facility  @relation(fields: [tenantId, facilityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  createdBy Account   @relation("FacilityClosureCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "facility_closures_tenant_id_created_by_fkey")
+  liftedBy  Account?  @relation("FacilityClosureLifter", fields: [tenantId, liftedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "facility_closures_tenant_id_lifted_by_fkey")
+  bookings  Booking[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, facilityId, startsAt, id], map: "facility_closures_facility_idx")
+  @@map("facility_closures")
 }

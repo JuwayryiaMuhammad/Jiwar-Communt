@@ -1001,6 +1001,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'ألغت الإدارة حجزك.',
     },
   },
+  'booking.cancelled_by_closure': {
+    en: {
+      title: 'Booking cancelled',
+      body: 'Your booking was cancelled because the facility is closed at that time.',
+    },
+    ar: {
+      title: 'تم إلغاء الحجز',
+      body: 'أُلغي حجزك لأن المرفق مغلق في ذلك الوقت.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

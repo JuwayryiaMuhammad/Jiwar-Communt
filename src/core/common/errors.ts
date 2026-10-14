@@ -406,6 +406,12 @@ export const ErrorCode = {
   BOOKING_CANCEL_CUTOFF_PASSED: 'BOOKING_CANCEL_CUTOFF_PASSED',
   /** Its start (to approve or reject) or its end (to cancel) has passed (409). */
   BOOKING_WINDOW_PASSED: 'BOOKING_WINDOW_PASSED',
+  /** The facility is closed over the slot (409). */
+  FACILITY_CLOSED: 'FACILITY_CLOSED',
+  /** Unknown, or another compound's. */
+  FACILITY_CLOSURE_NOT_FOUND: 'FACILITY_CLOSURE_NOT_FOUND',
+  /** It was lifted already (409). */
+  FACILITY_CLOSURE_LIFTED: 'FACILITY_CLOSURE_LIFTED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -515,6 +521,10 @@ export const FieldErrorCode = {
   BOOKING_TOO_MANY_GUESTS: 'BOOKING_TOO_MANY_GUESTS',
   /** The booker and guests are more people than a slot takes; params.max guests. */
   BOOKING_PARTY_TOO_LARGE: 'BOOKING_PARTY_TOO_LARGE',
+  /** A closure lasts at most params.days days. */
+  CLOSURE_TOO_LONG: 'CLOSURE_TOO_LONG',
+  /** A closure that has already ended. */
+  CLOSURE_ENDED: 'CLOSURE_ENDED',
 } as const;
 
 export type FieldErrorCode =

@@ -343,4 +343,13 @@ export const REASON_CODES = {
   // approval did not come before the start, the booker left (moved out,
   // was deactivated, or erased: an erasure deactivates first).
   bookingSystemCancel: ['facility_closed', 'approval_expired', 'booker_left'],
+  // Why a facility closes for a time, and why a closure is lifted early.
+  facilityClosure: [
+    'maintenance',
+    'cleaning',
+    'private_event',
+    'weather',
+    'other',
+  ],
+  facilityClosureLift: ['reopened_early', 'created_in_error', 'other'],
 } as const;

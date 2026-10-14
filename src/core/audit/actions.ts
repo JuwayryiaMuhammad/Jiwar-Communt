@@ -614,6 +614,10 @@ export const AUDIT_ACTIONS = {
   // By the system: nobody approved it before its start. metadata:
   // facilityId, unitId, reasonCode.
   'booking.expired': { log: 'tenant', target: 'booking' },
+  // metadata: facilityId, reasonCode, startsAt, endsAt, cancelledCount.
+  'facility_closure.created': { log: 'tenant', target: 'facility_closure' },
+  // metadata: facilityId, reasonCode (the lift's).
+  'facility_closure.lifted': { log: 'tenant', target: 'facility_closure' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

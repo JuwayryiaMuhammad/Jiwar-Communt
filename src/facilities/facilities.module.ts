@@ -14,6 +14,11 @@ import {
 import { StaffBookingsService } from './bookings/staff-bookings.service';
 import { BookingNotices } from './notices/booking-notices';
 import {
+  ClosuresController,
+  FacilityClosuresController,
+} from './closures/closures.controller';
+import { ClosuresService } from './closures/closures.service';
+import {
   FacilitiesController,
   StaffFacilitiesController,
 } from './setup/facilities.controller';
@@ -33,6 +38,8 @@ import { FacilitiesService } from './setup/facilities.service';
     BookingsController,
     StaffBookingsController,
     FacilityDayController,
+    FacilityClosuresController,
+    ClosuresController,
   ],
   providers: [
     FacilitiesAccess,
@@ -40,6 +47,7 @@ import { FacilitiesService } from './setup/facilities.service';
     BookingsService,
     StaffBookingsService,
     BookingNotices,
+    ClosuresService,
   ],
 })
 export class FacilitiesModule {}

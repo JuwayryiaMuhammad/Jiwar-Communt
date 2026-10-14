@@ -202,4 +202,5 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   bookings_tenant_id_id_key: null,
   // Checked under the unit's lock before the insert: a race.
   bookings_one_holding_per_unit_slot: null,
+  facility_closures_tenant_id_id_key: null,
 };

@@ -22,6 +22,7 @@ import { TenantTx } from '../../core/database/tenant-tx.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { FacilitiesAccess } from '../access';
+import { closedOver, closuresBetween } from '../closures/closure-reads';
 import { dbNow } from '../db-clock';
 import { rulesOf, type FacilityRules } from '../setup/facility-rules';
 import {
@@ -50,7 +51,7 @@ export interface NewBooking {
 
 /** A slot as a resident sees it: free or full, never how full or by whom. */
 export interface SlotState extends FacilitySlot {
-  state: 'free' | 'full';
+  state: 'free' | 'full' | 'closed';
   /** The unit asked about holds this slot. */
   mine: boolean;
 }
@@ -198,11 +199,19 @@ export class BookingsService implements OnModuleInit {
         day[0].startsAt,
         day[day.length - 1].endsAt,
       );
+      const closures = await closuresBetween(
+        tx,
+        facilityId,
+        day[0].startsAt,
+        day[day.length - 1].endsAt,
+      );
       const slots = day.map((slot): SlotState => ({
         ...slot,
-        // Full when not even one more booking (or person) fits.
-        state:
-          BookingsService.taken(rules, slot, holding) >= rules.capacity
+        // Closed by a closure in force; full when not even one more
+        // booking (or person) fits.
+        state: heldIn(slot, closures).length
+          ? 'closed'
+          : BookingsService.taken(rules, slot, holding) >= rules.capacity
             ? 'full'
             : 'free',
         mine:
@@ -325,6 +334,12 @@ export class BookingsService implements OnModuleInit {
             params: { days: rules.maxDaysAhead },
           },
         ]);
+
+      if (await closedOver(tx, facility.id, slot))
+        throw appError.conflict(
+          ErrorCode.FACILITY_CLOSED,
+          'The facility is closed at that time',
+        );
 
       await this.checkQuota(tx, unitId, facility.id, slot, rules);
 
@@ -542,6 +557,7 @@ export class BookingsService implements OnModuleInit {
         cancelReason: how.reason,
         cancelledById: how.by,
         cancelledAt: how.now,
+        closureId: how.closureId,
       },
     });
     await this.audit.record(tx, {

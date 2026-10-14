@@ -3644,6 +3644,29 @@
         },
         "type": "object"
       },
+      "CreateClosureDto": {
+        "properties": {
+          "endsAt": {
+            "description": "After the start (ENDS_BEFORE_START), at most 366 days after it (CLOSURE_TOO_LONG), and not already past (CLOSURE_ENDED).",
+            "format": "date-time",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "From the closed list `facilityClosure`.",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "startsAt",
+          "endsAt",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "CreateComplaintCategoryDto": {
         "properties": {
           "key": {
@@ -6876,6 +6899,150 @@
         ],
         "type": "string"
       },
+      "FacilityClosureCreatedView": {
+        "properties": {
+          "cancelledBookings": {
+            "description": "Bookings it cancelled.",
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "facilityId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "liftReasonCode": {
+            "description": "A code of `facilityClosureLift`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "liftedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A code of `facilityClosure`.",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "startsAt",
+          "endsAt",
+          "reasonCode",
+          "id",
+          "facilityId",
+          "createdAt",
+          "liftedAt",
+          "liftReasonCode",
+          "cancelledBookings"
+        ],
+        "type": "object"
+      },
+      "FacilityClosureNoticeView": {
+        "properties": {
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A code of `facilityClosure`.",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "startsAt",
+          "endsAt",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "FacilityClosureView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "facilityId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "liftReasonCode": {
+            "description": "A code of `facilityClosureLift`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "liftedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A code of `facilityClosure`.",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "startsAt",
+          "endsAt",
+          "reasonCode",
+          "id",
+          "facilityId",
+          "createdAt",
+          "liftedAt",
+          "liftReasonCode"
+        ],
+        "type": "object"
+      },
+      "FacilityClosureViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/FacilityClosureView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "FacilityDaySlotView": {
         "properties": {
           "endsAt": {
@@ -7013,9 +7180,11 @@
         "type": "object"
       },
       "FacilitySlotState": {
+        "description": "`closed`: a closure of the facility covers it.",
         "enum": [
           "free",
-          "full"
+          "full",
+          "closed"
         ],
         "type": "string"
       },
@@ -7041,7 +7210,8 @@
               {
                 "$ref": "#/components/schemas/FacilitySlotState"
               }
-            ]
+            ],
+            "description": "`closed`: a closure of the facility covers it."
           }
         },
         "required": [
@@ -7075,6 +7245,13 @@
       },
       "FacilityView": {
         "properties": {
+          "closures": {
+            "description": "Closures not lifted and not over, soonest first.",
+            "items": {
+              "$ref": "#/components/schemas/FacilityClosureNoticeView"
+            },
+            "type": "array"
+          },
           "descriptionAr": {
             "nullable": true,
             "type": "string"
@@ -7136,7 +7313,8 @@
           "descriptionAr",
           "hours",
           "peakWindows",
-          "rules"
+          "rules",
+          "closures"
         ],
         "type": "object"
       },
@@ -8800,6 +8978,18 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "LiftClosureDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `facilityClosureLift`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -38006,6 +38196,120 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/facilities/{id}/closures": {
+      "get": {
+        "operationId": "FacilityClosuresController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacilityClosureViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a facility’s closures, latest first",
+        "tags": [
+          "facilities"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Cancels every booking of the facility that holds a place in the window and has not started, and tells each booker.",
+        "operationId": "FacilityClosuresController_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClosureDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacilityClosureCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close a facility for a time",
+        "tags": [
+          "facilities"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/facilities/{id}/day": {
       "get": {
         "operationId": "FacilityDayController_day",
@@ -38143,6 +38447,48 @@
           }
         ],
         "summary": "Replace a bookable facility’s peak times",
+        "tags": [
+          "facilities"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/facility-closures/{id}/lift": {
+      "post": {
+        "description": "Once (FACILITY_CLOSURE_LIFTED). What it cancelled stays cancelled.",
+        "operationId": "ClosuresController_lift",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiftClosureDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lift a closure, with a reason code",
         "tags": [
           "facilities"
         ],

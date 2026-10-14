@@ -941,6 +941,14 @@ export const NOTIFICATION_KINDS = {
     target: 'booking',
     params: { reason: {} },
   },
+  /** The facility closed over it; `reason` is the closure's reason code. */
+  'booking.cancelled_by_closure': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'booking',
+    params: { reason: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

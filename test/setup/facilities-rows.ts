@@ -103,3 +103,22 @@ export async function slotLockRow(
   });
   return input.facilityId;
 }
+
+/** A closure of the facility, a month ahead. */
+export async function closureRow(
+  tx: TenantTxClient,
+  input: { tenantId: string; facilityId: string; createdById: string },
+): Promise<string> {
+  const id = newId();
+  const startsAt = new Date(Date.now() + 30 * 86_400_000);
+  await tx.facilityClosure.create({
+    data: {
+      id,
+      ...input,
+      startsAt,
+      endsAt: new Date(startsAt.getTime() + 3_600_000),
+      reasonCode: 'maintenance',
+    },
+  });
+  return id;
+}

@@ -656,6 +656,17 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'reject_reason IS NULL is tested first; the list runs only on a value',
   },
+  bookings_closure: {
+    guarded:
+      'closure_id IS NULL is tested first; with a closure the state shape has set the side and the reason',
+  },
+  facility_closures_window: {},
+  facility_closures_reason: {},
+  facility_closures_lifted_shape: {},
+  facility_closures_lift_reason: {
+    guarded:
+      'lift_reason_code IS NULL is tested first; the list runs only on a value',
+  },
 };
 
 interface Check {

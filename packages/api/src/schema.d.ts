@@ -5345,6 +5345,27 @@ export interface paths {
         patch: operations["StaffFacilitiesController_update"];
         trace?: never;
     };
+    "/api/v1/staff/facilities/{id}/closures": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List a facility’s closures, latest first */
+        get: operations["FacilityClosuresController_list"];
+        put?: never;
+        /**
+         * Close a facility for a time
+         * @description Cancels every booking of the facility that holds a place in the window and has not started, and tells each booker.
+         */
+        post: operations["FacilityClosuresController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/facilities/{id}/day": {
         parameters: {
             query?: never;
@@ -5390,6 +5411,26 @@ export interface paths {
         /** Replace a bookable facility’s peak times */
         put: operations["StaffFacilitiesController_replacePeaks"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/facility-closures/{id}/lift": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Lift a closure, with a reason code
+         * @description Once (FACILITY_CLOSURE_LIFTED). What it cancelled stays cancelled.
+         */
+        post: operations["ClosuresController_lift"];
         delete?: never;
         options?: never;
         head?: never;
@@ -8051,6 +8092,17 @@ export interface components {
             /** @description For the staff alone: how they will know it is yours. Never shown to whoever posted the item. */
             note?: string;
         };
+        CreateClosureDto: {
+            /**
+             * Format: date-time
+             * @description After the start (ENDS_BEFORE_START), at most 366 days after it (CLOSURE_TOO_LONG), and not already past (CLOSURE_ENDED).
+             */
+            endsAt: string;
+            /** @description From the closed list `facilityClosure`. */
+            reasonCode: string;
+            /** Format: date-time */
+            startsAt: string;
+        };
         CreateComplaintCategoryDto: {
             /** @description Stable code, lowercase (e.g. `noise`). Never changes once created. */
             key: string;
@@ -9057,6 +9109,56 @@ export interface components {
          * @enum {string}
          */
         FacilityCapacityUnit: "bookings" | "people";
+        FacilityClosureCreatedView: {
+            /** @description Bookings it cancelled. */
+            cancelledBookings: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            facilityId: string;
+            /** Format: uuid */
+            id: string;
+            /** @description A code of `facilityClosureLift`. */
+            liftReasonCode: string | null;
+            /** Format: date-time */
+            liftedAt: string | null;
+            /** @description A code of `facilityClosure`. */
+            reasonCode: string;
+            /** Format: date-time */
+            startsAt: string;
+        };
+        FacilityClosureNoticeView: {
+            /** Format: date-time */
+            endsAt: string;
+            /** @description A code of `facilityClosure`. */
+            reasonCode: string;
+            /** Format: date-time */
+            startsAt: string;
+        };
+        FacilityClosureView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            facilityId: string;
+            /** Format: uuid */
+            id: string;
+            /** @description A code of `facilityClosureLift`. */
+            liftReasonCode: string | null;
+            /** Format: date-time */
+            liftedAt: string | null;
+            /** @description A code of `facilityClosure`. */
+            reasonCode: string;
+            /** Format: date-time */
+            startsAt: string;
+        };
+        FacilityClosureViewList: {
+            data: components["schemas"]["FacilityClosureView"][];
+            nextCursor: string | null;
+        };
         FacilityDaySlotView: {
             /** Format: date-time */
             endsAt: string;
@@ -9099,8 +9201,11 @@ export interface components {
             /** @description Bookings a unit may hold here in any 7 days. */
             weeklyQuota: number;
         };
-        /** @enum {string} */
-        FacilitySlotState: "free" | "full";
+        /**
+         * @description `closed`: a closure of the facility covers it.
+         * @enum {string}
+         */
+        FacilitySlotState: "free" | "full" | "closed";
         FacilitySlotView: {
             /** Format: date-time */
             endsAt: string;
@@ -9109,6 +9214,7 @@ export interface components {
             peak: boolean;
             /** Format: date-time */
             startsAt: string;
+            /** @description `closed`: a closure of the facility covers it. */
             state: components["schemas"]["FacilitySlotState"];
         };
         FacilitySlotsView: {
@@ -9118,6 +9224,8 @@ export interface components {
             slots: components["schemas"]["FacilitySlotView"][];
         };
         FacilityView: {
+            /** @description Closures not lifted and not over, soonest first. */
+            closures: components["schemas"]["FacilityClosureNoticeView"][];
             descriptionAr: string | null;
             descriptionEn: string | null;
             /** @description Opening hours, by weekday then start. */
@@ -9629,6 +9737,10 @@ export interface components {
         LegalHoldResponseList: {
             data: components["schemas"]["LegalHoldResponse"][];
             nextCursor: string | null;
+        };
+        LiftClosureDto: {
+            /** @description From the closed list `facilityClosureLift`. */
+            reasonCode: string;
         };
         /** @enum {string} */
         Locale: "ar" | "en";
@@ -22110,6 +22222,59 @@ export interface operations {
             };
         };
     };
+    FacilityClosuresController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilityClosureViewList"];
+                };
+            };
+        };
+    };
+    FacilityClosuresController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateClosureDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilityClosureCreatedView"];
+                };
+            };
+        };
+    };
     FacilityDayController_day: {
         parameters: {
             query?: {
@@ -22181,6 +22346,29 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["StaffFacilityView"];
                 };
+            };
+        };
+    };
+    ClosuresController_lift: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LiftClosureDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

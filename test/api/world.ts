@@ -29,6 +29,7 @@ import { ConversationsService } from '../../src/neighbours/conversations/convers
 import { ReportsService } from '../../src/neighbours/conversations/reports.service';
 import { PostsService } from '../../src/neighbours/posts/posts.service';
 import { BookingsService } from '../../src/facilities/bookings/bookings.service';
+import { ClosuresService } from '../../src/facilities/closures/closures.service';
 import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
 import { ALL_WEEK, at, day } from '../setup/facilities';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
@@ -175,6 +176,8 @@ export interface World {
    * and its owner's booking of it. */
   bFacilityId: string;
   bBookingId: string;
+  /** A closure of B's facility, a month ahead. */
+  bClosureId: string;
   /** One of A's, open every day, roomy, for valid bookings. */
   aFacilityId: string;
   bDeviceId: string;
@@ -666,7 +669,15 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       startsAt: at(day(2), 10),
     }),
   );
+  const bClosure = await helpers.asManager(b, () =>
+    h.moduleRef.get(ClosuresService).create(bFacility.id, {
+      startsAt: at(day(30), 10),
+      endsAt: at(day(30), 12),
+      reasonCode: 'maintenance',
+    }),
+  );
   return {
+    bClosureId: bClosure.closure.id,
     bFacilityId: bFacility.id,
     bBookingId: bBooking.id,
     aFacilityId: aFacility.id,

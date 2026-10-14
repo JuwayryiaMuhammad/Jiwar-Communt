@@ -507,6 +507,21 @@ describe('API v0 — no-store', () => {
         startsAt: freshSlot(),
       }).expect(201),
     ).id;
+  let closuresMade = 0;
+  /** A closure of A's room, each a day further out, an hour long. */
+  const aClosure = async () => {
+    const n = closuresMade++;
+    return as(
+      'manager',
+      'POST',
+      `/staff/facilities/${await aRoom()}/closures`,
+      {
+        startsAt: at(localDay(40 + n), 10).toISOString(),
+        endsAt: at(localDay(40 + n), 11).toISOString(),
+        reasonCode: 'other',
+      },
+    );
+  };
   const FACILITY_CALLS = (): Record<string, () => Promise<Response>> => ({
     'GET /staff/bookings': () => as('manager', 'GET', '/staff/bookings'),
     'GET /staff/bookings/{id}': async () =>
@@ -521,6 +536,16 @@ describe('API v0 — no-store', () => {
       as('manager', 'POST', `/staff/bookings/${await aBooking()}/cancel`, {
         reasonCode: 'other',
       }),
+    'GET /staff/facilities/{id}/closures': () =>
+      as('manager', 'GET', `/staff/facilities/${w.aFacilityId}/closures`),
+    'POST /staff/facilities/{id}/closures': () => aClosure(),
+    'POST /staff/facility-closures/{id}/lift': async () =>
+      as(
+        'manager',
+        'POST',
+        `/staff/facility-closures/${body<{ id: string }>(await aClosure()).id}/lift`,
+        { reasonCode: 'other' },
+      ),
     'GET /staff/facilities/{id}/day': () =>
       as('manager', 'GET', `/staff/facilities/${w.aFacilityId}/day`),
     'GET /facilities': () => as('owner', 'GET', '/facilities'),

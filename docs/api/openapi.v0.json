@@ -1769,8 +1769,12 @@
       "CancelVisitorPassDto": {
         "properties": {
           "reasonCode": {
-            "description": "From the closed list `visitorPassCancel`.",
-            "type": "string"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorPassCancelReason"
+              }
+            ],
+            "description": "Required. The closed list `visitorPassCancel`: `not_needed` (the visit is off), `plans_changed` (another day or other visitors), `other`. Missing: REASON_REQUIRED; outside the list: INVALID_REASON_CODE with `allowed`."
           }
         },
         "required": [
@@ -4310,6 +4314,12 @@
           "validUntil": {
             "description": "At most 7 days after `validFrom` (one-time), 180 (recurring).",
             "format": "date-time",
+            "type": "string"
+          },
+          "vehiclePlate": {
+            "description": "The visitor’s car (ADR 0043): Arabic or Latin letters, Western or Arabic-Indic digits and spaces, at most 12 after tidying (trimmed, spaces collapsed, Latin upper-cased). Otherwise INVALID_FORMAT with `maxLength`. Shown to the host and to the guard who checks the code; deleted with the name.",
+            "example": "ق ب ط ١٢٣٤",
+            "maxLength": 12,
             "type": "string"
           },
           "visitorName": {
@@ -7903,13 +7913,12 @@
             "type": "object"
           },
           "status": {
-            "enum": [
-              "active",
-              "used",
-              "cancelled",
-              "expired"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorPassStatus"
+              }
             ],
-            "type": "string"
+            "description": "- `active`: the code opens the gate (within the dates, and the schedule for a recurring pass).\n- `used`: a one-time pass whose visitors all came in (`entriesUsed` reached `partySize`); the code is dead.\n- `cancelled`: the host or the primary cancelled it, the visitor said \"this isn’t me\", or the host can no longer invite; the code is dead.\n- `expired`: `validUntil` has passed; the code is dead."
           },
           "validFrom": {
             "format": "date-time",
@@ -10239,10 +10248,142 @@
         ],
         "type": "string"
       },
+      "PassDetailView": {
+        "properties": {
+          "code": {
+            "description": "6 digits. Active passes, for the host and the primary; null otherwise, and on a pass issued before this field existed (reissue its link).",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "enteredAt": {
+            "description": "The latest entry through the gate on this pass.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "exitedAt": {
+            "description": "The latest exit, once everyone who came in on the pass has left; null while anyone is inside.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorPassKind"
+              }
+            ]
+          },
+          "link": {
+            "description": "Null with `code`.",
+            "example": "https://app.jiwar.eg/v#q3Jz…",
+            "nullable": true,
+            "type": "string"
+          },
+          "mine": {
+            "description": "The caller is the host.",
+            "type": "boolean"
+          },
+          "partySize": {
+            "type": "number"
+          },
+          "qrPayload": {
+            "description": "Null with `code`.",
+            "example": "JWR1.q3Jz…",
+            "nullable": true,
+            "type": "string"
+          },
+          "schedule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorScheduleDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorPassStatus"
+              }
+            ],
+            "description": "- `active`: the code opens the gate (within the dates, and the schedule for a recurring pass).\n- `used`: a one-time pass whose visitors all came in (`entriesUsed` reached `partySize`); the code is dead.\n- `cancelled`: the host or the primary cancelled it, the visitor said \"this isn’t me\", or the host can no longer invite; the code is dead.\n- `expired`: `validUntil` has passed; the code is dead."
+          },
+          "validFrom": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "validUntil": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "vehiclePlate": {
+            "description": "On the caller's own passes only, until the data expires.",
+            "nullable": true,
+            "type": "string"
+          },
+          "visitorName": {
+            "description": "On the caller's own passes only, until the data expires.",
+            "nullable": true,
+            "type": "string"
+          },
+          "visitorPhoneMasked": {
+            "description": "The visitor's phone, last four digits only: the host's own passes, until the data expires.",
+            "example": "••••4567",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "partySize",
+          "validFrom",
+          "validUntil",
+          "schedule",
+          "status",
+          "mine",
+          "visitorName",
+          "vehiclePlate",
+          "enteredAt",
+          "exitedAt",
+          "createdAt",
+          "createdBy",
+          "code",
+          "link",
+          "qrPayload",
+          "visitorPhoneMasked"
+        ],
+        "type": "object"
+      },
       "PassView": {
         "properties": {
           "createdAt": {
             "format": "date-time",
+            "type": "string"
+          },
+          "enteredAt": {
+            "description": "The latest entry through the gate on this pass.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "exitedAt": {
+            "description": "The latest exit, once everyone who came in on the pass has left; null while anyone is inside.",
+            "format": "date-time",
+            "nullable": true,
             "type": "string"
           },
           "id": {
@@ -10273,13 +10414,12 @@
             "type": "object"
           },
           "status": {
-            "enum": [
-              "active",
-              "used",
-              "cancelled",
-              "expired"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorPassStatus"
+              }
             ],
-            "type": "string"
+            "description": "- `active`: the code opens the gate (within the dates, and the schedule for a recurring pass).\n- `used`: a one-time pass whose visitors all came in (`entriesUsed` reached `partySize`); the code is dead.\n- `cancelled`: the host or the primary cancelled it, the visitor said \"this isn’t me\", or the host can no longer invite; the code is dead.\n- `expired`: `validUntil` has passed; the code is dead."
           },
           "validFrom": {
             "format": "date-time",
@@ -10287,6 +10427,11 @@
           },
           "validUntil": {
             "format": "date-time",
+            "type": "string"
+          },
+          "vehiclePlate": {
+            "description": "On the caller's own passes only, until the data expires.",
+            "nullable": true,
             "type": "string"
           },
           "visitorName": {
@@ -10305,6 +10450,9 @@
           "status",
           "mine",
           "visitorName",
+          "vehiclePlate",
+          "enteredAt",
+          "exitedAt",
           "createdAt"
         ],
         "type": "object"
@@ -19927,6 +20075,11 @@
             "nullable": true,
             "type": "array"
           },
+          "vehiclePlate": {
+            "description": "A valid visitor pass's vehicle plate, as the host typed it (ADR 0043). Null otherwise.",
+            "nullable": true,
+            "type": "string"
+          },
           "workerName": {
             "nullable": true,
             "type": "string"
@@ -19941,7 +20094,8 @@
           "photo",
           "firstName",
           "unitCodes",
-          "photoUrl"
+          "photoUrl",
+          "vehiclePlate"
         ],
         "type": "object"
       },
@@ -20395,10 +20549,29 @@
         ],
         "type": "object"
       },
+      "VisitorPassCancelReason": {
+        "description": "Required. The closed list `visitorPassCancel`: `not_needed` (the visit is off), `plans_changed` (another day or other visitors), `other`. Missing: REASON_REQUIRED; outside the list: INVALID_REASON_CODE with `allowed`.",
+        "enum": [
+          "not_needed",
+          "plans_changed",
+          "other"
+        ],
+        "type": "string"
+      },
       "VisitorPassKind": {
         "enum": [
           "one_time",
           "recurring"
+        ],
+        "type": "string"
+      },
+      "VisitorPassStatus": {
+        "description": "- `active`: the code opens the gate (within the dates, and the schedule for a recurring pass).\n- `used`: a one-time pass whose visitors all came in (`entriesUsed` reached `partySize`); the code is dead.\n- `cancelled`: the host or the primary cancelled it, the visitor said \"this isn’t me\", or the host can no longer invite; the code is dead.\n- `expired`: `validUntil` has passed; the code is dead.",
+        "enum": [
+          "active",
+          "used",
+          "cancelled",
+          "expired"
         ],
         "type": "string"
       },
@@ -39432,6 +39605,44 @@
         "tags": [
           "workers"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/visitor-passes/{id}": {
+      "get": {
+        "operationId": "VisitorsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a visitor pass",
+        "tags": [
+          "visitors"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

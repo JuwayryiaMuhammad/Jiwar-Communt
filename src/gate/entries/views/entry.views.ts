@@ -75,6 +75,14 @@ export class VerifyDisplayView {
   })
   photoUrl: string | null;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      "A valid visitor pass's vehicle plate, as the host typed it (ADR 0043). Null otherwise.",
+  })
+  vehiclePlate: string | null;
+
   static from(d: VerifyDisplay): VerifyDisplayView {
     return {
       unitCode: d.unitCode,
@@ -86,6 +94,7 @@ export class VerifyDisplayView {
       firstName: d.firstName,
       unitCodes: d.unitCodes,
       photoUrl: d.photoUrl,
+      vehiclePlate: d.vehiclePlate,
     };
   }
 }

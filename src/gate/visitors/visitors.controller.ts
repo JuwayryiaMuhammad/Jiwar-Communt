@@ -46,6 +46,7 @@ import { VisitorPassesService } from './visitor-passes.service';
 import {
   GateInstructionsView,
   IssuedPassView,
+  PassDetailView,
   PassView,
 } from './views/visitor.views';
 
@@ -58,7 +59,7 @@ export class VisitorsController {
     private readonly instructions: InstructionsService,
   ) {}
 
-  /** The code is shown once. A retry with the same key gets a fresh code. */
+  /** A retry with the same key gets a fresh code; the first one dies. */
   @RequirePermissions('visitors.invite')
   @Post('units/:unitId/visitor-passes')
   @ApiOperation({ summary: 'Create a visitor pass' })
@@ -86,6 +87,15 @@ export class VisitorsController {
     return toList(await this.passes.listForUnit(unitId, q), (p) =>
       PassView.from(p),
     );
+  }
+
+  @RequirePermissions('visitors.invite')
+  @Get('visitor-passes/:id')
+  @ApiOperation({ summary: 'Get a visitor pass' })
+  @NoStore()
+  @ApiOkResponse({ type: PassDetailView })
+  async get(@Param('id', parseId()) id: string): Promise<PassDetailView> {
+    return PassDetailView.fromDetail(await this.passes.getOne(id));
   }
 
   /**

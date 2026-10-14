@@ -6280,6 +6280,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/visitor-passes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a visitor pass */
+        get: operations["VisitorsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/visitor-passes/{id}/cancel": {
         parameters: {
             query?: never;
@@ -7126,8 +7143,8 @@ export interface components {
             reasonCode: string;
         };
         CancelVisitorPassDto: {
-            /** @description From the closed list `visitorPassCancel`. */
-            reasonCode: string;
+            /** @description Required. The closed list `visitorPassCancel`: `not_needed` (the visit is off), `plans_changed` (another day or other visitors), `other`. Missing: REASON_REQUIRED; outside the list: INVALID_REASON_CODE with `allowed`. */
+            reasonCode: components["schemas"]["VisitorPassCancelReason"];
         };
         CapabilitiesView: {
             activityVisibleToPrimary: boolean;
@@ -7948,6 +7965,11 @@ export interface components {
              * @description At most 7 days after `validFrom` (one-time), 180 (recurring).
              */
             validUntil: string;
+            /**
+             * @description The visitor’s car (ADR 0043): Arabic or Latin letters, Western or Arabic-Indic digits and spaces, at most 12 after tidying (trimmed, spaces collapsed, Latin upper-cased). Otherwise INVALID_FORMAT with `maxLength`. Shown to the host and to the guard who checks the code; deleted with the name.
+             * @example ق ب ط ١٢٣٤
+             */
+            vehiclePlate?: string;
             /** @description Shown to the host only; deleted 30 days after the pass ends. */
             visitorName?: string;
             /** @description Never returned after creation; deleted with the name. */
@@ -8966,8 +8988,13 @@ export interface components {
              */
             qrPayload: string | null;
             schedule: components["schemas"]["VisitorScheduleDto"] | null;
-            /** @enum {string} */
-            status: "active" | "used" | "cancelled" | "expired";
+            /**
+             * @description - `active`: the code opens the gate (within the dates, and the schedule for a recurring pass).
+             *     - `used`: a one-time pass whose visitors all came in (`entriesUsed` reached `partySize`); the code is dead.
+             *     - `cancelled`: the host or the primary cancelled it, the visitor said "this isn’t me", or the host can no longer invite; the code is dead.
+             *     - `expired`: `validUntil` has passed; the code is dead.
+             */
+            status: components["schemas"]["VisitorPassStatus"];
             /** Format: date-time */
             validFrom: string;
             /** Format: date-time */
@@ -9663,9 +9690,73 @@ export interface components {
         };
         /** @enum {string} */
         ParcelStatus: "held" | "handed_over" | "rejected" | "returned";
+        PassDetailView: {
+            /** @description 6 digits. Active passes, for the host and the primary; null otherwise, and on a pass issued before this field existed (reissue its link). */
+            code: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: components["schemas"]["AccountRefView"];
+            /**
+             * Format: date-time
+             * @description The latest entry through the gate on this pass.
+             */
+            enteredAt: string | null;
+            /**
+             * Format: date-time
+             * @description The latest exit, once everyone who came in on the pass has left; null while anyone is inside.
+             */
+            exitedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["VisitorPassKind"];
+            /**
+             * @description Null with `code`.
+             * @example https://app.jiwar.eg/v#q3Jz…
+             */
+            link: string | null;
+            /** @description The caller is the host. */
+            mine: boolean;
+            partySize: number;
+            /**
+             * @description Null with `code`.
+             * @example JWR1.q3Jz…
+             */
+            qrPayload: string | null;
+            schedule: components["schemas"]["VisitorScheduleDto"] | null;
+            /**
+             * @description - `active`: the code opens the gate (within the dates, and the schedule for a recurring pass).
+             *     - `used`: a one-time pass whose visitors all came in (`entriesUsed` reached `partySize`); the code is dead.
+             *     - `cancelled`: the host or the primary cancelled it, the visitor said "this isn’t me", or the host can no longer invite; the code is dead.
+             *     - `expired`: `validUntil` has passed; the code is dead.
+             */
+            status: components["schemas"]["VisitorPassStatus"];
+            /** Format: date-time */
+            validFrom: string;
+            /** Format: date-time */
+            validUntil: string;
+            /** @description On the caller's own passes only, until the data expires. */
+            vehiclePlate: string | null;
+            /** @description On the caller's own passes only, until the data expires. */
+            visitorName: string | null;
+            /**
+             * @description The visitor's phone, last four digits only: the host's own passes, until the data expires.
+             * @example ••••4567
+             */
+            visitorPhoneMasked: string | null;
+        };
         PassView: {
             /** Format: date-time */
             createdAt: string;
+            /**
+             * Format: date-time
+             * @description The latest entry through the gate on this pass.
+             */
+            enteredAt: string | null;
+            /**
+             * Format: date-time
+             * @description The latest exit, once everyone who came in on the pass has left; null while anyone is inside.
+             */
+            exitedAt: string | null;
             /** Format: uuid */
             id: string;
             kind: components["schemas"]["VisitorPassKind"];
@@ -9673,12 +9764,19 @@ export interface components {
             mine: boolean;
             partySize: number;
             schedule: components["schemas"]["VisitorScheduleDto"] | null;
-            /** @enum {string} */
-            status: "active" | "used" | "cancelled" | "expired";
+            /**
+             * @description - `active`: the code opens the gate (within the dates, and the schedule for a recurring pass).
+             *     - `used`: a one-time pass whose visitors all came in (`entriesUsed` reached `partySize`); the code is dead.
+             *     - `cancelled`: the host or the primary cancelled it, the visitor said "this isn’t me", or the host can no longer invite; the code is dead.
+             *     - `expired`: `validUntil` has passed; the code is dead.
+             */
+            status: components["schemas"]["VisitorPassStatus"];
             /** Format: date-time */
             validFrom: string;
             /** Format: date-time */
             validUntil: string;
+            /** @description On the caller's own passes only, until the data expires. */
+            vehiclePlate: string | null;
             /** @description On the caller's own passes only, until the data expires. */
             visitorName: string | null;
         };
@@ -12527,6 +12625,8 @@ export interface components {
             unitCode: string | null;
             /** @description A valid resident: the codes of the units where they live now. Null otherwise. */
             unitCodes: string[] | null;
+            /** @description A valid visitor pass's vehicle plate, as the host typed it (ADR 0043). Null otherwise. */
+            vehiclePlate: string | null;
             workerName: string | null;
         };
         VerifyDto: {
@@ -12672,8 +12772,21 @@ export interface components {
             /** @description What the compound tells its visitors. */
             visitorDirections: string | null;
         };
+        /**
+         * @description Required. The closed list `visitorPassCancel`: `not_needed` (the visit is off), `plans_changed` (another day or other visitors), `other`. Missing: REASON_REQUIRED; outside the list: INVALID_REASON_CODE with `allowed`.
+         * @enum {string}
+         */
+        VisitorPassCancelReason: "not_needed" | "plans_changed" | "other";
         /** @enum {string} */
         VisitorPassKind: "one_time" | "recurring";
+        /**
+         * @description - `active`: the code opens the gate (within the dates, and the schedule for a recurring pass).
+         *     - `used`: a one-time pass whose visitors all came in (`entriesUsed` reached `partySize`); the code is dead.
+         *     - `cancelled`: the host or the primary cancelled it, the visitor said "this isn’t me", or the host can no longer invite; the code is dead.
+         *     - `expired`: `validUntil` has passed; the code is dead.
+         * @enum {string}
+         */
+        VisitorPassStatus: "active" | "used" | "cancelled" | "expired";
         VisitorScheduleDto: {
             /**
              * @description Days of the week the windows apply: 0 (Sunday) … 6. Checked by the service (`INVALID_VALUE` with `min`, `max`).
@@ -22758,6 +22871,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UnitEngagementView"];
+                };
+            };
+        };
+    };
+    VisitorsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PassDetailView"];
                 };
             };
         };

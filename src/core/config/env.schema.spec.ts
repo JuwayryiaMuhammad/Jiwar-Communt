@@ -17,6 +17,7 @@ const base = {
   ENTRY_CREDENTIAL_KEY: 'd'.repeat(32),
   PARCEL_TOKEN_KEY: 'e'.repeat(32),
   ENGAGEMENT_REF_SECRET: 'f'.repeat(32),
+  VISITOR_PASS_TOKEN_KEY: 'g'.repeat(32),
   PLATFORM_JWT_SECRET: 'c'.repeat(32),
   PUBLIC_APP_URL: 'https://app.jiwar.test',
 };
@@ -166,6 +167,32 @@ describe('validateEnv', () => {
       ] as const) {
         expect(() =>
           validateEnv({ ...base, ENGAGEMENT_REF_SECRET: base[other] }),
+        ).toThrow(new RegExp(`must differ from ${other}`));
+      }
+    });
+  });
+
+  describe('visitor pass token key (ADR 0043)', () => {
+    it('is required, with a message that says how to make one, at least 32 characters', () => {
+      const { VISITOR_PASS_TOKEN_KEY: _omit, ...without } = base;
+      void _omit;
+      expect(() => validateEnv(without)).toThrow(
+        /VISITOR_PASS_TOKEN_KEY[\s\S]*openssl rand|openssl rand[\s\S]*VISITOR_PASS_TOKEN_KEY/,
+      );
+      expect(() =>
+        validateEnv({ ...base, VISITOR_PASS_TOKEN_KEY: 'short' }),
+      ).toThrow(/VISITOR_PASS_TOKEN_KEY/);
+    });
+
+    it('must differ from every other key', () => {
+      for (const other of [
+        'IDENTIFIER_PEPPER',
+        'ENTRY_CREDENTIAL_KEY',
+        'PARCEL_TOKEN_KEY',
+        'ENGAGEMENT_REF_SECRET',
+      ] as const) {
+        expect(() =>
+          validateEnv({ ...base, VISITOR_PASS_TOKEN_KEY: base[other] }),
         ).toThrow(new RegExp(`must differ from ${other}`));
       }
     });

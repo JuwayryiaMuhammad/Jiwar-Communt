@@ -63,6 +63,7 @@ export class ResidentVerifier {
         // Only the first word of the name: never the full name.
         firstName: firstNameOf(found.fullName),
         unitCodes: [...codes.values()].sort(),
+        vehiclePlate: null,
         photoUrl: photo?.url ?? null,
       },
     };

@@ -915,6 +915,8 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/deferred-actions': unit.id,
       '/units/{unitId}/delegations': unit.id,
       '/units/{unitId}/visitor-passes': unit.id,
+      // ADR 0043: the family member's pass, read by every member of the unit.
+      '/visitor-passes/{id}': visit.id,
       '/units/{unitId}/gate-instructions': unit.id,
       '/gate/approval-requests/{id}': asked.id,
       '/gate/parcels/{id}': parcel.id,
@@ -1091,8 +1093,14 @@ describe('API v0 — PII leak scan', () => {
         const text = res.text ?? '';
         seen.set(`${name} ${r.path}`, text);
         const found = (s: string) => s && text.includes(s);
+        // ADR 0043: a pass's code is shown again to its host and the
+        // unit's primary, on the pass's own detail; nowhere else.
+        const passCodeReader =
+          r.path === '/visitor-passes/{id}' &&
+          (name === 'family' || name === 'resident');
         for (const s of secrets)
-          if (found(s)) leaks.push(`${name} ${r.path}: secret ${s}`);
+          if (found(s) && !(passCodeReader && s === visit.code))
+            leaks.push(`${name} ${r.path}: secret ${s}`);
         const others = people.filter((p) => p.id !== persona.self);
         if (name === 'guard') {
           for (const p of others)
@@ -1668,8 +1676,12 @@ describe('API v0 — PII leak scan', () => {
     }
 
     // The visitor's name: its host sees it, nobody else does.
+    const hostViews = new Set([
+      'family /units/{unitId}/visitor-passes',
+      'family /visitor-passes/{id}',
+    ]);
     for (const [key, text] of seen) {
-      if (key === 'family /units/{unitId}/visitor-passes') continue;
+      if (hostViews.has(key)) continue;
       if (text.includes('PII-VISITOR-name')) leaks.push(`${key}: visitor name`);
     }
     // The household's request list and its own notifications about it.
@@ -1689,9 +1701,12 @@ describe('API v0 — PII leak scan', () => {
     expect(leaks).toEqual([]);
     for (const key of household)
       expect(seen.get(key)).toContain('PII-ASKED-name');
-    expect(seen.get('family /units/{unitId}/visitor-passes')).toContain(
-      'PII-VISITOR-name',
-    );
+    for (const key of hostViews)
+      expect(seen.get(key)).toContain('PII-VISITOR-name');
+    // The pass's code, again, to its host and the primary only (ADR 0043).
+    for (const key of ['family', 'resident'])
+      expect(seen.get(`${key} /visitor-passes/{id}`)).toContain(visit.code!);
+    expect(seen.get('plainMember /visitor-passes/{id}')).toContain(visit.id);
     expect(seen.get('resident /units/{unitId}/visitor-passes')).toContain(
       visit.id,
     );

@@ -90,6 +90,14 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   gate_approval_requests_expiry_after_creation: {},
   // Phase 4.1 (ADR 0030)
   visitor_passes_token_only_with_code: {},
+  visitor_passes_token_seq_range: {
+    guarded:
+      'token_seq IS NULL is tested first; the range runs only on a value',
+  },
+  visitor_details_vehicle_plate_length: {
+    guarded:
+      'vehicle_plate IS NULL is tested first; the length runs only on a value',
+  },
   // files (ADR 0029): purpose and content_type are NOT NULL enums/text.
   files_content_type_for_purpose: {},
   files_size_for_purpose: {},

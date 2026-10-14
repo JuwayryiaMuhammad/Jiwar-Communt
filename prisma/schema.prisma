@@ -1879,6 +1879,8 @@ model VisitorDetails {
   tenantId  String   @map("tenant_id") @db.Uuid
   fullName  String?  @map("full_name")
   phone     String?
+  /// Optional (ADR 0043): letters (Arabic or Latin), digits and spaces.
+  vehiclePlate String? @map("vehicle_plate")
   expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
@@ -1908,6 +1910,9 @@ model VisitorPass {
   /// HMAC(IDENTIFIER_PEPPER, "qr:<tenantId>:<token>"); with the code, never
   /// alone (ADR 0030). NULL on passes issued before 4.1.
   qrTokenHash      String?           @map("qr_token_hash") @db.Char(64)
+  /// The live token's sequence number (ADR 0043): the token is derived from
+  /// VISITOR_PASS_TOKEN_KEY, the pass and this. NULL on passes issued before.
+  tokenSeq         Int?              @map("token_seq")
   visitorDetailsId String?           @map("visitor_details_id") @db.Uuid
   usedAt           DateTime?         @map("used_at") @db.Timestamptz(3)
   cancelledAt      DateTime?         @map("cancelled_at") @db.Timestamptz(3)

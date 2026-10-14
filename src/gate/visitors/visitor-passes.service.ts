@@ -25,6 +25,8 @@ import {
 import { requestHash } from '../../core/idempotency/idempotency-key';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
+import { PassTokens, type PassSecret } from './pass-tokens';
+import { normalizePlate, PLATE_MAX } from './vehicle-plate';
 
 export interface NewPass {
   kind: VisitorPassKind;
@@ -34,11 +36,13 @@ export interface NewPass {
   schedule?: GateSchedule;
   visitorName?: string;
   visitorPhone?: string;
+  vehiclePlate?: string;
 }
 
 /**
  * A pass as its host sees it right after creating it (or reissuing its
- * link): the code, the link and the QR payload, once (ADR 0030).
+ * link): the code, the link and the QR payload (ADR 0030); the pass's
+ * detail shows them again while it is active (ADR 0043).
  */
 export interface IssuedPass {
   id: string;
@@ -69,7 +73,34 @@ export interface PassListItem {
   mine: boolean;
   /** The caller's own passes only. */
   visitorName: string | null;
+  /** The caller's own passes only. */
+  vehiclePlate: string | null;
+  /** The latest entry through the gate. */
+  enteredAt: Date | null;
+  /** The latest exit, once nobody on the pass is inside. */
+  exitedAt: Date | null;
   createdAt: Date;
+}
+
+/**
+ * `GET /visitor-passes/:id` (ADR 0043): what every member of the unit sees,
+ * the secrets for those who may manage the pass, the visitor's data for its
+ * host.
+ */
+export interface PassDetail extends PassListItem {
+  createdBy: { id: string; fullName: string | null; status: string };
+  /** Active passes, for the host and the primary; null otherwise. */
+  code: string | null;
+  link: string | null;
+  qrPayload: string | null;
+  /** `••••1234`, the host's own passes only. */
+  visitorPhoneMasked: string | null;
+}
+
+/** When a pass's visitors last came and went (ADR 0043). */
+interface EntryTimes {
+  enteredAt: Date | null;
+  exitedAt: Date | null;
 }
 
 /** A one-time pass covers one visit, a recurring one a season at most. */
@@ -81,21 +112,13 @@ const PAGE = keysetCursor('createdAt');
 /** The idempotency resource of `reissue-link`: replayed, never stored. */
 export const PASS_LINK_RESOURCE = 'visitor_pass_link';
 
-/** A pass's secret, issued once: the token never touches the database. */
-interface PassToken {
-  token: string;
-  code: string;
-  codeHash: string;
-  qrHash: string;
-}
-
 export const passNotFound = () =>
   appError.notFound(ErrorCode.VISITOR_PASS_NOT_FOUND, 'Visitor pass not found');
 
 /**
  * Visitor passes (ADR 0028). A host who may invite visitors on a unit
  * (capabilities.visitorsInvite) creates a pass and gets a 6-digit code,
- * shown once and stored only as an HMAC. One-time passes are used by their
+ * stored only as an HMAC. One-time passes are used by their
  * first entry; recurring ones follow a weekly schedule in the compound's
  * time zone. A pass is valid only while its host still may invite on the
  * unit: the gate checks that at every use, and a host who is deactivated,
@@ -105,11 +128,14 @@ export const passNotFound = () =>
  * is a secret). A replay returns the same pass with a fresh code — the
  * first one dies (`visitor_pass.code_reissued`).
  *
- * Each code is derived from a random token (ADR 0030): the link the host
- * shares (`/v#<token>`) and the QR carry the token; the pass keeps the
- * code's and the token's HMACs, and a global pointer from the link's HMAC
- * lets the public page find the pass. A new code is always a new token, and
- * the old pointer goes in the same transaction.
+ * Each code is derived from a token (ADR 0030): the link the host shares
+ * (`/v#<token>`) and the QR carry the token; the pass keeps the code's and
+ * the token's HMACs, and a global pointer from the link's HMAC lets the
+ * public page find the pass. The token itself is derived from
+ * VISITOR_PASS_TOKEN_KEY, the pass and a sequence number (ADR 0043), so the
+ * pass's detail can show the code, QR and link again to those who may
+ * manage it. A new code is always the next number, and the old pointer goes
+ * in the same transaction.
  */
 @Injectable()
 export class VisitorPassesService implements OnModuleInit {
@@ -124,6 +150,7 @@ export class VisitorPassesService implements OnModuleInit {
     private readonly tokens: AccessTokens,
     private readonly globalDb: GlobalDbService,
     private readonly idempotency: IdempotencyService,
+    private readonly passTokens: PassTokens,
     config: ConfigService<Env, true>,
   ) {
     this.appUrl = config.get('PUBLIC_APP_URL', { infer: true });
@@ -224,7 +251,7 @@ export class VisitorPassesService implements OnModuleInit {
       );
 
     let detailsId: string | null = null;
-    if (input.visitorName || input.visitorPhone) {
+    if (input.visitorName || input.visitorPhone || input.vehiclePlate) {
       detailsId = newId();
       await tx.visitorDetails.create({
         data: {
@@ -232,14 +259,15 @@ export class VisitorPassesService implements OnModuleInit {
           tenantId,
           fullName: input.visitorName ?? null,
           phone: input.visitorPhone ?? null,
+          vehiclePlate: input.vehiclePlate ?? null,
           expiresAt: new Date(
             input.validUntil.getTime() + VISITOR_DATA_DAYS * DAY,
           ),
         },
       });
     }
-    const secret = await this.freshToken(tx, tenantId);
     const id = newId();
+    const secret = await this.freshToken(tx, tenantId, id, 0);
     const created = await tx.visitorPass.create({
       data: {
         id,
@@ -255,6 +283,7 @@ export class VisitorPassesService implements OnModuleInit {
           : Prisma.DbNull,
         codeHash: secret.codeHash,
         qrTokenHash: secret.qrHash,
+        tokenSeq: secret.seq,
         visitorDetailsId: detailsId,
         idempotencyKey: key ?? null,
         requestHash: hash,
@@ -331,10 +360,19 @@ export class VisitorPassesService implements OnModuleInit {
     pass: VisitorPass,
     reason: 'link_reissued' | 'idempotent_replay',
   ): Promise<IssuedPass> {
-    const secret = await this.freshToken(tx, pass.tenantId);
+    const secret = await this.freshToken(
+      tx,
+      pass.tenantId,
+      pass.id,
+      (pass.tokenSeq ?? -1) + 1,
+    );
     const updated = await tx.visitorPass.update({
       where: { id: pass.id },
-      data: { codeHash: secret.codeHash, qrTokenHash: secret.qrHash },
+      data: {
+        codeHash: secret.codeHash,
+        qrTokenHash: secret.qrHash,
+        tokenSeq: secret.seq,
+      },
     });
     await this.globalDb
       .in(tx)
@@ -352,7 +390,7 @@ export class VisitorPassesService implements OnModuleInit {
   private async link(
     tx: TenantTxClient,
     pass: VisitorPass,
-    secret: PassToken,
+    secret: PassSecret,
   ): Promise<void> {
     await this.globalDb.in(tx).visitorPassLink.create({
       data: {
@@ -403,30 +441,124 @@ export class VisitorPassesService implements OnModuleInit {
             ...(PAGE.after(q.cursor) as Prisma.VisitorPassWhereInput[]),
           ],
         },
-        include: { visitorDetails: { select: { fullName: true } } },
+        include: {
+          visitorDetails: { select: { fullName: true, vehiclePlate: true } },
+        },
         orderBy: PAGE.orderBy,
         take: limit + 1,
       });
       const page = PAGE.toPage(rows, limit);
+      const times = await this.entryTimes(
+        tx,
+        page.items.map((p) => p.id),
+      );
       return {
         nextCursor: page.nextCursor,
-        items: page.items.map((p) => {
-          const mine = p.hostAccountId === me;
-          return {
-            id: p.id,
-            kind: p.kind,
-            partySize: p.partySize,
-            validFrom: p.validFrom,
-            validUntil: p.validUntil,
-            schedule: (p.schedule as GateSchedule | null) ?? null,
-            status: passStatus(p),
-            mine,
-            visitorName: mine ? (p.visitorDetails?.fullName ?? null) : null,
-            createdAt: p.createdAt,
-          };
-        }),
+        items: page.items.map((p) => this.listItem(p, times.get(p.id))),
       };
     });
+  }
+
+  /**
+   * `GET /visitor-passes/:id` (ADR 0043). Any member of the unit
+   * (capabilities.unitView) reads the pass; an unknown pass and another
+   * unit's are the same "not found". The code, QR and link while it is
+   * active, for its host and the unit's primary (who may manage it); the
+   * visitor's name, masked phone and plate for its host only.
+   */
+  async getOne(id: string): Promise<PassDetail> {
+    const me = this.ctx.accountId;
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const pass = await tx.visitorPass.findUnique({
+        where: { id },
+        include: {
+          visitorDetails: {
+            select: { fullName: true, phone: true, vehiclePlate: true },
+          },
+          host: { select: { id: true, fullName: true, status: true } },
+        },
+      });
+      if (!pass) throw passNotFound();
+      const caps = await this.community.placeIn(tx, me, pass.unitId);
+      if (!caps?.unitView) throw passNotFound();
+      const item = this.listItem(
+        pass,
+        (await this.entryTimes(tx, [pass.id])).get(pass.id),
+      );
+      const secret =
+        item.status === 'active' && (await this.mayManage(tx, pass))
+          ? this.passTokens.liveSecret(pass)
+          : null;
+      const phone = item.mine ? (pass.visitorDetails?.phone ?? null) : null;
+      return {
+        ...item,
+        createdBy: pass.host,
+        code: secret?.code ?? null,
+        link: secret ? this.linkOf(secret) : null,
+        qrPayload: secret ? this.tokens.qrPayload(secret.token) : null,
+        visitorPhoneMasked: phone ? `••••${phone.slice(-4)}` : null,
+      };
+    });
+  }
+
+  private listItem(
+    p: VisitorPass & {
+      visitorDetails: {
+        fullName: string | null;
+        vehiclePlate: string | null;
+      } | null;
+    },
+    times: EntryTimes | undefined,
+  ): PassListItem {
+    const mine = p.hostAccountId === this.ctx.accountId;
+    return {
+      id: p.id,
+      kind: p.kind,
+      partySize: p.partySize,
+      validFrom: p.validFrom,
+      validUntil: p.validUntil,
+      schedule: (p.schedule as GateSchedule | null) ?? null,
+      status: passStatus(p),
+      mine,
+      visitorName: mine ? (p.visitorDetails?.fullName ?? null) : null,
+      vehiclePlate: mine ? (p.visitorDetails?.vehiclePlate ?? null) : null,
+      enteredAt: times?.enteredAt ?? null,
+      exitedAt: times?.exitedAt ?? null,
+      createdAt: p.createdAt,
+    };
+  }
+
+  /**
+   * The latest entry and exit of each pass, in one query: `exitedAt` once
+   * as many have left as came in, so it is null while anyone is inside.
+   */
+  private async entryTimes(
+    tx: TenantTxClient,
+    ids: string[],
+  ): Promise<Map<string, EntryTimes>> {
+    if (!ids.length) return new Map();
+    const rows = await tx.gateEntry.groupBy({
+      by: ['subjectId', 'direction'],
+      where: { subjectType: 'visitor_pass', subjectId: { in: ids } },
+      _max: { occurredAt: true },
+      _count: { _all: true },
+    });
+    const out = new Map<string, EntryTimes>();
+    for (const id of ids) {
+      const of = (d: 'in' | 'out') =>
+        rows.find((r) => r.subjectId === id && r.direction === d);
+      const ins = of('in');
+      const outs = of('out');
+      if (!ins) continue;
+      out.set(id, {
+        enteredAt: ins._max.occurredAt,
+        exitedAt:
+          outs && outs._count._all >= ins._count._all
+            ? outs._max.occurredAt
+            : null,
+      });
+    }
+    return out;
   }
 
   /** The host, or the unit's primary. Anyone else: not found. */
@@ -493,29 +625,36 @@ export class VisitorPassesService implements OnModuleInit {
   }
 
   /**
-   * A new token whose 6-digit code is free among the compound's active
-   * passes (only active passes have a code). A taken code is a new token.
+   * The pass's token from sequence number `from` on (ADR 0043) whose 6-digit
+   * code is free among the compound's active passes (only active passes
+   * have a code). A taken code is the next number.
    */
   private async freshToken(
     tx: TenantTxClient,
     tenantId: string,
-  ): Promise<PassToken> {
-    const hashOf = (code: string) =>
-      this.hasher.hashVisitorCode(tenantId, code);
-    const t = await this.tokens.issue(
-      tenantId,
-      6,
-      async (code) =>
-        (await tx.visitorPass.count({ where: { codeHash: hashOf(code) } })) > 0,
-    );
-    return { ...t, codeHash: hashOf(t.code) };
+    passId: string,
+    from: number,
+  ): Promise<PassSecret> {
+    for (let seq = from; seq < from + 10; seq++) {
+      const secret = this.passTokens.secretOf(tenantId, passId, seq);
+      const taken = await tx.visitorPass.count({
+        where: { codeHash: secret.codeHash },
+      });
+      if (!taken) return secret;
+    }
+    // 10 collisions in a row among 10^6 codes: something is wrong.
+    throw new Error('No free visitor code after 10 tokens');
   }
 
-  private issued(p: VisitorPass, secret: PassToken | null): IssuedPass {
+  private linkOf(secret: PassSecret): string {
+    return `${this.appUrl}/v#${secret.token}`;
+  }
+
+  private issued(p: VisitorPass, secret: PassSecret | null): IssuedPass {
     return {
       id: p.id,
       code: secret?.code ?? null,
-      link: secret ? `${this.appUrl}/v#${secret.token}` : null,
+      link: secret ? this.linkOf(secret) : null,
       qrPayload: secret ? this.tokens.qrPayload(secret.token) : null,
       kind: p.kind,
       partySize: p.partySize,
@@ -560,6 +699,16 @@ export class VisitorPassesService implements OnModuleInit {
           code: FieldErrorCode.INVALID_PHONE,
         });
     }
+    let plate: string | undefined;
+    if (input.vehiclePlate !== undefined) {
+      plate = normalizePlate(input.vehiclePlate) ?? undefined;
+      if (!plate)
+        fields.push({
+          field: 'vehiclePlate',
+          code: FieldErrorCode.INVALID_FORMAT,
+          params: { maxLength: PLATE_MAX },
+        });
+    }
     if (fields.length)
       throw appError.badRequest(
         ErrorCode.VALIDATION_FAILED,
@@ -571,6 +720,7 @@ export class VisitorPassesService implements OnModuleInit {
       schedule,
       visitorName: input.visitorName?.trim() || undefined,
       visitorPhone: phone,
+      vehiclePlate: plate,
     };
   }
 }

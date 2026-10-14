@@ -229,6 +229,15 @@ what keeps a database dump from telling who chose what. Changing it while a
 poll is open orphans the ballots already cast (those units can vote again,
 and their first ballots stay counted), so change it only when no poll is open.
 
+`app.env` must set `VISITOR_PASS_TOKEN_KEY` (ADR 0043; the app refuses to
+boot without it, and says so): the key that derives each visitor pass's
+token, so the host's app can show a pass's code, QR and link again. Generate
+it with `openssl rand -base64 48`. The rule: **different per environment, and
+never equal to `IDENTIFIER_PEPPER`, `ENTRY_CREDENTIAL_KEY`, `PARCEL_TOKEN_KEY`
+or `ENGAGEMENT_REF_SECRET`** (boot refuses an equal value). Changing it hides
+the codes of the passes active at the time (their codes keep opening the
+gate; the host reissues the link to see one again).
+
 Staging stores files on its own MinIO (`minio.env`, the `/jiwar/` nginx
 location). `app.env` must set `S3_*` (ADR 0029; the app refuses to boot
 without them): `S3_ENDPOINT=http://191.218.163.45` (the public address the

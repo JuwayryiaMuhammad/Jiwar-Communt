@@ -20,7 +20,9 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { IsPhone } from '../../../core/common/validation/is-phone';
+import { REASON_CODES } from '../../../core/common/reasons';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import { PLATE_MAX } from '../vehicle-plate';
 
 const PARTY = { min: 1, max: 50 };
 
@@ -127,12 +129,26 @@ export class CreateVisitorPassDto {
   @IsOptional()
   @IsPhone()
   visitorPhone?: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    maxLength: PLATE_MAX,
+    example: 'ق ب ط ١٢٣٤',
+    description:
+      'The visitor’s car (ADR 0043): Arabic or Latin letters, Western or Arabic-Indic digits and spaces, at most 12 after tidying (trimmed, spaces collapsed, Latin upper-cased). Otherwise INVALID_FORMAT with `maxLength`. Shown to the host and to the guard who checks the code; deleted with the name.',
+  })
+  @IsOptional()
+  @IsString()
+  vehiclePlate?: string;
 }
 
 export class CancelVisitorPassDto {
   @ApiProperty({
-    type: String,
-    description: 'From the closed list `visitorPassCancel`.',
+    enum: REASON_CODES.visitorPassCancel,
+    enumName: 'VisitorPassCancelReason',
+    description:
+      'Required. The closed list `visitorPassCancel`: `not_needed` (the visit is off), `plans_changed` (another day or other visitors), `other`. Missing: REASON_REQUIRED; outside the list: INVALID_REASON_CODE with `allowed`.',
   })
   @IsOptional()
   @IsString()

@@ -11,9 +11,9 @@ import {
  * - `visitor-passes.json`: the passes the account issued, with exactly
  *   `id`, `unitCode`, `kind`, `partySize`, `validFrom`, `validUntil`,
  *   `schedule`, `status`, `usedAt`, `cancelledAt`, `cancelReasonCode`,
- *   `createdAt` and `visitorName` (the name the account typed, while the
- *   pass's visitor details still exist, ADR 0028) — never a code, a QR,
- *   or the visitor's phone;
+ *   `createdAt`, `visitorName` and `vehiclePlate` (what the account typed,
+ *   while the pass's visitor details still exist, ADR 0028, 0043) — never
+ *   a code, a QR, or the visitor's phone;
  * - `entry-credentials.json`: the phones the account registered for its
  *   entry QR: `id`, `deviceName` (while live), `createdAt`, `revokedAt`,
  *   `revokeReason` — never a secret.
@@ -48,7 +48,7 @@ export class GateExportSections implements OnModuleInit {
           cancelReasonCode: true,
           createdAt: true,
           unit: { select: { code: true } },
-          visitorDetails: { select: { fullName: true } },
+          visitorDetails: { select: { fullName: true, vehiclePlate: true } },
         },
       }),
     );
@@ -68,6 +68,7 @@ export class GateExportSections implements OnModuleInit {
         cancelReasonCode: p.cancelReasonCode,
         createdAt: p.createdAt,
         visitorName: p.visitorDetails?.fullName ?? null,
+        vehiclePlate: p.visitorDetails?.vehiclePlate ?? null,
       })),
     };
   }

@@ -170,6 +170,20 @@ export const envSchema = z
           'is required (ADR 0040): generate one with `openssl rand -base64 48`',
       })
       .min(32, 'must be at least 32 characters'),
+    /**
+     * Derives the token behind every visitor pass's code, QR and link
+     * (ADR 0043), so the host can see them again while the server stores
+     * only their HMACs. Whoever holds it and a pass id can compute that
+     * pass's code; rotating it hides the codes of the passes active at the
+     * time (they still work: their hashes are stored). Must differ from the
+     * other keys, and from environment to environment.
+     */
+    VISITOR_PASS_TOKEN_KEY: z
+      .string({
+        error:
+          'is required (ADR 0043): generate one with `openssl rand -base64 48`',
+      })
+      .min(32, 'must be at least 32 characters'),
     OTP_TTL_SECONDS: positiveInt.default(300),
     OTP_MAX_ATTEMPTS: positiveInt.default(5),
     LOGIN_TICKET_TTL_SECONDS: positiveInt.default(300),
@@ -239,6 +253,22 @@ export const envSchema = z
         ctx.addIssue({
           code: 'custom',
           path: ['ENGAGEMENT_REF_SECRET'],
+          message: `must differ from ${other}`,
+        });
+      }
+    }
+    // The pass key derives codes like the parcel key (ADR 0043): it shares
+    // nothing with the keys that hash, forge or derive anything else.
+    for (const other of [
+      'IDENTIFIER_PEPPER',
+      'ENTRY_CREDENTIAL_KEY',
+      'PARCEL_TOKEN_KEY',
+      'ENGAGEMENT_REF_SECRET',
+    ] as const) {
+      if (env.VISITOR_PASS_TOKEN_KEY === env[other]) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['VISITOR_PASS_TOKEN_KEY'],
           message: `must differ from ${other}`,
         });
       }

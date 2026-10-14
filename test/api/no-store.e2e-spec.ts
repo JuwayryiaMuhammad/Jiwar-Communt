@@ -984,6 +984,22 @@ describe('API v0 — no-store', () => {
       call(w, 'POST', '/public/visitor-passes/not-me', {
         body: { token: await linkToken() },
       }),
+    'GET /visitor-passes/{id}': async () => {
+      const pass = await call(
+        w,
+        'POST',
+        `/units/${w.a.homeUnitId}/visitor-passes`,
+        { token: w.a.tokens.owner, body: passBody() },
+      ).expect(201);
+      return call(
+        w,
+        'GET',
+        `/visitor-passes/${body<{ id: string }>(pass).id}`,
+        {
+          token: w.a.tokens.owner,
+        },
+      );
+    },
     'POST /visitor-passes/{id}/reissue-link': async () => {
       const pass = await call(
         w,

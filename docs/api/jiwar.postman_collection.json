@@ -15699,7 +15699,7 @@
               },
               "raw": "{\n  \"kind\": \"one_time\",\n  \"partySize\": 1,\n  \"validFrom\": \"2026-01-01T09:00:00.000Z\",\n  \"validUntil\": \"2026-01-01T09:00:00.000Z\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `kind` | `one_time` \\| `recurring` | yes |  |\n| `partySize` | number | yes |  |\n| `schedule` | object |  | Recurring passes only: the days of the week and the times of day (compound time zone) the code opens the gate, between `validFrom` and `validUntil`. |\n| `validFrom` | string (date-time) | yes |  |\n| `validUntil` | string (date-time) | yes | At most 7 days after `validFrom` (one-time), 180 (recurring). |\n| `visitorName` | string |  | Shown to the host only; deleted 30 days after the pass ends. |\n| `visitorPhone` | string |  | Never returned after creation; deleted with the name. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `kind` | `one_time` \\| `recurring` | yes |  |\n| `partySize` | number | yes |  |\n| `schedule` | object |  | Recurring passes only: the days of the week and the times of day (compound time zone) the code opens the gate, between `validFrom` and `validUntil`. |\n| `validFrom` | string (date-time) | yes |  |\n| `validUntil` | string (date-time) | yes | At most 7 days after `validFrom` (one-time), 180 (recurring). |\n| `vehiclePlate` | string |  | The visitor’s car (ADR 0043): Arabic or Latin letters, Western or Arabic-Indic digits and spaces, at most 12 after tidying (trimmed, spaces collapsed, Latin upper-cased). Otherwise INVALID_FORMAT with `maxLength`. Shown to the host and to the guard who checks the code; deleted with the name. |\n| `visitorName` | string |  | Shown to the host only; deleted 30 days after the pass ends. |\n| `visitorPhone` | string |  | Never returned after creation; deleted with the name. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -15736,6 +15736,33 @@
           }
         },
         {
+          "name": "Get a visitor pass",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "visitor-passes",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/visitor-passes/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Cancel a visitor pass",
           "request": {
             "body": {
@@ -15745,9 +15772,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"reasonCode\": \"\"\n}"
+              "raw": "{\n  \"reasonCode\": \"not_needed\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `visitorPassCancel`. |\n\n**Responses:** 204",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | `not_needed` \\| `plans_changed` \\| `other` | yes | Required. The closed list `visitorPassCancel`: `not_needed` (the visit is off), `plans_changed` (another day or other visitors), `other`. Missing: REASON_REQUIRED; outside the list: INVALID_REASON_CODE with `allowed`. |\n\n**Responses:** 204",
             "header": [
               {
                 "description": "",

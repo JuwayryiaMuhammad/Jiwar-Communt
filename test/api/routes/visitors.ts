@@ -59,6 +59,19 @@ export const VISITORS_ROUTES: Row[] = [
     invalid: 'none',
   },
   {
+    method: 'GET',
+    path: '/visitor-passes/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'manager',
+    noStore: true,
+    foreign: {
+      params: (w) => ({ id: w.bPassId }),
+      code: 'VISITOR_PASS_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
     method: 'POST',
     path: '/visitor-passes/{id}/reissue-link',
     auth: 'tenant',

@@ -42,6 +42,11 @@ export interface VerifyDisplay {
    * so the guard knows to ask for ID. Never for an invalid result.
    */
   photoUrl: string | null;
+  /**
+   * A valid visitor pass's vehicle plate (ADR 0043), while the visitor's
+   * data lasts; null otherwise.
+   */
+  vehiclePlate: string | null;
 }
 
 export interface VerifyResult {
@@ -147,6 +152,15 @@ export class VerifyService {
           firstName: null,
           unitCodes: null,
           photoUrl: null,
+          vehiclePlate:
+            !isWorker && !refusal && subject.visitorDetailsId
+              ? ((
+                  await tx.visitorDetails.findUnique({
+                    where: { id: subject.visitorDetailsId },
+                    select: { vehiclePlate: true },
+                  })
+                )?.vehiclePlate ?? null)
+              : null,
           photo:
             isWorker && !refusal
               ? await this.files.readUrl(

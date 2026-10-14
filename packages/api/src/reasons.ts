@@ -39,6 +39,8 @@ export const REASON_CODES = {
   assist: ['in_person', 'phone_call', 'written_request'],
   // A queued deletion closed without erasing: a code only.
   deletionClose: ['blockers_unresolved', 'withdrawn', 'other'],
+  // A visitor pass cancelled by its host or the primary (ADR 0028): a code only.
+  visitorPassCancel: ['not_needed', 'plans_changed', 'other'],
   // Maintenance (ADR 0032-0034): codes only, never text.
   ticketReassign: ['technician_unavailable', 'workload', 'specialty', 'other'],
   ticketPriority: ['reassessed', 'safety_risk', 'reporter_request', 'other'],

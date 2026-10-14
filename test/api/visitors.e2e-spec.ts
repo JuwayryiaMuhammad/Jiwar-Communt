@@ -2,6 +2,7 @@ import { Client } from 'pg';
 import { AccessTokens } from '../../src/core/auth/access-token';
 import { IdentifierHasher } from '../../src/core/auth/identifier';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
+import { PassTokens } from '../../src/gate/visitors/pass-tokens';
 import { VISITOR_DATA_SWEEP } from '../../src/gate/visitors/visitor-data.sweep';
 import { SweepRunner } from '../../src/core/sweep/sweep-runner';
 import { auditReaders } from '../setup/audit';
@@ -30,6 +31,8 @@ const ISSUED = [
 ];
 const LISTED = [
   'createdAt',
+  'enteredAt',
+  'exitedAt',
   'id',
   'kind',
   'mine',
@@ -38,8 +41,19 @@ const LISTED = [
   'status',
   'validFrom',
   'validUntil',
+  'vehiclePlate',
   'visitorName',
 ];
+const DETAIL = [
+  ...LISTED,
+  'code',
+  'createdBy',
+  'createdBy.fullName',
+  'createdBy.id',
+  'link',
+  'qrPayload',
+  'visitorPhoneMasked',
+].sort();
 const LINK = /^https:\/\/app\.jiwar\.test\/v#([A-Za-z0-9_-]{43})$/;
 /** The token in a pass's link (ADR 0030). */
 const tokenOf = (body: unknown) => {
@@ -91,6 +105,7 @@ describe('API v0 — visitors (ADR 0028)', () => {
       w.helpers.prisma.tenant.visitorPass.findUniqueOrThrow({ where: { id } }),
     );
   const tokens = () => h.moduleRef.get(AccessTokens);
+  const passTokens = () => h.moduleRef.get(PassTokens);
   const hasher = () => h.moduleRef.get(IdentifierHasher);
   const linkOf = (token: string) =>
     h.moduleRef.get(GlobalDbService).visitorPassLink.findUnique({
@@ -264,6 +279,171 @@ describe('API v0 — visitors (ADR 0028)', () => {
       },
       { field: 'schedule.windows', code: 'INVALID_SCHEDULE' },
     ]);
+  });
+
+  it('every member reads a pass; secrets to the host and the primary, visitor data to the host', async () => {
+    const fresh = await w.helpers.unit(w.a);
+    const primary = await w.helpers.resident(w.a, [fresh.id]);
+    const member = await w.helpers.joinFamily(w.a, fresh.id, primary);
+    const other = await w.helpers.joinFamily(w.a, fresh.id, primary);
+    const memberToken = await w.tokenFor(w.a, member.id, 'family');
+    const otherToken = await w.tokenFor(w.a, other.id, 'family');
+    const primaryToken = await w.tokenFor(w.a, primary.id, 'resident');
+    // `other` may not invite: still a member of the unit, still a reader.
+    await call(
+      w,
+      'POST',
+      `/household/members/${other.memberId}/permissions/revoke`,
+      {
+        token: primaryToken,
+        body: {
+          permission: 'visitors_invite',
+          reasonCode: 'no_longer_needed',
+          reason: 'Test',
+        },
+      },
+    ).expect(204);
+    const phone = uniquePhone();
+    const created = await create(
+      memberToken,
+      passBody({
+        partySize: 1,
+        visitorName: 'Detail Guest',
+        visitorPhone: phone,
+        vehiclePlate: ' ق  ب ط ١٢٣٤ ',
+      }),
+      fresh.id,
+    ).expect(201);
+    const { id, code, link, qrPayload } = created.body as {
+      id: string;
+      code: string;
+      link: string;
+      qrPayload: string;
+    };
+    const get = (token: string) =>
+      call(w, 'GET', `/visitor-passes/${id}`, { token });
+
+    const asHost = await get(memberToken).expect(200);
+    expect(asHost.headers['cache-control']).toBe('no-store');
+    expect(keyPaths(asHost.body)).toEqual(DETAIL);
+    expect(asHost.body).toMatchObject({
+      id,
+      status: 'active',
+      mine: true,
+      code,
+      link,
+      qrPayload,
+      visitorName: 'Detail Guest',
+      vehiclePlate: 'ق ب ط ١٢٣٤',
+      visitorPhoneMasked: `••••${phone.slice(-4)}`,
+      createdBy: { id: member.id },
+      enteredAt: null,
+      exitedAt: null,
+    });
+    // The primary may manage it: the secrets, not the visitor's data.
+    expect((await get(primaryToken).expect(200)).body).toMatchObject({
+      mine: false,
+      code,
+      link,
+      visitorName: null,
+      vehiclePlate: null,
+      visitorPhoneMasked: null,
+    });
+    // Any other member: the pass, nothing secret, nothing personal.
+    const asOther = (await get(otherToken).expect(200)).body as Record<
+      string,
+      unknown
+    >;
+    expect(asOther).toMatchObject({
+      id,
+      code: null,
+      link: null,
+      qrPayload: null,
+      visitorName: null,
+      visitorPhoneMasked: null,
+      createdBy: { id: member.id },
+    });
+    expect(JSON.stringify(asOther)).not.toContain(phone.slice(-4));
+    // Another unit's resident: the same answer as an unknown pass.
+    const foreign = await get(w.a.tokens.tenant);
+    expect(status(foreign)).toEqual({
+      status: 404,
+      code: 'VISITOR_PASS_NOT_FOUND',
+    });
+
+    // A reissued link is what the detail shows from then on.
+    const again = await reissue(memberToken, id).expect(200);
+    expect((await get(primaryToken).expect(200)).body).toMatchObject({
+      code: (again.body as { code: string }).code,
+    });
+
+    // In and out at the gate: the detail and the list show both, and a
+    // one-time pass for one is used (its code gone).
+    const entry = (direction: 'in' | 'out') =>
+      call(w, 'POST', '/gate/entries', {
+        token: w.a.tokens.guard,
+        body: { subjectType: 'visitor_pass', subjectId: id, direction },
+      }).expect(201);
+    const inAt = (await entry('in')).body as { occurredAt: string };
+    expect((await get(memberToken).expect(200)).body).toMatchObject({
+      status: 'used',
+      code: null,
+      link: null,
+      qrPayload: null,
+      enteredAt: inAt.occurredAt,
+      exitedAt: null,
+    });
+    const outAt = (await entry('out')).body as { occurredAt: string };
+    const listed = (
+      await call(w, 'GET', passes(fresh.id), { token: memberToken }).expect(200)
+    ).body as { data: { id: string }[] };
+    expect(listed.data.find((p) => p.id === id)).toMatchObject({
+      enteredAt: inAt.occurredAt,
+      exitedAt: outAt.occurredAt,
+      vehiclePlate: 'ق ب ط ١٢٣٤',
+    });
+  });
+
+  it('a pass issued before derived tokens shows no code until its link is reissued', async () => {
+    const created = await create(owner(), passBody()).expect(201);
+    const { id } = created.body as { id: string };
+    await w.helpers.asManager(w.a, () =>
+      w.helpers.prisma.tenant.visitorPass.update({
+        where: { id },
+        data: { tokenSeq: null },
+      }),
+    );
+    const get = () =>
+      call(w, 'GET', `/visitor-passes/${id}`, { token: owner() }).expect(200);
+    expect((await get()).body).toMatchObject({ status: 'active', code: null });
+    const again = await reissue(owner(), id).expect(200);
+    expect((await get()).body).toMatchObject({
+      code: (again.body as { code: string }).code,
+    });
+  });
+
+  it('a vehicle plate is letters, digits and spaces, 12 at most', async () => {
+    for (const vehiclePlate of ['ABC-123', '1234567890123', '   '])
+      expect(
+        err(await create(owner(), passBody({ vehiclePlate }))).fields,
+      ).toEqual([
+        {
+          field: 'vehiclePlate',
+          code: 'INVALID_FORMAT',
+          params: { maxLength: 12 },
+        },
+      ]);
+    // The guard who checks the code sees the plate, never the name.
+    const res = await create(
+      owner(),
+      passBody({ vehiclePlate: 'abc 123', visitorName: 'Plate Guest' }),
+    ).expect(201);
+    const checked = await verify((res.body as { code: string }).code);
+    expect(checked.body).toMatchObject({
+      result: 'valid',
+      display: { vehiclePlate: 'ABC 123' },
+    });
+    expect(JSON.stringify(checked.body)).not.toContain('Plate Guest');
   });
 
   it("the mobile team's recurring body: windows are times of day", async () => {
@@ -563,30 +743,26 @@ describe('API v0 — visitors (ADR 0028)', () => {
     expect(JSON.stringify(row)).not.toContain(token);
   });
 
-  it('a derived code already in use draws a new token', async () => {
-    // Two tokens whose 6-digit codes collide (a birthday search, ~10^3 tries).
-    const byCode = new Map<string, string>();
-    let pair: [string, string] | null = null;
-    while (!pair) {
-      const t = tokens().newToken();
-      const code = tokens().codeOf(t, 6);
-      const seen = byCode.get(code);
-      if (seen) pair = [seen, t];
-      else byCode.set(code, t);
-    }
-    const third = tokens().newToken();
-    const spy = jest.spyOn(tokens(), 'newToken');
+  it('a derived code already in use draws the next token', async () => {
+    const first = await create(owner(), passBody()).expect(201);
+    const firstId = (first.body as { id: string }).id;
+    const taken = passTokens().secretOf(w.a.tenantId, firstId, 0);
+    expect((first.body as { code: string }).code).toBe(taken.code);
+    expect(tokenOf(first.body)).toBe(taken.token);
+    // The second pass's first token derives the first pass's code.
+    const spy = jest.spyOn(passTokens(), 'secretOf');
     try {
-      spy.mockReturnValueOnce(pair[0]);
-      const first = await create(owner(), passBody()).expect(201);
-      expect(tokenOf(first.body)).toBe(pair[0]);
-      spy.mockReturnValueOnce(pair[1]).mockReturnValueOnce(third);
+      spy.mockReturnValueOnce({ ...taken });
       const second = await create(owner(), passBody()).expect(201);
-      expect(tokenOf(second.body)).toBe(third);
-      expect((second.body as { code: string }).code).toBe(
-        tokens().codeOf(third, 6),
-      );
-      expect(await linkOf(pair[1])).toBeNull();
+      const id = (second.body as { id: string }).id;
+      const next = passTokens().secretOf(w.a.tenantId, id, 1);
+      expect(second.body).toMatchObject({ code: next.code });
+      expect(tokenOf(second.body)).toBe(next.token);
+      expect(await passRow(id)).toMatchObject({
+        tokenSeq: 1,
+        codeHash: next.codeHash,
+      });
+      expect(await linkOf(taken.token)).toMatchObject({ passId: firstId });
     } finally {
       spy.mockRestore();
     }

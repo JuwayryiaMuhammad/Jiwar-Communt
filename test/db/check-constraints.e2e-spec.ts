@@ -640,6 +640,22 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   facility_hours_window: {},
   facility_peak_windows_window: {},
+  bookings_window: {},
+  bookings_party: {},
+  // Nullable columns only under IS [NOT] NULL; status is NOT NULL.
+  bookings_state_shape: {},
+  bookings_cancelled_by: {
+    guarded:
+      'cancelled_side IS NULL is tested first; the comparison runs only on a value',
+  },
+  bookings_cancel_reason: {
+    guarded:
+      'cancel_reason IS NULL is tested first; the lists run only on a value, by cancelled_side, which the state shape sets with it',
+  },
+  bookings_reject_reason: {
+    guarded:
+      'reject_reason IS NULL is tested first; the list runs only on a value',
+  },
 };
 
 interface Check {

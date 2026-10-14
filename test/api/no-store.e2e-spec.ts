@@ -23,6 +23,7 @@ import { passBody } from './routes/visitors';
 import { workerBody } from './routes/workers';
 import { buildWorld, type World } from './world';
 
+import { ALL_WEEK, at, day as localDay } from '../setup/facilities';
 /**
  * Every response that carries a secret shown once (ADR 0025) is
  * `Cache-Control: no-store`: each registry row marked `noStore` is called
@@ -459,6 +460,66 @@ describe('API v0 — no-store', () => {
       reasonCode: 'spam',
     });
   }
+
+  // Facilities (ADR 0044): every response is no-store.
+  let slotsUsed = 0;
+  /** A slot of A's roomy facility nobody in this suite has booked. */
+  const freshSlot = () => {
+    const n = slotsUsed++;
+    return at(
+      localDay(2 + (n % 7)),
+      6 + (Math.floor(n / 7) % 16),
+    ).toISOString();
+  };
+  /** A booking of the owner's home, made now. */
+  const aBooking = async () =>
+    body<{ id: string }>(
+      await as('owner', 'POST', `/units/${w.a.homeUnitId}/bookings`, {
+        facilityId: w.aFacilityId,
+        startsAt: freshSlot(),
+      }).expect(201),
+    ).id;
+  const FACILITY_CALLS = (): Record<string, () => Promise<Response>> => ({
+    'GET /facilities': () => as('owner', 'GET', '/facilities'),
+    'GET /facilities/{id}': () =>
+      as('owner', 'GET', `/facilities/${w.aFacilityId}`),
+    'GET /staff/facilities': () => as('manager', 'GET', '/staff/facilities'),
+    'GET /staff/facilities/{id}': () =>
+      as('manager', 'GET', `/staff/facilities/${w.aFacilityId}`),
+    'POST /staff/facilities': () =>
+      as('manager', 'POST', '/staff/facilities', {
+        mode: 'walk_in',
+        nameEn: 'No-store pool',
+        nameAr: 'مسبح',
+      }),
+    'PATCH /staff/facilities/{id}': () =>
+      as('manager', 'PATCH', `/staff/facilities/${w.aFacilityId}`, {
+        position: 1,
+      }),
+    'PUT /staff/facilities/{id}/hours': () =>
+      as('manager', 'PUT', `/staff/facilities/${w.aFacilityId}/hours`, {
+        windows: ALL_WEEK,
+      }),
+    'PUT /staff/facilities/{id}/peak-windows': () =>
+      as('manager', 'PUT', `/staff/facilities/${w.aFacilityId}/peak-windows`, {
+        windows: [],
+      }),
+    'GET /facilities/{id}/slots': () =>
+      as('owner', 'GET', `/facilities/${w.aFacilityId}/slots`),
+    'POST /units/{unitId}/bookings': () =>
+      as('owner', 'POST', `/units/${w.a.homeUnitId}/bookings`, {
+        facilityId: w.aFacilityId,
+        startsAt: freshSlot(),
+      }),
+    'GET /units/{unitId}/bookings': () =>
+      as('owner', 'GET', `/units/${w.a.homeUnitId}/bookings`),
+    'GET /bookings/{id}': async () =>
+      as('owner', 'GET', `/bookings/${await aBooking()}`),
+    'POST /bookings/{id}/cancel': async () =>
+      as('owner', 'POST', `/bookings/${await aBooking()}/cancel`, {
+        reasonCode: 'no_longer_needed',
+      }),
+  });
 
   const CALLS: Record<string, () => Promise<Response>> = {
     // Community life (ADR 0040): every response is no-store.
@@ -1540,6 +1601,7 @@ describe('API v0 — no-store', () => {
       as('manager', 'POST', `/neighbours/reports/${await aReport()}/close`, {
         reasonCode: 'no_action',
       }),
+    ...FACILITY_CALLS(),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

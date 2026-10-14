@@ -384,6 +384,26 @@ export const ErrorCode = {
   FACILITY_NOT_FOUND: 'FACILITY_NOT_FOUND',
   /** A walk-in facility (the pool, the gym): nothing to book, no peak times (409). */
   FACILITY_NOT_BOOKABLE: 'FACILITY_NOT_BOOKABLE',
+  /**
+   * Unknown or another compound's; for a resident also one they neither
+   * made nor see as the unit's primary: one answer.
+   */
+  BOOKING_NOT_FOUND: 'BOOKING_NOT_FOUND',
+  /** The caller's capabilities on the unit carry no `bookings` (403). */
+  BOOKINGS_NOT_ALLOWED: 'BOOKINGS_NOT_ALLOWED',
+  /** Not even one more booking (or the party) fits in the slot (409). */
+  BOOKING_SLOT_FULL: 'BOOKING_SLOT_FULL',
+  /** The unit already holds this slot (409). */
+  BOOKING_ALREADY_HELD: 'BOOKING_ALREADY_HELD',
+  /**
+   * Some 7 days would hold more of the unit's bookings here than the
+   * facility allows (409, params.quota, params.peak: the peak quota).
+   */
+  BOOKING_QUOTA_REACHED: 'BOOKING_QUOTA_REACHED',
+  /** Its status does not take the action (409, params.status). */
+  BOOKING_INVALID_TRANSITION: 'BOOKING_INVALID_TRANSITION',
+  /** A confirmed booking is cancelled at least params.minutes before it starts (409). */
+  BOOKING_CANCEL_CUTOFF_PASSED: 'BOOKING_CANCEL_CUTOFF_PASSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -483,6 +503,16 @@ export const FieldErrorCode = {
   PEAK_OUTSIDE_HOURS: 'PEAK_OUTSIDE_HOURS',
   /** More peak bookings than bookings in a week; params.max is the weekly quota. */
   PEAK_QUOTA_ABOVE_WEEKLY: 'PEAK_QUOTA_ABOVE_WEEKLY',
+  /** Not the start of one of the facility's slots. */
+  BOOKING_SLOT_NOT_OFFERED: 'BOOKING_SLOT_NOT_OFFERED',
+  /** A booking starts at least params.minutes from now. */
+  BOOKING_TOO_SOON: 'BOOKING_TOO_SOON',
+  /** A booking is at most params.days local days ahead. */
+  BOOKING_TOO_FAR: 'BOOKING_TOO_FAR',
+  /** More guests than the facility takes; params.max. */
+  BOOKING_TOO_MANY_GUESTS: 'BOOKING_TOO_MANY_GUESTS',
+  /** The booker and guests are more people than a slot takes; params.max guests. */
+  BOOKING_PARTY_TOO_LARGE: 'BOOKING_PARTY_TOO_LARGE',
 } as const;
 
 export type FieldErrorCode =

@@ -199,4 +199,7 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   facilities_tenant_id_id_key: null,
   facility_hours_window_key: null,
   facility_peak_windows_window_key: null,
+  bookings_tenant_id_id_key: null,
+  // Checked under the unit's lock before the insert: a race.
+  bookings_one_holding_per_unit_slot: null,
 };

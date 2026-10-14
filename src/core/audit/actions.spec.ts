@@ -81,6 +81,7 @@ describe('audit catalog', () => {
         'neighbour_report',
         'neighbour_welcome',
         'facility',
+        'booking',
       ]).toContain(def.target);
     }
   });

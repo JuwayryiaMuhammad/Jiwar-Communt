@@ -58,3 +58,48 @@ export async function facilityWindowRow(
   else await tx.facilityHours.create({ data });
   return id;
 }
+
+let bookingRows = 0;
+
+/** A confirmed booking of a slot of the facility's, from tomorrow on, an hour each. */
+export async function bookingRow(
+  tx: TenantTxClient,
+  input: {
+    tenantId: string;
+    facilityId: string;
+    unitId: string;
+    bookedById: string;
+  },
+): Promise<string> {
+  const id = newId();
+  // A slot of its own each time: a unit holds one slot once.
+  const startsAt = new Date(
+    Math.ceil(Date.now() / 3_600_000) * 3_600_000 +
+      86_400_000 +
+      bookingRows++ * 3_600_000,
+  );
+  await tx.booking.create({
+    data: {
+      id,
+      ...input,
+      startsAt,
+      endsAt: new Date(startsAt.getTime() + 3_600_000),
+      guests: 0,
+      partySize: 1,
+      peak: false,
+      status: 'confirmed',
+    },
+  });
+  return id;
+}
+
+/** A slot's lock row of the facility. */
+export async function slotLockRow(
+  tx: TenantTxClient,
+  input: { tenantId: string; facilityId: string },
+): Promise<string> {
+  await tx.facilitySlotLock.create({
+    data: { ...input, startsAt: new Date(Date.UTC(2031, 0, 1, 10)) },
+  });
+  return input.facilityId;
+}

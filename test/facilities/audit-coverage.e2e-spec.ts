@@ -15,6 +15,8 @@ import {
   RESIDENT_SCREENS_COVERAGE,
 } from '../setup/audit-coverage-split';
 import {
+  at,
+  day,
   facilitiesHelpers,
   type FacilitiesSetUp,
   type Who,
@@ -138,6 +140,42 @@ describe('Audit coverage — facilities', () => {
       const peaks = await single('facility.peaks_changed', facilityId);
       expect(peaks.changes).toEqual({
         windows: { from: [], to: ['1:1080-1260'] },
+      });
+    });
+  });
+
+  describe('bookings', () => {
+    let court: string;
+
+    beforeAll(async () => {
+      court = await f.facility(s.c, s.manager);
+    });
+
+    it('booking.created — the facility, unit, status, peak, guests and start; never who', async () => {
+      const b = await f.book(s.alice, s.homeA.id, court, at(day(2), 10));
+      const row = await single('booking.created', b.id);
+      expect(row).toMatchObject(by(s.alice, 'booking'));
+      expect(row.metadata).toEqual({
+        facilityId: court,
+        unitId: s.homeA.id,
+        status: 'confirmed',
+        peak: false,
+        guests: 0,
+        startsAt: at(day(2), 10).toISOString(),
+      });
+    });
+
+    it('booking.cancelled — the side, the reason code and the status it left', async () => {
+      const b = await f.book(s.bob, s.homeB.id, court, at(day(3), 10));
+      await f.cancel(s.bob, b.id, 'cannot_attend').expect(204);
+      const row = await single('booking.cancelled', b.id);
+      expect(row).toMatchObject(by(s.bob, 'booking'));
+      expect(row.metadata).toEqual({
+        facilityId: court,
+        unitId: s.homeB.id,
+        from: 'confirmed',
+        side: 'resident',
+        reasonCode: 'cannot_attend',
       });
     });
   });

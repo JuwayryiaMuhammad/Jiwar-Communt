@@ -6,6 +6,7 @@ import { minorBody } from './routes/household';
 import { ticketBody } from './routes/maintenance';
 import { passBody } from './routes/visitors';
 import { buildWorld, type World } from './world';
+import { at, day } from '../setup/facilities';
 
 type Flags = Record<string, boolean | string | null>;
 
@@ -20,7 +21,7 @@ interface Probe {
  * /me/units/:unitId/capabilities says is what the endpoints do. For each
  * persona, every flag that has an endpoint is probed: allowed → 2xx,
  * disallowed → 403/404. Flags whose domains have no endpoint yet (finance,
- * governance, bookings…) are asserted on the flag only.
+ * governance…) are asserted on the flag only.
  */
 describe('API v0 — capabilities drive access', () => {
   let h: HttpHarness;
@@ -44,6 +45,13 @@ describe('API v0 — capabilities drive access', () => {
     parcels.set(unitId, id);
     return id;
   }
+
+  /** A different slot of A's roomy facility for each booking probe. */
+  let probed = 0;
+  const nextSlot = () => {
+    const n = probed++;
+    return at(day(2 + (n % 7)), 6 + (Math.floor(n / 7) % 16)).toISOString();
+  };
 
   const PROBES: Probe[] = [
     {
@@ -101,6 +109,25 @@ describe('API v0 — capabilities drive access', () => {
       flag: 'parcels',
       run: async (token, u) =>
         call(w, 'GET', `/me/parcels/${await parcelOf(u)}`, { token }),
+    },
+    {
+      // Bookings (ADR 0044): booking a slot for the unit is `bookings`. The
+      // probe cancels what it books, so no quota ever bites.
+      flag: 'bookings',
+      run: async (token, u) => {
+        const res = await call(w, 'POST', `/units/${u}/bookings`, {
+          token,
+          body: { facilityId: w.aFacilityId, startsAt: nextSlot() },
+        });
+        if (res.status === 201)
+          await call(
+            w,
+            'POST',
+            `/bookings/${(res.body as { id: string }).id}/cancel`,
+            { token, body: { reasonCode: 'no_longer_needed' } },
+          ).expect(204);
+        return res;
+      },
     },
     {
       // Maintenance (ADR 0032): opening a ticket on the unit is `tickets`.

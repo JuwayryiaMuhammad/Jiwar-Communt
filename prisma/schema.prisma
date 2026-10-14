@@ -515,6 +515,7 @@ model Tenant {
   neighbourConversations       NeighbourConversation[]
   neighbourWelcomeTemplate     NeighbourWelcomeTemplate?
   facilities                   Facility[]
+  bookings                     Booking[]
   announcements      Announcement[]
   communityEvents    CommunityEvent[]
   polls              Poll[]
@@ -929,6 +930,10 @@ model Account {
   neighbourClaims                NeighbourItemClaim[]                @relation("NeighbourClaimant")
   neighbourItemsReceived         NeighbourItemHandover[]             @relation("NeighbourHandoverRecipient")
   neighbourItemsHandedOver       NeighbourItemHandover[]             @relation("NeighbourHandoverStaff")
+  bookingsMade                   Booking[]                           @relation("BookingBooker")
+  bookingsDecided                Booking[]                           @relation("BookingDecider")
+  bookingsCancelled              Booking[]                           @relation("BookingCanceller")
+  bookingsMarkedNoShow           Booking[]                           @relation("BookingNoShowMarker")
   neighbourConversationsAuthored NeighbourConversation[]             @relation("NeighbourConversationAuthor")
   neighbourConversationsStarted  NeighbourConversation[]             @relation("NeighbourConversationResponder")
   neighbourConversationMessages  NeighbourConversationMessage[]      @relation("NeighbourConversationMessageSender")
@@ -1033,6 +1038,7 @@ model Unit {
   neighbourPosts             NeighbourPost[]
   neighbourConversations     NeighbourConversation[]
   neighbourWelcomes          NeighbourWelcome[]
+  bookings                   Booking[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -4415,6 +4421,8 @@ model Facility {
   tenant      Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   hours       FacilityHours[]
   peakWindows FacilityPeakWindow[]
+  slotLocks   FacilitySlotLock[]
+  bookings    Booking[]
 
   @@unique([tenantId, id])
   @@index([tenantId, position, id], map: "facilities_position_idx")
@@ -4452,4 +4460,86 @@ model FacilityPeakWindow {
 
   @@unique([tenantId, facilityId, weekday, startMinute], map: "facility_peak_windows_window_key")
   @@map("facility_peak_windows")
+}
+
+/// A slot's lock row: a booking locks it, then counts what holds the
+/// slot's window. It holds no count. One row per slot ever booked.
+model FacilitySlotLock {
+  tenantId   String   @map("tenant_id") @db.Uuid
+  facilityId String   @map("facility_id") @db.Uuid
+  startsAt   DateTime @map("starts_at") @db.Timestamptz(3)
+
+  facility Facility @relation(fields: [tenantId, facilityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([tenantId, facilityId, startsAt])
+  @@map("facility_slot_locks")
+}
+
+enum BookingStatus {
+  /// Waits for the management's approval (a facility that requires it).
+  pending
+  confirmed
+  rejected
+  cancelled
+  /// Confirmed, and nobody came: marked by the staff after the slot.
+  no_show
+
+  @@map("booking_status")
+}
+
+enum BookingSide {
+  resident
+  staff
+  system
+
+  @@map("booking_side")
+}
+
+/// A unit's booking of a facility's slot (ADR 0044), made by one of its
+/// people. Its facility, unit, booker, times and party never change
+/// (trigger); it is never deleted. An erased booker stays as the tombstone.
+model Booking {
+  id                String         @id @db.Uuid
+  tenantId          String         @map("tenant_id") @db.Uuid
+  facilityId        String         @map("facility_id") @db.Uuid
+  unitId            String         @map("unit_id") @db.Uuid
+  bookedById        String         @map("booked_by_account_id") @db.Uuid
+  startsAt          DateTime       @map("starts_at") @db.Timestamptz(3)
+  endsAt            DateTime       @map("ends_at") @db.Timestamptz(3)
+  guests            Int
+  /// The booker and their guests: what the booking takes of a slot counted in people.
+  partySize         Int            @map("party_size")
+  /// The slot overlapped a peak time when it was booked.
+  peak              Boolean
+  status            BookingStatus
+  /// Approved or rejected by the staff; null for a booking confirmed at once.
+  decidedById       String?        @map("decided_by_account_id") @db.Uuid
+  decidedAt         DateTime?      @map("decided_at") @db.Timestamptz(3)
+  rejectReason      String?        @map("reject_reason")
+  cancelledSide     BookingSide?   @map("cancelled_side")
+  cancelReason      String?        @map("cancel_reason")
+  /// Null when the system cancelled it.
+  cancelledById     String?        @map("cancelled_by_account_id") @db.Uuid
+  cancelledAt       DateTime?      @map("cancelled_at") @db.Timestamptz(3)
+  noShowMarkedById  String?        @map("no_show_marked_by_account_id") @db.Uuid
+  noShowMarkedAt    DateTime?      @map("no_show_marked_at") @db.Timestamptz(3)
+  /// The reminder before the slot was sent (once).
+  remindedAt        DateTime?      @map("reminded_at") @db.Timestamptz(3)
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  facility    Facility @relation(fields: [tenantId, facilityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  unit        Unit     @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  bookedBy    Account  @relation("BookingBooker", fields: [tenantId, bookedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_booked_by_fkey")
+  decidedBy   Account? @relation("BookingDecider", fields: [tenantId, decidedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_decided_by_fkey")
+  cancelledBy Account? @relation("BookingCanceller", fields: [tenantId, cancelledById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_cancelled_by_fkey")
+  noShowBy    Account? @relation("BookingNoShowMarker", fields: [tenantId, noShowMarkedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_no_show_by_fkey")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, unitId, startsAt, id], map: "bookings_unit_idx")
+  @@index([tenantId, bookedById, startsAt, id], map: "bookings_booker_idx")
+  @@index([tenantId, facilityId, startsAt, id], map: "bookings_facility_idx")
+  @@index([tenantId, status, startsAt, id], map: "bookings_status_idx")
+  @@map("bookings")
 }

@@ -28,7 +28,9 @@ import { BlocksService } from '../../src/neighbours/conversations/blocks.service
 import { ConversationsService } from '../../src/neighbours/conversations/conversations.service';
 import { ReportsService } from '../../src/neighbours/conversations/reports.service';
 import { PostsService } from '../../src/neighbours/posts/posts.service';
+import { BookingsService } from '../../src/facilities/bookings/bookings.service';
 import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
+import { ALL_WEEK, at, day } from '../setup/facilities';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
 import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
 import { VisitsService } from '../../src/maintenance/visits/visits.service';
@@ -169,8 +171,12 @@ export interface World {
   bConversationId: string;
   bBlockId: string;
   bReportId: string;
-  /** B's facilities data (ADR 0044): a bookable facility. */
+  /** B's facilities data (ADR 0044): a bookable facility open every day,
+   * and its owner's booking of it. */
   bFacilityId: string;
+  bBookingId: string;
+  /** One of A's, open every day, roomy, for valid bookings. */
+  aFacilityId: string;
   bDeviceId: string;
   /** A personal-data export B's owner asked for (ADR 0036). */
   bExportId: string;
@@ -638,17 +644,32 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
   const bPreventiveService = await service(b);
   const aPreventiveService = await service(a);
   // Facilities (ADR 0044).
-  const bFacility = await helpers.asManager(b, () =>
-    h.moduleRef.get(FacilitiesService).create({
-      mode: 'bookable',
-      nameEn: 'World court',
-      nameAr: 'ملعب',
-      slotMinutes: 60,
-      capacity: 1,
+  const facilityOf = (c: typeof a, roomy: boolean) =>
+    helpers.asManager(c, async () => {
+      const facilities = h.moduleRef.get(FacilitiesService);
+      const created = await facilities.create({
+        mode: 'bookable',
+        nameEn: 'World court',
+        nameAr: 'ملعب',
+        slotMinutes: 60,
+        capacity: roomy ? 500 : 1,
+        ...(roomy ? { weeklyQuota: 20 } : {}),
+      });
+      await facilities.replaceHours(created.id, ALL_WEEK);
+      return created;
+    });
+  const bFacility = await facilityOf(b, false);
+  const aFacility = await facilityOf(a, true);
+  const bBooking = await asBOwner(() =>
+    h.moduleRef.get(BookingsService).book(b.homeUnitId, {
+      facilityId: bFacility.id,
+      startsAt: at(day(2), 10),
     }),
   );
   return {
     bFacilityId: bFacility.id,
+    bBookingId: bBooking.id,
+    aFacilityId: aFacility.id,
     bPreventiveServiceId: bPreventiveService.id,
     aPreventiveServiceId: aPreventiveService.id,
     bSpecialtyId: bSpecialty.id,

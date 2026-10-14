@@ -323,4 +323,24 @@ export const REASON_CODES = {
     'participant_left',
     'participant_erased',
   ],
+  // Facilities and bookings (ADR 0044). Why a resident cancels their
+  // unit's booking, why the staff cancel one, and why they reject one
+  // waiting for approval.
+  bookingResidentCancel: ['no_longer_needed', 'cannot_attend', 'other'],
+  bookingStaffCancel: [
+    'facility_unavailable',
+    'rules_violation',
+    'resident_request',
+    'other',
+  ],
+  bookingReject: [
+    'slot_unavailable',
+    'not_eligible',
+    'rules_violation',
+    'other',
+  ],
+  // Written by the system only: the facility closed over the slot, the
+  // approval did not come before the start, the booker left (moved out,
+  // was deactivated, or erased: an erasure deactivates first).
+  bookingSystemCancel: ['facility_closed', 'approval_expired', 'booker_left'],
 } as const;

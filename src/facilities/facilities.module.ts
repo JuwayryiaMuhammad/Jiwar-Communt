@@ -1,4 +1,12 @@
 import { Module } from '@nestjs/common';
+import { CommunityFacilitiesPortModule } from '../community';
+import { FacilitiesAccess } from './access';
+import {
+  BookingsController,
+  FacilitySlotsController,
+  UnitBookingsController,
+} from './bookings/bookings.controller';
+import { BookingsService } from './bookings/bookings.service';
 import {
   FacilitiesController,
   StaffFacilitiesController,
@@ -10,7 +18,14 @@ import { FacilitiesService } from './setup/facilities.service';
  * its index and nothing else; nothing imports it.
  */
 @Module({
-  controllers: [FacilitiesController, StaffFacilitiesController],
-  providers: [FacilitiesService],
+  imports: [CommunityFacilitiesPortModule],
+  controllers: [
+    FacilitiesController,
+    StaffFacilitiesController,
+    FacilitySlotsController,
+    UnitBookingsController,
+    BookingsController,
+  ],
+  providers: [FacilitiesAccess, FacilitiesService, BookingsService],
 })
 export class FacilitiesModule {}

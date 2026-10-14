@@ -601,6 +601,12 @@ export const AUDIT_ACTIONS = {
   // changes: windows as `weekday:start-end` codes.
   'facility.hours_changed': { log: 'tenant', target: 'facility' },
   'facility.peaks_changed': { log: 'tenant', target: 'facility' },
+  // metadata: facilityId, unitId, status, peak, guests (a count), startsAt.
+  // Never the booker's name.
+  'booking.created': { log: 'tenant', target: 'booking' },
+  // metadata: facilityId, unitId, from (the status), side, reasonCode, and
+  // closureId when a closure cancelled it.
+  'booking.cancelled': { log: 'tenant', target: 'booking' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

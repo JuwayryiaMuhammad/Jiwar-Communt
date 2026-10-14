@@ -1601,6 +1601,123 @@
         ],
         "type": "object"
       },
+      "BookingSide": {
+        "enum": [
+          "resident",
+          "staff",
+          "system"
+        ],
+        "type": "string"
+      },
+      "BookingStatus": {
+        "enum": [
+          "pending",
+          "confirmed",
+          "rejected",
+          "cancelled",
+          "no_show"
+        ],
+        "type": "string"
+      },
+      "BookingView": {
+        "properties": {
+          "cancelReason": {
+            "description": "A code of `bookingResidentCancel`, `bookingStaffCancel` or `bookingSystemCancel`, by side.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledSide": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BookingSide"
+              }
+            ],
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "facilityId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "guests": {
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "mine": {
+            "description": "The caller made it.",
+            "type": "boolean"
+          },
+          "peak": {
+            "description": "The slot is in a peak time: it counts towards the peak quota.",
+            "type": "boolean"
+          },
+          "rejectReason": {
+            "description": "A code of `bookingReject`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BookingStatus"
+              }
+            ]
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "facilityId",
+          "unitId",
+          "startsAt",
+          "endsAt",
+          "guests",
+          "peak",
+          "status",
+          "mine",
+          "rejectReason",
+          "cancelledSide",
+          "cancelReason",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "BookingViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BookingView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "BriefAnnouncementsView": {
         "properties": {
           "new": {
@@ -1759,6 +1876,18 @@
         "properties": {
           "reasonCode": {
             "description": "From the closed list `managementAppointmentCancelByStaff`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "CancelBookingDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `bookingResidentCancel`.",
             "type": "string"
           }
         },
@@ -3418,6 +3547,30 @@
         },
         "required": [
           "kind"
+        ],
+        "type": "object"
+      },
+      "CreateBookingDto": {
+        "properties": {
+          "facilityId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "guests": {
+            "description": "Guests beside the booker: a number, never names. At most the facility’s `maxGuests` (BOOKING_TOO_MANY_GUESTS). Default 0.",
+            "maximum": 50,
+            "minimum": 0,
+            "type": "number"
+          },
+          "startsAt": {
+            "description": "The start of one of the facility’s slots, exactly (BOOKING_SLOT_NOT_OFFERED); not sooner than its `minMinutesBefore` (BOOKING_TOO_SOON) nor further than its `maxDaysAhead` (BOOKING_TOO_FAR).",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "facilityId",
+          "startsAt"
         ],
         "type": "object"
       },
@@ -6769,6 +6922,67 @@
           "peakQuota",
           "capacity",
           "capacityUnit"
+        ],
+        "type": "object"
+      },
+      "FacilitySlotState": {
+        "enum": [
+          "free",
+          "full"
+        ],
+        "type": "string"
+      },
+      "FacilitySlotView": {
+        "properties": {
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "mine": {
+            "description": "The unit asked about (`unitId`) holds this slot.",
+            "type": "boolean"
+          },
+          "peak": {
+            "type": "boolean"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FacilitySlotState"
+              }
+            ]
+          }
+        },
+        "required": [
+          "startsAt",
+          "endsAt",
+          "peak",
+          "state",
+          "mine"
+        ],
+        "type": "object"
+      },
+      "FacilitySlotsView": {
+        "properties": {
+          "date": {
+            "description": "The local day, `YYYY-MM-DD`.",
+            "type": "string"
+          },
+          "slots": {
+            "description": "The slots of the day that may be booked now, in order. Too soon and too far are left out.",
+            "items": {
+              "$ref": "#/components/schemas/FacilitySlotView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "date",
+          "slots"
         ],
         "type": "object"
       },
@@ -23185,6 +23399,86 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/bookings/{id}": {
+      "get": {
+        "operationId": "BookingsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a booking",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/bookings/{id}/cancel": {
+      "post": {
+        "description": "Its booker or the unit’s primary: a pending booking at any time, a confirmed one until the facility’s cutoff (BOOKING_CANCEL_CUTOFF_PASSED).",
+        "operationId": "BookingsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelBookingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a booking",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/card-incidents": {
       "get": {
         "operationId": "WorkersController_incidents",
@@ -25295,6 +25589,64 @@
         "summary": "Get a facility",
         "tags": [
           "facilities"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/facilities/{id}/slots": {
+      "get": {
+        "operationId": "FacilitySlotsController_slots",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A local day of the compound, `YYYY-MM-DD`. Default today.",
+            "in": "query",
+            "name": "date",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "One of the caller’s units: each slot then says whether that unit holds it (`mine`).",
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacilitySlotsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a facility’s slots of a day, free or full",
+        "tags": [
+          "bookings"
         ],
         "x-no-store": true,
         "x-stability": "draft"
@@ -40193,6 +40545,134 @@
         "tags": [
           "unit-states"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/bookings": {
+      "get": {
+        "description": "The caller’s own; the unit’s primary sees every booking of the unit, except during a separation.",
+        "operationId": "UnitBookingsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`upcoming`: not over yet, soonest first. `past`: over, latest first.",
+            "in": "query",
+            "name": "scope",
+            "required": false,
+            "schema": {
+              "default": "upcoming",
+              "enum": [
+                "upcoming",
+                "past"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the unit’s bookings the caller sees",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "UnitBookingsController_book",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBookingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Book a facility’s slot for the unit",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

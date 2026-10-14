@@ -38,6 +38,11 @@ export {
   type NoticeRecipientKind,
   type NoticeRecipients,
 } from './neighbours-port';
+export { CommunityFacilitiesPortModule } from './facilities-port.module';
+export {
+  CommunityFacilitiesPort,
+  type FacilityAccount,
+} from './facilities-port';
 export {
   capabilitiesFor,
   type Capabilities,

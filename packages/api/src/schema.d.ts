@@ -417,6 +417,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/bookings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a booking */
+        get: operations["BookingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/bookings/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel a booking
+         * @description Its booker or the unit’s primary: a pending booking at any time, a confirmed one until the facility’s cutoff (BOOKING_CANCEL_CUTOFF_PASSED).
+         */
+        post: operations["BookingsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/card-incidents": {
         parameters: {
             query?: never;
@@ -1131,6 +1168,23 @@ export interface paths {
         };
         /** Get a facility */
         get: operations["FacilitiesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facilities/{id}/slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List a facility’s slots of a day, free or full */
+        get: operations["FacilitySlotsController_slots"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6227,6 +6281,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the unit’s bookings the caller sees
+         * @description The caller’s own; the unit’s primary sees every booking of the unit, except during a separation.
+         */
+        get: operations["UnitBookingsController_list"];
+        put?: never;
+        /** Book a facility’s slot for the unit */
+        post: operations["UnitBookingsController_book"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/deferred-actions": {
         parameters: {
             query?: never;
@@ -7250,6 +7325,39 @@ export interface components {
             data: components["schemas"]["BoardSuggestionView"][];
             nextCursor: string | null;
         };
+        /** @enum {string} */
+        BookingSide: "resident" | "staff" | "system";
+        /** @enum {string} */
+        BookingStatus: "pending" | "confirmed" | "rejected" | "cancelled" | "no_show";
+        BookingView: {
+            /** @description A code of `bookingResidentCancel`, `bookingStaffCancel` or `bookingSystemCancel`, by side. */
+            cancelReason: string | null;
+            cancelledSide: components["schemas"]["BookingSide"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            facilityId: string;
+            guests: number;
+            /** Format: uuid */
+            id: string;
+            /** @description The caller made it. */
+            mine: boolean;
+            /** @description The slot is in a peak time: it counts towards the peak quota. */
+            peak: boolean;
+            /** @description A code of `bookingReject`. */
+            rejectReason: string | null;
+            /** Format: date-time */
+            startsAt: string;
+            status: components["schemas"]["BookingStatus"];
+            /** Format: uuid */
+            unitId: string;
+        };
+        BookingViewList: {
+            data: components["schemas"]["BookingView"][];
+            nextCursor: string | null;
+        };
         BriefAnnouncementsView: {
             /** @description Out in the last seven days and not opened by the caller, pinned ones aside. */
             new: components["schemas"]["AnnouncementListItemView"][];
@@ -7299,6 +7407,10 @@ export interface components {
         };
         CancelAppointmentByStaffDto: {
             /** @description From the closed list `managementAppointmentCancelByStaff`. */
+            reasonCode: string;
+        };
+        CancelBookingDto: {
+            /** @description From the closed list `bookingResidentCancel`. */
             reasonCode: string;
         };
         CancelEventDto: {
@@ -7795,6 +7907,17 @@ export interface components {
             titleEn?: string | null;
             /** @description Required for `works`, refused otherwise. */
             works?: components["schemas"]["WorksDto"];
+        };
+        CreateBookingDto: {
+            /** Format: uuid */
+            facilityId: string;
+            /** @description Guests beside the booker: a number, never names. At most the facility’s `maxGuests` (BOOKING_TOO_MANY_GUESTS). Default 0. */
+            guests?: number;
+            /**
+             * Format: date-time
+             * @description The start of one of the facility’s slots, exactly (BOOKING_SLOT_NOT_OFFERED); not sooner than its `minMinutesBefore` (BOOKING_TOO_SOON) nor further than its `maxDaysAhead` (BOOKING_TOO_FAR).
+             */
+            startsAt: string;
         };
         CreateCategoryDto: {
             /** @default true */
@@ -8839,6 +8962,24 @@ export interface components {
             slotMinutes: number;
             /** @description Bookings a unit may hold here in any 7 days. */
             weeklyQuota: number;
+        };
+        /** @enum {string} */
+        FacilitySlotState: "free" | "full";
+        FacilitySlotView: {
+            /** Format: date-time */
+            endsAt: string;
+            /** @description The unit asked about (`unitId`) holds this slot. */
+            mine: boolean;
+            peak: boolean;
+            /** Format: date-time */
+            startsAt: string;
+            state: components["schemas"]["FacilitySlotState"];
+        };
+        FacilitySlotsView: {
+            /** @description The local day, `YYYY-MM-DD`. */
+            date: string;
+            /** @description The slots of the day that may be booked now, in order. Too soon and too far are left out. */
+            slots: components["schemas"]["FacilitySlotView"][];
         };
         FacilityView: {
             descriptionAr: string | null;
@@ -14084,6 +14225,50 @@ export interface operations {
             };
         };
     };
+    BookingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingView"];
+                };
+            };
+        };
+    };
+    BookingsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelBookingDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     WorkersController_incidents: {
         parameters: {
             query?: {
@@ -15195,6 +15380,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FacilityView"];
+                };
+            };
+        };
+    };
+    FacilitySlotsController_slots: {
+        parameters: {
+            query?: {
+                /** @description A local day of the compound, `YYYY-MM-DD`. Default today. */
+                date?: string;
+                /** @description One of the caller’s units: each slot then says whether that unit holds it (`mine`). */
+                unitId?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilitySlotsView"];
                 };
             };
         };
@@ -23194,6 +23405,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OccupancyResponse"];
+                };
+            };
+        };
+    };
+    UnitBookingsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `upcoming`: not over yet, soonest first. `past`: over, latest first. */
+                scope?: "upcoming" | "past";
+            };
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingViewList"];
+                };
+            };
+        };
+    };
+    UnitBookingsController_book: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBookingDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingView"];
                 };
             };
         };

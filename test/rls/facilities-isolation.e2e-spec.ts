@@ -1,7 +1,12 @@
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
-import { facilityRow, facilityWindowRow } from '../setup/facilities-rows';
+import {
+  bookingRow,
+  facilityRow,
+  facilityWindowRow,
+  slotLockRow,
+} from '../setup/facilities-rows';
 
 /** What a seed needs from one compound. */
 interface Side {
@@ -51,6 +56,30 @@ const TABLES: Table[] = [
         tenantId: own.tenantId,
         facilityId: link.facilityId,
         peak: true,
+      }),
+  },
+  {
+    table: 'facility_slot_locks',
+    key: 'facility_id',
+    insert: async (tx, own, link) =>
+      own === link
+        ? slotLockRow(tx, {
+            tenantId: own.tenantId,
+            facilityId: await facilityRow(tx, own.tenantId),
+          })
+        : slotLockRow(tx, {
+            tenantId: own.tenantId,
+            facilityId: link.facilityId,
+          }),
+  },
+  {
+    table: 'bookings',
+    insert: (tx, own, link) =>
+      bookingRow(tx, {
+        tenantId: own.tenantId,
+        facilityId: link.facilityId,
+        unitId: link.unitId,
+        bookedById: link.accountId,
       }),
   },
 ];

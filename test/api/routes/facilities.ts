@@ -1,3 +1,4 @@
+import { at, day } from '../../setup/facilities';
 import type { Row } from '../registry';
 
 /**
@@ -142,6 +143,95 @@ export const FACILITY_SETUP_ROUTES: Row[] = [
           params: { min: 1, max: 1440 },
         },
       ],
+    },
+    noStore: true,
+  },
+];
+
+/** A valid booking body of A's roomy facility. */
+export const bookingBody = (facilityId: string) => ({
+  facilityId,
+  startsAt: at(day(9), 21).toISOString(),
+});
+
+/** Bookings (ADR 0044): slots, a unit's bookings, one booking. */
+export const BOOKING_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/facilities/{id}/slots',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bFacilityId }),
+      code: 'FACILITY_NOT_FOUND',
+    },
+    invalid: {
+      query: { date: '2031-13-01' },
+      fields: [{ field: 'date', code: 'INVALID_FORMAT' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/units/{unitId}/bookings',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.bUnitId }),
+      code: 'UNIT_NOT_FOUND',
+      body: (w) => bookingBody(w.aFacilityId),
+    },
+    invalid: {
+      body: { facilityId: 'x', startsAt: '2031-01-01T10:00:00Z' },
+      fields: [{ field: 'facilityId', code: 'INVALID_UUID' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/units/{unitId}/bookings',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.bUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      query: { scope: 'soon' },
+      fields: [{ field: 'scope', code: 'INVALID_VALUE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/bookings/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bBookingId }),
+      code: 'BOOKING_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/bookings/{id}/cancel',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bBookingId }),
+      code: 'BOOKING_NOT_FOUND',
+      body: () => ({ reasonCode: 'no_longer_needed' }),
+    },
+    invalid: {
+      body: { reasonCode: 7 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
     },
     noStore: true,
   },

@@ -36,6 +36,7 @@ import { buildWorld, type World } from './world';
 const born = (y: number, m: number, d: number) =>
   new Date(Date.UTC(y, m - 1, d));
 const iso = (d: Date) => d.toISOString().slice(0, 10);
+import { at, day } from '../setup/facilities';
 /** A name's first word: what first-name views show. */
 const first = (fullName?: string) => fullName?.split(' ')[0] ?? '';
 
@@ -887,6 +888,13 @@ describe('API v0 — PII leak scan', () => {
       primaryToken,
       { reasonCode: 'spam', note: 'PII-REPORT-note' },
     );
+    // Facilities (ADR 0044): the primary's booking of A's roomy facility.
+    const piiBooking = await idOf(
+      'POST',
+      `/units/${unit.id}/bookings`,
+      primaryToken,
+      { facilityId: w.aFacilityId, startsAt: at(day(3), 21).toISOString() },
+    );
 
     /** One id for every param of the path, or each param by name. */
     type Ids = string | Record<string, string>;
@@ -989,6 +997,11 @@ describe('API v0 — PII leak scan', () => {
       '/neighbours/reports/{id}': piiReport,
       '/neighbours/reports/{id}/messages': piiReport,
       '/neighbours/units/{unitId}/complaint-history': unit.id,
+      '/facilities/{id}': w.aFacilityId,
+      '/staff/facilities/{id}': w.aFacilityId,
+      '/facilities/{id}/slots': w.aFacilityId,
+      '/units/{unitId}/bookings': unit.id,
+      '/bookings/{id}': piiBooking,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

@@ -60,6 +60,9 @@ export const REASON_CODES = {
   neighbourPostRemove: ['inappropriate', 'duplicate', 'not_allowed'],
   neighbourClaimDecline: ['not_the_owner', 'insufficient_proof'],
   neighbourReportOutcome: ['no_action', 'warned', 'post_removed'],
+  // Facilities and bookings (ADR 0044): codes only, never text.
+  bookingStaffCancel: ['facility_unavailable', 'rules_violation', 'resident_request', 'other'],
+  bookingReject: ['slot_unavailable', 'not_eligible', 'rules_violation', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

@@ -62,6 +62,8 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   guard_shifts_one_open_per_guard: null,
   visitor_details_tenant_id_id_key: null,
   visitor_passes_tenant_id_id_key: null,
+  // ADR 0043.
+  unit_standing_instructions_tenant_id_id_key: null,
   // Retried before it can fire; a violation is a race and names no code.
   visitor_passes_active_code: null,
   // A 32-byte random token (ADR 0030): a violation is a broken generator.

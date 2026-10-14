@@ -100,6 +100,10 @@ describe('Gate — the resident entry QR (ADR 0031)', () => {
           firstName: 'Mona',
           unitCodes: codes,
           photoUrl: null,
+          // A pass's alone (ADR 0043).
+          vehiclePlate: null,
+          entriesUsed: null,
+          insideCount: null,
         },
       });
       // Never the full name, a contact or the document.

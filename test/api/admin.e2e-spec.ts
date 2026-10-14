@@ -7,6 +7,7 @@ import { buildWorld, type World } from './world';
 
 const ROLE = ['id', 'isSystem', 'key', 'kind', 'name', 'permissions'];
 const SETTINGS = [
+  'allowAlwaysAllow',
   'emergencyPhone',
   'familyJoinRequiresApproval',
   'gateRequestTimeoutSeconds',

@@ -28,6 +28,7 @@ describe('Tenant settings', () => {
       gateRequestTimeoutSeconds: 180,
       visitorDirections: null,
       emergencyPhone: null,
+      allowAlwaysAllow: true,
     });
   });
 
@@ -89,6 +90,7 @@ describe('Tenant settings', () => {
       gateRequestTimeoutSeconds: 180,
       visitorDirections: null,
       emergencyPhone: null,
+      allowAlwaysAllow: true,
     });
     expect(await x.asManager(other, () => settings.get())).toEqual({
       familyJoinRequiresApproval: false,
@@ -98,6 +100,7 @@ describe('Tenant settings', () => {
       gateRequestTimeoutSeconds: 180,
       visitorDirections: null,
       emergencyPhone: null,
+      allowAlwaysAllow: true,
     });
 
     const [entry] = await auditReaders(h).tenant(c.tenantId, {

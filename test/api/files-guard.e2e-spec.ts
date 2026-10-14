@@ -137,7 +137,7 @@ describe('API v0 — the guard and the files routes (ADR 0029, 0035)', () => {
     expect(await row(id)).toMatchObject({ deletedAt: null });
   });
 
-  it('a guard without parcels.handle is refused at the route on all four files routes', async () => {
+  it('a guard without parcels.handle uploads no parcel photo; with no uploading permission, refused at the route', async () => {
     const c = await w.helpers.compound('Files guard');
     const g = await gateHelpers(h).guard(c);
     const token = await h.tokenFor({
@@ -156,9 +156,23 @@ describe('API v0 — the guard and the files routes (ADR 0029, 0035)', () => {
       outcome(await upload(token, 'parcel_photo', 'image/jpeg')),
     ).toMatchObject({ status: 201 });
 
-    // Without it: the guard role keeps the gate and nothing of the files.
+    // Without it: the guard keeps the gate, and with it the photo of a
+    // visitor waiting there (ADR 0043), never a parcel's.
     await w.helpers.asManager(c, () =>
       roles.replacePermissions(guardRole.id, ['gate.operate']),
+    );
+    expect(outcome(await upload(token, 'parcel_photo', 'image/jpeg'))).toEqual({
+      status: 403,
+      code: 'FORBIDDEN',
+    });
+    expect(
+      outcome(await upload(token, 'gate_request_photo', 'image/jpeg')),
+    ).toMatchObject({ status: 201 });
+
+    // Only a permission that uploads nothing (dispatch): every files route
+    // refuses at the door.
+    await w.helpers.asManager(c, () =>
+      roles.replacePermissions(guardRole.id, ['tickets.dispatch']),
     );
     const id = newId();
     for (const [name, res] of [

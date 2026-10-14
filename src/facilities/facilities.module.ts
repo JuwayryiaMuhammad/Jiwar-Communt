@@ -8,6 +8,12 @@ import {
 } from './bookings/bookings.controller';
 import { BookingsService } from './bookings/bookings.service';
 import {
+  FacilityDayController,
+  StaffBookingsController,
+} from './bookings/staff-bookings.controller';
+import { StaffBookingsService } from './bookings/staff-bookings.service';
+import { BookingNotices } from './notices/booking-notices';
+import {
   FacilitiesController,
   StaffFacilitiesController,
 } from './setup/facilities.controller';
@@ -25,7 +31,15 @@ import { FacilitiesService } from './setup/facilities.service';
     FacilitySlotsController,
     UnitBookingsController,
     BookingsController,
+    StaffBookingsController,
+    FacilityDayController,
   ],
-  providers: [FacilitiesAccess, FacilitiesService, BookingsService],
+  providers: [
+    FacilitiesAccess,
+    FacilitiesService,
+    BookingsService,
+    StaffBookingsService,
+    BookingNotices,
+  ],
 })
 export class FacilitiesModule {}

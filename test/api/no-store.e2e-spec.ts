@@ -479,7 +479,50 @@ describe('API v0 — no-store', () => {
         startsAt: freshSlot(),
       }).expect(201),
     ).id;
+  let approvalRoom: Promise<string> | null = null;
+  /** A facility of A's that requires approval, open every day. */
+  const aRoom = () =>
+    (approvalRoom ??= (async () => {
+      const id = body<{ id: string }>(
+        await as('manager', 'POST', '/staff/facilities', {
+          mode: 'bookable',
+          nameEn: 'No-store room',
+          nameAr: 'قاعة',
+          slotMinutes: 60,
+          capacity: 50,
+          weeklyQuota: 20,
+          requiresApproval: true,
+        }).expect(201),
+      ).id;
+      await as('manager', 'PUT', `/staff/facilities/${id}/hours`, {
+        windows: ALL_WEEK,
+      }).expect(200);
+      return id;
+    })());
+  /** A pending booking of the owner's home. */
+  const aPending = async () =>
+    body<{ id: string }>(
+      await as('owner', 'POST', `/units/${w.a.homeUnitId}/bookings`, {
+        facilityId: await aRoom(),
+        startsAt: freshSlot(),
+      }).expect(201),
+    ).id;
   const FACILITY_CALLS = (): Record<string, () => Promise<Response>> => ({
+    'GET /staff/bookings': () => as('manager', 'GET', '/staff/bookings'),
+    'GET /staff/bookings/{id}': async () =>
+      as('manager', 'GET', `/staff/bookings/${await aBooking()}`),
+    'POST /staff/bookings/{id}/approve': async () =>
+      as('manager', 'POST', `/staff/bookings/${await aPending()}/approve`),
+    'POST /staff/bookings/{id}/reject': async () =>
+      as('manager', 'POST', `/staff/bookings/${await aPending()}/reject`, {
+        reasonCode: 'other',
+      }),
+    'POST /staff/bookings/{id}/cancel': async () =>
+      as('manager', 'POST', `/staff/bookings/${await aBooking()}/cancel`, {
+        reasonCode: 'other',
+      }),
+    'GET /staff/facilities/{id}/day': () =>
+      as('manager', 'GET', `/staff/facilities/${w.aFacilityId}/day`),
     'GET /facilities': () => as('owner', 'GET', '/facilities'),
     'GET /facilities/{id}': () =>
       as('owner', 'GET', `/facilities/${w.aFacilityId}`),

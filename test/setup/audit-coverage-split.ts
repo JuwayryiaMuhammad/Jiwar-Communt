@@ -275,4 +275,7 @@ export const FACILITIES_COVERAGE: readonly string[] = [
   'facility.peaks_changed',
   'booking.created',
   'booking.cancelled',
+  'booking.approved',
+  'booking.rejected',
+  'booking.expired',
 ];

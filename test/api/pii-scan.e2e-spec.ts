@@ -1002,6 +1002,8 @@ describe('API v0 — PII leak scan', () => {
       '/facilities/{id}/slots': w.aFacilityId,
       '/units/{unitId}/bookings': unit.id,
       '/bookings/{id}': piiBooking,
+      '/staff/bookings/{id}': piiBooking,
+      '/staff/facilities/{id}/day': w.aFacilityId,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

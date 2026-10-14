@@ -1601,6 +1601,28 @@
         ],
         "type": "object"
       },
+      "BookingPersonView": {
+        "properties": {
+          "erased": {
+            "type": "boolean"
+          },
+          "fullName": {
+            "description": "Null once erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "erased"
+        ],
+        "type": "object"
+      },
       "BookingSide": {
         "enum": [
           "resident",
@@ -6854,6 +6876,71 @@
         ],
         "type": "string"
       },
+      "FacilityDaySlotView": {
+        "properties": {
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "peak": {
+            "type": "boolean"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "taken": {
+            "description": "Bookings, or people, holding it (pending and confirmed).",
+            "type": "number"
+          }
+        },
+        "required": [
+          "startsAt",
+          "endsAt",
+          "peak",
+          "taken"
+        ],
+        "type": "object"
+      },
+      "FacilityDayView": {
+        "properties": {
+          "bookings": {
+            "description": "Every booking that overlaps the day, whatever its status, in order of start.",
+            "items": {
+              "$ref": "#/components/schemas/StaffBookingView"
+            },
+            "type": "array"
+          },
+          "capacity": {
+            "type": "number"
+          },
+          "capacityUnit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FacilityCapacityUnit"
+              }
+            ]
+          },
+          "date": {
+            "type": "string"
+          },
+          "slots": {
+            "description": "The slots of the day as the hours cut them now.",
+            "items": {
+              "$ref": "#/components/schemas/FacilityDaySlotView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "date",
+          "capacity",
+          "capacityUnit",
+          "slots",
+          "bookings"
+        ],
+        "type": "object"
+      },
       "FacilityMode": {
         "enum": [
           "bookable",
@@ -10461,7 +10548,8 @@
           "account_security",
           "management",
           "community",
-          "neighbours"
+          "neighbours",
+          "bookings"
         ],
         "type": "string"
       },
@@ -12967,6 +13055,18 @@
         "properties": {
           "reasonCode": {
             "description": "From the closed list `cardReissue`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "RejectBookingDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `bookingReject`.",
             "type": "string"
           }
         },
@@ -16265,6 +16365,141 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffBookingView": {
+        "properties": {
+          "bookedBy": {
+            "$ref": "#/components/schemas/BookingPersonView"
+          },
+          "cancelReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledSide": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BookingSide"
+              }
+            ],
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "description": "Approved or rejected at.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "facilityId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "guests": {
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "noShowMarkedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "partySize": {
+            "description": "The booker and the guests.",
+            "type": "number"
+          },
+          "peak": {
+            "type": "boolean"
+          },
+          "rejectReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BookingStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "facilityId",
+          "unitId",
+          "unitCode",
+          "bookedBy",
+          "startsAt",
+          "endsAt",
+          "guests",
+          "partySize",
+          "peak",
+          "status",
+          "decidedAt",
+          "rejectReason",
+          "cancelledSide",
+          "cancelReason",
+          "cancelledAt",
+          "noShowMarkedAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StaffBookingViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffBookingView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffCancelBookingDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `bookingStaffCancel`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -37369,6 +37604,248 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/bookings": {
+      "get": {
+        "description": "Soonest first. `status=pending` is the approvals queue.",
+        "operationId": "StaffBookingsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`pending` is the approvals queue.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/BookingStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "facilityId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Starting at or after.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Starting before.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBookingViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the compound’s bookings",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/bookings/{id}": {
+      "get": {
+        "operationId": "StaffBookingsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBookingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a booking with its unit and booker",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/bookings/{id}/approve": {
+      "post": {
+        "description": "Before its start (BOOKING_WINDOW_PASSED), and only while the slot’s confirmed bookings leave room under the capacity as it is now (BOOKING_SLOT_FULL).",
+        "operationId": "StaffBookingsController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve a pending booking",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/bookings/{id}/cancel": {
+      "post": {
+        "description": "A pending or confirmed booking that has not ended, whatever the facility’s cutoff.",
+        "operationId": "StaffBookingsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffCancelBookingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a booking, with a reason code",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/bookings/{id}/reject": {
+      "post": {
+        "operationId": "StaffBookingsController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectBookingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reject a pending booking, with a reason code",
+        "tags": [
+          "bookings"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/facilities": {
       "get": {
         "operationId": "StaffFacilitiesController_list",
@@ -37524,6 +38001,54 @@
         "summary": "Update a facility: names, order, state, rules",
         "tags": [
           "facilities"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/facilities/{id}/day": {
+      "get": {
+        "operationId": "FacilityDayController_day",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A local day of the compound, `YYYY-MM-DD`. Default today.",
+            "in": "query",
+            "name": "date",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacilityDayView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a facility’s day: its slots and bookings",
+        "tags": [
+          "bookings"
         ],
         "x-no-store": true,
         "x-stability": "draft"

@@ -5215,6 +5215,100 @@ export interface paths {
         patch: operations["SettingsController_update"];
         trace?: never;
     };
+    "/api/v1/staff/bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the compound’s bookings
+         * @description Soonest first. `status=pending` is the approvals queue.
+         */
+        get: operations["StaffBookingsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/bookings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a booking with its unit and booker */
+        get: operations["StaffBookingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/bookings/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve a pending booking
+         * @description Before its start (BOOKING_WINDOW_PASSED), and only while the slot’s confirmed bookings leave room under the capacity as it is now (BOOKING_SLOT_FULL).
+         */
+        post: operations["StaffBookingsController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/bookings/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel a booking, with a reason code
+         * @description A pending or confirmed booking that has not ended, whatever the facility’s cutoff.
+         */
+        post: operations["StaffBookingsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/bookings/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject a pending booking, with a reason code */
+        post: operations["StaffBookingsController_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/facilities": {
         parameters: {
             query?: never;
@@ -5249,6 +5343,23 @@ export interface paths {
         head?: never;
         /** Update a facility: names, order, state, rules */
         patch: operations["StaffFacilitiesController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/facilities/{id}/day": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a facility’s day: its slots and bookings */
+        get: operations["FacilityDayController_day"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/staff/facilities/{id}/hours": {
@@ -7325,6 +7436,13 @@ export interface components {
             data: components["schemas"]["BoardSuggestionView"][];
             nextCursor: string | null;
         };
+        BookingPersonView: {
+            erased: boolean;
+            /** @description Null once erased. */
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+        };
         /** @enum {string} */
         BookingSide: "resident" | "staff" | "system";
         /** @enum {string} */
@@ -8939,6 +9057,24 @@ export interface components {
          * @enum {string}
          */
         FacilityCapacityUnit: "bookings" | "people";
+        FacilityDaySlotView: {
+            /** Format: date-time */
+            endsAt: string;
+            peak: boolean;
+            /** Format: date-time */
+            startsAt: string;
+            /** @description Bookings, or people, holding it (pending and confirmed). */
+            taken: number;
+        };
+        FacilityDayView: {
+            /** @description Every booking that overlaps the day, whatever its status, in order of start. */
+            bookings: components["schemas"]["StaffBookingView"][];
+            capacity: number;
+            capacityUnit: components["schemas"]["FacilityCapacityUnit"];
+            date: string;
+            /** @description The slots of the day as the hours cut them now. */
+            slots: components["schemas"]["FacilityDaySlotView"][];
+        };
         /** @enum {string} */
         FacilityMode: "bookable" | "walk_in";
         FacilityRulesView: {
@@ -10022,7 +10158,7 @@ export interface components {
             sentAt: string;
         };
         /** @enum {string} */
-        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community" | "neighbours";
+        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community" | "neighbours" | "bookings";
         NotificationView: {
             /** Format: date-time */
             createdAt: string;
@@ -10812,6 +10948,10 @@ export interface components {
         };
         ReissueCodeDto: {
             /** @description From the closed list `cardReissue`. */
+            reasonCode: string;
+        };
+        RejectBookingDto: {
+            /** @description From the closed list `bookingReject`. */
             reasonCode: string;
         };
         RejectParcelDto: {
@@ -11769,6 +11909,47 @@ export interface components {
         StaffAppointmentSlotViewList: {
             data: components["schemas"]["StaffAppointmentSlotView"][];
             nextCursor: string | null;
+        };
+        StaffBookingView: {
+            bookedBy: components["schemas"]["BookingPersonView"];
+            cancelReason: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            cancelledSide: components["schemas"]["BookingSide"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description Approved or rejected at.
+             */
+            decidedAt: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            facilityId: string;
+            guests: number;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            noShowMarkedAt: string | null;
+            /** @description The booker and the guests. */
+            partySize: number;
+            peak: boolean;
+            rejectReason: string | null;
+            /** Format: date-time */
+            startsAt: string;
+            status: components["schemas"]["BookingStatus"];
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        StaffBookingViewList: {
+            data: components["schemas"]["StaffBookingView"][];
+            nextCursor: string | null;
+        };
+        StaffCancelBookingDto: {
+            /** @description From the closed list `bookingStaffCancel`. */
+            reasonCode: string;
         };
         StaffClaimView: {
             claimant: components["schemas"]["AccountRefView"];
@@ -21722,6 +21903,122 @@ export interface operations {
             };
         };
     };
+    StaffBookingsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `pending` is the approvals queue. */
+                status?: components["schemas"]["BookingStatus"];
+                facilityId?: string;
+                /** @description Starting at or after. */
+                from?: string;
+                /** @description Starting before. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffBookingViewList"];
+                };
+            };
+        };
+    };
+    StaffBookingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffBookingView"];
+                };
+            };
+        };
+    };
+    StaffBookingsController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffBookingsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffCancelBookingDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffBookingsController_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectBookingDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     StaffFacilitiesController_list: {
         parameters: {
             query?: never;
@@ -21809,6 +22106,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffFacilityView"];
+                };
+            };
+        };
+    };
+    FacilityDayController_day: {
+        parameters: {
+            query?: {
+                /** @description A local day of the compound, `YYYY-MM-DD`. Default today. */
+                date?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilityDayView"];
                 };
             };
         };

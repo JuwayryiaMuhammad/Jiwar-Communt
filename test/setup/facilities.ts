@@ -1,6 +1,8 @@
 import type { Response } from 'supertest';
 import { MemberPermissionsService } from '../../src/community/households/member-permissions.service';
 import { RolesService } from '../../src/core/access/roles.service';
+import { newId } from '../../src/core/common/uuid';
+import { SweepRunner } from '../../src/core/sweep/sweep-runner';
 import type { Permission } from '../../src/core/access/permissions';
 import { localDate, zonedInstant } from '../../src/core/common/slots/day-slots';
 import type { Compound } from './community';
@@ -219,6 +221,49 @@ export function facilitiesHelpers(h: HttpHarness) {
     );
   }
 
+  /** Runs one sweep now, or at `now`. */
+  function sweep(name: string, now: Date = new Date()) {
+    return h.moduleRef.get(SweepRunner).run(name, now);
+  }
+
+  /**
+   * A booking written straight into the table, for a time the API would
+   * refuse (one whose start has passed): its id.
+   */
+  async function rawBooking(
+    c: Compound,
+    input: {
+      facilityId: string;
+      unitId: string;
+      bookedById: string;
+      startsAt: Date;
+      minutes?: number;
+      status?: 'pending' | 'confirmed';
+    },
+  ): Promise<string> {
+    const id = newId();
+    await inTx(c, (tx) =>
+      tx.booking.create({
+        data: {
+          id,
+          tenantId: c.tenantId,
+          facilityId: input.facilityId,
+          unitId: input.unitId,
+          bookedById: input.bookedById,
+          startsAt: input.startsAt,
+          endsAt: new Date(
+            input.startsAt.getTime() + (input.minutes ?? 60) * 60_000,
+          ),
+          guests: 0,
+          partySize: 1,
+          peak: false,
+          status: input.status ?? 'confirmed',
+        },
+      }),
+    );
+    return id;
+  }
+
   return {
     ...e,
     x,
@@ -241,6 +286,8 @@ export function facilitiesHelpers(h: HttpHarness) {
     row,
     holding,
     revokeBookings,
+    sweep,
+    rawBooking,
   };
 }
 

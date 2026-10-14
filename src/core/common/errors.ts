@@ -404,6 +404,8 @@ export const ErrorCode = {
   BOOKING_INVALID_TRANSITION: 'BOOKING_INVALID_TRANSITION',
   /** A confirmed booking is cancelled at least params.minutes before it starts (409). */
   BOOKING_CANCEL_CUTOFF_PASSED: 'BOOKING_CANCEL_CUTOFF_PASSED',
+  /** Its start (to approve or reject) or its end (to cancel) has passed (409). */
+  BOOKING_WINDOW_PASSED: 'BOOKING_WINDOW_PASSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

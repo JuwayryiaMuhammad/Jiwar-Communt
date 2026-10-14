@@ -1,4 +1,5 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
+import { BOOKING_EXPIRE_SWEEP } from '../../src/facilities/bookings/staff-bookings.service';
 import { auditReaders } from '../setup/audit';
 import {
   COMMUNITY_COVERAGE,
@@ -176,6 +177,76 @@ describe('Audit coverage — facilities', () => {
         from: 'confirmed',
         side: 'resident',
         reasonCode: 'cannot_attend',
+      });
+    });
+  });
+
+  describe('decisions', () => {
+    let room: string;
+
+    beforeAll(async () => {
+      room = await f.facility(s.c, s.manager, {
+        requiresApproval: true,
+        capacity: 3,
+      });
+    });
+
+    it('booking.approved — by the handler; the facility and unit', async () => {
+      const b = await f.book(s.alice, s.homeA.id, room, at(day(2), 12));
+      await f
+        .http('post', `/staff/bookings/${b.id}/approve`, s.handler.token)
+        .expect(204);
+      const row = await single('booking.approved', b.id);
+      expect(row).toMatchObject(by(s.handler, 'booking'));
+      expect(row.metadata).toEqual({ facilityId: room, unitId: s.homeA.id });
+    });
+
+    it('booking.rejected — the reason code', async () => {
+      const b = await f.book(s.bob, s.homeB.id, room, at(day(2), 12));
+      await f
+        .http('post', `/staff/bookings/${b.id}/reject`, s.handler.token, {
+          reasonCode: 'not_eligible',
+        })
+        .expect(204);
+      const row = await single('booking.rejected', b.id);
+      expect(row).toMatchObject(by(s.handler, 'booking'));
+      expect(row.metadata).toEqual({
+        facilityId: room,
+        unitId: s.homeB.id,
+        reasonCode: 'not_eligible',
+      });
+    });
+
+    it('booking.cancelled by the staff — side staff, the reason code', async () => {
+      const b = await f.book(s.bob, s.homeB.id, room, at(day(3), 12));
+      await f
+        .http('post', `/staff/bookings/${b.id}/cancel`, s.handler.token, {
+          reasonCode: 'rules_violation',
+        })
+        .expect(204);
+      const [row] = await rows('booking.cancelled', b.id);
+      expect(row).toMatchObject(by(s.handler, 'booking'));
+      expect(row.metadata).toMatchObject({
+        side: 'staff',
+        reasonCode: 'rules_violation',
+      });
+    });
+
+    it('booking.expired — by the system', async () => {
+      const id = await f.rawBooking(s.c, {
+        facilityId: room,
+        unitId: s.homeA.id,
+        bookedById: s.alice.id,
+        startsAt: new Date(Date.now() - 60_000),
+        status: 'pending',
+      });
+      await f.sweep(BOOKING_EXPIRE_SWEEP);
+      const row = await single('booking.expired', id);
+      expect(row).toMatchObject({ actorType: 'system', targetType: 'booking' });
+      expect(row.metadata).toEqual({
+        facilityId: room,
+        unitId: s.homeA.id,
+        reasonCode: 'approval_expired',
       });
     });
   });

@@ -236,3 +236,96 @@ export const BOOKING_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** The staff's bookings (ADR 0044): the list and queue, a day, decisions. */
+export const STAFF_BOOKING_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/staff/bookings',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'waiting' },
+      fields: [{ field: 'status', code: 'INVALID_VALUE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/bookings/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bBookingId }),
+      code: 'BOOKING_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/bookings/{id}/approve',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bBookingId }),
+      code: 'BOOKING_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/bookings/{id}/reject',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bBookingId }),
+      code: 'BOOKING_NOT_FOUND',
+      body: () => ({ reasonCode: 'other' }),
+    },
+    invalid: {
+      body: {},
+      fields: [{ field: 'reasonCode', code: 'FIELD_REQUIRED' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/bookings/{id}/cancel',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bBookingId }),
+      code: 'BOOKING_NOT_FOUND',
+      body: () => ({ reasonCode: 'other' }),
+    },
+    invalid: {
+      body: { reasonCode: ['other'] },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/facilities/{id}/day',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bFacilityId }),
+      code: 'FACILITY_NOT_FOUND',
+    },
+    invalid: {
+      query: { date: 'today' },
+      fields: [{ field: 'date', code: 'INVALID_FORMAT' }],
+    },
+    noStore: true,
+  },
+];

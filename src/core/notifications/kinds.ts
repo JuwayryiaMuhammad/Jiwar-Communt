@@ -904,6 +904,43 @@ export const NOTIFICATION_KINDS = {
     target: 'neighbour_welcome',
     params: {},
   },
+  // Bookings and the club (ADR 0044). No kind is critical. They target the
+  // booking (or the suspension, the membership) and carry a reason's code
+  // at most (`reason`: a param named `…Code` reads as a secret): never a
+  // facility's name, a time, a unit or a name. To the booker
+  // only; never to the one who acted.
+  /** The management approved a booking that waited for it. */
+  'booking.approved': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'booking',
+    params: {},
+  },
+  /** The management did not approve it; the reason is a code. */
+  'booking.rejected': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'booking',
+    params: { reason: {} },
+  },
+  /** Nobody approved it before its start: it was cancelled by the system. */
+  'booking.approval_expired': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'booking',
+    params: {},
+  },
+  /** The management cancelled it; the reason is a code. */
+  'booking.cancelled_by_staff': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'booking',
+    params: { reason: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

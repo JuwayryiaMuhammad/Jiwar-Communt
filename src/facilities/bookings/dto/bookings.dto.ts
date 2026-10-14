@@ -1,7 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { BookingStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsDate,
+  IsEnum,
   IsIn,
   IsInt,
   IsOptional,
@@ -91,4 +93,74 @@ export class UnitBookingsQueryDto extends PageQueryDto {
   @IsOptional()
   @IsIn(['upcoming', 'past'])
   scope: 'upcoming' | 'past' = 'upcoming';
+}
+
+export class StaffBookingsQueryDto extends PageQueryDto {
+  @ApiProperty({
+    enum: BookingStatus,
+    enumName: 'BookingStatus',
+    required: false,
+    description: '`pending` is the approvals queue.',
+  })
+  @IsOptional()
+  @IsEnum(BookingStatus)
+  status?: BookingStatus;
+
+  @ApiProperty({ type: String, format: 'uuid', required: false })
+  @IsOptional()
+  @IsUUID()
+  facilityId?: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    required: false,
+    description: 'Starting at or after.',
+  })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  from?: Date;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    required: false,
+    description: 'Starting before.',
+  })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  to?: Date;
+}
+
+export class FacilityDayQueryDto {
+  @ApiProperty({
+    type: String,
+    required: false,
+    pattern: LOCAL_DATE.source,
+    description: 'A local day of the compound, `YYYY-MM-DD`. Default today.',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(LOCAL_DATE)
+  date?: string;
+}
+
+export class RejectBookingDto {
+  @ApiProperty({
+    type: String,
+    description: 'From the closed list `bookingReject`.',
+  })
+  @IsString()
+  reasonCode: string;
+}
+
+export class StaffCancelBookingDto {
+  @ApiProperty({
+    type: String,
+    description: 'From the closed list `bookingStaffCancel`.',
+  })
+  @IsString()
+  reasonCode: string;
 }

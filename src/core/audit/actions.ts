@@ -607,6 +607,13 @@ export const AUDIT_ACTIONS = {
   // metadata: facilityId, unitId, from (the status), side, reasonCode, and
   // closureId when a closure cancelled it.
   'booking.cancelled': { log: 'tenant', target: 'booking' },
+  // metadata: facilityId, unitId.
+  'booking.approved': { log: 'tenant', target: 'booking' },
+  // metadata: facilityId, unitId, reasonCode.
+  'booking.rejected': { log: 'tenant', target: 'booking' },
+  // By the system: nobody approved it before its start. metadata:
+  // facilityId, unitId, reasonCode.
+  'booking.expired': { log: 'tenant', target: 'booking' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

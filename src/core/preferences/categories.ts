@@ -17,6 +17,8 @@ export const NOTIFICATION_CATEGORIES = [
   'community',
   // Complaints between units, the boards and masked contact (ADR 0042).
   'neighbours',
+  // A resident's bookings of the facilities, and the club (ADR 0044).
+  'bookings',
 ] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 

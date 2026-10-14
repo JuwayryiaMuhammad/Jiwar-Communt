@@ -11,7 +11,11 @@ import {
   type FieldError,
 } from '../../core/common/errors';
 import { REASON_CODES, requireReasonCodeOnly } from '../../core/common/reasons';
-import { localDate, type LocalDate } from '../../core/common/slots/day-slots';
+import {
+  localDate,
+  type LocalDate,
+  type Slot,
+} from '../../core/common/slots/day-slots';
 import { newId } from '../../core/common/uuid';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { TenantTx } from '../../core/database/tenant-tx.service';
@@ -158,7 +162,7 @@ export class BookingsService implements OnModuleInit {
   /** How much of the slot is taken: bookings, or people. */
   static taken(
     rules: FacilityRules,
-    slot: FacilitySlot,
+    slot: Slot,
     holding: readonly Booking[],
   ): number {
     const inSlot = heldIn(slot, holding);
@@ -440,17 +444,9 @@ export class BookingsService implements OnModuleInit {
     tx: TenantTxClient,
     facility: Facility,
     rules: FacilityRules,
-    slot: FacilitySlot,
+    slot: Slot,
   ): Promise<number> {
-    await tx.$executeRaw`
-      INSERT INTO facility_slot_locks (tenant_id, facility_id, starts_at)
-      VALUES (${facility.tenantId}::uuid, ${facility.id}::uuid, ${slot.startsAt})
-      ON CONFLICT DO NOTHING`;
-    await tx.$queryRaw`
-      SELECT starts_at FROM facility_slot_locks
-       WHERE tenant_id = ${facility.tenantId}::uuid
-         AND facility_id = ${facility.id}::uuid
-         AND starts_at = ${slot.startsAt} FOR UPDATE`;
+    await this.lockSlotRow(tx, facility, slot.startsAt);
     const holding = await this.holdingBetween(
       tx,
       facility.id,
@@ -458,6 +454,23 @@ export class BookingsService implements OnModuleInit {
       slot.endsAt,
     );
     return BookingsService.taken(rules, slot, holding);
+  }
+
+  /** The slot's lock row, created on first use, locked to the end of the transaction. */
+  async lockSlotRow(
+    tx: TenantTxClient,
+    facility: Facility,
+    startsAt: Date,
+  ): Promise<void> {
+    await tx.$executeRaw`
+      INSERT INTO facility_slot_locks (tenant_id, facility_id, starts_at)
+      VALUES (${facility.tenantId}::uuid, ${facility.id}::uuid, ${startsAt})
+      ON CONFLICT DO NOTHING`;
+    await tx.$queryRaw`
+      SELECT starts_at FROM facility_slot_locks
+       WHERE tenant_id = ${facility.tenantId}::uuid
+         AND facility_id = ${facility.id}::uuid
+         AND starts_at = ${startsAt} FOR UPDATE`;
   }
 
   // --------------------------------------------------------------------------

@@ -959,6 +959,48 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'مرحبًا بك. افتح التطبيق للاطلاع على قواعد المجمع ومواعيد المكتب وأرقام الطوارئ.',
     },
   },
+  // Bookings and the club (ADR 0044): generic, no facility, time or name;
+  // the app shows the booking and its reason.
+  'booking.approved': {
+    en: {
+      title: 'Booking confirmed',
+      body: 'The management approved your booking.',
+    },
+    ar: {
+      title: 'تم تأكيد الحجز',
+      body: 'وافقت الإدارة على حجزك.',
+    },
+  },
+  'booking.rejected': {
+    en: {
+      title: 'Booking not approved',
+      body: 'Your booking request was not approved. Open the app for details.',
+    },
+    ar: {
+      title: 'لم تتم الموافقة على الحجز',
+      body: 'لم تتم الموافقة على طلب حجزك. افتح التطبيق للتفاصيل.',
+    },
+  },
+  'booking.approval_expired': {
+    en: {
+      title: 'Booking request expired',
+      body: 'Your booking request was not approved in time.',
+    },
+    ar: {
+      title: 'انتهت مهلة طلب الحجز',
+      body: 'لم تتم الموافقة على طلب حجزك في الوقت المحدد.',
+    },
+  },
+  'booking.cancelled_by_staff': {
+    en: {
+      title: 'Booking cancelled',
+      body: 'The management cancelled your booking.',
+    },
+    ar: {
+      title: 'تم إلغاء الحجز',
+      body: 'ألغت الإدارة حجزك.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

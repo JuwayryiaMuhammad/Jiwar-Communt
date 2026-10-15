@@ -1,5 +1,7 @@
+import { Client } from 'pg';
 import { newId } from '../../src/core/common/uuid';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
+import { required } from './test-env';
 
 // ============================================================================
 // Emergencies and gate services rows written straight into the tables (ADR
@@ -69,4 +71,27 @@ export async function familyAlertRow(
 ): Promise<string> {
   await tx.emergencyFamilyAlert.create({ data: input });
   return input.emergencyId;
+}
+
+/**
+ * TEST-ONLY time machine: moves an emergency's report `ms` into the past
+ * over a superuser connection with `session_replication_role = replica`,
+ * which skips the trigger that keeps it. src/ cannot import it.
+ */
+export async function rewindEmergency(id: string, ms: number): Promise<void> {
+  const db = new Client({
+    connectionString: required('TEST_SUPERUSER_DATABASE_URL'),
+  });
+  await db.connect();
+  try {
+    await db.query('BEGIN');
+    await db.query('SET LOCAL session_replication_role = replica');
+    await db.query(
+      `UPDATE emergencies SET reported_at = reported_at - $2::interval WHERE id = $1`,
+      [id, `${ms} milliseconds`],
+    );
+    await db.query('COMMIT');
+  } finally {
+    await db.end();
+  }
 }

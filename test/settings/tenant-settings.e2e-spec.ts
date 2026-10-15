@@ -28,6 +28,8 @@ describe('Tenant settings', () => {
       gateRequestTimeoutSeconds: 180,
       visitorDirections: null,
       emergencyPhone: null,
+      officePhone: null,
+      dutyPhone: null,
       allowAlwaysAllow: true,
     });
   });
@@ -90,6 +92,8 @@ describe('Tenant settings', () => {
       gateRequestTimeoutSeconds: 180,
       visitorDirections: null,
       emergencyPhone: null,
+      officePhone: null,
+      dutyPhone: null,
       allowAlwaysAllow: true,
     });
     expect(await x.asManager(other, () => settings.get())).toEqual({
@@ -100,6 +104,8 @@ describe('Tenant settings', () => {
       gateRequestTimeoutSeconds: 180,
       visitorDirections: null,
       emergencyPhone: null,
+      officePhone: null,
+      dutyPhone: null,
       allowAlwaysAllow: true,
     });
 
@@ -186,6 +192,40 @@ describe('Tenant settings', () => {
     ]);
     expect(JSON.stringify(entries)).not.toContain('Gate 2');
     expect(JSON.stringify(entries)).not.toContain('1000000123');
+  });
+
+  it('the office and duty phones: set, normalized, cleared, audited without values (ADR 0047)', async () => {
+    const c = await x.compound();
+    expect(
+      await x.asManager(c, () =>
+        settings.update({
+          officePhone: '0225550101',
+          dutyPhone: '+20 100 000 0789',
+        }),
+      ),
+    ).toMatchObject({
+      officePhone: '+20225550101',
+      dutyPhone: '+201000000789',
+      emergencyPhone: null,
+    });
+    for (const field of ['officePhone', 'dutyPhone'] as const)
+      await expect(
+        x.asManager(c, () => settings.update({ [field]: 'call me' })),
+      ).rejects.toMatchObject({
+        response: { fields: [{ field, code: 'INVALID_PHONE' }] },
+      });
+    expect(
+      await x.asManager(c, () => settings.update({ dutyPhone: null })),
+    ).toMatchObject({ officePhone: '+20225550101', dutyPhone: null });
+    const entries = await auditReaders(h).tenant(c.tenantId, {
+      action: 'tenant.settings_changed',
+    });
+    expect(entries.map((e) => e.changes)).toEqual([
+      { officePhone: { changed: true }, dutyPhone: { changed: true } },
+      { dutyPhone: { changed: true } },
+    ]);
+    expect(JSON.stringify(entries)).not.toContain('5550101');
+    expect(JSON.stringify(entries)).not.toContain('1000000789');
   });
 
   it.each([0, 101, 2.5])('rejects a household limit of %p', async (value) => {

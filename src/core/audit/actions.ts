@@ -125,7 +125,12 @@ export const AUDIT_ACTIONS = {
   'tenant.settings_changed': {
     log: 'tenant',
     target: 'tenant',
-    sensitive: ['visitorDirections', 'emergencyPhone'],
+    sensitive: [
+      'visitorDirections',
+      'emergencyPhone',
+      'officePhone',
+      'dutyPhone',
+    ],
   },
   // household (ADR 0016)
   'household.invite_created': { log: 'tenant', target: 'household_invite' },

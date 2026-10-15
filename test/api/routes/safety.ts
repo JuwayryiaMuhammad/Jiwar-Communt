@@ -64,3 +64,20 @@ export const PLACE_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** A unit's emergency contacts (ADR 0047). */
+export const EMERGENCY_CONTACT_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/units/{unitId}/emergency-contacts',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.bUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+];

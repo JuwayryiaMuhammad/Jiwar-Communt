@@ -39,6 +39,19 @@ export class SettingsView {
   })
   emergencyPhone: string | null;
   @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'E.164; the community office, in a unit’s emergency contacts.',
+  })
+  officePhone: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'E.164; the duty manager, in a unit’s emergency contacts and for a responder who is not at a gate.',
+  })
+  dutyPhone: string | null;
+  @ApiProperty({
     type: Boolean,
     description:
       'Whether households may write `always_allow` standing instructions (ADR 0043). Off: none is created (ALWAYS_ALLOW_DISABLED) and the guard sees those that exist as `call_first`.',
@@ -54,6 +67,8 @@ export class SettingsView {
       gateRequestTimeoutSeconds: s.gateRequestTimeoutSeconds,
       visitorDirections: s.visitorDirections,
       emergencyPhone: s.emergencyPhone,
+      officePhone: s.officePhone,
+      dutyPhone: s.dutyPhone,
       allowAlwaysAllow: s.allowAlwaysAllow,
     };
   }

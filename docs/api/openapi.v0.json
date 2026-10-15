@@ -7290,6 +7290,55 @@
         ],
         "type": "object"
       },
+      "EmergencyContactsView": {
+        "properties": {
+          "family": {
+            "description": "The other people who live in the unit, the primary first. Empty for a caller who does not live there (a landlord).",
+            "items": {
+              "$ref": "#/components/schemas/FamilyContactView"
+            },
+            "type": "array"
+          },
+          "gates": {
+            "description": "The gates in service that have a phone, by name.",
+            "items": {
+              "$ref": "#/components/schemas/GateContactView"
+            },
+            "type": "array"
+          },
+          "management": {
+            "description": "Each of the three when the management has set it.",
+            "items": {
+              "$ref": "#/components/schemas/ManagementContactView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "family",
+          "gates",
+          "management"
+        ],
+        "type": "object"
+      },
+      "EmergencyFamilyRole": {
+        "description": "An occupant (owner or tenant) or a household member.",
+        "enum": [
+          "owner",
+          "tenant",
+          "member"
+        ],
+        "type": "string"
+      },
+      "EmergencyManagementRole": {
+        "description": "`office`: the community office; `duty`: the duty manager; `emergency`: the compound’s emergency number.",
+        "enum": [
+          "office",
+          "duty",
+          "emergency"
+        ],
+        "type": "string"
+      },
       "EngagementDetailView": {
         "properties": {
           "capacity": {
@@ -8624,6 +8673,43 @@
         ],
         "type": "object"
       },
+      "FamilyContactView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "isPrimary": {
+            "description": "The unit’s primary resident.",
+            "type": "boolean"
+          },
+          "name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "phone": {
+            "example": "+201000000123",
+            "nullable": true,
+            "type": "string"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmergencyFamilyRole"
+              }
+            ],
+            "description": "An occupant (owner or tenant) or a household member."
+          }
+        },
+        "required": [
+          "accountId",
+          "name",
+          "role",
+          "isPrimary",
+          "phone"
+        ],
+        "type": "object"
+      },
       "FeedbackView": {
         "properties": {
           "author": {
@@ -8969,6 +9055,36 @@
         },
         "required": [
           "flagId"
+        ],
+        "type": "object"
+      },
+      "GateContactView": {
+        "properties": {
+          "gateId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "example": "North gate",
+            "type": "string"
+          },
+          "phone": {
+            "example": "+20225550100",
+            "type": "string"
+          },
+          "role": {
+            "description": "Always `gate`.",
+            "enum": [
+              "gate"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "gateId",
+          "name",
+          "role",
+          "phone"
         ],
         "type": "object"
       },
@@ -11313,6 +11429,27 @@
           "superseded"
         ],
         "type": "string"
+      },
+      "ManagementContactView": {
+        "properties": {
+          "phone": {
+            "example": "+20225550101",
+            "type": "string"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmergencyManagementRole"
+              }
+            ],
+            "description": "`office`: the community office; `duty`: the duty manager; `emergency`: the compound’s emergency number."
+          }
+        },
+        "required": [
+          "role",
+          "phone"
+        ],
+        "type": "object"
       },
       "ManagementRequestStatus": {
         "enum": [
@@ -19226,6 +19363,11 @@
             "description": "Whether households may write `always_allow` standing instructions (ADR 0043). Off: none is created (ALWAYS_ALLOW_DISABLED) and the guard sees those that exist as `call_first`.",
             "type": "boolean"
           },
+          "dutyPhone": {
+            "description": "E.164; the duty manager, in a unit’s emergency contacts and for a responder who is not at a gate.",
+            "nullable": true,
+            "type": "string"
+          },
           "emergencyPhone": {
             "description": "E.164; on the visitor page and the worker card.",
             "nullable": true,
@@ -19245,6 +19387,11 @@
           "maxHouseholdMembers": {
             "type": "number"
           },
+          "officePhone": {
+            "description": "E.164; the community office, in a unit’s emergency contacts.",
+            "nullable": true,
+            "type": "string"
+          },
           "timezone": {
             "description": "IANA; worker schedules are read in it.",
             "type": "string"
@@ -19263,6 +19410,8 @@
           "gateRequestTimeoutSeconds",
           "visitorDirections",
           "emergencyPhone",
+          "officePhone",
+          "dutyPhone",
           "allowAlwaysAllow"
         ],
         "type": "object"
@@ -25769,6 +25918,12 @@
             "description": "Whether households may write `always_allow` standing instructions (ADR 0043).",
             "type": "boolean"
           },
+          "dutyPhone": {
+            "description": "The duty manager (ADR 0047), stored in E.164: in every unit’s emergency contacts, and the phone an emergency shows when someone who is not at a gate answers it. `null` clears it.",
+            "example": "+201000000002",
+            "nullable": true,
+            "type": "string"
+          },
           "emergencyPhone": {
             "description": "Stored in E.164; on the visitor page and the worker card. `null` clears it.",
             "example": "+201000000000",
@@ -25794,6 +25949,12 @@
             "maximum": 100,
             "minimum": 1,
             "type": "number"
+          },
+          "officePhone": {
+            "description": "The community office (ADR 0047), stored in E.164: in every unit’s emergency contacts. `null` clears it.",
+            "example": "+20225550101",
+            "nullable": true,
+            "type": "string"
           },
           "timezone": {
             "description": "IANA time zone.",
@@ -50387,6 +50548,45 @@
         "tags": [
           "delegations"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/emergency-contacts": {
+      "get": {
+        "description": "For anyone the unit gives the emergency button. The family (with their phones) only for someone who lives there too.",
+        "operationId": "EmergencyContactsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmergencyContactsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a unit’s emergency contacts",
+        "tags": [
+          "emergencies"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

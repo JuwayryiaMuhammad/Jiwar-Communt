@@ -167,6 +167,14 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'emergency_phone IS NULL is tested first; the pattern runs only on a value',
   },
+  tenant_settings_office_phone_e164: {
+    guarded:
+      'office_phone IS NULL is tested first; the pattern runs only on a value',
+  },
+  tenant_settings_duty_phone_e164: {
+    guarded:
+      'duty_phone IS NULL is tested first; the pattern runs only on a value',
+  },
   // Maintenance (ADR 0032): no nullable column, or only under IS [NOT] NULL.
   ticket_categories_key_shape: {},
   ticket_categories_names_length: {},

@@ -21,6 +21,10 @@ export interface TenantSettingsView {
   visitorDirections: string | null;
   /** E.164; on the visitor page and the worker card (ADR 0030). */
   emergencyPhone: string | null;
+  /** E.164; the community office, in a unit's emergency contacts (ADR 0047). */
+  officePhone: string | null;
+  /** E.164; the duty manager, in the contacts and for a staff responder (ADR 0047). */
+  dutyPhone: string | null;
   /** Whether households may write `always_allow` instructions (ADR 0043). */
   allowAlwaysAllow: boolean;
 }
@@ -124,7 +128,9 @@ export class TenantSettingsService {
       );
     }
     const directions = checkDirections(input.visitorDirections);
-    const phone = checkPhone(input.emergencyPhone);
+    const phone = checkPhone('emergencyPhone', input.emergencyPhone);
+    const officePhone = checkPhone('officePhone', input.officePhone);
+    const dutyPhone = checkPhone('dutyPhone', input.dutyPhone);
     const tenantId = this.ctx.tenantId;
     return this.tenantTx.withTenantTx(async (tx) => {
       const before = await this.inTx(tx, tenantId);
@@ -138,6 +144,8 @@ export class TenantSettingsService {
           gateRequestTimeoutSeconds: input.gateRequestTimeoutSeconds,
           visitorDirections: directions,
           emergencyPhone: phone,
+          officePhone,
+          dutyPhone,
           allowAlwaysAllow: input.allowAlwaysAllow,
         },
       });
@@ -167,6 +175,8 @@ function view(row: TenantSettings): TenantSettingsView {
     gateRequestTimeoutSeconds: row.gateRequestTimeoutSeconds,
     visitorDirections: row.visitorDirections,
     emergencyPhone: row.emergencyPhone,
+    officePhone: row.officePhone,
+    dutyPhone: row.dutyPhone,
     allowAlwaysAllow: row.allowAlwaysAllow,
   };
 }
@@ -196,19 +206,13 @@ function checkDirections(value: string | null | undefined) {
 }
 
 /** Stored in E.164; `null` clears, absent keeps. */
-function checkPhone(value: string | null | undefined) {
+function checkPhone(field: string, value: string | null | undefined) {
   if (value === undefined || value === null) return value;
   const e164 = normalizePhone(value);
   if (!e164)
-    throw appError.badRequest(
-      ErrorCode.VALIDATION_FAILED,
-      'Invalid emergency phone',
-      {
-        fields: [
-          { field: 'emergencyPhone', code: FieldErrorCode.INVALID_PHONE },
-        ],
-      },
-    );
+    throw appError.badRequest(ErrorCode.VALIDATION_FAILED, `Invalid ${field}`, {
+      fields: [{ field, code: FieldErrorCode.INVALID_PHONE }],
+    });
   return e164;
 }
 

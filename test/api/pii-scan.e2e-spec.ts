@@ -1136,6 +1136,8 @@ describe('API v0 — PII leak scan', () => {
       '/vehicle-fines/{id}': piiFine,
       '/staff/vehicle-fines/{id}': piiFine,
       '/staff/parking-reports/{id}': piiParkingReport,
+      // ADR 0047: the family's phones, for those who live there only.
+      '/units/{unitId}/emergency-contacts': unit.id,
       // ADR 0046: last four characters at most, never a name.
       '/platform/tenants/{id}/payment-gateway': a.tenantId,
       '/staff/invoice-batches/{id}': piiInvoice.batchId,
@@ -1452,9 +1454,17 @@ describe('API v0 — PII leak scan', () => {
           for (const s of dispatchOnly)
             if (found(s)) leaks.push(`${name} ${r.path}: ${s}`);
         }
+        // A unit's emergency contacts (ADR 0047): the people who live there
+        // see each other's phones; nobody else's, and nobody else sees them.
+        const sameHome =
+          r.path === '/units/{unitId}/emergency-contacts' &&
+          ['resident', 'family', 'plainMember'].includes(name)
+            ? [primary, family]
+            : [];
         if (!persona.isManager) {
           for (const p of others) {
-            if (found(p.phone)) leaks.push(`${name} ${r.path}: phone`);
+            if (found(p.phone) && !sameHome.includes(p))
+              leaks.push(`${name} ${r.path}: phone`);
             if (found(p.email)) leaks.push(`${name} ${r.path}: email`);
           }
           for (const b of birthDates)
@@ -1974,6 +1984,12 @@ describe('API v0 — PII leak scan', () => {
     // Positive controls: the scan reads real data, where it is allowed.
     expect(seen.get('manager /residents/{id}')).toContain(primary.birthDate);
     expect(seen.get('manager /residents')).toContain(primary.phone);
+    expect(seen.get('resident /units/{unitId}/emergency-contacts')).toContain(
+      family.phone,
+    );
+    expect(seen.get('family /units/{unitId}/emergency-contacts')).toContain(
+      primary.phone,
+    );
     expect(seen.get('resident /me')).toContain(primary.phone);
     expect(seen.get('resident /units/{unitId}/household')).toContain(
       joined.fullName,

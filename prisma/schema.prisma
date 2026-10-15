@@ -1145,6 +1145,10 @@ model TenantSettings {
   visitorDirections          String?  @map("visitor_directions")
   /// E.164; on the visitor page and the worker card.
   emergencyPhone             String?  @map("emergency_phone")
+  /// E.164 (ADR 0047): the community office, in a unit's emergency contacts.
+  officePhone                String?  @map("office_phone")
+  /// E.164 (ADR 0047): the duty manager; also a staff responder's phone.
+  dutyPhone                  String?  @map("duty_phone")
   /// Whether households may write `always_allow` instructions (ADR 0043).
   allowAlwaysAllow           Boolean  @default(true) @map("allow_always_allow")
   createdAt                  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)

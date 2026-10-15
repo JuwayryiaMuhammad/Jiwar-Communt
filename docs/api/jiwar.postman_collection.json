@@ -1935,9 +1935,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"allowAlwaysAllow\": false,\n  \"emergencyPhone\": \"+201000000000\",\n  \"familyJoinRequiresApproval\": false,\n  \"gateRequestTimeoutSeconds\": 30,\n  \"maxActiveVisitorPasses\": 1,\n  \"maxHouseholdMembers\": 1,\n  \"timezone\": \"Africa/Cairo\",\n  \"visitorDirections\": \"\"\n}"
+              "raw": "{\n  \"allowAlwaysAllow\": false,\n  \"dutyPhone\": \"+201000000002\",\n  \"emergencyPhone\": \"+201000000000\",\n  \"familyJoinRequiresApproval\": false,\n  \"gateRequestTimeoutSeconds\": 30,\n  \"maxActiveVisitorPasses\": 1,\n  \"maxHouseholdMembers\": 1,\n  \"officePhone\": \"+20225550101\",\n  \"timezone\": \"Africa/Cairo\",\n  \"visitorDirections\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `allowAlwaysAllow` | boolean |  | Whether households may write `always_allow` standing instructions (ADR 0043). |\n| `emergencyPhone` | string |  | Stored in E.164; on the visitor page and the worker card. `null` clears it. |\n| `familyJoinRequiresApproval` | boolean |  |  |\n| `gateRequestTimeoutSeconds` | number |  | Seconds a household has to answer the gate before its standing instruction applies. |\n| `maxActiveVisitorPasses` | number |  | Active visitor passes per unit. |\n| `maxHouseholdMembers` | number |  |  |\n| `timezone` | string |  | IANA time zone. |\n| `visitorDirections` | string |  | What the compound tells its visitors on the public pass page (ADR 0030). `null` clears it. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `allowAlwaysAllow` | boolean |  | Whether households may write `always_allow` standing instructions (ADR 0043). |\n| `dutyPhone` | string |  | The duty manager (ADR 0047), stored in E.164: in every unit’s emergency contacts, and the phone an emergency shows when someone who is not at a gate answers it. `null` clears it. |\n| `emergencyPhone` | string |  | Stored in E.164; on the visitor page and the worker card. `null` clears it. |\n| `familyJoinRequiresApproval` | boolean |  |  |\n| `gateRequestTimeoutSeconds` | number |  | Seconds a household has to answer the gate before its standing instruction applies. |\n| `maxActiveVisitorPasses` | number |  | Active visitor passes per unit. |\n| `maxHouseholdMembers` | number |  |  |\n| `officePhone` | string |  | The community office (ADR 0047), stored in E.164: in every unit’s emergency contacts. `null` clears it. |\n| `timezone` | string |  | IANA time zone. |\n| `visitorDirections` | string |  | What the compound tells its visitors on the public pass page (ADR 0030). `null` clears it. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -5585,6 +5585,39 @@
         }
       ],
       "name": "delegations"
+    },
+    {
+      "item": [
+        {
+          "name": "Get a unit’s emergency contacts",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "emergency-contacts"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/emergency-contacts",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "name": "emergencies"
     },
     {
       "item": [

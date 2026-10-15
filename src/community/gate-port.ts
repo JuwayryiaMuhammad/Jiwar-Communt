@@ -41,6 +41,13 @@ export interface GateEngagement {
   photoFileId: string | null;
 }
 
+/** Someone who lives in a unit, and as what (ADR 0047). */
+export interface UnitResident {
+  accountId: string;
+  role: 'owner' | 'tenant' | 'member';
+  isPrimary: boolean;
+}
+
 const ENGAGEMENT = {
   worker: { select: { fullName: true, bannedAt: true, photoFileId: true } },
   unit: { select: { code: true } },
@@ -98,6 +105,30 @@ export class CommunityGatePort {
     flag: CapabilityFlag,
   ): Promise<string[]> {
     return this.capabilities.holders(tx, unitId, flag);
+  }
+
+  /**
+   * The people who live in the unit (ADR 0047): its residing occupants and
+   * its active adult members with an account — the `gateEntry` holders,
+   * never a landlord, a pending or removed member, a minor or an ended
+   * occupancy. Each with what they are there; the primary first.
+   */
+  async residents(tx: TenantTxClient, unitId: string): Promise<UnitResident[]> {
+    const ids = await this.capabilities.holders(tx, unitId, 'gateEntry');
+    if (!ids.length) return [];
+    const occupancies = await tx.unitOccupancy.findMany({
+      where: { unitId, status: 'active', accountId: { in: ids } },
+      select: { accountId: true, occupancyType: true, isPrimary: true },
+    });
+    const by = new Map(occupancies.map((o) => [o.accountId, o]));
+    return ids
+      .map((accountId): UnitResident => {
+        const o = by.get(accountId);
+        return o
+          ? { accountId, role: o.occupancyType, isPrimary: o.isPrimary }
+          : { accountId, role: 'member', isPrimary: false };
+      })
+      .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
   }
 
   /** The units where the account's capabilities carry `flag`. */

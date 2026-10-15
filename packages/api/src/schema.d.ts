@@ -7712,6 +7712,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/emergency-contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a unit’s emergency contacts
+         * @description For anyone the unit gives the emergency button. The family (with their phones) only for someone who lives there too.
+         */
+        get: operations["EmergencyContactsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/gate-instructions": {
         parameters: {
             query?: never;
@@ -10724,6 +10744,24 @@ export interface components {
             /** @description A presigned GET of the archive, valid a few minutes. */
             url: string;
         };
+        EmergencyContactsView: {
+            /** @description The other people who live in the unit, the primary first. Empty for a caller who does not live there (a landlord). */
+            family: components["schemas"]["FamilyContactView"][];
+            /** @description The gates in service that have a phone, by name. */
+            gates: components["schemas"]["GateContactView"][];
+            /** @description Each of the three when the management has set it. */
+            management: components["schemas"]["ManagementContactView"][];
+        };
+        /**
+         * @description An occupant (owner or tenant) or a household member.
+         * @enum {string}
+         */
+        EmergencyFamilyRole: "owner" | "tenant" | "member";
+        /**
+         * @description `office`: the community office; `duty`: the duty manager; `emergency`: the compound’s emergency number.
+         * @enum {string}
+         */
+        EmergencyManagementRole: "office" | "duty" | "emergency";
         EngagementDetailView: {
             capacity: components["schemas"]["WorkerCapacity"];
             /** Format: date-time */
@@ -11130,6 +11168,17 @@ export interface components {
             /** @description 0 is Sunday. */
             weekday: number;
         };
+        FamilyContactView: {
+            /** Format: uuid */
+            accountId: string;
+            /** @description The unit’s primary resident. */
+            isPrimary: boolean;
+            name: string | null;
+            /** @example +201000000123 */
+            phone: string | null;
+            /** @description An occupant (owner or tenant) or a household member. */
+            role: components["schemas"]["EmergencyFamilyRole"];
+        };
         FeedbackView: {
             author: components["schemas"]["AccountRefView"];
             /** @description The confirmation's comment; null once its author is erased. */
@@ -11235,6 +11284,19 @@ export interface components {
              * @description The open flag (an existing one when already open).
              */
             flagId: string;
+        };
+        GateContactView: {
+            /** Format: uuid */
+            gateId: string;
+            /** @example North gate */
+            name: string;
+            /** @example +20225550100 */
+            phone: string;
+            /**
+             * @description Always `gate`.
+             * @enum {string}
+             */
+            role: "gate";
         };
         GateDecisionDto: {
             /** @enum {string} */
@@ -11956,6 +12018,12 @@ export interface components {
          * @enum {string}
          */
         ManagementAppointmentStatus: "requested" | "proposed" | "confirmed" | "cancelled" | "superseded";
+        ManagementContactView: {
+            /** @example +20225550101 */
+            phone: string;
+            /** @description `office`: the community office; `duty`: the duty manager; `emergency`: the compound’s emergency number. */
+            role: components["schemas"]["EmergencyManagementRole"];
+        };
         /** @enum {string} */
         ManagementRequestStatus: "open" | "in_progress" | "answered" | "closed";
         /**
@@ -14336,6 +14404,8 @@ export interface components {
         SettingsView: {
             /** @description Whether households may write `always_allow` standing instructions (ADR 0043). Off: none is created (ALWAYS_ALLOW_DISABLED) and the guard sees those that exist as `call_first`. */
             allowAlwaysAllow: boolean;
+            /** @description E.164; the duty manager, in a unit’s emergency contacts and for a responder who is not at a gate. */
+            dutyPhone: string | null;
             /** @description E.164; on the visitor page and the worker card. */
             emergencyPhone: string | null;
             familyJoinRequiresApproval: boolean;
@@ -14344,6 +14414,8 @@ export interface components {
             /** @description Active visitor passes per unit. */
             maxActiveVisitorPasses: number;
             maxHouseholdMembers: number;
+            /** @description E.164; the community office, in a unit’s emergency contacts. */
+            officePhone: string | null;
             /** @description IANA; worker schedules are read in it. */
             timezone: string;
             /** @description Shown to visitors on the public pass page (ADR 0030). */
@@ -16238,6 +16310,11 @@ export interface components {
             /** @description Whether households may write `always_allow` standing instructions (ADR 0043). */
             allowAlwaysAllow?: boolean;
             /**
+             * @description The duty manager (ADR 0047), stored in E.164: in every unit’s emergency contacts, and the phone an emergency shows when someone who is not at a gate answers it. `null` clears it.
+             * @example +201000000002
+             */
+            dutyPhone?: string | null;
+            /**
              * @description Stored in E.164; on the visitor page and the worker card. `null` clears it.
              * @example +201000000000
              */
@@ -16248,6 +16325,11 @@ export interface components {
             /** @description Active visitor passes per unit. */
             maxActiveVisitorPasses?: number;
             maxHouseholdMembers?: number;
+            /**
+             * @description The community office (ADR 0047), stored in E.164: in every unit’s emergency contacts. `null` clears it.
+             * @example +20225550101
+             */
+            officePhone?: string | null;
             /**
              * @description IANA time zone.
              * @example Africa/Cairo
@@ -28978,6 +29060,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CreatedDelegationView"];
+                };
+            };
+        };
+    };
+    EmergencyContactsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmergencyContactsView"];
                 };
             };
         };

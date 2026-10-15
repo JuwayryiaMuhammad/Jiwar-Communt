@@ -630,6 +630,8 @@ describe('API v0 — no-store', () => {
       }),
     'PATCH /places/{id}': () =>
       as('manager', 'PATCH', `/places/${w.aPlaceId}`, { position: 40 }),
+    'GET /units/{unitId}/emergency-contacts': () =>
+      as('owner', 'GET', `/units/${w.a.homeUnitId}/emergency-contacts`),
   });
 
   const FINANCE_CALLS = (): Record<string, () => Promise<Response>> => ({

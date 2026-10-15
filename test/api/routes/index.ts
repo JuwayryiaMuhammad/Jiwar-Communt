@@ -87,7 +87,7 @@ import {
 } from './vehicles';
 import { VISITORS_ROUTES } from './visitors';
 import { WORKERS_ROUTES } from './workers';
-import { PLACE_ROUTES } from './safety';
+import { EMERGENCY_CONTACT_ROUTES, PLACE_ROUTES } from './safety';
 
 /** Every endpoint of the API, one row each (ADR 0025). */
 export const ROUTES: Row[] = [
@@ -164,4 +164,5 @@ export const ROUTES: Row[] = [
   ...FINANCE_ONLINE_ROUTES,
   ...FINANCE_PUBLIC_ROUTES,
   ...PLACE_ROUTES,
+  ...EMERGENCY_CONTACT_ROUTES,
 ];

@@ -117,4 +117,28 @@ export class UpdateSettingsDto {
   @IsOptional()
   @IsPhone()
   emergencyPhone?: string | null;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    example: '+20225550101',
+    description:
+      'The community office (ADR 0047), stored in E.164: in every unit’s emergency contacts. `null` clears it.',
+  })
+  @IsOptional()
+  @IsPhone()
+  officePhone?: string | null;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    example: '+201000000002',
+    description:
+      'The duty manager (ADR 0047), stored in E.164: in every unit’s emergency contacts, and the phone an emergency shows when someone who is not at a gate answers it. `null` clears it.',
+  })
+  @IsOptional()
+  @IsPhone()
+  dutyPhone?: string | null;
 }

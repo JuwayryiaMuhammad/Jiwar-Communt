@@ -88,6 +88,8 @@ import {
 } from './places/places.controller';
 import { PlaceProvisioning } from './places/place-provisioning';
 import { PlacesService } from './places/places.service';
+import { EmergencyContactsController } from './emergencies/emergency-contacts.controller';
+import { EmergencyContactsService } from './emergencies/emergency-contacts.service';
 
 /**
  * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
@@ -132,6 +134,7 @@ import { PlacesService } from './places/places.service';
     StaffParkingReportsController,
     CommunityPlacesController,
     PlacesController,
+    EmergencyContactsController,
   ],
   providers: [
     GatesService,
@@ -176,6 +179,7 @@ import { PlacesService } from './places/places.service';
     VehicleExportSections,
     PlaceProvisioning,
     PlacesService,
+    EmergencyContactsService,
   ],
 })
 export class GateModule {}

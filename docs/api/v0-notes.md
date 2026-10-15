@@ -108,3 +108,15 @@ The full notes for the mobile team, with examples, are in [`notes/gate-card-visi
 - Gate requests take `photoFileId` (purpose `gate_request_photo`, the guard's). They carry `photoUrl` (presigned, minutes; deleted 7 days after the decision) and, for the household, `gatePhone`. The guard's request views and `/me/gate-requests` are now `no-store`.
 - Gates have an optional `phone` (E.164), set by the manager.
 - Not built: a `count` on entries for a group arriving together, a notification when a visitor comes in on an `always_allow`, a history of decided requests for residents.
+
+### Gate card — vehicles & parking (ADR 0045)
+
+The full notes for the mobile team, with examples, are in [`notes/gate-card-vehicles.md`](notes/gate-card-vehicles.md).
+
+- Vehicles (`GET`/`POST /units/{unitId}/vehicles`, `GET`/`PATCH`/`DELETE /vehicles/{id}`) for whoever holds the new `vehicles` capability. A new plate sends a vehicle back to `pending`; colour, model, type and the photo do not. `permitStatus` reads `expires_soon` and `expired` when asked.
+- `GET /units/{unitId}/parking`: the unit's slots and the visitor areas' free spaces now.
+- Visitor parking (`GET`/`POST /units/{unitId}/visitor-parking-bookings`, `DELETE …/{id}`) for whoever may invite: for a pass or a visitor's name; the area's capacity holds at every instant.
+- Fines (`GET /units/{unitId}/vehicle-fines`, `GET /vehicle-fines/{id}`, `POST /vehicle-fines/{id}/appeal`): appealed once within 30 days; paid at the management office (no gateway before R6).
+- Parking reports (`POST`/`GET /parking-reports`): about a plate, never a unit; the reported unit never learns who reported.
+- The guard: `POST /gate/plate-lookup`, `GET /gate/visitor-parking`, and `display.parking` on verify.
+- Uploads are `photoFileId` / `licencePhotoFileId` (purposes `vehicle_licence`, `parking_photo`), not `photoUploadId`.

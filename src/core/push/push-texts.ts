@@ -1231,6 +1231,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تم استلام دفعة لوحدتك. الإيصال متاح في التطبيق.',
     },
   },
+  'instalment_plan.created': {
+    en: {
+      title: 'Instalment plan set up',
+      body: 'An invoice for your unit was split into instalments. Open the app for the schedule.',
+    },
+    ar: {
+      title: 'تم إنشاء خطة تقسيط',
+      body: 'تم تقسيط فاتورة لوحدتك. افتح التطبيق لمعرفة مواعيد الأقساط.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

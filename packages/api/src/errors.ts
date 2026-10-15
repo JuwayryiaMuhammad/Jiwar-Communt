@@ -286,6 +286,10 @@ const ERROR_TEXT: Record<string, string> = {
   PAYMENT_GATEWAY_ERROR: 'The payment provider could not open the checkout. Try again.',
   PAYMENT_SESSION_NOT_FOUND: 'This checkout does not exist.',
   RECEIPT_NOT_FOUND: 'No receipt has this code.',
+  INSTALMENT_PLAN_NOT_FOUND: 'This instalment plan does not exist.',
+  INVOICE_NOT_CONVERTIBLE: 'This invoice cannot be split: it is an instalment, already has a plan, or nothing is owed.',
+  INSTALMENTS_DONT_ADD_UP: 'The instalments must add up to what the invoice still owes: it changed, split it again.',
+  INSTALMENT_PLAN_CLOSED: 'This plan was cancelled or is already settled.',
 };
 
 const FIELD_TEXT: Record<string, string> = {
@@ -365,6 +369,7 @@ const FIELD_TEXT: Record<string, string> = {
   DUE_ON_OUT_OF_RANGE: 'From today to a year ahead.',
   INVOICE_TOTAL_TOO_LARGE: 'An invoice asks for at most 1,000,000 EGP.',
   STARTS_ON_OUT_OF_RANGE: 'From the first of this month to a year ahead.',
+  DUE_DATES_NOT_INCREASING: 'Each instalment must fall due after the one before it.',
 };
 
 export function errorText(error: unknown): string {

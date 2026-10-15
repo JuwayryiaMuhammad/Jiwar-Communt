@@ -591,6 +591,21 @@ export const ErrorCode = {
   PAYMENT_SESSION_NOT_FOUND: 'PAYMENT_SESSION_NOT_FOUND',
   /** No receipt has this code (also a malformed code: no read is made). */
   RECEIPT_NOT_FOUND: 'RECEIPT_NOT_FOUND',
+  /** Unknown, another compound's, or not the caller's to see. */
+  INSTALMENT_PLAN_NOT_FOUND: 'INSTALMENT_PLAN_NOT_FOUND',
+  /**
+   * The invoice cannot become instalments (409, params.reason): it is an
+   * instalment itself (`instalment`), already has a plan (`has_plan`), or
+   * nothing is owed on it (`nothing_owed`).
+   */
+  INVOICE_NOT_CONVERTIBLE: 'INVOICE_NOT_CONVERTIBLE',
+  /**
+   * The instalments do not add up to what the invoice owes now — a payment
+   * may have landed meanwhile (409, params.outstanding).
+   */
+  INSTALMENTS_DONT_ADD_UP: 'INSTALMENTS_DONT_ADD_UP',
+  /** The plan was cancelled or is settled (409, params.status). */
+  INSTALMENT_PLAN_CLOSED: 'INSTALMENT_PLAN_CLOSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -744,6 +759,8 @@ export const FieldErrorCode = {
   INVOICE_TOTAL_TOO_LARGE: 'INVOICE_TOTAL_TOO_LARGE',
   /** Before this month, or more than a year ahead (params.min, params.max). */
   STARTS_ON_OUT_OF_RANGE: 'STARTS_ON_OUT_OF_RANGE',
+  /** Each instalment must fall due after the one before it. */
+  DUE_DATES_NOT_INCREASING: 'DUE_DATES_NOT_INCREASING',
 } as const;
 
 export type FieldErrorCode =

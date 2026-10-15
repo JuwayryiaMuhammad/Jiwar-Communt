@@ -6,6 +6,8 @@ import { money, ZERO } from '../money';
 
 /**
  * Where an invoice stands (ADR 0046), always computed:
+ * - `rescheduled`: nothing is owed, and an instalment plan took it over
+ *   (ADR 0048: the plan's credit note closed it, whatever was paid before);
  * - `credited`: credit notes cover it, and nothing was paid;
  * - `paid`: nothing is owed, and something was paid;
  * - `overdue`: something is owed after the due date (the compound's day);
@@ -17,6 +19,7 @@ export const INVOICE_STATUSES = [
   'overdue',
   'paid',
   'credited',
+  'rescheduled',
 ] as const;
 export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
 
@@ -29,6 +32,8 @@ export interface Balance {
   credited: Prisma.Decimal;
   paid: Prisma.Decimal;
   outstanding: Prisma.Decimal;
+  /** An instalment plan's credit note closed it (ADR 0048). */
+  rescheduled: boolean;
 }
 
 /**
@@ -43,18 +48,29 @@ export const PAID_SQL = Prisma.sql`COALESCE((
    WHERE a.tenant_id = i.tenant_id AND a.invoice_id = i.id
      AND NOT EXISTS (SELECT 1 FROM finance_payments r
                       WHERE r.tenant_id = a.tenant_id AND r.reverses_id = a.payment_id)), 0)`;
+/** An instalment plan took invoice `i` over (opened on it, or cancelled it). */
+export const RESCHEDULED_SQL = Prisma.sql`EXISTS (
+  SELECT 1 FROM credit_notes c
+   WHERE c.tenant_id = i.tenant_id AND c.invoice_id = i.id
+     AND c.reason_code = 'instalment_plan')`;
 
 export function statusOf(
   b: Balance,
   dueOn: LocalDate,
   today: LocalDate,
 ): InvoiceStatus {
-  if (b.outstanding.lte(ZERO)) return b.paid.gt(ZERO) ? 'paid' : 'credited';
+  if (b.outstanding.lte(ZERO)) {
+    if (b.rescheduled) return 'rescheduled';
+    return b.paid.gt(ZERO) ? 'paid' : 'credited';
+  }
   if (dueOn < today) return 'overdue';
   return b.paid.gt(ZERO) ? 'partially_paid' : 'unpaid';
 }
 
-/** The filter as SQL over `credited`, `paid`, `total` and `due_on`. */
+/**
+ * The filter as SQL over `credited`, `paid`, `rescheduled`, `total` and
+ * `due_on`.
+ */
 export function filterSql(filter: InvoiceFilter, today: LocalDate): Prisma.Sql {
   const owed = Prisma.sql`(b.total - b.credited - b.paid) > 0`;
   switch (filter) {
@@ -67,9 +83,11 @@ export function filterSql(filter: InvoiceFilter, today: LocalDate): Prisma.Sql {
     case 'partially_paid':
       return Prisma.sql`${owed} AND b.paid > 0 AND b.due_on >= ${today}::date`;
     case 'paid':
-      return Prisma.sql`NOT ${owed} AND b.paid > 0`;
+      return Prisma.sql`NOT ${owed} AND b.paid > 0 AND NOT b.rescheduled`;
     case 'credited':
-      return Prisma.sql`NOT ${owed} AND b.paid = 0`;
+      return Prisma.sql`NOT ${owed} AND b.paid = 0 AND NOT b.rescheduled`;
+    case 'rescheduled':
+      return Prisma.sql`NOT ${owed} AND b.rescheduled`;
   }
 }
 
@@ -85,10 +103,12 @@ export async function balancesOf(
       total: Prisma.Decimal;
       credited: Prisma.Decimal;
       paid: Prisma.Decimal;
+      rescheduled: boolean;
       due_on: Date;
     }[]
   >`
-    SELECT i.id, i.total, ${CREDITED_SQL} AS credited, ${PAID_SQL} AS paid, i.due_on
+    SELECT i.id, i.total, ${CREDITED_SQL} AS credited, ${PAID_SQL} AS paid,
+           ${RESCHEDULED_SQL} AS rescheduled, i.due_on
       FROM invoices i
      WHERE i.id = ANY(${[...invoiceIds]}::uuid[])`;
   return new Map(
@@ -103,6 +123,7 @@ export async function balancesOf(
           credited,
           paid,
           outstanding: total.sub(credited).sub(paid),
+          rescheduled: r.rescheduled,
           dueOn: fromDate(r.due_on),
         },
       ];

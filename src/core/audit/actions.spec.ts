@@ -102,6 +102,7 @@ describe('audit catalog', () => {
         'billing_plan',
         'payment',
         'payment_session',
+        'instalment_plan',
       ]).toContain(def.target);
     }
   });

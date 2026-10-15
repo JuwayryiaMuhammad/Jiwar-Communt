@@ -305,4 +305,12 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   gate_service_requests_tenant_id_id_key: null,
   // Numbers come from the counter under its row lock: a collision is a bug.
   gate_service_requests_number_key: null,
+  // Instalment plans (ADR 0048): numbers from the counter, one plan per
+  // invoice and one remainder per plan checked under the unit's finance
+  // lock, positions from one insert. A violation is a race.
+  instalment_plans_tenant_id_id_key: null,
+  instalment_plans_tenant_id_number_key: null,
+  instalment_plans_one_per_invoice: null,
+  instalment_plans_remainder_key: null,
+  invoices_instalment_position_key: null,
 };

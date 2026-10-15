@@ -117,6 +117,32 @@ export async function lineRow(
   return id;
 }
 
+/** An instalment plan over `invoiceId` (one plan per invoice, ever). */
+export async function instalmentPlanRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    unitId: string;
+    invoiceId: string;
+    createdById: string;
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.instalmentPlan.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      number: next(),
+      unitId: r.unitId,
+      invoiceId: r.invoiceId,
+      instalmentCount: 2,
+      total: new Prisma.Decimal('100'),
+      createdById: r.createdById,
+    },
+  });
+  return id;
+}
+
 export async function creditNoteRow(
   tx: TenantTxClient,
   r: {

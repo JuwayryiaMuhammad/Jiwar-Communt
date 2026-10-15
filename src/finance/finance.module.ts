@@ -29,6 +29,11 @@ import {
   UnitInvoicesController,
 } from './invoices/invoices.controller';
 import { InvoicesService } from './invoices/invoices.service';
+import {
+  StaffInstalmentsController,
+  UnitInstalmentsController,
+} from './instalments/instalments.controller';
+import { InstalmentsService } from './instalments/instalments.service';
 import { FinanceNotices } from './notices/finance-notices';
 import { PaymentSessionsController } from './online/payment-sessions.controller';
 import { GatewayEventsController } from './online/gateway-events.controller';
@@ -59,6 +64,8 @@ import { PaymentsService } from './payments/payments.service';
     PlatformGatewayController,
     StaffInvoicesController,
     UnitInvoicesController,
+    StaffInstalmentsController,
+    UnitInstalmentsController,
     BillingPlansController,
     StaffPaymentsController,
     UnitPaymentsController,
@@ -72,6 +79,7 @@ import { PaymentsService } from './payments/payments.service';
     FinanceAccess,
     FinanceNotices,
     InvoicesService,
+    InstalmentsService,
     InvoiceNoticesSweep,
     InvoiceRemindersSweep,
     BillingPlansService,

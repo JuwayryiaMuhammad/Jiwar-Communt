@@ -947,6 +947,39 @@ describe('API v0 — PII leak scan', () => {
       a.tokens.manager,
       { amount: '300', method: 'cheque', reference: 'CHQ-77', paidOn: day(0) },
     );
+    // Instalments (ADR 0048): a fresh invoice of the home, split in two.
+    const toSplit = await idOf('POST', '/staff/invoices', a.tokens.manager, {
+      target: 'unit',
+      unitId: unit.id,
+      kind: 'other',
+      dueOn: day(5),
+      lines: [
+        {
+          descriptionEn: 'Gate fob',
+          descriptionAr: 'شريحة البوابة',
+          amount: '400',
+        },
+      ],
+    });
+    const toSplitInvoice = (
+      (
+        await call(w, 'GET', '/staff/invoices', {
+          token: a.tokens.manager,
+          query: { batchId: toSplit },
+        }).expect(200)
+      ).body as { data: { id: string }[] }
+    ).data[0].id;
+    const piiInstalmentPlan = await idOf(
+      'POST',
+      `/staff/invoices/${toSplitInvoice}/instalment-plan`,
+      a.tokens.manager,
+      {
+        instalments: [
+          { dueOn: day(5), amount: '200' },
+          { dueOn: day(35), amount: '200' },
+        ],
+      },
+    );
     const piiPlan = await idOf(
       'POST',
       '/staff/billing-plans',
@@ -1181,6 +1214,9 @@ describe('API v0 — PII leak scan', () => {
       '/staff/units/{unitId}/statement': unit.id,
       // A foreign checkout: not found for everyone of A.
       '/payment-sessions/{id}': w.bPaymentSessionId,
+      // ADR 0048: numbers, amounts and unit codes only.
+      '/staff/instalment-plans/{id}': piiInstalmentPlan,
+      '/instalment-plans/{id}': piiInstalmentPlan,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

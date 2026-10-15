@@ -2333,6 +2333,19 @@
         ],
         "type": "object"
       },
+      "CancelInstalmentPlanDto": {
+        "properties": {
+          "dueOn": {
+            "description": "When the remainder invoice falls due: from today to 366 days ahead.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dueOn"
+        ],
+        "type": "object"
+      },
       "CancelVisitorPassDto": {
         "properties": {
           "reasonCode": {
@@ -4320,6 +4333,22 @@
         ],
         "type": "object"
       },
+      "ConvertToInstalmentsDto": {
+        "properties": {
+          "instalments": {
+            "items": {
+              "$ref": "#/components/schemas/InstalmentDto"
+            },
+            "maxItems": 24,
+            "minItems": 2,
+            "type": "array"
+          }
+        },
+        "required": [
+          "instalments"
+        ],
+        "type": "object"
+      },
       "ConvertToOwnerDto": {
         "properties": {
           "resides": {
@@ -6167,7 +6196,7 @@
             "type": "string"
           },
           "reasonCode": {
-            "description": "REASON_CODES.creditNote",
+            "description": "REASON_CODES.creditNote, or a system reason (REASON_CODES.creditNoteSystem): `instalment_plan`.",
             "type": "string"
           }
         },
@@ -11139,6 +11168,315 @@
         ],
         "type": "object"
       },
+      "InstalmentDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP, at least 1.00.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "dueOn": {
+            "description": "A local day of the compound: from today to 730 days ahead, after the instalment before.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dueOn",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "InstalmentPlanDetailView": {
+        "properties": {
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "instalmentCount": {
+            "type": "number"
+          },
+          "instalments": {
+            "description": "In order.",
+            "items": {
+              "$ref": "#/components/schemas/InstalmentView"
+            },
+            "type": "array"
+          },
+          "invoiceId": {
+            "description": "The invoice the plan took over (now `rescheduled`).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "invoiceNumber": {
+            "example": "INV-000123",
+            "type": "string"
+          },
+          "number": {
+            "example": "IP-000004",
+            "type": "string"
+          },
+          "outstanding": {
+            "description": "Still owed on the instalments (0.00 once cancelled).",
+            "type": "string"
+          },
+          "remainderInvoiceId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "remainderInvoiceNumber": {
+            "example": "INV-000140",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "description": "`settled`: nothing is owed on the instalments; `cancelled`: what was owed moved to the remainder invoice.",
+            "enum": [
+              "active",
+              "settled",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "total": {
+            "description": "What the plan took over: the instalments add up to it.",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitId",
+          "unitCode",
+          "invoiceId",
+          "invoiceNumber",
+          "instalmentCount",
+          "total",
+          "outstanding",
+          "status",
+          "createdAt",
+          "cancelledAt",
+          "remainderInvoiceId",
+          "remainderInvoiceNumber",
+          "instalments"
+        ],
+        "type": "object"
+      },
+      "InstalmentPlanView": {
+        "properties": {
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "instalmentCount": {
+            "type": "number"
+          },
+          "invoiceId": {
+            "description": "The invoice the plan took over (now `rescheduled`).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "invoiceNumber": {
+            "example": "INV-000123",
+            "type": "string"
+          },
+          "number": {
+            "example": "IP-000004",
+            "type": "string"
+          },
+          "outstanding": {
+            "description": "Still owed on the instalments (0.00 once cancelled).",
+            "type": "string"
+          },
+          "remainderInvoiceId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "remainderInvoiceNumber": {
+            "example": "INV-000140",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "description": "`settled`: nothing is owed on the instalments; `cancelled`: what was owed moved to the remainder invoice.",
+            "enum": [
+              "active",
+              "settled",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "total": {
+            "description": "What the plan took over: the instalments add up to it.",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitId",
+          "unitCode",
+          "invoiceId",
+          "invoiceNumber",
+          "instalmentCount",
+          "total",
+          "outstanding",
+          "status",
+          "createdAt",
+          "cancelledAt",
+          "remainderInvoiceId",
+          "remainderInvoiceNumber"
+        ],
+        "type": "object"
+      },
+      "InstalmentPlanViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/InstalmentPlanView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "InstalmentView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "credited": {
+            "description": "Taken off by credit notes.",
+            "type": "string"
+          },
+          "currency": {
+            "enum": [
+              "EGP"
+            ],
+            "type": "string"
+          },
+          "dueOn": {
+            "description": "Local day.",
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "issuedOn": {
+            "description": "Local day.",
+            "format": "date",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InvoiceKind"
+              }
+            ]
+          },
+          "number": {
+            "example": "INV-000123",
+            "type": "string"
+          },
+          "outstanding": {
+            "description": "Still owed.",
+            "type": "string"
+          },
+          "paid": {
+            "description": "Paid by live payments.",
+            "type": "string"
+          },
+          "position": {
+            "description": "From 1.",
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "unpaid",
+              "partially_paid",
+              "overdue",
+              "paid",
+              "credited",
+              "rescheduled"
+            ],
+            "type": "string"
+          },
+          "total": {
+            "description": "EGP, two decimals.",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitId",
+          "unitCode",
+          "kind",
+          "total",
+          "currency",
+          "credited",
+          "paid",
+          "outstanding",
+          "status",
+          "issuedOn",
+          "dueOn",
+          "createdAt",
+          "position"
+        ],
+        "type": "object"
+      },
       "InviteAcceptedView": {
         "properties": {
           "code": {
@@ -11333,6 +11671,16 @@
             "format": "uuid",
             "type": "string"
           },
+          "instalmentPlan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InvoiceInstalmentPlanView"
+              }
+            ],
+            "description": "On an instalment (ADR 0048).",
+            "nullable": true,
+            "type": "object"
+          },
           "issuedOn": {
             "description": "Local day.",
             "format": "date",
@@ -11369,6 +11717,17 @@
                 "$ref": "#/components/schemas/InvoicePlanView"
               }
             ],
+            "description": "The billing plan and period of a recurring invoice.",
+            "nullable": true,
+            "type": "object"
+          },
+          "rescheduledBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InvoiceRescheduledByView"
+              }
+            ],
+            "description": "On an invoice an instalment plan took over.",
             "nullable": true,
             "type": "object"
           },
@@ -11378,7 +11737,8 @@
               "partially_paid",
               "overdue",
               "paid",
-              "credited"
+              "credited",
+              "rescheduled"
             ],
             "type": "string"
           },
@@ -11411,9 +11771,37 @@
           "createdAt",
           "batchId",
           "plan",
+          "instalmentPlan",
+          "rescheduledBy",
           "lines",
           "creditNotes",
           "allocations"
+        ],
+        "type": "object"
+      },
+      "InvoiceInstalmentPlanView": {
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "example": "IP-000004",
+            "type": "string"
+          },
+          "position": {
+            "description": "From 1.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "position",
+          "count"
         ],
         "type": "object"
       },
@@ -11497,6 +11885,23 @@
         ],
         "type": "object"
       },
+      "InvoiceRescheduledByView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "example": "IP-000004",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number"
+        ],
+        "type": "object"
+      },
       "InvoiceView": {
         "properties": {
           "createdAt": {
@@ -11552,7 +11957,8 @@
               "partially_paid",
               "overdue",
               "paid",
-              "credited"
+              "credited",
+              "rescheduled"
             ],
             "type": "string"
           },
@@ -35087,6 +35493,43 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/instalment-plans/{id}": {
+      "get": {
+        "operationId": "UnitInstalmentsController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstalmentPlanDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an instalment plan of one of my units",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/invites/accept/complete": {
       "post": {
         "operationId": "InviteAcceptanceController_complete",
@@ -47740,6 +48183,170 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/instalment-plans": {
+      "get": {
+        "operationId": "StaffInstalmentsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "active",
+                "settled",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstalmentPlanViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List instalment plans, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/instalment-plans/{id}": {
+      "get": {
+        "operationId": "StaffInstalmentsController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstalmentPlanDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an instalment plan with its instalments",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/instalment-plans/{id}/cancel": {
+      "post": {
+        "operationId": "StaffInstalmentsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelInstalmentPlanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstalmentPlanDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a plan: what its instalments owe becomes one invoice",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/invoice-batches/{id}": {
       "get": {
         "operationId": "StaffInvoicesController_batch",
@@ -47813,6 +48420,7 @@
                 "overdue",
                 "paid",
                 "credited",
+                "rescheduled",
                 "open"
               ],
               "type": "string"
@@ -48021,6 +48629,63 @@
           }
         ],
         "summary": "Credit part or all of an invoice, with a reason code",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/invoices/{id}/instalment-plan": {
+      "post": {
+        "description": "The instalments must add up to exactly what the invoice owes now; a credit note closes the original. One push tells the unit.",
+        "operationId": "StaffInstalmentsController_convert",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertToInstalmentsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstalmentPlanDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Split what an invoice owes into instalments",
         "tags": [
           "finance"
         ],
@@ -53193,6 +53858,7 @@
                 "overdue",
                 "paid",
                 "credited",
+                "rescheduled",
                 "open"
               ],
               "type": "string"

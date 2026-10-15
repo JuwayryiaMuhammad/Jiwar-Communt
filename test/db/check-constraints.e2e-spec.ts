@@ -858,6 +858,17 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   invoice_batches_plan_shape: {},
   invoices_plan_shape: {},
+  // Instalment plans (ADR 0048). invoices_due tests instalment_plan_id only
+  // under IS NULL (its CASE); the cancellation's columns only under IS NULL.
+  instalment_plans_number: {},
+  instalment_plans_count: {},
+  instalment_plans_total: {},
+  instalment_plans_cancel_shape: {},
+  invoices_instalment_shape: {
+    guarded:
+      'instalment_position IS NULL is tested first; the range runs only on a value',
+  },
+  credit_notes_instalment_plan_link: {},
   // Nullable columns only under IS [NOT] NULL; kind is NOT NULL.
   finance_payments_kind_shape: {},
   finance_payments_office_shape: {

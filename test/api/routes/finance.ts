@@ -105,6 +105,7 @@ const STATUS_ALLOWED = [
   'overdue',
   'paid',
   'credited',
+  'rescheduled',
   'open',
 ];
 
@@ -223,6 +224,97 @@ export const FINANCE_INVOICE_ROUTES: Row[] = [
     foreign: {
       params: (w) => ({ id: w.bInvoiceId }),
       code: 'INVOICE_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+];
+
+/** Instalment plans (ADR 0048). */
+export const FINANCE_INSTALMENT_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/staff/invoices/{id}/instalment-plan',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bInvoiceId }),
+      body: () => ({
+        instalments: [
+          { dueOn: '2099-01-01', amount: '10' },
+          { dueOn: '2099-02-01', amount: '10' },
+        ],
+      }),
+      code: 'INVOICE_NOT_FOUND',
+    },
+    invalid: {
+      body: { instalments: [{ dueOn: '2099-13-01', amount: '0' }] },
+      fields: [
+        {
+          field: 'instalments',
+          code: 'INVALID_LENGTH',
+          params: { min: 2, max: 24 },
+        },
+        { field: 'instalments.0.dueOn', code: 'INVALID_FORMAT' },
+        { field: 'instalments.0.amount', code: 'INVALID_FORMAT' },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/staff/instalment-plans',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'late' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['active', 'settled', 'cancelled'] },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/staff/instalment-plans/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bInstalmentPlanId }),
+      code: 'INSTALMENT_PLAN_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/staff/instalment-plans/{id}/cancel',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bInstalmentPlanId }),
+      body: () => ({ dueOn: '2099-01-01' }),
+      code: 'INSTALMENT_PLAN_NOT_FOUND',
+    },
+    invalid: {
+      body: { dueOn: 'soon' },
+      fields: [{ field: 'dueOn', code: 'INVALID_FORMAT' }],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/instalment-plans/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bInstalmentPlanId }),
+      code: 'INSTALMENT_PLAN_NOT_FOUND',
     },
     invalid: 'none',
   },

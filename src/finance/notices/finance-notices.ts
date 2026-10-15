@@ -59,4 +59,27 @@ export class FinanceNotices {
     await this.toUnit(tx, invoice.unitId, KIND[kind], invoice.id);
     return true;
   }
+
+  /**
+   * Claims invoices' notice of `kind` without telling anyone: an
+   * instalment plan announces itself once (ADR 0048), so the minute sweep
+   * must never announce its instalments one by one.
+   */
+  async claimSilently(
+    tx: TenantTxClient,
+    tenantId: string,
+    invoiceIds: readonly string[],
+    kind: InvoiceNoticeKind,
+  ): Promise<void> {
+    if (!invoiceIds.length) return;
+    await tx.invoiceNotice.createMany({
+      data: invoiceIds.map((invoiceId) => ({
+        id: newId(),
+        tenantId,
+        invoiceId,
+        kind,
+      })),
+      skipDuplicates: true,
+    });
+  }
 }

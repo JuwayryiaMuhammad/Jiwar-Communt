@@ -7,6 +7,7 @@ import {
   batchRow,
   creditNoteRow,
   eventRow,
+  instalmentPlanRow,
   invoiceRow,
   lineRow,
   noticeRow,
@@ -80,6 +81,22 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
         invoiceId: ids.invoice,
       });
       ids.event = await eventRow(tx, { tenantId, sessionId: ids.session });
+      ids.instalmentPlan = await instalmentPlanRow(tx, {
+        tenantId,
+        unitId,
+        invoiceId: ids.invoice,
+        createdById: accountId,
+      });
+      ids.remainder = await invoiceRow(tx, {
+        tenantId,
+        unitId,
+        batchId: await batchRow(tx, {
+          tenantId,
+          unitId,
+          createdById: accountId,
+        }),
+        createdById: accountId,
+      });
     });
     app = new Client({ connectionString: process.env.DATABASE_URL });
     migrator = new Client({
@@ -120,7 +137,7 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
     return rows[0];
   };
 
-  it('the app updates only settings, gateways, counters, plans, overrides and sessions; deletes only overrides', async () => {
+  it('the app updates only settings, gateways, counters, plans, overrides, sessions and instalment plans; deletes only overrides', async () => {
     const updatable: string[] = [];
     const deletable: string[] = [];
     for (const table of [
@@ -140,6 +157,7 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
       'payment_session_invoices',
       'payment_gateway_events',
       'receipt_links',
+      'instalment_plans',
     ]) {
       const p = await privileges(table);
       expect({
@@ -163,6 +181,7 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
       'billing_plans',
       'billing_plan_overrides',
       'payment_sessions',
+      'instalment_plans',
     ]);
     expect(deletable).toEqual(['billing_plan_overrides']);
   });
@@ -248,6 +267,64 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
     await expect(
       attempt(migrator, `DELETE FROM payment_sessions WHERE id = '${s}'`),
     ).rejects.toThrow(/not a move/);
+  });
+
+  it('an instalment plan changes once, by its cancellation; never its terms (ADR 0048)', async () => {
+    const p = ids.instalmentPlan;
+    const cancel = `cancelled_at = now(), cancelled_by_account_id = '${accountId}', remainder_invoice_id = '${ids.remainder}'`;
+    await expect(
+      attempt(app, `UPDATE instalment_plans SET total = 1 WHERE id = '${p}'`),
+    ).rejects.toThrow(/only a cancellation/);
+    await expect(
+      attempt(
+        app,
+        `UPDATE instalment_plans SET cancelled_at = now() WHERE id = '${p}'`,
+      ),
+    ).rejects.toThrow(/instalment_plans_cancel_shape/);
+    await attempt(
+      app,
+      `UPDATE instalment_plans SET ${cancel} WHERE id = '${p}'`,
+    );
+    await expect(
+      attempt(
+        app,
+        `UPDATE instalment_plans SET ${cancel} WHERE id = '${p}'`,
+        `UPDATE instalment_plans SET ${cancel} WHERE id = '${p}'`,
+      ),
+    ).rejects.toThrow(/only a cancellation/);
+    await expect(
+      attempt(migrator, `DELETE FROM instalment_plans WHERE id = '${p}'`),
+    ).rejects.toThrow(/only a cancellation/);
+    await expect(
+      attempt(migrator, `TRUNCATE instalment_plans CASCADE`),
+    ).rejects.toThrow(/append-only|cannot truncate/);
+  });
+
+  it('an instalment names its plan and place; it may fall due two years out, any other invoice one (ADR 0048)', async () => {
+    const insert = (over: string) =>
+      `INSERT INTO invoices (id, tenant_id, number, batch_id, unit_id, kind, total, currency, issued_on, due_on, instalment_plan_id, instalment_position)
+       VALUES (gen_random_uuid(), '${tenantId}', 990000 + floor(random() * 9999)::int, '${ids.batch}', '${unitId}', 'other', 1, 'EGP', current_date, ${over})`;
+    await expect(
+      attempt(app, insert(`current_date + 700, NULL, NULL`)),
+    ).rejects.toThrow(/invoices_due/);
+    await expect(
+      attempt(app, insert(`current_date, '${ids.instalmentPlan}', NULL`)),
+    ).rejects.toThrow(/invoices_instalment_shape/);
+    await expect(
+      attempt(app, insert(`current_date + 731, '${ids.instalmentPlan}', 1`)),
+    ).rejects.toThrow(/invoices_due/);
+  });
+
+  it('a credit note of reason instalment_plan names its plan, and only such a note does', async () => {
+    const note = (reason: string, plan: string) =>
+      `INSERT INTO credit_notes (id, tenant_id, number, invoice_id, amount, reason_code, created_by_account_id, instalment_plan_id)
+       VALUES (gen_random_uuid(), '${tenantId}', 990000 + floor(random() * 9999)::int, '${ids.remainder}', 1, '${reason}', '${accountId}', ${plan})`;
+    await expect(attempt(app, note('instalment_plan', 'NULL'))).rejects.toThrow(
+      /credit_notes_instalment_plan_link/,
+    );
+    await expect(
+      attempt(app, note('waiver', `'${ids.instalmentPlan}'`)),
+    ).rejects.toThrow(/credit_notes_instalment_plan_link/);
   });
 
   describe('at commit', () => {

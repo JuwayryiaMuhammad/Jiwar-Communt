@@ -277,6 +277,89 @@ describe('Audit coverage — finance', () => {
     });
   });
 
+  describe('instalment plans', () => {
+    it('instalment_plan.created and .cancelled: numbers, amounts, ids and days', async () => {
+      const { invoiceId } = await f.issue(s.accountant, s.home.id, {
+        lines: [
+          {
+            descriptionEn: `${MARKER} fees`,
+            descriptionAr: `${MARKER} رسوم`,
+            amount: '900',
+          },
+        ],
+      });
+      const res = await f
+        .http(
+          'post',
+          `/staff/invoices/${invoiceId}/instalment-plan`,
+          s.accountant.token,
+          {
+            instalments: [
+              { dueOn: day(10), amount: '450' },
+              { dueOn: day(40), amount: '450' },
+            ],
+          },
+        )
+        .expect(201);
+      const plan = res.body as { id: string; number: string };
+      const note = (
+        (
+          await f
+            .http('get', `/staff/invoices/${invoiceId}`, s.manager.token)
+            .expect(200)
+        ).body as { creditNotes: { id: string }[] }
+      ).creditNotes[0];
+      const created = await single('instalment_plan.created', plan.id);
+      expect(created).toMatchObject({
+        actorId: s.accountant.id,
+        targetType: 'instalment_plan',
+        changes: null,
+        metadata: {
+          unitId: s.home.id,
+          invoiceId,
+          number: plan.number,
+          count: 2,
+          total: '900.00',
+          creditNoteId: note.id,
+          firstDueOn: day(10),
+          lastDueOn: day(40),
+        },
+      });
+      // Its credit note is the plan's own act: no credit_note.created.
+      expect(
+        await read.tenant(s.c.tenantId, {
+          action: 'credit_note.created',
+          targetId: note.id,
+        }),
+      ).toEqual([]);
+
+      const cancelled = (
+        await f
+          .http(
+            'post',
+            `/staff/instalment-plans/${plan.id}/cancel`,
+            s.manager.token,
+            { dueOn: day(20) },
+          )
+          .expect(201)
+      ).body as { remainderInvoiceId: string };
+      const row = await single('instalment_plan.cancelled', plan.id);
+      expect(row).toMatchObject({
+        actorId: s.manager.id,
+        metadata: {
+          unitId: s.home.id,
+          remainder: '900.00',
+          remainderInvoiceId: cancelled.remainderInvoiceId,
+          creditNoteIds: expect.any(Array) as string[],
+        },
+      });
+      expect(
+        (row.metadata as { creditNoteIds: string[] }).creditNoteIds,
+      ).toHaveLength(2);
+      expect(JSON.stringify([created, row])).not.toContain(MARKER);
+    });
+  });
+
   describe('billing plans', () => {
     let planId: string;
 
@@ -541,7 +624,7 @@ describe('Audit coverage — finance', () => {
       expect(
         all
           .filter((k) =>
-            /^(finance_gateway|invoice|invoice_batch|credit_note|billing_plan|payment|payment_session)\.|^tenant\.payment_gateway_|^platform\.step_up_/.test(
+            /^(finance_gateway|invoice|invoice_batch|credit_note|billing_plan|payment|payment_session|instalment_plan)\.|^tenant\.payment_gateway_|^platform\.step_up_/.test(
               k,
             ),
           )

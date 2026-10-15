@@ -1153,6 +1153,15 @@ export const NOTIFICATION_KINDS = {
     target: 'payment',
     params: {},
   },
+  // Finance part 2 (ADR 0048), under the same rules.
+  /** An invoice of the unit was split into instalments: one notice, not one per instalment. */
+  'instalment_plan.created': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'instalment_plan',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

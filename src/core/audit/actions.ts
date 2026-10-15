@@ -826,6 +826,13 @@ export const AUDIT_ACTIONS = {
   'payment.reversed': { log: 'tenant', target: 'payment' },
   // metadata: unitId, amount, invoiceIds.
   'payment_session.opened': { log: 'tenant', target: 'payment_session' },
+
+  // Finance part 2 (ADR 0048): codes, ids and amounts only.
+  // metadata: unitId, invoiceId, number, count, total, creditNoteId, the
+  // first and last instalment's due day.
+  'instalment_plan.created': { log: 'tenant', target: 'instalment_plan' },
+  // metadata: unitId, remainder, remainderInvoiceId, creditNoteIds.
+  'instalment_plan.cancelled': { log: 'tenant', target: 'instalment_plan' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

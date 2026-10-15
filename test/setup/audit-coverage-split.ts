@@ -322,9 +322,9 @@ export const VEHICLES_COVERAGE: readonly string[] = [
 ];
 
 /**
- * R6a entries (ADR 0046), covered by test/finance/audit-coverage.e2e-spec.ts:
- * the gateway, the platform's step-up, invoices, billing plans, payments
- * and sessions.
+ * R6a and R6b entries (ADR 0046, 0048), covered by
+ * test/finance/audit-coverage.e2e-spec.ts: the gateway, the platform's
+ * step-up, invoices, billing plans, payments, sessions, instalment plans.
  */
 export const FINANCE_COVERAGE: readonly string[] = [
   'platform.step_up_requested',
@@ -348,6 +348,9 @@ export const FINANCE_COVERAGE: readonly string[] = [
   'payment.amount_mismatch',
   'payment.verification_contradicted',
   'payment.duplicate_charge',
+  // R6b (ADR 0048).
+  'instalment_plan.created',
+  'instalment_plan.cancelled',
 ];
 
 /**

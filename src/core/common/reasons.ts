@@ -440,6 +440,9 @@ export const REASON_CODES = {
   ],
   // Why the staff credit part or all of an invoice (ADR 0046).
   creditNote: ['billing_error', 'waiver', 'duplicate', 'goodwill', 'other'],
+  // A credit note the system writes, never picked by staff (ADR 0048): an
+  // instalment plan closing an invoice or cancelling its instalments.
+  creditNoteSystem: ['instalment_plan'],
   // Why the office reverses a payment it recorded (ADR 0046).
   paymentReverse: ['entered_in_error', 'duplicate', 'bounced_cheque', 'other'],
 } as const;

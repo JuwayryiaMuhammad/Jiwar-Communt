@@ -963,6 +963,8 @@ model Account {
   invoiceBatchesCreated          InvoiceBatch[]                      @relation("InvoiceBatchCreator")
   invoicesCreated                Invoice[]                           @relation("InvoiceCreator")
   creditNotesCreated             CreditNote[]                        @relation("CreditNoteCreator")
+  instalmentPlansCreated         InstalmentPlan[]                    @relation("InstalmentPlanCreator")
+  instalmentPlansCancelled       InstalmentPlan[]                    @relation("InstalmentPlanCanceller")
   billingPlansCreated            BillingPlan[]                       @relation("BillingPlanCreator")
   billingPlanOverridesUpdated    BillingPlanOverride[]               @relation("BillingPlanOverrideUpdater")
   financePaymentsRecorded        FinancePayment[]                    @relation("FinancePaymentRecorder")
@@ -1077,6 +1079,7 @@ model Unit {
   clubMembership             ClubMembership?
   invoiceBatches             InvoiceBatch[]
   invoices                   Invoice[]
+  instalmentPlans            InstalmentPlan[]
   billingPlanOverrides       BillingPlanOverride[]
   financePayments            FinancePayment[]
   paymentSessions            PaymentSession[]
@@ -5289,8 +5292,14 @@ model Invoice {
   planId         String?   @map("plan_id") @db.Uuid
   periodStartsOn DateTime? @map("period_starts_on") @db.Date
   periodEndsOn   DateTime? @map("period_ends_on") @db.Date
+  /// An instalment (ADR 0048): its plan and its place in it, from 1.
+  instalmentPlanId   String? @map("instalment_plan_id") @db.Uuid
+  instalmentPosition Int?    @map("instalment_position")
 
   plan        BillingPlan?  @relation(fields: [tenantId, planId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "invoices_tenant_id_plan_id_fkey")
+  instalmentPlan InstalmentPlan? @relation("InstalmentPlanInstalments", fields: [tenantId, instalmentPlanId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  rescheduledBy  InstalmentPlan? @relation("InstalmentPlanOriginal")
+  remainderOf    InstalmentPlan? @relation("InstalmentPlanRemainder")
   batch       InvoiceBatch  @relation(fields: [tenantId, batchId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   unit        Unit          @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   createdBy   Account?      @relation("InvoiceCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "invoices_tenant_id_created_by_fkey")
@@ -5304,6 +5313,7 @@ model Invoice {
   @@unique([tenantId, id])
   @@unique([tenantId, number])
   @@unique([tenantId, batchId, unitId], map: "invoices_one_per_batch_unit")
+  @@unique([tenantId, instalmentPlanId, instalmentPosition], map: "invoices_instalment_position_key")
   @@index([tenantId, unitId, dueOn, number], map: "invoices_unit_idx")
   @@index([tenantId, createdAt, id], map: "invoices_created_idx")
   @@index([tenantId, dueOn], map: "invoices_due_idx")
@@ -5338,14 +5348,52 @@ model CreditNote {
   reasonCode  String   @map("reason_code")
   createdById String   @map("created_by_account_id") @db.Uuid
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Reason `instalment_plan` (ADR 0048): the plan it opened or cancelled.
+  instalmentPlanId String? @map("instalment_plan_id") @db.Uuid
 
-  invoice   Invoice @relation(fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
-  createdBy Account @relation("CreditNoteCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "credit_notes_tenant_id_created_by_fkey")
+  invoice        Invoice         @relation(fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  createdBy      Account         @relation("CreditNoteCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "credit_notes_tenant_id_created_by_fkey")
+  instalmentPlan InstalmentPlan? @relation(fields: [tenantId, instalmentPlanId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([tenantId, id])
   @@unique([tenantId, number])
   @@index([tenantId, invoiceId, createdAt], map: "credit_notes_invoice_idx")
+  @@index([tenantId, instalmentPlanId], map: "credit_notes_instalment_plan_idx")
   @@map("credit_notes")
+}
+
+/// An open invoice's outstanding turned into instalment invoices (ADR
+/// 0048). Immutable but for its cancellation, set once with the remainder
+/// invoice that cancellation issued.
+model InstalmentPlan {
+  id                 String    @id @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  number             Int
+  unitId             String    @map("unit_id") @db.Uuid
+  invoiceId          String    @map("invoice_id") @db.Uuid
+  instalmentCount    Int       @map("instalment_count")
+  total              Decimal   @db.Decimal(12, 2)
+  createdById        String    @map("created_by_account_id") @db.Uuid
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  cancelledAt        DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  cancelledById      String?   @map("cancelled_by_account_id") @db.Uuid
+  remainderInvoiceId String?   @map("remainder_invoice_id") @db.Uuid
+
+  unit             Unit         @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  invoice          Invoice      @relation("InstalmentPlanOriginal", fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  remainderInvoice Invoice?     @relation("InstalmentPlanRemainder", fields: [tenantId, remainderInvoiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  createdBy        Account      @relation("InstalmentPlanCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "instalment_plans_tenant_id_created_by_fkey")
+  cancelledBy      Account?     @relation("InstalmentPlanCanceller", fields: [tenantId, cancelledById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "instalment_plans_tenant_id_cancelled_by_fkey")
+  instalments      Invoice[]    @relation("InstalmentPlanInstalments")
+  creditNotes      CreditNote[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number])
+  @@unique([tenantId, invoiceId], map: "instalment_plans_one_per_invoice")
+  @@unique([tenantId, remainderInvoiceId], map: "instalment_plans_remainder_key")
+  @@index([tenantId, unitId, createdAt, id], map: "instalment_plans_unit_idx")
+  @@index([tenantId, createdAt, id], map: "instalment_plans_created_idx")
+  @@map("instalment_plans")
 }
 
 /// What a unit's people were told about an invoice (ADR 0046): `issued`,

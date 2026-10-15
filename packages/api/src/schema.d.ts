@@ -2225,6 +2225,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/instalment-plans/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an instalment plan of one of my units */
+        get: operations["UnitInstalmentsController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/invites/accept/complete": {
         parameters: {
             query?: never;
@@ -6462,6 +6479,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/instalment-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List instalment plans, newest first */
+        get: operations["StaffInstalmentsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/instalment-plans/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an instalment plan with its instalments */
+        get: operations["StaffInstalmentsController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/instalment-plans/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a plan: what its instalments owe becomes one invoice */
+        post: operations["StaffInstalmentsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/invoice-batches/{id}": {
         parameters: {
             query?: never;
@@ -6528,6 +6596,26 @@ export interface paths {
         put?: never;
         /** Credit part or all of an invoice, with a reason code */
         post: operations["StaffInvoicesController_credit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/invoices/{id}/instalment-plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Split what an invoice owes into instalments
+         * @description The instalments must add up to exactly what the invoice owes now; a credit note closes the original. One push tells the unit.
+         */
+        post: operations["StaffInstalmentsController_convert"];
         delete?: never;
         options?: never;
         head?: never;
@@ -9619,6 +9707,10 @@ export interface components {
             /** @description From the closed list `vehicleFineCancel`. */
             reasonCode: string;
         };
+        CancelInstalmentPlanDto: {
+            /** @description When the remainder invoice falls due: from today to 366 days ahead. */
+            dueOn: string;
+        };
         CancelVisitorPassDto: {
             /** @description Required. The closed list `visitorPassCancel`: `not_needed` (the visit is off), `plans_changed` (another day or other visitors), `other`. Missing: REASON_REQUIRED; outside the list: INVALID_REASON_CODE with `allowed`. */
             reasonCode: components["schemas"]["VisitorPassCancelReason"];
@@ -10212,6 +10304,9 @@ export interface components {
         ConversationViewList: {
             data: components["schemas"]["ConversationView"][];
             nextCursor: string | null;
+        };
+        ConvertToInstalmentsDto: {
+            instalments: components["schemas"]["InstalmentDto"][];
         };
         ConvertToOwnerDto: {
             /** @description False: they let the unit (a landlord). */
@@ -10912,7 +11007,7 @@ export interface components {
             invoiceId: string;
             /** @example CN-000012 */
             number: string;
-            /** @description REASON_CODES.creditNote */
+            /** @description REASON_CODES.creditNote, or a system reason (REASON_CODES.creditNoteSystem): `instalment_plan`. */
             reasonCode: string;
         };
         DailyBriefView: {
@@ -12345,6 +12440,122 @@ export interface components {
             data: components["schemas"]["InsideView"][];
             nextCursor: string | null;
         };
+        InstalmentDto: {
+            /** @description EGP, at least 1.00. */
+            amount: string;
+            /** @description A local day of the compound: from today to 730 days ahead, after the instalment before. */
+            dueOn: string;
+        };
+        InstalmentPlanDetailView: {
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            instalmentCount: number;
+            /** @description In order. */
+            instalments: components["schemas"]["InstalmentView"][];
+            /**
+             * Format: uuid
+             * @description The invoice the plan took over (now `rescheduled`).
+             */
+            invoiceId: string;
+            /** @example INV-000123 */
+            invoiceNumber: string;
+            /** @example IP-000004 */
+            number: string;
+            /** @description Still owed on the instalments (0.00 once cancelled). */
+            outstanding: string;
+            /** Format: uuid */
+            remainderInvoiceId: string | null;
+            /** @example INV-000140 */
+            remainderInvoiceNumber: string | null;
+            /**
+             * @description `settled`: nothing is owed on the instalments; `cancelled`: what was owed moved to the remainder invoice.
+             * @enum {string}
+             */
+            status: "active" | "settled" | "cancelled";
+            /** @description What the plan took over: the instalments add up to it. */
+            total: string;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        InstalmentPlanView: {
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            instalmentCount: number;
+            /**
+             * Format: uuid
+             * @description The invoice the plan took over (now `rescheduled`).
+             */
+            invoiceId: string;
+            /** @example INV-000123 */
+            invoiceNumber: string;
+            /** @example IP-000004 */
+            number: string;
+            /** @description Still owed on the instalments (0.00 once cancelled). */
+            outstanding: string;
+            /** Format: uuid */
+            remainderInvoiceId: string | null;
+            /** @example INV-000140 */
+            remainderInvoiceNumber: string | null;
+            /**
+             * @description `settled`: nothing is owed on the instalments; `cancelled`: what was owed moved to the remainder invoice.
+             * @enum {string}
+             */
+            status: "active" | "settled" | "cancelled";
+            /** @description What the plan took over: the instalments add up to it. */
+            total: string;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        InstalmentPlanViewList: {
+            data: components["schemas"]["InstalmentPlanView"][];
+            nextCursor: string | null;
+        };
+        InstalmentView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** @description Taken off by credit notes. */
+            credited: string;
+            /** @enum {string} */
+            currency: "EGP";
+            /**
+             * Format: date
+             * @description Local day.
+             */
+            dueOn: string;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date
+             * @description Local day.
+             */
+            issuedOn: string;
+            kind: components["schemas"]["InvoiceKind"];
+            /** @example INV-000123 */
+            number: string;
+            /** @description Still owed. */
+            outstanding: string;
+            /** @description Paid by live payments. */
+            paid: string;
+            /** @description From 1. */
+            position: number;
+            /** @enum {string} */
+            status: "unpaid" | "partially_paid" | "overdue" | "paid" | "credited" | "rescheduled";
+            /** @description EGP, two decimals. */
+            total: string;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
         InviteAcceptedView: {
             /** @enum {string} */
             code: "INVITE_ACCEPTED";
@@ -12410,6 +12621,8 @@ export interface components {
             dueOn: string;
             /** Format: uuid */
             id: string;
+            /** @description On an instalment (ADR 0048). */
+            instalmentPlan: components["schemas"]["InvoiceInstalmentPlanView"] | null;
             /**
              * Format: date
              * @description Local day.
@@ -12423,14 +12636,26 @@ export interface components {
             outstanding: string;
             /** @description Paid by live payments. */
             paid: string;
+            /** @description The billing plan and period of a recurring invoice. */
             plan: components["schemas"]["InvoicePlanView"] | null;
+            /** @description On an invoice an instalment plan took over. */
+            rescheduledBy: components["schemas"]["InvoiceRescheduledByView"] | null;
             /** @enum {string} */
-            status: "unpaid" | "partially_paid" | "overdue" | "paid" | "credited";
+            status: "unpaid" | "partially_paid" | "overdue" | "paid" | "credited" | "rescheduled";
             /** @description EGP, two decimals. */
             total: string;
             unitCode: string;
             /** Format: uuid */
             unitId: string;
+        };
+        InvoiceInstalmentPlanView: {
+            count: number;
+            /** Format: uuid */
+            id: string;
+            /** @example IP-000004 */
+            number: string;
+            /** @description From 1. */
+            position: number;
         };
         /** @enum {string} */
         InvoiceKind: "service_charge" | "maintenance" | "other";
@@ -12457,6 +12682,12 @@ export interface components {
             periodEndsOn: string;
             /** Format: date */
             periodStartsOn: string;
+        };
+        InvoiceRescheduledByView: {
+            /** Format: uuid */
+            id: string;
+            /** @example IP-000004 */
+            number: string;
         };
         InvoiceView: {
             /** Format: date-time */
@@ -12485,7 +12716,7 @@ export interface components {
             /** @description Paid by live payments. */
             paid: string;
             /** @enum {string} */
-            status: "unpaid" | "partially_paid" | "overdue" | "paid" | "credited";
+            status: "unpaid" | "partially_paid" | "overdue" | "paid" | "credited" | "rescheduled";
             /** @description EGP, two decimals. */
             total: string;
             unitCode: string;
@@ -20994,6 +21225,27 @@ export interface operations {
             };
         };
     };
+    UnitInstalmentsController_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstalmentPlanDetailView"];
+                };
+            };
+        };
+    };
     InviteAcceptanceController_complete: {
         parameters: {
             query?: never;
@@ -27778,6 +28030,80 @@ export interface operations {
             };
         };
     };
+    StaffInstalmentsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                unitId?: string;
+                status?: "active" | "settled" | "cancelled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstalmentPlanViewList"];
+                };
+            };
+        };
+    };
+    StaffInstalmentsController_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstalmentPlanDetailView"];
+                };
+            };
+        };
+    };
+    StaffInstalmentsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelInstalmentPlanDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstalmentPlanDetailView"];
+                };
+            };
+        };
+    };
     StaffInvoicesController_batch: {
         parameters: {
             query?: never;
@@ -27806,7 +28132,7 @@ export interface operations {
                 cursor?: string;
                 limit?: number;
                 /** @description `open`: anything still owed. */
-                status?: "unpaid" | "partially_paid" | "overdue" | "paid" | "credited" | "open";
+                status?: "unpaid" | "partially_paid" | "overdue" | "paid" | "credited" | "rescheduled" | "open";
                 kind?: components["schemas"]["InvoiceKind"];
                 unitId?: string;
                 building?: string;
@@ -27900,6 +28226,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CreditNoteView"];
+                };
+            };
+        };
+    };
+    StaffInstalmentsController_convert: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConvertToInstalmentsDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstalmentPlanDetailView"];
                 };
             };
         };
@@ -30576,7 +30930,7 @@ export interface operations {
                 cursor?: string;
                 limit?: number;
                 /** @description `open`: anything still owed. */
-                status?: "unpaid" | "partially_paid" | "overdue" | "paid" | "credited" | "open";
+                status?: "unpaid" | "partially_paid" | "overdue" | "paid" | "credited" | "rescheduled" | "open";
             };
             header?: never;
             path: {

@@ -8,6 +8,7 @@ import {
   creditNoteRow,
   eventRow,
   gatewayRow,
+  instalmentPlanRow,
   invoiceRow,
   noticeRow,
   overrideRow,
@@ -42,7 +43,7 @@ interface Table {
 }
 
 /**
- * The finance tables (ADR 0046): isolated like every other tenant table,
+ * The finance tables (ADR 0046, 0048): isolated like every other tenant table,
  * linked with composite keys. The RLS coverage test checks the policies
  * exist; this suite checks they hold, table by table.
  */
@@ -107,6 +108,29 @@ const TABLES: Table[] = [
       creditNoteRow(tx, {
         tenantId: own.tenantId,
         invoiceId: link.invoiceId,
+        createdById: link.accountId,
+      }),
+  },
+  {
+    // One per invoice: a fresh invoice of the compound's own.
+    table: 'instalment_plans',
+    insert: async (tx, own, link) =>
+      instalmentPlanRow(tx, {
+        tenantId: own.tenantId,
+        unitId: link.unitId,
+        invoiceId:
+          own === link
+            ? await invoiceRow(tx, {
+                tenantId: own.tenantId,
+                unitId: own.unitId,
+                batchId: await batchRow(tx, {
+                  tenantId: own.tenantId,
+                  unitId: own.unitId,
+                  createdById: own.accountId,
+                }),
+                createdById: own.accountId,
+              })
+            : link.invoiceId,
         createdById: link.accountId,
       }),
   },

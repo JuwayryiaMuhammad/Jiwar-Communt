@@ -31,6 +31,7 @@ import {
   CREDITED_SQL,
   filterSql,
   PAID_SQL,
+  RESCHEDULED_SQL,
   statusOf,
   type Balance,
   type InvoiceFilter,
@@ -459,7 +460,8 @@ export class InvoicesService implements OnModuleInit {
     const rows = await tx.$queryRaw<{ id: string }[]>`
       WITH b AS (
         SELECT i.id, i.created_at, i.total, i.due_on,
-               ${CREDITED_SQL} AS credited, ${PAID_SQL} AS paid
+               ${CREDITED_SQL} AS credited, ${PAID_SQL} AS paid,
+               ${RESCHEDULED_SQL} AS rescheduled
           FROM invoices i
          WHERE ${Prisma.join(conds, ' AND ')}
       )
@@ -477,7 +479,7 @@ export class InvoicesService implements OnModuleInit {
     return { items: views, nextCursor: page.nextCursor };
   }
 
-  private async views(
+  async views(
     tx: TenantTxClient,
     invoices: readonly Invoice[],
     today: LocalDate,
@@ -514,6 +516,16 @@ export class InvoicesService implements OnModuleInit {
       where: { invoiceId: invoice.id },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
+    const instalmentOf = invoice.instalmentPlanId
+      ? await tx.instalmentPlan.findUniqueOrThrow({
+          where: { id: invoice.instalmentPlanId },
+          select: { id: true, number: true, instalmentCount: true },
+        })
+      : null;
+    const rescheduledBy = await tx.instalmentPlan.findFirst({
+      where: { invoiceId: invoice.id },
+      select: { id: true, number: true },
+    });
     const allocations = await tx.financeAllocation.findMany({
       where: { invoiceId: invoice.id },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
@@ -534,6 +546,20 @@ export class InvoicesService implements OnModuleInit {
               periodEndsOn: fromDate(invoice.periodEndsOn),
             }
           : null,
+      instalmentPlan: instalmentOf
+        ? {
+            id: instalmentOf.id,
+            number: formatNumber('instalment_plan', instalmentOf.number),
+            position: invoice.instalmentPosition!,
+            count: instalmentOf.instalmentCount,
+          }
+        : null,
+      rescheduledBy: rescheduledBy
+        ? {
+            id: rescheduledBy.id,
+            number: formatNumber('instalment_plan', rescheduledBy.number),
+          }
+        : null,
       lines: lines.map((l) => ({
         position: l.position,
         descriptionEn: l.descriptionEn,

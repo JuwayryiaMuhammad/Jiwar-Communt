@@ -22,7 +22,11 @@ export class CreditNoteView {
   invoiceId: string;
   @ApiProperty({ type: String })
   amount: string;
-  @ApiProperty({ type: String, description: 'REASON_CODES.creditNote' })
+  @ApiProperty({
+    type: String,
+    description:
+      'REASON_CODES.creditNote, or a system reason (REASON_CODES.creditNoteSystem): `instalment_plan`.',
+  })
   reasonCode: string;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
@@ -87,11 +91,47 @@ export class InvoicePlanView {
   periodEndsOn: string;
 }
 
+/** The instalment plan an instalment belongs to, and its place in it. */
+export class InvoiceInstalmentPlanView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String, example: 'IP-000004' })
+  number: string;
+  @ApiProperty({ type: Number, description: 'From 1.' })
+  position: number;
+  @ApiProperty({ type: Number })
+  count: number;
+}
+
+/** The instalment plan that took an invoice over. */
+export class InvoiceRescheduledByView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String, example: 'IP-000004' })
+  number: string;
+}
+
 export class InvoiceDetailView extends InvoiceView {
   @ApiProperty({ type: String, format: 'uuid' })
   batchId: string;
-  @ApiProperty({ type: InvoicePlanView, nullable: true })
+  @ApiProperty({
+    type: InvoicePlanView,
+    nullable: true,
+    description: 'The billing plan and period of a recurring invoice.',
+  })
   plan: InvoicePlanView | null;
+  @ApiProperty({
+    type: InvoiceInstalmentPlanView,
+    nullable: true,
+    description: 'On an instalment (ADR 0048).',
+  })
+  instalmentPlan: InvoiceInstalmentPlanView | null;
+  @ApiProperty({
+    type: InvoiceRescheduledByView,
+    nullable: true,
+    description: 'On an invoice an instalment plan took over.',
+  })
+  rescheduledBy: InvoiceRescheduledByView | null;
   @ApiProperty({ type: [InvoiceLineView] })
   lines: InvoiceLineView[];
   @ApiProperty({ type: [CreditNoteView] })

@@ -5,6 +5,7 @@ import { hashPassword } from '../../src/core/platform/password';
 import { PlatformSessionService } from '../../src/core/platform/platform-session.service';
 import { BillingPlansService } from '../../src/finance/billing-plans/billing-plans.service';
 import { InvoicesService } from '../../src/finance/invoices/invoices.service';
+import { InstalmentsService } from '../../src/finance/instalments/instalments.service';
 import { PaymentsService } from '../../src/finance/payments/payments.service';
 import { GatewayService } from '../../src/finance/gateway/gateway.service';
 import { PaymentSessionsService } from '../../src/finance/online/payment-sessions.service';
@@ -209,6 +210,8 @@ export interface World {
   bFinancePaymentId: string;
   /** A checkout B's owner opened (B's gateway is on). */
   bPaymentSessionId: string;
+  /** An invoice of B's home split into two instalments (ADR 0048). */
+  bInstalmentPlanId: string;
   /** One of A's plans, for valid payment bodies. */
   aClubPlanId: string;
   /** One of A's, open every day, roomy, for valid bookings. */
@@ -911,6 +914,28 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
         method: 'cash',
         paidOn: day(0),
       });
+    const toSplit = await h.moduleRef.get(InvoicesService).issue({
+      target: 'unit',
+      unitId: b.homeUnitId,
+      kind: 'maintenance',
+      dueOn: day(10),
+      lines: [
+        { descriptionEn: 'Repairs', descriptionAr: 'إصلاحات', amount: '600' },
+      ],
+    });
+    const instalmentPlan = await h.moduleRef.get(InstalmentsService).convert(
+      (
+        await helpers.prisma.tenant.invoice.findFirstOrThrow({
+          where: { batchId: toSplit.id },
+        })
+      ).id,
+      {
+        instalments: [
+          { dueOn: day(10), amount: '300' },
+          { dueOn: day(40), amount: '300' },
+        ],
+      },
+    );
     await h.moduleRef.get(TenantTx).withTenantTx(async (tx) => {
       const gateway = h.moduleRef.get(GatewayService);
       await gateway.set(tx, b.tenantId, gatewayBody() as never, {
@@ -923,6 +948,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       invoiceId: invoice.id,
       planId: plan.id,
       paymentId: payment.id,
+      instalmentPlanId: instalmentPlan.id,
     };
   });
   const bSession = await helpers.as(
@@ -948,6 +974,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bBillingPlanId: bFinance.planId,
     bFinancePaymentId: bFinance.paymentId,
     bPaymentSessionId: bSession.id,
+    bInstalmentPlanId: bFinance.instalmentPlanId,
     bClubPlanId: bClubPlan.id,
     aClubPlanId: aClubPlan.id,
     bMembershipId: bClub.membershipId,

@@ -87,6 +87,7 @@ export const REASON_CODES = {
   laneReason: ['ambulance', 'fire_truck', 'moving_truck', 'large_delivery'],
   gateServiceClose: ['done', 'not_found', 'no_show', 'duplicate', 'not_possible'],
   creditNote: ['billing_error', 'waiver', 'duplicate', 'goodwill', 'other'],
+  creditNoteSystem: ['instalment_plan'],
   paymentReverse: ['entered_in_error', 'duplicate', 'bounced_cheque', 'other'],
 } as const;
 

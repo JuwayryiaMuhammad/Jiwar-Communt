@@ -42,7 +42,9 @@ import {
   UserX,
   Vote,
   Wrench,
+  Banknote,
   CreditCard,
+  FileText,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -264,6 +266,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     {
       label: 'Finance',
       items: [
+        { href: '/finance/invoices', label: 'Invoices', icon: <FileText aria-hidden />, show: can('finance.invoice') },
+        { href: '/finance/payments', label: 'Payments', icon: <Banknote aria-hidden />, show: can('finance.payments') },
         { href: '/finance/plans', label: 'Billing plans', icon: <CalendarClock aria-hidden />, show: can('finance.billing') || can('finance.invoice') },
         { href: '/finance/gateway', label: 'Online payments', icon: <CreditCard aria-hidden />, show: can('finance.gateway') },
       ],

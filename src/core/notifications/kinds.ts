@@ -1020,6 +1020,18 @@ export const NOTIFICATION_KINDS = {
     target: 'vehicle_fine',
     params: { reason: {} },
   },
+  /**
+   * A vehicle of the unit was removed because its registrant no longer
+   * holds `vehicles` there: to the unit's primary, so a car that stays is
+   * registered again.
+   */
+  'vehicle.registrant_left': {
+    priority: 'normal',
+    category: 'vehicles',
+    critical: false,
+    target: 'vehicle',
+    params: {},
+  },
   /** The appeal was decided and the fine stands: to the appellant. */
   'vehicle_fine.appeal_upheld': {
     priority: 'normal',

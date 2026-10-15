@@ -71,6 +71,8 @@ import {
   StaffParkingReportsController,
 } from './parking-reports/parking-reports.controller';
 import { ParkingReportsService } from './parking-reports/parking-reports.service';
+import { VehicleExportSections } from './vehicles/vehicle-export-sections';
+import { VehiclesLifecycle } from './vehicles/vehicles-lifecycle';
 import {
   ParkingSlotsController,
   StaffVisitorParkingController,
@@ -161,6 +163,8 @@ import { VisitorParkingService } from './parking/visitor-parking.service';
     FinesService,
     FinePaymentsService,
     ParkingReportsService,
+    VehiclesLifecycle,
+    VehicleExportSections,
   ],
 })
 export class GateModule {}

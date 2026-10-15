@@ -1071,6 +1071,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'ينتهي تصريح ركن إحدى المركبات خلال 30 يومًا. تواصل مع مكتب الإدارة لتجديده.',
     },
   },
+  'vehicle.registrant_left': {
+    en: {
+      title: 'Vehicle removed',
+      body: 'A vehicle registered to your unit was removed because its owner no longer lives there. Register it again if it stays.',
+    },
+    ar: {
+      title: 'تمت إزالة مركبة',
+      body: 'أُزيلت مركبة مسجلة على وحدتك لأن صاحبها لم يعد يقيم فيها. سجّلها من جديد إن كانت ستبقى.',
+    },
+  },
   'vehicle_fine.issued': {
     en: {
       title: 'New parking fine',

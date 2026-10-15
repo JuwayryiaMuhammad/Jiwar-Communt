@@ -161,6 +161,29 @@ export type Statement = Schema<'StatementView'>;
 export type InstalmentPlan = Schema<'InstalmentPlanView'>;
 export type InstalmentPlanDetail = Schema<'InstalmentPlanDetailView'>;
 export type StaffDispute = Schema<'StaffDisputeView'>;
+export type Refund = Schema<'RefundView'>;
+export type LedgerEntry = Schema<'LedgerEntryView'>;
+export type AgingReport = Schema<'AgingView'>;
+export type CollectionsReport = Schema<'CollectionsView'>;
+export type OutstandingReport = Schema<'OutstandingView'>;
+export type DailyCashReport = Schema<'DailyCashView'>;
+export type LedgerType = LedgerEntry['type'];
+export interface LedgerFilters {
+  from: string;
+  to: string;
+  type?: LedgerType | '';
+  building?: string;
+  unitId?: string;
+}
+export interface RefundFilters {
+  unitId?: string;
+  from?: string;
+  to?: string;
+}
+export interface UnitReportFilters {
+  groupBy: 'unit' | 'building';
+  building?: string;
+}
 export interface InstalmentPlanFilters {
   status?: 'active' | 'settled' | 'cancelled' | '';
   unitId?: string;
@@ -371,6 +394,9 @@ export const keys = {
   instalmentPlans: (filters: object) => ['invoices', 'instalment-plans', filters] as const,
   instalmentPlan: (id: string) => ['invoices', 'instalment-plan', id] as const,
   disputes: (status: string) => ['invoices', 'disputes', status] as const,
+  refunds: (filters: object) => ['invoices', 'refunds', filters] as const,
+  ledger: (filters: object) => ['invoices', 'ledger', filters] as const,
+  report: (name: string, filters: object) => ['invoices', 'report', name, filters] as const,
   dispute: (id: string) => ['invoices', 'dispute', id] as const,
   clubPlans: ['club-plans'] as const,
   clubAll: ['club-memberships'] as const,
@@ -599,6 +625,22 @@ export const fetchers = {
       }),
     ),
   dispute: (id: string) => unwrap(api.GET('/api/v1/staff/invoice-disputes/{id}', { params: { path: { id } } })),
+  refunds: (filters: RefundFilters, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/refunds', { params: { query: { ...clean(filters), cursor, limit } } })),
+  ledger: (filters: LedgerFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/finance/ledger', {
+        params: { query: { ...(clean(filters) as LedgerFilters & { type?: LedgerType }), cursor, limit } },
+      }),
+    ),
+  aging: (filters: UnitReportFilters) =>
+    unwrap(api.GET('/api/v1/staff/finance/reports/aging', { params: { query: clean(filters) } })),
+  outstanding: (filters: UnitReportFilters) =>
+    unwrap(api.GET('/api/v1/staff/finance/reports/outstanding', { params: { query: clean(filters) } })),
+  collections: (filters: { from: string; to: string; groupBy: 'day' | 'month' }) =>
+    unwrap(api.GET('/api/v1/staff/finance/reports/collections', { params: { query: filters } })),
+  dailyCash: (day: string) =>
+    unwrap(api.GET('/api/v1/staff/finance/reports/daily-cash', { params: { query: { day } } })),
   clubPlans: () => unwrap(api.GET('/api/v1/staff/club-plans')),
   clubMemberships: (state: ClubMembershipState | '') =>
     unwrap(api.GET('/api/v1/staff/club-memberships', { params: { query: state ? { state } : {} } })),

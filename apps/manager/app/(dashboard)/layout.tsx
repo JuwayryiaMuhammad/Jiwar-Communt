@@ -48,6 +48,9 @@ import {
   LifeBuoy,
   CalendarRange,
   MessageSquareWarning,
+  Undo2,
+  BookOpen,
+  ChartColumn,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -307,6 +310,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/finance/disputes', label: 'Disputes', icon: <MessageSquareWarning aria-hidden />, show: can('finance.invoice') },
         { href: '/finance/payments', label: 'Payments', icon: <Banknote aria-hidden />, show: can('finance.payments') },
         { href: '/finance/plans', label: 'Billing plans', icon: <CalendarClock aria-hidden />, show: can('finance.billing') || can('finance.invoice') },
+        { href: '/finance/refunds', label: 'Refunds', icon: <Undo2 aria-hidden />, show: can('finance.refund') },
+        { href: '/finance/ledger', label: 'Ledger', icon: <BookOpen aria-hidden />, show: can('finance.reports') },
+        { href: '/finance/reports', label: 'Reports', icon: <ChartColumn aria-hidden />, show: can('finance.reports') },
         { href: '/finance/gateway', label: 'Online payments', icon: <CreditCard aria-hidden />, show: can('finance.gateway') },
       ],
     },

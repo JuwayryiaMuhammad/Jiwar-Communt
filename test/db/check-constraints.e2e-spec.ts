@@ -792,6 +792,18 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'reason_code IS NULL is tested first; the list runs only on a value',
   },
+  parking_reports_number_positive: {},
+  parking_reports_text_length: {},
+  parking_reports_note_length: {
+    guarded: 'note IS NULL is tested first; the length runs only on a value',
+  },
+  parking_reports_note_cleared: {},
+  // Nullable columns only under IS [NOT] NULL; status is NOT NULL.
+  parking_reports_state_shape: {},
+  parking_reports_close_reason: {
+    guarded:
+      'close_reason IS NULL is tested first; the list runs only on a value',
+  },
 };
 
 interface Check {

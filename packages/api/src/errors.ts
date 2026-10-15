@@ -246,6 +246,10 @@ const ERROR_TEXT: Record<string, string> = {
   FINE_NOT_PAYABLE: 'This fine is paid already or cancelled.',
   FINE_PAYMENT_NOT_FOUND: 'This payment does not exist.',
   FINE_PAYMENT_ALREADY_REVERSED: 'This payment was reversed already.',
+  PARKING_REPORT_NOT_FOUND: 'This parking report does not exist.',
+  PARKING_REPORT_NOT_ALLOWED: 'Only residents report parking.',
+  PARKING_REPORT_LIMIT_REACHED: 'As many reports are open as a resident may have.',
+  PARKING_REPORT_CLOSED: 'This report was dealt with already.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

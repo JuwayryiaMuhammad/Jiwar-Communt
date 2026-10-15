@@ -397,4 +397,11 @@ export const REASON_CODES = {
     'other',
   ],
   vehicleFinePaymentReverse: ['entered_in_error', 'refunded', 'other'],
+  // Why security closes a parking report without a fine.
+  parkingReportClose: [
+    'resolved',
+    'vehicle_not_found',
+    'duplicate',
+    'not_a_violation',
+  ],
 } as const;

@@ -249,4 +249,8 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   vehicle_fine_payments_one_reversal: null,
   // A receipt is recorded once among the compound's fine payments.
   vehicle_fine_payments_receipt_key: ['receiptNumber'],
+  parking_reports_tenant_id_id_key: null,
+  parking_reports_number_key: null,
+  // A report becomes one fine, under its row lock: a race.
+  parking_reports_fine_key: null,
 };

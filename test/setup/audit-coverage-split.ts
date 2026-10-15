@@ -316,4 +316,7 @@ export const VEHICLES_COVERAGE: readonly string[] = [
   'vehicle_fine.cancelled',
   'vehicle_fine.payment_recorded',
   'vehicle_fine.payment_reversed',
+  'parking_report.created',
+  'parking_report.closed',
+  'parking_report.converted',
 ];

@@ -36,6 +36,7 @@ import { StaffParkingService } from '../../src/gate/parking/staff-parking.servic
 import { VisitorParkingService } from '../../src/gate/parking/visitor-parking.service';
 import { FinesService } from '../../src/gate/fines/fines.service';
 import { FinePaymentsService } from '../../src/gate/fines/fine-payments.service';
+import { ParkingReportsService } from '../../src/gate/parking-reports/parking-reports.service';
 import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
 import { ALL_WEEK, at, day } from '../setup/facilities';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
@@ -205,6 +206,8 @@ export interface World {
   /** A fine to B's home, issued by B's manager, and its payment. */
   bFineId: string;
   bFinePaymentId: string;
+  /** A parking report of B's tenant. */
+  bParkingReportId: string;
   bDeviceId: string;
   /** A personal-data export B's owner asked for (ADR 0036). */
   bExportId: string;
@@ -812,7 +815,16 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       paidOn: day(0),
     }),
   );
+  const bParkingReport = await helpers.as(
+    b,
+    { id: b.ids.tenant, type: 'resident' },
+    () =>
+      h.moduleRef
+        .get(ParkingReportsService)
+        .create({ plate: 'ب و 1234', location: 'World ramp' }),
+  );
   return {
+    bParkingReportId: bParkingReport.id,
     bFineId: bFine.fine.id,
     bFinePaymentId: bFinePayment.id,
     bVehicleId: bVehicle.vehicle.id,

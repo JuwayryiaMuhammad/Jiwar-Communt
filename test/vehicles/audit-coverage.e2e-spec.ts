@@ -487,6 +487,69 @@ describe('Audit coverage — vehicles and parking', () => {
     });
   });
 
+  describe('parking reports', () => {
+    const PLACE = 'AUDIT-REPORT-PLACE';
+    const NOTE = 'AUDIT-REPORT-NOTE';
+
+    it('parking_report.created / closed / converted — numbers, codes and the fine; never the plate, the place or the note', async () => {
+      const file = (body: object) =>
+        v
+          .http('post', '/parking-reports', s.alice.token, body)
+          .expect(201)
+          .then((r) => (r.body as { id: string }).id);
+      const closedId = await file({
+        plate: PLATE,
+        location: PLACE,
+        note: NOTE,
+      });
+      const convertedId = await file({ plate: PLATE, location: PLACE });
+      await v
+        .http(
+          'post',
+          `/staff/parking-reports/${closedId}/close`,
+          s.manager.token,
+          {
+            reasonCode: 'duplicate',
+          },
+        )
+        .expect(200);
+      const converted = (
+        await v
+          .http(
+            'post',
+            `/staff/parking-reports/${convertedId}/convert`,
+            s.manager.token,
+            {
+              unitCode: s.home.code,
+              plate: PLATE,
+              reason: 'blocking',
+              amount: '50',
+              occurredOn: day(0),
+            },
+          )
+          .expect(200)
+      ).body as { fineId: string };
+      const created = await single('parking_report.created', closedId);
+      expect(created).toMatchObject(by(s.alice, 'parking_report'));
+      expect(created.metadata).toEqual({
+        number: expect.any(Number) as number,
+        note: true,
+        photo: false,
+      });
+      await single('parking_report.created', convertedId);
+      expect(
+        (await single('parking_report.closed', closedId)).metadata,
+      ).toEqual({ reasonCode: 'duplicate' });
+      const conv = await single('parking_report.converted', convertedId);
+      expect(conv).toMatchObject(by(s.manager, 'parking_report'));
+      expect(conv.metadata).toEqual({ fineId: converted.fineId });
+      const all = await read.tenant(s.c.tenantId, {});
+      const text = JSON.stringify(all);
+      expect(text).not.toContain(PLACE);
+      expect(text).not.toContain(NOTE);
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every vehicles and parking entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

@@ -2676,6 +2676,18 @@
         ],
         "type": "object"
       },
+      "CloseParkingReportDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `parkingReportClose`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "CloseReportDto": {
         "properties": {
           "reasonCode": {
@@ -4709,6 +4721,36 @@
         },
         "required": [
           "kind"
+        ],
+        "type": "object"
+      },
+      "CreateParkingReportDto": {
+        "properties": {
+          "location": {
+            "example": "Visitor area B, by the gym",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "note": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "photoFileId": {
+            "description": "A finalized `parking_photo` upload of the caller.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "plate": {
+            "description": "As read off the car.",
+            "maxLength": 12,
+            "type": "string"
+          }
+        },
+        "required": [
+          "plate",
+          "location"
         ],
         "type": "object"
       },
@@ -11054,6 +11096,69 @@
         ],
         "type": "object"
       },
+      "MyParkingReportView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "plate": {
+            "type": "string"
+          },
+          "reference": {
+            "example": "R-3917",
+            "type": "string"
+          },
+          "status": {
+            "description": "Closed: the staff dealt with it, whatever they did.",
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "plate",
+          "location",
+          "note",
+          "status",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "MyParkingReportViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MyParkingReportView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "MyPermissionsView": {
         "properties": {
           "baseline": {
@@ -12410,6 +12515,14 @@
           "handed_over",
           "rejected",
           "returned"
+        ],
+        "type": "string"
+      },
+      "ParkingReportStatus": {
+        "enum": [
+          "open",
+          "closed",
+          "converted"
         ],
         "type": "string"
       },
@@ -14833,6 +14946,35 @@
         "required": [
           "id",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "ReportMatchView": {
+        "properties": {
+          "permitStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehiclePermitStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "vehicleId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vehicleId",
+          "unitId",
+          "unitCode",
+          "permitStatus"
         ],
         "type": "object"
       },
@@ -19279,6 +19421,119 @@
           "sentBy",
           "recipients",
           "sentAt"
+        ],
+        "type": "object"
+      },
+      "StaffParkingReportView": {
+        "properties": {
+          "closeReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "fineId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "handledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "handledBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "matches": {
+            "description": "The pending and active vehicles whose plate matches, by key.",
+            "items": {
+              "$ref": "#/components/schemas/ReportMatchView"
+            },
+            "type": "array"
+          },
+          "note": {
+            "description": "Null once the reporter was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "photoUrl": {
+            "description": "A presigned URL, valid for minutes.",
+            "nullable": true,
+            "type": "string"
+          },
+          "plate": {
+            "type": "string"
+          },
+          "reference": {
+            "example": "R-3917",
+            "type": "string"
+          },
+          "reporter": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Security always sees who reported; the reported unit never does."
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ParkingReportStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "reporter",
+          "plate",
+          "location",
+          "note",
+          "photoUrl",
+          "status",
+          "closeReason",
+          "fineId",
+          "handledBy",
+          "handledAt",
+          "matches",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StaffParkingReportViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffParkingReportView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -38921,6 +39176,105 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/parking-reports": {
+      "get": {
+        "description": "Open or closed, never the outcome.",
+        "operationId": "MyParkingReportsController_mine",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyParkingReportViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my parking reports",
+        "tags": [
+          "parking-reports"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "About a plate, never a unit: the answer says nothing of whom it matches. At most 10 open per resident (PARKING_REPORT_LIMIT_REACHED).",
+        "operationId": "MyParkingReportsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateParkingReportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyParkingReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Report a wrongly parked vehicle to security",
+        "tags": [
+          "parking-reports"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/permissions": {
       "get": {
         "operationId": "RolesController_catalog",
@@ -42093,6 +42447,201 @@
         "summary": "Update the facility settings",
         "tags": [
           "facilities"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/parking-reports": {
+      "get": {
+        "description": "`status=open` is the queue, oldest first.",
+        "operationId": "StaffParkingReportsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`open` is the queue, oldest first; anything else newest first.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ParkingReportStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffParkingReportViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the parking reports",
+        "tags": [
+          "parking-reports"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/parking-reports/{id}": {
+      "get": {
+        "operationId": "StaffParkingReportsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffParkingReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a parking report with its reporter and the plate’s matches",
+        "tags": [
+          "parking-reports"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/parking-reports/{id}/close": {
+      "post": {
+        "operationId": "StaffParkingReportsController_close",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseParkingReportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffParkingReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close an open report, with a reason code",
+        "tags": [
+          "parking-reports"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/parking-reports/{id}/convert": {
+      "post": {
+        "description": "Issued as any fine (the body is the fine’s): nothing of the report goes on it, not the reporter and not its photo.",
+        "operationId": "StaffParkingReportsController_convert",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssueFineDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffParkingReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Turn an open report into a fine",
+        "tags": [
+          "parking-reports"
         ],
         "x-no-store": true,
         "x-stability": "draft"

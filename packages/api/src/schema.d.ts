@@ -4619,6 +4619,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/parking-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List my parking reports
+         * @description Open or closed, never the outcome.
+         */
+        get: operations["MyParkingReportsController_mine"];
+        put?: never;
+        /**
+         * Report a wrongly parked vehicle to security
+         * @description About a plate, never a unit: the answer says nothing of whom it matches. At most 10 open per resident (PARKING_REPORT_LIMIT_REACHED).
+         */
+        post: operations["MyParkingReportsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/permissions": {
         parameters: {
             query?: never;
@@ -5722,6 +5746,80 @@ export interface paths {
         head?: never;
         /** Update the facility settings */
         patch: operations["FacilitySettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/parking-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the parking reports
+         * @description `status=open` is the queue, oldest first.
+         */
+        get: operations["StaffParkingReportsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/parking-reports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a parking report with its reporter and the plate’s matches */
+        get: operations["StaffParkingReportsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/parking-reports/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close an open report, with a reason code */
+        post: operations["StaffParkingReportsController_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/parking-reports/{id}/convert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Turn an open report into a fine
+         * @description Issued as any fine (the body is the fine’s): nothing of the report goes on it, not the reporter and not its photo.
+         */
+        post: operations["StaffParkingReportsController_convert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/staff/parking-slots": {
@@ -8645,6 +8743,10 @@ export interface components {
             /** @description From the closed list `reviewClear`. */
             reasonCode: string;
         };
+        CloseParkingReportDto: {
+            /** @description From the closed list `parkingReportClose`. */
+            reasonCode: string;
+        };
         CloseReportDto: {
             /** @description What was done, from the closed list `neighbourReportOutcome`. `post_removed` takes the post down with the case. */
             reasonCode: string;
@@ -9293,6 +9395,18 @@ export interface components {
             unitCode?: string;
             /** @description As the visitor gives it; shown to the household only. */
             visitorName?: string;
+        };
+        CreateParkingReportDto: {
+            /** @example Visitor area B, by the gym */
+            location: string;
+            note?: string;
+            /**
+             * Format: uuid
+             * @description A finalized `parking_photo` upload of the caller.
+             */
+            photoFileId?: string;
+            /** @description As read off the car. */
+            plate: string;
         };
         CreateParkingSlotDto: {
             /** @description Upper-cased; once in the compound (DUPLICATE_RESOURCE on code). */
@@ -11226,6 +11340,26 @@ export interface components {
             data: components["schemas"]["MyDelegationView"][];
             nextCursor: string | null;
         };
+        MyParkingReportView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            location: string;
+            note: string | null;
+            plate: string;
+            /** @example R-3917 */
+            reference: string;
+            /**
+             * @description Closed: the staff dealt with it, whatever they did.
+             * @enum {string}
+             */
+            status: "open" | "closed";
+        };
+        MyParkingReportViewList: {
+            data: components["schemas"]["MyParkingReportView"][];
+            nextCursor: string | null;
+        };
         MyPermissionsView: {
             /** @description Never revocable. */
             baseline: string[];
@@ -11644,6 +11778,8 @@ export interface components {
         };
         /** @enum {string} */
         ParcelStatus: "held" | "handed_over" | "rejected" | "returned";
+        /** @enum {string} */
+        ParkingReportStatus: "open" | "closed" | "converted";
         ParkingSlotRefView: {
             /** @example B2-117 */
             code: string;
@@ -12417,6 +12553,14 @@ export interface components {
             createdAt: string;
             /** Format: uuid */
             id: string;
+        };
+        ReportMatchView: {
+            permitStatus: components["schemas"]["VehiclePermitStatus"];
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+            /** Format: uuid */
+            vehicleId: string;
         };
         ReportPartyView: {
             account: components["schemas"]["AccountRefView"];
@@ -13694,6 +13838,35 @@ export interface components {
             /** Format: date-time */
             sentAt: string;
             sentBy: components["schemas"]["AccountRefView"];
+        };
+        StaffParkingReportView: {
+            closeReason: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            fineId: string | null;
+            /** Format: date-time */
+            handledAt: string | null;
+            handledBy: components["schemas"]["AccountRefView"] | null;
+            /** Format: uuid */
+            id: string;
+            location: string;
+            /** @description The pending and active vehicles whose plate matches, by key. */
+            matches: components["schemas"]["ReportMatchView"][];
+            /** @description Null once the reporter was erased. */
+            note: string | null;
+            /** @description A presigned URL, valid for minutes. */
+            photoUrl: string | null;
+            plate: string;
+            /** @example R-3917 */
+            reference: string;
+            /** @description Security always sees who reported; the reported unit never does. */
+            reporter: components["schemas"]["AccountRefView"];
+            status: components["schemas"]["ParkingReportStatus"];
+        };
+        StaffParkingReportViewList: {
+            data: components["schemas"]["StaffParkingReportView"][];
+            nextCursor: string | null;
         };
         StaffParkingSlotView: {
             code: string;
@@ -22809,6 +22982,55 @@ export interface operations {
             };
         };
     };
+    MyParkingReportsController_mine: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyParkingReportViewList"];
+                };
+            };
+        };
+    };
+    MyParkingReportsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateParkingReportDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyParkingReportView"];
+                };
+            };
+        };
+    };
     RolesController_catalog: {
         parameters: {
             query?: never;
@@ -24500,6 +24722,102 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FacilitySettingsResponse"];
+                };
+            };
+        };
+    };
+    StaffParkingReportsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `open` is the queue, oldest first; anything else newest first. */
+                status?: components["schemas"]["ParkingReportStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffParkingReportViewList"];
+                };
+            };
+        };
+    };
+    StaffParkingReportsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffParkingReportView"];
+                };
+            };
+        };
+    };
+    StaffParkingReportsController_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseParkingReportDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffParkingReportView"];
+                };
+            };
+        };
+    };
+    StaffParkingReportsController_convert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueFineDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffParkingReportView"];
                 };
             };
         };

@@ -77,6 +77,7 @@ export const REASON_CODES = {
   vehicleFineReason: ['parked_in_visitor_slot', 'parked_in_others_slot', 'blocking', 'no_permit', 'fire_lane', 'other'],
   vehicleFineCancel: ['appeal_accepted', 'issued_in_error', 'duplicate', 'other'],
   vehicleFinePaymentReverse: ['entered_in_error', 'refunded', 'other'],
+  parkingReportClose: ['resolved', 'vehicle_not_found', 'duplicate', 'not_a_violation'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

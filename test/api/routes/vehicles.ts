@@ -701,3 +701,117 @@ export const FINE_PAYMENT_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** Parking reports (ADR 0045): residents report; security works the queue. */
+export const PARKING_REPORT_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/parking-reports',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: { plate: 'AB 1', location: 5 },
+      fields: [{ field: 'location', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/parking-reports',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { limit: '0' },
+      fields: [
+        {
+          field: 'limit',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 100 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/parking-reports',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'pending' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['open', 'closed', 'converted'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/parking-reports/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bParkingReportId }),
+      code: 'PARKING_REPORT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/parking-reports/{id}/close',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bParkingReportId }),
+      code: 'PARKING_REPORT_NOT_FOUND',
+      body: () => ({ reasonCode: 'resolved' }),
+    },
+    invalid: {
+      body: {},
+      fields: [{ field: 'reasonCode', code: 'FIELD_REQUIRED' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/parking-reports/{id}/convert',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bParkingReportId }),
+      code: 'PARKING_REPORT_NOT_FOUND',
+      body: () => ({
+        unitCode: 'NONE',
+        plate: 'AB 1',
+        reason: 'blocking',
+        amount: '100',
+        occurredOn: '2026-10-15',
+      }),
+    },
+    invalid: {
+      body: {
+        unitCode: 'U-1',
+        plate: 'AB 1',
+        reason: 'blocking',
+        amount: 'free',
+        occurredOn: '2026-10-15',
+      },
+      fields: [{ field: 'amount', code: 'INVALID_FORMAT' }],
+    },
+    noStore: true,
+  },
+];

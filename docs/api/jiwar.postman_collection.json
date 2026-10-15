@@ -14615,6 +14615,239 @@
     {
       "item": [
         {
+          "name": "List my parking reports",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "parking-reports"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/parking-reports"
+            }
+          }
+        },
+        {
+          "name": "Report a wrongly parked vehicle to security",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"plate\": \"\",\n  \"location\": \"Visitor area B, by the gym\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `location` | string | yes |  |\n| `note` | string |  |  |\n| `photoFileId` | string (uuid) |  | A finalized `parking_photo` upload of the caller. |\n| `plate` | string | yes | As read off the car. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "parking-reports"
+              ],
+              "raw": "{{baseUrl}}/api/v1/parking-reports"
+            }
+          }
+        },
+        {
+          "name": "List the parking reports",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "parking-reports"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "`open` is the queue, oldest first; anything else newest first.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/parking-reports"
+            }
+          }
+        },
+        {
+          "name": "Get a parking report with its reporter and the plate’s matches",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "parking-reports",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/parking-reports/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Close an open report, with a reason code",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `parkingReportClose`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "parking-reports",
+                ":id",
+                "close"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/parking-reports/:id/close",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Turn an open report into a fine",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"unitCode\": \"\",\n  \"reason\": \"\",\n  \"amount\": \"\",\n  \"occurredOn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | EGP, e.g. `500` or `500.50`; at most 100,000. |\n| `note` | string |  | What the unit’s people read. |\n| `occurredOn` | string | yes | The local day it happened: not ahead, at most 90 days ago (DAY_OUT_OF_RANGE). |\n| `photoFileId` | string (uuid) |  | A finalized `vehicle_fine_photo` upload of the caller. |\n| `plate` | string |  | Without a vehicle: the plate as read. |\n| `reason` | string | yes | From the closed list `vehicleFineReason`. |\n| `unitCode` | string | yes | The unit’s code (UNIT_CODE_UNKNOWN). |\n| `vehicleId` | string (uuid) |  | One of the unit’s vehicles, not removed (VEHICLE_NOT_OF_UNIT); its plate is taken. Otherwise give `plate`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "parking-reports",
+                ":id",
+                "convert"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/parking-reports/:id/convert",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "name": "parking-reports"
+    },
+    {
+      "item": [
+        {
           "name": "Get my notification preferences",
           "request": {
             "description": "**Responses:** 200",

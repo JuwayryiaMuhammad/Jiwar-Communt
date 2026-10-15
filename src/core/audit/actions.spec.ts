@@ -93,6 +93,7 @@ describe('audit catalog', () => {
         'visitor_parking_booking',
         'vehicle_fine',
         'vehicle_fine_payment',
+        'parking_report',
       ]).toContain(def.target);
     }
   });

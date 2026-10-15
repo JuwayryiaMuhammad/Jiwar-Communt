@@ -941,6 +941,16 @@ describe('API v0 — PII leak scan', () => {
         occurredOn: day(0),
       },
     );
+    const piiParkingReport = await idOf(
+      'POST',
+      '/parking-reports',
+      neighbourToken,
+      {
+        plate: 'PII 4321',
+        location: 'PII ramp',
+        note: 'Seen twice',
+      },
+    );
 
     /** One id for every param of the path, or each param by name. */
     type Ids = string | Record<string, string>;
@@ -1063,6 +1073,7 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/vehicle-fines': unit.id,
       '/vehicle-fines/{id}': piiFine,
       '/staff/vehicle-fines/{id}': piiFine,
+      '/staff/parking-reports/{id}': piiParkingReport,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

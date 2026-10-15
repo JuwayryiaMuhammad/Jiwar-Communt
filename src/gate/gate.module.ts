@@ -67,6 +67,11 @@ import { FinesService } from './fines/fines.service';
 import { FinePaymentsController } from './fines/fine-payments.controller';
 import { FinePaymentsService } from './fines/fine-payments.service';
 import {
+  MyParkingReportsController,
+  StaffParkingReportsController,
+} from './parking-reports/parking-reports.controller';
+import { ParkingReportsService } from './parking-reports/parking-reports.service';
+import {
   ParkingSlotsController,
   StaffVisitorParkingController,
   UnitParkingController,
@@ -114,6 +119,8 @@ import { VisitorParkingService } from './parking/visitor-parking.service';
     UnitFinesController,
     StaffFinesController,
     FinePaymentsController,
+    MyParkingReportsController,
+    StaffParkingReportsController,
   ],
   providers: [
     GatesService,
@@ -153,6 +160,7 @@ import { VisitorParkingService } from './parking/visitor-parking.service';
     PlateLookupService,
     FinesService,
     FinePaymentsService,
+    ParkingReportsService,
   ],
 })
 export class GateModule {}

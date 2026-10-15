@@ -725,6 +725,14 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'vehicle_fine_payment',
   },
+  // metadata: number, note and photo (booleans). Never the plate, the
+  // place or the note: the reporter is the actor, which only the
+  // audit's readers see.
+  'parking_report.created': { log: 'tenant', target: 'parking_report' },
+  // metadata: reasonCode.
+  'parking_report.closed': { log: 'tenant', target: 'parking_report' },
+  // metadata: fineId. The fine's own rows never name the report.
+  'parking_report.converted': { log: 'tenant', target: 'parking_report' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

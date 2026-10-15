@@ -502,6 +502,14 @@ export const ErrorCode = {
   FINE_PAYMENT_NOT_FOUND: 'FINE_PAYMENT_NOT_FOUND',
   /** It was reversed already (409). */
   FINE_PAYMENT_ALREADY_REVERSED: 'FINE_PAYMENT_ALREADY_REVERSED',
+  /** Unknown, or another compound's. */
+  PARKING_REPORT_NOT_FOUND: 'PARKING_REPORT_NOT_FOUND',
+  /** Only someone who lives in or belongs to a unit reports parking (403). */
+  PARKING_REPORT_NOT_ALLOWED: 'PARKING_REPORT_NOT_ALLOWED',
+  /** The resident has params.max open reports (409). */
+  PARKING_REPORT_LIMIT_REACHED: 'PARKING_REPORT_LIMIT_REACHED',
+  /** It was closed or turned into a fine already (409, params.status). */
+  PARKING_REPORT_CLOSED: 'PARKING_REPORT_CLOSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

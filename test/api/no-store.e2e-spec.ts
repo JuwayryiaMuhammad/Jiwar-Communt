@@ -788,6 +788,12 @@ describe('API v0 — no-store', () => {
       place: 'No-store row',
     });
   };
+  /** A parking report of A's tenant (ten at most open: each is handled or not). */
+  const aParkingReport = () =>
+    as('tenant', 'POST', '/parking-reports', {
+      plate: `NS ${String(Math.floor(Math.random() * 1e4)).padStart(4, '0')}`,
+      location: 'No-store ramp',
+    });
   /** A new fine to A's home: its id. */
   const aFine = async () => {
     const unit = await w.helpers.asManager(w.a, () =>
@@ -868,6 +874,42 @@ describe('API v0 — no-store', () => {
         'POST',
         `/staff/vehicle-fine-payments/${body<{ id: string }>(paid).id}/reverse`,
         { reasonCode: 'entered_in_error' },
+      );
+    },
+    'POST /parking-reports': () => aParkingReport(),
+    'GET /parking-reports': () => as('tenant', 'GET', '/parking-reports'),
+    'GET /staff/parking-reports': () =>
+      as('manager', 'GET', '/staff/parking-reports'),
+    'GET /staff/parking-reports/{id}': async () =>
+      as(
+        'manager',
+        'GET',
+        `/staff/parking-reports/${body<{ id: string }>(await aParkingReport()).id}`,
+      ),
+    'POST /staff/parking-reports/{id}/close': async () =>
+      as(
+        'manager',
+        'POST',
+        `/staff/parking-reports/${body<{ id: string }>(await aParkingReport()).id}/close`,
+        { reasonCode: 'resolved' },
+      ),
+    'POST /staff/parking-reports/{id}/convert': async () => {
+      const unit = await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.unit.findUniqueOrThrow({
+          where: { id: w.a.homeUnitId },
+        }),
+      );
+      return as(
+        'manager',
+        'POST',
+        `/staff/parking-reports/${body<{ id: string }>(await aParkingReport()).id}/convert`,
+        {
+          unitCode: unit.code,
+          plate: 'NS 4',
+          reason: 'blocking',
+          amount: '100',
+          occurredOn: localDay(0),
+        },
       );
     },
     'POST /staff/vehicle-fines/{id}/cancel': async () =>

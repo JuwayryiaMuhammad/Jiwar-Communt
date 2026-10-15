@@ -71,6 +71,10 @@ export default tseslint.config(
   // the visitor page resolves the compound from the link's global pointer,
   // with no account at all (ADR 0030); the push worker claims deliveries
   // across compounds and reads each one's notification in its own (ADR 0041).
+  // Finance (ADR 0046): the platform changes a compound's gateway, the
+  // Paymob webhook resolves the compound from its URL, the public receipt
+  // page from the code's global pointer, and the boot check and the
+  // re-encryption CLI walk every compound.
   {
     files: ['**/*.ts'],
     rules: {
@@ -96,6 +100,8 @@ export default tseslint.config(
       'src/core/push/push-processor.ts',
       'src/core/sweep/sweep-runner.ts',
       'src/gate/visitors/visitor-page.service.ts',
+      'src/finance/gateway/platform-gateway.service.ts',
+      'src/finance/gateway/gateway-keys.ts',
       'prisma/seed.ts',
     ],
     rules: {

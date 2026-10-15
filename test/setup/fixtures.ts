@@ -7,6 +7,7 @@ import { newId } from '../../src/core/common/uuid';
 import { TenantLifecycle } from '../../src/core/tenant-settings/tenant-lifecycle';
 import { EngagementProvisioning } from '../../src/engagement/provisioning';
 import { FacilitiesProvisioning } from '../../src/facilities/provisioning';
+import { FinanceProvisioning } from '../../src/finance/provisioning';
 import { ParcelProvisioning } from '../../src/gate/parcels/parcel-provisioning';
 import { VehicleProvisioning } from '../../src/gate/vehicles/vehicle-provisioning';
 import { MaintenanceProvisioning } from '../../src/maintenance/provisioning';
@@ -31,6 +32,7 @@ new ManagementProvisioning(tenantLifecycle).onModuleInit();
 new EngagementProvisioning(tenantLifecycle).onModuleInit();
 new NeighboursProvisioning(tenantLifecycle).onModuleInit();
 new FacilitiesProvisioning(tenantLifecycle).onModuleInit();
+new FinanceProvisioning(tenantLifecycle).onModuleInit();
 
 /**
  * Generated phones and national IDs live in a space hand-written test values

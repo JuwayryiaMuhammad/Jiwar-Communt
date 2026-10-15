@@ -8482,6 +8482,13 @@
         ],
         "type": "object"
       },
+      "FinanceGatewayMode": {
+        "enum": [
+          "sandbox",
+          "live"
+        ],
+        "type": "string"
+      },
       "FineAppealView": {
         "properties": {
           "appealedAt": {
@@ -9062,6 +9069,96 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GatewayLast4View": {
+        "properties": {
+          "cardIntegrationId": {
+            "type": "string"
+          },
+          "hmacSecret": {
+            "type": "string"
+          },
+          "publicKey": {
+            "type": "string"
+          },
+          "secretKey": {
+            "type": "string"
+          },
+          "walletIntegrationId": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "secretKey",
+          "publicKey",
+          "hmacSecret",
+          "cardIntegrationId",
+          "walletIntegrationId"
+        ],
+        "type": "object"
+      },
+      "GatewayView": {
+        "properties": {
+          "available": {
+            "description": "Residents can pay online now: configured, enabled, not disabled by the platform, and the server holds the key.",
+            "type": "boolean"
+          },
+          "configured": {
+            "description": "Credentials have been set.",
+            "type": "boolean"
+          },
+          "last4": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GatewayLast4View"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FinanceGatewayMode"
+              }
+            ],
+            "nullable": true
+          },
+          "onlineEnabled": {
+            "description": "The manager's switch.",
+            "type": "boolean"
+          },
+          "platformDisabled": {
+            "description": "The platform's switch: true turns online payment off whatever the manager says.",
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "updatedBy": {
+            "description": "Who set the credentials last.",
+            "enum": [
+              "manager",
+              "platform"
+            ],
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "configured",
+          "mode",
+          "last4",
+          "onlineEnabled",
+          "platformDisabled",
+          "available",
+          "updatedBy",
+          "updatedAt"
         ],
         "type": "object"
       },
@@ -17434,6 +17531,73 @@
         },
         "required": [
           "state"
+        ],
+        "type": "object"
+      },
+      "SetGatewayDto": {
+        "properties": {
+          "cardIntegrationId": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "number"
+          },
+          "hmacSecret": {
+            "pattern": "^[A-Za-z0-9_-]{16,256}$",
+            "type": "string"
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FinanceGatewayMode"
+              }
+            ]
+          },
+          "publicKey": {
+            "pattern": "^egy_pk_(test|live)_[A-Za-z0-9_-]{8,240}$",
+            "type": "string"
+          },
+          "secretKey": {
+            "description": "The secret key; `egy_sk_live_…` in live mode, `egy_sk_test_…` in sandbox.",
+            "pattern": "^egy_sk_(test|live)_[A-Za-z0-9_-]{8,240}$",
+            "type": "string"
+          },
+          "walletIntegrationId": {
+            "description": "The mobile wallet integration; omitted or null: card only.",
+            "maximum": 2147483647,
+            "minimum": 1,
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "mode",
+          "secretKey",
+          "publicKey",
+          "hmacSecret",
+          "cardIntegrationId"
+        ],
+        "type": "object"
+      },
+      "SetOnlinePaymentDto": {
+        "properties": {
+          "onlineEnabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "onlineEnabled"
+        ],
+        "type": "object"
+      },
+      "SetPlatformDisabledDto": {
+        "properties": {
+          "platformDisabled": {
+            "description": "True switches online payment off for the compound, whatever its manager says.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "platformDisabled"
         ],
         "type": "object"
       },
@@ -39945,6 +40109,133 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/platform/tenants/{id}/payment-gateway": {
+      "get": {
+        "operationId": "PlatformGatewayController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A compound's online payment account, masked",
+        "tags": [
+          "platform"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "PlatformGatewayController_toggle",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPlatformDisabledDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Switch a compound's online payment off or back (platform step-up required)",
+        "tags": [
+          "platform"
+        ],
+        "x-stability": "draft"
+      },
+      "put": {
+        "operationId": "PlatformGatewayController_set",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetGatewayDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set a compound's Paymob credentials (platform step-up required)",
+        "tags": [
+          "platform"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/platform/tenants/{id}/status": {
       "patch": {
         "operationId": "TenantsController_setStatus",
@@ -42508,6 +42799,106 @@
           "facilities"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gateway": {
+      "get": {
+        "operationId": "GatewayController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The compound's online payment account, masked",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "GatewayController_toggle",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetOnlinePaymentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Turn online payment on or off (step-up required)",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      },
+      "put": {
+        "operationId": "GatewayController_set",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetGatewayDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set the compound's Paymob credentials (step-up required)",
+        "tags": [
+          "finance"
+        ],
         "x-stability": "draft"
       }
     },

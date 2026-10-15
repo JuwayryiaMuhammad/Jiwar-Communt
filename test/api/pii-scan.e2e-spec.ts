@@ -1074,6 +1074,8 @@ describe('API v0 — PII leak scan', () => {
       '/vehicle-fines/{id}': piiFine,
       '/staff/vehicle-fines/{id}': piiFine,
       '/staff/parking-reports/{id}': piiParkingReport,
+      // ADR 0046: last four characters at most, never a name.
+      '/platform/tenants/{id}/payment-gateway': a.tenantId,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

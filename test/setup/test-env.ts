@@ -47,6 +47,17 @@ export function applyTestEnv(): void {
   // The reference secret (ADR 0040): a test default, for the same reason.
   process.env.ENGAGEMENT_REF_SECRET ??=
     'test-engagement-ref-secret-0123456789abcdef';
+  // The payment vault and Paymob (ADR 0046): a test key of 32 bytes, never
+  // a developer's, a webhook origin, and a base URL nothing answers on (the
+  // suites put a fake transport in front of Paymob).
+  process.env.PAYMENT_CREDENTIALS_KEY = Buffer.from(
+    'jiwar-test-payment-credentials!!',
+  ).toString('base64');
+  process.env.PAYMENT_CREDENTIALS_KEY_VERSION = '1';
+  delete process.env.PAYMENT_CREDENTIALS_PREVIOUS_KEYS;
+  process.env.PAYMENT_WEBHOOK_BASE_URL = 'https://api.jiwar.test';
+  process.env.PAYMOB_BASE_URL = 'https://paymob.invalid';
+  process.env.RECEIPT_PAGE_RATE_LIMIT_PER_IP = '100000';
   // The cooling-off the deletion suites count on (ADR 0036), whatever the
   // developer's .env still says.
   process.env.DELETION_GRACE_DAYS = '14';

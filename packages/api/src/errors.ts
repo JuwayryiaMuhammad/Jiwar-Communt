@@ -250,6 +250,10 @@ const ERROR_TEXT: Record<string, string> = {
   PARKING_REPORT_NOT_ALLOWED: 'Only residents report parking.',
   PARKING_REPORT_LIMIT_REACHED: 'As many reports are open as a resident may have.',
   PARKING_REPORT_CLOSED: 'This report was dealt with already.',
+  STEP_UP_REQUIRED: 'Confirm with the code we email you first.',
+  STEP_UP_CODE_INVALID: 'That code is wrong or has expired.',
+  PAYMENT_VAULT_UNAVAILABLE: 'The server is not set up to store payment credentials yet. Ask the platform team.',
+  GATEWAY_NOT_CONFIGURED: 'Set the payment account’s credentials first.',
 };
 
 const FIELD_TEXT: Record<string, string> = {
@@ -325,6 +329,7 @@ const FIELD_TEXT: Record<string, string> = {
   VEHICLE_NOT_OF_UNIT: 'Not one of the unit’s vehicles.',
   DAY_OUT_OF_RANGE: 'Pick a day in range.',
   AMOUNT_MISMATCH: 'Not the fine’s amount: a fine is paid in full.',
+  GATEWAY_MODE_MISMATCH: 'Live mode takes live keys, sandbox takes test keys.',
 };
 
 export function errorText(error: unknown): string {

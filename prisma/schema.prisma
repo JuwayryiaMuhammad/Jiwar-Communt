@@ -522,6 +522,8 @@ model Tenant {
   bookingSuspensions           BookingSuspension[]
   clubPlans                    ClubPlan[]
   clubMemberships              ClubMembership[]
+  financeSettings              FinanceSettings?
+  financeGateway               FinanceGateway?
   announcements      Announcement[]
   communityEvents    CommunityEvent[]
   polls              Poll[]
@@ -950,6 +952,7 @@ model Account {
   clubPeopleAdded                ClubMembershipPerson[]              @relation("ClubPersonAdder")
   clubPeopleRemoved              ClubMembershipPerson[]              @relation("ClubPersonRemover")
   clubPaymentsRecorded           ClubPaymentRecord[]                 @relation("ClubPaymentRecorder")
+  financeGatewaysUpdated         FinanceGateway[]                    @relation("FinanceGatewayUpdater")
   neighbourConversationsAuthored NeighbourConversation[]             @relation("NeighbourConversationAuthor")
   neighbourConversationsStarted  NeighbourConversation[]             @relation("NeighbourConversationResponder")
   neighbourConversationMessages  NeighbourConversationMessage[]      @relation("NeighbourConversationMessageSender")
@@ -5124,3 +5127,58 @@ model ParkingReport {
   @@index([tenantId, status, createdAt, id], map: "parking_reports_status_idx")
   @@map("parking_reports")
 }
+
+// ============================================================================
+// Phase R6a — finance: invoices and payments (ADR 0046)
+// ============================================================================
+
+enum FinanceGatewayMode {
+  sandbox
+  live
+
+  @@map("finance_gateway_mode")
+}
+
+/// One per compound (ADR 0046): online payment on or off. The platform's
+/// switch wins over the manager's.
+model FinanceSettings {
+  tenantId         String   @id @map("tenant_id") @db.Uuid
+  onlineEnabled    Boolean  @default(false) @map("online_enabled")
+  platformDisabled Boolean  @default(false) @map("platform_disabled")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("finance_settings")
+}
+
+/// A compound's own Paymob account (ADR 0046), sealed by the credential
+/// vault: each *Enc is iv ‖ tag ‖ ciphertext under `keyVersion`. Only the
+/// last four characters are ever shown. Replaced as a whole; never deleted.
+model FinanceGateway {
+  tenantId               String             @id @map("tenant_id") @db.Uuid
+  provider               String             @default("paymob")
+  mode                   FinanceGatewayMode
+  keyVersion             Int                @map("key_version")
+  secretKeyEnc           Bytes              @map("secret_key_enc")
+  publicKeyEnc           Bytes              @map("public_key_enc")
+  hmacSecretEnc          Bytes              @map("hmac_secret_enc")
+  cardIntegrationEnc     Bytes              @map("card_integration_enc")
+  walletIntegrationEnc   Bytes?             @map("wallet_integration_enc")
+  secretKeyLast4         String             @map("secret_key_last4")
+  publicKeyLast4         String             @map("public_key_last4")
+  hmacSecretLast4        String             @map("hmac_secret_last4")
+  cardIntegrationLast4   String             @map("card_integration_last4")
+  walletIntegrationLast4 String?            @map("wallet_integration_last4")
+  updatedById            String?            @map("updated_by_account_id") @db.Uuid
+  updatedByPlatform      Boolean            @map("updated_by_platform")
+  createdAt              DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  updatedBy Account? @relation("FinanceGatewayUpdater", fields: [tenantId, updatedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_gateways_tenant_id_updated_by_fkey")
+
+  @@map("finance_gateways")
+}
+

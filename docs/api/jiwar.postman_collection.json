@@ -921,6 +921,123 @@
           }
         },
         {
+          "name": "A compound's online payment account, masked",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "platform",
+                "tenants",
+                ":id",
+                "payment-gateway"
+              ],
+              "raw": "{{baseUrl}}/api/v1/platform/tenants/:id/payment-gateway",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Set a compound's Paymob credentials (platform step-up required)",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"mode\": \"sandbox\",\n  \"secretKey\": \"\",\n  \"publicKey\": \"\",\n  \"hmacSecret\": \"\",\n  \"cardIntegrationId\": 1\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `cardIntegrationId` | number | yes |  |\n| `hmacSecret` | string | yes |  |\n| `mode` | `sandbox` \\| `live` | yes |  |\n| `publicKey` | string | yes |  |\n| `secretKey` | string | yes | The secret key; `egy_sk_live_…` in live mode, `egy_sk_test_…` in sandbox. |\n| `walletIntegrationId` | number |  | The mobile wallet integration; omitted or null: card only. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "platform",
+                "tenants",
+                ":id",
+                "payment-gateway"
+              ],
+              "raw": "{{baseUrl}}/api/v1/platform/tenants/:id/payment-gateway",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Switch a compound's online payment off or back (platform step-up required)",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"platformDisabled\": false\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `platformDisabled` | boolean | yes | True switches online payment off for the compound, whatever its manager says. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "platform",
+                "tenants",
+                ":id",
+                "payment-gateway"
+              ],
+              "raw": "{{baseUrl}}/api/v1/platform/tenants/:id/payment-gateway",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Activate or suspend a compound",
           "request": {
             "body": {
@@ -6411,6 +6528,104 @@
         }
       ],
       "name": "files"
+    },
+    {
+      "item": [
+        {
+          "name": "The compound's online payment account, masked",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gateway"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gateway"
+            }
+          }
+        },
+        {
+          "name": "Set the compound's Paymob credentials (step-up required)",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"mode\": \"sandbox\",\n  \"secretKey\": \"\",\n  \"publicKey\": \"\",\n  \"hmacSecret\": \"\",\n  \"cardIntegrationId\": 1\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `cardIntegrationId` | number | yes |  |\n| `hmacSecret` | string | yes |  |\n| `mode` | `sandbox` \\| `live` | yes |  |\n| `publicKey` | string | yes |  |\n| `secretKey` | string | yes | The secret key; `egy_sk_live_…` in live mode, `egy_sk_test_…` in sandbox. |\n| `walletIntegrationId` | number |  | The mobile wallet integration; omitted or null: card only. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gateway"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gateway"
+            }
+          }
+        },
+        {
+          "name": "Turn online payment on or off (step-up required)",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"onlineEnabled\": false\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `onlineEnabled` | boolean | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gateway"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gateway"
+            }
+          }
+        }
+      ],
+      "name": "finance"
     },
     {
       "item": [

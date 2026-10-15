@@ -733,6 +733,16 @@ export const AUDIT_ACTIONS = {
   'parking_report.closed': { log: 'tenant', target: 'parking_report' },
   // metadata: fineId. The fine's own rows never name the report.
   'parking_report.converted': { log: 'tenant', target: 'parking_report' },
+
+  // Finance (ADR 0046). The gateway's credentials are never recorded, not
+  // even their last four characters: metadata names the fields that
+  // changed (`fieldsChanged`) and the mode.
+  'finance_gateway.set': { log: 'tenant', target: 'tenant' },
+  // metadata: onlineEnabled.
+  'finance_gateway.toggled': { log: 'tenant', target: 'tenant' },
+  // The platform's side of the same (metadata as above; platformDisabled).
+  'tenant.payment_gateway_set': { log: 'platform', target: 'tenant' },
+  'tenant.payment_gateway_toggled': { log: 'platform', target: 'tenant' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

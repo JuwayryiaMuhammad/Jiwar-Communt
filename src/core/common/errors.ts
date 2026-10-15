@@ -510,6 +510,13 @@ export const ErrorCode = {
   PARKING_REPORT_LIMIT_REACHED: 'PARKING_REPORT_LIMIT_REACHED',
   /** It was closed or turned into a fine already (409, params.status). */
   PARKING_REPORT_CLOSED: 'PARKING_REPORT_CLOSED',
+  /**
+   * The server holds no PAYMENT_CREDENTIALS_KEY, so no credential can be
+   * stored and online payment cannot be turned on (503, ADR 0046).
+   */
+  PAYMENT_VAULT_UNAVAILABLE: 'PAYMENT_VAULT_UNAVAILABLE',
+  /** Online payment needs the gateway's credentials first (409). */
+  GATEWAY_NOT_CONFIGURED: 'GATEWAY_NOT_CONFIGURED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -655,6 +662,8 @@ export const FieldErrorCode = {
   DAY_OUT_OF_RANGE: 'DAY_OUT_OF_RANGE',
   /** Not the fine's whole amount (params.amount): no partial payment. */
   AMOUNT_MISMATCH: 'AMOUNT_MISMATCH',
+  /** A sandbox key in live mode, or a live key in sandbox (ADR 0046). */
+  GATEWAY_MODE_MISMATCH: 'GATEWAY_MODE_MISMATCH',
 } as const;
 
 export type FieldErrorCode =

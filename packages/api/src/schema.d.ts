@@ -4865,6 +4865,25 @@ export interface paths {
         patch: operations["TenantsController_setManagerStatus"];
         trace?: never;
     };
+    "/api/v1/platform/tenants/{id}/payment-gateway": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A compound's online payment account, masked */
+        get: operations["PlatformGatewayController_get"];
+        /** Set a compound's Paymob credentials (platform step-up required) */
+        put: operations["PlatformGatewayController_set"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Switch a compound's online payment off or back (platform step-up required) */
+        patch: operations["PlatformGatewayController_toggle"];
+        trace?: never;
+    };
     "/api/v1/platform/tenants/{id}/status": {
         parameters: {
             query?: never;
@@ -5780,6 +5799,25 @@ export interface paths {
         head?: never;
         /** Update the facility settings */
         patch: operations["FacilitySettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gateway": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The compound's online payment account, masked */
+        get: operations["GatewayController_get"];
+        /** Set the compound's Paymob credentials (step-up required) */
+        put: operations["GatewayController_set"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Turn online payment on or off (step-up required) */
+        patch: operations["GatewayController_toggle"];
         trace?: never;
     };
     "/api/v1/staff/parking-reports": {
@@ -10592,6 +10630,8 @@ export interface components {
             /** @description `pending` until finalized. */
             status: components["schemas"]["FileStatus"];
         };
+        /** @enum {string} */
+        FinanceGatewayMode: "sandbox" | "live";
         FineAppealView: {
             /** Format: date-time */
             appealedAt: string;
@@ -10754,6 +10794,32 @@ export interface components {
         GateViewList: {
             data: components["schemas"]["GateView"][];
             nextCursor: string | null;
+        };
+        GatewayLast4View: {
+            cardIntegrationId: string;
+            hmacSecret: string;
+            publicKey: string;
+            secretKey: string;
+            walletIntegrationId: string | null;
+        };
+        GatewayView: {
+            /** @description Residents can pay online now: configured, enabled, not disabled by the platform, and the server holds the key. */
+            available: boolean;
+            /** @description Credentials have been set. */
+            configured: boolean;
+            last4: components["schemas"]["GatewayLast4View"] | null;
+            mode: components["schemas"]["FinanceGatewayMode"] | null;
+            /** @description The manager's switch. */
+            onlineEnabled: boolean;
+            /** @description The platform's switch: true turns online payment off whatever the manager says. */
+            platformDisabled: boolean;
+            /** Format: date-time */
+            updatedAt: string | null;
+            /**
+             * @description Who set the credentials last.
+             * @enum {string|null}
+             */
+            updatedBy: "manager" | "platform" | null;
         };
         GrantConsentDto: {
             code: components["schemas"]["ConsentCode"];
@@ -13301,6 +13367,23 @@ export interface components {
         };
         SetAvailabilityDto: {
             state: components["schemas"]["TechnicianAvailabilityState"];
+        };
+        SetGatewayDto: {
+            cardIntegrationId: number;
+            hmacSecret: string;
+            mode: components["schemas"]["FinanceGatewayMode"];
+            publicKey: string;
+            /** @description The secret key; `egy_sk_live_…` in live mode, `egy_sk_test_…` in sandbox. */
+            secretKey: string;
+            /** @description The mobile wallet integration; omitted or null: card only. */
+            walletIntegrationId?: number | null;
+        };
+        SetOnlinePaymentDto: {
+            onlineEnabled: boolean;
+        };
+        SetPlatformDisabledDto: {
+            /** @description True switches online payment off for the compound, whatever its manager says. */
+            platformDisabled: boolean;
         };
         SetPrimaryDto: {
             /**
@@ -23398,6 +23481,77 @@ export interface operations {
             };
         };
     };
+    PlatformGatewayController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GatewayView"];
+                };
+            };
+        };
+    };
+    PlatformGatewayController_set: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetGatewayDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GatewayView"];
+                };
+            };
+        };
+    };
+    PlatformGatewayController_toggle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetPlatformDisabledDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GatewayView"];
+                };
+            };
+        };
+    };
     TenantsController_setStatus: {
         parameters: {
             query?: never;
@@ -24796,6 +24950,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FacilitySettingsResponse"];
+                };
+            };
+        };
+    };
+    GatewayController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GatewayView"];
+                };
+            };
+        };
+    };
+    GatewayController_set: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetGatewayDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GatewayView"];
+                };
+            };
+        };
+    };
+    GatewayController_toggle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetOnlinePaymentDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GatewayView"];
                 };
             };
         };

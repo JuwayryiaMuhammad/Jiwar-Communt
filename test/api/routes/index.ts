@@ -19,6 +19,7 @@ import {
   SUSPENSION_ROUTES,
 } from './facilities';
 import { FILES_ROUTES } from './files';
+import { FINANCE_GATEWAY_ROUTES } from './finance';
 import { GATE_ROUTES } from './gate';
 import { EXISTING_ROUTES } from './existing';
 import { HOUSEHOLD_ROUTES } from './household';
@@ -148,4 +149,5 @@ export const ROUTES: Row[] = [
   ...FINE_ROUTES,
   ...FINE_PAYMENT_ROUTES,
   ...PARKING_REPORT_ROUTES,
+  ...FINANCE_GATEWAY_ROUTES,
 ];

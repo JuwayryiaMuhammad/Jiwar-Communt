@@ -804,6 +804,20 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'close_reason IS NULL is tested first; the list runs only on a value',
   },
+  // Finance (ADR 0046).
+  finance_gateways_provider: {},
+  finance_gateways_key_version: {},
+  finance_gateways_sealed: {
+    guarded:
+      'wallet_integration_enc IS NULL is tested first; the length runs only on a value',
+  },
+  finance_gateways_last4: {
+    guarded:
+      'wallet_integration_last4 IS NULL is tested first; the length runs only on a value',
+  },
+  finance_gateways_wallet_shape: {},
+  // updated_by_platform is NOT NULL; the account only under IS NULL.
+  finance_gateways_updated_by_shape: {},
 };
 
 interface Check {

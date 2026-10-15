@@ -320,3 +320,18 @@ export const VEHICLES_COVERAGE: readonly string[] = [
   'parking_report.closed',
   'parking_report.converted',
 ];
+
+/**
+ * R6a entries (ADR 0046), covered by test/finance/audit-coverage.e2e-spec.ts:
+ * the gateway, the platform's step-up, invoices, billing plans, payments
+ * and sessions.
+ */
+export const FINANCE_COVERAGE: readonly string[] = [
+  'platform.step_up_requested',
+  'platform.step_up_verified',
+  'platform.step_up_failed',
+  'finance_gateway.set',
+  'finance_gateway.toggled',
+  'tenant.payment_gateway_set',
+  'tenant.payment_gateway_toggled',
+];

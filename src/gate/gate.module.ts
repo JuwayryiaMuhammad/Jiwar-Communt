@@ -97,6 +97,9 @@ import { EmergencyRespondersService } from './emergencies/emergency-responders.s
 import { EmergencyEscalation } from './emergencies/emergency-escalation';
 import { EmergencyRecords } from './emergencies/emergency-records';
 import { SafetyCore } from './safety/safety-core';
+import { GateServicesController } from './gate-services/gate-services.controller';
+import { GateServicesService } from './gate-services/gate-services.service';
+import { GateServiceRecords } from './gate-services/gate-service-records';
 
 /**
  * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
@@ -144,6 +147,7 @@ import { SafetyCore } from './safety/safety-core';
     EmergencyContactsController,
     EmergenciesController,
     EmergencyRespondersController,
+    GateServicesController,
   ],
   providers: [
     GatesService,
@@ -194,6 +198,8 @@ import { SafetyCore } from './safety/safety-core';
     EmergencyEscalation,
     EmergenciesService,
     EmergencyRespondersService,
+    GateServiceRecords,
+    GateServicesService,
   ],
 })
 export class GateModule {}

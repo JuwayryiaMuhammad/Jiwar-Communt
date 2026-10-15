@@ -1046,6 +1046,15 @@
         ],
         "type": "object"
       },
+      "AssistanceKind": {
+        "enum": [
+          "wheelchair",
+          "walk_with",
+          "golf_cart",
+          "bags"
+        ],
+        "type": "string"
+      },
       "AttendanceDayView": {
         "properties": {
           "date": {
@@ -4287,6 +4296,53 @@
         },
         "type": "object"
       },
+      "CreateAccessibilityRequestDto": {
+        "properties": {
+          "assistanceKind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssistanceKind"
+              }
+            ]
+          },
+          "fromPlaceId": {
+            "description": "A place of GET /community/places.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "memberId": {
+            "description": "A member of the unit’s household (an id of GET /units/{unitId}/household); absent or null: the caller.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "toPlaceId": {
+            "description": "A place; absent or null: to the unit.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "description": "The caller’s unit: someone who lives there asks.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "when": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateServiceWhen"
+              }
+            ]
+          }
+        },
+        "required": [
+          "unitId",
+          "assistanceKind",
+          "fromPlaceId",
+          "when"
+        ],
+        "type": "object"
+      },
       "CreateAccountDto": {
         "properties": {
           "birthDate": {
@@ -4744,6 +4800,39 @@
         ],
         "type": "object"
       },
+      "CreateEscortRequestDto": {
+        "properties": {
+          "fromPlaceId": {
+            "description": "A place.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "toPlaceId": {
+            "description": "A place.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitId": {
+            "description": "The caller’s unit: someone who lives there asks.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "when": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateServiceWhen"
+              }
+            ]
+          }
+        },
+        "required": [
+          "unitId",
+          "fromPlaceId",
+          "toPlaceId",
+          "when"
+        ],
+        "type": "object"
+      },
       "CreateEventDto": {
         "properties": {
           "attachmentFileIds": {
@@ -4994,6 +5083,38 @@
         },
         "required": [
           "kind"
+        ],
+        "type": "object"
+      },
+      "CreateLaneRequestDto": {
+        "properties": {
+          "gateId": {
+            "description": "A gate in service (GET /gates/status).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "notes": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LaneReason"
+              }
+            ]
+          },
+          "unitId": {
+            "description": "The caller’s unit: someone who lives there asks.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "reason",
+          "gateId"
         ],
         "type": "object"
       },
@@ -5432,6 +5553,37 @@
           "phone",
           "email",
           "units"
+        ],
+        "type": "object"
+      },
+      "CreateSecurityReportDto": {
+        "properties": {
+          "description": {
+            "example": "A man trying car doors in the visitor parking",
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "photoFileId": {
+            "description": "A finalized `gate_service_photo` upload of the caller.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "placeId": {
+            "description": "Where: a place of GET /community/places.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitId": {
+            "description": "The caller’s unit: someone who lives there asks.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "placeId",
+          "description"
         ],
         "type": "object"
       },
@@ -9598,6 +9750,273 @@
         ],
         "type": "string"
       },
+      "GateServiceCloseReason": {
+        "enum": [
+          "done",
+          "not_found",
+          "no_show",
+          "duplicate",
+          "not_possible"
+        ],
+        "type": "string"
+      },
+      "GateServiceKind": {
+        "enum": [
+          "accessibility",
+          "suspicious",
+          "escort",
+          "lane"
+        ],
+        "type": "string"
+      },
+      "GateServiceStatus": {
+        "description": "`open`: waiting for security; `accepted`: someone is coming; `in_progress`: being done; `closed`; `cancelled` (by the requester while open, or because the requester left).",
+        "enum": [
+          "open",
+          "accepted",
+          "in_progress",
+          "closed",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "GateServiceView": {
+        "properties": {
+          "acceptedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "assistanceKind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssistanceKind"
+              }
+            ],
+            "description": "accessibility only.",
+            "nullable": true
+          },
+          "canCancel": {
+            "description": "Open: the requester may cancel.",
+            "type": "boolean"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "closeReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateServiceCloseReason"
+              }
+            ],
+            "nullable": true
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "description": "suspicious only; null once the requester was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "fromPlace": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceView"
+              }
+            ],
+            "description": "accessibility and escort.",
+            "nullable": true,
+            "type": "object"
+          },
+          "gate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceGateView"
+              }
+            ],
+            "description": "lane only.",
+            "nullable": true,
+            "type": "object"
+          },
+          "handler": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResponderView"
+              }
+            ],
+            "description": "Who accepted it: a first name and the phone of their gate (else the compound’s duty phone). Never their own.",
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateServiceKind"
+              }
+            ]
+          },
+          "laneReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LaneReason"
+              }
+            ],
+            "description": "lane only.",
+            "nullable": true
+          },
+          "member": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceMemberView"
+              }
+            ],
+            "description": "accessibility only: the household member helped; null for the requester.",
+            "nullable": true,
+            "type": "object"
+          },
+          "minutesAway": {
+            "description": "The minutes security picked, counted down from when they accepted; null before, once closed and when none was given.",
+            "nullable": true,
+            "type": "number"
+          },
+          "notes": {
+            "description": "lane only; null once the requester was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "photoUrl": {
+            "description": "suspicious only: a presigned URL of the photo, valid for minutes.",
+            "nullable": true,
+            "type": "string"
+          },
+          "place": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceView"
+              }
+            ],
+            "description": "suspicious only.",
+            "nullable": true,
+            "type": "object"
+          },
+          "reference": {
+            "description": "A- for accessibility help, S- for the other services.",
+            "example": "S-0042",
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateServiceStatus"
+              }
+            ],
+            "description": "`open`: waiting for security; `accepted`: someone is coming; `in_progress`: being done; `closed`; `cancelled` (by the requester while open, or because the requester left)."
+          },
+          "toPlace": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceView"
+              }
+            ],
+            "description": "escort; accessibility, where null means the unit.",
+            "nullable": true,
+            "type": "object"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "wantedAt": {
+            "description": "When the help is wanted: the request’s time plus `when`.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "when": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateServiceWhen"
+              }
+            ],
+            "description": "accessibility and escort.",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "kind",
+          "status",
+          "createdAt",
+          "unitId",
+          "assistanceKind",
+          "member",
+          "fromPlace",
+          "toPlace",
+          "place",
+          "when",
+          "wantedAt",
+          "description",
+          "photoUrl",
+          "laneReason",
+          "gate",
+          "notes",
+          "minutesAway",
+          "handler",
+          "acceptedAt",
+          "startedAt",
+          "closedAt",
+          "closeReason",
+          "cancelledAt",
+          "canCancel"
+        ],
+        "type": "object"
+      },
+      "GateServiceViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GateServiceView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GateServiceWhen": {
+        "enum": [
+          "now",
+          "in_15",
+          "in_30"
+        ],
+        "type": "string"
+      },
       "GateStatus": {
         "enum": [
           "active",
@@ -11368,6 +11787,16 @@
           "auditEntries"
         ],
         "type": "object"
+      },
+      "LaneReason": {
+        "description": "lane only.",
+        "enum": [
+          "ambulance",
+          "fire_truck",
+          "moving_truck",
+          "large_delivery"
+        ],
+        "type": "string"
       },
       "LegalHoldResponse": {
         "properties": {
@@ -19381,6 +19810,40 @@
         },
         "required": [
           "body"
+        ],
+        "type": "object"
+      },
+      "ServiceGateView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "example": "Main gate",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "ServiceMemberView": {
+        "properties": {
+          "firstName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "firstName"
         ],
         "type": "object"
       },
@@ -28167,6 +28630,56 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/accessibility-requests": {
+      "post": {
+        "description": "A wheelchair, someone to walk with, a golf cart or help with bags, for the caller or a household member. At most 3 open of a kind per unit, and 20 a day per unit (GATE_SERVICE_LIMIT_REACHED, params.scope `open` or `day`). Someone who lives in the unit asks (a landlord: GATE_SERVICE_NOT_ALLOWED).",
+        "operationId": "GateServicesController_accessibility",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAccessibilityRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateServiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask for accessibility help (C7)",
+        "tags": [
+          "gate-services"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/accounts": {
       "get": {
         "operationId": "AccountsController_list",
@@ -31625,6 +32138,56 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/escort-requests": {
+      "post": {
+        "description": "At most 3 open of a kind per unit, and 20 a day per unit (GATE_SERVICE_LIMIT_REACHED, params.scope `open` or `day`). Someone who lives in the unit asks (a landlord: GATE_SERVICE_NOT_ALLOWED).",
+        "operationId": "GateServicesController_escort",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEscortRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateServiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask for a security escort (D2)",
+        "tags": [
+          "gate-services"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/events": {
       "get": {
         "operationId": "EventsController_list",
@@ -32065,6 +32628,83 @@
         "tags": [
           "gate-requests"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate-services/{id}": {
+      "get": {
+        "operationId": "GateServicesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateServiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one of my gate service requests",
+        "tags": [
+          "gate-services"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate-services/{id}/cancel": {
+      "post": {
+        "description": "Once security accepted it: GATE_SERVICE_NOT_OPEN.",
+        "operationId": "GateServicesController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateServiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel my request while it is open",
+        "tags": [
+          "gate-services"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -33979,6 +34619,56 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/lane-requests": {
+      "post": {
+        "description": "The guards on shift at that gate are told first. At most 3 open of a kind per unit, and 20 a day per unit (GATE_SERVICE_LIMIT_REACHED, params.scope `open` or `day`). Someone who lives in the unit asks (a landlord: GATE_SERVICE_NOT_ALLOWED).",
+        "operationId": "GateServicesController_lane",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLaneRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateServiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask a gate to open a lane (D3)",
+        "tags": [
+          "gate-services"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -38108,6 +38798,73 @@
         "summary": "List the gate's requests waiting for my answer",
         "tags": [
           "gate-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/gate-services": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "GateServicesController_mine",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/GateServiceStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/GateServiceKind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateServiceViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my gate service requests (D5)",
+        "tags": [
+          "gate-services"
         ],
         "x-no-store": true,
         "x-stability": "draft"
@@ -44447,6 +45204,56 @@
         "tags": [
           "admin"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/security-reports": {
+      "post": {
+        "description": "At most 3 open of a kind per unit, and 20 a day per unit (GATE_SERVICE_LIMIT_REACHED, params.scope `open` or `day`). Someone who lives in the unit asks (a landlord: GATE_SERVICE_NOT_ALLOWED).",
+        "operationId": "GateServicesController_suspicious",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSecurityReportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateServiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Report something suspicious (D1)",
+        "tags": [
+          "gate-services"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

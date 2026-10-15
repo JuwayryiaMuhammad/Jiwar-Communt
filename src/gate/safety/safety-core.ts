@@ -155,6 +155,14 @@ export class SafetyCore {
     return s.dutyPhone ?? s.emergencyPhone ?? null;
   }
 
+  /** Household members' first names by member id (accessibility help). */
+  async memberNames(
+    tx: TenantTxClient,
+    memberIds: readonly string[],
+  ): Promise<Map<string, string | null>> {
+    return this.community.memberFirstNames(tx, memberIds);
+  }
+
   /** Where each unit is. */
   async locations(
     tx: TenantTxClient,

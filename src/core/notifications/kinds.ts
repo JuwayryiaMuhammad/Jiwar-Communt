@@ -1091,6 +1091,17 @@ export const NOTIFICATION_KINDS = {
     target: 'emergency',
     params: {},
   },
+  // Gate services (ADR 0047). The new request is staff work, critical, like
+  // a ticket assigned; what the requester is told is not. They carry the
+  // kind and codes at most: never a name, a unit or what was written.
+  /** A new request: the guards on shift (at the lane's gate) and the handlers. */
+  'gate_service.requested': {
+    priority: 'critical',
+    category: 'safety',
+    critical: true,
+    target: 'gate_service_request',
+    params: { serviceKind: {} },
+  },
   // Finance (ADR 0046). No kind is critical, and none carries a param: never
   // an amount, a number, a unit or a name. To every account that sees the
   // unit's money (capabilities.financeView).

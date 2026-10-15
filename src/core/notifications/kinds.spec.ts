@@ -26,6 +26,7 @@ const CRITICAL_KINDS = [
   'emergency.reported',
   'emergency.responder_on_the_way',
   'entry_credential.issued',
+  'gate_service.requested',
   'gate.approval_requested',
   'gate.approval_reversed',
   'ticket.assigned',

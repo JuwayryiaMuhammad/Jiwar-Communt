@@ -107,6 +107,42 @@ export class CommunityGatePort {
     return this.capabilities.holders(tx, unitId, flag);
   }
 
+  /**
+   * Whether `memberId` is an active member of the unit's household (ADR
+   * 0047: whom accessibility help is for), a minor without an account
+   * included. Read FOR SHARE: a removal waits for the request naming them.
+   */
+  async isActiveMember(
+    tx: TenantTxClient,
+    unitId: string,
+    memberId: string,
+  ): Promise<boolean> {
+    const rows = await tx.$queryRaw<{ id: string }[]>`
+      SELECT id FROM household_members
+       WHERE id = ${memberId}::uuid AND unit_id = ${unitId}::uuid
+         AND status = 'active'
+         FOR SHARE`;
+    return rows.length > 0;
+  }
+
+  /** Household members' first names (ADR 0047), null for an erased one. */
+  async memberFirstNames(
+    tx: TenantTxClient,
+    memberIds: readonly string[],
+  ): Promise<Map<string, string | null>> {
+    if (!memberIds.length) return new Map();
+    const members = await tx.householdMember.findMany({
+      where: { id: { in: [...new Set(memberIds)] } },
+      select: { id: true, fullName: true },
+    });
+    return new Map(
+      members.map((m) => [
+        m.id,
+        (m.fullName ?? '').trim().split(/\s+/)[0] || null,
+      ]),
+    );
+  }
+
   /** Each unit's code and building (ADR 0047: where an emergency is). */
   async unitLocations(
     tx: TenantTxClient,

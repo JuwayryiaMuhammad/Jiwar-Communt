@@ -177,6 +177,64 @@ describe('Audit coverage — emergencies and gate services', () => {
     });
   });
 
+  describe('gate services, the requester', () => {
+    it('requested and cancelled: kind, codes and ids; the words as booleans', async () => {
+      const home = await x.unit(s.c);
+      const owner = await x.owner(s.c, home.id);
+      const places = await x.places(owner);
+      const lane = (
+        await x
+          .http('post', '/lane-requests', owner.token, {
+            unitId: home.id,
+            reason: 'ambulance',
+            gateId: (await x.g.gate(s.c)).id,
+            notes: WORDS,
+          })
+          .expect(201)
+      ).body as { id: string; reference: string; gate: { id: string } };
+      const r = await single('gate_service.requested', lane.id);
+      expect(r).toMatchObject(by(owner, 'gate_service_request'));
+      expect(r.metadata).toEqual({
+        number: Number(lane.reference.slice(2)),
+        kind: 'lane',
+        unitId: home.id,
+        laneReason: 'ambulance',
+        gateId: lane.gate.id,
+        notes: true,
+      });
+      const help = (
+        await x
+          .http('post', '/accessibility-requests', owner.token, {
+            unitId: home.id,
+            assistanceKind: 'golf_cart',
+            fromPlaceId: places.clubhouse.id,
+            when: 'now',
+          })
+          .expect(201)
+      ).body as { id: string; reference: string };
+      expect(
+        (await single('gate_service.requested', help.id)).metadata,
+      ).toEqual({
+        number: Number(help.reference.slice(2)),
+        kind: 'accessibility',
+        unitId: home.id,
+        assistanceKind: 'golf_cart',
+        whenCode: 'now',
+        fromPlaceId: places.clubhouse.id,
+      });
+      await x
+        .http('post', `/gate-services/${help.id}/cancel`, owner.token)
+        .expect(200);
+      const c = await single('gate_service.cancelled', help.id);
+      expect(c).toMatchObject(by(owner, 'gate_service_request'));
+      expect(c.metadata).toEqual({
+        from: 'open',
+        side: 'requester',
+        reasonCode: null,
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every emergencies and gate services entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

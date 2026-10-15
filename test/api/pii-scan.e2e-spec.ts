@@ -1023,6 +1023,21 @@ describe('API v0 — PII leak scan', () => {
       { type: 'medical', unitId: unit.id },
     );
 
+    // A suspicious-activity report in the primary's words (ADR 0047).
+    const piiPlace = await manager(() =>
+      c.prisma.tenant.place.findFirstOrThrow({ where: { key: 'parking' } }),
+    );
+    const piiGateService = await idOf(
+      'POST',
+      '/security-reports',
+      await w.tokenFor(a, primary.id, 'resident'),
+      {
+        unitId: unit.id,
+        placeId: piiPlace.id,
+        description: 'PII-SUSPICIOUS-words',
+      },
+    );
+
     /** One id for every param of the path, or each param by name. */
     type Ids = string | Record<string, string>;
     const params: Record<string, Ids> = {
@@ -1149,6 +1164,7 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/emergency-contacts': unit.id,
       '/emergencies/{id}': piiEmergency,
       '/gate/emergencies/{id}': piiEmergency,
+      '/gate-services/{id}': piiGateService,
       // ADR 0046: last four characters at most, never a name.
       '/platform/tenants/{id}/payment-gateway': a.tenantId,
       '/staff/invoice-batches/{id}': piiInvoice.batchId,

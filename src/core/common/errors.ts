@@ -525,6 +525,17 @@ export const ErrorCode = {
   EMERGENCY_NOT_RESPONDER: 'EMERGENCY_NOT_RESPONDER',
   /** Nobody accepted it yet: there is no arrival to mark (409, params.status). */
   EMERGENCY_NOT_ON_THE_WAY: 'EMERGENCY_NOT_ON_THE_WAY',
+  /** Unknown, another compound's, or not the caller's to see. */
+  GATE_SERVICE_NOT_FOUND: 'GATE_SERVICE_NOT_FOUND',
+  /** Only someone who lives in the unit asks security for a service (403). */
+  GATE_SERVICE_NOT_ALLOWED: 'GATE_SERVICE_NOT_ALLOWED',
+  /**
+   * The unit has params.max requests: open of this kind (params.scope
+   * `open`), or made in the last 24 hours (`day`) (409).
+   */
+  GATE_SERVICE_LIMIT_REACHED: 'GATE_SERVICE_LIMIT_REACHED',
+  /** It is not open any more: accepted, closed or cancelled (409, params.status). */
+  GATE_SERVICE_NOT_OPEN: 'GATE_SERVICE_NOT_OPEN',
   /**
    * The server holds no PAYMENT_CREDENTIALS_KEY, so no credential can be
    * stored and online payment cannot be turned on (503, ADR 0046).

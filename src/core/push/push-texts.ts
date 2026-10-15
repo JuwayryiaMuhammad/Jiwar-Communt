@@ -1151,6 +1151,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'أحد المستجيبين في الطريق، خلال {etaMinutes} دقائق تقريبًا.',
     },
   },
+  'gate_service.requested': {
+    en: {
+      title: 'New request for security',
+      body: 'A resident asked for help from security. Open the app to answer.',
+    },
+    ar: {
+      title: 'طلب جديد للأمن',
+      body: 'طلب أحد السكان مساعدة من الأمن. افتح التطبيق للرد.',
+    },
+  },
   'emergency.cancelled': {
     en: {
       title: 'Emergency cancelled',

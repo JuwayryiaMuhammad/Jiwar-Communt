@@ -21,6 +21,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/accessibility-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask for accessibility help (C7)
+         * @description A wheelchair, someone to walk with, a golf cart or help with bags, for the caller or a household member. At most 3 open of a kind per unit, and 20 a day per unit (GATE_SERVICE_LIMIT_REACHED, params.scope `open` or `day`). Someone who lives in the unit asks (a landlord: GATE_SERVICE_NOT_ALLOWED).
+         */
+        post: operations["GateServicesController_accessibility"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/accounts": {
         parameters: {
             query?: never;
@@ -1205,6 +1225,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/escort-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask for a security escort (D2)
+         * @description At most 3 open of a kind per unit, and 20 a day per unit (GATE_SERVICE_LIMIT_REACHED, params.scope `open` or `day`). Someone who lives in the unit asks (a landlord: GATE_SERVICE_NOT_ALLOWED).
+         */
+        post: operations["GateServicesController_escort"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events": {
         parameters: {
             query?: never;
@@ -1370,6 +1410,43 @@ export interface paths {
         put?: never;
         /** Answer the gate's request */
         post: operations["HostApprovalsController_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate-services/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one of my gate service requests */
+        get: operations["GateServicesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate-services/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel my request while it is open
+         * @description Once security accepted it: GATE_SERVICE_NOT_OPEN.
+         */
+        post: operations["GateServicesController_cancel"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2099,6 +2176,26 @@ export interface paths {
         get: operations["UnitInvoicesController_detail"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/lane-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask a gate to open a lane (D3)
+         * @description The guards on shift at that gate are told first. At most 3 open of a kind per unit, and 20 a day per unit (GATE_SERVICE_LIMIT_REACHED, params.scope `open` or `day`). Someone who lives in the unit asks (a landlord: GATE_SERVICE_NOT_ALLOWED).
+         */
+        post: operations["GateServicesController_lane"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3479,6 +3576,26 @@ export interface paths {
         };
         /** List the gate's requests waiting for my answer */
         get: operations["HostApprovalsController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/gate-services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List my gate service requests (D5)
+         * @description Newest first.
+         */
+        get: operations["GateServicesController_mine"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5642,6 +5759,26 @@ export interface paths {
         /** Replace a role's permissions */
         put: operations["RolesController_replace"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Report something suspicious (D1)
+         * @description At most 3 open of a kind per unit, and 20 a day per unit (GATE_SERVICE_LIMIT_REACHED, params.scope `open` or `day`). Someone who lives in the unit asks (a landlord: GATE_SERVICE_NOT_ALLOWED).
+         */
+        post: operations["GateServicesController_suspicious"];
         delete?: never;
         options?: never;
         head?: never;
@@ -8999,6 +9136,8 @@ export interface components {
             /** @description How the person asked: `in_person`, `phone_call` or `written_request` (INVALID_REASON_CODE otherwise). */
             reasonCode: string;
         };
+        /** @enum {string} */
+        AssistanceKind: "wheelchair" | "walk_with" | "golf_cart" | "bags";
         AttendanceDayView: {
             /** Format: date */
             date: string;
@@ -9971,6 +10110,30 @@ export interface components {
             /** @description False: they let the unit (a landlord). */
             resides?: boolean;
         };
+        CreateAccessibilityRequestDto: {
+            assistanceKind: components["schemas"]["AssistanceKind"];
+            /**
+             * Format: uuid
+             * @description A place of GET /community/places.
+             */
+            fromPlaceId: string;
+            /**
+             * Format: uuid
+             * @description A member of the unit’s household (an id of GET /units/{unitId}/household); absent or null: the caller.
+             */
+            memberId?: string | null;
+            /**
+             * Format: uuid
+             * @description A place; absent or null: to the unit.
+             */
+            toPlaceId?: string | null;
+            /**
+             * Format: uuid
+             * @description The caller’s unit: someone who lives there asks.
+             */
+            unitId: string;
+            when: components["schemas"]["GateServiceWhen"];
+        };
         CreateAccountDto: {
             /**
              * Format: date
@@ -10126,6 +10289,24 @@ export interface components {
             expiresAt: string;
             scopes: components["schemas"]["DelegationScope"][];
         };
+        CreateEscortRequestDto: {
+            /**
+             * Format: uuid
+             * @description A place.
+             */
+            fromPlaceId: string;
+            /**
+             * Format: uuid
+             * @description A place.
+             */
+            toPlaceId: string;
+            /**
+             * Format: uuid
+             * @description The caller’s unit: someone who lives there asks.
+             */
+            unitId: string;
+            when: components["schemas"]["GateServiceWhen"];
+        };
         CreateEventDto: {
             /** @description The files it shows from now on: ids it already shows to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). */
             attachmentFileIds?: string[];
@@ -10211,6 +10392,20 @@ export interface components {
             unitCode?: string;
             /** @description As the visitor gives it; shown to the household only. */
             visitorName?: string;
+        };
+        CreateLaneRequestDto: {
+            /**
+             * Format: uuid
+             * @description A gate in service (GET /gates/status).
+             */
+            gateId: string;
+            notes?: string;
+            reason: components["schemas"]["LaneReason"];
+            /**
+             * Format: uuid
+             * @description The caller’s unit: someone who lives there asks.
+             */
+            unitId: string;
         };
         CreateParkingReportDto: {
             /** @example Visitor area B, by the gym */
@@ -10381,6 +10576,25 @@ export interface components {
             preferredLocale?: components["schemas"]["Locale"];
             /** @description At least one (checked by the service). */
             units: components["schemas"]["OccupancyInputDto"][];
+        };
+        CreateSecurityReportDto: {
+            /** @example A man trying car doors in the visitor parking */
+            description: string;
+            /**
+             * Format: uuid
+             * @description A finalized `gate_service_photo` upload of the caller.
+             */
+            photoFileId?: string;
+            /**
+             * Format: uuid
+             * @description Where: a place of GET /community/places.
+             */
+            placeId: string;
+            /**
+             * Format: uuid
+             * @description The caller’s unit: someone who lives there asks.
+             */
+            unitId: string;
         };
         CreateSpecialtyDto: {
             /** @description Stable code, lowercase (e.g. `hvac`). Never changes once created. */
@@ -11629,6 +11843,79 @@ export interface components {
         /** @enum {string} */
         GateRequestStatus: "pending" | "approved" | "denied" | "timed_out" | "leave_at_gate" | "withdrawn";
         /** @enum {string} */
+        GateServiceCloseReason: "done" | "not_found" | "no_show" | "duplicate" | "not_possible";
+        /** @enum {string} */
+        GateServiceKind: "accessibility" | "suspicious" | "escort" | "lane";
+        /**
+         * @description `open`: waiting for security; `accepted`: someone is coming; `in_progress`: being done; `closed`; `cancelled` (by the requester while open, or because the requester left).
+         * @enum {string}
+         */
+        GateServiceStatus: "open" | "accepted" | "in_progress" | "closed" | "cancelled";
+        GateServiceView: {
+            /** Format: date-time */
+            acceptedAt: string | null;
+            /** @description accessibility only. */
+            assistanceKind: components["schemas"]["AssistanceKind"] | null;
+            /** @description Open: the requester may cancel. */
+            canCancel: boolean;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            closeReason: components["schemas"]["GateServiceCloseReason"] | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description suspicious only; null once the requester was erased. */
+            description: string | null;
+            /** @description accessibility and escort. */
+            fromPlace: components["schemas"]["PlaceView"] | null;
+            /** @description lane only. */
+            gate: components["schemas"]["ServiceGateView"] | null;
+            /** @description Who accepted it: a first name and the phone of their gate (else the compound’s duty phone). Never their own. */
+            handler: components["schemas"]["ResponderView"] | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["GateServiceKind"];
+            /** @description lane only. */
+            laneReason: components["schemas"]["LaneReason"] | null;
+            /** @description accessibility only: the household member helped; null for the requester. */
+            member: components["schemas"]["ServiceMemberView"] | null;
+            /** @description The minutes security picked, counted down from when they accepted; null before, once closed and when none was given. */
+            minutesAway: number | null;
+            /** @description lane only; null once the requester was erased. */
+            notes: string | null;
+            /** @description suspicious only: a presigned URL of the photo, valid for minutes. */
+            photoUrl: string | null;
+            /** @description suspicious only. */
+            place: components["schemas"]["PlaceView"] | null;
+            /**
+             * @description A- for accessibility help, S- for the other services.
+             * @example S-0042
+             */
+            reference: string;
+            /** Format: date-time */
+            startedAt: string | null;
+            /** @description `open`: waiting for security; `accepted`: someone is coming; `in_progress`: being done; `closed`; `cancelled` (by the requester while open, or because the requester left). */
+            status: components["schemas"]["GateServiceStatus"];
+            /** @description escort; accessibility, where null means the unit. */
+            toPlace: components["schemas"]["PlaceView"] | null;
+            /** Format: uuid */
+            unitId: string;
+            /**
+             * Format: date-time
+             * @description When the help is wanted: the request’s time plus `when`.
+             */
+            wantedAt: string | null;
+            /** @description accessibility and escort. */
+            when: components["schemas"]["GateServiceWhen"] | null;
+        };
+        GateServiceViewList: {
+            data: components["schemas"]["GateServiceView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        GateServiceWhen: "now" | "in_15" | "in_30";
+        /** @enum {string} */
         GateStatus: "active" | "inactive";
         GateStatusView: {
             /** Format: uuid */
@@ -12187,6 +12474,11 @@ export interface components {
             /** @description They stay, pointing at a deleted user. */
             auditEntries: number;
         };
+        /**
+         * @description lane only.
+         * @enum {string}
+         */
+        LaneReason: "ambulance" | "fire_truck" | "moving_truck" | "large_delivery";
         LegalHoldResponse: {
             /** Format: uuid */
             accountId: string;
@@ -14606,6 +14898,17 @@ export interface components {
         SendNoticeDto: {
             /** @description The management’s own words to the unit. The only text of the matter the unit ever reads: never the complaint’s. */
             body: string;
+        };
+        ServiceGateView: {
+            /** Format: uuid */
+            id: string;
+            /** @example Main gate */
+            name: string;
+        };
+        ServiceMemberView: {
+            firstName: string | null;
+            /** Format: uuid */
+            id: string;
         };
         SessionInvoiceView: {
             /** @description What it owed when the checkout opened. */
@@ -17237,6 +17540,32 @@ export interface operations {
             };
         };
     };
+    GateServicesController_accessibility: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAccessibilityRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateServiceView"];
+                };
+            };
+        };
+    };
     AccountsController_list: {
         parameters: {
             query?: {
@@ -19084,6 +19413,32 @@ export interface operations {
             };
         };
     };
+    GateServicesController_escort: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEscortRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateServiceView"];
+                };
+            };
+        };
+    };
     EventsController_list: {
         parameters: {
             query?: {
@@ -19322,6 +19677,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DecisionResponse"];
+                };
+            };
+        };
+    };
+    GateServicesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateServiceView"];
+                };
+            };
+        };
+    };
+    GateServicesController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateServiceView"];
                 };
             };
         };
@@ -20357,6 +20754,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvoiceDetailView"];
+                };
+            };
+        };
+    };
+    GateServicesController_lane: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateLaneRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateServiceView"];
                 };
             };
         };
@@ -22588,6 +23011,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HostRequestResponseList"];
+                };
+            };
+        };
+    };
+    GateServicesController_mine: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["GateServiceStatus"];
+                kind?: components["schemas"]["GateServiceKind"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateServiceViewList"];
                 };
             };
         };
@@ -25980,6 +26428,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RoleView"];
+                };
+            };
+        };
+    };
+    GateServicesController_suspicious: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSecurityReportDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateServiceView"];
                 };
             };
         };

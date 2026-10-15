@@ -267,3 +267,189 @@ export const EMERGENCY_RESPONDER_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+const WHEN = ['now', 'in_15', 'in_30'];
+
+/** Gate services, the requester's side (ADR 0047). */
+export const GATE_SERVICE_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/accessibility-requests',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: () => ({}),
+      code: 'UNIT_NOT_FOUND',
+      body: (w) => ({
+        unitId: w.bUnitId,
+        assistanceKind: 'wheelchair',
+        fromPlaceId: w.aPlaceId,
+        when: 'now',
+      }),
+    },
+    invalid: {
+      body: {
+        unitId: 'x',
+        assistanceKind: 'piggyback',
+        fromPlaceId: 'x',
+        when: 'later',
+      },
+      fields: [
+        {
+          field: 'assistanceKind',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['wheelchair', 'walk_with', 'golf_cart', 'bags'] },
+        },
+        { field: 'fromPlaceId', code: 'INVALID_UUID' },
+        { field: 'when', code: 'INVALID_VALUE', params: { allowed: WHEN } },
+        { field: 'unitId', code: 'INVALID_UUID' },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/security-reports',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: () => ({}),
+      code: 'UNIT_NOT_FOUND',
+      body: (w) => ({
+        unitId: w.bUnitId,
+        placeId: w.aPlaceId,
+        description: 'Someone at the fence',
+      }),
+    },
+    invalid: {
+      body: { unitId: 'x', placeId: 'x', description: '' },
+      fields: [
+        { field: 'placeId', code: 'INVALID_UUID' },
+        {
+          field: 'description',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 1000 },
+        },
+        { field: 'unitId', code: 'INVALID_UUID' },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/escort-requests',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: () => ({}),
+      code: 'UNIT_NOT_FOUND',
+      body: (w) => ({
+        unitId: w.bUnitId,
+        fromPlaceId: w.aPlaceId,
+        toPlaceId: w.aPlaceId,
+        when: 'in_15',
+      }),
+    },
+    invalid: {
+      body: { unitId: 'x', fromPlaceId: 'x', toPlaceId: 'x', when: 'soon' },
+      fields: [
+        { field: 'fromPlaceId', code: 'INVALID_UUID' },
+        { field: 'toPlaceId', code: 'INVALID_UUID' },
+        { field: 'when', code: 'INVALID_VALUE', params: { allowed: WHEN } },
+        { field: 'unitId', code: 'INVALID_UUID' },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/lane-requests',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: () => ({}),
+      code: 'UNIT_NOT_FOUND',
+      body: (w) => ({
+        unitId: w.bUnitId,
+        reason: 'ambulance',
+        gateId: w.a.gateId,
+      }),
+    },
+    invalid: {
+      body: { unitId: 'x', reason: 'parade', gateId: 'x', notes: '' },
+      fields: [
+        {
+          field: 'reason',
+          code: 'INVALID_VALUE',
+          params: {
+            allowed: [
+              'ambulance',
+              'fire_truck',
+              'moving_truck',
+              'large_delivery',
+            ],
+          },
+        },
+        { field: 'gateId', code: 'INVALID_UUID' },
+        {
+          field: 'notes',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 500 },
+        },
+        { field: 'unitId', code: 'INVALID_UUID' },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/me/gate-services',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { kind: 'parade' },
+      fields: [
+        {
+          field: 'kind',
+          code: 'INVALID_VALUE',
+          params: {
+            allowed: ['accessibility', 'suspicious', 'escort', 'lane'],
+          },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/gate-services/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bGateServiceId }),
+      code: 'GATE_SERVICE_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate-services/{id}/cancel',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bGateServiceId }),
+      code: 'GATE_SERVICE_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+];

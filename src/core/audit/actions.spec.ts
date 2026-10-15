@@ -96,6 +96,7 @@ describe('audit catalog', () => {
         'parking_report',
         'place',
         'emergency',
+        'gate_service_request',
         'invoice_batch',
         'credit_note',
         'billing_plan',

@@ -642,6 +642,17 @@ describe('API v0 — no-store', () => {
     return anEmergency('facilities');
   };
 
+  /** An escort request of A's owner: the response. */
+  const anEscort = () =>
+    as('owner', 'POST', '/escort-requests', {
+      unitId: w.a.homeUnitId,
+      fromPlaceId: w.aPlaceId,
+      toPlaceId: w.aPlaceId,
+      when: 'in_30',
+    });
+  /** An open escort request of A's owner: its id. */
+  const aService = async () => body<{ id: string }>(await anEscort()).id;
+
   /** Emergencies and gate services (ADR 0047). */
   const SAFETY_CALLS = (): Record<string, () => Promise<Response>> => ({
     'GET /community/places': () => as('owner', 'GET', '/community/places'),
@@ -691,6 +702,31 @@ describe('API v0 — no-store', () => {
         `/gate/emergencies/${await anUnansweredEmergency()}/resolve`,
         { reasonCode: 'false_alarm' },
       ),
+    'POST /accessibility-requests': () =>
+      as('owner', 'POST', '/accessibility-requests', {
+        unitId: w.a.homeUnitId,
+        assistanceKind: 'bags',
+        fromPlaceId: w.aPlaceId,
+        when: 'now',
+      }),
+    'POST /security-reports': () =>
+      as('owner', 'POST', '/security-reports', {
+        unitId: w.a.homeUnitId,
+        placeId: w.aPlaceId,
+        description: 'NS suspicious',
+      }),
+    'POST /escort-requests': () => anEscort(),
+    'POST /lane-requests': () =>
+      as('owner', 'POST', '/lane-requests', {
+        unitId: w.a.homeUnitId,
+        reason: 'large_delivery',
+        gateId: w.a.gateId,
+      }),
+    'GET /me/gate-services': () => as('owner', 'GET', '/me/gate-services'),
+    'GET /gate-services/{id}': async () =>
+      as('owner', 'GET', `/gate-services/${await aService()}`),
+    'POST /gate-services/{id}/cancel': async () =>
+      as('owner', 'POST', `/gate-services/${await aService()}/cancel`),
     'POST /emergencies/{id}/on-my-way': async () =>
       as(
         'family',

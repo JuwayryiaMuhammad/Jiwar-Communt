@@ -767,6 +767,12 @@ export const AUDIT_ACTIONS = {
   // metadata: from, reasonCode, side (responder | staff), note (a boolean:
   // never the words).
   'emergency.resolved': { log: 'tenant', target: 'emergency' },
+  // metadata: number, kind, unitId, and per kind its codes and ids
+  // (assistanceKind, memberId, whenCode, laneReason, gateId, place ids);
+  // description, notes and photo as booleans. Never the words.
+  'gate_service.requested': { log: 'tenant', target: 'gate_service_request' },
+  // metadata: from (the status), side (requester | system), reasonCode.
+  'gate_service.cancelled': { log: 'tenant', target: 'gate_service_request' },
   // No metadata: the member is the actor.
   'emergency.family_on_my_way': { log: 'tenant', target: 'emergency' },
 

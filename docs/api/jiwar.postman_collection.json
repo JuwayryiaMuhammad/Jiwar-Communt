@@ -8983,6 +8983,268 @@
     {
       "item": [
         {
+          "name": "Ask for accessibility help (C7)",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"unitId\": \"\",\n  \"assistanceKind\": \"wheelchair\",\n  \"fromPlaceId\": \"\",\n  \"when\": \"now\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `assistanceKind` | `wheelchair` \\| `walk_with` \\| `golf_cart` \\| `bags` | yes |  |\n| `fromPlaceId` | string (uuid) | yes | A place of GET /community/places. |\n| `memberId` | string (uuid) |  | A member of the unit’s household (an id of GET /units/{unitId}/household); absent or null: the caller. |\n| `toPlaceId` | string (uuid) |  | A place; absent or null: to the unit. |\n| `unitId` | string (uuid) | yes | The caller’s unit: someone who lives there asks. |\n| `when` | `now` \\| `in_15` \\| `in_30` | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "accessibility-requests"
+              ],
+              "raw": "{{baseUrl}}/api/v1/accessibility-requests"
+            }
+          }
+        },
+        {
+          "name": "Ask for a security escort (D2)",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"unitId\": \"\",\n  \"fromPlaceId\": \"\",\n  \"toPlaceId\": \"\",\n  \"when\": \"now\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `fromPlaceId` | string (uuid) | yes | A place. |\n| `toPlaceId` | string (uuid) | yes | A place. |\n| `unitId` | string (uuid) | yes | The caller’s unit: someone who lives there asks. |\n| `when` | `now` \\| `in_15` \\| `in_30` | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "escort-requests"
+              ],
+              "raw": "{{baseUrl}}/api/v1/escort-requests"
+            }
+          }
+        },
+        {
+          "name": "Get one of my gate service requests",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate-services",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate-services/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel my request while it is open",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate-services",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate-services/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ask a gate to open a lane (D3)",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"unitId\": \"\",\n  \"reason\": \"ambulance\",\n  \"gateId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `gateId` | string (uuid) | yes | A gate in service (GET /gates/status). |\n| `notes` | string |  |  |\n| `reason` | `ambulance` \\| `fire_truck` \\| `moving_truck` \\| `large_delivery` | yes | lane only. |\n| `unitId` | string (uuid) | yes | The caller’s unit: someone who lives there asks. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "lane-requests"
+              ],
+              "raw": "{{baseUrl}}/api/v1/lane-requests"
+            }
+          }
+        },
+        {
+          "name": "List my gate service requests (D5)",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "gate-services"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "kind",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/me/gate-services"
+            }
+          }
+        },
+        {
+          "name": "Report something suspicious (D1)",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"unitId\": \"\",\n  \"placeId\": \"\",\n  \"description\": \"A man trying car doors in the visitor parking\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `description` | string | yes |  |\n| `photoFileId` | string (uuid) |  | A finalized `gate_service_photo` upload of the caller. |\n| `placeId` | string (uuid) | yes | Where: a place of GET /community/places. |\n| `unitId` | string (uuid) | yes | The caller’s unit: someone who lives there asks. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "security-reports"
+              ],
+              "raw": "{{baseUrl}}/api/v1/security-reports"
+            }
+          }
+        }
+      ],
+      "name": "gate-services"
+    },
+    {
+      "item": [
+        {
           "name": "List the compound's gates",
           "request": {
             "description": "**Responses:** 200",

@@ -494,6 +494,14 @@ export const ErrorCode = {
   FINE_NOT_UNDER_APPEAL: 'FINE_NOT_UNDER_APPEAL',
   /** Only an unpaid fine not under appeal is cancelled (409, params.status). */
   FINE_NOT_CANCELLABLE: 'FINE_NOT_CANCELLABLE',
+  /** It is under appeal: it is paid once the appeal is decided (409). */
+  FINE_UNDER_APPEAL: 'FINE_UNDER_APPEAL',
+  /** Paid already, or cancelled (409, params.status). */
+  FINE_NOT_PAYABLE: 'FINE_NOT_PAYABLE',
+  /** Unknown, another compound's, or not a payment. */
+  FINE_PAYMENT_NOT_FOUND: 'FINE_PAYMENT_NOT_FOUND',
+  /** It was reversed already (409). */
+  FINE_PAYMENT_ALREADY_REVERSED: 'FINE_PAYMENT_ALREADY_REVERSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -637,6 +645,8 @@ export const FieldErrorCode = {
   VEHICLE_NOT_OF_UNIT: 'VEHICLE_NOT_OF_UNIT',
   /** A local day outside params.min and params.max. */
   DAY_OUT_OF_RANGE: 'DAY_OUT_OF_RANGE',
+  /** Not the fine's whole amount (params.amount): no partial payment. */
+  AMOUNT_MISMATCH: 'AMOUNT_MISMATCH',
 } as const;
 
 export type FieldErrorCode =

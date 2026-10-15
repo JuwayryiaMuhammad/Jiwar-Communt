@@ -433,6 +433,60 @@ describe('Audit coverage — vehicles and parking', () => {
     });
   });
 
+  describe('fine payments', () => {
+    it('vehicle_fine.payment_recorded / payment_reversed — the amount, receipt and day; the reason code', async () => {
+      const fine = await v.fine(s.manager, s.home.code, {
+        plate: PLATE,
+        amount: '120',
+      });
+      const receipt = `AUD-${Date.now()}`;
+      const paid = (
+        await v
+          .http(
+            'post',
+            `/staff/vehicle-fines/${fine.id}/payments`,
+            s.manager.token,
+            {
+              amount: '120',
+              receiptNumber: receipt,
+              paidOn: day(0),
+            },
+          )
+          .expect(201)
+      ).body as { id: string };
+      const reversed = (
+        await v
+          .http(
+            'post',
+            `/staff/vehicle-fine-payments/${paid.id}/reverse`,
+            s.manager.token,
+            { reasonCode: 'refunded' },
+          )
+          .expect(201)
+      ).body as { id: string };
+      const recorded = await single('vehicle_fine.payment_recorded', paid.id);
+      expect(recorded).toMatchObject(by(s.manager, 'vehicle_fine_payment'));
+      expect(recorded.metadata).toEqual({
+        fineId: fine.id,
+        unitId: s.home.id,
+        amount: '120.00',
+        currency: 'EGP',
+        receiptNumber: receipt,
+        paidOn: day(0),
+      });
+      const reversal = await single(
+        'vehicle_fine.payment_reversed',
+        reversed.id,
+      );
+      expect(reversal.metadata).toEqual({
+        fineId: fine.id,
+        unitId: s.home.id,
+        reversesId: paid.id,
+        reasonCode: 'refunded',
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every vehicles and parking entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

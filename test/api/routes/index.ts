@@ -70,6 +70,7 @@ import { SECURITY_ROUTES } from './security';
 import { UNIT_STATES_ROUTES } from './unit-states';
 import { UNITS_ROUTES } from './units';
 import {
+  FINE_PAYMENT_ROUTES,
   FINE_ROUTES,
   GATE_VEHICLE_ROUTES,
   PARKING_ROUTES,
@@ -144,4 +145,5 @@ export const ROUTES: Row[] = [
   ...PARKING_ROUTES,
   ...GATE_VEHICLE_ROUTES,
   ...FINE_ROUTES,
+  ...FINE_PAYMENT_ROUTES,
 ];

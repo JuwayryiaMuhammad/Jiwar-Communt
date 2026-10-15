@@ -242,6 +242,10 @@ const ERROR_TEXT: Record<string, string> = {
   FINE_APPEAL_WINDOW_PASSED: 'The time to appeal this fine has passed.',
   FINE_NOT_UNDER_APPEAL: 'This fine is not under appeal.',
   FINE_NOT_CANCELLABLE: 'Only an unpaid fine that is not under appeal can be cancelled.',
+  FINE_UNDER_APPEAL: 'This fine is under appeal: record its payment once the appeal is decided.',
+  FINE_NOT_PAYABLE: 'This fine is paid already or cancelled.',
+  FINE_PAYMENT_NOT_FOUND: 'This payment does not exist.',
+  FINE_PAYMENT_ALREADY_REVERSED: 'This payment was reversed already.',
 };
 
 const FIELD_TEXT: Record<string, string> = {
@@ -316,6 +320,7 @@ const FIELD_TEXT: Record<string, string> = {
   PARKING_OUTSIDE_PASS: 'Outside the visitor pass’s validity.',
   VEHICLE_NOT_OF_UNIT: 'Not one of the unit’s vehicles.',
   DAY_OUT_OF_RANGE: 'Pick a day in range.',
+  AMOUNT_MISMATCH: 'Not the fine’s amount: a fine is paid in full.',
 };
 
 export function errorText(error: unknown): string {

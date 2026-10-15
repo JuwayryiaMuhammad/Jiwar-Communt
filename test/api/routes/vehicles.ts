@@ -659,3 +659,45 @@ export const FINE_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** A fine's payments at the office (ADR 0045): `fines.billing`. */
+export const FINE_PAYMENT_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/staff/vehicle-fines/{id}/payments',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bFineId }),
+      code: 'VEHICLE_FINE_NOT_FOUND',
+      body: () => ({
+        amount: '300',
+        receiptNumber: 'R-FOREIGN',
+        paidOn: '2026-10-15',
+      }),
+    },
+    invalid: {
+      body: { amount: '300', receiptNumber: 'no spaces', paidOn: '2026-10-15' },
+      fields: [{ field: 'receiptNumber', code: 'INVALID_FORMAT' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/vehicle-fine-payments/{id}/reverse',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bFinePaymentId }),
+      code: 'FINE_PAYMENT_NOT_FOUND',
+      body: () => ({ reasonCode: 'other' }),
+    },
+    invalid: {
+      body: {},
+      fields: [{ field: 'reasonCode', code: 'FIELD_REQUIRED' }],
+    },
+    noStore: true,
+  },
+];

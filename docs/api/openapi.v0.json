@@ -8479,6 +8479,68 @@
         ],
         "type": "object"
       },
+      "FinePaymentView": {
+        "properties": {
+          "amount": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "fineId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehicleFinePaymentKind"
+              }
+            ]
+          },
+          "paidOn": {
+            "description": "`YYYY-MM-DD`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiptNumber": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reversesId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fineId",
+          "kind",
+          "amount",
+          "currency",
+          "receiptNumber",
+          "paidOn",
+          "reversesId",
+          "reasonCode",
+          "createdAt"
+        ],
+        "type": "object"
+      },
       "FirstNameOnlyView": {
         "properties": {
           "erased": {
@@ -14354,6 +14416,38 @@
         ],
         "type": "object"
       },
+      "RecordFinePaymentDto": {
+        "properties": {
+          "amount": {
+            "description": "The whole amount of the fine (AMOUNT_MISMATCH, params.amount).",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,6}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "currency": {
+            "default": "EGP",
+            "enum": [
+              "EGP"
+            ],
+            "type": "string"
+          },
+          "paidOn": {
+            "description": "The local day it was paid: not ahead, at most 90 days ago, not before the fine’s day (PAID_ON_OUT_OF_RANGE).",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "receiptNumber": {
+            "description": "Once among the compound’s fine payments (DUPLICATE_RESOURCE).",
+            "pattern": "^[A-Za-z0-9/-]{1,40}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "receiptNumber",
+          "paidOn"
+        ],
+        "type": "object"
+      },
       "RefreshTokenDto": {
         "properties": {
           "refreshToken": {
@@ -16634,6 +16728,18 @@
         "properties": {
           "reasonCode": {
             "description": "From the closed list `clubPaymentReverse`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "ReverseFinePaymentDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `vehicleFinePaymentReverse`.",
             "type": "string"
           }
         },
@@ -42163,6 +42269,64 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/vehicle-fine-payments/{id}/reverse": {
+      "post": {
+        "description": "Once (FINE_PAYMENT_ALREADY_REVERSED); the fine is unpaid again.",
+        "operationId": "FinePaymentsController_reverse",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseFinePaymentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinePaymentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reverse a payment recorded by mistake, with a reason code",
+        "tags": [
+          "fines"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/vehicle-fines": {
       "get": {
         "description": "`status=under_appeal` is the appeals queue, oldest first.",
@@ -42405,6 +42569,64 @@
           }
         ],
         "summary": "Decide a fine’s appeal: upheld or cancelled",
+        "tags": [
+          "fines"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/vehicle-fines/{id}/payments": {
+      "post": {
+        "description": "The whole amount (AMOUNT_MISMATCH) of an unpaid fine (FINE_NOT_PAYABLE) not under appeal (FINE_UNDER_APPEAL); the fine is then paid.",
+        "operationId": "FinePaymentsController_record",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordFinePaymentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinePaymentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a fine’s payment made at the office",
         "tags": [
           "fines"
         ],

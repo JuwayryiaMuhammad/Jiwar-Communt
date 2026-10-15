@@ -846,6 +846,30 @@ describe('API v0 — no-store', () => {
         `/staff/vehicle-fines/${await anAppealedFine()}/decide-appeal`,
         { decision: 'upheld' },
       ),
+    'POST /staff/vehicle-fines/{id}/payments': async () =>
+      as('manager', 'POST', `/staff/vehicle-fines/${await aFine()}/payments`, {
+        amount: '100',
+        receiptNumber: `NS-${uniqueSuffix()}`,
+        paidOn: localDay(0),
+      }),
+    'POST /staff/vehicle-fine-payments/{id}/reverse': async () => {
+      const paid = await as(
+        'manager',
+        'POST',
+        `/staff/vehicle-fines/${await aFine()}/payments`,
+        {
+          amount: '100',
+          receiptNumber: `NS-${uniqueSuffix()}`,
+          paidOn: localDay(0),
+        },
+      );
+      return as(
+        'manager',
+        'POST',
+        `/staff/vehicle-fine-payments/${body<{ id: string }>(paid).id}/reverse`,
+        { reasonCode: 'entered_in_error' },
+      );
+    },
     'POST /staff/vehicle-fines/{id}/cancel': async () =>
       as('manager', 'POST', `/staff/vehicle-fines/${await aFine()}/cancel`, {
         reasonCode: 'issued_in_error',

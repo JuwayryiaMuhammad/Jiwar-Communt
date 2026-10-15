@@ -314,4 +314,6 @@ export const VEHICLES_COVERAGE: readonly string[] = [
   'vehicle_fine.appealed',
   'vehicle_fine.appeal_decided',
   'vehicle_fine.cancelled',
+  'vehicle_fine.payment_recorded',
+  'vehicle_fine.payment_reversed',
 ];

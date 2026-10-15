@@ -5760,6 +5760,26 @@ export interface paths {
         patch: operations["ParkingSlotsController_update"];
         trace?: never;
     };
+    "/api/v1/staff/vehicle-fine-payments/{id}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reverse a payment recorded by mistake, with a reason code
+         * @description Once (FINE_PAYMENT_ALREADY_REVERSED); the fine is unpaid again.
+         */
+        post: operations["FinePaymentsController_reverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/vehicle-fines": {
         parameters: {
             query?: never;
@@ -5826,6 +5846,26 @@ export interface paths {
         put?: never;
         /** Decide a fine’s appeal: upheld or cancelled */
         post: operations["StaffFinesController_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/vehicle-fines/{id}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record a fine’s payment made at the office
+         * @description The whole amount (AMOUNT_MISMATCH) of an unpaid fine (FINE_NOT_PAYABLE) not under appeal (FINE_UNDER_APPEAL); the fine is then paid.
+         */
+        post: operations["FinePaymentsController_record"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10415,6 +10455,23 @@ export interface components {
             /** @description The appellant’s words; null once the appellant was erased. */
             reason: string | null;
         };
+        FinePaymentView: {
+            amount: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            currency: string | null;
+            /** Format: uuid */
+            fineId: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["VehicleFinePaymentKind"];
+            /** @description `YYYY-MM-DD`. */
+            paidOn: string | null;
+            reasonCode: string | null;
+            receiptNumber: string | null;
+            /** Format: uuid */
+            reversesId: string | null;
+        };
         FirstNameOnlyView: {
             /**
              * @description Present (true) only on an erased account.
@@ -12235,6 +12292,19 @@ export interface components {
              */
             via: "code" | "qr";
         };
+        RecordFinePaymentDto: {
+            /** @description The whole amount of the fine (AMOUNT_MISMATCH, params.amount). */
+            amount: string;
+            /**
+             * @default EGP
+             * @enum {string}
+             */
+            currency: "EGP";
+            /** @description The local day it was paid: not ahead, at most 90 days ago, not before the fine’s day (PAID_ON_OUT_OF_RANGE). */
+            paidOn: string;
+            /** @description Once among the compound’s fine payments (DUPLICATE_RESOURCE). */
+            receiptNumber: string;
+        };
         RefreshTokenDto: {
             refreshToken: string;
         };
@@ -12893,6 +12963,10 @@ export interface components {
         };
         ReverseClubPaymentDto: {
             /** @description From the closed list `clubPaymentReverse`. */
+            reasonCode: string;
+        };
+        ReverseFinePaymentDto: {
+            /** @description From the closed list `vehicleFinePaymentReverse`. */
             reasonCode: string;
         };
         ReviewDto: {
@@ -24521,6 +24595,34 @@ export interface operations {
             };
         };
     };
+    FinePaymentsController_reverse: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseFinePaymentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinePaymentView"];
+                };
+            };
+        };
+    };
     StaffFinesController_list: {
         parameters: {
             query?: {
@@ -24640,6 +24742,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffFineView"];
+                };
+            };
+        };
+    };
+    FinePaymentsController_record: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordFinePaymentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinePaymentView"];
                 };
             };
         };

@@ -6359,6 +6359,55 @@
     {
       "item": [
         {
+          "name": "Reverse a payment recorded by mistake, with a reason code",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `vehicleFinePaymentReverse`. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vehicle-fine-payments",
+                ":id",
+                "reverse"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vehicle-fine-payments/:id/reverse",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the compound’s fines",
           "request": {
             "description": "**Responses:** 200",
@@ -6550,6 +6599,55 @@
                 "decide-appeal"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/vehicle-fines/:id/decide-appeal",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record a fine’s payment made at the office",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"amount\": \"\",\n  \"receiptNumber\": \"\",\n  \"paidOn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | The whole amount of the fine (AMOUNT_MISMATCH, params.amount). |\n| `currency` | `EGP` |  |  |\n| `paidOn` | string | yes | The local day it was paid: not ahead, at most 90 days ago, not before the fine’s day (PAID_ON_OUT_OF_RANGE). |\n| `receiptNumber` | string | yes | Once among the compound’s fine payments (DUPLICATE_RESOURCE). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vehicle-fines",
+                ":id",
+                "payments"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vehicle-fines/:id/payments",
               "variable": [
                 {
                   "description": "",

@@ -35,6 +35,7 @@ import { VehiclesService } from '../../src/gate/vehicles/vehicles.service';
 import { StaffParkingService } from '../../src/gate/parking/staff-parking.service';
 import { VisitorParkingService } from '../../src/gate/parking/visitor-parking.service';
 import { FinesService } from '../../src/gate/fines/fines.service';
+import { FinePaymentsService } from '../../src/gate/fines/fine-payments.service';
 import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
 import { ALL_WEEK, at, day } from '../setup/facilities';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
@@ -201,8 +202,9 @@ export interface World {
   bParkingBookingId: string;
   /** One of A's visitor areas, roomy, for valid bookings. */
   aAreaId: string;
-  /** A fine to B's home, issued by B's manager. */
+  /** A fine to B's home, issued by B's manager, and its payment. */
   bFineId: string;
+  bFinePaymentId: string;
   bDeviceId: string;
   /** A personal-data export B's owner asked for (ADR 0036). */
   bExportId: string;
@@ -803,8 +805,16 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       occurredOn: day(0),
     }),
   );
+  const bFinePayment = await helpers.asManager(b, () =>
+    h.moduleRef.get(FinePaymentsService).record(bFine.fine.id, {
+      amount: '300',
+      receiptNumber: `F-WORLD-${b.tenantId.slice(0, 8)}`,
+      paidOn: day(0),
+    }),
+  );
   return {
     bFineId: bFine.fine.id,
+    bFinePaymentId: bFinePayment.id,
     bVehicleId: bVehicle.vehicle.id,
     bSlotId: bSlot.slot.id,
     bAreaId: bArea.id,

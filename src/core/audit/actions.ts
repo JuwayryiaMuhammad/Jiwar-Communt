@@ -715,6 +715,16 @@ export const AUDIT_ACTIONS = {
   'vehicle_fine.appeal_decided': { log: 'tenant', target: 'vehicle_fine' },
   // metadata: unitId, reasonCode.
   'vehicle_fine.cancelled': { log: 'tenant', target: 'vehicle_fine' },
+  // metadata: fineId, unitId, amount, currency, receiptNumber, paidOn.
+  'vehicle_fine.payment_recorded': {
+    log: 'tenant',
+    target: 'vehicle_fine_payment',
+  },
+  // metadata: fineId, unitId, reversesId, reasonCode.
+  'vehicle_fine.payment_reversed': {
+    log: 'tenant',
+    target: 'vehicle_fine_payment',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

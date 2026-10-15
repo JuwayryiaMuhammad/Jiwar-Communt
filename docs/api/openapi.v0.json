@@ -2148,6 +2148,9 @@
           "unitView": {
             "type": "boolean"
           },
+          "vehicles": {
+            "type": "boolean"
+          },
           "visitConsent": {
             "type": "boolean"
           },
@@ -2176,6 +2179,7 @@
           "gateEntry",
           "visitConsent",
           "parcels",
+          "vehicles",
           "financeView",
           "financePay",
           "financeCapPerOperation",

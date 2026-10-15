@@ -7938,6 +7938,7 @@ export interface components {
             transferOwnership: boolean;
             unitSecurity: boolean;
             unitView: boolean;
+            vehicles: boolean;
             visitConsent: boolean;
             visitorsInvite: boolean;
             visitorsNotify: boolean;

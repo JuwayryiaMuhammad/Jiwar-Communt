@@ -367,6 +367,45 @@ describe('capabilitiesFor', () => {
       );
   });
 
+  it('vehicles (ADR 0045): residing adults, per capacity — the same people as parcels, through every review', () => {
+    const vehicles = (s: Subject, state: UnitState = OPEN) =>
+      capabilitiesFor(s, state).vehicles;
+    expect(vehicles(occ({ isPrimary: true }))).toBe(true);
+    expect(vehicles(occ())).toBe(true);
+    expect(vehicles(occ({ occupancyType: 'tenant' }))).toBe(true);
+    // No grant needed: an adult member with an account and no grants.
+    expect(vehicles(member({ grants: [] }))).toBe(true);
+    expect(vehicles(occ({ resides: false }))).toBe(false);
+    expect(vehicles(occ({ status: 'ended' }))).toBe(false);
+    expect(vehicles(member({ status: 'pending_approval' }))).toBe(false);
+    expect(vehicles(member({ status: 'removed' }))).toBe(false);
+    expect(vehicles(member({ isMinor: true, hasAccount: false }))).toBe(false);
+    expect(vehicles(member({ hasAccount: false }))).toBe(false);
+    expect(vehicles({ kind: 'registration', status: 'pending' })).toBe(false);
+    for (const reason of [
+      'primary_deceased',
+      'separation',
+      'primary_left',
+      'primary_frozen',
+    ] as const) {
+      const state: UnitState = { closed: false, reviewReasons: [reason] };
+      expect(vehicles(occ(), state)).toBe(true);
+      expect(vehicles(member(), state)).toBe(true);
+      expect(vehicles(occ({ resides: false }), state)).toBe(false);
+    }
+    for (const s of [
+      occ(),
+      occ({ resides: false }),
+      occ({ status: 'ended' }),
+      member(),
+      member({ isMinor: true, hasAccount: false }),
+      member({ status: 'removed' }),
+    ])
+      expect(capabilitiesFor(s, OPEN).vehicles).toBe(
+        capabilitiesFor(s, OPEN).parcels,
+      );
+  });
+
   it('pollsVote (ADR 0040): the primary, or a member given polls_vote — never a landlord, a minor or someone who left; owners vote as owners', () => {
     const vote = (s: Subject, state = OPEN) => {
       const c = capabilitiesFor(s, state);

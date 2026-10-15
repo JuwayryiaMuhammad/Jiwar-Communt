@@ -95,11 +95,13 @@ describe('Roles', () => {
         'household.manage',
         'neighbours.board',
         'neighbours.complain',
+        'parking.report',
         'profile.photo',
         'requests.create',
         'suggestions.create',
         'tickets.create',
         'units.read',
+        'vehicles.register',
         'visitors.invite',
         'workers.manage',
       ],
@@ -236,6 +238,8 @@ describe('Roles', () => {
         'neighbours.complain',
         'neighbours.board',
         'facilities.book',
+        'vehicles.register',
+        'parking.report',
       ]),
     );
     expect(await version()).toBe(before);

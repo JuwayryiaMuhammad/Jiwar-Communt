@@ -92,6 +92,14 @@ export interface Capabilities {
    * member, a minor or an ended occupancy. A review does not take it away.
    */
   parcels: boolean;
+  /**
+   * Registers the unit's vehicles and keeps them (ADR 0045): a residing
+   * occupant or an active adult member with an account, no grant needed.
+   * Never a landlord or non-residing owner, a pending or removed member, a
+   * minor or an ended occupancy. A review does not take it away. Losing it
+   * removes the vehicles one registered there.
+   */
+  vehicles: boolean;
 
   financeView: boolean;
   financePay: boolean;
@@ -152,6 +160,7 @@ export const NONE: Capabilities = Object.freeze({
   gateEntry: false,
   visitConsent: false,
   parcels: false,
+  vehicles: false,
   financeView: false,
   financePay: false,
   financeCapPerOperation: null,
@@ -229,6 +238,7 @@ function occupancy(
     gateEntry: daily,
     visitConsent: daily,
     parcels: daily,
+    vehicles: daily,
     financeView: true,
     financePay: true,
     landlordTenantFinance: landlord,
@@ -269,6 +279,7 @@ function member(m: Extract<Subject, { kind: 'member' }>): Capabilities {
     gateEntry: true,
     visitConsent: true,
     parcels: true,
+    vehicles: true,
     financeView: finance !== undefined,
     financePay: finance !== undefined,
     financeCapPerOperation: finance?.capPerOperation ?? null,

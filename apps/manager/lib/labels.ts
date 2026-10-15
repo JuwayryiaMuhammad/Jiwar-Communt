@@ -56,4 +56,10 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'facilities.manage': 'Set up facilities, their rules, opening hours, peak times and closures, and the club’s plans',
   'bookings.handle': 'Approve and cancel bookings, mark no-shows, lift suspensions',
   'club.billing': 'Keep club memberships and record payments made at the office',
+  'vehicles.register': 'Register the unit’s vehicles and appeal its parking fines',
+  'parking.report': 'Report a wrongly parked vehicle to security',
+  'vehicles.manage': 'Approve vehicles and issue stickers; set up parking slots and visitor areas',
+  'fines.issue': 'Issue vehicle fines and decide appeals',
+  'fines.billing': 'Record vehicle fine payments made at the office',
+  'parking_reports.handle': 'Work the parking reports queue: close reports or turn them into fines',
 };

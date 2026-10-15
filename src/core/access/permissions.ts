@@ -111,6 +111,19 @@ export const PERMISSIONS = {
   'facilities.manage': { kinds: ['staff', 'manager'] },
   'bookings.handle': { kinds: ['staff', 'manager'] },
   'club.billing': { kinds: ['staff', 'manager'] },
+  // Vehicles and parking (ADR 0045). Residents and family register their
+  // unit's vehicles (capabilities.vehicles decides per unit) and report
+  // wrong parking; `vehicles.manage` approves vehicles, issues stickers and
+  // sets up slots and visitor areas; `fines.issue` issues fines and decides
+  // appeals; `fines.billing` records offline payments (the accountant);
+  // `parking_reports.handle` works the reports queue. The guard's plate
+  // lookup is `gate.operate`.
+  'vehicles.register': { kinds: ['resident', 'family'] },
+  'parking.report': { kinds: ['resident', 'family'] },
+  'vehicles.manage': { kinds: ['staff', 'manager'] },
+  'fines.issue': { kinds: ['staff', 'manager'] },
+  'fines.billing': { kinds: ['staff', 'manager'] },
+  'parking_reports.handle': { kinds: ['staff', 'manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

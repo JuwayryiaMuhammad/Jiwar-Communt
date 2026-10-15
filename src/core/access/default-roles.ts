@@ -58,6 +58,10 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'facilities.manage',
       'bookings.handle',
       'club.billing',
+      'vehicles.manage',
+      'fines.issue',
+      'fines.billing',
+      'parking_reports.handle',
     ],
   },
   {
@@ -78,6 +82,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'neighbours.complain',
       'neighbours.board',
       'facilities.book',
+      'vehicles.register',
+      'parking.report',
     ],
   },
   {
@@ -98,6 +104,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'neighbours.complain',
       'neighbours.board',
       'facilities.book',
+      'vehicles.register',
+      'parking.report',
     ],
   },
   {
@@ -123,12 +131,13 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
     permissions: ['tickets.dispatch'],
   },
   {
-    // The club's accountant (ADR 0044): memberships and the offline
-    // payments that keep them, and nothing else of the compound.
+    // The accountant (ADR 0044, 0045): the club's memberships and the
+    // offline payments that keep them, and the vehicle fines' payments at
+    // the office; nothing else of the compound.
     key: 'accountant',
     kind: 'staff',
     kindDefault: false,
-    permissions: ['club.billing'],
+    permissions: ['club.billing', 'fines.billing'],
   },
 ];
 

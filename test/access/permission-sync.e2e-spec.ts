@@ -700,7 +700,11 @@ describe('Permission sync', () => {
     const report = await sync(base, t);
     expect([...report.added].sort()).toEqual([...r5].sort());
     expect(report.rolesCreated).toEqual(['accountant']);
-    expect((await role(t, 'accountant')).permissions).toEqual(['club.billing']);
+    // The role as the code has it now: the fines' payments came with G2.
+    expect([...(await role(t, 'accountant')).permissions].sort()).toEqual([
+      'club.billing',
+      'fines.billing',
+    ]);
     for (const key of ['resident', 'family_member']) {
       const { permissions } = await role(t, key);
       expect(permissions).toContain('facilities.book');
@@ -719,6 +723,70 @@ describe('Permission sync', () => {
     // No other staff role works bookings or the club until a manager says so.
     for (const key of ['guard', 'technician', 'maintenance_supervisor']) {
       for (const permission of r5)
+        expect((await role(t, key)).permissions).not.toContain(permission);
+    }
+    expect(await sync(base, t)).toMatchObject({
+      added: [],
+      rolesCreated: [],
+      rolesChanged: 0,
+    });
+  });
+
+  it('Phase G2 reaches an existing compound: vehicles.register and parking.report for residents and family, the four vehicles permissions for the manager, fines.billing for the accountant (ADR 0045)', async () => {
+    const g2 = [
+      'vehicles.register',
+      'parking.report',
+      'vehicles.manage',
+      'fines.issue',
+      'fines.billing',
+      'parking_reports.handle',
+    ];
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !g2.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !g2.includes(p)),
+      })),
+    };
+    expect(catalogProblems(before)).toEqual([]);
+    const t = newId();
+    await h.globalDb.tenant.create({
+      data: { id: t, name: `Sync G2 compound ${t}` },
+    });
+    await h.asTenant(t, () =>
+      h.tenantTx.withTenantTx(async (tx) => {
+        await new RoleProvisioner(before).provision(tx, t);
+        await tx.tenantSettings.create({ data: { tenantId: t } });
+        await tenantLifecycle.tenantCreated(tx, t);
+      }),
+    );
+    expect((await role(t, 'accountant')).permissions).toEqual(['club.billing']);
+
+    const report = await sync(base, t);
+    expect([...report.added].sort()).toEqual([...g2].sort());
+    expect(report.rolesCreated).toEqual([]);
+    expect([...(await role(t, 'accountant')).permissions].sort()).toEqual([
+      'club.billing',
+      'fines.billing',
+    ]);
+    for (const key of ['resident', 'family_member']) {
+      const { permissions } = await role(t, key);
+      expect(permissions).toEqual(
+        expect.arrayContaining(['vehicles.register', 'parking.report']),
+      );
+      for (const p of g2.slice(2)) expect(permissions).not.toContain(p);
+    }
+    const manager = (await role(t, 'manager')).permissions;
+    expect(manager).toEqual(expect.arrayContaining(g2.slice(2)));
+    expect(manager).not.toContain('vehicles.register');
+    expect(manager).not.toContain('parking.report');
+    // The guard looks plates up with gate.operate; no other staff role
+    // works vehicles, fines or reports until a manager says so.
+    for (const key of ['guard', 'technician', 'maintenance_supervisor']) {
+      for (const permission of g2)
         expect((await role(t, key)).permissions).not.toContain(permission);
     }
     expect(await sync(base, t)).toMatchObject({

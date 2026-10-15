@@ -1,5 +1,6 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { auditReaders } from '../setup/audit';
+import { eraseNow } from '../setup/erasure';
 import {
   COMMUNITY_COVERAGE,
   ENGAGEMENT_COVERAGE,
@@ -279,6 +280,31 @@ describe('Audit coverage — emergencies and gate services', () => {
       await x
         .http('post', '/gate/shifts/end', guard.token)
         .expect((res) => expect(res.status).toBeLessThan(300));
+    });
+  });
+
+  describe('gate services, erasure', () => {
+    it('text_cleared: what went, as booleans', async () => {
+      const home = await x.unit(s.c);
+      const owner = await x.owner(s.c, home.id);
+      const member = await x.family(s.c, home.id, owner);
+      const places = await x.places(owner);
+      const r = (
+        await x
+          .http('post', '/security-reports', member.token, {
+            unitId: home.id,
+            placeId: places.other.id,
+            description: WORDS,
+          })
+          .expect(201)
+      ).body as { id: string };
+      await eraseNow(h, s.c, member.id);
+      const c = await single('gate_service.text_cleared', r.id);
+      expect(c.metadata).toEqual({
+        description: true,
+        notes: false,
+        photo: false,
+      });
     });
   });
 

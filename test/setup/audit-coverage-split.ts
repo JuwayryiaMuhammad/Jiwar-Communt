@@ -369,4 +369,5 @@ export const SAFETY_COVERAGE: readonly string[] = [
   'gate_service.accepted',
   'gate_service.started',
   'gate_service.closed',
+  'gate_service.text_cleared',
 ];

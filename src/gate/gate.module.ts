@@ -97,6 +97,8 @@ import { EmergencyRespondersService } from './emergencies/emergency-responders.s
 import { EmergencyEscalation } from './emergencies/emergency-escalation';
 import { EmergencyRecords } from './emergencies/emergency-records';
 import { SafetyCore } from './safety/safety-core';
+import { SafetyExportSections } from './safety/safety-export-sections';
+import { SafetyLifecycle } from './safety/safety-lifecycle';
 import { GateServicesController } from './gate-services/gate-services.controller';
 import { GateServicesService } from './gate-services/gate-services.service';
 import { GateServiceRecords } from './gate-services/gate-service-records';
@@ -204,6 +206,8 @@ import { GateServiceHandlersService } from './gate-services/gate-service-handler
     GateServiceRecords,
     GateServicesService,
     GateServiceHandlersService,
+    SafetyLifecycle,
+    SafetyExportSections,
   ],
 })
 export class GateModule {}

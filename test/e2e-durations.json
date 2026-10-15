@@ -192,7 +192,20 @@
   "test/rls/facilities-isolation.e2e-spec.ts": 2,
   "test/rls/http-isolation.e2e-spec.ts": 7,
   "test/rls/login-bootstrap.e2e-spec.ts": 10,
+  "test/rls/vehicles-isolation.e2e-spec.ts": 3,
   "test/settings/tenant-settings.e2e-spec.ts": 8,
   "test/setup/http-harness.e2e-spec.ts": 6,
-  "test/setup/tenant-lifecycle.e2e-spec.ts": 7
+  "test/setup/tenant-lifecycle.e2e-spec.ts": 7,
+  "test/vehicles/audit-coverage.e2e-spec.ts": 6,
+  "test/vehicles/fine-payments.e2e-spec.ts": 5,
+  "test/vehicles/fines.e2e-spec.ts": 12,
+  "test/vehicles/parking-capacity.e2e-spec.ts": 6,
+  "test/vehicles/parking-reports.e2e-spec.ts": 8,
+  "test/vehicles/parking.e2e-spec.ts": 12,
+  "test/vehicles/plate-lookup.e2e-spec.ts": 5,
+  "test/vehicles/privacy.e2e-spec.ts": 10,
+  "test/vehicles/schema.e2e-spec.ts": 1,
+  "test/vehicles/stickers.e2e-spec.ts": 7,
+  "test/vehicles/vehicle-limit.e2e-spec.ts": 6,
+  "test/vehicles/vehicles.e2e-spec.ts": 16
 }

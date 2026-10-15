@@ -85,6 +85,14 @@ const STATUS_TONE: Record<string, Tone> = {
   // are above.
   no_show: 'error',
   expiring: 'terracotta',
+  // Vehicles and parking (ADR 0045). `pending`, `active`, `rejected`,
+  // `expired`, `cancelled`, `confirmed`, `open` and `closed` are above.
+  expires_soon: 'terracotta',
+  removed: 'beige',
+  unpaid: 'terracotta',
+  under_appeal: 'terracotta',
+  paid: 'green',
+  converted: 'green',
 };
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {

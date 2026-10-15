@@ -4,7 +4,8 @@
  * handles requests to the management (ADR 0039), publishes to the community
  * or handles its suggestions (ADR 0040), handles complaints between
  * units and the boards (ADR 0042), or sets up the facilities, works the
- * bookings or keeps the club's memberships (ADR 0044).
+ * bookings or keeps the club's memberships (ADR 0044), or works vehicles,
+ * parking, fines and parking reports (ADR 0045).
  * Decided from `GET /me`, by the BFF at sign-in and by the shell on every
  * load; the API still checks each call.
  */
@@ -19,6 +20,10 @@ export const ENTRY_PERMISSIONS = [
   'facilities.manage',
   'bookings.handle',
   'club.billing',
+  'vehicles.manage',
+  'fines.issue',
+  'fines.billing',
+  'parking_reports.handle',
 ] as const;
 
 export function mayEnter(me: { type?: unknown; permissions?: unknown } | null | undefined): boolean {

@@ -6,6 +6,9 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Ban,
   Building,
+  Car,
+  CircleParking,
+  ParkingMeter,
   CalendarCheck,
   CalendarClock,
   CalendarDays,
@@ -66,6 +69,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   });
 
   const isManager = me?.type === 'manager';
+  const vehiclesToApprove = useQueueSize(
+    keys.vehicles({ status: 'pending' }),
+    () => fetchers.vehicles({ status: 'pending' }, undefined, 100),
+    can('vehicles.manage'),
+  );
   const registrations = useQueueSize(
     keys.registrations,
     () => fetchers.registrations(undefined, 100),
@@ -216,6 +224,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/gate', label: 'Gate', icon: <DoorOpen aria-hidden />, show: can('gate.read') },
         { href: '/parcels', label: 'Parcels', icon: <Package aria-hidden />, show: can('parcels.manage') },
         { href: '/staff', label: 'Staff', icon: <UserCog aria-hidden />, show: can('accounts.read') },
+      ],
+    },
+    {
+      label: 'Vehicles & parking',
+      items: [
+        { href: '/vehicles', label: 'Vehicles', icon: <Car aria-hidden />, count: vehiclesToApprove, show: can('vehicles.manage') },
+        { href: '/visitor-parking', label: 'Visitor parking', icon: <ParkingMeter aria-hidden />, show: can('vehicles.manage') },
+        { href: '/parking', label: 'Parking setup', icon: <CircleParking aria-hidden />, show: can('vehicles.manage') },
       ],
     },
     {

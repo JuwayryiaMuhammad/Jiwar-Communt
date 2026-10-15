@@ -30,6 +30,9 @@ test('a staff role that sets up facilities, works bookings or keeps the club ent
   assert.equal(mayEnter({ type: 'staff', permissions: ['facilities.manage'] }), true);
   assert.equal(mayEnter({ type: 'staff', permissions: ['gate.operate', 'bookings.handle'] }), true);
   assert.equal(mayEnter({ type: 'staff', permissions: ['club.billing'] }), true);
+  // Vehicles, parking, fines and parking reports (ADR 0045).
+  for (const p of ['vehicles.manage', 'fines.issue', 'fines.billing', 'parking_reports.handle'])
+    assert.equal(mayEnter({ type: 'staff', permissions: ['gate.operate', p] }), true);
 });
 
 test('a guard, a technician and a resident do not', () => {

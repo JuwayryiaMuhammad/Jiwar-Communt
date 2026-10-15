@@ -120,6 +120,20 @@ export type ClubPayment = Schema<'ClubPaymentView'>;
 export type ClubPerson = Schema<'ClubPersonView'>;
 export type ClubUnit = Schema<'ClubUnitView'>;
 export type ClubMembershipState = Schema<'ClubMembershipState'>;
+// Vehicles and parking (ADR 0045).
+export type StaffVehicle = Schema<'StaffVehicleView'>;
+export type StaffVehicleDetail = Schema<'StaffVehicleDetailView'>;
+export type VehiclePermitStatus = Schema<'VehiclePermitStatus'>;
+export type VehicleSettings = Schema<'VehicleSettingsResponse'>;
+export type ParkingSlot = Schema<'StaffParkingSlotView'>;
+export type VisitorArea = Schema<'VisitorParkingAreaView'>;
+export type StaffVisitorParking = Schema<'StaffVisitorParkingBookingView'>;
+
+export interface VehicleFilters {
+  status?: VehiclePermitStatus | '';
+  unitCode?: string;
+  plate?: string;
+}
 
 export interface StaffBookingFilters {
   status?: BookingStatus | '';
@@ -290,6 +304,15 @@ export const keys = {
   clubMemberships: (state: string) => ['club-memberships', 'list', state] as const,
   clubMembership: (id: string) => ['club-memberships', 'detail', id] as const,
   clubUnitPeople: (unitId: string) => ['club-memberships', 'people', unitId] as const,
+  vehiclesAll: ['vehicles'] as const,
+  vehicles: (filters: object) => ['vehicles', 'list', filters] as const,
+  vehicle: (id: string) => ['vehicles', 'detail', id] as const,
+  vehicleSettings: ['vehicle-settings'] as const,
+  parkingSlotsAll: ['parking-slots'] as const,
+  parkingSlots: (unitCode: string) => ['parking-slots', unitCode] as const,
+  visitorAreas: ['visitor-areas'] as const,
+  visitorParkingAll: ['visitor-parking'] as const,
+  visitorParking: (areaId: string, day: string) => ['visitor-parking', areaId, day] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -457,6 +480,19 @@ export const fetchers = {
   clubUnit: (code: string) => unwrap(api.GET('/api/v1/staff/club/units', { params: { query: { code } } })),
   clubUnitPeople: (unitId: string) =>
     unwrap(api.GET('/api/v1/staff/club/units/{unitId}/people', { params: { path: { unitId } } })),
+  vehicles: (filters: VehicleFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/vehicles', {
+        params: { query: { ...(clean(filters) as { status?: VehiclePermitStatus; unitCode?: string; plate?: string }), cursor, limit } },
+      }),
+    ),
+  vehicle: (id: string) => unwrap(api.GET('/api/v1/staff/vehicles/{id}', { params: { path: { id } } })),
+  vehicleSettings: () => unwrap(api.GET('/api/v1/staff/vehicle-settings')),
+  parkingSlots: (unitCode: string, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/parking-slots', { params: { query: { ...(unitCode ? { unitCode } : {}), cursor, limit } } })),
+  visitorAreas: () => unwrap(api.GET('/api/v1/staff/visitor-parking-areas')),
+  visitorParking: (areaId: string, day: string) =>
+    unwrap(api.GET('/api/v1/staff/visitor-parking-bookings', { params: { query: { ...(areaId ? { areaId } : {}), day } } })),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

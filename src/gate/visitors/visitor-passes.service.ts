@@ -26,7 +26,7 @@ import { requestHash } from '../../core/idempotency/idempotency-key';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { PassTokens, type PassSecret } from './pass-tokens';
-import { normalizePlate, PLATE_MAX } from './vehicle-plate';
+import { normalizePlate, PLATE_MAX } from '../../core/common/vehicle-plate';
 
 export interface NewPass {
   kind: VisitorPassKind;

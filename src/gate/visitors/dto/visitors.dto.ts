@@ -24,7 +24,7 @@ import { IsPhone } from '../../../core/common/validation/is-phone';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { DESCRIPTION_LENGTH } from '../standing-instructions.service';
-import { PLATE_MAX } from '../vehicle-plate';
+import { PLATE_MAX } from '../../../core/common/vehicle-plate';
 
 const PARTY = { min: 1, max: 50 };
 

@@ -1,5 +1,10 @@
 import { z } from 'zod';
 import { fcmServiceAccount } from './fcm-service-account';
+import {
+  decodePaymentKey,
+  PAYMENT_KEY_VERSION_MAX,
+  parsePreviousPaymentKeys,
+} from './payment-key-ring';
 
 /** Unset and empty (`KEY=` in .env) mean the same thing: not configured. */
 const optional = <T extends z.ZodType>(schema: T) =>
@@ -184,6 +189,60 @@ export const envSchema = z
           'is required (ADR 0043): generate one with `openssl rand -base64 48`',
       })
       .min(32, 'must be at least 32 characters'),
+    /**
+     * Seals every compound's Paymob credentials and open checkout secrets
+     * (ADR 0046): base64 of exactly 32 bytes (`openssl rand -base64 32`).
+     * Optional while no compound takes online payment; the app refuses to
+     * boot once one does and it is missing (FinanceBootCheck). Must differ
+     * from the other keys, and from environment to environment.
+     */
+    PAYMENT_CREDENTIALS_KEY: optional(z.string()),
+    /** The version new ciphertexts carry; raise it when the key rotates. */
+    PAYMENT_CREDENTIALS_KEY_VERSION: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(PAYMENT_KEY_VERSION_MAX)
+      .default(1),
+    /** Retired keys, decrypt only, during a rotation: `ver:base64[,…]`. */
+    PAYMENT_CREDENTIALS_PREVIOUS_KEYS: optional(z.string()),
+    /**
+     * The public HTTPS origin Paymob posts its notifications to (ADR 0046):
+     * `<origin>/api/v1/public/payments/paymob/<compound id>`. No path, no
+     * trailing slash. Required once a compound takes online payment.
+     */
+    PAYMENT_WEBHOOK_BASE_URL: optional(
+      z
+        .string()
+        .regex(
+          /^https?:\/\/[^\s/?#]+\/?$/,
+          'must be an http(s) origin, without a path',
+        )
+        .transform((v) => v.replace(/\/+$/, '')),
+    ),
+    PAYMOB_BASE_URL: z
+      .string()
+      .regex(
+        /^https?:\/\/[^\s/?#]+\/?$/,
+        'must be an http(s) origin, without a path',
+      )
+      .transform((v) => v.replace(/\/+$/, ''))
+      .default('https://accept.paymob.com'),
+    PAYMOB_REQUEST_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(1000)
+      .max(30000)
+      .default(15000),
+    /** How long a checkout stays open (ADR 0046). */
+    PAYMENT_SESSION_TTL_MINUTES: z.coerce
+      .number()
+      .int()
+      .min(10)
+      .max(120)
+      .default(30),
+    // The public receipt page (ADR 0046): lookups per minute per IP.
+    RECEIPT_PAGE_RATE_LIMIT_PER_IP: positiveInt.default(30),
     OTP_TTL_SECONDS: positiveInt.default(300),
     OTP_MAX_ATTEMPTS: positiveInt.default(5),
     LOGIN_TICKET_TTL_SECONDS: positiveInt.default(300),
@@ -272,6 +331,67 @@ export const envSchema = z
           message: `must differ from ${other}`,
         });
       }
+    }
+    // The payment vault (ADR 0046): one key of 32 bytes, shared with
+    // nothing; retired keys parse and never reuse the current version.
+    if (env.PAYMENT_CREDENTIALS_KEY !== undefined) {
+      if (!decodePaymentKey(env.PAYMENT_CREDENTIALS_KEY)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['PAYMENT_CREDENTIALS_KEY'],
+          message:
+            'must be base64 of exactly 32 bytes (`openssl rand -base64 32`)',
+        });
+      }
+      for (const other of [
+        'JWT_ACCESS_SECRET',
+        'PLATFORM_JWT_SECRET',
+        'IDENTIFIER_PEPPER',
+        'ENTRY_CREDENTIAL_KEY',
+        'PARCEL_TOKEN_KEY',
+        'ENGAGEMENT_REF_SECRET',
+        'VISITOR_PASS_TOKEN_KEY',
+      ] as const) {
+        if (env.PAYMENT_CREDENTIALS_KEY === env[other]) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['PAYMENT_CREDENTIALS_KEY'],
+            message: `must differ from ${other}`,
+          });
+        }
+      }
+    }
+    if (env.PAYMENT_CREDENTIALS_PREVIOUS_KEYS !== undefined) {
+      const previous = parsePreviousPaymentKeys(
+        env.PAYMENT_CREDENTIALS_PREVIOUS_KEYS,
+      );
+      if ('invalid' in previous) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['PAYMENT_CREDENTIALS_PREVIOUS_KEYS'],
+          message: previous.invalid,
+        });
+      } else if (
+        previous.some((k) => k.version === env.PAYMENT_CREDENTIALS_KEY_VERSION)
+      ) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['PAYMENT_CREDENTIALS_PREVIOUS_KEYS'],
+          message: 'must not reuse PAYMENT_CREDENTIALS_KEY_VERSION',
+        });
+      }
+    }
+    // Paymob posts payment results there: never over http in production.
+    if (
+      env.NODE_ENV === 'production' &&
+      env.PAYMENT_WEBHOOK_BASE_URL !== undefined &&
+      !env.PAYMENT_WEBHOOK_BASE_URL.startsWith('https://')
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['PAYMENT_WEBHOOK_BASE_URL'],
+        message: 'must be https:// when NODE_ENV=production',
+      });
     }
     if (
       (env.SUPERADMIN_EMAIL === undefined) !==

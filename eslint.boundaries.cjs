@@ -22,6 +22,7 @@ const DOMAINS = [
   'community',
   'engagement',
   'facilities',
+  'finance',
   'gate',
   'maintenance',
   'management',
@@ -34,13 +35,29 @@ const DOMAINS = [
  * and maintenance (ADR 0039). Engagement reads all four through their
  * index.ts, and nothing imports it (ADR 0040). Neighbours reads community
  * only, and nothing imports it (ADR 0042). Facilities reads community only,
- * and nothing imports it (ADR 0044).
+ * and nothing imports it (ADR 0044). Finance reads community only, and
+ * nothing imports it (ADR 0046).
  */
 const NO_IMPORT = {
-  facilities: ['engagement', 'gate', 'maintenance', 'management', 'neighbours'],
+  facilities: [
+    'engagement',
+    'finance',
+    'gate',
+    'maintenance',
+    'management',
+    'neighbours',
+  ],
+  finance: [
+    'engagement',
+    'facilities',
+    'gate',
+    'maintenance',
+    'management',
+    'neighbours',
+  ],
   maintenance: ['gate'],
   management: ['gate'],
-  neighbours: ['engagement', 'gate', 'maintenance', 'management'],
+  neighbours: ['engagement', 'finance', 'gate', 'maintenance', 'management'],
 };
 
 const BASE_PRISMA = {
@@ -73,7 +90,7 @@ function otherDomainsInternals(domain) {
     banned.includes(d)
       ? {
           group: [`**/${d}`, `**/${d}/**`],
-          message: `${domain} must not import ${d} at all (ADR 0032, 0039, 0042, 0044).`,
+          message: `${domain} must not import ${d} at all (ADR 0032, 0039, 0042, 0044, 0046).`,
         }
       : {
           group: [`**/${d}/**`, `!**/${d}/index`],

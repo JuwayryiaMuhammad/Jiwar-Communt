@@ -419,4 +419,86 @@ describe('validateEnv', () => {
       ).toBe('https://app.jiwar.eg');
     });
   });
+
+  describe('payment settings (ADR 0046)', () => {
+    const key = Buffer.alloc(32, 7).toString('base64');
+
+    it('all optional, with defaults', () => {
+      const env = validateEnv(base);
+      expect(env.PAYMENT_CREDENTIALS_KEY).toBeUndefined();
+      expect(env.PAYMENT_CREDENTIALS_KEY_VERSION).toBe(1);
+      expect(env.PAYMENT_WEBHOOK_BASE_URL).toBeUndefined();
+      expect(env.PAYMOB_BASE_URL).toBe('https://accept.paymob.com');
+      expect(env.PAYMOB_REQUEST_TIMEOUT_MS).toBe(15000);
+      expect(env.PAYMENT_SESSION_TTL_MINUTES).toBe(30);
+    });
+
+    it('the key is base64 of exactly 32 bytes, and shared with no other secret', () => {
+      expect(
+        validateEnv({ ...base, PAYMENT_CREDENTIALS_KEY: key })
+          .PAYMENT_CREDENTIALS_KEY,
+      ).toBe(key);
+      expect(() =>
+        validateEnv({ ...base, PAYMENT_CREDENTIALS_KEY: 'a'.repeat(32) }),
+      ).toThrow(/32 bytes[\s\S]*PAYMENT_CREDENTIALS_KEY/);
+      const shared = Buffer.alloc(32, 9).toString('base64');
+      expect(() =>
+        validateEnv({
+          ...base,
+          IDENTIFIER_PEPPER: shared,
+          PAYMENT_CREDENTIALS_KEY: shared,
+        }),
+      ).toThrow(/must differ from IDENTIFIER_PEPPER/);
+    });
+
+    it('retired keys parse and never reuse the current version', () => {
+      expect(() =>
+        validateEnv({
+          ...base,
+          PAYMENT_CREDENTIALS_KEY: key,
+          PAYMENT_CREDENTIALS_PREVIOUS_KEYS: `1:${key}`,
+        }),
+      ).toThrow(/must not reuse PAYMENT_CREDENTIALS_KEY_VERSION/);
+      expect(() =>
+        validateEnv({ ...base, PAYMENT_CREDENTIALS_PREVIOUS_KEYS: 'nonsense' }),
+      ).toThrow(/PAYMENT_CREDENTIALS_PREVIOUS_KEYS/);
+      expect(
+        validateEnv({
+          ...base,
+          PAYMENT_CREDENTIALS_KEY: key,
+          PAYMENT_CREDENTIALS_KEY_VERSION: '2',
+          PAYMENT_CREDENTIALS_PREVIOUS_KEYS: `1:${key}`,
+        }).PAYMENT_CREDENTIALS_KEY_VERSION,
+      ).toBe(2);
+    });
+
+    it('the webhook base is an origin, https in production', () => {
+      expect(
+        validateEnv({ ...base, PAYMENT_WEBHOOK_BASE_URL: 'https://x.test/' })
+          .PAYMENT_WEBHOOK_BASE_URL,
+      ).toBe('https://x.test');
+      expect(() =>
+        validateEnv({
+          ...base,
+          PAYMENT_WEBHOOK_BASE_URL: 'https://x.test/api',
+        }),
+      ).toThrow(/without a path/);
+      expect(() =>
+        validateEnv({
+          ...base,
+          NODE_ENV: 'production',
+          PAYMENT_WEBHOOK_BASE_URL: 'http://x.test',
+        }),
+      ).toThrow(/https[\s\S]*PAYMENT_WEBHOOK_BASE_URL/);
+    });
+
+    it('timeouts and lifetimes stay within their ranges', () => {
+      expect(() =>
+        validateEnv({ ...base, PAYMOB_REQUEST_TIMEOUT_MS: '500' }),
+      ).toThrow();
+      expect(() =>
+        validateEnv({ ...base, PAYMENT_SESSION_TTL_MINUTES: '5' }),
+      ).toThrow();
+    });
+  });
 });

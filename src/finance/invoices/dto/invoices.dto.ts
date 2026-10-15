@@ -160,4 +160,9 @@ export class StaffInvoicesQueryDto extends InvoiceStatusQueryDto {
   @IsOptional()
   @IsUUID()
   batchId?: string;
+
+  @ApiProperty({ required: false, type: String, format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  planId?: string;
 }

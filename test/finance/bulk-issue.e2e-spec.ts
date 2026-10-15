@@ -1,5 +1,7 @@
 import type { Response } from 'supertest';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
+import { SweepRunner } from '../../src/core/sweep/sweep-runner';
+import { BILLING_SWEEP } from '../../src/finance/billing-plans/billing-plans.service';
 import { day } from '../setup/facilities';
 import { financeHelpers } from '../setup/finance';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
@@ -98,6 +100,38 @@ describe('Finance — bulk issue (races)', () => {
       all(s.accountant.token),
     ]);
     expect([one.status, every.status]).toEqual([201, 201]);
+  });
+
+  it('two billing sweeps at once: one invoice per unit and period', async () => {
+    const s = await f.setUp('Bulk Two Sweeps');
+    for (let i = 0; i < 5; i++) await f.unit(s.c, 'A');
+    const plan = await f
+      .http('post', '/staff/billing-plans', s.manager.token, {
+        nameEn: 'Fee',
+        nameAr: 'رسم',
+        kind: 'service_charge',
+        frequency: 'monthly',
+        amount: '300',
+        startsOn: `${day(0).slice(0, 8)}01`,
+        issueDaysBefore: 0,
+        dueDaysAfterIssue: 5,
+      })
+      .expect(201);
+    const sweeps = h.moduleRef.get(SweepRunner);
+    await Promise.all([
+      sweeps.run(BILLING_SWEEP, new Date()),
+      sweeps.run(BILLING_SWEEP, new Date()),
+    ]);
+    const rows = await f.x.asManager(s.c, () =>
+      h.moduleRef.get(TenantTx).withTenantTx((tx) =>
+        tx.invoice.findMany({
+          where: { planId: body<{ id: string }>(plan).id },
+          select: { unitId: true },
+        }),
+      ),
+    );
+    expect(rows).toHaveLength(6);
+    expect(new Set(rows.map((r) => r.unitId)).size).toBe(6);
   });
 
   it('two credit notes at once on one invoice: never more than is owed', async () => {

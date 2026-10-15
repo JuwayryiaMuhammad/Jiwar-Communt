@@ -96,6 +96,7 @@ describe('audit catalog', () => {
         'parking_report',
         'invoice_batch',
         'credit_note',
+        'billing_plan',
       ]).toContain(def.target);
     }
   });

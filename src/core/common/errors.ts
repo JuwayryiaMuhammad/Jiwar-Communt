@@ -527,6 +527,10 @@ export const ErrorCode = {
   INVOICE_BATCH_TOO_LARGE: 'INVOICE_BATCH_TOO_LARGE',
   /** A credit note above what the invoice still asks for (409, params.outstanding). */
   CREDIT_EXCEEDS_OUTSTANDING: 'CREDIT_EXCEEDS_OUTSTANDING',
+  /** Unknown, or another compound's. */
+  BILLING_PLAN_NOT_FOUND: 'BILLING_PLAN_NOT_FOUND',
+  /** The unit has no terms of its own in the plan. */
+  BILLING_OVERRIDE_NOT_FOUND: 'BILLING_OVERRIDE_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -678,6 +682,8 @@ export const FieldErrorCode = {
   DUE_ON_OUT_OF_RANGE: 'DUE_ON_OUT_OF_RANGE',
   /** The lines add up to more than an invoice may ask (params.max). */
   INVOICE_TOTAL_TOO_LARGE: 'INVOICE_TOTAL_TOO_LARGE',
+  /** Before this month, or more than a year ahead (params.min, params.max). */
+  STARTS_ON_OUT_OF_RANGE: 'STARTS_ON_OUT_OF_RANGE',
 } as const;
 
 export type FieldErrorCode =

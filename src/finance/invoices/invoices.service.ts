@@ -67,6 +67,7 @@ export interface InvoiceListFilter {
   unitId?: string;
   building?: string;
   batchId?: string;
+  planId?: string;
   cursor?: string;
   limit: number;
 }
@@ -178,6 +179,7 @@ export class InvoicesService implements OnModuleInit {
   /**
    * Writes one batch's invoices and lines under locks the caller holds,
    * audits it and announces small ones (the sweep announces the rest).
+   * Shared with the billing plans' sweep, which names its plan and period.
    */
   async issueTo(
     tx: TenantTxClient,
@@ -194,6 +196,7 @@ export class InvoicesService implements OnModuleInit {
         amount: Prisma.Decimal;
       }[];
       createdById: string | null;
+      plan?: { id: string; period: { start: LocalDate; end: LocalDate } };
     },
   ): Promise<InvoiceBatchView> {
     const tenantId = this.ctx.txTenantId;
@@ -228,6 +231,8 @@ export class InvoicesService implements OnModuleInit {
         issuedOn: asDate(input.issuedOn),
         dueOn: asDate(input.dueOn),
         createdById: input.createdById,
+        planId: input.plan?.id ?? null,
+        periodStartsOn: input.plan ? asDate(input.plan.period.start) : null,
       },
     });
     const invoices = input.units.map((u, i) => ({
@@ -242,6 +247,9 @@ export class InvoicesService implements OnModuleInit {
       issuedOn: asDate(input.issuedOn),
       dueOn: asDate(input.dueOn),
       createdById: input.createdById,
+      planId: input.plan?.id ?? null,
+      periodStartsOn: input.plan ? asDate(input.plan.period.start) : null,
+      periodEndsOn: input.plan ? asDate(input.plan.period.end) : null,
     }));
     await tx.invoice.createMany({ data: invoices });
     await tx.invoiceLine.createMany({
@@ -264,6 +272,9 @@ export class InvoicesService implements OnModuleInit {
       metadata: {
         target: kind,
         ...(kind === 'unit' ? { unitId: batch.unitId } : {}),
+        ...(input.plan
+          ? { planId: input.plan.id, periodStartsOn: input.plan.period.start }
+          : {}),
         unitCount: input.units.length,
         kind: input.kind,
         total: show(total),
@@ -423,6 +434,8 @@ export class InvoicesService implements OnModuleInit {
       conds.push(Prisma.sql`i.unit_id = ${filter.unitId}::uuid`);
     if (filter.batchId)
       conds.push(Prisma.sql`i.batch_id = ${filter.batchId}::uuid`);
+    if (filter.planId)
+      conds.push(Prisma.sql`i.plan_id = ${filter.planId}::uuid`);
     if (filter.building)
       conds.push(
         Prisma.sql`i.unit_id IN (SELECT u.id FROM units u WHERE u.building = ${filter.building})`,
@@ -495,6 +508,14 @@ export class InvoicesService implements OnModuleInit {
     return {
       ...view,
       batchId: invoice.batchId,
+      plan:
+        invoice.planId && invoice.periodStartsOn && invoice.periodEndsOn
+          ? {
+              id: invoice.planId,
+              periodStartsOn: fromDate(invoice.periodStartsOn),
+              periodEndsOn: fromDate(invoice.periodEndsOn),
+            }
+          : null,
       lines: lines.map((l) => ({
         position: l.position,
         descriptionEn: l.descriptionEn,

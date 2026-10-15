@@ -749,6 +749,22 @@ export const AUDIT_ACTIONS = {
   'invoice_batch.issued': { log: 'tenant', target: 'invoice_batch' },
   // metadata: invoiceId, unitId, number, amount, reasonCode.
   'credit_note.created': { log: 'tenant', target: 'credit_note' },
+  // changes: kind, frequency, amount, days and state by value; names as
+  // changed only.
+  'billing_plan.created': {
+    log: 'tenant',
+    target: 'billing_plan',
+    sensitive: ['nameEn', 'nameAr'],
+  },
+  'billing_plan.updated': {
+    log: 'tenant',
+    target: 'billing_plan',
+    sensitive: ['nameEn', 'nameAr'],
+  },
+  // metadata: unitId, amount or excluded (and the previous terms).
+  'billing_plan.override_set': { log: 'tenant', target: 'billing_plan' },
+  // metadata: unitId.
+  'billing_plan.override_removed': { log: 'tenant', target: 'billing_plan' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

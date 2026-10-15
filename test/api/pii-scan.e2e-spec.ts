@@ -941,6 +941,30 @@ describe('API v0 — PII leak scan', () => {
       a.tokens.manager,
       { amount: '50', reasonCode: 'goodwill' },
     );
+    const piiPlan = await idOf(
+      'POST',
+      '/staff/billing-plans',
+      a.tokens.manager,
+      {
+        nameEn: 'Service charge',
+        nameAr: 'رسوم الخدمات',
+        kind: 'service_charge',
+        frequency: 'monthly',
+        amount: '1500',
+        startsOn: `${day(0).slice(0, 8)}01`,
+        issueDaysBefore: 0,
+        dueDaysAfterIssue: 10,
+      },
+    );
+    await call(
+      w,
+      'PUT',
+      `/staff/billing-plans/${piiPlan}/overrides/${unit.id}`,
+      {
+        token: a.tokens.manager,
+        body: { amount: '900' },
+      },
+    ).expect(200);
     // Facilities (ADR 0044): the primary's booking of A's roomy facility.
     const piiBooking = await idOf(
       'POST',
@@ -1112,6 +1136,8 @@ describe('API v0 — PII leak scan', () => {
       '/staff/invoices/{id}': piiInvoice.invoiceId,
       '/invoices/{id}': piiInvoice.invoiceId,
       '/units/{unitId}/invoices': unit.id,
+      '/staff/billing-plans/{id}': piiPlan,
+      '/staff/billing-plans/{id}/overrides': piiPlan,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

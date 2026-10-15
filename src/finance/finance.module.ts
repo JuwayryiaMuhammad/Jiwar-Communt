@@ -3,6 +3,8 @@ import { CommunityFinancePortModule } from '../community';
 import { AuthModule } from '../core/auth/auth.module';
 import { PlatformModule } from '../core/platform/platform.module';
 import { FinanceAccess } from './access';
+import { BillingPlansController } from './billing-plans/billing-plans.controller';
+import { BillingPlansService } from './billing-plans/billing-plans.service';
 import { CredentialVault } from './gateway/credential-vault';
 import { GatewayController } from './gateway/gateway.controller';
 import { GatewayKeys } from './gateway/gateway-keys';
@@ -36,6 +38,7 @@ import { FinanceNotices } from './notices/finance-notices';
     PlatformGatewayController,
     StaffInvoicesController,
     UnitInvoicesController,
+    BillingPlansController,
   ],
   providers: [
     FinanceProvisioning,
@@ -43,6 +46,7 @@ import { FinanceNotices } from './notices/finance-notices';
     FinanceNotices,
     InvoicesService,
     InvoiceNoticesSweep,
+    BillingPlansService,
     CredentialVault,
     GatewayService,
     GatewayKeys,

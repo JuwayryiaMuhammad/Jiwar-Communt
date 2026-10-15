@@ -265,4 +265,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   credit_notes_tenant_id_number_key: null,
   // Claimed with ON CONFLICT DO NOTHING.
   invoice_notices_once: null,
+  billing_plans_tenant_id_id_key: null,
+  billing_plan_overrides_tenant_id_id_key: null,
+  // Upserted: a violation is a race.
+  billing_plan_overrides_one_per_unit: null,
+  // The sweep bills under the compound's exclusive lock: a race.
+  invoices_one_per_plan_unit_period: null,
 };

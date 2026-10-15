@@ -6559,6 +6559,251 @@
           }
         },
         {
+          "name": "List the billing plans, active first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "billing-plans"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/billing-plans"
+            }
+          }
+        },
+        {
+          "name": "Create a billing plan: every unit, a fixed amount each period",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"nameEn\": \"\",\n  \"nameAr\": \"\",\n  \"kind\": \"service_charge\",\n  \"frequency\": \"monthly\",\n  \"amount\": \"\",\n  \"startsOn\": \"\",\n  \"issueDaysBefore\": 0,\n  \"dueDaysAfterIssue\": 0\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | Every unit, each period, unless overridden. |\n| `dueDaysAfterIssue` | number | yes | An invoice is due this many days after it is issued. |\n| `frequency` | `monthly` \\| `quarterly` \\| `annual` | yes | Never changes. |\n| `issueDaysBefore` | number | yes | Issue a period’s invoices this many days before it starts. |\n| `kind` | `service_charge` \\| `maintenance` \\| `other` | yes | Never changes. |\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n| `startsOn` | string | yes | The first day of the first period: the first of a month, from this month to a year ahead. Never changes. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "billing-plans"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/billing-plans"
+            }
+          }
+        },
+        {
+          "name": "Get a billing plan and its next period",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "billing-plans",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/billing-plans/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change a plan’s names, amount, days, or retire it",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"active\": false,\n  \"amount\": \"\",\n  \"dueDaysAfterIssue\": 0,\n  \"issueDaysBefore\": 0,\n  \"nameAr\": \"\",\n  \"nameEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `active` | boolean |  | False retires the plan. |\n| `amount` | string |  |  |\n| `dueDaysAfterIssue` | number |  |  |\n| `issueDaysBefore` | number |  |  |\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "billing-plans",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/billing-plans/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the units with terms of their own",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "billing-plans",
+                ":id",
+                "overrides"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/billing-plans/:id/overrides",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Give a unit another amount in the plan, or exclude it",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"amount\": \"\",\n  \"excluded\": false\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string |  |  |\n| `excluded` | boolean |  | True: the unit is not billed by this plan. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "billing-plans",
+                ":id",
+                "overrides",
+                ":unitId"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/billing-plans/:id/overrides/:unitId",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Put a unit back on the plan’s own terms",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "billing-plans",
+                ":id",
+                "overrides",
+                ":unitId"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/billing-plans/:id/overrides/:unitId",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "The compound's online payment account, masked",
           "request": {
             "description": "**Responses:** 200",
@@ -6736,6 +6981,12 @@
                   "description": "",
                   "disabled": true,
                   "key": "batchId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "planId",
                   "value": ""
                 }
               ],

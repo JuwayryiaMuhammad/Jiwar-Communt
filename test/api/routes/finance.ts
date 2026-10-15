@@ -227,3 +227,116 @@ export const FINANCE_INVOICE_ROUTES: Row[] = [
     invalid: 'none',
   },
 ];
+
+const PLAN = {
+  nameEn: 'Service charge',
+  nameAr: 'رسوم الخدمات',
+  kind: 'service_charge',
+  frequency: 'monthly',
+  amount: '1500',
+  startsOn: '2099-01-01',
+  issueDaysBefore: 0,
+  dueDaysAfterIssue: 10,
+};
+
+/** Billing plans and their per-unit terms (ADR 0046). */
+export const FINANCE_BILLING_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/staff/billing-plans',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/staff/billing-plans',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: { ...PLAN, frequency: 'weekly', startsOn: '2026-11-02' },
+      fields: [
+        { field: 'frequency', code: 'INVALID_VALUE' },
+        { field: 'startsOn', code: 'INVALID_FORMAT' },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/staff/billing-plans/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bBillingPlanId }),
+      code: 'BILLING_PLAN_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'PATCH',
+    path: '/staff/billing-plans/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bBillingPlanId }),
+      body: () => ({ active: true }),
+      code: 'BILLING_PLAN_NOT_FOUND',
+    },
+    invalid: {
+      body: { issueDaysBefore: 29 },
+      fields: [
+        {
+          field: 'issueDaysBefore',
+          code: 'INVALID_NUMBER',
+          params: { min: 0, max: 28 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/staff/billing-plans/{id}/overrides',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bBillingPlanId }),
+      code: 'BILLING_PLAN_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'PUT',
+    path: '/staff/billing-plans/{id}/overrides/{unitId}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bBillingPlanId, unitId: w.a.homeUnitId }),
+      body: () => ({ amount: '100' }),
+      code: 'BILLING_PLAN_NOT_FOUND',
+    },
+    invalid: {
+      body: { amount: '-1' },
+      fields: [{ field: 'amount', code: 'INVALID_FORMAT' }],
+    },
+  },
+  {
+    method: 'DELETE',
+    path: '/staff/billing-plans/{id}/overrides/{unitId}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bBillingPlanId, unitId: w.a.homeUnitId }),
+      code: 'BILLING_PLAN_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+];

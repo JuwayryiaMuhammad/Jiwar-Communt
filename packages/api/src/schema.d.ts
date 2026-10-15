@@ -5363,6 +5363,80 @@ export interface paths {
         patch: operations["SettingsController_update"];
         trace?: never;
     };
+    "/api/v1/staff/billing-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the billing plans, active first */
+        get: operations["BillingPlansController_list"];
+        put?: never;
+        /** Create a billing plan: every unit, a fixed amount each period */
+        post: operations["BillingPlansController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/billing-plans/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a billing plan and its next period */
+        get: operations["BillingPlansController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change a plan’s names, amount, days, or retire it
+         * @description Applies to periods issued afterwards.
+         */
+        patch: operations["BillingPlansController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/billing-plans/{id}/overrides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the units with terms of their own */
+        get: operations["BillingPlansController_overrides"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/billing-plans/{id}/overrides/{unitId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Give a unit another amount in the plan, or exclude it */
+        put: operations["BillingPlansController_setOverride"];
+        post?: never;
+        /** Put a unit back on the plan’s own terms */
+        delete: operations["BillingPlansController_removeOverride"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/booking-suspensions": {
         parameters: {
             query?: never;
@@ -8542,6 +8616,61 @@ export interface components {
             /** @description A technician who never set it is `unavailable`. */
             state: components["schemas"]["TechnicianAvailabilityState"];
         };
+        /** @enum {string} */
+        BillingFrequency: "monthly" | "quarterly" | "annual";
+        BillingOverrideView: {
+            amount: string | null;
+            excluded: boolean;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        BillingOverrideViewList: {
+            data: components["schemas"]["BillingOverrideView"][];
+            nextCursor: string | null;
+        };
+        BillingPeriodView: {
+            /**
+             * Format: date
+             * @description Excluded.
+             */
+            endsOn: string;
+            /**
+             * Format: date
+             * @description When its invoices are issued.
+             */
+            issueOn: string;
+            /** Format: date */
+            startsOn: string;
+        };
+        BillingPlanView: {
+            active: boolean;
+            amount: string;
+            /** Format: date-time */
+            createdAt: string;
+            dueDaysAfterIssue: number;
+            frequency: components["schemas"]["BillingFrequency"];
+            /** Format: uuid */
+            id: string;
+            issueDaysBefore: number;
+            kind: components["schemas"]["InvoiceKind"];
+            nameAr: string;
+            nameEn: string;
+            /** @description The next period to issue, from the compound’s today; none once retired. */
+            nextPeriod: components["schemas"]["BillingPeriodView"] | null;
+            /** @description Units with their own terms. */
+            overrideCount: number;
+            /** Format: date */
+            startsOn: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        BillingPlanViewList: {
+            data: components["schemas"]["BillingPlanView"][];
+            nextCursor: string | null;
+        };
         BirthDateDto: {
             /** Format: date */
             birthDate: string;
@@ -9395,6 +9524,22 @@ export interface components {
             titleEn?: string | null;
             /** @description Required for `works`, refused otherwise. */
             works?: components["schemas"]["WorksDto"];
+        };
+        CreateBillingPlanDto: {
+            /** @description Every unit, each period, unless overridden. */
+            amount: string;
+            /** @description An invoice is due this many days after it is issued. */
+            dueDaysAfterIssue: number;
+            /** @description Never changes. */
+            frequency: components["schemas"]["BillingFrequency"];
+            /** @description Issue a period’s invoices this many days before it starts. */
+            issueDaysBefore: number;
+            /** @description Never changes. */
+            kind: components["schemas"]["InvoiceKind"];
+            nameAr: string;
+            nameEn: string;
+            /** @description The first day of the first period: the first of a month, from this month to a year ahead. Never changes. */
+            startsOn: string;
         };
         CreateBookingDto: {
             /** Format: uuid */
@@ -11269,6 +11414,7 @@ export interface components {
             outstanding: string;
             /** @description Paid by live payments. */
             paid: string;
+            plan: components["schemas"]["InvoicePlanView"] | null;
             /** @enum {string} */
             status: "unpaid" | "partially_paid" | "overdue" | "paid" | "credited";
             /** @description EGP, two decimals. */
@@ -11291,6 +11437,17 @@ export interface components {
             descriptionAr: string;
             descriptionEn: string;
             position: number;
+        };
+        InvoicePlanView: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date
+             * @description Excluded.
+             */
+            periodEndsOn: string;
+            /** Format: date */
+            periodStartsOn: string;
         };
         InvoiceView: {
             /** Format: date-time */
@@ -13630,6 +13787,11 @@ export interface components {
         SetAvailabilityDto: {
             state: components["schemas"]["TechnicianAvailabilityState"];
         };
+        SetBillingOverrideDto: {
+            amount?: string;
+            /** @description True: the unit is not billed by this plan. */
+            excluded?: boolean;
+        };
         SetGatewayDto: {
             cardIntegrationId: number;
             hmacSecret: string;
@@ -15328,6 +15490,15 @@ export interface components {
             titleEn?: string | null;
             /** @description Replaces the dates and the area of works as a whole. */
             works?: components["schemas"]["WorksDto"];
+        };
+        UpdateBillingPlanDto: {
+            /** @description False retires the plan. */
+            active?: boolean;
+            amount?: string;
+            dueDaysAfterIssue?: number;
+            issueDaysBefore?: number;
+            nameAr?: string;
+            nameEn?: string;
         };
         UpdateCategoryDto: {
             /** @description False retires it: no new ticket under it. */
@@ -24509,6 +24680,164 @@ export interface operations {
             };
         };
     };
+    BillingPlansController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingPlanViewList"];
+                };
+            };
+        };
+    };
+    BillingPlansController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBillingPlanDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingPlanView"];
+                };
+            };
+        };
+    };
+    BillingPlansController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingPlanView"];
+                };
+            };
+        };
+    };
+    BillingPlansController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateBillingPlanDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingPlanView"];
+                };
+            };
+        };
+    };
+    BillingPlansController_overrides: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingOverrideViewList"];
+                };
+            };
+        };
+    };
+    BillingPlansController_setOverride: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetBillingOverrideDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingOverrideView"];
+                };
+            };
+        };
+    };
+    BillingPlansController_removeOverride: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     BookingSuspensionsController_list: {
         parameters: {
             query?: {
@@ -25335,6 +25664,7 @@ export interface operations {
                 unitId?: string;
                 building?: string;
                 batchId?: string;
+                planId?: string;
             };
             header?: never;
             path?: never;

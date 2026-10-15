@@ -839,6 +839,21 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   credit_notes_number: {},
   credit_notes_amount: {},
   credit_notes_reason: {},
+  billing_plans_names_length: {},
+  billing_plans_amount: {},
+  billing_plans_starts_on: {},
+  billing_plans_days: {},
+  // excluded is NOT NULL; the amount only under IS NULL.
+  billing_plan_overrides_shape: {},
+  billing_plan_overrides_amount: {
+    guarded: 'amount IS NULL is tested first; the range runs only on a value',
+  },
+  invoice_batches_plan_shape: {},
+  invoices_plan_shape: {},
+  invoices_period: {
+    guarded:
+      'period_starts_on IS NULL and period_ends_on IS NULL are tested first; the comparison runs only on two values',
+  },
 };
 
 interface Check {

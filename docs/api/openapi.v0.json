@@ -1396,6 +1396,189 @@
         ],
         "type": "object"
       },
+      "BillingFrequency": {
+        "enum": [
+          "monthly",
+          "quarterly",
+          "annual"
+        ],
+        "type": "string"
+      },
+      "BillingOverrideView": {
+        "properties": {
+          "amount": {
+            "nullable": true,
+            "type": "string"
+          },
+          "excluded": {
+            "type": "boolean"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "unitCode",
+          "amount",
+          "excluded",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "BillingOverrideViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BillingOverrideView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "BillingPeriodView": {
+        "properties": {
+          "endsOn": {
+            "description": "Excluded.",
+            "format": "date",
+            "type": "string"
+          },
+          "issueOn": {
+            "description": "When its invoices are issued.",
+            "format": "date",
+            "type": "string"
+          },
+          "startsOn": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "startsOn",
+          "endsOn",
+          "issueOn"
+        ],
+        "type": "object"
+      },
+      "BillingPlanView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dueDaysAfterIssue": {
+            "type": "number"
+          },
+          "frequency": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BillingFrequency"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "issueDaysBefore": {
+            "type": "number"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InvoiceKind"
+              }
+            ]
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "nextPeriod": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BillingPeriodView"
+              }
+            ],
+            "description": "The next period to issue, from the compound’s today; none once retired.",
+            "nullable": true,
+            "type": "object"
+          },
+          "overrideCount": {
+            "description": "Units with their own terms.",
+            "type": "number"
+          },
+          "startsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr",
+          "kind",
+          "frequency",
+          "amount",
+          "startsOn",
+          "issueDaysBefore",
+          "dueDaysAfterIssue",
+          "active",
+          "overrideCount",
+          "nextPeriod",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "BillingPlanViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BillingPlanView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "BirthDateDto": {
         "properties": {
           "birthDate": {
@@ -4219,6 +4402,69 @@
         },
         "required": [
           "kind"
+        ],
+        "type": "object"
+      },
+      "CreateBillingPlanDto": {
+        "properties": {
+          "amount": {
+            "description": "Every unit, each period, unless overridden.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "dueDaysAfterIssue": {
+            "description": "An invoice is due this many days after it is issued.",
+            "maximum": 90,
+            "minimum": 0,
+            "type": "number"
+          },
+          "frequency": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BillingFrequency"
+              }
+            ],
+            "description": "Never changes."
+          },
+          "issueDaysBefore": {
+            "description": "Issue a period’s invoices this many days before it starts.",
+            "maximum": 28,
+            "minimum": 0,
+            "type": "number"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InvoiceKind"
+              }
+            ],
+            "description": "Never changes."
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "startsOn": {
+            "description": "The first day of the first period: the first of a month, from this month to a year ahead. Never changes.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-01$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameEn",
+          "nameAr",
+          "kind",
+          "frequency",
+          "amount",
+          "startsOn",
+          "issueDaysBefore",
+          "dueDaysAfterIssue"
         ],
         "type": "object"
       },
@@ -10241,6 +10487,15 @@
             "description": "Paid by live payments.",
             "type": "string"
           },
+          "plan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InvoicePlanView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
           "status": {
             "enum": [
               "unpaid",
@@ -10279,6 +10534,7 @@
           "dueOn",
           "createdAt",
           "batchId",
+          "plan",
           "lines",
           "creditNotes",
           "allocations"
@@ -10339,6 +10595,29 @@
           "descriptionEn",
           "descriptionAr",
           "amount"
+        ],
+        "type": "object"
+      },
+      "InvoicePlanView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "periodEndsOn": {
+            "description": "Excluded.",
+            "format": "date",
+            "type": "string"
+          },
+          "periodStartsOn": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "periodStartsOn",
+          "periodEndsOn"
         ],
         "type": "object"
       },
@@ -18022,6 +18301,19 @@
         ],
         "type": "object"
       },
+      "SetBillingOverrideDto": {
+        "properties": {
+          "amount": {
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "excluded": {
+            "description": "True: the unit is not billed by this plan.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "SetGatewayDto": {
         "properties": {
           "cardIntegrationId": {
@@ -23927,6 +24219,39 @@
               }
             ],
             "description": "Replaces the dates and the area of works as a whole."
+          }
+        },
+        "type": "object"
+      },
+      "UpdateBillingPlanDto": {
+        "properties": {
+          "active": {
+            "description": "False retires the plan.",
+            "type": "boolean"
+          },
+          "amount": {
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "dueDaysAfterIssue": {
+            "maximum": 90,
+            "minimum": 0,
+            "type": "number"
+          },
+          "issueDaysBefore": {
+            "maximum": 28,
+            "minimum": 0,
+            "type": "number"
+          },
+          "nameAr": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
           }
         },
         "type": "object"
@@ -41929,6 +42254,291 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/billing-plans": {
+      "get": {
+        "operationId": "BillingPlansController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingPlanViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the billing plans, active first",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "BillingPlansController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBillingPlanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingPlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a billing plan: every unit, a fixed amount each period",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/billing-plans/{id}": {
+      "get": {
+        "operationId": "BillingPlansController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingPlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a billing plan and its next period",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "Applies to periods issued afterwards.",
+        "operationId": "BillingPlansController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBillingPlanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingPlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a plan’s names, amount, days, or retire it",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/billing-plans/{id}/overrides": {
+      "get": {
+        "operationId": "BillingPlansController_overrides",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingOverrideViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the units with terms of their own",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/billing-plans/{id}/overrides/{unitId}": {
+      "delete": {
+        "operationId": "BillingPlansController_removeOverride",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Put a unit back on the plan’s own terms",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      },
+      "put": {
+        "operationId": "BillingPlansController_setOverride",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetBillingOverrideDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingOverrideView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Give a unit another amount in the plan, or exclude it",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/booking-suspensions": {
       "get": {
         "operationId": "BookingSuspensionsController_list",
@@ -43534,6 +44144,15 @@
           {
             "in": "query",
             "name": "batchId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "planId",
             "required": false,
             "schema": {
               "format": "uuid",

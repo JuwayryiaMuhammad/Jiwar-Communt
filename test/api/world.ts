@@ -3,6 +3,7 @@ import { newId } from '../../src/core/common/uuid';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { hashPassword } from '../../src/core/platform/password';
 import { PlatformSessionService } from '../../src/core/platform/platform-session.service';
+import { BillingPlansService } from '../../src/finance/billing-plans/billing-plans.service';
 import { InvoicesService } from '../../src/finance/invoices/invoices.service';
 import { DelegationsService } from '../../src/community/households/delegations.service';
 import { HouseholdsService } from '../../src/community/households/households.service';
@@ -40,6 +41,7 @@ import { FinePaymentsService } from '../../src/gate/fines/fine-payments.service'
 import { ParkingReportsService } from '../../src/gate/parking-reports/parking-reports.service';
 import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
 import { ALL_WEEK, at, day } from '../setup/facilities';
+import { addDays } from '../../src/core/common/slots/day-slots';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
 import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
 import { VisitsService } from '../../src/maintenance/visits/visits.service';
@@ -195,6 +197,8 @@ export interface World {
   /** B's finance (ADR 0046): an issue to B's home, and its invoice. */
   bInvoiceBatchId: string;
   bInvoiceId: string;
+  /** One of B's billing plans (ADR 0046). */
+  bBillingPlanId: string;
   /** One of A's plans, for valid payment bodies. */
   aClubPlanId: string;
   /** One of A's, open every day, roomy, for valid bookings. */
@@ -844,7 +848,17 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     const invoice = await helpers.prisma.tenant.invoice.findFirstOrThrow({
       where: { batchId: batch.id },
     });
-    return { batchId: batch.id, invoiceId: invoice.id };
+    const plan = await h.moduleRef.get(BillingPlansService).create({
+      nameEn: 'Service charge',
+      nameAr: 'رسوم الخدمات',
+      kind: 'service_charge',
+      frequency: 'monthly',
+      amount: '1500',
+      startsOn: addDays(day(0), 40).slice(0, 8) + '01',
+      issueDaysBefore: 0,
+      dueDaysAfterIssue: 10,
+    });
+    return { batchId: batch.id, invoiceId: invoice.id, planId: plan.id };
   });
   return {
     bInvoiceBatchId: bFinance.batchId,
@@ -857,6 +871,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bAreaId: bArea.id,
     bParkingBookingId: bParking.booking.id,
     aAreaId: aArea.id,
+    bBillingPlanId: bFinance.planId,
     bClubPlanId: bClubPlan.id,
     aClubPlanId: aClubPlan.id,
     bMembershipId: bClub.membershipId,

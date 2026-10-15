@@ -259,6 +259,8 @@ const ERROR_TEXT: Record<string, string> = {
   INVOICE_BATCH_EMPTY: 'No unit matches: nothing was issued.',
   INVOICE_BATCH_TOO_LARGE: 'Too many units for one issue: split it by building.',
   CREDIT_EXCEEDS_OUTSTANDING: 'A credit note cannot be more than the invoice still asks for.',
+  BILLING_PLAN_NOT_FOUND: 'This billing plan does not exist.',
+  BILLING_OVERRIDE_NOT_FOUND: 'This unit has no terms of its own in the plan.',
 };
 
 const FIELD_TEXT: Record<string, string> = {
@@ -337,6 +339,7 @@ const FIELD_TEXT: Record<string, string> = {
   GATEWAY_MODE_MISMATCH: 'Live mode takes live keys, sandbox takes test keys.',
   DUE_ON_OUT_OF_RANGE: 'From today to a year ahead.',
   INVOICE_TOTAL_TOO_LARGE: 'An invoice asks for at most 1,000,000 EGP.',
+  STARTS_ON_OUT_OF_RANGE: 'From the first of this month to a year ahead.',
 };
 
 export function errorText(error: unknown): string {

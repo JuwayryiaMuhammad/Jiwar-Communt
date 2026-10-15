@@ -77,9 +77,21 @@ export class InvoiceAllocationView {
   createdAt: Date;
 }
 
+/** The plan and the period a plan's invoice bills. */
+export class InvoicePlanView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String, format: 'date' })
+  periodStartsOn: string;
+  @ApiProperty({ type: String, format: 'date', description: 'Excluded.' })
+  periodEndsOn: string;
+}
+
 export class InvoiceDetailView extends InvoiceView {
   @ApiProperty({ type: String, format: 'uuid' })
   batchId: string;
+  @ApiProperty({ type: InvoicePlanView, nullable: true })
+  plan: InvoicePlanView | null;
   @ApiProperty({ type: [InvoiceLineView] })
   lines: InvoiceLineView[];
   @ApiProperty({ type: [CreditNoteView] })

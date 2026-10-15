@@ -274,6 +274,85 @@ describe('Audit coverage — finance', () => {
     });
   });
 
+  describe('billing plans', () => {
+    let planId: string;
+
+    it('billing_plan.created: terms by value, names as changed only', async () => {
+      const res = await f
+        .http('post', '/staff/billing-plans', s.manager.token, {
+          nameEn: `${MARKER} fee`,
+          nameAr: `${MARKER} رسم`,
+          kind: 'service_charge',
+          frequency: 'quarterly',
+          amount: '3000',
+          startsOn: `${day(0).slice(0, 8)}01`,
+          issueDaysBefore: 3,
+          dueDaysAfterIssue: 14,
+        })
+        .expect(201);
+      planId = (res.body as { id: string }).id;
+      const row = await single('billing_plan.created', planId);
+      expect(row).toMatchObject({
+        actorId: s.manager.id,
+        targetType: 'billing_plan',
+        changes: {
+          nameEn: { changed: true },
+          nameAr: { changed: true },
+          kind: { from: null, to: 'service_charge' },
+          frequency: { from: null, to: 'quarterly' },
+          amount: { from: null, to: '3000.00' },
+          issueDaysBefore: { from: null, to: 3 },
+          dueDaysAfterIssue: { from: null, to: 14 },
+          active: { from: null, to: true },
+        },
+      });
+      expect(JSON.stringify(row)).not.toContain(MARKER);
+    });
+
+    it('billing_plan.updated: what changed', async () => {
+      await f
+        .http('patch', `/staff/billing-plans/${planId}`, s.accountant.token, {
+          nameEn: `${MARKER} new`,
+          amount: '3200',
+        })
+        .expect(200);
+      const row = await single('billing_plan.updated', planId);
+      expect(row.changes).toEqual({
+        nameEn: { changed: true },
+        amount: { from: '3000.00', to: '3200.00' },
+      });
+      expect(JSON.stringify(row)).not.toContain(MARKER);
+    });
+
+    it('billing_plan.override_set and _removed: the unit and its terms', async () => {
+      const path = `/staff/billing-plans/${planId}/overrides/${s.home.id}`;
+      await f
+        .http('put', path, s.manager.token, { amount: '1000' })
+        .expect(200);
+      await f
+        .http('put', path, s.manager.token, { excluded: true })
+        .expect(200);
+      const set = await read.tenant(s.c.tenantId, {
+        action: 'billing_plan.override_set',
+        targetId: planId,
+      });
+      covered.add('billing_plan.override_set');
+      expect(set.map((r) => r.metadata)).toEqual([
+        { unitId: s.home.id, amount: '1000.00', excluded: false },
+        {
+          unitId: s.home.id,
+          amount: null,
+          excluded: true,
+          previousAmount: '1000.00',
+          previousExcluded: false,
+        },
+      ]);
+      await f.http('delete', path, s.manager.token).expect(204);
+      const removed = await single('billing_plan.override_removed', planId);
+      expect(removed.metadata).toEqual({ unitId: s.home.id });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every finance entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

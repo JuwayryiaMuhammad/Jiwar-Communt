@@ -253,4 +253,16 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   parking_reports_number_key: null,
   // A report becomes one fine, under its row lock: a race.
   parking_reports_fine_key: null,
+  // Finance (ADR 0046). Numbers come from the counter under its row lock and
+  // one unit's invoice per batch from one insert: a violation is a race.
+  invoice_batches_tenant_id_id_key: null,
+  invoices_tenant_id_id_key: null,
+  invoices_tenant_id_number_key: null,
+  invoices_one_per_batch_unit: null,
+  invoice_lines_tenant_id_id_key: null,
+  invoice_lines_position_key: null,
+  credit_notes_tenant_id_id_key: null,
+  credit_notes_tenant_id_number_key: null,
+  // Claimed with ON CONFLICT DO NOTHING.
+  invoice_notices_once: null,
 };

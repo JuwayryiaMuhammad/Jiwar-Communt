@@ -404,4 +404,6 @@ export const REASON_CODES = {
     'duplicate',
     'not_a_violation',
   ],
+  // Why the staff credit part or all of an invoice (ADR 0046).
+  creditNote: ['billing_error', 'waiver', 'duplicate', 'goodwill', 'other'],
 } as const;

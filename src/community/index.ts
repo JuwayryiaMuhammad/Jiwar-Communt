@@ -44,6 +44,8 @@ export {
   type ClubPerson,
   type FacilityAccount,
 } from './facilities-port';
+export { CommunityFinancePortModule } from './finance-port.module';
+export { CommunityFinancePort, type FinanceUnit } from './finance-port';
 export {
   capabilitiesFor,
   type Capabilities,

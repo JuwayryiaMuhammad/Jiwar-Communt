@@ -743,6 +743,12 @@ export const AUDIT_ACTIONS = {
   // The platform's side of the same (metadata as above; platformDisabled).
   'tenant.payment_gateway_set': { log: 'platform', target: 'tenant' },
   'tenant.payment_gateway_toggled': { log: 'platform', target: 'tenant' },
+  // metadata: target, unitCount, kind, total (each invoice's), issuedOn,
+  // dueOn, firstNumber, lastNumber; the unit for one unit. Never the
+  // building's name or a line's words.
+  'invoice_batch.issued': { log: 'tenant', target: 'invoice_batch' },
+  // metadata: invoiceId, unitId, number, amount, reasonCode.
+  'credit_note.created': { log: 'tenant', target: 'credit_note' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

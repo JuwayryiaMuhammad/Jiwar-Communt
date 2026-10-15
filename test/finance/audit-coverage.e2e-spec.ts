@@ -1,6 +1,7 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { auditReaders } from '../setup/audit';
+import { day } from '../setup/facilities';
 import {
   COMMUNITY_COVERAGE,
   ENGAGEMENT_COVERAGE,
@@ -31,6 +32,9 @@ import { waitForOtp } from '../setup/mailpit';
  * last four characters), a line's words or a plan's name.
  */
 const covered = new Set<string>();
+
+/** Planted in every free text a scenario writes: no audit row may hold it. */
+const MARKER = 'AUDIT-FREE-TEXT';
 
 describe('Audit coverage — finance', () => {
   let h: HttpHarness;
@@ -164,6 +168,109 @@ describe('Audit coverage — finance', () => {
           { platformDisabled: true },
         ],
       ]);
+    });
+  });
+
+  describe('invoices', () => {
+    let invoiceId: string;
+
+    it('invoice_batch.issued: the target, the count, the amount and the numbers; never a line’s words', async () => {
+      const res = await f
+        .http('post', '/staff/invoices', s.accountant.token, {
+          target: 'unit',
+          unitId: s.home.id,
+          kind: 'maintenance',
+          dueOn: day(7),
+          lines: [
+            {
+              descriptionEn: `${MARKER} pump`,
+              descriptionAr: `${MARKER} مضخة`,
+              amount: '450',
+            },
+          ],
+        })
+        .expect(201);
+      const batch = res.body as { id: string; firstNumber: string };
+      const row = await single('invoice_batch.issued', batch.id);
+      expect(row).toMatchObject({
+        actorType: 'account',
+        actorId: s.accountant.id,
+        targetType: 'invoice_batch',
+        changes: null,
+        metadata: {
+          target: 'unit',
+          unitId: s.home.id,
+          unitCount: 1,
+          kind: 'maintenance',
+          total: '450.00',
+          issuedOn: day(0),
+          dueOn: day(7),
+          firstNumber: batch.firstNumber,
+          lastNumber: batch.firstNumber,
+        },
+      });
+      expect(JSON.stringify(row)).not.toContain(MARKER);
+      invoiceId = (
+        (
+          await f
+            .http(
+              'get',
+              `/staff/invoices?batchId=${batch.id}`,
+              s.accountant.token,
+            )
+            .expect(200)
+        ).body as { data: { id: string }[] }
+      ).data[0].id;
+    });
+
+    it('a building’s issue names the target, never the building', async () => {
+      await f.unit(s.c, `${MARKER}-B`);
+      const res = await f
+        .http('post', '/staff/invoices', s.manager.token, {
+          target: 'building',
+          building: `${MARKER}-B`,
+          kind: 'other',
+          dueOn: day(7),
+          lines: [{ descriptionEn: 'x', descriptionAr: 'س', amount: '1' }],
+        })
+        .expect(201);
+      const found = await read.tenant(s.c.tenantId, {
+        action: 'invoice_batch.issued',
+        targetId: (res.body as { id: string }).id,
+      });
+      expect(found).toHaveLength(1);
+      expect(found[0].metadata).toMatchObject({
+        target: 'building',
+        unitCount: 1,
+      });
+      expect(JSON.stringify(found[0])).not.toContain(MARKER);
+    });
+
+    it('credit_note.created: the invoice, the unit, the number, the amount and the reason', async () => {
+      const res = await f
+        .http(
+          'post',
+          `/staff/invoices/${invoiceId}/credit-notes`,
+          s.manager.token,
+          {
+            amount: '50',
+            reasonCode: 'goodwill',
+          },
+        )
+        .expect(201);
+      const note = res.body as { id: string; number: string };
+      const row = await single('credit_note.created', note.id);
+      expect(row).toMatchObject({
+        actorId: s.manager.id,
+        targetType: 'credit_note',
+        metadata: {
+          invoiceId,
+          unitId: s.home.id,
+          number: note.number,
+          amount: '50.00',
+          reasonCode: 'goodwill',
+        },
+      });
     });
   });
 

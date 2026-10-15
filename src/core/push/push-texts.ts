@@ -1111,6 +1111,36 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تم قبول تظلمك وإلغاء المخالفة.',
     },
   },
+  'invoice.issued': {
+    en: {
+      title: 'New invoice',
+      body: 'A new invoice was issued for your unit. Open the app for details.',
+    },
+    ar: {
+      title: 'فاتورة جديدة',
+      body: 'صدرت فاتورة جديدة لوحدتك. افتح التطبيق لمعرفة التفاصيل.',
+    },
+  },
+  'invoice.due_soon': {
+    en: {
+      title: 'Invoice due soon',
+      body: 'An invoice for your unit is due in a few days.',
+    },
+    ar: {
+      title: 'فاتورة مستحقة قريبًا',
+      body: 'تستحق فاتورة لوحدتك خلال أيام.',
+    },
+  },
+  'invoice.overdue': {
+    en: {
+      title: 'Invoice overdue',
+      body: 'An invoice for your unit is past its due date.',
+    },
+    ar: {
+      title: 'فاتورة متأخرة',
+      body: 'تجاوزت فاتورة لوحدتك تاريخ استحقاقها.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

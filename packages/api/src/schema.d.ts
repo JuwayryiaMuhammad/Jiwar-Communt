@@ -1897,6 +1897,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/invoices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one of my units’ invoices */
+        get: operations["UnitInvoicesController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/legal-holds/{id}/release": {
         parameters: {
             query?: never;
@@ -5820,6 +5837,78 @@ export interface paths {
         patch: operations["GatewayController_toggle"];
         trace?: never;
     };
+    "/api/v1/staff/invoice-batches/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one issue: whom it reached and its numbers */
+        get: operations["StaffInvoicesController_batch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List invoices, newest first */
+        get: operations["StaffInvoicesController_list"];
+        put?: never;
+        /**
+         * Issue an invoice to one unit, a building’s units or every unit
+         * @description One invoice per unit, each with its own number; announced to the units’ finance holders.
+         */
+        post: operations["StaffInvoicesController_issue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/invoices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an invoice with its lines, credit notes and payments */
+        get: operations["StaffInvoicesController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/invoices/{id}/credit-notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Credit part or all of an invoice, with a reason code */
+        post: operations["StaffInvoicesController_credit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/parking-reports": {
         parameters: {
             query?: never;
@@ -7410,6 +7499,23 @@ export interface paths {
         };
         /** List minors who turned 18 */
         get: operations["HouseholdController_minorsReady"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List a unit’s invoices, newest first */
+        get: operations["UnitInvoicesController_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -9823,6 +9929,25 @@ export interface components {
             /** @description Shown once; only its hash is stored. */
             token: string;
         };
+        CreditNoteDto: {
+            /** @description At most what the invoice still asks for. */
+            amount: string;
+            /** @description `billing_error`, `waiver`, `duplicate`, `goodwill` or `other` (REASON_CODES.creditNote). */
+            reasonCode: string;
+        };
+        CreditNoteView: {
+            amount: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            invoiceId: string;
+            /** @example CN-000012 */
+            number: string;
+            /** @description REASON_CODES.creditNote */
+            reasonCode: string;
+        };
         DailyBriefView: {
             announcements: components["schemas"]["BriefAnnouncementsView"];
             /**
@@ -11080,6 +11205,131 @@ export interface components {
             /** @description The token from the invitation link. */
             token: string;
         };
+        InvoiceAllocationView: {
+            amount: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            paymentId: string;
+            receiptNumber: string;
+            /** @description The payment was reversed: this no longer counts. */
+            reversed: boolean;
+        };
+        InvoiceBatchView: {
+            building: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date */
+            dueOn: string;
+            /** @example INV-000123 */
+            firstNumber: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date */
+            issuedOn: string;
+            kind: components["schemas"]["InvoiceKind"];
+            /** @example INV-000140 */
+            lastNumber: string;
+            /** @enum {string} */
+            target: "unit" | "building" | "all";
+            /** @description Each invoice's total. */
+            total: string;
+            unitCount: number;
+            /** Format: uuid */
+            unitId: string | null;
+        };
+        InvoiceDetailView: {
+            allocations: components["schemas"]["InvoiceAllocationView"][];
+            /** Format: uuid */
+            batchId: string;
+            /** Format: date-time */
+            createdAt: string;
+            creditNotes: components["schemas"]["CreditNoteView"][];
+            /** @description Taken off by credit notes. */
+            credited: string;
+            /** @enum {string} */
+            currency: "EGP";
+            /**
+             * Format: date
+             * @description Local day.
+             */
+            dueOn: string;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date
+             * @description Local day.
+             */
+            issuedOn: string;
+            kind: components["schemas"]["InvoiceKind"];
+            lines: components["schemas"]["InvoiceLineView"][];
+            /** @example INV-000123 */
+            number: string;
+            /** @description Still owed. */
+            outstanding: string;
+            /** @description Paid by live payments. */
+            paid: string;
+            /** @enum {string} */
+            status: "unpaid" | "partially_paid" | "overdue" | "paid" | "credited";
+            /** @description EGP, two decimals. */
+            total: string;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        /** @enum {string} */
+        InvoiceKind: "service_charge" | "maintenance" | "other";
+        InvoiceLineDto: {
+            /** @description EGP, e.g. `1500` or `1500.50`. */
+            amount: string;
+            descriptionAr: string;
+            descriptionEn: string;
+        };
+        InvoiceLineView: {
+            /** @description EGP, two decimals. */
+            amount: string;
+            descriptionAr: string;
+            descriptionEn: string;
+            position: number;
+        };
+        InvoiceView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** @description Taken off by credit notes. */
+            credited: string;
+            /** @enum {string} */
+            currency: "EGP";
+            /**
+             * Format: date
+             * @description Local day.
+             */
+            dueOn: string;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date
+             * @description Local day.
+             */
+            issuedOn: string;
+            kind: components["schemas"]["InvoiceKind"];
+            /** @example INV-000123 */
+            number: string;
+            /** @description Still owed. */
+            outstanding: string;
+            /** @description Paid by live payments. */
+            paid: string;
+            /** @enum {string} */
+            status: "unpaid" | "partially_paid" | "overdue" | "paid" | "credited";
+            /** @description EGP, two decimals. */
+            total: string;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        InvoiceViewList: {
+            data: components["schemas"]["InvoiceView"][];
+            nextCursor: string | null;
+        };
         IssueEntryCredentialDto: {
             /**
              * @description A label the owner sees in their list (1–60 characters). Kept only while the credential is live; never audited.
@@ -11110,6 +11360,18 @@ export interface components {
              * @description One of the unit’s vehicles, not removed (VEHICLE_NOT_OF_UNIT); its plate is taken. Otherwise give `plate`.
              */
             vehicleId?: string;
+        };
+        IssueInvoicesDto: {
+            /** @description Units whose building reads exactly this. */
+            building?: string;
+            /** @description A local day of the compound: from today to 366 days ahead. */
+            dueOn: string;
+            kind: components["schemas"]["InvoiceKind"];
+            lines: components["schemas"]["InvoiceLineDto"][];
+            /** @enum {string} */
+            target: "unit" | "building" | "all";
+            /** Format: uuid */
+            unitId?: string;
         };
         IssuedEntryCredentialView: {
             /** Format: uuid */
@@ -11733,7 +11995,7 @@ export interface components {
             sentAt: string;
         };
         /** @enum {string} */
-        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community" | "neighbours" | "bookings" | "vehicles";
+        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community" | "neighbours" | "bookings" | "vehicles" | "finance";
         NotificationView: {
             /** Format: date-time */
             createdAt: string;
@@ -18718,6 +18980,27 @@ export interface operations {
             };
         };
     };
+    UnitInvoicesController_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceDetailView"];
+                };
+            };
+        };
+    };
     ErasureController_releaseHold: {
         parameters: {
             query?: never;
@@ -25019,6 +25302,131 @@ export interface operations {
             };
         };
     };
+    StaffInvoicesController_batch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceBatchView"];
+                };
+            };
+        };
+    };
+    StaffInvoicesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `open`: anything still owed. */
+                status?: "unpaid" | "partially_paid" | "overdue" | "paid" | "credited" | "open";
+                kind?: components["schemas"]["InvoiceKind"];
+                unitId?: string;
+                building?: string;
+                batchId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceViewList"];
+                };
+            };
+        };
+    };
+    StaffInvoicesController_issue: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueInvoicesDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceBatchView"];
+                };
+            };
+        };
+    };
+    StaffInvoicesController_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceDetailView"];
+                };
+            };
+        };
+    };
+    StaffInvoicesController_credit: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreditNoteDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditNoteView"];
+                };
+            };
+        };
+    };
     StaffParkingReportsController_list: {
         parameters: {
             query?: {
@@ -27531,6 +27939,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HouseholdMemberResponseList"];
+                };
+            };
+        };
+    };
+    UnitInvoicesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `open`: anything still owed. */
+                status?: "unpaid" | "partially_paid" | "overdue" | "paid" | "credited" | "open";
+            };
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceViewList"];
                 };
             };
         };

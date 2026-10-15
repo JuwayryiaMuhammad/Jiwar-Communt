@@ -91,3 +91,139 @@ export const FINANCE_GATEWAY_ROUTES: Row[] = [
     },
   },
 ];
+
+const LINES = [
+  {
+    descriptionEn: 'Service charge',
+    descriptionAr: 'رسوم الخدمات',
+    amount: '1000',
+  },
+];
+const STATUS_ALLOWED = [
+  'unpaid',
+  'partially_paid',
+  'overdue',
+  'paid',
+  'credited',
+  'open',
+];
+
+/** Invoices and credit notes (ADR 0046). */
+export const FINANCE_INVOICE_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/staff/invoices',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: {
+        target: 'street',
+        kind: 'rent',
+        dueOn: '2026-13-01',
+        lines: LINES,
+      },
+      fields: [
+        {
+          field: 'target',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['unit', 'building', 'all'] },
+        },
+        { field: 'kind', code: 'INVALID_VALUE' },
+        { field: 'dueOn', code: 'INVALID_FORMAT' },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/staff/invoice-batches/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bInvoiceBatchId }),
+      code: 'INVOICE_BATCH_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/staff/invoices',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'late' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: STATUS_ALLOWED },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/staff/invoices/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bInvoiceId }),
+      code: 'INVOICE_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/staff/invoices/{id}/credit-notes',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bInvoiceId }),
+      body: () => ({ amount: '10', reasonCode: 'waiver' }),
+      code: 'INVOICE_NOT_FOUND',
+    },
+    invalid: {
+      body: { amount: '0', reasonCode: 'waiver' },
+      fields: [{ field: 'amount', code: 'INVALID_FORMAT' }],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/units/{unitId}/invoices',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      query: { status: 'late' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: STATUS_ALLOWED },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/invoices/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bInvoiceId }),
+      code: 'INVOICE_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+];

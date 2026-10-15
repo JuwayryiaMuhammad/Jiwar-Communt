@@ -334,4 +334,6 @@ export const FINANCE_COVERAGE: readonly string[] = [
   'finance_gateway.toggled',
   'tenant.payment_gateway_set',
   'tenant.payment_gateway_toggled',
+  'invoice_batch.issued',
+  'credit_note.created',
 ];

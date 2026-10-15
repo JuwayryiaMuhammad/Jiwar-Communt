@@ -21,6 +21,8 @@ export const NOTIFICATION_CATEGORIES = [
   'bookings',
   // A unit's vehicles, their permits and fines (ADR 0045).
   'vehicles',
+  // A unit's invoices and payments (ADR 0046).
+  'finance',
 ] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 

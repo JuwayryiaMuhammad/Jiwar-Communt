@@ -3,6 +3,7 @@ import { newId } from '../../src/core/common/uuid';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { hashPassword } from '../../src/core/platform/password';
 import { PlatformSessionService } from '../../src/core/platform/platform-session.service';
+import { InvoicesService } from '../../src/finance/invoices/invoices.service';
 import { DelegationsService } from '../../src/community/households/delegations.service';
 import { HouseholdsService } from '../../src/community/households/households.service';
 import { MemberPermissionsService } from '../../src/community/households/member-permissions.service';
@@ -191,6 +192,9 @@ export interface World {
   bClubPlanId: string;
   bMembershipId: string;
   bPaymentId: string;
+  /** B's finance (ADR 0046): an issue to B's home, and its invoice. */
+  bInvoiceBatchId: string;
+  bInvoiceId: string;
   /** One of A's plans, for valid payment bodies. */
   aClubPlanId: string;
   /** One of A's, open every day, roomy, for valid bookings. */
@@ -823,7 +827,28 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
         .get(ParkingReportsService)
         .create({ plate: 'ب و 1234', location: 'World ramp' }),
   );
+  const bFinance = await helpers.asManager(b, async () => {
+    const batch = await h.moduleRef.get(InvoicesService).issue({
+      target: 'unit',
+      unitId: b.homeUnitId,
+      kind: 'service_charge',
+      dueOn: day(10),
+      lines: [
+        {
+          descriptionEn: 'Service charge',
+          descriptionAr: 'رسوم الخدمات',
+          amount: '1200',
+        },
+      ],
+    });
+    const invoice = await helpers.prisma.tenant.invoice.findFirstOrThrow({
+      where: { batchId: batch.id },
+    });
+    return { batchId: batch.id, invoiceId: invoice.id };
+  });
   return {
+    bInvoiceBatchId: bFinance.batchId,
+    bInvoiceId: bFinance.invoiceId,
     bParkingReportId: bParkingReport.id,
     bFineId: bFine.fine.id,
     bFinePaymentId: bFinePayment.id,

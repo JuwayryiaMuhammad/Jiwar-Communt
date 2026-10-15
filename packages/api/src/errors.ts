@@ -254,6 +254,11 @@ const ERROR_TEXT: Record<string, string> = {
   STEP_UP_CODE_INVALID: 'That code is wrong or has expired.',
   PAYMENT_VAULT_UNAVAILABLE: 'The server is not set up to store payment credentials yet. Ask the platform team.',
   GATEWAY_NOT_CONFIGURED: 'Set the payment account’s credentials first.',
+  INVOICE_NOT_FOUND: 'This invoice does not exist.',
+  INVOICE_BATCH_NOT_FOUND: 'This issue does not exist.',
+  INVOICE_BATCH_EMPTY: 'No unit matches: nothing was issued.',
+  INVOICE_BATCH_TOO_LARGE: 'Too many units for one issue: split it by building.',
+  CREDIT_EXCEEDS_OUTSTANDING: 'A credit note cannot be more than the invoice still asks for.',
 };
 
 const FIELD_TEXT: Record<string, string> = {
@@ -330,6 +335,8 @@ const FIELD_TEXT: Record<string, string> = {
   DAY_OUT_OF_RANGE: 'Pick a day in range.',
   AMOUNT_MISMATCH: 'Not the fine’s amount: a fine is paid in full.',
   GATEWAY_MODE_MISMATCH: 'Live mode takes live keys, sandbox takes test keys.',
+  DUE_ON_OUT_OF_RANGE: 'From today to a year ahead.',
+  INVOICE_TOTAL_TOO_LARGE: 'An invoice asks for at most 1,000,000 EGP.',
 };
 
 export function errorText(error: unknown): string {

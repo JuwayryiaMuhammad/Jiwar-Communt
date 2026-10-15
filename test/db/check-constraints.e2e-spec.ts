@@ -818,6 +818,27 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   finance_gateways_wallet_shape: {},
   // updated_by_platform is NOT NULL; the account only under IS NULL.
   finance_gateways_updated_by_shape: {},
+  finance_counters_kind: {},
+  finance_counters_last_number: {},
+  // Nullable columns only under IS [NOT] NULL; target is NOT NULL.
+  invoice_batches_target_shape: {},
+  invoice_batches_building_length: {
+    guarded:
+      'building IS NULL is tested first; the length runs only on a value',
+  },
+  invoice_batches_unit_count: {},
+  invoice_batches_due: {},
+  invoices_number: {},
+  invoices_total: {},
+  invoices_currency: {},
+  invoices_due: {},
+  invoice_lines_position: {},
+  invoice_lines_descriptions: {},
+  invoice_lines_amount: {},
+  invoice_notices_kind: {},
+  credit_notes_number: {},
+  credit_notes_amount: {},
+  credit_notes_reason: {},
 };
 
 interface Check {

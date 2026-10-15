@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { CommunityFinancePortModule } from '../community';
 import { AuthModule } from '../core/auth/auth.module';
 import { PlatformModule } from '../core/platform/platform.module';
+import { FinanceAccess } from './access';
 import { CredentialVault } from './gateway/credential-vault';
 import { GatewayController } from './gateway/gateway.controller';
 import { GatewayKeys } from './gateway/gateway-keys';
@@ -13,6 +15,13 @@ import {
   PAYMOB_TRANSPORT,
 } from './paymob/paymob-transport';
 import { FinanceProvisioning } from './provisioning';
+import { InvoiceNoticesSweep } from './invoices/invoice-notices.sweep';
+import {
+  StaffInvoicesController,
+  UnitInvoicesController,
+} from './invoices/invoices.controller';
+import { InvoicesService } from './invoices/invoices.service';
+import { FinanceNotices } from './notices/finance-notices';
 
 /**
  * Finance (ADR 0046): invoices per unit, recurring billing, payments at the
@@ -21,10 +30,19 @@ import { FinanceProvisioning } from './provisioning';
  * imports it.
  */
 @Module({
-  imports: [AuthModule, PlatformModule],
-  controllers: [GatewayController, PlatformGatewayController],
+  imports: [AuthModule, PlatformModule, CommunityFinancePortModule],
+  controllers: [
+    GatewayController,
+    PlatformGatewayController,
+    StaffInvoicesController,
+    UnitInvoicesController,
+  ],
   providers: [
     FinanceProvisioning,
+    FinanceAccess,
+    FinanceNotices,
+    InvoicesService,
+    InvoiceNoticesSweep,
     CredentialVault,
     GatewayService,
     GatewayKeys,

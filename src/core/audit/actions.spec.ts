@@ -94,6 +94,8 @@ describe('audit catalog', () => {
         'vehicle_fine',
         'vehicle_fine_payment',
         'parking_report',
+        'invoice_batch',
+        'credit_note',
       ]).toContain(def.target);
     }
   });

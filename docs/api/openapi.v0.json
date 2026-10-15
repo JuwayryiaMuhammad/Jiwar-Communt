@@ -5642,6 +5642,60 @@
         ],
         "type": "object"
       },
+      "CreditNoteDto": {
+        "properties": {
+          "amount": {
+            "description": "At most what the invoice still asks for.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "`billing_error`, `waiver`, `duplicate`, `goodwill` or `other` (REASON_CODES.creditNote).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "CreditNoteView": {
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "invoiceId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "example": "CN-000012",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "REASON_CODES.creditNote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "invoiceId",
+          "amount",
+          "reasonCode",
+          "createdAt"
+        ],
+        "type": "object"
+      },
       "DailyBriefView": {
         "properties": {
           "announcements": {
@@ -10012,6 +10066,390 @@
         ],
         "type": "object"
       },
+      "InvoiceAllocationView": {
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "paymentId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "receiptNumber": {
+            "type": "string"
+          },
+          "reversed": {
+            "description": "The payment was reversed: this no longer counts.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "paymentId",
+          "receiptNumber",
+          "amount",
+          "reversed",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "InvoiceBatchView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "firstNumber": {
+            "example": "INV-000123",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "issuedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InvoiceKind"
+              }
+            ]
+          },
+          "lastNumber": {
+            "example": "INV-000140",
+            "type": "string"
+          },
+          "target": {
+            "enum": [
+              "unit",
+              "building",
+              "all"
+            ],
+            "type": "string"
+          },
+          "total": {
+            "description": "Each invoice's total.",
+            "type": "string"
+          },
+          "unitCount": {
+            "type": "number"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "target",
+          "unitId",
+          "building",
+          "kind",
+          "unitCount",
+          "total",
+          "firstNumber",
+          "lastNumber",
+          "issuedOn",
+          "dueOn",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "InvoiceDetailView": {
+        "properties": {
+          "allocations": {
+            "items": {
+              "$ref": "#/components/schemas/InvoiceAllocationView"
+            },
+            "type": "array"
+          },
+          "batchId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "creditNotes": {
+            "items": {
+              "$ref": "#/components/schemas/CreditNoteView"
+            },
+            "type": "array"
+          },
+          "credited": {
+            "description": "Taken off by credit notes.",
+            "type": "string"
+          },
+          "currency": {
+            "enum": [
+              "EGP"
+            ],
+            "type": "string"
+          },
+          "dueOn": {
+            "description": "Local day.",
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "issuedOn": {
+            "description": "Local day.",
+            "format": "date",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InvoiceKind"
+              }
+            ]
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineView"
+            },
+            "type": "array"
+          },
+          "number": {
+            "example": "INV-000123",
+            "type": "string"
+          },
+          "outstanding": {
+            "description": "Still owed.",
+            "type": "string"
+          },
+          "paid": {
+            "description": "Paid by live payments.",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "unpaid",
+              "partially_paid",
+              "overdue",
+              "paid",
+              "credited"
+            ],
+            "type": "string"
+          },
+          "total": {
+            "description": "EGP, two decimals.",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitId",
+          "unitCode",
+          "kind",
+          "total",
+          "currency",
+          "credited",
+          "paid",
+          "outstanding",
+          "status",
+          "issuedOn",
+          "dueOn",
+          "createdAt",
+          "batchId",
+          "lines",
+          "creditNotes",
+          "allocations"
+        ],
+        "type": "object"
+      },
+      "InvoiceKind": {
+        "enum": [
+          "service_charge",
+          "maintenance",
+          "other"
+        ],
+        "type": "string"
+      },
+      "InvoiceLineDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP, e.g. `1500` or `1500.50`.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "descriptionAr": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "descriptionEn": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "descriptionEn",
+          "descriptionAr",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "InvoiceLineView": {
+        "properties": {
+          "amount": {
+            "description": "EGP, two decimals.",
+            "type": "string"
+          },
+          "descriptionAr": {
+            "type": "string"
+          },
+          "descriptionEn": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "position",
+          "descriptionEn",
+          "descriptionAr",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "InvoiceView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "credited": {
+            "description": "Taken off by credit notes.",
+            "type": "string"
+          },
+          "currency": {
+            "enum": [
+              "EGP"
+            ],
+            "type": "string"
+          },
+          "dueOn": {
+            "description": "Local day.",
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "issuedOn": {
+            "description": "Local day.",
+            "format": "date",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InvoiceKind"
+              }
+            ]
+          },
+          "number": {
+            "example": "INV-000123",
+            "type": "string"
+          },
+          "outstanding": {
+            "description": "Still owed.",
+            "type": "string"
+          },
+          "paid": {
+            "description": "Paid by live payments.",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "unpaid",
+              "partially_paid",
+              "overdue",
+              "paid",
+              "credited"
+            ],
+            "type": "string"
+          },
+          "total": {
+            "description": "EGP, two decimals.",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitId",
+          "unitCode",
+          "kind",
+          "total",
+          "currency",
+          "credited",
+          "paid",
+          "outstanding",
+          "status",
+          "issuedOn",
+          "dueOn",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "InvoiceViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/InvoiceView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "IssueEntryCredentialDto": {
         "properties": {
           "deviceName": {
@@ -10069,6 +10507,55 @@
           "reason",
           "amount",
           "occurredOn"
+        ],
+        "type": "object"
+      },
+      "IssueInvoicesDto": {
+        "properties": {
+          "building": {
+            "description": "Units whose building reads exactly this.",
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "dueOn": {
+            "description": "A local day of the compound: from today to 366 days ahead.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InvoiceKind"
+              }
+            ]
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineDto"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
+          },
+          "target": {
+            "enum": [
+              "unit",
+              "building",
+              "all"
+            ],
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target",
+          "kind",
+          "dueOn",
+          "lines"
         ],
         "type": "object"
       },
@@ -12112,7 +12599,8 @@
           "community",
           "neighbours",
           "bookings",
-          "vehicles"
+          "vehicles",
+          "finance"
         ],
         "type": "string"
       },
@@ -31161,6 +31649,43 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/invoices/{id}": {
+      "get": {
+        "operationId": "UnitInvoicesController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one of my units’ invoices",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/legal-holds/{id}/release": {
       "post": {
         "operationId": "ErasureController_releaseHold",
@@ -42902,6 +43427,284 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/invoice-batches/{id}": {
+      "get": {
+        "operationId": "StaffInvoicesController_batch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceBatchView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one issue: whom it reached and its numbers",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/invoices": {
+      "get": {
+        "operationId": "StaffInvoicesController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`open`: anything still owed.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "unpaid",
+                "partially_paid",
+                "overdue",
+                "paid",
+                "credited",
+                "open"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/InvoiceKind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "building",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "batchId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List invoices, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "One invoice per unit, each with its own number; announced to the units’ finance holders.",
+        "operationId": "StaffInvoicesController_issue",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssueInvoicesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceBatchView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Issue an invoice to one unit, a building’s units or every unit",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/invoices/{id}": {
+      "get": {
+        "operationId": "StaffInvoicesController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an invoice with its lines, credit notes and payments",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/invoices/{id}/credit-notes": {
+      "post": {
+        "operationId": "StaffInvoicesController_credit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreditNoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditNoteView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Credit part or all of an invoice, with a reason code",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/parking-reports": {
       "get": {
         "description": "`status=open` is the queue, oldest first.",
@@ -47700,6 +48503,80 @@
         "summary": "List minors who turned 18",
         "tags": [
           "household"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/invoices": {
+      "get": {
+        "operationId": "UnitInvoicesController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`open`: anything still owed.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "unpaid",
+                "partially_paid",
+                "overdue",
+                "paid",
+                "credited",
+                "open"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a unit’s invoices, newest first",
+        "tags": [
+          "finance"
         ],
         "x-stability": "draft"
       }

@@ -1048,6 +1048,33 @@ export const NOTIFICATION_KINDS = {
     target: 'vehicle_fine',
     params: {},
   },
+  // Finance (ADR 0046). No kind is critical, and none carries a param: never
+  // an amount, a number, a unit or a name. To every account that sees the
+  // unit's money (capabilities.financeView).
+  /** A new invoice for the unit. */
+  'invoice.issued': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'invoice',
+    params: {},
+  },
+  /** An invoice still owed falls due in three days. */
+  'invoice.due_soon': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'invoice',
+    params: {},
+  },
+  /** An invoice is still owed after its due date. */
+  'invoice.overdue': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'invoice',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

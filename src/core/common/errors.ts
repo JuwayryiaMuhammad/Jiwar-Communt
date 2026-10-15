@@ -517,6 +517,16 @@ export const ErrorCode = {
   PAYMENT_VAULT_UNAVAILABLE: 'PAYMENT_VAULT_UNAVAILABLE',
   /** Online payment needs the gateway's credentials first (409). */
   GATEWAY_NOT_CONFIGURED: 'GATEWAY_NOT_CONFIGURED',
+  /** Unknown, another compound's, or not the caller's to see. */
+  INVOICE_NOT_FOUND: 'INVOICE_NOT_FOUND',
+  /** Unknown, or another compound's. */
+  INVOICE_BATCH_NOT_FOUND: 'INVOICE_BATCH_NOT_FOUND',
+  /** The target holds no unit: an empty building (422). */
+  INVOICE_BATCH_EMPTY: 'INVOICE_BATCH_EMPTY',
+  /** More units than one issue takes (422, params.max). */
+  INVOICE_BATCH_TOO_LARGE: 'INVOICE_BATCH_TOO_LARGE',
+  /** A credit note above what the invoice still asks for (409, params.outstanding). */
+  CREDIT_EXCEEDS_OUTSTANDING: 'CREDIT_EXCEEDS_OUTSTANDING',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -664,6 +674,10 @@ export const FieldErrorCode = {
   AMOUNT_MISMATCH: 'AMOUNT_MISMATCH',
   /** A sandbox key in live mode, or a live key in sandbox (ADR 0046). */
   GATEWAY_MODE_MISMATCH: 'GATEWAY_MODE_MISMATCH',
+  /** Before today, or more than params.max days ahead. */
+  DUE_ON_OUT_OF_RANGE: 'DUE_ON_OUT_OF_RANGE',
+  /** The lines add up to more than an invoice may ask (params.max). */
+  INVOICE_TOTAL_TOO_LARGE: 'INVOICE_TOTAL_TOO_LARGE',
 } as const;
 
 export type FieldErrorCode =

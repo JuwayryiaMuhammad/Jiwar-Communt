@@ -909,6 +909,38 @@ describe('API v0 — PII leak scan', () => {
         paidOn: day(0),
       },
     );
+    // Finance (ADR 0046): an invoice to the primary's home, its lines in
+    // the staff's words; a credit note on it.
+    const piiBatch = await idOf('POST', '/staff/invoices', a.tokens.manager, {
+      target: 'unit',
+      unitId: unit.id,
+      kind: 'maintenance',
+      dueOn: day(5),
+      lines: [
+        {
+          descriptionEn: 'Pump repair',
+          descriptionAr: 'إصلاح المضخة',
+          amount: '800',
+        },
+      ],
+    });
+    const piiInvoice = {
+      batchId: piiBatch,
+      invoiceId: (
+        (
+          await call(w, 'GET', '/staff/invoices', {
+            token: a.tokens.manager,
+            query: { batchId: piiBatch },
+          }).expect(200)
+        ).body as { data: { id: string }[] }
+      ).data[0].id,
+    };
+    await idOf(
+      'POST',
+      `/staff/invoices/${piiInvoice.invoiceId}/credit-notes`,
+      a.tokens.manager,
+      { amount: '50', reasonCode: 'goodwill' },
+    );
     // Facilities (ADR 0044): the primary's booking of A's roomy facility.
     const piiBooking = await idOf(
       'POST',
@@ -1076,6 +1108,10 @@ describe('API v0 — PII leak scan', () => {
       '/staff/parking-reports/{id}': piiParkingReport,
       // ADR 0046: last four characters at most, never a name.
       '/platform/tenants/{id}/payment-gateway': a.tenantId,
+      '/staff/invoice-batches/{id}': piiInvoice.batchId,
+      '/staff/invoices/{id}': piiInvoice.invoiceId,
+      '/invoices/{id}': piiInvoice.invoiceId,
+      '/units/{unitId}/invoices': unit.id,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

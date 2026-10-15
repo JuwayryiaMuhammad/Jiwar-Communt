@@ -272,7 +272,7 @@ const ERROR_TEXT: Record<string, string> = {
   INVOICE_BATCH_NOT_FOUND: 'This issue does not exist.',
   INVOICE_BATCH_EMPTY: 'No unit matches: nothing was issued.',
   INVOICE_BATCH_TOO_LARGE: 'Too many units for one issue: split it by building.',
-  CREDIT_EXCEEDS_OUTSTANDING: 'A credit note cannot be more than the invoice still asks for.',
+  CREDIT_EXCEEDS_CREDITABLE: 'A credit note cannot be more than the invoice’s total less its credit notes.',
   BILLING_PLAN_NOT_FOUND: 'This billing plan does not exist.',
   BILLING_OVERRIDE_NOT_FOUND: 'This unit has no terms of its own in the plan.',
   PAYMENT_NOT_FOUND: 'This payment does not exist.',

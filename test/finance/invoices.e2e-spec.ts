@@ -270,8 +270,164 @@ describe('Finance — invoices', () => {
     });
   });
 
+  describe('releasing paid money (ADR 0048)', () => {
+    const pay = (unitId: string, amount: string, invoiceIds: string[]) =>
+      f
+        .http('post', `/staff/units/${unitId}/payments`, s.accountant.token, {
+          amount,
+          method: 'cash',
+          paidOn: day(0),
+          invoiceIds,
+        })
+        .expect(201);
+    const credit = (invoiceId: string, amount: string) =>
+      f.http(
+        'post',
+        `/staff/invoices/${invoiceId}/credit-notes`,
+        s.manager.token,
+        { amount, reasonCode: 'billing_error' },
+      );
+    const statement = async (unitId: string) =>
+      body<{ outstanding: string; credit: string }>(
+        await f
+          .http('get', `/staff/units/${unitId}/statement`, s.manager.token)
+          .expect(200),
+      );
+    const detail = async (id: string) =>
+      body<
+        InvoiceBody & {
+          allocations: { amount: string; released: string }[];
+          creditNotes: { amount: string; released: string }[];
+        }
+      >(
+        await f
+          .http('get', `/staff/invoices/${id}`, s.manager.token)
+          .expect(200),
+      );
+
+    it('beyond what is owed, a credit note gives the newest payments back to credit, splitting the last', async () => {
+      const home = await f.unit(s.c, 'A');
+      const { invoiceId } = await f.issue(s.manager, home.id);
+      await pay(home.id, '400', [invoiceId]);
+      await pay(home.id, '600', [invoiceId]);
+      const note = body<{ amount: string; released: string }>(
+        await credit(invoiceId, '700').expect(201),
+      );
+      expect(note).toMatchObject({ amount: '700.00', released: '700.00' });
+      const inv = await detail(invoiceId);
+      expect(inv).toMatchObject({
+        credited: '700.00',
+        paid: '300.00',
+        outstanding: '0.00',
+        status: 'paid',
+      });
+      expect(inv.allocations.map((a) => [a.amount, a.released])).toEqual([
+        ['400.00', '100.00'],
+        ['600.00', '600.00'],
+      ]);
+      expect(await statement(home.id)).toMatchObject({
+        outstanding: '0.00',
+        credit: '700.00',
+      });
+      // Up to the total less credit notes: 300 more, never 300.01.
+      const over = await credit(invoiceId, '300.01').expect(409);
+      expect(body<{ params: object }>(over).params).toEqual({
+        creditable: '300.00',
+        outstanding: '0.00',
+      });
+      await credit(invoiceId, '300').expect(201);
+      expect(await detail(invoiceId)).toMatchObject({
+        paid: '0.00',
+        status: 'credited',
+      });
+      expect((await statement(home.id)).credit).toBe('1000.00');
+    });
+
+    it('on a partly paid invoice, what it owes is credited first, then the payment released', async () => {
+      const home = await f.unit(s.c, 'A');
+      const { invoiceId } = await f.issue(s.manager, home.id);
+      await pay(home.id, '400', [invoiceId]);
+      const note = body<{ released: string }>(
+        await credit(invoiceId, '800').expect(201),
+      );
+      expect(note.released).toBe('200.00');
+      expect(await detail(invoiceId)).toMatchObject({
+        credited: '800.00',
+        paid: '200.00',
+        outstanding: '0.00',
+      });
+      expect((await statement(home.id)).credit).toBe('200.00');
+    });
+
+    it('released money pays the unit’s other open invoices at once', async () => {
+      const home = await f.unit(s.c, 'A');
+      const paid = await f.issue(s.manager, home.id);
+      await pay(home.id, '1000', [paid.invoiceId]);
+      const other = await f.issue(s.manager, home.id, { dueOn: day(20) });
+      await credit(paid.invoiceId, '300').expect(201);
+      expect(await detail(other.invoiceId)).toMatchObject({
+        paid: '300.00',
+        outstanding: '700.00',
+      });
+      expect(await statement(home.id)).toMatchObject({
+        outstanding: '700.00',
+        credit: '0.00',
+      });
+    });
+
+    it('released money can be refunded; then its payment cannot be reversed; reversing a payment drops its released money too', async () => {
+      const home = await f.unit(s.c, 'A');
+      const a = await f.issue(s.manager, home.id);
+      const refunded = body<{ id: string }>(
+        await pay(home.id, '1000', [a.invoiceId]),
+      ).id;
+      await credit(a.invoiceId, '1000').expect(201);
+      await f.stepUp(s.manager.token);
+      await f
+        .http('post', `/staff/units/${home.id}/refunds`, s.manager.token, {
+          amount: '1000',
+          channel: 'bank_transfer',
+          refundedOn: day(0),
+        })
+        .expect(201);
+      expect((await statement(home.id)).credit).toBe('0.00');
+      expect(
+        code(
+          await f
+            .http(
+              'post',
+              `/staff/payments/${refunded}/reverse`,
+              s.manager.token,
+              {
+                reasonCode: 'entered_in_error',
+              },
+            )
+            .expect(409),
+        ),
+      ).toBe('PAYMENT_REFUNDED');
+
+      const b = await f.issue(s.manager, home.id);
+      const reversed = body<{ id: string }>(
+        await pay(home.id, '1000', [b.invoiceId]),
+      ).id;
+      await credit(b.invoiceId, '400').expect(201);
+      expect((await statement(home.id)).credit).toBe('400.00');
+      await f
+        .http('post', `/staff/payments/${reversed}/reverse`, s.manager.token, {
+          reasonCode: 'bounced_cheque',
+        })
+        .expect(201);
+      // The payment is gone, its released money with it; the invoice owes
+      // what the credit note did not take.
+      expect(await statement(home.id)).toMatchObject({
+        outstanding: '600.00',
+        credit: '0.00',
+      });
+    });
+  });
+
   describe('credit notes', () => {
-    it('reduce what is owed; never past it; a full credit leaves it credited', async () => {
+    it('reduce what is owed; never past the total less credit notes; a full credit leaves it credited', async () => {
       const { invoiceId } = await f.issue(s.manager, s.home.id);
       const credit = (amount: string, reasonCode = 'waiver') =>
         f.http(
@@ -296,8 +452,9 @@ describe('Finance — invoices', () => {
         status: 'unpaid',
       });
       const over = await credit('750.01').expect(409);
-      expect(code(over)).toBe('CREDIT_EXCEEDS_OUTSTANDING');
+      expect(code(over)).toBe('CREDIT_EXCEEDS_CREDITABLE');
       expect(body<{ params: object }>(over).params).toEqual({
+        creditable: '750.00',
         outstanding: '750.00',
       });
       await credit('750', 'billing_error').expect(201);
@@ -308,7 +465,7 @@ describe('Finance — invoices', () => {
         ['750.00', 'billing_error'],
       ]);
       expect(code(await credit('1').expect(409))).toBe(
-        'CREDIT_EXCEEDS_OUTSTANDING',
+        'CREDIT_EXCEEDS_CREDITABLE',
       );
     });
 

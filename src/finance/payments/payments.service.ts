@@ -489,6 +489,15 @@ export class PaymentsService implements OnModuleInit {
       where: { paymentId: { in: ids } },
       _sum: { amount: true },
     });
+    // What credit notes gave back of each payment's allocations (ADR 0048).
+    const releasedRows = await tx.$queryRaw<
+      { payment_id: string; released: Prisma.Decimal }[]
+    >`
+      SELECT a.payment_id, SUM(x.amount) AS released
+        FROM finance_allocation_releases x
+        JOIN finance_allocations a ON a.tenant_id = x.tenant_id AND a.id = x.allocation_id
+       WHERE a.payment_id = ANY(${ids}::uuid[])
+       GROUP BY a.payment_id`;
     // What live refunds took from each payment (ADR 0048).
     const refunded = await tx.financeRefundSource.groupBy({
       by: ['paymentId'],
@@ -509,7 +518,13 @@ export class PaymentsService implements OnModuleInit {
       const reversal = reversals.find((r) => r.reversesId === p.id) ?? null;
       const given = reversal
         ? ZERO
-        : money(allocated.find((a) => a.paymentId === p.id)?._sum.amount ?? 0);
+        : money(
+            allocated.find((a) => a.paymentId === p.id)?._sum.amount ?? 0,
+          ).sub(
+            money(
+              releasedRows.find((r) => r.payment_id === p.id)?.released ?? 0,
+            ),
+          );
       const paidBack = reversal
         ? ZERO
         : money(refunded.find((r) => r.paymentId === p.id)?._sum.amount ?? 0);
@@ -583,28 +598,33 @@ export class PaymentsService implements OnModuleInit {
         number: number;
         prefix: string;
         amount: Prisma.Decimal;
+        released: Prisma.Decimal | null;
         at: Date;
       }[]
     >`
       SELECT * FROM (
-        SELECT 'invoice' AS kind, i.id, i.number, 'invoice' AS prefix, i.total AS amount, i.created_at AS at
+        SELECT 'invoice' AS kind, i.id, i.number, 'invoice' AS prefix, i.total AS amount,
+               NULL::numeric AS released, i.created_at AS at
           FROM invoices i WHERE i.unit_id = ${unitId}::uuid
         UNION ALL
-        SELECT 'credit_note', c.id, c.number, 'credit_note', c.amount, c.created_at
+        SELECT 'credit_note', c.id, c.number, 'credit_note', c.amount,
+               COALESCE((SELECT SUM(x.amount) FROM finance_allocation_releases x
+                          WHERE x.tenant_id = c.tenant_id AND x.credit_note_id = c.id), 0),
+               c.created_at
           FROM credit_notes c JOIN invoices i ON i.tenant_id = c.tenant_id AND i.id = c.invoice_id
          WHERE i.unit_id = ${unitId}::uuid
         UNION ALL
-        SELECT 'payment', p.id, p.receipt_number, 'receipt', p.amount, p.created_at
+        SELECT 'payment', p.id, p.receipt_number, 'receipt', p.amount, NULL, p.created_at
           FROM finance_payments p WHERE p.unit_id = ${unitId}::uuid AND p.kind = 'payment'
         UNION ALL
-        SELECT 'reversal', r.id, p.receipt_number, 'receipt', p.amount, r.created_at
+        SELECT 'reversal', r.id, p.receipt_number, 'receipt', p.amount, NULL, r.created_at
           FROM finance_payments r JOIN finance_payments p ON p.tenant_id = r.tenant_id AND p.id = r.reverses_id
          WHERE r.unit_id = ${unitId}::uuid AND r.kind = 'reversal'
         UNION ALL
-        SELECT 'refund', f.id, f.number, 'refund', f.amount, f.created_at
+        SELECT 'refund', f.id, f.number, 'refund', f.amount, NULL, f.created_at
           FROM finance_refunds f WHERE f.unit_id = ${unitId}::uuid AND f.kind = 'refund'
         UNION ALL
-        SELECT 'refund_reversal', r.id, f.number, 'refund', f.amount, r.created_at
+        SELECT 'refund_reversal', r.id, f.number, 'refund', f.amount, NULL, r.created_at
           FROM finance_refunds r JOIN finance_refunds f ON f.tenant_id = r.tenant_id AND f.id = r.reverses_id
          WHERE r.unit_id = ${unitId}::uuid AND r.kind = 'reversal'
       ) e ORDER BY e.at DESC, e.id DESC LIMIT 100`;
@@ -616,6 +636,7 @@ export class PaymentsService implements OnModuleInit {
         r.number,
       ),
       amount: show(r.amount),
+      released: r.released === null ? null : show(r.released),
       at: r.at,
     }));
   }

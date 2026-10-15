@@ -25,6 +25,12 @@ export class CreditNoteView {
   @ApiProperty({
     type: String,
     description:
+      'What it gave back of paid money to the unit’s credit: the part beyond what the invoice still owed (ADR 0048).',
+  })
+  released: string;
+  @ApiProperty({
+    type: String,
+    description:
       'REASON_CODES.creditNote, or a system reason (REASON_CODES.creditNoteSystem): `instalment_plan`, `dispute`.',
   })
   reasonCode: string;
@@ -72,6 +78,12 @@ export class InvoiceAllocationView {
   receiptNumber: string;
   @ApiProperty({ type: String })
   amount: string;
+  @ApiProperty({
+    type: String,
+    description:
+      'Given back to the unit’s credit by credit notes: this counts net of it (ADR 0048).',
+  })
+  released: string;
   @ApiProperty({
     type: Boolean,
     description: 'The payment was reversed: this no longer counts.',

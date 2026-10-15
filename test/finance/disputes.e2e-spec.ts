@@ -461,8 +461,8 @@ describe('Finance — invoice disputes', () => {
         amount: '1000.01',
       }).expect(409);
       expect([code(over), params(over)]).toEqual([
-        'CREDIT_EXCEEDS_OUTSTANDING',
-        { outstanding: '1000.00' },
+        'CREDIT_EXCEEDS_CREDITABLE',
+        { creditable: '1000.00', outstanding: '1000.00' },
       ]);
       const accepted = body<StaffDispute>(
         await decide(d.id, { decision: 'accept', amount: '250' }).expect(201),

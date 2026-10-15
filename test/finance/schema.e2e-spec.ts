@@ -15,6 +15,7 @@ import {
   paymentRow,
   planRow,
   refundRow,
+  releaseRow,
   sessionInvoiceRow,
   sessionRow,
 } from '../setup/finance-rows';
@@ -112,6 +113,33 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
           where: { refundId: ids.refund },
         })
       ).id;
+      // A release of its own invoice's, so R6a's bounds keep their figures.
+      ids.releaseInvoice = await invoiceRow(tx, {
+        tenantId,
+        unitId,
+        batchId: await batchRow(tx, {
+          tenantId,
+          unitId,
+          createdById: accountId,
+        }),
+        createdById: accountId,
+      });
+      ids.releaseAllocation = await allocationRow(tx, {
+        tenantId,
+        paymentId: ids.refundPayment,
+        invoiceId: ids.releaseInvoice,
+        amount: '5',
+      });
+      ids.releaseNote = await creditNoteRow(tx, {
+        tenantId,
+        invoiceId: ids.releaseInvoice,
+        createdById: accountId,
+      });
+      ids.release = await releaseRow(tx, {
+        tenantId,
+        allocationId: ids.releaseAllocation,
+        creditNoteId: ids.releaseNote,
+      });
       ids.remainder = await invoiceRow(tx, {
         tenantId,
         unitId,
@@ -186,6 +214,7 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
       'invoice_disputes',
       'finance_refunds',
       'finance_refund_sources',
+      'finance_allocation_releases',
     ]) {
       const p = await privileges(table);
       expect({
@@ -227,6 +256,7 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
     ['payment_gateway_events', 'event', `outcome = 'applied'`],
     ['finance_refunds', 'refund', 'amount = 1'],
     ['finance_refund_sources', 'refundSource', 'amount = 1'],
+    ['finance_allocation_releases', 'release', 'amount = 2'],
   ])('%s is append-only', (table, key, change) => {
     it('the tables’ owner cannot update, delete or truncate it either', async () => {
       await expect(
@@ -440,6 +470,60 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
       attempt(app, accept, note(ids.invoice, 'waiver')),
     ).rejects.toThrow(/credit_notes_dispute_link/);
     await attempt(app, accept, note(ids.invoice));
+  });
+
+  describe('allocation releases (ADR 0048)', () => {
+    const release = (allocation: string, note: string, amount: string) =>
+      `INSERT INTO finance_allocation_releases (id, tenant_id, allocation_id, credit_note_id, amount)
+       VALUES (gen_random_uuid(), '${tenantId}', '${allocation}', '${note}', ${amount})`;
+
+    it('a credit note releases a live allocation of its own invoice only', async () => {
+      const other = await inTenant((tx) =>
+        creditNoteRow(tx, {
+          tenantId,
+          invoiceId: ids.remainder,
+          createdById: accountId,
+        }),
+      );
+      await expect(
+        attempt(app, release(ids.releaseAllocation, other, '1')),
+      ).rejects.toThrow(/live allocation of its own invoice/);
+      await expect(
+        attempt(
+          app,
+          `INSERT INTO finance_payments (id, tenant_id, kind, unit_id, reverses_id, reason_code, recorded_by_account_id)
+           VALUES (gen_random_uuid(), '${tenantId}', 'reversal', '${unitId}', '${ids.payment}', 'other', '${accountId}')`,
+          // ids.allocation is the reversed payment's, on ids.invoice.
+          release(ids.allocation, ids.creditNote, '1'),
+        ),
+      ).rejects.toThrow(/live allocation of its own invoice/);
+    });
+
+    it('never beyond the allocation, at commit; what is released counts as neither paid nor given', async () => {
+      const { amount } = await inTenant((tx) =>
+        tx.financeAllocation.findUniqueOrThrow({
+          where: { id: ids.releaseAllocation },
+        }),
+      );
+      await expect(
+        attempt(
+          app,
+          release(ids.releaseAllocation, ids.releaseNote, amount.toString()),
+        ),
+      ).rejects.toThrow(/releases .* exceed its amount/);
+      // Released, the invoice has room for a credit note it had not.
+      const { total } = await inTenant((tx) =>
+        tx.invoice.findUniqueOrThrow({ where: { id: ids.releaseInvoice } }),
+      );
+      const room = total.sub(1).sub(amount).add(1);
+      const note = (n: string) =>
+        `INSERT INTO credit_notes (id, tenant_id, number, invoice_id, amount, reason_code, created_by_account_id)
+         VALUES (gen_random_uuid(), '${tenantId}', 990000 + floor(random() * 9999)::int, '${ids.releaseInvoice}', ${n}, 'waiver', '${accountId}')`;
+      await expect(
+        attempt(app, note(room.add('0.01').toString())),
+      ).rejects.toThrow(/exceed its total/);
+      await attempt(app, note(room.toString()));
+    });
   });
 
   describe('refunds (ADR 0048)', () => {

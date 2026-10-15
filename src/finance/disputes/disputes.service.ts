@@ -19,14 +19,14 @@ import {
 import { FilesService } from '../../core/files/files.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { FinanceAccess } from '../access';
-import { formatNumber, takeNumbers } from '../counters';
+import { formatNumber } from '../counters';
 import { dbNow } from '../db-clock';
 import { money, show, ZERO } from '../money';
 import { FinanceNotices } from '../notices/finance-notices';
 import { supersedeLive } from '../online/supersede';
 import { allocateUnit } from '../payments/allocation';
 import { balancesOf } from '../invoices/balances';
-import { invoiceNotFound } from '../invoices/invoices.service';
+import { creditInvoice, invoiceNotFound } from '../invoices/invoices.service';
 import {
   DISPUTE_TEXT,
   type DecideDisputeDto,
@@ -204,9 +204,10 @@ export class DisputesService implements OnModuleInit {
   }
 
   /**
-   * The staff decide, once: accept with a credit note (at most what the
-   * invoice owes now — a payment that landed first lowers it), or reject
-   * with a reason. The opener is told, while they still see the money.
+   * The staff decide, once: accept with a credit note (at most what credit
+   * notes may still take; beyond what is owed now, paid money is released
+   * to the unit's credit, ADR 0048), or reject with a reason. The opener is
+   * told, while they still see the money.
    */
   decide(id: string, dto: DecideDisputeDto): Promise<StaffDisputeView> {
     const shape: FieldError[] = [];
@@ -245,31 +246,24 @@ export class DisputesService implements OnModuleInit {
         );
       const tenantId = dispute.tenantId;
       const now = await dbNow(tx);
-      let creditNote: { id: string; amount: Prisma.Decimal } | null = null;
+      let creditNote: {
+        id: string;
+        amount: Prisma.Decimal;
+        released: Prisma.Decimal;
+      } | null = null;
       if (dto.decision === 'accept') {
-        const amount = money(dto.amount!);
-        const balance = (await balancesOf(tx, [dispute.invoiceId])).get(
-          dispute.invoiceId,
-        )!;
-        if (amount.gt(balance.outstanding))
-          throw appError.conflict(
-            ErrorCode.CREDIT_EXCEEDS_OUTSTANDING,
-            'More than the invoice still asks for',
-            { params: { outstanding: show(balance.outstanding) } },
-          );
-        const number = await takeNumbers(tx, tenantId, 'credit_note');
-        creditNote = await tx.creditNote.create({
-          data: {
-            id: newId(),
-            tenantId,
-            number,
-            invoiceId: dispute.invoiceId,
-            amount,
-            reasonCode: 'dispute',
-            disputeId: id,
-            createdById: this.ctx.accountId,
-          },
+        // Up to what credit notes may still take: beyond what is owed (a
+        // payment landed meanwhile), paid money is released to credit.
+        const { note, released } = await creditInvoice(tx, {
+          id: newId(),
+          tenantId,
+          invoiceId: dispute.invoiceId,
+          amount: money(dto.amount!),
+          reasonCode: 'dispute',
+          disputeId: id,
+          createdById: this.ctx.accountId,
         });
+        creditNote = { id: note.id, amount: note.amount, released };
         await supersedeLive(tx, [dispute.unitId]);
       }
       const decided = await tx.invoiceDispute.update({
@@ -292,7 +286,11 @@ export class DisputesService implements OnModuleInit {
           invoiceId: dispute.invoiceId,
           decision: dto.decision,
           ...(creditNote
-            ? { amount: show(creditNote.amount), creditNoteId: creditNote.id }
+            ? {
+                amount: show(creditNote.amount),
+                released: show(creditNote.released),
+                creditNoteId: creditNote.id,
+              }
             : { reasonCode: reasonCode! }),
         },
       });

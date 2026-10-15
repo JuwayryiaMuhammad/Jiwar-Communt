@@ -801,7 +801,8 @@ export const AUDIT_ACTIONS = {
   // dueOn, firstNumber, lastNumber; the unit for one unit. Never the
   // building's name or a line's words.
   'invoice_batch.issued': { log: 'tenant', target: 'invoice_batch' },
-  // metadata: invoiceId, unitId, number, amount, reasonCode.
+  // metadata: invoiceId, unitId, number, amount, released (paid money
+  // given back to credit, ADR 0048), reasonCode.
   'credit_note.created': { log: 'tenant', target: 'credit_note' },
   // changes: kind, frequency, amount, days and state by value; names as
   // changed only.
@@ -836,8 +837,8 @@ export const AUDIT_ACTIONS = {
   // metadata: unitId, invoiceId, reasonCode, photo (boolean). Never the
   // opener's words.
   'invoice_dispute.opened': { log: 'tenant', target: 'invoice_dispute' },
-  // metadata: unitId, invoiceId, decision; amount and creditNoteId on an
-  // acceptance, reasonCode on a rejection.
+  // metadata: unitId, invoiceId, decision; amount, released and
+  // creditNoteId on an acceptance, reasonCode on a rejection.
   'invoice_dispute.decided': { log: 'tenant', target: 'invoice_dispute' },
   // metadata: unitId, number, amount, channel, refundedOn, sourceCount;
   // never the reference.

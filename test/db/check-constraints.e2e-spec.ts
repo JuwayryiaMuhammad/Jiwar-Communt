@@ -904,6 +904,7 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'reason_code IS NULL is tested first; the list runs only on a value',
   },
   finance_refund_sources_amount: {},
+  finance_allocation_releases_amount: {},
   // Nullable columns only under IS [NOT] NULL; kind is NOT NULL.
   finance_payments_kind_shape: {},
   finance_payments_office_shape: {

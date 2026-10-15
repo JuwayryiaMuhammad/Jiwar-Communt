@@ -1,7 +1,12 @@
 import { Prisma } from '@prisma/client';
 import { newId } from '../../core/common/uuid';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
-import { CREDITED_SQL, DISPUTED_SQL, PAID_SQL } from '../invoices/balances';
+import {
+  CREDITED_SQL,
+  DISPUTED_SQL,
+  PAID_SQL,
+  RELEASED_SQL,
+} from '../invoices/balances';
 import { money, ZERO } from '../money';
 
 /** What a live payment still has to give. */
@@ -18,13 +23,14 @@ interface Owed {
 
 /**
  * What live payment `p` still has to give, as SQL: its amount less what it
- * paid to invoices and what live refunds took from it (ADR 0048). Every
+ * paid to invoices (net of releases) and what live refunds took from it
+ * (ADR 0048). Every
  * reader of free money — the allocator, the unit's credit, a payment's
  * view — uses this one fragment, so the allocator never pours money that
  * was paid back.
  */
 export const FREE_SQL = Prisma.sql`(p.amount
-  - COALESCE((SELECT SUM(a.amount) FROM finance_allocations a
+  - COALESCE((SELECT SUM(a.amount - ${RELEASED_SQL}) FROM finance_allocations a
                WHERE a.tenant_id = p.tenant_id AND a.payment_id = p.id), 0)
   - COALESCE((SELECT SUM(s.amount) FROM finance_refund_sources s
                WHERE s.tenant_id = p.tenant_id AND s.payment_id = p.id
@@ -167,6 +173,46 @@ async function allocate(
     fresh,
   );
   if (rows.length) await tx.financeAllocation.createMany({ data: rows });
+  return rows.length;
+}
+
+/**
+ * Gives `amount` of the invoice's newest live allocations back to the
+ * unit's credit, against credit note `creditNoteId` (ADR 0048): a credit
+ * note took off more than the invoice still owed. Under the unit's finance
+ * lock; the caller checked the invoice has that much paid.
+ */
+export async function releaseNewest(
+  tx: TenantTxClient,
+  tenantId: string,
+  invoiceId: string,
+  creditNoteId: string,
+  amount: Prisma.Decimal,
+): Promise<number> {
+  const live = await tx.$queryRaw<{ id: string; left: Prisma.Decimal }[]>`
+    SELECT a.id, a.amount - ${RELEASED_SQL} AS left
+      FROM finance_allocations a
+     WHERE a.invoice_id = ${invoiceId}::uuid
+       AND NOT EXISTS (SELECT 1 FROM finance_payments r
+                        WHERE r.tenant_id = a.tenant_id AND r.reverses_id = a.payment_id)
+     ORDER BY a.created_at DESC, a.id DESC`;
+  const rows: Prisma.FinanceAllocationReleaseCreateManyInput[] = [];
+  let left = amount;
+  for (const a of live) {
+    if (left.lte(ZERO)) break;
+    const room = money(a.left);
+    if (room.lte(ZERO)) continue;
+    const take = Prisma.Decimal.min(room, left);
+    rows.push({
+      id: newId(),
+      tenantId,
+      allocationId: a.id,
+      creditNoteId,
+      amount: take,
+    });
+    left = left.sub(take);
+  }
+  if (rows.length) await tx.financeAllocationRelease.createMany({ data: rows });
   return rows.length;
 }
 

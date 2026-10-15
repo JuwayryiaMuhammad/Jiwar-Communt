@@ -25,7 +25,11 @@ import { asDate, fromDate, localToday } from '../db-clock';
 import { CURRENCY, MAX_AMOUNT, money, show, ZERO } from '../money';
 import { FinanceNotices } from '../notices/finance-notices';
 import { supersedeLive } from '../online/supersede';
-import { allocateUnits } from '../payments/allocation';
+import {
+  allocateUnit,
+  allocateUnits,
+  releaseNewest,
+} from '../payments/allocation';
 import {
   balancesOf,
   CREDITED_SQL,
@@ -104,11 +108,12 @@ export class InvoicesService implements OnModuleInit {
   onModuleInit(): void {
     this.idempotency.renderer(INVOICE_BATCH_RESOURCE, (id) => this.batch(id));
     this.idempotency.renderer(CREDIT_NOTE_RESOURCE, (id) =>
-      this.tenantTx.withTenantTx(async (tx) =>
-        creditNoteView(
+      this.tenantTx.withTenantTx(async (tx) => {
+        const [view] = await creditNoteViews(tx, [
           await tx.creditNote.findUniqueOrThrow({ where: { id } }),
-        ),
-      ),
+        ]);
+        return view;
+      }),
     );
   }
 
@@ -305,7 +310,11 @@ export class InvoicesService implements OnModuleInit {
     return batchView(batch, total, first, last);
   }
 
-  /** A credit note: at most what the invoice still asks for. */
+  /**
+   * A credit note: at most what credit notes have not yet taken off the
+   * invoice. Beyond what it still owes, it releases paid money to the unit's
+   * credit (ADR 0048).
+   */
   credit(invoiceId: string, dto: CreditNoteDto): Promise<CreditNoteView> {
     const reasonCode = requireReasonCodeOnly(
       dto.reasonCode,
@@ -321,39 +330,31 @@ export class InvoicesService implements OnModuleInit {
       // A disputed invoice is credited only by its dispute's decision.
       if ((await disputedAmong(tx, [invoiceId])).length)
         throw invoiceDisputed();
-      const balance = (await balancesOf(tx, [invoiceId])).get(invoiceId)!;
-      const amount = money(dto.amount);
-      if (amount.gt(balance.outstanding))
-        throw appError.conflict(
-          ErrorCode.CREDIT_EXCEEDS_OUTSTANDING,
-          'More than the invoice still asks for',
-          { params: { outstanding: show(balance.outstanding) } },
-        );
-      const number = await takeNumbers(tx, invoice.tenantId, 'credit_note');
-      const note = await tx.creditNote.create({
-        data: {
-          id,
-          tenantId: invoice.tenantId,
-          number,
-          invoiceId,
-          amount,
-          reasonCode,
-          createdById: this.ctx.accountId,
-        },
+      const { note, released } = await creditInvoice(tx, {
+        id,
+        tenantId: invoice.tenantId,
+        invoiceId,
+        amount: money(dto.amount),
+        reasonCode,
+        createdById: this.ctx.accountId,
       });
       await supersedeLive(tx, [invoice.unitId]);
+      // Released money pays the unit's other open invoices at once.
+      if (released.gt(ZERO))
+        await allocateUnit(tx, invoice.tenantId, invoice.unitId);
       await this.audit.record(tx, {
         action: 'credit_note.created',
         targetId: id,
         metadata: {
           invoiceId,
           unitId: invoice.unitId,
-          number: formatNumber('credit_note', number),
-          amount: show(amount),
+          number: formatNumber('credit_note', note.number),
+          amount: show(note.amount),
+          released: show(released),
           reasonCode,
         },
       });
-      return creditNoteView(note);
+      return creditNoteView({ ...note, released });
     });
   }
 
@@ -546,6 +547,7 @@ export class InvoicesService implements OnModuleInit {
         payment: {
           select: { receiptNumber: true, reversedBy: { select: { id: true } } },
         },
+        releases: { select: { amount: true } },
       },
     });
     return {
@@ -586,11 +588,12 @@ export class InvoicesService implements OnModuleInit {
         descriptionAr: l.descriptionAr,
         amount: show(l.amount),
       })),
-      creditNotes: notes.map(creditNoteView),
+      creditNotes: await creditNoteViews(tx, notes),
       allocations: allocations.map((a) => ({
         paymentId: a.paymentId,
         receiptNumber: formatNumber('receipt', a.payment.receiptNumber!),
         amount: show(a.amount),
+        released: show(a.releases.reduce((sum, r) => sum.add(r.amount), ZERO)),
         reversed: a.payment.reversedBy !== null,
         createdAt: a.createdAt,
       })),
@@ -649,15 +652,102 @@ export function creditNoteView(n: {
   amount: Prisma.Decimal;
   reasonCode: string;
   createdAt: Date;
+  released: Prisma.Decimal;
 }): CreditNoteView {
   return {
     id: n.id,
     number: formatNumber('credit_note', n.number),
     invoiceId: n.invoiceId,
     amount: show(n.amount),
+    released: show(n.released),
     reasonCode: n.reasonCode,
     createdAt: n.createdAt,
   };
+}
+
+/** Credit notes with what each gave back to the unit's credit. */
+export async function creditNoteViews(
+  tx: TenantTxClient,
+  notes: readonly {
+    id: string;
+    number: number;
+    invoiceId: string;
+    amount: Prisma.Decimal;
+    reasonCode: string;
+    createdAt: Date;
+  }[],
+): Promise<CreditNoteView[]> {
+  if (!notes.length) return [];
+  const released = await tx.financeAllocationRelease.groupBy({
+    by: ['creditNoteId'],
+    where: { creditNoteId: { in: notes.map((n) => n.id) } },
+    _sum: { amount: true },
+  });
+  return notes.map((n) =>
+    creditNoteView({
+      ...n,
+      released: money(
+        released.find((r) => r.creditNoteId === n.id)?._sum.amount ?? 0,
+      ),
+    }),
+  );
+}
+
+/**
+ * Writes a credit note of `amount` off an invoice, under the unit's finance
+ * lock the caller holds (ADR 0046, 0048). It may take at most what credit
+ * notes have not yet taken (the total less them): what it owes, and what
+ * was paid on it. Beyond what it owes, the invoice's newest live payments
+ * are released to the unit's credit. The caller supersedes checkouts and
+ * re-allocates.
+ */
+export async function creditInvoice(
+  tx: TenantTxClient,
+  input: {
+    id: string;
+    tenantId: string;
+    invoiceId: string;
+    amount: Prisma.Decimal;
+    reasonCode: string;
+    createdById: string;
+    instalmentPlanId?: string;
+    disputeId?: string;
+  },
+) {
+  const balance = (await balancesOf(tx, [input.invoiceId])).get(
+    input.invoiceId,
+  )!;
+  const creditable = balance.total.sub(balance.credited);
+  if (input.amount.gt(creditable))
+    throw appError.conflict(
+      ErrorCode.CREDIT_EXCEEDS_CREDITABLE,
+      'More than credit notes may still take off the invoice',
+      {
+        params: {
+          creditable: show(creditable),
+          outstanding: show(balance.outstanding),
+        },
+      },
+    );
+  const number = await takeNumbers(tx, input.tenantId, 'credit_note');
+  const note = await tx.creditNote.create({
+    data: {
+      id: input.id,
+      tenantId: input.tenantId,
+      number,
+      invoiceId: input.invoiceId,
+      amount: input.amount,
+      reasonCode: input.reasonCode,
+      createdById: input.createdById,
+      instalmentPlanId: input.instalmentPlanId ?? null,
+      disputeId: input.disputeId ?? null,
+    },
+  });
+  const excess = input.amount.sub(balance.outstanding);
+  const released = excess.gt(ZERO) ? excess : ZERO;
+  if (released.gt(ZERO))
+    await releaseNewest(tx, input.tenantId, input.invoiceId, note.id, released);
+  return { note, released };
 }
 
 function batchView(

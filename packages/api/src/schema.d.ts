@@ -11155,7 +11155,7 @@ export interface components {
             token: string;
         };
         CreditNoteDto: {
-            /** @description At most what the invoice still asks for. */
+            /** @description At most its total less earlier credit notes. Beyond what it still owes, paid money is released to the unit’s credit (ADR 0048). */
             amount: string;
             /** @description `billing_error`, `waiver`, `duplicate`, `goodwill` or `other` (REASON_CODES.creditNote). */
             reasonCode: string;
@@ -11172,6 +11172,8 @@ export interface components {
             number: string;
             /** @description REASON_CODES.creditNote, or a system reason (REASON_CODES.creditNoteSystem): `instalment_plan`, `dispute`. */
             reasonCode: string;
+            /** @description What it gave back of paid money to the unit’s credit: the part beyond what the invoice still owed (ADR 0048). */
+            released: string;
         };
         DailyBriefView: {
             announcements: components["schemas"]["BriefAnnouncementsView"];
@@ -12783,6 +12785,8 @@ export interface components {
             /** Format: uuid */
             paymentId: string;
             receiptNumber: string;
+            /** @description Given back to the unit’s credit by credit notes: this counts net of it (ADR 0048). */
+            released: string;
             /** @description The payment was reversed: this no longer counts. */
             reversed: boolean;
         };
@@ -13940,7 +13944,7 @@ export interface components {
         /** @enum {string} */
         PaymentChannel: "office" | "online";
         PaymentDetailView: {
-            /** @description Paid to invoices (live). */
+            /** @description Paid to invoices (live), net of what credit notes released. */
             allocated: string;
             allocations: components["schemas"]["PaymentAllocationView"][];
             /** @description EGP, two decimals. */
@@ -14010,7 +14014,7 @@ export interface components {
             unitId: string;
         };
         PaymentView: {
-            /** @description Paid to invoices (live). */
+            /** @description Paid to invoices (live), net of what credit notes released. */
             allocated: string;
             /** @description EGP, two decimals. */
             amount: string;
@@ -16860,6 +16864,8 @@ export interface components {
             kind: "invoice" | "credit_note" | "payment" | "reversal" | "refund" | "refund_reversal";
             /** @description INV-, CN-, RC- or RF- number; a reversal shows its payment’s or refund’s. */
             number: string;
+            /** @description On a credit note: what it gave back of paid money to the unit’s credit (ADR 0048); null on other kinds. */
+            released: string | null;
         };
         StatementView: {
             /** @description Paid beyond what was owed and not refunded, for its next invoices. */

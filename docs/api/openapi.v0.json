@@ -6159,7 +6159,7 @@
       "CreditNoteDto": {
         "properties": {
           "amount": {
-            "description": "At most what the invoice still asks for.",
+            "description": "At most its total less earlier credit notes. Beyond what it still owes, paid money is released to the unit’s credit (ADR 0048).",
             "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
             "type": "string"
           },
@@ -6198,6 +6198,10 @@
           "reasonCode": {
             "description": "REASON_CODES.creditNote, or a system reason (REASON_CODES.creditNoteSystem): `instalment_plan`, `dispute`.",
             "type": "string"
+          },
+          "released": {
+            "description": "What it gave back of paid money to the unit’s credit: the part beyond what the invoice still owed (ADR 0048).",
+            "type": "string"
           }
         },
         "required": [
@@ -6205,6 +6209,7 @@
           "number",
           "invoiceId",
           "amount",
+          "released",
           "reasonCode",
           "createdAt"
         ],
@@ -11676,6 +11681,10 @@
           "receiptNumber": {
             "type": "string"
           },
+          "released": {
+            "description": "Given back to the unit’s credit by credit notes: this counts net of it (ADR 0048).",
+            "type": "string"
+          },
           "reversed": {
             "description": "The payment was reversed: this no longer counts.",
             "type": "boolean"
@@ -11685,6 +11694,7 @@
           "paymentId",
           "receiptNumber",
           "amount",
+          "released",
           "reversed",
           "createdAt"
         ],
@@ -15318,7 +15328,7 @@
       "PaymentDetailView": {
         "properties": {
           "allocated": {
-            "description": "Paid to invoices (live).",
+            "description": "Paid to invoices (live), net of what credit notes released.",
             "type": "string"
           },
           "allocations": {
@@ -15557,7 +15567,7 @@
       "PaymentView": {
         "properties": {
           "allocated": {
-            "description": "Paid to invoices (live).",
+            "description": "Paid to invoices (live), net of what credit notes released.",
             "type": "string"
           },
           "amount": {
@@ -25253,6 +25263,11 @@
           "number": {
             "description": "INV-, CN-, RC- or RF- number; a reversal shows its payment’s or refund’s.",
             "type": "string"
+          },
+          "released": {
+            "description": "On a credit note: what it gave back of paid money to the unit’s credit (ADR 0048); null on other kinds.",
+            "nullable": true,
+            "type": "string"
           }
         },
         "required": [
@@ -25260,6 +25275,7 @@
           "id",
           "number",
           "amount",
+          "released",
           "at"
         ],
         "type": "object"

@@ -16,6 +16,7 @@ import {
   paymentRow,
   planRow,
   refundRow,
+  releaseRow,
   sessionInvoiceRow,
   sessionRow,
 } from '../setup/finance-rows';
@@ -30,6 +31,8 @@ interface Side {
   planId: string;
   paymentId: string;
   sessionId: string;
+  allocationId: string;
+  creditNoteId: string;
 }
 
 /**
@@ -241,6 +244,17 @@ const TABLES: Table[] = [
     },
   },
   {
+    // Released from the compound's own allocation by its own note, or
+    // pointed at the other's.
+    table: 'finance_allocation_releases',
+    insert: (tx, own, link) =>
+      releaseRow(tx, {
+        tenantId: own.tenantId,
+        allocationId: link.allocationId,
+        creditNoteId: link.creditNoteId,
+      }),
+  },
+  {
     table: 'finance_allocations',
     insert: (tx, own, link) =>
       allocationRow(tx, {
@@ -308,6 +322,8 @@ describe('Finance — RLS isolation', () => {
       planId: '',
       paymentId: '',
       sessionId: '',
+      allocationId: '',
+      creditNoteId: '',
     };
     await inTenant(s, async (tx) => {
       s.batchId = await batchRow(tx, {
@@ -331,6 +347,17 @@ describe('Finance — RLS isolation', () => {
         tenantId,
         unitId: s.unitId,
         accountId: s.accountId,
+      });
+      s.allocationId = await allocationRow(tx, {
+        tenantId,
+        paymentId: s.paymentId,
+        invoiceId: s.invoiceId,
+        amount: '10',
+      });
+      s.creditNoteId = await creditNoteRow(tx, {
+        tenantId,
+        invoiceId: s.invoiceId,
+        createdById: s.accountId,
       });
     });
     return s;

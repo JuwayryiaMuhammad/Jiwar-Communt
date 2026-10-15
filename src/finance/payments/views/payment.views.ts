@@ -54,7 +54,10 @@ export class PaymentView {
   receiptUrl: string;
   @ApiProperty({ type: String, nullable: true })
   reference: string | null;
-  @ApiProperty({ type: String, description: 'Paid to invoices (live).' })
+  @ApiProperty({
+    type: String,
+    description: 'Paid to invoices (live), net of what credit notes released.',
+  })
   allocated: string;
   @ApiProperty({
     type: String,
@@ -127,6 +130,13 @@ export class StatementEntryView {
     description: 'Positive; the kind says which way it goes.',
   })
   amount: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'On a credit note: what it gave back of paid money to the unit’s credit (ADR 0048); null on other kinds.',
+  })
+  released: string | null;
   @ApiProperty({ type: String, format: 'date-time' })
   at: Date;
 }

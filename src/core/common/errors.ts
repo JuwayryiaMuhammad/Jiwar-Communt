@@ -557,8 +557,12 @@ export const ErrorCode = {
   INVOICE_BATCH_EMPTY: 'INVOICE_BATCH_EMPTY',
   /** More units than one issue takes (422, params.max). */
   INVOICE_BATCH_TOO_LARGE: 'INVOICE_BATCH_TOO_LARGE',
-  /** A credit note above what the invoice still asks for (409, params.outstanding). */
-  CREDIT_EXCEEDS_OUTSTANDING: 'CREDIT_EXCEEDS_OUTSTANDING',
+  /**
+   * A credit note above what credit notes may still take off the invoice:
+   * its total less them (409, params.creditable and params.outstanding).
+   * Beyond what it owes, a credit note releases paid money (ADR 0048).
+   */
+  CREDIT_EXCEEDS_CREDITABLE: 'CREDIT_EXCEEDS_CREDITABLE',
   /** Unknown, or another compound's. */
   BILLING_PLAN_NOT_FOUND: 'BILLING_PLAN_NOT_FOUND',
   /** The unit has no terms of its own in the plan. */

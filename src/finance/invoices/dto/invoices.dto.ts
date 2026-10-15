@@ -112,7 +112,8 @@ export class CreditNoteDto {
   @ApiProperty({
     type: String,
     pattern: MONEY.source,
-    description: 'At most what the invoice still asks for.',
+    description:
+      'At most its total less earlier credit notes. Beyond what it still owes, paid money is released to the unit’s credit (ADR 0048).',
   })
   @IsString()
   @Matches(MONEY)

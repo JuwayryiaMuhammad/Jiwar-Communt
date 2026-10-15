@@ -8,7 +8,7 @@ import { FakePaymob } from '../setup/paymob-fake';
  * name, so the only payment that can still reach it is a checkout opened
  * before the dispute and paid late (the money was taken). Whoever wins, the
  * invoice is never credited and paid beyond its total, and no money is
- * lost: what nothing owed absorbs is the unit's credit.
+ * lost: an acceptance after the money releases it to the unit's credit.
  */
 describe('Finance — dispute vs payment (races)', () => {
   let h: HttpHarness;
@@ -75,26 +75,19 @@ describe('Finance — dispute vs payment (races)', () => {
           .http('get', `/units/${s.home.id}/statement`, s.owner.token)
           .expect(200)
       ).body as { outstanding: string; credit: string };
-      expect(invoice.outstanding).toBe('0.00');
-      if (accept.status === 201) {
-        // The acceptance won: the late money is the unit's credit.
-        expect(invoice).toMatchObject({ credited: '1000.00', paid: '0.00' });
-        expect(statement).toMatchObject({
-          outstanding: '0.00',
-          credit: '1000.00',
-        });
-      } else {
-        // The money won: nothing is left to credit.
-        expect(accept.body).toMatchObject({
-          code: 'CREDIT_EXCEEDS_OUTSTANDING',
-          params: { outstanding: '0.00' },
-        });
-        expect(invoice).toMatchObject({ credited: '0.00', paid: '1000.00' });
-        expect(statement).toMatchObject({
-          outstanding: '0.00',
-          credit: '0.00',
-        });
-      }
+      // Whoever won, the acceptance credits the whole invoice: before the
+      // money it took what was owed and the money became credit; after it,
+      // it released the money to credit (ADR 0048). Nothing is lost.
+      expect(accept.status).toBe(201);
+      expect(invoice).toMatchObject({
+        credited: '1000.00',
+        paid: '0.00',
+        outstanding: '0.00',
+      });
+      expect(statement).toMatchObject({
+        outstanding: '0.00',
+        credit: '1000.00',
+      });
     },
   );
 });

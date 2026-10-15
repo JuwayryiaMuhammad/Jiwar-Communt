@@ -316,6 +316,29 @@ export async function refundRow(
   return id;
 }
 
+/** Part of an allocation released by a credit note on its invoice. */
+export async function releaseRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    allocationId: string;
+    creditNoteId: string;
+    amount?: string;
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.financeAllocationRelease.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      allocationId: r.allocationId,
+      creditNoteId: r.creditNoteId,
+      amount: new Prisma.Decimal(r.amount ?? '1'),
+    },
+  });
+  return id;
+}
+
 export async function allocationRow(
   tx: TenantTxClient,
   r: {

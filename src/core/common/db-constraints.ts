@@ -325,4 +325,5 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   finance_refunds_one_reversal: null,
   finance_refund_sources_tenant_id_id_key: null,
   finance_refund_sources_once: null,
+  finance_allocation_releases_tenant_id_id_key: null,
 };

@@ -37,6 +37,14 @@ export interface Balance {
 }
 
 /**
+ * What credit notes gave back of allocation `a` to the unit's credit (ADR
+ * 0048): an allocation counts net of its releases everywhere.
+ */
+export const RELEASED_SQL = Prisma.sql`COALESCE((
+  SELECT SUM(x.amount) FROM finance_allocation_releases x
+   WHERE x.tenant_id = a.tenant_id AND x.allocation_id = a.id), 0)`;
+
+/**
  * What credit notes and live payments took off invoice `i`, as SQL. Every
  * read and every decision uses this one fragment, so they cannot disagree.
  */
@@ -44,7 +52,7 @@ export const CREDITED_SQL = Prisma.sql`COALESCE((
   SELECT SUM(c.amount) FROM credit_notes c
    WHERE c.tenant_id = i.tenant_id AND c.invoice_id = i.id), 0)`;
 export const PAID_SQL = Prisma.sql`COALESCE((
-  SELECT SUM(a.amount) FROM finance_allocations a
+  SELECT SUM(a.amount - ${RELEASED_SQL}) FROM finance_allocations a
    WHERE a.tenant_id = i.tenant_id AND a.invoice_id = i.id
      AND NOT EXISTS (SELECT 1 FROM finance_payments r
                       WHERE r.tenant_id = a.tenant_id AND r.reverses_id = a.payment_id)), 0)`;

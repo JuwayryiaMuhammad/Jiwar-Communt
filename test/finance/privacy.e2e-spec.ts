@@ -80,7 +80,11 @@ describe('Finance — export, erasure, deactivation and leaving', () => {
     const archive = await exportOf(p);
     const names = archive.names.filter((n) => n.startsWith('finance/')).sort();
     expect(names).toEqual(
-      ['finance/checkouts.json', `finance/${s.home.code}.json`].sort(),
+      [
+        'finance/checkouts.json',
+        'finance/disputes.json',
+        `finance/${s.home.code}.json`,
+      ].sort(),
     );
     const unit = JSON.parse(archive.text(`finance/${s.home.code}.json`)) as {
       statement: { outstanding: string };
@@ -100,6 +104,56 @@ describe('Finance — export, erasure, deactivation and leaving', () => {
     ]);
     expect(archive.text('finance/checkouts.json')).not.toMatch(
       /egy_csk|client/i,
+    );
+  });
+
+  it('the export holds the disputes the account opened, with its own words; never another’s (ADR 0048)', async () => {
+    const s = await f.setUp('Finance Privacy Disputes');
+    const p = await resident(s);
+    const { invoiceId } = await f.issue(s.manager, s.home.id);
+    const other = await f.issue(s.manager, s.home.id);
+    const mine = (
+      await f
+        .http('post', `/invoices/${invoiceId}/disputes`, p.token, {
+          reasonCode: 'wrong_amount',
+          text: 'My own words',
+        })
+        .expect(201)
+    ).body as { id: string };
+    await f
+      .http('post', `/invoices/${other.invoiceId}/disputes`, s.owner.token, {
+        reasonCode: 'other',
+        text: 'The owner’s words',
+      })
+      .expect(201);
+    await f
+      .http(
+        'post',
+        `/staff/invoice-disputes/${mine.id}/decide`,
+        s.manager.token,
+        {
+          decision: 'accept',
+          amount: '100',
+        },
+      )
+      .expect(201);
+    const archive = await exportOf(p);
+    const disputes = JSON.parse(archive.text('finance/disputes.json')) as {
+      id: string;
+      text: string;
+      status: string;
+      creditedAmount: string;
+    }[];
+    expect(disputes).toEqual([
+      expect.objectContaining({
+        id: mine.id,
+        text: 'My own words',
+        status: 'accepted',
+        creditedAmount: '100.00',
+      }),
+    ]);
+    expect(archive.text('finance/disputes.json')).not.toContain(
+      'The owner’s words',
     );
   });
 

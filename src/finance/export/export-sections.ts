@@ -8,6 +8,7 @@ import {
 } from '../../core/exports/export-sections';
 import { InvoicesService } from '../invoices/invoices.service';
 import type { InvoiceView } from '../invoices/views/invoice.views';
+import { formatNumber } from '../counters';
 import { show } from '../money';
 import { PaymentsService } from '../payments/payments.service';
 import type { PaymentView } from '../payments/views/payment.views';
@@ -20,9 +21,13 @@ import type { PaymentView } from '../payments/views/payment.views';
  *   now, its statement, every invoice and every payment (receipts
  *   included), as the app shows them;
  * - `finance/checkouts.json`: the checkouts the account opened, whatever
- *   the unit — never Paymob's secrets.
+ *   the unit — never Paymob's secrets;
+ * - `finance/disputes.json`: the invoice disputes the account opened,
+ *   whatever the unit, with its own words (ADR 0048). Their photos are not
+ *   exported: once attached they are no longer the account's own files.
  *
  * Nothing here names another person: payments show no recorder.
+ * Refunds are on each unit's statement.
  */
 @Injectable()
 export class FinanceExportSections implements OnModuleInit {
@@ -95,6 +100,33 @@ export class FinanceExportSections implements OnModuleInit {
     yield {
       path: 'finance/checkouts.json',
       json: sessions.map((x) => ({ ...x, amount: show(x.amount) })),
+    };
+    const disputes = await this.tenantTx.withTenantTx((tx) =>
+      tx.invoiceDispute.findMany({
+        where: { openedById: s.accountId },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        include: {
+          invoice: { select: { number: true } },
+          creditNote: { select: { amount: true } },
+        },
+      }),
+    );
+    yield {
+      path: 'finance/disputes.json',
+      json: disputes.map((d) => ({
+        id: d.id,
+        invoiceId: d.invoiceId,
+        invoiceNumber: formatNumber('invoice', d.invoice.number),
+        unitId: d.unitId,
+        reasonCode: d.reasonCode,
+        text: d.text,
+        photo: d.photoFileId !== null,
+        status: d.status,
+        decidedAt: d.decidedAt,
+        decisionReasonCode: d.decisionReasonCode,
+        creditedAmount: d.creditNote ? show(d.creditNote.amount) : null,
+        createdAt: d.createdAt,
+      })),
     };
   }
 }

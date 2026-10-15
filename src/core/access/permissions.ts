@@ -147,6 +147,12 @@ export const PERMISSIONS = {
   'emergencies.respond': { kinds: ['staff', 'manager'] },
   'emergencies.manage': { kinds: ['manager'] },
   'gate_services.handle': { kinds: ['staff', 'manager'] },
+  // Finance part 2 (ADR 0048). `finance.refund` pays a unit's credit back
+  // and reverses such refunds, after a step-up (manager only);
+  // `finance.reports` reads the compound's ledger and the finance reports
+  // and exports them. Instalment plans and disputes are `finance.invoice`.
+  'finance.refund': { kinds: ['manager'] },
+  'finance.reports': { kinds: ['staff', 'manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

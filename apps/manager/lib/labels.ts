@@ -66,4 +66,6 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'finance.billing': 'Keep the recurring billing plans and their per-unit amounts',
   'finance.invoice': 'Issue invoices to units and credit notes, and see unit statements',
   'finance.payments': 'Record payments made at the office, reverse them, and see every payment',
+  'finance.refund': 'Refund a unit’s credit and reverse such refunds (asks for a code by email)',
+  'finance.reports': 'Read the ledger and the finance reports, and export them as CSV',
 };

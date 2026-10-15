@@ -89,6 +89,7 @@ export const REASON_CODES = {
   creditNote: ['billing_error', 'waiver', 'duplicate', 'goodwill', 'other'],
   creditNoteSystem: ['instalment_plan', 'dispute'],
   invoiceDispute: ['already_paid', 'wrong_amount', 'not_my_unit', 'service_not_provided', 'duplicate_invoice', 'other'],
+  refundReverse: ['entered_in_error', 'refund_failed', 'other'],
   invoiceDisputeReject: ['charge_is_correct', 'payment_not_found', 'outside_policy', 'no_longer_owed', 'other'],
   paymentReverse: ['entered_in_error', 'duplicate', 'bounced_cheque', 'other'],
 } as const;

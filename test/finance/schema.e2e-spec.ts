@@ -14,6 +14,7 @@ import {
   noticeRow,
   paymentRow,
   planRow,
+  refundRow,
   sessionInvoiceRow,
   sessionRow,
 } from '../setup/finance-rows';
@@ -41,6 +42,7 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
     tenantId = await createTenant(h, 'Finance schema');
     accountId = (await createAccountRow(h, tenantId)).id;
     unitId = (await createUnit(h, tenantId)).id;
+    ids.otherUnit = (await createUnit(h, tenantId)).id;
     await inTenant(async (tx) => {
       ids.batch = await batchRow(tx, {
         tenantId,
@@ -94,6 +96,22 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
         invoiceId: ids.invoice,
         openedById: accountId,
       });
+      ids.refundPayment = await paymentRow(tx, {
+        tenantId,
+        unitId,
+        recordedById: accountId,
+      });
+      ids.refund = await refundRow(tx, {
+        tenantId,
+        unitId,
+        paymentId: ids.refundPayment,
+        recordedById: accountId,
+      });
+      ids.refundSource = (
+        await tx.financeRefundSource.findFirstOrThrow({
+          where: { refundId: ids.refund },
+        })
+      ).id;
       ids.remainder = await invoiceRow(tx, {
         tenantId,
         unitId,
@@ -166,6 +184,8 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
       'receipt_links',
       'instalment_plans',
       'invoice_disputes',
+      'finance_refunds',
+      'finance_refund_sources',
     ]) {
       const p = await privileges(table);
       expect({
@@ -205,6 +225,8 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
     ['finance_allocations', 'allocation', 'amount = 2'],
     ['payment_session_invoices', 'sessionInvoice', 'amount = 1'],
     ['payment_gateway_events', 'event', `outcome = 'applied'`],
+    ['finance_refunds', 'refund', 'amount = 1'],
+    ['finance_refund_sources', 'refundSource', 'amount = 1'],
   ])('%s is append-only', (table, key, change) => {
     it('the tables’ owner cannot update, delete or truncate it either', async () => {
       await expect(
@@ -418,6 +440,76 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
       attempt(app, accept, note(ids.invoice, 'waiver')),
     ).rejects.toThrow(/credit_notes_dispute_link/);
     await attempt(app, accept, note(ids.invoice));
+  });
+
+  describe('refunds (ADR 0048)', () => {
+    const source = (refund: string, payment: string, amount = '5') =>
+      `INSERT INTO finance_refund_sources (id, tenant_id, refund_id, payment_id, amount)
+       VALUES (gen_random_uuid(), '${tenantId}', '${refund}', '${payment}', ${amount})`;
+    const refund = (id: string, amount = '5') =>
+      `INSERT INTO finance_refunds (id, tenant_id, kind, unit_id, number, amount, currency, channel, refunded_on, recorded_by_account_id)
+       VALUES ('${id}', '${tenantId}', 'refund', '${unitId}', 990000 + floor(random() * 9999)::int, ${amount}, 'EGP', 'cash', current_date, '${accountId}')`;
+
+    it('a refund’s sources add up to its amount, at commit', async () => {
+      const id = crypto.randomUUID();
+      await expect(attempt(app, refund(id))).rejects.toThrow(/do not add up/);
+      await expect(
+        attempt(app, refund(id), source(id, ids.refundPayment, '4')),
+      ).rejects.toThrow(/do not add up/);
+      await attempt(app, refund(id), source(id, ids.refundPayment));
+    });
+
+    it('a source takes from a live payment of the refund’s unit only', async () => {
+      const id = crypto.randomUUID();
+      const reversal = crypto.randomUUID();
+      await expect(
+        attempt(
+          app,
+          `INSERT INTO finance_payments (id, tenant_id, kind, unit_id, reverses_id, reason_code, recorded_by_account_id)
+           VALUES ('${reversal}', '${tenantId}', 'reversal', '${unitId}', '${ids.refundPayment}', 'other', '${accountId}')`,
+        ),
+      ).rejects.toThrow(/cannot be reversed/);
+      await expect(
+        attempt(
+          app,
+          refund(id),
+          `INSERT INTO finance_refunds (id, tenant_id, kind, unit_id, reverses_id, reason_code, recorded_by_account_id)
+           VALUES (gen_random_uuid(), '${tenantId}', 'reversal', '${unitId}', '${id}', 'other', '${accountId}')`,
+          source(id, ids.payment),
+          `INSERT INTO finance_refund_sources (id, tenant_id, refund_id, payment_id, amount)
+           SELECT gen_random_uuid(), '${tenantId}', r.id, '${ids.payment}', 1
+             FROM finance_refunds r WHERE r.reverses_id = '${id}'`,
+        ),
+      ).rejects.toThrow(/live payment of its unit/);
+    });
+
+    it('a payment’s allocations and live refunds never exceed its amount; a reversed refund frees it', async () => {
+      const id = crypto.randomUUID();
+      await expect(
+        attempt(app, refund(id, '95'), source(id, ids.refundPayment, '95')),
+      ).rejects.toThrow(/exceed its amount/);
+      const undone = crypto.randomUUID();
+      await attempt(
+        app,
+        `INSERT INTO finance_refunds (id, tenant_id, kind, unit_id, reverses_id, reason_code, recorded_by_account_id)
+         VALUES ('${undone}', '${tenantId}', 'reversal', '${unitId}', '${ids.refund}', 'entered_in_error', '${accountId}')`,
+        refund(id, '95'),
+        source(id, ids.refundPayment, '95'),
+        // And with its refund reversed, the payment may be reversed.
+        `INSERT INTO finance_payments (id, tenant_id, kind, unit_id, reverses_id, reason_code, recorded_by_account_id)
+         VALUES (gen_random_uuid(), '${tenantId}', 'reversal', '${unitId}', '${ids.payment}', 'other', '${accountId}')`,
+      );
+    });
+
+    it('a refund’s reversal reverses a refund of its own unit', async () => {
+      await expect(
+        attempt(
+          app,
+          `INSERT INTO finance_refunds (id, tenant_id, kind, unit_id, reverses_id, reason_code, recorded_by_account_id)
+           VALUES (gen_random_uuid(), '${tenantId}', 'reversal', '${ids.otherUnit}', '${ids.refund}', 'other', '${accountId}')`,
+        ),
+      ).rejects.toThrow(/reverses a refund of its unit/);
+    });
   });
 
   describe('at commit', () => {

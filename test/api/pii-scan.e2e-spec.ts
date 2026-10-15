@@ -31,7 +31,10 @@ import {
 } from '../setup/http-app';
 import { fill, paramNames, call } from './request';
 import { ROUTES } from './routes';
-import { buildWorld, type World } from './world';
+import { buildWorld, sessionOf, type World } from './world';
+import { GlobalDbService } from '../../src/core/database/global-db.service';
+import { TenantTx } from '../../src/core/database/tenant-tx.service';
+import { paymentRow } from '../setup/finance-rows';
 
 const born = (y: number, m: number, d: number) =>
   new Date(Date.UTC(y, m - 1, d));
@@ -988,6 +991,28 @@ describe('API v0 — PII leak scan', () => {
       primaryToken,
       { reasonCode: 'service_not_provided', text: 'The pump still leaks' },
     );
+    // Refunds (ADR 0048): credit on the home, paid back by the manager
+    // after a step-up; staff names only.
+    await w.helpers.asManager(a, () =>
+      h.moduleRef.get(TenantTx).withTenantTx((tx) =>
+        paymentRow(tx, {
+          tenantId: a.tenantId,
+          unitId: unit.id,
+          recordedById: a.ids.manager,
+          amount: '120',
+        }),
+      ),
+    );
+    await h.moduleRef.get(GlobalDbService).session.update({
+      where: { id: sessionOf(a.tokens.manager) },
+      data: { stepUpUntil: new Date(Date.now() + 600_000) },
+    });
+    const piiRefund = await idOf(
+      'POST',
+      `/staff/units/${unit.id}/refunds`,
+      a.tokens.manager,
+      { amount: '120', channel: 'bank_transfer', refundedOn: day(0) },
+    );
     const piiPlan = await idOf(
       'POST',
       '/staff/billing-plans',
@@ -1229,6 +1254,7 @@ describe('API v0 — PII leak scan', () => {
       '/staff/invoice-disputes/{id}': piiDispute,
       '/invoice-disputes/{id}': piiDispute,
       '/invoices/{id}/disputes': piiInvoice.invoiceId,
+      '/staff/refunds/{id}': piiRefund,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

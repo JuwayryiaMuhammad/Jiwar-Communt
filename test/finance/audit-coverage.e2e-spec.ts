@@ -432,6 +432,51 @@ describe('Audit coverage — finance', () => {
     });
   });
 
+  describe('refunds', () => {
+    it('refund.recorded and .reversed: amounts, the channel and ids; never the reference', async () => {
+      const home = await f.unit(s.c, 'A');
+      await f.giveCredit(s.c, home.id, '300');
+      await f.stepUp(s.manager.token);
+      const refund = (
+        await f
+          .http('post', `/staff/units/${home.id}/refunds`, s.manager.token, {
+            amount: '250',
+            channel: 'bank_transfer',
+            reference: 'TRF-AUDIT-77',
+            refundedOn: day(0),
+          })
+          .expect(201)
+      ).body as { id: string; number: string };
+      const recorded = await single('refund.recorded', refund.id);
+      expect(recorded).toMatchObject({
+        actorId: s.manager.id,
+        targetType: 'refund',
+        changes: null,
+        metadata: {
+          unitId: home.id,
+          number: refund.number,
+          amount: '250.00',
+          channel: 'bank_transfer',
+          refundedOn: day(0),
+          sourceCount: 1,
+        },
+      });
+      await f
+        .http('post', `/staff/refunds/${refund.id}/reverse`, s.manager.token, {
+          reasonCode: 'refund_failed',
+        })
+        .expect(201);
+      const reversed = await single('refund.reversed', refund.id);
+      expect(reversed.metadata).toEqual({
+        refundId: refund.id,
+        unitId: home.id,
+        amount: '250.00',
+        reasonCode: 'refund_failed',
+      });
+      expect(JSON.stringify([recorded, reversed])).not.toContain('TRF-AUDIT');
+    });
+  });
+
   describe('billing plans', () => {
     let planId: string;
 
@@ -696,7 +741,7 @@ describe('Audit coverage — finance', () => {
       expect(
         all
           .filter((k) =>
-            /^(finance_gateway|invoice|invoice_batch|credit_note|billing_plan|payment|payment_session|instalment_plan|invoice_dispute)\.|^tenant\.payment_gateway_|^platform\.step_up_/.test(
+            /^(finance_gateway|invoice|invoice_batch|credit_note|billing_plan|payment|payment_session|instalment_plan|invoice_dispute|refund)\.|^tenant\.payment_gateway_|^platform\.step_up_/.test(
               k,
             ),
           )

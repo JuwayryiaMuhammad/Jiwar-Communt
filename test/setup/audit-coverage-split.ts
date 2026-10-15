@@ -353,6 +353,8 @@ export const FINANCE_COVERAGE: readonly string[] = [
   'instalment_plan.cancelled',
   'invoice_dispute.opened',
   'invoice_dispute.decided',
+  'refund.recorded',
+  'refund.reversed',
 ];
 
 /**

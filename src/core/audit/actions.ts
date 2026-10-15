@@ -839,6 +839,11 @@ export const AUDIT_ACTIONS = {
   // metadata: unitId, invoiceId, decision; amount and creditNoteId on an
   // acceptance, reasonCode on a rejection.
   'invoice_dispute.decided': { log: 'tenant', target: 'invoice_dispute' },
+  // metadata: unitId, number, amount, channel, refundedOn, sourceCount;
+  // never the reference.
+  'refund.recorded': { log: 'tenant', target: 'refund' },
+  // metadata: refundId, unitId, amount, reasonCode.
+  'refund.reversed': { log: 'tenant', target: 'refund' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

@@ -15390,6 +15390,10 @@
             "nullable": true,
             "type": "string"
           },
+          "refunded": {
+            "description": "Paid back to the unit by live refunds (ADR 0048).",
+            "type": "string"
+          },
           "reversal": {
             "allOf": [
               {
@@ -15400,7 +15404,7 @@
             "type": "object"
           },
           "unallocated": {
-            "description": "Not yet paid to any invoice: the unit’s credit.",
+            "description": "Neither paid to an invoice nor refunded: part of the unit’s credit.",
             "type": "string"
           },
           "unitCode": {
@@ -15425,6 +15429,7 @@
           "receiptUrl",
           "reference",
           "allocated",
+          "refunded",
           "unallocated",
           "reversal",
           "recordedBy",
@@ -15618,6 +15623,10 @@
             "nullable": true,
             "type": "string"
           },
+          "refunded": {
+            "description": "Paid back to the unit by live refunds (ADR 0048).",
+            "type": "string"
+          },
           "reversal": {
             "allOf": [
               {
@@ -15628,7 +15637,7 @@
             "type": "object"
           },
           "unallocated": {
-            "description": "Not yet paid to any invoice: the unit’s credit.",
+            "description": "Neither paid to an invoice nor refunded: part of the unit’s credit.",
             "type": "string"
           },
           "unitCode": {
@@ -15653,6 +15662,7 @@
           "receiptUrl",
           "reference",
           "allocated",
+          "refunded",
           "unallocated",
           "reversal",
           "recordedBy",
@@ -17566,6 +17576,39 @@
         ],
         "type": "object"
       },
+      "RecordRefundDto": {
+        "properties": {
+          "amount": {
+            "description": "At most the unit’s credit now.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RefundChannel"
+              }
+            ],
+            "description": "`gateway_manual`: refunded by hand in the payment provider’s dashboard."
+          },
+          "reference": {
+            "description": "The transfer’s or the provider’s own reference, if any.",
+            "pattern": "^[A-Za-z0-9/-]{1,40}$",
+            "type": "string"
+          },
+          "refundedOn": {
+            "description": "The local day the money was paid back: up to 31 days ago.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "channel",
+          "refundedOn"
+        ],
+        "type": "object"
+      },
       "RefreshTokenDto": {
         "properties": {
           "refreshToken": {
@@ -17576,6 +17619,165 @@
         },
         "required": [
           "refreshToken"
+        ],
+        "type": "object"
+      },
+      "RefundChannel": {
+        "description": "`gateway_manual`: refunded by hand in the payment provider’s dashboard.",
+        "enum": [
+          "cash",
+          "bank_transfer",
+          "gateway_manual"
+        ],
+        "type": "string"
+      },
+      "RefundReversalView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "REASON_CODES.refundReverse",
+            "type": "string"
+          },
+          "recordedBy": {
+            "$ref": "#/components/schemas/StaffRefView"
+          }
+        },
+        "required": [
+          "id",
+          "reasonCode",
+          "recordedBy",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "RefundSourceView": {
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "paymentId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "receiptNumber": {
+            "example": "RC-000042",
+            "type": "string"
+          }
+        },
+        "required": [
+          "paymentId",
+          "receiptNumber",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "RefundView": {
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RefundChannel"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "enum": [
+              "EGP"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "example": "RF-000007",
+            "type": "string"
+          },
+          "recordedBy": {
+            "$ref": "#/components/schemas/StaffRefView"
+          },
+          "reference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "refundedOn": {
+            "description": "Local day.",
+            "format": "date",
+            "type": "string"
+          },
+          "reversal": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RefundReversalView"
+              }
+            ],
+            "description": "Reversed: the money is the unit’s credit again.",
+            "nullable": true,
+            "type": "object"
+          },
+          "sources": {
+            "description": "Newest payment first.",
+            "items": {
+              "$ref": "#/components/schemas/RefundSourceView"
+            },
+            "type": "array"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitId",
+          "unitCode",
+          "amount",
+          "currency",
+          "channel",
+          "reference",
+          "refundedOn",
+          "recordedBy",
+          "sources",
+          "reversal",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "RefundViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/RefundView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -19958,6 +20160,18 @@
         "properties": {
           "reasonCode": {
             "description": "`entered_in_error`, `duplicate`, `bounced_cheque` or `other` (REASON_CODES.paymentReverse).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "ReverseRefundDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "`entered_in_error`, `refund_failed` or `other` (REASON_CODES.refundReverse).",
             "type": "string"
           }
         },
@@ -25025,16 +25239,19 @@
             "type": "string"
           },
           "kind": {
+            "description": "`refund`: the unit’s credit paid back; `refund_reversal`: a refund undone, the money credit again (ADR 0048).",
             "enum": [
               "invoice",
               "credit_note",
               "payment",
-              "reversal"
+              "reversal",
+              "refund",
+              "refund_reversal"
             ],
             "type": "string"
           },
           "number": {
-            "description": "INV-, CN- or RC- number; a reversal shows its payment’s.",
+            "description": "INV-, CN-, RC- or RF- number; a reversal shows its payment’s or refund’s.",
             "type": "string"
           }
         },
@@ -25050,7 +25267,7 @@
       "StatementView": {
         "properties": {
           "credit": {
-            "description": "Paid beyond what was owed, for its next invoices.",
+            "description": "Paid beyond what was owed and not refunded, for its next invoices.",
             "type": "string"
           },
           "entries": {
@@ -49842,6 +50059,177 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/refunds": {
+      "get": {
+        "operationId": "RefundsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Refunded on or after (local day).",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Refunded on or before (local day).",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List refunds, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/refunds/{id}": {
+      "get": {
+        "operationId": "RefundsController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a refund with the payments it took from",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/refunds/{id}/reverse": {
+      "post": {
+        "operationId": "RefundsController_reverse",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseRefundDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reverse a refund: the money is the unit’s credit again",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/units/{unitId}/payments": {
       "post": {
         "description": "Cash, a bank transfer or a cheque; at most what is owed. It pays the invoices named first, then the oldest due.",
@@ -49893,6 +50281,63 @@
           }
         ],
         "summary": "Record a payment made at the office",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/units/{unitId}/refunds": {
+      "post": {
+        "description": "Recorded by hand: no call to the payment provider. At most the unit’s credit now; spends the session’s step-up.",
+        "operationId": "RefundsController_record",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordRefundDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Refund part or all of a unit’s credit (step-up required)",
         "tags": [
           "finance"
         ],

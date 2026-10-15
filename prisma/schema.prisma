@@ -967,6 +967,7 @@ model Account {
   instalmentPlansCancelled       InstalmentPlan[]                    @relation("InstalmentPlanCanceller")
   invoiceDisputesOpened          InvoiceDispute[]                    @relation("InvoiceDisputeOpener")
   invoiceDisputesDecided         InvoiceDispute[]                    @relation("InvoiceDisputeDecider")
+  financeRefundsRecorded         FinanceRefund[]                     @relation("FinanceRefundRecorder")
   billingPlansCreated            BillingPlan[]                       @relation("BillingPlanCreator")
   billingPlanOverridesUpdated    BillingPlanOverride[]               @relation("BillingPlanOverrideUpdater")
   financePaymentsRecorded        FinancePayment[]                    @relation("FinancePaymentRecorder")
@@ -1083,6 +1084,7 @@ model Unit {
   invoices                   Invoice[]
   instalmentPlans            InstalmentPlan[]
   invoiceDisputes            InvoiceDispute[]
+  financeRefunds             FinanceRefund[]
   billingPlanOverrides       BillingPlanOverride[]
   financePayments            FinancePayment[]
   paymentSessions            PaymentSession[]
@@ -5581,12 +5583,80 @@ model FinancePayment {
   reverses    FinancePayment?     @relation("FinancePaymentReversal", fields: [tenantId, reversesId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_payments_tenant_id_reverses_id_fkey")
   reversedBy  FinancePayment?     @relation("FinancePaymentReversal")
   allocations FinanceAllocation[]
+  refundSources FinanceRefundSource[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, reversesId], map: "finance_payments_one_reversal")
   @@index([tenantId, unitId, createdAt, id], map: "finance_payments_unit_idx")
   @@index([tenantId, createdAt, id], map: "finance_payments_created_idx")
   @@map("finance_payments")
+}
+
+enum RefundKind {
+  refund
+  reversal
+
+  @@map("refund_kind")
+}
+
+enum RefundChannel {
+  cash
+  bank_transfer
+  gateway_manual
+
+  @@map("refund_channel")
+}
+
+/// A refund of a unit's credit, recorded by hand (ADR 0048), or the reversal
+/// of one. Append-only.
+model FinanceRefund {
+  id           String         @id @db.Uuid
+  tenantId     String         @map("tenant_id") @db.Uuid
+  kind         RefundKind
+  unitId       String         @map("unit_id") @db.Uuid
+  number       Int?
+  amount       Decimal?       @db.Decimal(12, 2)
+  currency     String?
+  channel      RefundChannel?
+  /// The transfer's or the gateway's own reference, as given.
+  reference    String?
+  /// The local day the money was paid back.
+  refundedOn   DateTime?      @map("refunded_on") @db.Date
+  reversesId   String?        @map("reverses_id") @db.Uuid
+  reasonCode   String?        @map("reason_code")
+  recordedById String         @map("recorded_by_account_id") @db.Uuid
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  unit       Unit                  @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  recordedBy Account               @relation("FinanceRefundRecorder", fields: [tenantId, recordedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_refunds_tenant_id_recorded_by_fkey")
+  reverses   FinanceRefund?        @relation("FinanceRefundReversal", fields: [tenantId, reversesId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_refunds_tenant_id_reverses_id_fkey")
+  reversedBy FinanceRefund?        @relation("FinanceRefundReversal")
+  sources    FinanceRefundSource[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, reversesId], map: "finance_refunds_one_reversal")
+  @@index([tenantId, unitId, createdAt, id], map: "finance_refunds_unit_idx")
+  @@index([tenantId, createdAt, id], map: "finance_refunds_created_idx")
+  @@map("finance_refunds")
+}
+
+/// Which live payment's free money a refund took, and how much (ADR 0048).
+/// Append-only; it stops counting when its refund is reversed.
+model FinanceRefundSource {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  refundId  String   @map("refund_id") @db.Uuid
+  paymentId String   @map("payment_id") @db.Uuid
+  amount    Decimal  @db.Decimal(12, 2)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  refund  FinanceRefund  @relation(fields: [tenantId, refundId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  payment FinancePayment @relation(fields: [tenantId, paymentId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, refundId, paymentId], map: "finance_refund_sources_once")
+  @@index([tenantId, paymentId], map: "finance_refund_sources_payment_idx")
+  @@map("finance_refund_sources")
 }
 
 /// Which invoice a payment paid, and how much (ADR 0046). Append-only; it

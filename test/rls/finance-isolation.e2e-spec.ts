@@ -15,6 +15,7 @@ import {
   overrideRow,
   paymentRow,
   planRow,
+  refundRow,
   sessionInvoiceRow,
   sessionRow,
 } from '../setup/finance-rows';
@@ -192,6 +193,52 @@ const TABLES: Table[] = [
         unitId: link.unitId,
         recordedById: link.accountId,
       }),
+  },
+  {
+    // A refund and its one source: the source points at the other's payment.
+    table: 'finance_refunds',
+    insert: (tx, own, link) =>
+      refundRow(tx, {
+        tenantId: own.tenantId,
+        unitId: link.unitId,
+        paymentId: link.paymentId,
+        recordedById: link.accountId,
+      }),
+  },
+  {
+    // A source of a refund of the compound's own, taking from its own
+    // payment or the other's (the refund adds up to its one source).
+    table: 'finance_refund_sources',
+    insert: async (tx, own, link) => {
+      const refund = newId();
+      await tx.financeRefund.create({
+        data: {
+          id: refund,
+          tenantId: own.tenantId,
+          kind: 'refund',
+          unitId: own.unitId,
+          number: Math.floor(Math.random() * 1_000_000_000) + 1,
+          amount: 1,
+          currency: 'EGP',
+          channel: 'cash',
+          refundedOn: new Date(
+            `${new Date().toISOString().slice(0, 10)}T00:00:00Z`,
+          ),
+          recordedById: own.accountId,
+        },
+      });
+      return (
+        await tx.financeRefundSource.create({
+          data: {
+            id: newId(),
+            tenantId: own.tenantId,
+            refundId: refund,
+            paymentId: link.paymentId,
+            amount: 1,
+          },
+        })
+      ).id;
+    },
   },
   {
     table: 'finance_allocations',

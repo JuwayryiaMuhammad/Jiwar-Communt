@@ -253,6 +253,8 @@ export async function paymentRow(
     unitId: string;
     recordedById: string;
     amount?: string;
+    /** A local day `YYYY-MM-DD`; today in UTC when left out. */
+    paidOn?: string;
   },
 ): Promise<string> {
   const id = newId();
@@ -266,10 +268,49 @@ export async function paymentRow(
       method: 'cash',
       amount: new Prisma.Decimal(r.amount ?? '100'),
       currency: 'EGP',
-      paidOn: today(),
+      paidOn: r.paidOn ? new Date(`${r.paidOn}T00:00:00.000Z`) : today(),
       receiptNumber: next(),
       receiptCode: randomBytes(16).toString('base64url'),
       recordedById: r.recordedById,
+    },
+  });
+  return id;
+}
+
+/** A refund taking `amount` from one payment's free money. */
+export async function refundRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    unitId: string;
+    paymentId: string;
+    recordedById: string;
+    amount?: string;
+  },
+): Promise<string> {
+  const id = newId();
+  const amount = new Prisma.Decimal(r.amount ?? '10');
+  await tx.financeRefund.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      kind: 'refund',
+      unitId: r.unitId,
+      number: next(),
+      amount,
+      currency: 'EGP',
+      channel: 'cash',
+      refundedOn: today(),
+      recordedById: r.recordedById,
+    },
+  });
+  await tx.financeRefundSource.create({
+    data: {
+      id: newId(),
+      tenantId: r.tenantId,
+      refundId: id,
+      paymentId: r.paymentId,
+      amount,
     },
   });
   return id;

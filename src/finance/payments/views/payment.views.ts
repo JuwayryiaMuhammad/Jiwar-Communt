@@ -58,7 +58,13 @@ export class PaymentView {
   allocated: string;
   @ApiProperty({
     type: String,
-    description: 'Not yet paid to any invoice: the unit’s credit.',
+    description: 'Paid back to the unit by live refunds (ADR 0048).',
+  })
+  refunded: string;
+  @ApiProperty({
+    type: String,
+    description:
+      'Neither paid to an invoice nor refunded: part of the unit’s credit.',
   })
   unallocated: string;
   @ApiProperty({ type: PaymentReversalView, nullable: true })
@@ -90,14 +96,30 @@ export class PaymentDetailView extends PaymentView {
 export class StatementEntryView {
   @ApiProperty({
     type: String,
-    enum: ['invoice', 'credit_note', 'payment', 'reversal'],
+    enum: [
+      'invoice',
+      'credit_note',
+      'payment',
+      'reversal',
+      'refund',
+      'refund_reversal',
+    ],
+    description:
+      '`refund`: the unit’s credit paid back; `refund_reversal`: a refund undone, the money credit again (ADR 0048).',
   })
-  kind: 'invoice' | 'credit_note' | 'payment' | 'reversal';
+  kind:
+    | 'invoice'
+    | 'credit_note'
+    | 'payment'
+    | 'reversal'
+    | 'refund'
+    | 'refund_reversal';
   @ApiProperty({ type: String, format: 'uuid' })
   id: string;
   @ApiProperty({
     type: String,
-    description: 'INV-, CN- or RC- number; a reversal shows its payment’s.',
+    description:
+      'INV-, CN-, RC- or RF- number; a reversal shows its payment’s or refund’s.',
   })
   number: string;
   @ApiProperty({
@@ -119,7 +141,8 @@ export class StatementView {
   outstanding: string;
   @ApiProperty({
     type: String,
-    description: 'Paid beyond what was owed, for its next invoices.',
+    description:
+      'Paid beyond what was owed and not refunded, for its next invoices.',
   })
   credit: string;
   @ApiProperty({

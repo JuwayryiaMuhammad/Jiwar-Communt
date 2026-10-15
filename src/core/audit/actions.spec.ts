@@ -104,6 +104,7 @@ describe('audit catalog', () => {
         'payment_session',
         'instalment_plan',
         'invoice_dispute',
+        'refund',
       ]).toContain(def.target);
     }
   });

@@ -452,6 +452,9 @@ export const REASON_CODES = {
     'duplicate_invoice',
     'other',
   ],
+  // Why the manager reverses a refund (ADR 0048): the money is the unit's
+  // credit again.
+  refundReverse: ['entered_in_error', 'refund_failed', 'other'],
   // Why the staff reject a dispute (ADR 0048). `no_longer_owed`: a payment
   // started before the dispute paid the invoice meanwhile.
   invoiceDisputeReject: [

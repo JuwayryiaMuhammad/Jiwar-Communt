@@ -7,6 +7,7 @@ import { BillingPlansService } from '../../src/finance/billing-plans/billing-pla
 import { InvoicesService } from '../../src/finance/invoices/invoices.service';
 import { InstalmentsService } from '../../src/finance/instalments/instalments.service';
 import { DisputesService } from '../../src/finance/disputes/disputes.service';
+import { paymentRow, refundRow } from '../setup/finance-rows';
 import { PaymentsService } from '../../src/finance/payments/payments.service';
 import { GatewayService } from '../../src/finance/gateway/gateway.service';
 import { PaymentSessionsService } from '../../src/finance/online/payment-sessions.service';
@@ -215,6 +216,8 @@ export interface World {
   bInstalmentPlanId: string;
   /** B's owner's open dispute of B's invoice (ADR 0048). */
   bDisputeId: string;
+  /** A refund of B's home's credit (raw rows: a refund needs a step-up). */
+  bRefundId: string;
   /** One of A's plans, for valid payment bodies. */
   aClubPlanId: string;
   /** One of A's, open every day, roomy, for valid bookings. */
@@ -962,6 +965,21 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
         .get(DisputesService)
         .open(bFinance.invoiceId, { reasonCode: 'wrong_amount' }),
   );
+  const bRefundId = await helpers.asManager(b, () =>
+    h.moduleRef.get(TenantTx).withTenantTx(async (tx) =>
+      refundRow(tx, {
+        tenantId: b.tenantId,
+        unitId: b.homeUnitId,
+        paymentId: await paymentRow(tx, {
+          tenantId: b.tenantId,
+          unitId: b.homeUnitId,
+          recordedById: b.ids.manager,
+          amount: '50',
+        }),
+        recordedById: b.ids.manager,
+      }),
+    ),
+  );
   const bSession = await helpers.as(
     b,
     { id: b.ids.owner, type: 'resident' },
@@ -987,6 +1005,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bPaymentSessionId: bSession.id,
     bInstalmentPlanId: bFinance.instalmentPlanId,
     bDisputeId: bDispute.id,
+    bRefundId,
     bClubPlanId: bClubPlan.id,
     aClubPlanId: aClubPlan.id,
     bMembershipId: bClub.membershipId,

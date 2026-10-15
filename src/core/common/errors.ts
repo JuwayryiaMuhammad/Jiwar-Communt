@@ -565,7 +565,10 @@ export const ErrorCode = {
   BILLING_OVERRIDE_NOT_FOUND: 'BILLING_OVERRIDE_NOT_FOUND',
   /** Unknown, another compound's, not a payment, or not the caller's to see. */
   PAYMENT_NOT_FOUND: 'PAYMENT_NOT_FOUND',
-  /** An online payment is refunded, never reversed (409). */
+  /**
+   * An online payment is never reversed (409): credit its invoice to
+   * release the money to the unit's credit, then refund it (ADR 0048).
+   */
   PAYMENT_NOT_REVERSIBLE: 'PAYMENT_NOT_REVERSIBLE',
   /** It was reversed already (409). */
   PAYMENT_ALREADY_REVERSED: 'PAYMENT_ALREADY_REVERSED',
@@ -622,6 +625,14 @@ export const ErrorCode = {
   DISPUTE_ALREADY_DECIDED: 'DISPUTE_ALREADY_DECIDED',
   /** The invoice was disputed params.max times already (409). */
   DISPUTE_LIMIT_REACHED: 'DISPUTE_LIMIT_REACHED',
+  /** Unknown, another compound's, or not a refund. */
+  REFUND_NOT_FOUND: 'REFUND_NOT_FOUND',
+  /** More than the unit's credit now (409, params.credit). */
+  REFUND_EXCEEDS_CREDIT: 'REFUND_EXCEEDS_CREDIT',
+  /** It was reversed already (409). */
+  REFUND_ALREADY_REVERSED: 'REFUND_ALREADY_REVERSED',
+  /** Money of this payment was refunded: it cannot be reversed (409). */
+  PAYMENT_REFUNDED: 'PAYMENT_REFUNDED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -777,6 +788,8 @@ export const FieldErrorCode = {
   STARTS_ON_OUT_OF_RANGE: 'STARTS_ON_OUT_OF_RANGE',
   /** Each instalment must fall due after the one before it. */
   DUE_DATES_NOT_INCREASING: 'DUE_DATES_NOT_INCREASING',
+  /** Not between params.min and params.max (local days). */
+  REFUNDED_ON_OUT_OF_RANGE: 'REFUNDED_ON_OUT_OF_RANGE',
 } as const;
 
 export type FieldErrorCode =

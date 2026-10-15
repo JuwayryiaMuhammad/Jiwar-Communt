@@ -3,6 +3,8 @@ import { Client } from 'pg';
 import { MemberPermissionsService } from '../../src/community/households/member-permissions.service';
 import { newId } from '../../src/core/common/uuid';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
+import { TenantTx } from '../../src/core/database/tenant-tx.service';
+import { paymentRow } from './finance-rows';
 import { hashPassword } from '../../src/core/platform/password';
 import { PlatformSessionService } from '../../src/core/platform/platform-session.service';
 import { sessionOf } from '../api/world';
@@ -162,6 +164,31 @@ export function financeHelpers(h: HttpHarness) {
     };
   }
 
+  /**
+   * Leaves `amount` of credit on the unit, as an overpayment would: a live
+   * payment nothing owed absorbs, written raw (the office never takes
+   * credit; online it takes a late or duplicate success). The payment's id.
+   */
+  function giveCredit(
+    c: Compound,
+    unitId: string,
+    amount: string,
+    recordedById = c.managerId,
+  ): Promise<string> {
+    return x.asManager(c, () =>
+      h.moduleRef.get(TenantTx).withTenantTx((tx) =>
+        // Paid on the compound's own day, as any payment is.
+        paymentRow(tx, {
+          tenantId: c.tenantId,
+          unitId,
+          recordedById,
+          amount,
+          paidOn: day(0),
+        }),
+      ),
+    );
+  }
+
   /** The primary gives a member the unit's money, with a cap per operation. */
   function grantFinance(
     c: Compound,
@@ -196,6 +223,7 @@ export function financeHelpers(h: HttpHarness) {
     platformStepUp,
     configureGateway,
     issue,
+    giveCredit,
     grantFinance,
     setUp,
   };

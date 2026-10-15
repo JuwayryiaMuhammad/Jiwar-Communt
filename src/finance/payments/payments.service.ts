@@ -272,7 +272,7 @@ export class PaymentsService implements OnModuleInit {
       if (payment.channel !== 'office')
         throw appError.conflict(
           ErrorCode.PAYMENT_NOT_REVERSIBLE,
-          'An online payment is refunded, not reversed',
+          'An online payment cannot be reversed',
         );
       await this.access.lockUnits(tx, [payment.unitId]);
       const already = await tx.financePayment.findFirst({
@@ -283,6 +283,16 @@ export class PaymentsService implements OnModuleInit {
         throw appError.conflict(
           ErrorCode.PAYMENT_ALREADY_REVERSED,
           'Reversed already',
+        );
+      // Its money left the compound as a refund already (ADR 0048).
+      const refunded = await tx.financeRefundSource.findFirst({
+        where: { paymentId, refund: { reversedBy: null } },
+        select: { id: true },
+      });
+      if (refunded)
+        throw appError.conflict(
+          ErrorCode.PAYMENT_REFUNDED,
+          'Money of this payment was refunded',
         );
       await tx.financePayment.create({
         data: {
@@ -479,6 +489,12 @@ export class PaymentsService implements OnModuleInit {
       where: { paymentId: { in: ids } },
       _sum: { amount: true },
     });
+    // What live refunds took from each payment (ADR 0048).
+    const refunded = await tx.financeRefundSource.groupBy({
+      by: ['paymentId'],
+      where: { paymentId: { in: ids }, refund: { reversedBy: null } },
+      _sum: { amount: true },
+    });
     const units = await this.community.units(
       tx,
       payments.map((p) => p.unitId),
@@ -494,6 +510,9 @@ export class PaymentsService implements OnModuleInit {
       const given = reversal
         ? ZERO
         : money(allocated.find((a) => a.paymentId === p.id)?._sum.amount ?? 0);
+      const paidBack = reversal
+        ? ZERO
+        : money(refunded.find((r) => r.paymentId === p.id)?._sum.amount ?? 0);
       return {
         id: p.id,
         unitId: p.unitId,
@@ -508,7 +527,8 @@ export class PaymentsService implements OnModuleInit {
         receiptUrl: receiptUrl(this.publicAppUrl, p.receiptCode!),
         reference: p.reference,
         allocated: show(given),
-        unallocated: show(reversal ? ZERO : p.amount!.sub(given)),
+        refunded: show(paidBack),
+        unallocated: show(reversal ? ZERO : p.amount!.sub(given).sub(paidBack)),
         reversal: reversal
           ? {
               id: reversal.id,
@@ -580,12 +600,19 @@ export class PaymentsService implements OnModuleInit {
         SELECT 'reversal', r.id, p.receipt_number, 'receipt', p.amount, r.created_at
           FROM finance_payments r JOIN finance_payments p ON p.tenant_id = r.tenant_id AND p.id = r.reverses_id
          WHERE r.unit_id = ${unitId}::uuid AND r.kind = 'reversal'
+        UNION ALL
+        SELECT 'refund', f.id, f.number, 'refund', f.amount, f.created_at
+          FROM finance_refunds f WHERE f.unit_id = ${unitId}::uuid AND f.kind = 'refund'
+        UNION ALL
+        SELECT 'refund_reversal', r.id, f.number, 'refund', f.amount, r.created_at
+          FROM finance_refunds r JOIN finance_refunds f ON f.tenant_id = r.tenant_id AND f.id = r.reverses_id
+         WHERE r.unit_id = ${unitId}::uuid AND r.kind = 'reversal'
       ) e ORDER BY e.at DESC, e.id DESC LIMIT 100`;
     return rows.map((r) => ({
       kind: r.kind,
       id: r.id,
       number: formatNumber(
-        r.prefix as 'invoice' | 'credit_note' | 'receipt',
+        r.prefix as 'invoice' | 'credit_note' | 'receipt' | 'refund',
         r.number,
       ),
       amount: show(r.amount),

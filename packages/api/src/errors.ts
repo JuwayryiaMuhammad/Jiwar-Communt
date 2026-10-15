@@ -276,7 +276,7 @@ const ERROR_TEXT: Record<string, string> = {
   BILLING_PLAN_NOT_FOUND: 'This billing plan does not exist.',
   BILLING_OVERRIDE_NOT_FOUND: 'This unit has no terms of its own in the plan.',
   PAYMENT_NOT_FOUND: 'This payment does not exist.',
-  PAYMENT_NOT_REVERSIBLE: 'An online payment cannot be reversed here.',
+  PAYMENT_NOT_REVERSIBLE: 'An online payment cannot be reversed. Credit its invoice to release the money to the unit’s credit, then refund it.',
   PAYMENT_ALREADY_REVERSED: 'This payment was reversed already.',
   PAYMENT_EXCEEDS_OUTSTANDING: 'More than the unit owes: record at most what is outstanding.',
   INVOICE_NOT_PAYABLE: 'One of these invoices is not this unit’s, or nothing is owed on it.',
@@ -296,6 +296,10 @@ const ERROR_TEXT: Record<string, string> = {
   DISPUTE_ALREADY_OPEN: 'This invoice already has an open dispute.',
   DISPUTE_ALREADY_DECIDED: 'This dispute was decided already.',
   DISPUTE_LIMIT_REACHED: 'This invoice was disputed too many times.',
+  REFUND_NOT_FOUND: 'This refund does not exist.',
+  REFUND_EXCEEDS_CREDIT: 'More than the unit’s credit: refund at most what it holds.',
+  REFUND_ALREADY_REVERSED: 'This refund was reversed already.',
+  PAYMENT_REFUNDED: 'Money of this payment was refunded: reverse the refund first.',
 };
 
 const FIELD_TEXT: Record<string, string> = {
@@ -376,6 +380,7 @@ const FIELD_TEXT: Record<string, string> = {
   INVOICE_TOTAL_TOO_LARGE: 'An invoice asks for at most 1,000,000 EGP.',
   STARTS_ON_OUT_OF_RANGE: 'From the first of this month to a year ahead.',
   DUE_DATES_NOT_INCREASING: 'Each instalment must fall due after the one before it.',
+  REFUNDED_ON_OUT_OF_RANGE: 'From a month ago to today.',
 };
 
 export function errorText(error: unknown): string {

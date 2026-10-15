@@ -882,6 +882,28 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   invoice_disputes_decision_shape: {},
   invoice_disputes_cleared_shape: {},
   credit_notes_dispute_link: {},
+  // Refunds (ADR 0048), as finance_payments: kind is NOT NULL, the rest
+  // only under IS [NOT] NULL in the shape.
+  finance_refunds_kind_shape: {},
+  finance_refunds_number: {
+    guarded: 'number IS NULL is tested first; the range runs only on a value',
+  },
+  finance_refunds_amount: {
+    guarded: 'amount IS NULL is tested first; the range runs only on a value',
+  },
+  finance_refunds_currency: {
+    guarded:
+      'currency IS NULL is tested first; the comparison runs only on a value',
+  },
+  finance_refunds_reference_format: {
+    guarded:
+      'reference IS NULL is tested first; the pattern runs only on a value',
+  },
+  finance_refunds_reason: {
+    guarded:
+      'reason_code IS NULL is tested first; the list runs only on a value',
+  },
+  finance_refund_sources_amount: {},
   // Nullable columns only under IS [NOT] NULL; kind is NOT NULL.
   finance_payments_kind_shape: {},
   finance_payments_office_shape: {

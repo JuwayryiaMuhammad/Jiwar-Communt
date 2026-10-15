@@ -429,6 +429,69 @@ export const FINANCE_DISPUTE_ROUTES: Row[] = [
   },
 ];
 
+/** Refunds of a unit's credit (ADR 0048): the manager's, after a step-up. */
+export const FINANCE_REFUND_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/staff/units/{unitId}/refunds',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      body: () => ({ amount: '1', channel: 'cash', refundedOn: '2099-01-01' }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      body: { amount: '1', channel: 'cheque', refundedOn: 'today' },
+      fields: [
+        { field: 'channel', code: 'INVALID_VALUE' },
+        { field: 'refundedOn', code: 'INVALID_FORMAT' },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/staff/refunds/{id}/reverse',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bRefundId }),
+      body: () => ({ reasonCode: 'other' }),
+      code: 'REFUND_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: 3 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/staff/refunds',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { from: 'yesterday' },
+      fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/staff/refunds/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bRefundId }),
+      code: 'REFUND_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+];
+
 const PLAN = {
   nameEn: 'Service charge',
   nameAr: 'رسوم الخدمات',

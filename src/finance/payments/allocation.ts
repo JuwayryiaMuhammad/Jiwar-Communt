@@ -5,7 +5,7 @@ import { CREDITED_SQL, DISPUTED_SQL, PAID_SQL } from '../invoices/balances';
 import { money, ZERO } from '../money';
 
 /** What a live payment still has to give. */
-interface FreeMoney {
+export interface FreeMoney {
   id: string;
   free: Prisma.Decimal;
 }
@@ -17,24 +17,46 @@ interface Owed {
 }
 
 /**
- * The live payments of a unit with money not yet allocated, oldest paid
- * first (a reversed payment gives nothing).
+ * What live payment `p` still has to give, as SQL: its amount less what it
+ * paid to invoices and what live refunds took from it (ADR 0048). Every
+ * reader of free money — the allocator, the unit's credit, a payment's
+ * view — uses this one fragment, so the allocator never pours money that
+ * was paid back.
  */
-async function freeMoney(
+export const FREE_SQL = Prisma.sql`(p.amount
+  - COALESCE((SELECT SUM(a.amount) FROM finance_allocations a
+               WHERE a.tenant_id = p.tenant_id AND a.payment_id = p.id), 0)
+  - COALESCE((SELECT SUM(s.amount) FROM finance_refund_sources s
+               WHERE s.tenant_id = p.tenant_id AND s.payment_id = p.id
+                 AND NOT EXISTS (SELECT 1 FROM finance_refunds x
+                                  WHERE x.tenant_id = s.tenant_id
+                                    AND x.reverses_id = s.refund_id)), 0))`;
+
+/** A payment of `p`'s that is live: a payment, and not reversed. */
+const LIVE_SQL = Prisma.sql`p.kind = 'payment'
+  AND NOT EXISTS (SELECT 1 FROM finance_payments r
+                   WHERE r.tenant_id = p.tenant_id AND r.reverses_id = p.id)`;
+
+/**
+ * The live payments of a unit with money not yet allocated or refunded,
+ * oldest paid first (a reversed payment gives nothing).
+ */
+export async function freeMoney(
   tx: TenantTxClient,
   unitId: string,
   only?: string,
+  order: 'oldest' | 'newest' = 'oldest',
 ): Promise<FreeMoney[]> {
   const rows = await tx.$queryRaw<{ id: string; free: Prisma.Decimal }[]>`
-    SELECT p.id,
-           p.amount - COALESCE((SELECT SUM(a.amount) FROM finance_allocations a
-                                 WHERE a.tenant_id = p.tenant_id AND a.payment_id = p.id), 0) AS free
+    SELECT p.id, ${FREE_SQL} AS free
       FROM finance_payments p
-     WHERE p.unit_id = ${unitId}::uuid AND p.kind = 'payment'
-       AND NOT EXISTS (SELECT 1 FROM finance_payments r
-                        WHERE r.tenant_id = p.tenant_id AND r.reverses_id = p.id)
+     WHERE p.unit_id = ${unitId}::uuid AND ${LIVE_SQL}
        ${only ? Prisma.sql`AND p.id = ${only}::uuid` : Prisma.empty}
-     ORDER BY p.paid_on, p.created_at, p.id`;
+     ORDER BY ${
+       order === 'oldest'
+         ? Prisma.sql`p.paid_on, p.created_at, p.id`
+         : Prisma.sql`p.paid_on DESC, p.created_at DESC, p.id DESC`
+     }`;
   return rows
     .map((r) => ({ id: r.id, free: money(r.free) }))
     .filter((r) => r.free.gt(ZERO));
@@ -148,7 +170,10 @@ async function allocate(
   return rows.length;
 }
 
-/** The unit's credit: live payments not allocated to any invoice. */
+/**
+ * The unit's credit: what live payments gave to no invoice and no live
+ * refund took.
+ */
 export async function unitCredit(
   tx: TenantTxClient,
   unitId: string,
@@ -171,11 +196,8 @@ export async function allocateUnits(
   if (!unitIds.length) return 0;
   const withCredit = await tx.$queryRaw<{ unit_id: string }[]>`
     SELECT DISTINCT p.unit_id FROM finance_payments p
-     WHERE p.unit_id = ANY(${[...unitIds]}::uuid[]) AND p.kind = 'payment'
-       AND NOT EXISTS (SELECT 1 FROM finance_payments r
-                        WHERE r.tenant_id = p.tenant_id AND r.reverses_id = p.id)
-       AND p.amount > COALESCE((SELECT SUM(a.amount) FROM finance_allocations a
-                                 WHERE a.tenant_id = p.tenant_id AND a.payment_id = p.id), 0)
+     WHERE p.unit_id = ANY(${[...unitIds]}::uuid[]) AND ${LIVE_SQL}
+       AND ${FREE_SQL} > 0
      ORDER BY p.unit_id`;
   let n = 0;
   for (const { unit_id } of withCredit)

@@ -6875,6 +6875,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/refunds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List refunds, newest first */
+        get: operations["RefundsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/refunds/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a refund with the payments it took from */
+        get: operations["RefundsController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/refunds/{id}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverse a refund: the money is the unit’s credit again */
+        post: operations["RefundsController_reverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/units/{unitId}/payments": {
         parameters: {
             query?: never;
@@ -6889,6 +6940,26 @@ export interface paths {
          * @description Cash, a bank transfer or a cheque; at most what is owed. It pays the invoices named first, then the oldest due.
          */
         post: operations["StaffPaymentsController_record"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/units/{unitId}/refunds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refund part or all of a unit’s credit (step-up required)
+         * @description Recorded by hand: no call to the payment provider. At most the unit’s credit now; spends the session’s step-up.
+         */
+        post: operations["RefundsController_record"];
         delete?: never;
         options?: never;
         head?: never;
@@ -13896,8 +13967,10 @@ export interface components {
             /** @description Who recorded it at the office: in staff views only. */
             recordedBy: components["schemas"]["StaffRefView"] | null;
             reference: string | null;
+            /** @description Paid back to the unit by live refunds (ADR 0048). */
+            refunded: string;
             reversal: components["schemas"]["PaymentReversalView"] | null;
-            /** @description Not yet paid to any invoice: the unit’s credit. */
+            /** @description Neither paid to an invoice nor refunded: part of the unit’s credit. */
             unallocated: string;
             unitCode: string;
             /** Format: uuid */
@@ -13963,8 +14036,10 @@ export interface components {
             /** @description Who recorded it at the office: in staff views only. */
             recordedBy: components["schemas"]["StaffRefView"] | null;
             reference: string | null;
+            /** @description Paid back to the unit by live refunds (ADR 0048). */
+            refunded: string;
             reversal: components["schemas"]["PaymentReversalView"] | null;
-            /** @description Not yet paid to any invoice: the unit’s credit. */
+            /** @description Neither paid to an invoice nor refunded: part of the unit’s credit. */
             unallocated: string;
             unitCode: string;
             /** Format: uuid */
@@ -14557,8 +14632,69 @@ export interface components {
             /** @description For a transfer or a cheque, and only for them. */
             reference?: string;
         };
+        RecordRefundDto: {
+            /** @description At most the unit’s credit now. */
+            amount: string;
+            /** @description `gateway_manual`: refunded by hand in the payment provider’s dashboard. */
+            channel: components["schemas"]["RefundChannel"];
+            /** @description The transfer’s or the provider’s own reference, if any. */
+            reference?: string;
+            /** @description The local day the money was paid back: up to 31 days ago. */
+            refundedOn: string;
+        };
         RefreshTokenDto: {
             refreshToken: string;
+        };
+        /**
+         * @description `gateway_manual`: refunded by hand in the payment provider’s dashboard.
+         * @enum {string}
+         */
+        RefundChannel: "cash" | "bank_transfer" | "gateway_manual";
+        RefundReversalView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description REASON_CODES.refundReverse */
+            reasonCode: string;
+            recordedBy: components["schemas"]["StaffRefView"];
+        };
+        RefundSourceView: {
+            amount: string;
+            /** Format: uuid */
+            paymentId: string;
+            /** @example RC-000042 */
+            receiptNumber: string;
+        };
+        RefundView: {
+            amount: string;
+            channel: components["schemas"]["RefundChannel"];
+            /** Format: date-time */
+            createdAt: string;
+            /** @enum {string} */
+            currency: "EGP";
+            /** Format: uuid */
+            id: string;
+            /** @example RF-000007 */
+            number: string;
+            recordedBy: components["schemas"]["StaffRefView"];
+            reference: string | null;
+            /**
+             * Format: date
+             * @description Local day.
+             */
+            refundedOn: string;
+            /** @description Reversed: the money is the unit’s credit again. */
+            reversal: components["schemas"]["RefundReversalView"] | null;
+            /** @description Newest payment first. */
+            sources: components["schemas"]["RefundSourceView"][];
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        RefundViewList: {
+            data: components["schemas"]["RefundView"][];
+            nextCursor: string | null;
         };
         RegisterPushTokenDto: {
             platform: components["schemas"]["PushPlatform"];
@@ -15254,6 +15390,10 @@ export interface components {
         };
         ReversePaymentDto: {
             /** @description `entered_in_error`, `duplicate`, `bounced_cheque` or `other` (REASON_CODES.paymentReverse). */
+            reasonCode: string;
+        };
+        ReverseRefundDto: {
+            /** @description `entered_in_error`, `refund_failed` or `other` (REASON_CODES.refundReverse). */
             reasonCode: string;
         };
         ReviewDto: {
@@ -16713,13 +16853,16 @@ export interface components {
             at: string;
             /** Format: uuid */
             id: string;
-            /** @enum {string} */
-            kind: "invoice" | "credit_note" | "payment" | "reversal";
-            /** @description INV-, CN- or RC- number; a reversal shows its payment’s. */
+            /**
+             * @description `refund`: the unit’s credit paid back; `refund_reversal`: a refund undone, the money credit again (ADR 0048).
+             * @enum {string}
+             */
+            kind: "invoice" | "credit_note" | "payment" | "reversal" | "refund" | "refund_reversal";
+            /** @description INV-, CN-, RC- or RF- number; a reversal shows its payment’s or refund’s. */
             number: string;
         };
         StatementView: {
-            /** @description Paid beyond what was owed, for its next invoices. */
+            /** @description Paid beyond what was owed and not refunded, for its next invoices. */
             credit: string;
             /** @description The latest 100 entries, newest first. */
             entries: components["schemas"]["StatementEntryView"][];
@@ -28853,6 +28996,83 @@ export interface operations {
             };
         };
     };
+    RefundsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                unitId?: string;
+                /** @description Refunded on or after (local day). */
+                from?: string;
+                /** @description Refunded on or before (local day). */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RefundViewList"];
+                };
+            };
+        };
+    };
+    RefundsController_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RefundView"];
+                };
+            };
+        };
+    };
+    RefundsController_reverse: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseRefundDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RefundView"];
+                };
+            };
+        };
+    };
     StaffPaymentsController_record: {
         parameters: {
             query?: never;
@@ -28877,6 +29097,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaymentDetailView"];
+                };
+            };
+        };
+    };
+    RefundsController_record: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordRefundDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RefundView"];
                 };
             };
         };

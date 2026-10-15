@@ -6,7 +6,8 @@
  * units and the boards (ADR 0042), or sets up the facilities, works the
  * bookings or keeps the club's memberships (ADR 0044), works vehicles,
  * parking, fines and parking reports (ADR 0045), or keeps the units'
- * billing plans, invoices or payments (ADR 0046).
+ * billing plans, invoices or payments (ADR 0046), or watches the
+ * emergencies or works the gate service requests (ADR 0047).
  * Decided from `GET /me`, by the BFF at sign-in and by the shell on every
  * load; the API still checks each call.
  */
@@ -28,6 +29,9 @@ export const ENTRY_PERMISSIONS = [
   'finance.billing',
   'finance.invoice',
   'finance.payments',
+  'emergencies.manage',
+  'emergencies.respond',
+  'gate_services.handle',
 ] as const;
 
 export function mayEnter(me: { type?: unknown; permissions?: unknown } | null | undefined): boolean {

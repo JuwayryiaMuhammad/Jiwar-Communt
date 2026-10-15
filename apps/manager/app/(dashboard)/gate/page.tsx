@@ -20,11 +20,13 @@ import { useQuery } from '@tanstack/react-query';
 import { Plus, RotateCcw } from 'lucide-react';
 import { Suspense, useMemo, useState } from 'react';
 import { DateRange, endOfDay, startOfDay } from '@/components/date-range';
+import { Places } from '@/components/safety/places';
+import { usePermissions } from '@/lib/permissions';
 import { api } from '@/lib/api';
 import { fetchers, keys, type Entry, type Gate } from '@/lib/queries';
 import { useTab } from '@/lib/use-tab';
 
-const TABS = ['entries', 'gates'] as const;
+const TABS = ['entries', 'gates', 'places'] as const;
 type Tab = (typeof TABS)[number];
 type GateKind = Gate['kind'];
 
@@ -207,7 +209,7 @@ function GateDialog({ gate, open, onClose }: { gate: Gate | null; open: boolean;
         </Field>
         <Field
           label="Gate phone"
-          hint="Optional. Residents asked about a visitor can call the gate on it."
+          hint="Optional. Residents asked about a visitor call it; it is in every unit's emergency contacts, and a guard on shift here gives it when they answer."
           error={fieldError(save.error, 'phone')}
         >
           {(p) => <Input {...p} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />}
@@ -288,6 +290,7 @@ function Gates({ query }: { query: { data?: { data: Gate[] }; isPending: boolean
 
 function GateView() {
   const [tab, setTab] = useTab(TABS, 'entries');
+  const { can } = usePermissions();
   const gates = useQuery({ queryKey: keys.gates, queryFn: fetchers.gates });
   return (
     <>
@@ -302,11 +305,18 @@ function GateView() {
             options={[
               { value: 'entries', label: 'Entries' },
               { value: 'gates', label: 'Gates' },
+              ...(can('gate.manage') ? [{ value: 'places' as const, label: 'Places' }] : []),
             ]}
           />
         }
       />
-      {tab === 'entries' ? <Entries gates={gates.data?.data ?? []} /> : <Gates query={gates} />}
+      {tab === 'entries' ? (
+        <Entries gates={gates.data?.data ?? []} />
+      ) : tab === 'places' && can('gate.manage') ? (
+        <Places />
+      ) : (
+        <Gates query={gates} />
+      )}
     </>
   );
 }

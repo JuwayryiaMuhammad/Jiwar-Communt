@@ -134,6 +134,17 @@ export type FinePayment = Schema<'StaffFinePaymentView'>;
 export type StaffParkingReport = Schema<'StaffParkingReportView'>;
 export type ParkingReportStatus = Schema<'ParkingReportStatus'>;
 
+// Emergencies and gate services (ADR 0047).
+export type StaffEmergency = Schema<'StaffEmergencyView'>;
+export type StaffGateService = Schema<'StaffGateServiceView'>;
+export type GateServiceStatus = Schema<'GateServiceStatus'>;
+export type GateServiceKind = Schema<'GateServiceKind'>;
+export type ManagedPlace = Schema<'ManagedPlaceView'>;
+export interface GateServiceFilters {
+  status?: GateServiceStatus | '';
+  kind?: GateServiceKind | '';
+}
+
 // Finance (ADR 0046).
 export type GatewayView = Schema<'GatewayView'>;
 export type GatewayEvent = Schema<'GatewayEventView'>;
@@ -369,6 +380,13 @@ export const keys = {
   parkingReportsAll: ['parking-reports'] as const,
   parkingReports: (status: string) => ['parking-reports', 'list', status] as const,
   parkingReport: (id: string) => ['parking-reports', 'detail', id] as const,
+  emergenciesAll: ['emergencies'] as const,
+  emergencies: (state: string) => ['emergencies', 'list', state] as const,
+  emergency: (id: string) => ['emergencies', 'detail', id] as const,
+  gateServicesAll: ['gate-services'] as const,
+  gateServices: (filters: object) => ['gate-services', 'list', filters] as const,
+  gateService: (id: string) => ['gate-services', 'detail', id] as const,
+  places: ['places'] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -585,6 +603,17 @@ export const fetchers = {
   parkingReports: (status: ParkingReportStatus | '', cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/staff/parking-reports', { params: { query: { ...(status ? { status } : {}), cursor, limit } } })),
   parkingReport: (id: string) => unwrap(api.GET('/api/v1/staff/parking-reports/{id}', { params: { path: { id } } })),
+  emergencies: (state: 'open' | 'closed', cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/gate/emergencies', { params: { query: { status: state, cursor, limit } } })),
+  emergency: (id: string) => unwrap(api.GET('/api/v1/gate/emergencies/{id}', { params: { path: { id } } })),
+  gateServices: (filters: GateServiceFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/gate/gate-services', {
+        params: { query: { ...(clean(filters) as { status?: GateServiceStatus; kind?: GateServiceKind }), cursor, limit } },
+      }),
+    ),
+  gateService: (id: string) => unwrap(api.GET('/api/v1/gate/gate-services/{id}', { params: { path: { id } } })),
+  places: () => unwrap(api.GET('/api/v1/places')),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

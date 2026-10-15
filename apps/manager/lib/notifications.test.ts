@@ -144,3 +144,13 @@ test('a neighbours notice leads to its page for a handler, and nowhere for what 
     assert.equal(notificationHref(n(kind, {}, target, 'x-1'), () => true), null, kind);
   }
 });
+
+test('an emergency or a gate service says the kind, never a name, and leads to its queue (ADR 0047)', () => {
+  const late = n('emergency.escalated', { emergencyType: 'medical' }, 'emergency', 'e-1');
+  assert.equal(notificationText(late), 'Nobody has answered a medical emergency');
+  assert.equal(notificationHref(late, (p) => p === 'emergencies.manage'), '/emergencies');
+  assert.equal(notificationHref(late, () => false), null);
+  const asked = n('gate_service.requested', { serviceKind: 'escort' }, 'gate_service_request', 'g-1');
+  assert.equal(notificationText(asked), 'A resident asked security for escort');
+  assert.equal(notificationHref(asked, (p) => p === 'gate_services.handle'), '/gate-services');
+});

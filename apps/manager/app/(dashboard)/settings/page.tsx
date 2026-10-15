@@ -11,6 +11,8 @@ import { fetchers, keys, type Settings } from '@/lib/queries';
 type Form = {
   timezone: string;
   emergencyPhone: string;
+  officePhone: string;
+  dutyPhone: string;
   visitorDirections: string;
   familyJoinRequiresApproval: boolean;
   maxHouseholdMembers: string;
@@ -23,6 +25,8 @@ function toForm(s: Settings): Form {
   return {
     timezone: s.timezone,
     emergencyPhone: s.emergencyPhone ?? '',
+    officePhone: s.officePhone ?? '',
+    dutyPhone: s.dutyPhone ?? '',
     visitorDirections: s.visitorDirections ?? '',
     familyJoinRequiresApproval: s.familyJoinRequiresApproval,
     maxHouseholdMembers: String(s.maxHouseholdMembers),
@@ -36,7 +40,9 @@ function toForm(s: Settings): Form {
 function diff(s: Settings, f: Form) {
   const out: Record<string, unknown> = {};
   if (f.timezone.trim() !== s.timezone) out.timezone = f.timezone.trim();
-  if ((f.emergencyPhone.trim() || null) !== s.emergencyPhone) out.emergencyPhone = f.emergencyPhone.trim() || null;
+  for (const key of ['emergencyPhone', 'officePhone', 'dutyPhone'] as const) {
+    if ((f[key].trim() || null) !== s[key]) out[key] = f[key].trim() || null;
+  }
   if ((f.visitorDirections.trim() || null) !== s.visitorDirections) out.visitorDirections = f.visitorDirections.trim() || null;
   if (f.familyJoinRequiresApproval !== s.familyJoinRequiresApproval) out.familyJoinRequiresApproval = f.familyJoinRequiresApproval;
   if (f.allowAlwaysAllow !== s.allowAlwaysAllow) out.allowAlwaysAllow = f.allowAlwaysAllow;
@@ -102,8 +108,26 @@ export default function SettingsPage() {
                   <Field label="Time zone" hint="IANA name, e.g. Africa/Cairo. Schedules and attendance use it." error={err('timezone')}>
                     {(p) => <Input {...p} value={form.timezone} onChange={(e) => set('timezone', e.target.value)} />}
                   </Field>
-                  <Field label="Emergency phone" hint="On the visitor page and the worker card." error={err('emergencyPhone')}>
+                  <Field
+                    label="Emergency phone"
+                    hint="On the visitor page, the worker card and every unit's emergency contacts."
+                    error={err('emergencyPhone')}
+                  >
                     {(p) => <Input {...p} type="tel" value={form.emergencyPhone} onChange={(e) => set('emergencyPhone', e.target.value)} />}
+                  </Field>
+                  <Field
+                    label="Community office phone"
+                    hint="In every unit's emergency contacts."
+                    error={err('officePhone')}
+                  >
+                    {(p) => <Input {...p} type="tel" value={form.officePhone} onChange={(e) => set('officePhone', e.target.value)} />}
+                  </Field>
+                  <Field
+                    label="Duty manager phone"
+                    hint="In every unit's emergency contacts, and what a household sees when the management answers an emergency."
+                    error={err('dutyPhone')}
+                  >
+                    {(p) => <Input {...p} type="tel" value={form.dutyPhone} onChange={(e) => set('dutyPhone', e.target.value)} />}
                   </Field>
                   <Field label="Directions for visitors" hint="On the visitor's pass page." error={err('visitorDirections')}>
                     {(p) => (

@@ -50,6 +50,13 @@ test('a guard, a technician and a resident do not', () => {
   assert.equal(mayEnter({ type: 'resident', permissions: ['facilities.book'] }), false);
 });
 
+test('a staff role that watches emergencies or works gate services enters (ADR 0047)', () => {
+  for (const p of ['emergencies.manage', 'emergencies.respond', 'gate_services.handle'])
+    assert.equal(mayEnter({ type: 'staff', permissions: ['gate.operate', p] }), true);
+  // A guard alone works from the app, inside a shift.
+  assert.equal(mayEnter({ type: 'staff', permissions: ['gate.operate', 'parcels.handle'] }), false);
+});
+
 test('an answer without permissions admits nobody but a manager', () => {
   assert.equal(mayEnter(null), false);
   assert.equal(mayEnter(undefined), false);

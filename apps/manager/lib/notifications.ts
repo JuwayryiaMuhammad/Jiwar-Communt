@@ -83,6 +83,15 @@ const TEXT: Record<string, (p: P) => string> = {
   'account.deletion_closed': (p) => `Your deletion request was closed without deleting the account (${words(p.reason)})`,
   'account.assisted_action': (p) => `Management acted for you: ${words(p.action)} (asked ${words(p.reason)})`,
   'ticket.emergency': (p) => `Emergency: ${ticket(p)} · ${words(p.categoryKey)}${inUnit(p)}`,
+  // Emergencies and gate services (ADR 0047): the kind and codes only.
+  'emergency.reported': (p) => `A ${words(p.emergencyType)} emergency was reported`,
+  'emergency.escalated': (p) => `Nobody has answered a ${words(p.emergencyType)} emergency`,
+  'emergency.cancelled': () => 'An emergency was cancelled by the household',
+  'emergency.family_alert': () => 'An emergency was reported from your unit',
+  'emergency.responder_on_the_way': (p) => `A responder is on the way, about ${p.etaMinutes} minutes`,
+  'gate_service.requested': (p) => `A resident asked security for ${words(p.serviceKind)}`,
+  'gate_service.accepted': () => 'Security accepted your request',
+  'gate_service.closed': (p) => `Security closed your request (${words(p.reason)})`,
   'ticket.assigned': (p) => `${ticket(p)} is assigned to you · ${words(p.priority)} · ${words(p.categoryKey)}${inUnit(p)}`,
   'ticket.unassigned': (p) => `${ticket(p)} was given to someone else${inUnit(p)}`,
   'ticket.status_changed': (p) =>
@@ -205,6 +214,9 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
   if (n.targetType === 'neighbour_post' && n.targetId) return can('neighbours.handle') ? `/lost-found/${n.targetId}` : null;
   if (n.targetType === 'neighbour_report' && n.targetId)
     return can('neighbours.handle') ? `/conversation-reports/${n.targetId}` : null;
+  if (n.targetType === 'emergency')
+    return can('emergencies.manage') || can('emergencies.respond') ? '/emergencies' : null;
+  if (n.targetType === 'gate_service_request') return can('gate_services.handle') ? '/gate-services' : null;
   if (n.kind === 'account.deletion_queued') return can('accounts.erase') ? '/deletions' : null;
   if (n.kind === 'account.new_device_login') return '/account';
   if (n.targetType === 'worker_engagement') return can('workers.review') ? '/workers?tab=all' : null;

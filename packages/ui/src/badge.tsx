@@ -101,6 +101,11 @@ const STATUS_TONE: Record<string, Tone> = {
   opening: 'beige',
   succeeded: 'green',
   failed: 'error',
+  // Emergencies and gate services (ADR 0047). `arrived`, `resolved`,
+  // `cancelled`, `open`, `in_progress` and `closed` are above.
+  reported: 'error',
+  on_the_way: 'green',
+  accepted: 'green',
 };
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {

@@ -45,6 +45,7 @@ import {
   Banknote,
   CreditCard,
   FileText,
+  LifeBuoy,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -88,6 +89,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     keys.parkingReports('open'),
     () => fetchers.parkingReports('open', undefined, 100),
     can('parking_reports.handle'),
+  );
+  // Emergencies (ADR 0047): counted every ten seconds, not two minutes.
+  const openEmergencies =
+    useQuery({
+      queryKey: [...keys.emergencies('open'), 'count'],
+      queryFn: () => fetchers.emergencies('open', undefined, 100),
+      refetchInterval: 10_000,
+      retry: false,
+      enabled: can('emergencies.manage') || can('emergencies.respond'),
+    }).data?.data.length ?? 0;
+  const gateServices = useQueueSize(
+    keys.gateServices({ status: 'open' }),
+    () => fetchers.gateServices({ status: 'open' }, undefined, 100),
+    can('gate_services.handle'),
   );
   const registrations = useQueueSize(
     keys.registrations,
@@ -261,6 +276,25 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           show: can('parking_reports.handle'),
         },
         { href: '/parking', label: 'Parking setup', icon: <CircleParking aria-hidden />, show: can('vehicles.manage') },
+      ],
+    },
+    {
+      label: 'Safety',
+      items: [
+        {
+          href: '/emergencies',
+          label: 'Emergencies',
+          icon: <Siren aria-hidden />,
+          count: openEmergencies,
+          show: can('emergencies.manage') || can('emergencies.respond'),
+        },
+        {
+          href: '/gate-services',
+          label: 'Gate services',
+          icon: <LifeBuoy aria-hidden />,
+          count: gateServices,
+          show: can('gate_services.handle'),
+        },
       ],
     },
     {

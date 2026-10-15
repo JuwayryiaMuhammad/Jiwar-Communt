@@ -15507,6 +15507,47 @@
         ],
         "type": "object"
       },
+      "PublicReceiptView": {
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "compoundName": {
+            "type": "string"
+          },
+          "currency": {
+            "enum": [
+              "EGP"
+            ],
+            "type": "string"
+          },
+          "paidOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "receiptNumber": {
+            "example": "RC-000123",
+            "type": "string"
+          },
+          "status": {
+            "description": "`reversed`: the office reversed this payment.",
+            "enum": [
+              "valid",
+              "reversed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "compoundName",
+          "receiptNumber",
+          "amount",
+          "currency",
+          "paidOn",
+          "status"
+        ],
+        "type": "object"
+      },
       "PublicSummaryView": {
         "properties": {
           "textAr": {
@@ -15747,6 +15788,18 @@
         "required": [
           "technicianId",
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "ReceiptCodeDto": {
+        "properties": {
+          "code": {
+            "description": "The code from the receipt link’s fragment (`/receipt#<code>`).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
         ],
         "type": "object"
       },
@@ -42195,6 +42248,40 @@
         "tags": [
           "security"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/receipts/lookup": {
+      "post": {
+        "operationId": "ReceiptPageController_lookup",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReceiptCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicReceiptView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Verify a receipt from its link",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

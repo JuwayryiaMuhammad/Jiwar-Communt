@@ -557,6 +557,8 @@ export const ErrorCode = {
   PAYMENT_GATEWAY_ERROR: 'PAYMENT_GATEWAY_ERROR',
   /** Unknown, another compound's, or not the caller's to see. */
   PAYMENT_SESSION_NOT_FOUND: 'PAYMENT_SESSION_NOT_FOUND',
+  /** No receipt has this code (also a malformed code: no read is made). */
+  RECEIPT_NOT_FOUND: 'RECEIPT_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

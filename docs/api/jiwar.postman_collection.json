@@ -16224,6 +16224,45 @@
           }
         },
         {
+          "name": "Verify a receipt from its link",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"code\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | string | yes | The code from the receipt link’s fragment (`/receipt#<code>`). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "receipts",
+                "lookup"
+              ],
+              "raw": "{{baseUrl}}/api/v1/public/receipts/lookup"
+            }
+          }
+        },
+        {
           "name": "Open a visitor pass from the host's link",
           "request": {
             "auth": {

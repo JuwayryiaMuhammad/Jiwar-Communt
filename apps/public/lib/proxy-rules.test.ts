@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { backendPath, clientIp, forwardedHeaders, isJson } from './proxy-rules.ts';
 
-test('only the nine public routes are proxied', () => {
+test('only the ten public routes are proxied; never the Paymob webhook', () => {
   assert.equal(backendPath(['public', 'not-me']), '/api/v1/public/not-me');
   assert.equal(backendPath(['public', 'visitor-passes', 'lookup']), '/api/v1/public/visitor-passes/lookup');
   assert.equal(backendPath(['registrations', 'complete']), '/api/v1/registrations/complete');
+  assert.equal(backendPath(['public', 'receipts', 'lookup']), '/api/v1/public/receipts/lookup');
   for (const path of [
     [],
     ['auth', 'request-code'],
@@ -16,6 +17,8 @@ test('only the nine public routes are proxied', () => {
     ['PUBLIC', 'not-me'],
     ['files', 'uploads'],
     ['platform', 'auth', 'login'],
+    ['public', 'payments', 'paymob', '0190a1b2-0000-7000-8000-000000000001'],
+    ['public', 'receipts'],
   ]) {
     assert.equal(backendPath(path), null, path.join('/'));
   }

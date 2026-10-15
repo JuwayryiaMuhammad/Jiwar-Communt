@@ -1999,15 +1999,45 @@ describe('API v0 — PII leak scan', () => {
     const publicReads = ROUTES.filter(
       (r) => r.auth === 'public' && r.path.endsWith('/lookup'),
     ).map((r) => r.path);
-    expect(publicReads).toEqual(['/public/visitor-passes/lookup']);
+    expect(publicReads).toEqual([
+      '/public/visitor-passes/lookup',
+      '/public/receipts/lookup',
+    ]);
     const ids = [...people.map((p) => p.id), ...Object.values(a.ids)].filter(
       Boolean,
     );
+    // Whoever holds a receipt's link (ADR 0046): the compound, the number,
+    // the amount, the day and the status — no person, no id, no unit.
+    const receiptCode = (
+      (
+        await call(w, 'GET', `/staff/payments/${piiPayment}`, {
+          token: a.tokens.manager,
+        }).expect(200)
+      ).body as { receiptCode: string }
+    ).receiptCode;
+    const receipt = await call(w, 'POST', '/public/receipts/lookup', {
+      body: { code: receiptCode },
+    }).expect(200);
+    expect(Object.keys(receipt.body as object).sort()).toEqual([
+      'amount',
+      'compoundName',
+      'currency',
+      'paidOn',
+      'receiptNumber',
+      'status',
+    ]);
+    for (const p of people)
+      for (const v of [p.fullName ?? '', p.phone, p.email, p.doc])
+        if (v && receipt.text.includes(v))
+          leaks.push(`public /public/receipts/lookup: a person's data`);
+    for (const id of [...ids, unit.id])
+      if (receipt.text.includes(id))
+        leaks.push(`public /public/receipts/lookup: an id`);
     for (const [host, issued] of [
       ['family', visit],
       ['primary', primaryVisit],
     ] as const) {
-      for (const path of publicReads) {
+      for (const path of ['/public/visitor-passes/lookup']) {
         const res = await call(w, 'POST', path, {
           body: { token: issued.link!.split('#')[1] },
         }).expect(200);

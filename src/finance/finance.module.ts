@@ -17,6 +17,8 @@ import {
   PAYMOB_TRANSPORT,
 } from './paymob/paymob-transport';
 import { FinanceProvisioning } from './provisioning';
+import { ReceiptPageController } from './receipts-public/receipt-page.controller';
+import { ReceiptPageService } from './receipts-public/receipt-page.service';
 import { InvoiceNoticesSweep } from './invoices/invoice-notices.sweep';
 import { InvoiceRemindersSweep } from './invoices/invoice-reminders.sweep';
 import {
@@ -55,6 +57,7 @@ import { PaymentsService } from './payments/payments.service';
     PaymentSessionsController,
     PaymobWebhookController,
     GatewayEventsController,
+    ReceiptPageController,
   ],
   providers: [
     FinanceProvisioning,
@@ -67,6 +70,7 @@ import { PaymentsService } from './payments/payments.service';
     PaymentsService,
     PaymentSessionsService,
     PaymobWebhookService,
+    ReceiptPageService,
     CredentialVault,
     GatewayService,
     GatewayKeys,

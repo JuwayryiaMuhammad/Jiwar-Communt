@@ -5088,6 +5088,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/receipts/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify a receipt from its link */
+        post: operations["ReceiptPageController_lookup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/public/visitor-passes/lookup": {
         parameters: {
             query?: never;
@@ -13148,6 +13165,21 @@ export interface components {
             /** @description From the closed list `ticketPriority`. */
             reasonCode: string;
         };
+        PublicReceiptView: {
+            amount: string;
+            compoundName: string;
+            /** @enum {string} */
+            currency: "EGP";
+            /** Format: date */
+            paidOn: string;
+            /** @example RC-000123 */
+            receiptNumber: string;
+            /**
+             * @description `reversed`: the office reversed this payment.
+             * @enum {string}
+             */
+            status: "valid" | "reversed";
+        };
         PublicSummaryView: {
             textAr: string | null;
             textEn: string | null;
@@ -13224,6 +13256,10 @@ export interface components {
             reasonCode: string;
             /** Format: uuid */
             technicianId: string;
+        };
+        ReceiptCodeDto: {
+            /** @description The code from the receipt link’s fragment (`/receipt#<code>`). */
+            code: string;
         };
         ReceiveParcelDto: {
             carrier: components["schemas"]["ParcelCarrier"];
@@ -24641,6 +24677,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    ReceiptPageController_lookup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReceiptCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicReceiptView"];
+                };
             };
         };
     };

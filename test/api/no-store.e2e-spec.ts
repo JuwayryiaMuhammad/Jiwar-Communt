@@ -629,6 +629,31 @@ describe('API v0 — no-store', () => {
         {},
       );
     },
+    'POST /public/receipts/lookup': async () => {
+      await call(w, 'POST', '/staff/invoices', {
+        token: w.a.tokens.manager,
+        body: {
+          target: 'unit',
+          unitId: w.a.homeUnitId,
+          kind: 'other',
+          dueOn: localDay(5),
+          lines: [{ descriptionEn: 'Fee', descriptionAr: 'رسم', amount: '10' }],
+        },
+      }).expect(201);
+      const paid = await as(
+        'manager',
+        'POST',
+        `/staff/units/${w.a.homeUnitId}/payments`,
+        {
+          amount: '10',
+          method: 'cash',
+          paidOn: localDay(0),
+        },
+      );
+      return call(w, 'POST', '/public/receipts/lookup', {
+        body: { code: body<{ receiptCode: string }>(paid).receiptCode },
+      });
+    },
     'GET /payment-sessions/{id}': async () =>
       as('owner', 'GET', `/payment-sessions/${await anOpenCheckout()}`),
   });

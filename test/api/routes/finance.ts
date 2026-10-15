@@ -518,3 +518,21 @@ export const FINANCE_ONLINE_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** The public receipt page (ADR 0046). */
+export const FINANCE_PUBLIC_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/public/receipts/lookup',
+    auth: 'public',
+    denied: 'none',
+    foreign: 'none',
+    invalid: {
+      body: { code: '' },
+      fields: [
+        { field: 'code', code: 'INVALID_LENGTH', params: { min: 1, max: 64 } },
+      ],
+    },
+    noStore: true,
+  },
+];

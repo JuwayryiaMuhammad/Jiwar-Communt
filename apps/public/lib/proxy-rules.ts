@@ -13,6 +13,7 @@ const ROUTES: ReadonlySet<string> = new Set([
   'invites/accept/complete',
   'registrations/start',
   'registrations/complete',
+  'public/receipts/lookup',
 ]);
 
 /** The largest body is the registration form; this is far above it. */

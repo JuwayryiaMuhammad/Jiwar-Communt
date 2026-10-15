@@ -36,3 +36,11 @@ test('an empty, padded or decorated fragment is no token', () => {
     assert.equal(parseFragment(`#${VISITOR}/..`, kind), null);
   }
 });
+
+test('a receipt code is 22 base64url characters', () => {
+  const code = 'Ab_-'.repeat(5) + 'xy';
+  assert.equal(parseFragment(`#${code}`, 'receipt'), code);
+  assert.equal(parseFragment(`#${code}z`, 'receipt'), null);
+  assert.equal(parseFragment(`#${code.slice(1)}`, 'receipt'), null);
+  assert.equal(parseFragment(`#${VISITOR}`, 'receipt'), null);
+});

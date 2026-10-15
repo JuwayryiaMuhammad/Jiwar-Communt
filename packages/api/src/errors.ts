@@ -271,6 +271,7 @@ const ERROR_TEXT: Record<string, string> = {
   PAYMENT_SESSION_IN_FLIGHT: 'A checkout is being opened: try again in a moment.',
   PAYMENT_GATEWAY_ERROR: 'The payment provider could not open the checkout. Try again.',
   PAYMENT_SESSION_NOT_FOUND: 'This checkout does not exist.',
+  RECEIPT_NOT_FOUND: 'No receipt has this code.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

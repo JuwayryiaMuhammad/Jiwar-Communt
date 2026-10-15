@@ -105,6 +105,10 @@ const STATUS_TONE: Record<string, Tone> = {
   // `cancelled`, `open`, `in_progress` and `closed` are above.
   reported: 'error',
   on_the_way: 'green',
+  // Finance part 2 (ADR 0048). Plans are `active`, `settled` or
+  // `cancelled`; disputes `open`, `accepted` or `rejected`; an invoice may
+  // be `rescheduled` (above).
+  settled: 'green',
   accepted: 'green',
 };
 

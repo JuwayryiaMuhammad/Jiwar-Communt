@@ -157,8 +157,16 @@ export type InvoiceKind = Schema<'InvoiceKind'>;
 export type Payment = Schema<'PaymentView'>;
 export type PaymentDetail = Schema<'PaymentDetailView'>;
 export type Statement = Schema<'StatementView'>;
+// Finance part 2 (ADR 0048).
+export type InstalmentPlan = Schema<'InstalmentPlanView'>;
+export type InstalmentPlanDetail = Schema<'InstalmentPlanDetailView'>;
+export type StaffDispute = Schema<'StaffDisputeView'>;
+export interface InstalmentPlanFilters {
+  status?: 'active' | 'settled' | 'cancelled' | '';
+  unitId?: string;
+}
 export interface InvoiceFilters {
-  status?: 'unpaid' | 'partially_paid' | 'overdue' | 'paid' | 'credited' | 'open' | '';
+  status?: 'unpaid' | 'partially_paid' | 'overdue' | 'paid' | 'credited' | 'rescheduled' | 'open' | '';
   kind?: InvoiceKind | '';
   unitId?: string;
   building?: string;
@@ -360,6 +368,10 @@ export const keys = {
   payments: (filters: object) => ['payments', 'list', filters] as const,
   payment: (id: string) => ['payments', 'detail', id] as const,
   statement: (unitId: string) => ['invoices', 'statement', unitId] as const,
+  instalmentPlans: (filters: object) => ['invoices', 'instalment-plans', filters] as const,
+  instalmentPlan: (id: string) => ['invoices', 'instalment-plan', id] as const,
+  disputes: (status: string) => ['invoices', 'disputes', status] as const,
+  dispute: (id: string) => ['invoices', 'dispute', id] as const,
   clubPlans: ['club-plans'] as const,
   clubAll: ['club-memberships'] as const,
   clubMemberships: (state: string) => ['club-memberships', 'list', state] as const,
@@ -573,6 +585,20 @@ export const fetchers = {
   payment: (id: string) => unwrap(api.GET('/api/v1/staff/payments/{id}', { params: { path: { id } } })),
   statement: (unitId: string) =>
     unwrap(api.GET('/api/v1/staff/units/{unitId}/statement', { params: { path: { unitId } } })),
+  instalmentPlans: (filters: InstalmentPlanFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/instalment-plans', {
+        params: { query: { ...(clean(filters) as Record<string, never>), cursor, limit } },
+      }),
+    ),
+  instalmentPlan: (id: string) => unwrap(api.GET('/api/v1/staff/instalment-plans/{id}', { params: { path: { id } } })),
+  disputes: (status: StaffDispute['status'] | '', cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/invoice-disputes', {
+        params: { query: { status: status || undefined, cursor, limit } },
+      }),
+    ),
+  dispute: (id: string) => unwrap(api.GET('/api/v1/staff/invoice-disputes/{id}', { params: { path: { id } } })),
   clubPlans: () => unwrap(api.GET('/api/v1/staff/club-plans')),
   clubMemberships: (state: ClubMembershipState | '') =>
     unwrap(api.GET('/api/v1/staff/club-memberships', { params: { query: state ? { state } : {} } })),

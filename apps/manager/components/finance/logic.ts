@@ -93,3 +93,65 @@ export function keyProblem(key: string, kind: 'sk' | 'pk', mode: 'sandbox' | 'li
   if (live !== (mode === 'live')) return mode === 'live' ? 'Live mode takes a live key.' : 'Sandbox takes a test key.';
   return undefined;
 }
+
+// Finance part 2 (ADR 0048).
+
+/** `YYYY-MM-DD` plus `n` months: the same day, or the month's last when it has none. */
+export function addMonths(day: string, n: number): string {
+  const y = Number(day.slice(0, 4));
+  const m = Number(day.slice(5, 7)) - 1 + n;
+  const d = Number(day.slice(8, 10));
+  const year = y + Math.floor(m / 12);
+  const month = ((m % 12) + 12) % 12;
+  const last = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(Math.min(d, last)).padStart(2, '0')}`;
+}
+
+/**
+ * What an invoice owes as `count` monthly instalments from `firstDue`:
+ * equal parts in piastres, the remainder on the last, so they add up to
+ * exactly the total (the API refuses anything else).
+ */
+export function splitEqually(total: string, count: number, firstDue: string): { dueOn: string; amount: string }[] {
+  const cents = Math.round(Number(total) * 100);
+  if (!Number.isFinite(cents) || cents <= 0 || count < 1) return [];
+  const each = Math.floor(cents / count);
+  return Array.from({ length: count }, (_, i) => ({
+    dueOn: addMonths(firstDue, i),
+    amount: ((i === count - 1 ? cents - each * (count - 1) : each) / 100).toFixed(2),
+  }));
+}
+
+/** Instalments the API takes: 2–24, each at least 1.00, due dates rising. */
+export function instalmentsProblem(rows: readonly { dueOn: string; amount: string }[], owed: string): string | undefined {
+  if (rows.length < 2 || rows.length > 24) return 'Between 2 and 24 instalments.';
+  if (rows.some((r) => !validMoney(r.amount) || Number(r.amount) < 1)) return 'Each instalment is at least 1.00 EGP.';
+  if (rows.some((r, i) => i > 0 && r.dueOn <= (rows[i - 1]?.dueOn ?? ''))) return 'Each instalment falls due after the one before.';
+  if (linesTotal(rows) !== Number(owed).toFixed(2)) return `They must add up to ${Number(owed).toFixed(2)} EGP.`;
+  return undefined;
+}
+
+/** What a credit note may still take off an invoice: its total less credit notes. */
+export const creditable = (i: { total: string; credited: string }) => (Math.round((Number(i.total) - Number(i.credited)) * 100) / 100).toFixed(2);
+
+export const LEDGER_TEXT: Record<string, string> = {
+  invoice: 'Invoice',
+  credit_note: 'Credit note',
+  payment: 'Payment',
+  payment_reversal: 'Payment reversed',
+  refund: 'Refund',
+  refund_reversal: 'Refund reversed',
+  credit_applied: 'Credit applied',
+  allocation_release: 'Released to credit',
+};
+
+export const REFUND_CHANNEL_TEXT: Record<string, string> = {
+  cash: 'Cash',
+  bank_transfer: 'Bank transfer',
+  gateway_manual: 'In the payment provider’s dashboard',
+};
+
+/** A file name a download falls back on when the server names none. */
+export function downloadName(disposition: string | null, fallback: string): string {
+  return /filename="([^"]+)"/.exec(disposition ?? '')?.[1] ?? fallback;
+}

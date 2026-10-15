@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { firstOfMonth, keyProblem, lineReady, linesTotal, masked, monthStarts, needsReference, validCode, validMoney, validReference } from './logic.ts';
+import { firstOfMonth, keyProblem, lineReady, linesTotal, masked, monthStarts, needsReference, validCode, validMoney, validReference, addMonths, splitEqually, instalmentsProblem, creditable, downloadName } from './logic.ts';
 
 test('money: positive, two decimals at most, up to a million', () => {
   assert.equal(validMoney('1500'), true);
@@ -43,4 +43,53 @@ test('credentials: masked, keys fit the mode, codes are six digits', () => {
   assert.match(keyProblem('sk_live_x', 'sk', 'live') ?? '', /Starts with/);
   assert.equal(validCode('123456'), true);
   assert.equal(validCode('12345'), false);
+});
+
+test('months add on, keeping the day or taking the month’s last', () => {
+  assert.equal(addMonths('2026-01-31', 1), '2026-02-28');
+  assert.equal(addMonths('2026-11-15', 2), '2027-01-15');
+  assert.equal(addMonths('2028-01-31', 1), '2028-02-29');
+});
+
+test('an equal split adds up exactly, the piastres left over on the last', () => {
+  const rows = splitEqually('1000', 3, '2026-11-01');
+  assert.deepEqual(
+    rows.map((r) => [r.dueOn, r.amount]),
+    [
+      ['2026-11-01', '333.33'],
+      ['2026-12-01', '333.33'],
+      ['2027-01-01', '333.34'],
+    ],
+  );
+  assert.equal(instalmentsProblem(rows, '1000'), undefined);
+});
+
+test('instalments the API would refuse are named before sending', () => {
+  assert.match(instalmentsProblem([{ dueOn: '2026-11-01', amount: '10' }], '10')!, /Between 2/);
+  assert.match(
+    instalmentsProblem(
+      [
+        { dueOn: '2026-11-01', amount: '5' },
+        { dueOn: '2026-11-01', amount: '5' },
+      ],
+      '10',
+    )!,
+    /after the one before/,
+  );
+  assert.match(
+    instalmentsProblem(
+      [
+        { dueOn: '2026-11-01', amount: '5' },
+        { dueOn: '2026-12-01', amount: '4' },
+      ],
+      '10',
+    )!,
+    /add up to 10.00/,
+  );
+});
+
+test('a credit note may take the total less credit notes; a download keeps the server’s name', () => {
+  assert.equal(creditable({ total: '1000.00', credited: '250.00' }), '750.00');
+  assert.equal(downloadName('attachment; filename="ledger-2026-10-01_2026-10-31.csv"', 'x.csv'), 'ledger-2026-10-01_2026-10-31.csv');
+  assert.equal(downloadName(null, 'x.csv'), 'x.csv');
 });

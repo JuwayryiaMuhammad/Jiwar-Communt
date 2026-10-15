@@ -13,7 +13,7 @@ import { KIND_TEXT } from '@/components/finance/logic';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Invoice, type InvoiceFilters, type InvoiceKind } from '@/lib/queries';
 
-type View = 'open' | 'overdue' | 'paid' | 'credited' | 'all';
+type View = 'open' | 'overdue' | 'paid' | 'credited' | 'rescheduled' | 'all';
 
 /**
  * Invoices (ADR 0046): issued to one unit, a building or every unit, or by
@@ -58,6 +58,7 @@ export default function InvoicesPage() {
             { value: 'overdue', label: 'Overdue' },
             { value: 'paid', label: 'Paid' },
             { value: 'credited', label: 'Credited' },
+            { value: 'rescheduled', label: 'Rescheduled' },
             { value: 'all', label: 'All' },
           ]}
         />

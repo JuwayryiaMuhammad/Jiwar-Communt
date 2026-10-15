@@ -4,12 +4,12 @@ import { FILE_PURPOSES, FILE_TYPES } from './purposes';
 import { matchesSignature } from './signatures';
 
 const migrations = '../../../prisma/migrations';
-/** Both CHECKs as they stand now (ADR 0043 recreated them). */
+/** Both CHECKs as they stand now (ADR 0045 recreated them). */
 const sizeCheck = readFileSync(
   join(
     __dirname,
     migrations,
-    '20261021090400_gate_request_photos_and_gate_phone/migration.sql',
+    '20261023090200_vehicle_file_purposes/migration.sql',
   ),
   'utf8',
 );
@@ -37,6 +37,12 @@ describe('file purposes', () => {
       `WHEN 'gate_request_photo' THEN ${FILE_PURPOSES.gate_request_photo.maxBytes}`,
     );
     expect(sizeCheck).toContain(
+      `WHEN 'parking_photo' THEN ${FILE_PURPOSES.parking_photo.maxBytes}`,
+    );
+    expect(sizeCheck).toContain(
+      `WHEN 'vehicle_fine_photo' THEN ${FILE_PURPOSES.vehicle_fine_photo.maxBytes}`,
+    );
+    expect(sizeCheck).toContain(
       `WHEN 'data_export' THEN ${FILE_PURPOSES.data_export.maxBytes}`,
     );
     expect(sizeCheck).toContain(`ELSE ${FILE_PURPOSES.document.maxBytes} END`);
@@ -53,9 +59,13 @@ describe('file purposes', () => {
     expect(FILE_PURPOSES.complaint_evidence.maxBytes).toBe(
       FILE_PURPOSES.document.maxBytes,
     );
+    expect(sizeCheck).not.toContain(`WHEN 'vehicle_licence'`);
+    expect(FILE_PURPOSES.vehicle_licence.maxBytes).toBe(
+      FILE_PURPOSES.document.maxBytes,
+    );
     // files_content_type_for_purpose: images for every purpose, a PDF only
-    // as a document, a request's attachment, a community attachment or a
-    // complaint's evidence.
+    // as a document, a request's attachment, a community attachment, a
+    // complaint's evidence or a vehicle's licence.
     expect(FILE_PURPOSES.worker_photo.types).toEqual([
       'image/jpeg',
       'image/png',
@@ -86,12 +96,21 @@ describe('file purposes', () => {
     expect(FILE_PURPOSES.neighbour_post_photo.types).toEqual(
       FILE_PURPOSES.worker_photo.types,
     );
+    expect(FILE_PURPOSES.vehicle_licence.types).toEqual(
+      FILE_PURPOSES.document.types,
+    );
+    expect(FILE_PURPOSES.parking_photo.types).toEqual(
+      FILE_PURPOSES.worker_photo.types,
+    );
+    expect(FILE_PURPOSES.vehicle_fine_photo.types).toEqual(
+      FILE_PURPOSES.worker_photo.types,
+    );
     expect(FILE_PURPOSES.data_export.types).toEqual(['application/zip']);
     expect(typeCheck).toContain(
       `("content_type" IN ('image/jpeg', 'image/png', 'image/webp') AND "purpose" <> 'data_export')`,
     );
     expect(typeCheck).toContain(
-      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence'))`,
+      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence'))`,
     );
     expect(typeCheck).toContain(
       `("content_type" = 'application/zip' AND "purpose" = 'data_export')`,

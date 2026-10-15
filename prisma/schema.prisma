@@ -1652,6 +1652,8 @@ enum NotificationCategory {
   neighbours
   /// A resident's bookings of the facilities, and the club (ADR 0044).
   bookings
+  /// A unit's vehicles, their permits and fines (ADR 0045).
+  vehicles
 
   @@map("notification_category")
 }
@@ -2106,6 +2108,12 @@ enum FilePurpose {
   /// A lost-and-found or lending post's photo (ADR 0042).
   neighbour_post_photo
   gate_request_photo
+  /// A vehicle's licence (ADR 0045): image or PDF, the resident's.
+  vehicle_licence
+  /// A resident's photo of a parking report or a fine's appeal (ADR 0045).
+  parking_photo
+  /// A vehicle fine's photo (ADR 0045): the staff's.
+  vehicle_fine_photo
 
   @@map("file_purpose")
 }

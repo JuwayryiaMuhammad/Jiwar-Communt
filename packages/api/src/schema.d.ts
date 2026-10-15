@@ -9773,7 +9773,7 @@ export interface components {
             technicianRating: number | null;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -10781,7 +10781,7 @@ export interface components {
             sentAt: string;
         };
         /** @enum {string} */
-        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community" | "neighbours" | "bookings";
+        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community" | "neighbours" | "bookings" | "vehicles";
         NotificationView: {
             /** Format: date-time */
             createdAt: string;

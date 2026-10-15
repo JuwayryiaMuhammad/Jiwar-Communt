@@ -34,6 +34,9 @@ export interface FilePurposeDefinition {
  * staff's (ADR 0040). A complaint's evidence comes from whoever writes on
  * the complaint, and a board post's photos from whoever posts (ADR 0042).
  * The photo of a visitor waiting at the gate is the guard's (ADR 0043).
+ * A vehicle's licence is uploaded by whoever registers the unit's
+ * vehicles; a parking photo by a reporter or an appellant; a fine's photo
+ * by the staff who issue fines (ADR 0045).
  */
 export const FILE_PURPOSES = {
   worker_photo: {
@@ -93,6 +96,24 @@ export const FILE_PURPOSES = {
     types: IMAGE_TYPES,
     maxBytes: 5 * MB,
     uploaders: ['gate.operate'],
+  },
+  // A vehicle's licence (ADR 0045): a photo or a scan.
+  vehicle_licence: {
+    types: [...IMAGE_TYPES, 'application/pdf'],
+    maxBytes: 10 * MB,
+    uploaders: ['vehicles.register'],
+  },
+  // A parking report's photo, or a fine's appeal's (ADR 0045).
+  parking_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['parking.report', 'vehicles.register'],
+  },
+  // A vehicle fine's photo (ADR 0045), the staff's.
+  vehicle_fine_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['fines.issue'],
   },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.

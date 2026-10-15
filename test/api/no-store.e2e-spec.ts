@@ -628,6 +628,20 @@ describe('API v0 — no-store', () => {
       }),
     ).id;
 
+  const asGuard = (method: 'GET' | 'POST', path: string, payload?: object) =>
+    call(w, method, path, { token: w.a.tokens.guard, body: payload });
+  /**
+   * An emergency nobody answered yet: one of A's home's types is cancelled
+   * first if open, so every call gets a fresh one.
+   */
+  const anUnansweredEmergency = async () => {
+    const id = await anEmergency('facilities');
+    const seen = await asGuard('GET', `/gate/emergencies/${id}`);
+    if (body<{ status: string }>(seen).status === 'reported') return id;
+    await as('owner', 'POST', `/emergencies/${id}/cancel`, {});
+    return anEmergency('facilities');
+  };
+
   /** Emergencies and gate services (ADR 0047). */
   const SAFETY_CALLS = (): Record<string, () => Promise<Response>> => ({
     'GET /community/places': () => as('owner', 'GET', '/community/places'),
@@ -653,6 +667,30 @@ describe('API v0 — no-store', () => {
       as('owner', 'POST', `/emergencies/${await anEmergency('fire')}/cancel`, {
         reasonCode: 'false_alarm',
       }),
+    'GET /gate/emergencies': () =>
+      asGuard('GET', '/gate/emergencies?status=open'),
+    'GET /gate/emergencies/{id}': async () =>
+      asGuard('GET', `/gate/emergencies/${await anEmergency('medical')}`),
+    'POST /gate/emergencies/{id}/accept': async () =>
+      asGuard(
+        'POST',
+        `/gate/emergencies/${await anUnansweredEmergency()}/accept`,
+        { etaMinutes: 5 },
+      ),
+    'POST /gate/emergencies/{id}/arrived': async () => {
+      const id = await anUnansweredEmergency();
+      await asGuard('POST', `/gate/emergencies/${id}/accept`, {
+        etaMinutes: 2,
+      }).expect(200);
+      return asGuard('POST', `/gate/emergencies/${id}/arrived`);
+    },
+    'POST /gate/emergencies/{id}/resolve': async () =>
+      as(
+        'manager',
+        'POST',
+        `/gate/emergencies/${await anUnansweredEmergency()}/resolve`,
+        { reasonCode: 'false_alarm' },
+      ),
     'POST /emergencies/{id}/on-my-way': async () =>
       as(
         'family',

@@ -1141,6 +1141,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'لم يستجب أحد لبلاغ طوارئ حتى الآن. افتح التطبيق الآن.',
     },
   },
+  'emergency.responder_on_the_way': {
+    en: {
+      title: 'Security is on the way',
+      body: 'A responder is on the way, about {etaMinutes} minutes.',
+    },
+    ar: {
+      title: 'الأمن في الطريق',
+      body: 'أحد المستجيبين في الطريق، خلال {etaMinutes} دقائق تقريبًا.',
+    },
+  },
   'emergency.cancelled': {
     en: {
       title: 'Emergency cancelled',

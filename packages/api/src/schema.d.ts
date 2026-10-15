@@ -1444,6 +1444,100 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/emergencies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the compound’s emergencies
+         * @description `status=open` is the queue, oldest first. A guard needs an open shift (NO_OPEN_SHIFT).
+         */
+        get: operations["EmergencyRespondersController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/emergencies/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an emergency */
+        get: operations["EmergencyRespondersController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/emergencies/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept an emergency, with the minutes you expect to take
+         * @description The first one wins (409 EMERGENCY_ALREADY_ACCEPTED for the others). The household is told, and sees your first name and your gate’s phone.
+         */
+        post: operations["EmergencyRespondersController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/emergencies/{id}/arrived": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark that you arrived (its responder) */
+        post: operations["EmergencyRespondersController_arrived"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/emergencies/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resolve an emergency
+         * @description Its responder, or the management (`emergencies.manage`).
+         */
+        post: operations["EmergencyRespondersController_resolve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/entries": {
         parameters: {
             query?: never;
@@ -8596,6 +8690,13 @@ export interface components {
             grantedAt: string | null;
             grantedBy: components["schemas"]["ConsenterView"] | null;
         };
+        AcceptEmergencyDto: {
+            /**
+             * @description How many minutes the responder expects to take: the household sees it count down.
+             * @enum {number}
+             */
+            etaMinutes: 2 | 5 | 10 | 15;
+        };
         AccessCodeView: {
             /** @description 8 digits, shown once. */
             accessCode: string | null;
@@ -14338,6 +14439,12 @@ export interface components {
             data: components["schemas"]["ResidentVisitView"][];
             nextCursor: string | null;
         };
+        ResolveEmergencyDto: {
+            /** @description The staff’s own words, kept for the management. */
+            note?: string;
+            /** @description From the closed list `emergencyResolve`. */
+            reasonCode: string;
+        };
         RespondSuggestionDto: {
             /** @description What the staff tell the author. Replaces an earlier answer. */
             response: string;
@@ -14959,6 +15066,46 @@ export interface components {
         };
         StaffComplaintViewList: {
             data: components["schemas"]["StaffComplaintView"][];
+            nextCursor: string | null;
+        };
+        StaffEmergencyView: {
+            /** @description The resolving staff’s note. */
+            closeNote: string | null;
+            closeReason: string | null;
+            /**
+             * Format: date-time
+             * @description Handed to the management: nobody accepted in time, or nobody was there to tell.
+             */
+            escalatedAt: string | null;
+            /** @enum {string|null} */
+            escalationReason: "timeout" | "no_responders" | null;
+            /** @enum {number|null} */
+            etaMinutes: 2 | 5 | 10 | 15 | null;
+            familyNotified: number;
+            familyOnTheWay: number;
+            /** Format: uuid */
+            id: string;
+            /** @description The caller is its responder. */
+            isMine: boolean;
+            location: components["schemas"]["EmergencyLocationView"];
+            minutesAway: number | null;
+            /** @example E-0042 */
+            reference: string;
+            /** Format: date-time */
+            reportedAt: string;
+            reportedBy: components["schemas"]["FirstNameRefView"];
+            /** @description What the household sees of the responder. */
+            responder: components["schemas"]["ResponderView"] | null;
+            /** @description Who accepted it. */
+            responderAccount: components["schemas"]["FirstNameRefView"] | null;
+            /** @description Responders told at the report. */
+            respondersNotified: number;
+            status: components["schemas"]["EmergencyStatus"];
+            timeline: components["schemas"]["TimelineStepView"][];
+            type: components["schemas"]["EmergencyType"];
+        };
+        StaffEmergencyViewList: {
+            data: components["schemas"]["StaffEmergencyView"][];
             nextCursor: string | null;
         };
         StaffEventListItemView: {
@@ -19274,6 +19421,123 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GuardRequestResponse"];
+                };
+            };
+        };
+    };
+    EmergencyRespondersController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `open` is the queue, oldest first; else newest first. */
+                status?: "open" | "closed";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffEmergencyViewList"];
+                };
+            };
+        };
+    };
+    EmergencyRespondersController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffEmergencyView"];
+                };
+            };
+        };
+    };
+    EmergencyRespondersController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptEmergencyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffEmergencyView"];
+                };
+            };
+        };
+    };
+    EmergencyRespondersController_arrived: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffEmergencyView"];
+                };
+            };
+        };
+    };
+    EmergencyRespondersController_resolve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolveEmergencyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffEmergencyView"];
                 };
             };
         };

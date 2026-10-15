@@ -136,6 +136,47 @@ describe('Audit coverage — emergencies and gate services', () => {
     });
   });
 
+  describe('emergencies, the responders', () => {
+    it('accepted, arrived and resolved: minutes, gate, codes; the note as a boolean', async () => {
+      const guard = await x.guardOnDuty(s.c);
+      const home = await x.unit(s.c);
+      const owner = await x.owner(s.c, home.id);
+      const e = await x.report(owner, home.id, 'medical');
+      await x
+        .http('post', `/gate/emergencies/${e.id}/accept`, guard.token, {
+          etaMinutes: 15,
+        })
+        .expect(200);
+      const a = await single('emergency.accepted', e.id);
+      expect(a).toMatchObject(by(guard, 'emergency'));
+      expect(a.metadata).toEqual({ etaMinutes: 15, gateId: guard.gateId });
+      await x
+        .http('post', `/gate/emergencies/${e.id}/arrived`, guard.token)
+        .expect(200);
+      const ar = await single('emergency.arrived', e.id);
+      expect(ar).toMatchObject(by(guard, 'emergency'));
+      expect(ar.metadata ?? null).toBeNull();
+      await x
+        .http('post', `/gate/emergencies/${e.id}/resolve`, guard.token, {
+          reasonCode: 'handled',
+          note: WORDS,
+        })
+        .expect(200);
+      const r = await single('emergency.resolved', e.id);
+      expect(r).toMatchObject(by(guard, 'emergency'));
+      expect(r.metadata).toEqual({
+        from: 'arrived',
+        reasonCode: 'handled',
+        side: 'responder',
+        note: true,
+      });
+      // The guard's shift ends: the rest of this suite has nobody on duty.
+      await x
+        .http('post', '/gate/shifts/end', guard.token)
+        .expect((res) => expect(res.status).toBeLessThan(300));
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every emergencies and gate services entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

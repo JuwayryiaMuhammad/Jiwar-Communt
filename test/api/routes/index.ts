@@ -89,6 +89,7 @@ import { VISITORS_ROUTES } from './visitors';
 import { WORKERS_ROUTES } from './workers';
 import {
   EMERGENCY_CONTACT_ROUTES,
+  EMERGENCY_RESPONDER_ROUTES,
   EMERGENCY_ROUTES,
   PLACE_ROUTES,
 } from './safety';
@@ -170,4 +171,5 @@ export const ROUTES: Row[] = [
   ...PLACE_ROUTES,
   ...EMERGENCY_CONTACT_ROUTES,
   ...EMERGENCY_ROUTES,
+  ...EMERGENCY_RESPONDER_ROUTES,
 ];

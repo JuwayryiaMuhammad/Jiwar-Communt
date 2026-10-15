@@ -29,6 +29,24 @@
         ],
         "type": "object"
       },
+      "AcceptEmergencyDto": {
+        "properties": {
+          "etaMinutes": {
+            "description": "How many minutes the responder expects to take: the household sees it count down.",
+            "enum": [
+              2,
+              5,
+              10,
+              15
+            ],
+            "type": "number"
+          }
+        },
+        "required": [
+          "etaMinutes"
+        ],
+        "type": "object"
+      },
       "AccessCodeView": {
         "properties": {
           "accessCode": {
@@ -18798,6 +18816,24 @@
         ],
         "type": "object"
       },
+      "ResolveEmergencyDto": {
+        "properties": {
+          "note": {
+            "description": "The staff’s own words, kept for the management.",
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "From the closed list `emergencyResolve`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "RespondSuggestionDto": {
         "properties": {
           "response": {
@@ -20917,6 +20953,161 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/StaffComplaintView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffEmergencyView": {
+        "properties": {
+          "closeNote": {
+            "description": "The resolving staff’s note.",
+            "nullable": true,
+            "type": "string"
+          },
+          "closeReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "escalatedAt": {
+            "description": "Handed to the management: nobody accepted in time, or nobody was there to tell.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "escalationReason": {
+            "enum": [
+              "timeout",
+              "no_responders"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "etaMinutes": {
+            "enum": [
+              2,
+              5,
+              10,
+              15
+            ],
+            "nullable": true,
+            "type": "number"
+          },
+          "familyNotified": {
+            "type": "number"
+          },
+          "familyOnTheWay": {
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "isMine": {
+            "description": "The caller is its responder.",
+            "type": "boolean"
+          },
+          "location": {
+            "$ref": "#/components/schemas/EmergencyLocationView"
+          },
+          "minutesAway": {
+            "nullable": true,
+            "type": "number"
+          },
+          "reference": {
+            "example": "E-0042",
+            "type": "string"
+          },
+          "reportedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reportedBy": {
+            "$ref": "#/components/schemas/FirstNameRefView"
+          },
+          "responder": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResponderView"
+              }
+            ],
+            "description": "What the household sees of the responder.",
+            "nullable": true,
+            "type": "object"
+          },
+          "responderAccount": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FirstNameRefView"
+              }
+            ],
+            "description": "Who accepted it.",
+            "nullable": true,
+            "type": "object"
+          },
+          "respondersNotified": {
+            "description": "Responders told at the report.",
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmergencyStatus"
+              }
+            ]
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineStepView"
+            },
+            "type": "array"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmergencyType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "type",
+          "status",
+          "reportedAt",
+          "location",
+          "reportedBy",
+          "responderAccount",
+          "responder",
+          "isMine",
+          "etaMinutes",
+          "minutesAway",
+          "escalatedAt",
+          "escalationReason",
+          "respondersNotified",
+          "familyNotified",
+          "familyOnTheWay",
+          "timeline",
+          "closeReason",
+          "closeNote"
+        ],
+        "type": "object"
+      },
+      "StaffEmergencyViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffEmergencyView"
             },
             "type": "array"
           },
@@ -32063,6 +32254,244 @@
         "summary": "Withdraw an approval request",
         "tags": [
           "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/emergencies": {
+      "get": {
+        "description": "`status=open` is the queue, oldest first. A guard needs an open shift (NO_OPEN_SHIFT).",
+        "operationId": "EmergencyRespondersController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`open` is the queue, oldest first; else newest first.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "open",
+                "closed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffEmergencyViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the compound’s emergencies",
+        "tags": [
+          "emergencies"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/emergencies/{id}": {
+      "get": {
+        "operationId": "EmergencyRespondersController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffEmergencyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an emergency",
+        "tags": [
+          "emergencies"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/emergencies/{id}/accept": {
+      "post": {
+        "description": "The first one wins (409 EMERGENCY_ALREADY_ACCEPTED for the others). The household is told, and sees your first name and your gate’s phone.",
+        "operationId": "EmergencyRespondersController_accept",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptEmergencyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffEmergencyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accept an emergency, with the minutes you expect to take",
+        "tags": [
+          "emergencies"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/emergencies/{id}/arrived": {
+      "post": {
+        "operationId": "EmergencyRespondersController_arrived",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffEmergencyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark that you arrived (its responder)",
+        "tags": [
+          "emergencies"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/emergencies/{id}/resolve": {
+      "post": {
+        "description": "Its responder, or the management (`emergencies.manage`).",
+        "operationId": "EmergencyRespondersController_resolve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveEmergencyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffEmergencyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Resolve an emergency",
+        "tags": [
+          "emergencies"
         ],
         "x-no-store": true,
         "x-stability": "draft"

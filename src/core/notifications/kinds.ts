@@ -1075,6 +1075,14 @@ export const NOTIFICATION_KINDS = {
     target: 'emergency',
     params: { emergencyType: {} },
   },
+  /** A responder accepted, with their minutes: the reporter and the family. */
+  'emergency.responder_on_the_way': {
+    priority: 'critical',
+    category: 'safety',
+    critical: true,
+    target: 'emergency',
+    params: { etaMinutes: {} },
+  },
   /** Cancelled by the household: its responder, or those told of it. */
   'emergency.cancelled': {
     priority: 'critical',

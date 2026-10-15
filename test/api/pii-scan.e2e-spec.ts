@@ -1148,6 +1148,7 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0047: the family's phones, for those who live there only.
       '/units/{unitId}/emergency-contacts': unit.id,
       '/emergencies/{id}': piiEmergency,
+      '/gate/emergencies/{id}': piiEmergency,
       // ADR 0046: last four characters at most, never a name.
       '/platform/tenants/{id}/payment-gateway': a.tenantId,
       '/staff/invoice-batches/{id}': piiInvoice.batchId,

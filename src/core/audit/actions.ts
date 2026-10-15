@@ -760,6 +760,13 @@ export const AUDIT_ACTIONS = {
   'emergency.escalated': { log: 'tenant', target: 'emergency' },
   // metadata: from (the status), reasonCode (or null).
   'emergency.cancelled': { log: 'tenant', target: 'emergency' },
+  // metadata: etaMinutes, gateId (null for a responder not at a gate).
+  'emergency.accepted': { log: 'tenant', target: 'emergency' },
+  // No metadata: the responder is the actor.
+  'emergency.arrived': { log: 'tenant', target: 'emergency' },
+  // metadata: from, reasonCode, side (responder | staff), note (a boolean:
+  // never the words).
+  'emergency.resolved': { log: 'tenant', target: 'emergency' },
   // No metadata: the member is the actor.
   'emergency.family_on_my_way': { log: 'tenant', target: 'emergency' },
 

@@ -361,4 +361,7 @@ export const SAFETY_COVERAGE: readonly string[] = [
   'emergency.escalated',
   'emergency.cancelled',
   'emergency.family_on_my_way',
+  'emergency.accepted',
+  'emergency.arrived',
+  'emergency.resolved',
 ];

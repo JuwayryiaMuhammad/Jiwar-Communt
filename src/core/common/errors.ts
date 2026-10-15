@@ -519,6 +519,12 @@ export const ErrorCode = {
   EMERGENCY_CLOSED: 'EMERGENCY_CLOSED',
   /** The caller sees it but may not do this (403): cancel, or "on my way". */
   EMERGENCY_ACTION_NOT_ALLOWED: 'EMERGENCY_ACTION_NOT_ALLOWED',
+  /** Another responder accepted it first (409). */
+  EMERGENCY_ALREADY_ACCEPTED: 'EMERGENCY_ALREADY_ACCEPTED',
+  /** Only its responder marks the arrival (403). */
+  EMERGENCY_NOT_RESPONDER: 'EMERGENCY_NOT_RESPONDER',
+  /** Nobody accepted it yet: there is no arrival to mark (409, params.status). */
+  EMERGENCY_NOT_ON_THE_WAY: 'EMERGENCY_NOT_ON_THE_WAY',
   /**
    * The server holds no PAYMENT_CREDENTIALS_KEY, so no credential can be
    * stored and online payment cannot be turned on (503, ADR 0046).
@@ -726,7 +732,10 @@ export const FieldErrorCode = {
 export type FieldErrorCode =
   (typeof FieldErrorCode)[keyof typeof FieldErrorCode];
 
-export type ErrorParams = Record<string, string | number | boolean | string[]>;
+export type ErrorParams = Record<
+  string,
+  string | number | boolean | string[] | number[]
+>;
 
 export interface FieldError {
   /** API field path, e.g. `email` or `units.0.unitId`. */

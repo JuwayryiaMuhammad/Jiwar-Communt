@@ -171,3 +171,99 @@ export const EMERGENCY_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** Emergencies, the responders' side (ADR 0047). */
+export const EMERGENCY_RESPONDER_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/gate/emergencies',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'pending' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['open', 'closed'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/gate/emergencies/{id}',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bEmergencyId }),
+      code: 'EMERGENCY_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/emergencies/{id}/accept',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bEmergencyId }),
+      code: 'EMERGENCY_NOT_FOUND',
+      body: () => ({ etaMinutes: 5 }),
+    },
+    invalid: {
+      body: { etaMinutes: 3 },
+      fields: [
+        {
+          field: 'etaMinutes',
+          code: 'INVALID_VALUE',
+          params: { allowed: [2, 5, 10, 15] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/emergencies/{id}/arrived',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bEmergencyId }),
+      code: 'EMERGENCY_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/emergencies/{id}/resolve',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bEmergencyId }),
+      code: 'EMERGENCY_NOT_FOUND',
+      body: () => ({ reasonCode: 'handled' }),
+    },
+    invalid: {
+      body: { note: '' },
+      fields: [
+        { field: 'reasonCode', code: 'FIELD_REQUIRED' },
+        {
+          field: 'note',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 500 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+];

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { SafetyCounterSeries } from '@prisma/client';
 import { CommunityGatePort } from '../../community';
 import type { Permission } from '../../core/access/permissions';
+import { PermissionsService } from '../../core/access/permissions.service';
 import { StaffRecipients } from '../../core/access/staff-recipients';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { appError, ErrorCode } from '../../core/common/errors';
@@ -38,7 +39,34 @@ export class SafetyCore {
     private readonly staff: StaffRecipients,
     private readonly notifier: Notifier,
     private readonly settings: TenantSettingsService,
+    private readonly permissions: PermissionsService,
   ) {}
+
+  /**
+   * Who is acting on the responders' side, and from where: a guard inside
+   * their open shift (the gate of it), or a holder of one of `others` (no
+   * gate). A guard without an open shift and nothing else is refused (403
+   * NO_OPEN_SHIFT): the route let them in by `gate.operate` alone.
+   */
+  async acting(
+    tx: TenantTxClient,
+    others: readonly Permission[],
+  ): Promise<{ gateId: string | null; permissions: ReadonlySet<string> }> {
+    const permissions = await this.permissions.current();
+    if (permissions.has('gate.operate')) {
+      const shift = await tx.guardShift.findFirst({
+        where: { guardAccountId: this.ctx.accountId, endedAt: null },
+        select: { gateId: true },
+      });
+      if (shift) return { gateId: shift.gateId, permissions };
+    }
+    if (others.some((p) => permissions.has(p)))
+      return { gateId: null, permissions };
+    throw appError.forbidden(
+      ErrorCode.NO_OPEN_SHIFT,
+      'Start a shift at a gate before acting at the gate',
+    );
+  }
 
   /**
    * The caller's own account row, shared-locked for the rest of the

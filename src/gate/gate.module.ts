@@ -92,6 +92,8 @@ import { EmergencyContactsController } from './emergencies/emergency-contacts.co
 import { EmergencyContactsService } from './emergencies/emergency-contacts.service';
 import { EmergenciesController } from './emergencies/emergencies.controller';
 import { EmergenciesService } from './emergencies/emergencies.service';
+import { EmergencyRespondersController } from './emergencies/emergency-responders.controller';
+import { EmergencyRespondersService } from './emergencies/emergency-responders.service';
 import { EmergencyEscalation } from './emergencies/emergency-escalation';
 import { EmergencyRecords } from './emergencies/emergency-records';
 import { SafetyCore } from './safety/safety-core';
@@ -141,6 +143,7 @@ import { SafetyCore } from './safety/safety-core';
     PlacesController,
     EmergencyContactsController,
     EmergenciesController,
+    EmergencyRespondersController,
   ],
   providers: [
     GatesService,
@@ -190,6 +193,7 @@ import { SafetyCore } from './safety/safety-core';
     EmergencyRecords,
     EmergencyEscalation,
     EmergenciesService,
+    EmergencyRespondersService,
   ],
 })
 export class GateModule {}

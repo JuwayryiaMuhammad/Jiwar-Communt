@@ -3,11 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import type { Vehicle, VisitorPass } from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
 import { RequestContext } from '../../core/common/cls/request-context';
-import {
-  appError,
-  ErrorCode,
-  FieldErrorCode,
-} from '../../core/common/errors';
+import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import { localDate } from '../../core/common/slots/day-slots';
 import {
   normalizePlate,
@@ -135,11 +131,7 @@ export class PlateLookupService {
         kind: 'vehicle',
         unitCode: codes.get(v.unitId) ?? '',
         vehicle: v,
-        permitStatus: permitStatus(
-          v.status,
-          dayOf(v.permitValidUntil),
-          today,
-        ),
+        permitStatus: permitStatus(v.status, dayOf(v.permitValidUntil), today),
       }));
       for (const { visitorDetails, ...pass } of passes) {
         const subject = await this.subjects.pass(tx, pass);

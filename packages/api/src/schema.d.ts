@@ -5760,6 +5760,78 @@ export interface paths {
         patch: operations["ParkingSlotsController_update"];
         trace?: never;
     };
+    "/api/v1/staff/vehicle-fines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the compound’s fines
+         * @description `status=under_appeal` is the appeals queue, oldest first.
+         */
+        get: operations["StaffFinesController_list"];
+        put?: never;
+        /** Issue a fine to a unit */
+        post: operations["StaffFinesController_issue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/vehicle-fines/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a fine with its appeal and payments */
+        get: operations["StaffFinesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/vehicle-fines/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an unpaid fine not under appeal, with a reason code */
+        post: operations["StaffFinesController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/vehicle-fines/{id}/decide-appeal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide a fine’s appeal: upheld or cancelled */
+        post: operations["StaffFinesController_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/vehicle-settings": {
         parameters: {
             query?: never;
@@ -7191,6 +7263,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/vehicle-fines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the unit’s fines
+         * @description For its vehicle keepers and whoever sees its money (FINES_NOT_ALLOWED). Newest first.
+         */
+        get: operations["UnitFinesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/vehicles": {
         parameters: {
             query?: never;
@@ -7306,6 +7398,43 @@ export interface paths {
         get: operations["WorkersController_one"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vehicle-fines/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one of the unit’s fines */
+        get: operations["UnitFinesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vehicle-fines/{id}/appeal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Appeal a fine, once
+         * @description A vehicle keeper of the unit or its primary (FINE_APPEAL_NOT_ALLOWED): unpaid, never appealed (FINE_APPEAL_CLOSED), within 30 days of being issued (FINE_APPEAL_WINDOW_PASSED).
+         */
+        post: operations["UnitFinesController_appeal"];
         delete?: never;
         options?: never;
         head?: never;
@@ -7862,6 +7991,15 @@ export interface components {
             titleEn: string | null;
             works: components["schemas"]["WorksView"] | null;
         };
+        AppealFineDto: {
+            /**
+             * Format: uuid
+             * @description A finalized `parking_photo` upload of the caller.
+             */
+            photoFileId?: string;
+            /** @description Why: the appellant’s words. */
+            reason: string;
+        };
         ApplyInstructionDto: {
             /**
              * Format: uuid
@@ -8297,6 +8435,10 @@ export interface components {
         };
         CancelEventDto: {
             /** @description From the closed list `communityEventCancel`. */
+            reasonCode: string;
+        };
+        CancelFineDto: {
+            /** @description From the closed list `vehicleFineCancel`. */
             reasonCode: string;
         };
         CancelVisitorPassDto: {
@@ -9498,6 +9640,15 @@ export interface components {
             data: components["schemas"]["DataExportView"][];
             nextCursor: string | null;
         };
+        DecideAppealDto: {
+            /**
+             * @description `upheld`: the fine is unpaid again. `cancelled`: it is cancelled.
+             * @enum {string}
+             */
+            decision: "upheld" | "cancelled";
+            /** @description With `cancelled` only, from `vehicleFineCancel` (default `appeal_accepted`). */
+            reasonCode?: string;
+        };
         DecisionResponse: {
             decisionSource: components["schemas"]["GateDecisionSource"] | null;
             /** Format: uuid */
@@ -10253,6 +10404,17 @@ export interface components {
             /** @description `pending` until finalized. */
             status: components["schemas"]["FileStatus"];
         };
+        FineAppealView: {
+            /** Format: date-time */
+            appealedAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            decision: components["schemas"]["VehicleFineDecision"] | null;
+            /** @description A presigned URL, valid for minutes. */
+            photoUrl: string | null;
+            /** @description The appellant’s words; null once the appellant was erased. */
+            reason: string | null;
+        };
         FirstNameOnlyView: {
             /**
              * @description Present (true) only on an erased account.
@@ -10653,6 +10815,30 @@ export interface components {
              * @example Mona's phone
              */
             deviceName?: string;
+        };
+        IssueFineDto: {
+            /** @description EGP, e.g. `500` or `500.50`; at most 100,000. */
+            amount: string;
+            /** @description What the unit’s people read. */
+            note?: string;
+            /** @description The local day it happened: not ahead, at most 90 days ago (DAY_OUT_OF_RANGE). */
+            occurredOn: string;
+            /**
+             * Format: uuid
+             * @description A finalized `vehicle_fine_photo` upload of the caller.
+             */
+            photoFileId?: string;
+            /** @description Without a vehicle: the plate as read. */
+            plate?: string;
+            /** @description From the closed list `vehicleFineReason`. */
+            reason: string;
+            /** @description The unit’s code (UNIT_CODE_UNKNOWN). */
+            unitCode: string;
+            /**
+             * Format: uuid
+             * @description One of the unit’s vehicles, not removed (VEHICLE_NOT_OF_UNIT); its plate is taken. Otherwise give `plate`.
+             */
+            vehicleId?: string;
         };
         IssuedEntryCredentialView: {
             /** Format: uuid */
@@ -12345,6 +12531,41 @@ export interface components {
             preferredLocale?: components["schemas"]["Locale"];
             status?: components["schemas"]["AccountStatus"];
         };
+        ResidentFineView: {
+            /**
+             * @description EGP, two decimals.
+             * @example 500.00
+             */
+            amount: string;
+            appeal: components["schemas"]["FineAppealView"] | null;
+            /** @description The caller may appeal it now: unpaid, never appealed, within 30 days, a vehicle keeper of the unit or its primary. */
+            canAppeal: boolean;
+            /** @description Why it was cancelled: `vehicleFineCancel`. */
+            cancelReason: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @enum {string} */
+            currency: "EGP";
+            /** @description The local day it happened, `YYYY-MM-DD`. */
+            date: string;
+            /** Format: uuid */
+            id: string;
+            /** @description The staff’s words. */
+            note: string | null;
+            /** @description A presigned URL, valid for minutes. */
+            photoUrl: string | null;
+            plate: string;
+            /** @description From the closed list `vehicleFineReason`. */
+            reason: string;
+            /** @example F-0042 */
+            reference: string;
+            /** @description `paid` at the office (no online payment yet). */
+            status: components["schemas"]["VehicleFineStatus"];
+        };
+        ResidentFineViewList: {
+            data: components["schemas"]["ResidentFineView"][];
+            nextCursor: string | null;
+        };
         ResidentListItemView: {
             email?: string;
             /** @enum {boolean} */
@@ -13324,6 +13545,60 @@ export interface components {
         };
         StaffFacilityViewList: {
             data: components["schemas"]["StaffFacilityView"][];
+            nextCursor: string | null;
+        };
+        StaffFinePaymentView: {
+            amount: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            currency: string | null;
+            /** Format: uuid */
+            fineId: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["VehicleFinePaymentKind"];
+            /** @description `YYYY-MM-DD`. */
+            paidOn: string | null;
+            reasonCode: string | null;
+            receiptNumber: string | null;
+            recordedBy: components["schemas"]["AccountRefView"];
+            /** Format: uuid */
+            reversesId: string | null;
+        };
+        StaffFineView: {
+            /** @description EGP, two decimals. */
+            amount: string;
+            appeal: components["schemas"]["FineAppealView"] | null;
+            appealedBy: components["schemas"]["AccountRefView"] | null;
+            cancelReason: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            cancelledBy: components["schemas"]["AccountRefView"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            currency: string;
+            decidedBy: components["schemas"]["AccountRefView"] | null;
+            /** Format: uuid */
+            id: string;
+            issuedBy: components["schemas"]["AccountRefView"];
+            note: string | null;
+            /** @description `YYYY-MM-DD`. */
+            occurredOn: string;
+            payments: components["schemas"]["StaffFinePaymentView"][];
+            photoUrl: string | null;
+            plate: string;
+            reason: string;
+            /** @example F-0042 */
+            reference: string;
+            status: components["schemas"]["VehicleFineStatus"];
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+            /** Format: uuid */
+            vehicleId: string | null;
+        };
+        StaffFineViewList: {
+            data: components["schemas"]["StaffFineView"][];
             nextCursor: string | null;
         };
         StaffMessageDto: {
@@ -14725,6 +15000,15 @@ export interface components {
             /** @description Presigned; shown once. */
             url: string;
         };
+        /** @enum {string} */
+        VehicleFineDecision: "upheld" | "cancelled";
+        /** @enum {string} */
+        VehicleFinePaymentKind: "payment" | "reversal";
+        /**
+         * @description `paid` at the office (no online payment yet).
+         * @enum {string}
+         */
+        VehicleFineStatus: "unpaid" | "under_appeal" | "paid" | "cancelled";
         /**
          * @description `expires_soon` within 30 days of `permitValidUntil`, `expired` after it: read when asked, never stored. `removed` only on staff views.
          * @enum {string}
@@ -24237,6 +24521,129 @@ export interface operations {
             };
         };
     };
+    StaffFinesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `under_appeal` is the appeals queue, oldest first; anything else newest first. */
+                status?: components["schemas"]["VehicleFineStatus"];
+                unitCode?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFineViewList"];
+                };
+            };
+        };
+    };
+    StaffFinesController_issue: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueFineDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFineView"];
+                };
+            };
+        };
+    };
+    StaffFinesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFineView"];
+                };
+            };
+        };
+    };
+    StaffFinesController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelFineDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFineView"];
+                };
+            };
+        };
+    };
+    StaffFinesController_decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideAppealDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFineView"];
+                };
+            };
+        };
+    };
     VehicleSettingsController_get: {
         parameters: {
             query?: never;
@@ -26477,6 +26884,33 @@ export interface operations {
             };
         };
     };
+    UnitFinesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `unpaid` includes what is under appeal. Absent: every fine. */
+                status?: "unpaid" | "paid" | "cancelled";
+            };
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentFineViewList"];
+                };
+            };
+        };
+    };
     VehiclesController_list: {
         parameters: {
             query?: never;
@@ -26722,6 +27156,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UnitEngagementView"];
+                };
+            };
+        };
+    };
+    UnitFinesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentFineView"];
+                };
+            };
+        };
+    };
+    UnitFinesController_appeal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppealFineDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentFineView"];
                 };
             };
         };

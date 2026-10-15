@@ -604,6 +604,25 @@
         ],
         "type": "object"
       },
+      "AppealFineDto": {
+        "properties": {
+          "photoFileId": {
+            "description": "A finalized `parking_photo` upload of the caller.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why: the appellant’s words.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
       "ApplyInstructionDto": {
         "properties": {
           "instructionId": {
@@ -2060,6 +2079,18 @@
         "properties": {
           "reasonCode": {
             "description": "From the closed list `communityEventCancel`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "CancelFineDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `vehicleFineCancel`.",
             "type": "string"
           }
         },
@@ -5716,6 +5747,26 @@
         ],
         "type": "object"
       },
+      "DecideAppealDto": {
+        "properties": {
+          "decision": {
+            "description": "`upheld`: the fine is unpaid again. `cancelled`: it is cancelled.",
+            "enum": [
+              "upheld",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "With `cancelled` only, from `vehicleFineCancel` (default `appeal_accepted`).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "type": "object"
+      },
       "DecisionResponse": {
         "properties": {
           "decisionSource": {
@@ -8389,6 +8440,45 @@
         ],
         "type": "object"
       },
+      "FineAppealView": {
+        "properties": {
+          "appealedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehicleFineDecision"
+              }
+            ],
+            "nullable": true
+          },
+          "photoUrl": {
+            "description": "A presigned URL, valid for minutes.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reason": {
+            "description": "The appellant’s words; null once the appellant was erased.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "photoUrl",
+          "appealedAt",
+          "decision",
+          "decidedAt"
+        ],
+        "type": "object"
+      },
       "FirstNameOnlyView": {
         "properties": {
           "erased": {
@@ -9729,6 +9819,56 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "IssueFineDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP, e.g. `500` or `500.50`; at most 100,000.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,6}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "note": {
+            "description": "What the unit’s people read.",
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "occurredOn": {
+            "description": "The local day it happened: not ahead, at most 90 days ago (DAY_OUT_OF_RANGE).",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "photoFileId": {
+            "description": "A finalized `vehicle_fine_photo` upload of the caller.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "plate": {
+            "description": "Without a vehicle: the plate as read.",
+            "maxLength": 12,
+            "type": "string"
+          },
+          "reason": {
+            "description": "From the closed list `vehicleFineReason`.",
+            "type": "string"
+          },
+          "unitCode": {
+            "description": "The unit’s code (UNIT_CODE_UNKNOWN).",
+            "type": "string"
+          },
+          "vehicleId": {
+            "description": "One of the unit’s vehicles, not removed (VEHICLE_NOT_OF_UNIT); its plate is taken. Otherwise give `plate`.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitCode",
+          "reason",
+          "amount",
+          "occurredOn"
+        ],
         "type": "object"
       },
       "IssuedEntryCredentialView": {
@@ -15230,6 +15370,116 @@
         ],
         "type": "object"
       },
+      "ResidentFineView": {
+        "properties": {
+          "amount": {
+            "description": "EGP, two decimals.",
+            "example": "500.00",
+            "type": "string"
+          },
+          "appeal": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FineAppealView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "canAppeal": {
+            "description": "The caller may appeal it now: unpaid, never appealed, within 30 days, a vehicle keeper of the unit or its primary.",
+            "type": "boolean"
+          },
+          "cancelReason": {
+            "description": "Why it was cancelled: `vehicleFineCancel`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "enum": [
+              "EGP"
+            ],
+            "type": "string"
+          },
+          "date": {
+            "description": "The local day it happened, `YYYY-MM-DD`.",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "description": "The staff’s words.",
+            "nullable": true,
+            "type": "string"
+          },
+          "photoUrl": {
+            "description": "A presigned URL, valid for minutes.",
+            "nullable": true,
+            "type": "string"
+          },
+          "plate": {
+            "type": "string"
+          },
+          "reason": {
+            "description": "From the closed list `vehicleFineReason`.",
+            "type": "string"
+          },
+          "reference": {
+            "example": "F-0042",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehicleFineStatus"
+              }
+            ],
+            "description": "`paid` at the office (no online payment yet)."
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "reason",
+          "date",
+          "plate",
+          "amount",
+          "currency",
+          "status",
+          "note",
+          "photoUrl",
+          "appeal",
+          "cancelReason",
+          "canAppeal",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ResidentFineViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ResidentFineView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ResidentListItemView": {
         "properties": {
           "email": {
@@ -18628,6 +18878,230 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/StaffFacilityView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffFinePaymentView": {
+        "properties": {
+          "amount": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "nullable": true,
+            "type": "string"
+          },
+          "fineId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehicleFinePaymentKind"
+              }
+            ]
+          },
+          "paidOn": {
+            "description": "`YYYY-MM-DD`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "receiptNumber": {
+            "nullable": true,
+            "type": "string"
+          },
+          "recordedBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "reversesId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fineId",
+          "kind",
+          "amount",
+          "currency",
+          "receiptNumber",
+          "paidOn",
+          "reversesId",
+          "reasonCode",
+          "createdAt",
+          "recordedBy"
+        ],
+        "type": "object"
+      },
+      "StaffFineView": {
+        "properties": {
+          "amount": {
+            "description": "EGP, two decimals.",
+            "type": "string"
+          },
+          "appeal": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FineAppealView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "appealedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "cancelReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "decidedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "issuedBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "occurredOn": {
+            "description": "`YYYY-MM-DD`.",
+            "type": "string"
+          },
+          "payments": {
+            "items": {
+              "$ref": "#/components/schemas/StaffFinePaymentView"
+            },
+            "type": "array"
+          },
+          "photoUrl": {
+            "nullable": true,
+            "type": "string"
+          },
+          "plate": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "reference": {
+            "example": "F-0042",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehicleFineStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "vehicleId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "unitId",
+          "unitCode",
+          "vehicleId",
+          "plate",
+          "reason",
+          "note",
+          "amount",
+          "currency",
+          "occurredOn",
+          "status",
+          "photoUrl",
+          "issuedBy",
+          "appeal",
+          "appealedBy",
+          "decidedBy",
+          "cancelReason",
+          "cancelledBy",
+          "cancelledAt",
+          "payments",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StaffFineViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffFineView"
             },
             "type": "array"
           },
@@ -23338,6 +23812,30 @@
           "expiresAt"
         ],
         "type": "object"
+      },
+      "VehicleFineDecision": {
+        "enum": [
+          "upheld",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "VehicleFinePaymentKind": {
+        "enum": [
+          "payment",
+          "reversal"
+        ],
+        "type": "string"
+      },
+      "VehicleFineStatus": {
+        "description": "`paid` at the office (no online payment yet).",
+        "enum": [
+          "unpaid",
+          "under_appeal",
+          "paid",
+          "cancelled"
+        ],
+        "type": "string"
       },
       "VehiclePermitStatus": {
         "description": "`expires_soon` within 30 days of `permitValidUntil`, `expired` after it: read when asked, never stored. `removed` only on staff views.",
@@ -41665,6 +42163,255 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/vehicle-fines": {
+      "get": {
+        "description": "`status=under_appeal` is the appeals queue, oldest first.",
+        "operationId": "StaffFinesController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`under_appeal` is the appeals queue, oldest first; anything else newest first.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/VehicleFineStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitCode",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFineViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the compound’s fines",
+        "tags": [
+          "fines"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffFinesController_issue",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssueFineDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFineView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Issue a fine to a unit",
+        "tags": [
+          "fines"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/vehicle-fines/{id}": {
+      "get": {
+        "operationId": "StaffFinesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFineView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a fine with its appeal and payments",
+        "tags": [
+          "fines"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/vehicle-fines/{id}/cancel": {
+      "post": {
+        "operationId": "StaffFinesController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelFineDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFineView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel an unpaid fine not under appeal, with a reason code",
+        "tags": [
+          "fines"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/vehicle-fines/{id}/decide-appeal": {
+      "post": {
+        "operationId": "StaffFinesController_decide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideAppealDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFineView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decide a fine’s appeal: upheld or cancelled",
+        "tags": [
+          "fines"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/vehicle-settings": {
       "get": {
         "operationId": "VehicleSettingsController_get",
@@ -45904,6 +46651,79 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/units/{unitId}/vehicle-fines": {
+      "get": {
+        "description": "For its vehicle keepers and whoever sees its money (FINES_NOT_ALLOWED). Newest first.",
+        "operationId": "UnitFinesController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`unpaid` includes what is under appeal. Absent: every fine.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "unpaid",
+                "paid",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentFineViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the unit’s fines",
+        "tags": [
+          "fines"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/units/{unitId}/vehicles": {
       "get": {
         "description": "For whoever holds `vehicles` on the unit. Removed vehicles are gone.",
@@ -46423,6 +47243,93 @@
         "tags": [
           "workers"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/vehicle-fines/{id}": {
+      "get": {
+        "operationId": "UnitFinesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentFineView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one of the unit’s fines",
+        "tags": [
+          "fines"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/vehicle-fines/{id}/appeal": {
+      "post": {
+        "description": "A vehicle keeper of the unit or its primary (FINE_APPEAL_NOT_ALLOWED): unpaid, never appealed (FINE_APPEAL_CLOSED), within 30 days of being issued (FINE_APPEAL_WINDOW_PASSED).",
+        "operationId": "UnitFinesController_appeal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppealFineDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentFineView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Appeal a fine, once",
+        "tags": [
+          "fines"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

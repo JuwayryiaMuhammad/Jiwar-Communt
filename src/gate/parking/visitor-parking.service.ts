@@ -122,11 +122,7 @@ export class VisitorParkingService implements OnModuleInit {
   /** The unit's slots, and each active visitor area with its free spaces now. */
   unitParking(unitId: string): Promise<UnitParking> {
     return this.tenantTx.withTenantTx(async (tx) => {
-      const caps = await this.community.placeIn(
-        tx,
-        this.ctx.accountId,
-        unitId,
-      );
+      const caps = await this.community.placeIn(tx, this.ctx.accountId, unitId);
       if (!caps?.unitView) throw unitNotFound();
       const slots = await tx.unitParkingSlot.findMany({
         where: { unitId },
@@ -183,7 +179,9 @@ export class VisitorParkingService implements OnModuleInit {
           AND: [
             { unitId, ...(all ? {} : { bookedById: me }) },
             when,
-            ...(page.after(q.cursor) as Prisma.VisitorParkingBookingWhereInput[]),
+            ...(page.after(
+              q.cursor,
+            ) as Prisma.VisitorParkingBookingWhereInput[]),
           ],
         },
         include: { area: { select: { name: true } } },
@@ -278,7 +276,8 @@ export class VisitorParkingService implements OnModuleInit {
           'The unit holds as many visitor parking bookings as the compound allows',
           { params: { max } },
         );
-      if (passId) await this.checkPass(tx, unitId, passId, startsAt, endsAt, now);
+      if (passId)
+        await this.checkPass(tx, unitId, passId, startsAt, endsAt, now);
       const area = await this.lockArea(tx, input.areaId);
       if (!area?.active)
         throw invalid([
@@ -387,7 +386,9 @@ export class VisitorParkingService implements OnModuleInit {
         visitorPassId: passId,
         status: 'confirmed',
         endsAt: { gt: now },
-        startsAt: { lte: new Date(now.getTime() + GUARD_AHEAD_MINUTES * MINUTE) },
+        startsAt: {
+          lte: new Date(now.getTime() + GUARD_AHEAD_MINUTES * MINUTE),
+        },
       },
       include: { area: { select: { name: true } } },
       orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
@@ -410,7 +411,9 @@ export class VisitorParkingService implements OnModuleInit {
       where: {
         status: 'confirmed',
         endsAt: { gt: now },
-        startsAt: { lte: new Date(now.getTime() + GUARD_AHEAD_MINUTES * MINUTE) },
+        startsAt: {
+          lte: new Date(now.getTime() + GUARD_AHEAD_MINUTES * MINUTE),
+        },
       },
       include: { area: { select: { name: true } } },
       orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],

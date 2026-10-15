@@ -310,4 +310,8 @@ export const VEHICLES_COVERAGE: readonly string[] = [
   'visitor_parking_booking.created',
   'visitor_parking_booking.cancelled',
   'gate.plate_lookup',
+  'vehicle_fine.issued',
+  'vehicle_fine.appealed',
+  'vehicle_fine.appeal_decided',
+  'vehicle_fine.cancelled',
 ];

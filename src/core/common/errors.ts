@@ -477,6 +477,23 @@ export const ErrorCode = {
   VISITOR_PARKING_INVALID_TRANSITION: 'VISITOR_PARKING_INVALID_TRANSITION',
   /** It has ended (409). */
   VISITOR_PARKING_WINDOW_PASSED: 'VISITOR_PARKING_WINDOW_PASSED',
+  /**
+   * Unknown, another compound's; for a resident also one of a unit whose
+   * fines they do not see: one answer.
+   */
+  VEHICLE_FINE_NOT_FOUND: 'VEHICLE_FINE_NOT_FOUND',
+  /** The caller neither keeps the unit's vehicles nor sees its money (403). */
+  FINES_NOT_ALLOWED: 'FINES_NOT_ALLOWED',
+  /** Only the unit's vehicle keepers or its primary appeal a fine (403). */
+  FINE_APPEAL_NOT_ALLOWED: 'FINE_APPEAL_NOT_ALLOWED',
+  /** Appealed already, paid or cancelled (409, params.status, params.appealed). */
+  FINE_APPEAL_CLOSED: 'FINE_APPEAL_CLOSED',
+  /** A fine is appealed within params.days of being issued (409). */
+  FINE_APPEAL_WINDOW_PASSED: 'FINE_APPEAL_WINDOW_PASSED',
+  /** Only a fine under appeal is decided (409, params.status). */
+  FINE_NOT_UNDER_APPEAL: 'FINE_NOT_UNDER_APPEAL',
+  /** Only an unpaid fine not under appeal is cancelled (409, params.status). */
+  FINE_NOT_CANCELLABLE: 'FINE_NOT_CANCELLABLE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -616,6 +633,10 @@ export const FieldErrorCode = {
   PARKING_TOO_LONG: 'PARKING_TOO_LONG',
   /** Its window is not inside the pass's (params.validFrom, params.validUntil). */
   PARKING_OUTSIDE_PASS: 'PARKING_OUTSIDE_PASS',
+  /** Not a vehicle of that unit, or removed. */
+  VEHICLE_NOT_OF_UNIT: 'VEHICLE_NOT_OF_UNIT',
+  /** A local day outside params.min and params.max. */
+  DAY_OUT_OF_RANGE: 'DAY_OUT_OF_RANGE',
 } as const;
 
 export type FieldErrorCode =

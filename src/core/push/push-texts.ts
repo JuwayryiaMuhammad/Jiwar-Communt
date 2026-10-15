@@ -1071,6 +1071,36 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'ينتهي تصريح ركن إحدى المركبات خلال 30 يومًا. تواصل مع مكتب الإدارة لتجديده.',
     },
   },
+  'vehicle_fine.issued': {
+    en: {
+      title: 'New parking fine',
+      body: 'A parking fine was issued to your unit. Open the app for details.',
+    },
+    ar: {
+      title: 'مخالفة ركن جديدة',
+      body: 'صدرت مخالفة ركن على وحدتك. افتح التطبيق لمعرفة التفاصيل.',
+    },
+  },
+  'vehicle_fine.appeal_upheld': {
+    en: {
+      title: 'Appeal decided',
+      body: 'Your appeal was reviewed and the fine stands. It can be paid at the management office.',
+    },
+    ar: {
+      title: 'تم البت في التظلم',
+      body: 'تمت مراجعة تظلمك وتأييد المخالفة. يمكن سدادها في مكتب الإدارة.',
+    },
+  },
+  'vehicle_fine.appeal_accepted': {
+    en: {
+      title: 'Appeal accepted',
+      body: 'Your appeal was accepted and the fine was cancelled.',
+    },
+    ar: {
+      title: 'تم قبول التظلم',
+      body: 'تم قبول تظلمك وإلغاء المخالفة.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

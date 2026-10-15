@@ -242,4 +242,11 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   visitor_parking_areas_name_key: ['name'],
   visitor_parking_bookings_tenant_id_id_key: null,
   visitor_parking_bookings_number_key: null,
+  vehicle_fines_tenant_id_id_key: null,
+  vehicle_fines_number_key: null,
+  vehicle_fine_payments_tenant_id_id_key: null,
+  // Checked under the fine's lock first: a race.
+  vehicle_fine_payments_one_reversal: null,
+  // A receipt is recorded once among the compound's fine payments.
+  vehicle_fine_payments_receipt_key: ['receiptNumber'],
 };

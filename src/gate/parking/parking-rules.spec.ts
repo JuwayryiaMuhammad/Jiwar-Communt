@@ -3,8 +3,7 @@ import { join } from 'node:path';
 import { REASON_CODES } from '../../core/common/reasons';
 import { freeSpaces, peakOverlap, type Window } from './parking-rules';
 
-const t = (h: number, m = 0) =>
-  new Date(Date.UTC(2026, 9, 20, h, m));
+const t = (h: number, m = 0) => new Date(Date.UTC(2026, 9, 20, h, m));
 const w = (a: number, b: number): Window => ({
   startsAt: t(a),
   endsAt: t(b),
@@ -14,9 +13,7 @@ describe('peakOverlap (ADR 0045)', () => {
   it('counts what holds one instant, not what touches the window', () => {
     expect(peakOverlap([w(10, 11), w(12, 13)], t(10), t(13))).toBe(1);
     expect(peakOverlap([w(10, 12), w(11, 13)], t(10), t(13))).toBe(2);
-    expect(peakOverlap([w(9, 14), w(10, 11), w(10, 11)], t(10), t(13))).toBe(
-      3,
-    );
+    expect(peakOverlap([w(9, 14), w(10, 11), w(10, 11)], t(10), t(13))).toBe(3);
   });
 
   it('windows are half-open: one ending as another starts holds one space', () => {

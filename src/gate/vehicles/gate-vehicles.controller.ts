@@ -1,10 +1,21 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+} from '@nestjs/common';
 import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, Length } from 'class-validator';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
-import { bounded, ListOf, type ListResponse } from '../../core/common/http/list';
+import {
+  bounded,
+  ListOf,
+  type ListResponse,
+} from '../../core/common/http/list';
 import { withParams } from '../../core/common/validation/validation-errors';
 import { PlateLookupService } from './plate-lookup.service';
 import {
@@ -37,7 +48,8 @@ export class GateVehiclesController {
   @HttpCode(HttpStatus.OK)
   @NoStore()
   @ApiOperation({
-    summary: 'Look a plate up: the units’ vehicles and the visitors’ passes carrying it',
+    summary:
+      'Look a plate up: the units’ vehicles and the visitors’ passes carrying it',
     description:
       'The permit’s status, or whether the pass lets its visitor in now and their parking. Never a name. Rate-limited with verify; audited without the plate.',
   })
@@ -49,7 +61,8 @@ export class GateVehiclesController {
   @Get('visitor-parking')
   @NoStore()
   @ApiOperation({
-    summary: 'List the visitor parking bookings holding now or starting within two hours',
+    summary:
+      'List the visitor parking bookings holding now or starting within two hours',
   })
   @ApiOkResponse({ type: ListOf(GuardVisitorParkingView) })
   async visitorParking(): Promise<ListResponse<GuardVisitorParkingView>> {

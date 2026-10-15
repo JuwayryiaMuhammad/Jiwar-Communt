@@ -1009,6 +1009,33 @@ export const NOTIFICATION_KINDS = {
     target: 'vehicle',
     params: {},
   },
+  /**
+   * A fine was issued to the unit: to its vehicle keepers and its primary.
+   * The reason is a code; never the plate, the amount or who reported it.
+   */
+  'vehicle_fine.issued': {
+    priority: 'normal',
+    category: 'vehicles',
+    critical: false,
+    target: 'vehicle_fine',
+    params: { reason: {} },
+  },
+  /** The appeal was decided and the fine stands: to the appellant. */
+  'vehicle_fine.appeal_upheld': {
+    priority: 'normal',
+    category: 'vehicles',
+    critical: false,
+    target: 'vehicle_fine',
+    params: {},
+  },
+  /** The appeal was accepted and the fine cancelled: to the appellant. */
+  'vehicle_fine.appeal_accepted': {
+    priority: 'normal',
+    category: 'vehicles',
+    critical: false,
+    target: 'vehicle_fine',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

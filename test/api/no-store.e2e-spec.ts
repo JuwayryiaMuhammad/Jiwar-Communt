@@ -788,7 +788,68 @@ describe('API v0 — no-store', () => {
       place: 'No-store row',
     });
   };
+  /** A new fine to A's home: its id. */
+  const aFine = async () => {
+    const unit = await w.helpers.asManager(w.a, () =>
+      w.helpers.prisma.tenant.unit.findUniqueOrThrow({
+        where: { id: w.a.homeUnitId },
+      }),
+    );
+    const res = await as('manager', 'POST', '/staff/vehicle-fines', {
+      unitCode: unit.code,
+      plate: 'NS 2',
+      reason: 'blocking',
+      amount: '100',
+      occurredOn: localDay(0),
+    });
+    return body<{ id: string }>(res).id;
+  };
+  /** A fine to A's home under appeal: its id. */
+  const anAppealedFine = async () => {
+    const id = await aFine();
+    await as('owner', 'POST', `/vehicle-fines/${id}/appeal`, {
+      reason: 'Not ours',
+    });
+    return id;
+  };
   const VEHICLE_CALLS = (): Record<string, () => Promise<Response>> => ({
+    'GET /units/{unitId}/vehicle-fines': () =>
+      as('owner', 'GET', `/units/${w.a.homeUnitId}/vehicle-fines`),
+    'GET /vehicle-fines/{id}': async () =>
+      as('owner', 'GET', `/vehicle-fines/${await aFine()}`),
+    'POST /vehicle-fines/{id}/appeal': async () =>
+      as('owner', 'POST', `/vehicle-fines/${await aFine()}/appeal`, {
+        reason: 'Not ours',
+      }),
+    'POST /staff/vehicle-fines': async () => {
+      const unit = await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.unit.findUniqueOrThrow({
+          where: { id: w.a.homeUnitId },
+        }),
+      );
+      return as('manager', 'POST', '/staff/vehicle-fines', {
+        unitCode: unit.code,
+        plate: 'NS 3',
+        reason: 'blocking',
+        amount: '100',
+        occurredOn: localDay(0),
+      });
+    },
+    'GET /staff/vehicle-fines': () =>
+      as('manager', 'GET', '/staff/vehicle-fines'),
+    'GET /staff/vehicle-fines/{id}': async () =>
+      as('manager', 'GET', `/staff/vehicle-fines/${await aFine()}`),
+    'POST /staff/vehicle-fines/{id}/decide-appeal': async () =>
+      as(
+        'manager',
+        'POST',
+        `/staff/vehicle-fines/${await anAppealedFine()}/decide-appeal`,
+        { decision: 'upheld' },
+      ),
+    'POST /staff/vehicle-fines/{id}/cancel': async () =>
+      as('manager', 'POST', `/staff/vehicle-fines/${await aFine()}/cancel`, {
+        reasonCode: 'issued_in_error',
+      }),
     'GET /units/{unitId}/vehicles': () =>
       as('owner', 'GET', `/units/${w.a.homeUnitId}/vehicles`),
     'POST /units/{unitId}/vehicles': async () => {

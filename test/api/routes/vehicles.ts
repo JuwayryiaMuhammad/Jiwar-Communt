@@ -512,3 +512,150 @@ export const GATE_VEHICLE_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** Fines (ADR 0045): a unit's for its people; issue and decide for the staff. */
+export const FINE_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/units/{unitId}/vehicle-fines',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.bUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      query: { status: 'under_appeal' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['unpaid', 'paid', 'cancelled'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/vehicle-fines/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bFineId }),
+      code: 'VEHICLE_FINE_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/vehicle-fines/{id}/appeal',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bFineId }),
+      code: 'VEHICLE_FINE_NOT_FOUND',
+      body: () => ({ reason: 'Not mine' }),
+    },
+    invalid: {
+      body: { reason: 7 },
+      fields: [{ field: 'reason', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/vehicle-fines',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: {
+        unitCode: 'U-1',
+        plate: 'AB 1',
+        reason: 'blocking',
+        amount: '0',
+        occurredOn: '2026-10-15',
+      },
+      fields: [{ field: 'amount', code: 'INVALID_FORMAT' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/vehicle-fines',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'owed' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['unpaid', 'under_appeal', 'paid', 'cancelled'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/vehicle-fines/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bFineId }),
+      code: 'VEHICLE_FINE_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/vehicle-fines/{id}/decide-appeal',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bFineId }),
+      code: 'VEHICLE_FINE_NOT_FOUND',
+      body: () => ({ decision: 'upheld' }),
+    },
+    invalid: {
+      body: { decision: 'maybe' },
+      fields: [
+        {
+          field: 'decision',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['upheld', 'cancelled'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/vehicle-fines/{id}/cancel',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bFineId }),
+      code: 'VEHICLE_FINE_NOT_FOUND',
+      body: () => ({ reasonCode: 'other' }),
+    },
+    invalid: {
+      body: {},
+      fields: [{ field: 'reasonCode', code: 'FIELD_REQUIRED' }],
+    },
+    noStore: true,
+  },
+];

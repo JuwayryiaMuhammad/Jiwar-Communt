@@ -60,6 +60,11 @@ import { VehiclesService } from './vehicles/vehicles.service';
 import { GateVehiclesController } from './vehicles/gate-vehicles.controller';
 import { PlateLookupService } from './vehicles/plate-lookup.service';
 import {
+  StaffFinesController,
+  UnitFinesController,
+} from './fines/fines.controller';
+import { FinesService } from './fines/fines.service';
+import {
   ParkingSlotsController,
   StaffVisitorParkingController,
   UnitParkingController,
@@ -104,6 +109,8 @@ import { VisitorParkingService } from './parking/visitor-parking.service';
     VisitorAreasController,
     StaffVisitorParkingController,
     GateVehiclesController,
+    UnitFinesController,
+    StaffFinesController,
   ],
   providers: [
     GatesService,
@@ -141,6 +148,7 @@ import { VisitorParkingService } from './parking/visitor-parking.service';
     StaffParkingService,
     ParkingSweeps,
     PlateLookupService,
+    FinesService,
   ],
 })
 export class GateModule {}

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { Client } from 'pg';
 import type { Response } from 'supertest';
 import { RolesService } from '../../src/core/access/roles.service';
 import type { Permission } from '../../src/core/access/permissions';
@@ -11,6 +12,7 @@ import { fileHelpers } from './files';
 import { uniqueSuffix } from './fixtures';
 import { gateHelpers } from './gate';
 import type { HttpHarness } from './http-app';
+import { required } from './test-env';
 
 export type { Who } from './engagement';
 export { at, day, ZONE } from './facilities';
@@ -53,6 +55,29 @@ export const sticker = () =>
   `S-${uniqueSuffix()
     .replace(/[^A-Za-z0-9]/g, '')
     .slice(-12)}`.toUpperCase();
+
+/**
+ * TEST-ONLY time machine: moves a fine's creation `days` into the past over
+ * a superuser connection with `session_replication_role = replica`, which
+ * skips the trigger that freezes it. src/ cannot import it.
+ */
+export async function rewindFine(fineId: string, days: number): Promise<void> {
+  const db = new Client({
+    connectionString: required('TEST_SUPERUSER_DATABASE_URL'),
+  });
+  await db.connect();
+  try {
+    await db.query('BEGIN');
+    await db.query('SET LOCAL session_replication_role = replica');
+    await db.query(
+      `UPDATE vehicle_fines SET created_at = created_at - $2::interval WHERE id = $1`,
+      [fineId, `${days} days`],
+    );
+    await db.query('COMMIT');
+  } finally {
+    await db.end();
+  }
+}
 
 /**
  * Helpers for the vehicles and parking suites (ADR 0045): a compound with
@@ -238,6 +263,42 @@ export function vehicleHelpers(h: HttpHarness) {
     return (res.body as { id: string }).id;
   }
 
+  /** `POST /staff/vehicle-fines` as `staffer`: the response. */
+  function fineRaw(
+    staffer: Who,
+    unitCode: string,
+    over: Record<string, unknown> = {},
+    headers: Record<string, string> = {},
+  ): Promise<Response> {
+    return (async () =>
+      await http(
+        'post',
+        '/staff/vehicle-fines',
+        staffer.token,
+        {
+          unitCode,
+          plate: plate(),
+          reason: 'blocking',
+          amount: '500',
+          occurredOn: day(0),
+          ...over,
+        },
+        headers,
+      ))();
+  }
+
+  /** A fine that must be issued: its body. */
+  async function fine(
+    staffer: Who,
+    unitCode: string,
+    over: Record<string, unknown> = {},
+  ): Promise<{ id: string; reference: string; status: string }> {
+    const res = await fineRaw(staffer, unitCode, over);
+    if (res.status !== 201)
+      throw new Error(`fine: ${res.status} ${JSON.stringify(res.body)}`);
+    return res.body as { id: string; reference: string; status: string };
+  }
+
   /** A finalized licence photo of `as`. */
   const licence = (as: Who) => files.ready(as.token, 'vehicle_licence');
 
@@ -274,6 +335,8 @@ export function vehicleHelpers(h: HttpHarness) {
     sweep,
     notifications: e.notifications,
     inMinutes,
+    fineRaw,
+    fine,
     area,
     parkRaw,
     pass,

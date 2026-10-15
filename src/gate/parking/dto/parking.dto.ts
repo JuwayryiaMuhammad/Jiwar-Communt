@@ -25,7 +25,11 @@ import {
 } from '../parking-rules';
 
 export class CreateVisitorParkingDto {
-  @ApiProperty({ type: String, format: 'uuid', description: 'An active visitor area (AREA_NOT_AVAILABLE).' })
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    description: 'An active visitor area (AREA_NOT_AVAILABLE).',
+  })
   @IsUUID()
   areaId: string;
 
@@ -46,7 +50,8 @@ export class CreateVisitorParkingDto {
     required: false,
     minLength: VISITOR_NAME.min,
     maxLength: VISITOR_NAME.max,
-    description: 'Without a pass only (FIELD_NOT_ALLOWED with one). Deleted 30 days after the booking ends.',
+    description:
+      'Without a pass only (FIELD_NOT_ALLOWED with one). Deleted 30 days after the booking ends.',
   })
   @ValidateIf((_, v) => v !== undefined)
   @IsString()
@@ -55,7 +60,8 @@ export class CreateVisitorParkingDto {
   @ApiProperty({
     type: String,
     format: 'date-time',
-    description: 'Whole minutes; no earlier than 15 minutes ago, at most 14 days ahead.',
+    description:
+      'Whole minutes; no earlier than 15 minutes ago, at most 14 days ahead.',
   })
   @IsISO8601()
   startsAt: string;
@@ -63,7 +69,8 @@ export class CreateVisitorParkingDto {
   @ApiProperty({
     type: String,
     format: 'date-time',
-    description: 'Whole minutes; 15 minutes to the compound’s `visitorParkingMaxHours` after the start.',
+    description:
+      'Whole minutes; 15 minutes to the compound’s `visitorParkingMaxHours` after the start.',
   })
   @IsISO8601()
   endsAt: string;
@@ -74,7 +81,8 @@ export class VisitorParkingQueryDto extends PageQueryDto {
     enum: ['upcoming', 'past'],
     required: false,
     default: 'upcoming',
-    description: 'Upcoming: confirmed and not ended, soonest first. Past: ended or cancelled, latest first.',
+    description:
+      'Upcoming: confirmed and not ended, soonest first. Past: ended or cancelled, latest first.',
   })
   @IsOptional()
   @IsIn(['upcoming', 'past'], withParams({ allowed: ['upcoming', 'past'] }))
@@ -90,7 +98,10 @@ export class ParkingSlotsQueryDto extends PageQueryDto {
 }
 
 export class CreateParkingSlotDto {
-  @ApiProperty({ type: String, description: 'The unit’s code (UNIT_CODE_UNKNOWN).' })
+  @ApiProperty({
+    type: String,
+    description: 'The unit’s code (UNIT_CODE_UNKNOWN).',
+  })
   @IsString()
   @Length(1, 64, withParams({ min: 1, max: 64 }))
   unitCode: string;
@@ -99,34 +110,58 @@ export class CreateParkingSlotDto {
     type: String,
     minLength: SLOT_CODE.min,
     maxLength: SLOT_CODE.max,
-    description: 'Upper-cased; once in the compound (DUPLICATE_RESOURCE on code).',
+    description:
+      'Upper-cased; once in the compound (DUPLICATE_RESOURCE on code).',
   })
   @IsString()
   code: string;
 
-  @ApiProperty({ type: String, minLength: SLOT_PLACE.min, maxLength: SLOT_PLACE.max })
+  @ApiProperty({
+    type: String,
+    minLength: SLOT_PLACE.min,
+    maxLength: SLOT_PLACE.max,
+  })
   @IsString()
   place: string;
 }
 
 export class UpdateParkingSlotDto {
-  @ApiProperty({ type: String, required: false, minLength: SLOT_CODE.min, maxLength: SLOT_CODE.max })
+  @ApiProperty({
+    type: String,
+    required: false,
+    minLength: SLOT_CODE.min,
+    maxLength: SLOT_CODE.max,
+  })
   @IsOptional()
   @IsString()
   code?: string;
 
-  @ApiProperty({ type: String, required: false, minLength: SLOT_PLACE.min, maxLength: SLOT_PLACE.max })
+  @ApiProperty({
+    type: String,
+    required: false,
+    minLength: SLOT_PLACE.min,
+    maxLength: SLOT_PLACE.max,
+  })
   @IsOptional()
   @IsString()
   place?: string;
 }
 
 export class CreateVisitorAreaDto {
-  @ApiProperty({ type: String, minLength: AREA_NAME.min, maxLength: AREA_NAME.max, description: 'Once in the compound.' })
+  @ApiProperty({
+    type: String,
+    minLength: AREA_NAME.min,
+    maxLength: AREA_NAME.max,
+    description: 'Once in the compound.',
+  })
   @IsString()
   name: string;
 
-  @ApiProperty({ type: Number, minimum: AREA_CAPACITY.min, maximum: AREA_CAPACITY.max })
+  @ApiProperty({
+    type: Number,
+    minimum: AREA_CAPACITY.min,
+    maximum: AREA_CAPACITY.max,
+  })
   @IsInt(withParams(AREA_CAPACITY))
   @Min(AREA_CAPACITY.min, withParams(AREA_CAPACITY))
   @Max(AREA_CAPACITY.max, withParams(AREA_CAPACITY))
@@ -134,7 +169,12 @@ export class CreateVisitorAreaDto {
 }
 
 export class UpdateVisitorAreaDto {
-  @ApiProperty({ type: String, required: false, minLength: AREA_NAME.min, maxLength: AREA_NAME.max })
+  @ApiProperty({
+    type: String,
+    required: false,
+    minLength: AREA_NAME.min,
+    maxLength: AREA_NAME.max,
+  })
   @IsOptional()
   @IsString()
   name?: string;
@@ -152,7 +192,12 @@ export class UpdateVisitorAreaDto {
   @Max(AREA_CAPACITY.max, withParams(AREA_CAPACITY))
   capacity?: number;
 
-  @ApiProperty({ type: Boolean, required: false, description: 'False retires the area: no new booking, the booked ones stay.' })
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    description:
+      'False retires the area: no new booking, the booked ones stay.',
+  })
   @IsOptional()
   @IsBoolean()
   active?: boolean;
@@ -177,7 +222,10 @@ export class StaffVisitorParkingQueryDto {
 }
 
 export class StaffCancelVisitorParkingDto {
-  @ApiProperty({ type: String, description: 'From the closed list `visitorParkingStaffCancel`.' })
+  @ApiProperty({
+    type: String,
+    description: 'From the closed list `visitorParkingStaffCancel`.',
+  })
   @IsString()
   reasonCode: string;
 }

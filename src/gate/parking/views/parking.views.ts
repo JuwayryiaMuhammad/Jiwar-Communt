@@ -4,16 +4,10 @@ import {
   VisitorParkingStatus,
   type VisitorParkingArea,
 } from '@prisma/client';
-import {
-  accountRef,
-  AccountRefView,
-} from '../../../core/common/http/personal';
+import { accountRef, AccountRefView } from '../../../core/common/http/personal';
 import { reference } from '../../vehicles/vehicle-rules';
 import type { StaffParking, StaffSlot } from '../staff-parking.service';
-import type {
-  ResidentParking,
-  UnitParking,
-} from '../visitor-parking.service';
+import type { ResidentParking, UnitParking } from '../visitor-parking.service';
 
 export class ParkingSlotRefView {
   @ApiProperty({ type: String, example: 'B2-117' })
@@ -29,7 +23,8 @@ export class VisitorAreaFreeView {
   name: string;
   @ApiProperty({
     type: Number,
-    description: 'Spaces free now, never below zero. Read it again before booking.',
+    description:
+      'Spaces free now, never below zero. Read it again before booking.',
   })
   freeSpaces: number;
 }
@@ -144,7 +139,10 @@ export class VisitorParkingAreaView {
   name: string;
   @ApiProperty({ type: Number })
   capacity: number;
-  @ApiProperty({ type: Boolean, description: 'False: retired, takes no booking.' })
+  @ApiProperty({
+    type: Boolean,
+    description: 'False: retired, takes no booking.',
+  })
   active: boolean;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;

@@ -751,6 +751,47 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'cancel_reason IS NULL is tested first; the lists run only on a value, by cancel_side, which the state shape sets with it',
   },
+  vehicle_fines_number_positive: {},
+  vehicle_fines_plate_length: {},
+  vehicle_fines_note_length: {
+    guarded: 'note IS NULL is tested first; the length runs only on a value',
+  },
+  vehicle_fines_amount: {},
+  vehicle_fines_reason: {},
+  // Nullable columns only under IS [NOT] NULL.
+  vehicle_fines_appeal_shape: {},
+  vehicle_fines_appeal_text_length: {
+    guarded:
+      'appeal_text IS NULL is tested first; the length runs only on a value',
+  },
+  vehicle_fines_decision_shape: {},
+  // Nullable columns only under IS [NOT] NULL; status is NOT NULL.
+  vehicle_fines_state_shape: {},
+  vehicle_fines_accepted_cancels: {
+    guarded:
+      'appeal_decision IS NULL is tested first; the comparison runs only on a value',
+  },
+  vehicle_fines_cancel_reason: {
+    guarded:
+      'cancel_reason IS NULL is tested first; the list runs only on a value',
+  },
+  // Nullable columns only under IS [NOT] NULL; kind is NOT NULL.
+  vehicle_fine_payments_kind_shape: {},
+  vehicle_fine_payments_amount: {
+    guarded: 'amount IS NULL is tested first; the range runs only on a value',
+  },
+  vehicle_fine_payments_currency: {
+    guarded:
+      'currency IS NULL is tested first; the comparison runs only on a value',
+  },
+  vehicle_fine_payments_receipt_shape: {
+    guarded:
+      'receipt_number IS NULL is tested first; the pattern runs only on a value',
+  },
+  vehicle_fine_payments_reason: {
+    guarded:
+      'reason_code IS NULL is tested first; the list runs only on a value',
+  },
 };
 
 interface Check {

@@ -72,7 +72,8 @@ export class UnitParkingController {
   @RequirePermissions('visitors.invite')
   @ApiOperation({
     summary: 'List the unit’s visitor parking bookings',
-    description: 'The primary sees every one; anyone else who may invite, their own.',
+    description:
+      'The primary sees every one; anyone else who may invite, their own.',
   })
   @ApiOkResponse({ type: ListOf(VisitorParkingBookingView) })
   async list(
@@ -142,7 +143,9 @@ export class ParkingSlotsController {
   @NoStore()
   @ApiOperation({ summary: 'Give a unit a parking slot' })
   @ApiCreatedResponse({ type: StaffParkingSlotView })
-  async create(@Body() dto: CreateParkingSlotDto): Promise<StaffParkingSlotView> {
+  async create(
+    @Body() dto: CreateParkingSlotDto,
+  ): Promise<StaffParkingSlotView> {
     return StaffParkingSlotView.from(await this.parking.createSlot(dto));
   }
 
@@ -175,7 +178,9 @@ export class VisitorAreasController {
 
   @Get()
   @NoStore()
-  @ApiOperation({ summary: 'List the visitor parking areas, retired ones included' })
+  @ApiOperation({
+    summary: 'List the visitor parking areas, retired ones included',
+  })
   @ApiOkResponse({ type: ListOf(VisitorParkingAreaView) })
   async list(): Promise<ListResponse<VisitorParkingAreaView>> {
     return bounded(await this.parking.areas(), (a) =>
@@ -187,7 +192,9 @@ export class VisitorAreasController {
   @NoStore()
   @ApiOperation({ summary: 'Create a visitor parking area' })
   @ApiCreatedResponse({ type: VisitorParkingAreaView })
-  async create(@Body() dto: CreateVisitorAreaDto): Promise<VisitorParkingAreaView> {
+  async create(
+    @Body() dto: CreateVisitorAreaDto,
+  ): Promise<VisitorParkingAreaView> {
     return VisitorParkingAreaView.from(await this.parking.createArea(dto));
   }
 
@@ -214,7 +221,8 @@ export class StaffVisitorParkingController {
   @NoStore()
   @ApiOperation({
     summary: 'List one day’s visitor parking bookings',
-    description: 'Those touching the local day (today by default), cancelled ones included, soonest first.',
+    description:
+      'Those touching the local day (today by default), cancelled ones included, soonest first.',
   })
   @ApiOkResponse({ type: ListOf(StaffVisitorParkingBookingView) })
   async list(
@@ -228,7 +236,9 @@ export class StaffVisitorParkingController {
   @Post(':id/cancel')
   @HttpCode(HttpStatus.NO_CONTENT)
   @NoStore()
-  @ApiOperation({ summary: 'Cancel a visitor parking booking, with a reason code' })
+  @ApiOperation({
+    summary: 'Cancel a visitor parking booking, with a reason code',
+  })
   @ApiNoContentResponse()
   async cancel(
     @Param('id', parseId()) id: string,

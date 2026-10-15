@@ -928,6 +928,19 @@ describe('API v0 — PII leak scan', () => {
         type: 'car',
       },
     );
+    const piiFine = await idOf(
+      'POST',
+      '/staff/vehicle-fines',
+      a.tokens.manager,
+      {
+        unitCode: unit.code,
+        vehicleId: piiVehicle,
+        reason: 'blocking',
+        note: 'Blocked the gate',
+        amount: '200',
+        occurredOn: day(0),
+      },
+    );
 
     /** One id for every param of the path, or each param by name. */
     type Ids = string | Record<string, string>;
@@ -1047,6 +1060,9 @@ describe('API v0 — PII leak scan', () => {
       '/staff/vehicles/{id}': piiVehicle,
       '/units/{unitId}/parking': unit.id,
       '/units/{unitId}/visitor-parking-bookings': unit.id,
+      '/units/{unitId}/vehicle-fines': unit.id,
+      '/vehicle-fines/{id}': piiFine,
+      '/staff/vehicle-fines/{id}': piiFine,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

@@ -380,4 +380,21 @@ export const REASON_CODES = {
   visitorParkingResidentCancel: ['no_longer_needed'],
   visitorParkingStaffCancel: ['area_closed', 'misuse', 'other'],
   visitorParkingSystemCancel: ['pass_cancelled', 'booker_left'],
+  // Why the staff fine a unit; why they cancel a fine (`appeal_accepted`
+  // when they accept its appeal); why the accountant reverses a payment.
+  vehicleFineReason: [
+    'parked_in_visitor_slot',
+    'parked_in_others_slot',
+    'blocking',
+    'no_permit',
+    'fire_lane',
+    'other',
+  ],
+  vehicleFineCancel: [
+    'appeal_accepted',
+    'issued_in_error',
+    'duplicate',
+    'other',
+  ],
+  vehicleFinePaymentReverse: ['entered_in_error', 'refunded', 'other'],
 } as const;

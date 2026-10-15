@@ -706,6 +706,15 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'visitor_parking_booking',
   },
+  // metadata: unitId, vehicleId, number, reason, amount, currency,
+  // occurredOn, photo (boolean). Never the plate or the note.
+  'vehicle_fine.issued': { log: 'tenant', target: 'vehicle_fine' },
+  // metadata: unitId, photo (boolean). Never the appeal's words.
+  'vehicle_fine.appealed': { log: 'tenant', target: 'vehicle_fine' },
+  // metadata: unitId, decision, reasonCode.
+  'vehicle_fine.appeal_decided': { log: 'tenant', target: 'vehicle_fine' },
+  // metadata: unitId, reasonCode.
+  'vehicle_fine.cancelled': { log: 'tenant', target: 'vehicle_fine' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

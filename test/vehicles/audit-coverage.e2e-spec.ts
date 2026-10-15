@@ -350,6 +350,89 @@ describe('Audit coverage — vehicles and parking', () => {
     });
   });
 
+  describe('fines', () => {
+    const WORDS = 'AUDIT-APPEAL-WORDS';
+    const NOTE = 'AUDIT-FINE-NOTE';
+    let issuedId: string;
+    let cancelledId: string;
+
+    beforeAll(async () => {
+      issuedId = (
+        await v.fine(s.manager, s.home.code, {
+          plate: PLATE,
+          note: NOTE,
+          reason: 'no_permit',
+          amount: '250',
+        })
+      ).id;
+      cancelledId = (await v.fine(s.manager, s.home.code, { plate: PLATE })).id;
+    });
+
+    it('vehicle_fine.issued — unit, reason, amount and day; never the plate or the note', async () => {
+      const row = await single('vehicle_fine.issued', issuedId);
+      expect(row).toMatchObject(by(s.manager, 'vehicle_fine'));
+      expect(row.metadata).toEqual({
+        unitId: s.home.id,
+        vehicleId: null,
+        number: expect.any(Number) as number,
+        reason: 'no_permit',
+        amount: '250.00',
+        currency: 'EGP',
+        occurredOn: day(0),
+        photo: false,
+      });
+      expect(JSON.stringify(row)).not.toContain(NOTE);
+    });
+
+    it('vehicle_fine.appealed / appeal_decided — never the appeal’s words', async () => {
+      await v
+        .http('post', `/vehicle-fines/${issuedId}/appeal`, s.alice.token, {
+          reason: WORDS,
+        })
+        .expect(200);
+      await v
+        .http(
+          'post',
+          `/staff/vehicle-fines/${issuedId}/decide-appeal`,
+          s.manager.token,
+          {
+            decision: 'upheld',
+          },
+        )
+        .expect(200);
+      const appealed = await single('vehicle_fine.appealed', issuedId);
+      expect(appealed).toMatchObject(by(s.alice, 'vehicle_fine'));
+      expect(appealed.metadata).toEqual({ unitId: s.home.id, photo: false });
+      const decided = await single('vehicle_fine.appeal_decided', issuedId);
+      expect(decided).toMatchObject(by(s.manager, 'vehicle_fine'));
+      expect(decided.metadata).toEqual({
+        unitId: s.home.id,
+        decision: 'upheld',
+        reasonCode: null,
+      });
+      expect(JSON.stringify([appealed, decided])).not.toContain(WORDS);
+    });
+
+    it('vehicle_fine.cancelled — the reason code', async () => {
+      await v
+        .http(
+          'post',
+          `/staff/vehicle-fines/${cancelledId}/cancel`,
+          s.manager.token,
+          {
+            reasonCode: 'issued_in_error',
+          },
+        )
+        .expect(200);
+      const row = await single('vehicle_fine.cancelled', cancelledId);
+      expect(row).toMatchObject(by(s.manager, 'vehicle_fine'));
+      expect(row.metadata).toEqual({
+        unitId: s.home.id,
+        reasonCode: 'issued_in_error',
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every vehicles and parking entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

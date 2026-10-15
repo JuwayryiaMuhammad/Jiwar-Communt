@@ -235,6 +235,13 @@ const ERROR_TEXT: Record<string, string> = {
   VISITOR_PARKING_LIMIT_REACHED: 'The unit holds as many visitor parking bookings as the compound allows.',
   VISITOR_PARKING_INVALID_TRANSITION: 'This booking was cancelled already.',
   VISITOR_PARKING_WINDOW_PASSED: 'This booking has ended.',
+  VEHICLE_FINE_NOT_FOUND: 'This fine does not exist.',
+  FINES_NOT_ALLOWED: 'This person may not see this unit’s fines.',
+  FINE_APPEAL_NOT_ALLOWED: 'Only the unit’s vehicle keepers or its primary resident may appeal.',
+  FINE_APPEAL_CLOSED: 'This fine takes no appeal: appealed already, paid or cancelled.',
+  FINE_APPEAL_WINDOW_PASSED: 'The time to appeal this fine has passed.',
+  FINE_NOT_UNDER_APPEAL: 'This fine is not under appeal.',
+  FINE_NOT_CANCELLABLE: 'Only an unpaid fine that is not under appeal can be cancelled.',
 };
 
 const FIELD_TEXT: Record<string, string> = {
@@ -307,6 +314,8 @@ const FIELD_TEXT: Record<string, string> = {
   PARKING_TOO_SHORT: 'Too short.',
   PARKING_TOO_LONG: 'Longer than the compound allows.',
   PARKING_OUTSIDE_PASS: 'Outside the visitor pass’s validity.',
+  VEHICLE_NOT_OF_UNIT: 'Not one of the unit’s vehicles.',
+  DAY_OUT_OF_RANGE: 'Pick a day in range.',
 };
 
 export function errorText(error: unknown): string {

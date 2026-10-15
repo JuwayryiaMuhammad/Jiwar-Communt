@@ -31,7 +31,9 @@ export class GuardParkingView {
   endsAt: Date;
 
   static from(p: GuardParking | null): GuardParkingView | null {
-    return p && { areaName: p.areaName, startsAt: p.startsAt, endsAt: p.endsAt };
+    return (
+      p && { areaName: p.areaName, startsAt: p.startsAt, endsAt: p.endsAt }
+    );
   }
 }
 
@@ -39,10 +41,15 @@ export class PlateVehicleView {
   @ApiProperty({
     enum: [...PERMIT_STATUSES],
     enumName: 'VehiclePermitStatus',
-    description: 'Pending or active vehicles only; `expires_soon` and `expired` read now.',
+    description:
+      'Pending or active vehicles only; `expires_soon` and `expired` read now.',
   })
   permitStatus: string;
-  @ApiProperty({ type: String, nullable: true, description: 'The permit’s last local day.' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'The permit’s last local day.',
+  })
   permitValidUntil: string | null;
   @ApiProperty({ type: String, nullable: true })
   stickerNumber: string | null;
@@ -57,7 +64,10 @@ export class PlateVehicleView {
 export class PlatePassView {
   @ApiProperty({ enum: VisitorPassKind, enumName: 'VisitorPassKind' })
   passKind: VisitorPassKind;
-  @ApiProperty({ type: Boolean, description: 'The pass lets its visitor in now.' })
+  @ApiProperty({
+    type: Boolean,
+    description: 'The pass lets its visitor in now.',
+  })
   valid: boolean;
   @ApiProperty({
     enum: PASS_REFUSALS,
@@ -72,7 +82,8 @@ export class PlatePassView {
   @ApiProperty({
     type: GuardParkingView,
     nullable: true,
-    description: 'Its visitor parking booking holding now, or the next within two hours.',
+    description:
+      'Its visitor parking booking holding now, or the next within two hours.',
   })
   parking: GuardParkingView | null;
 }
@@ -133,7 +144,10 @@ export class PlateLookupView {
   matches: PlateMatchView[];
 
   static from(l: PlateLookup): PlateLookupView {
-    return { plate: l.plate, matches: l.matches.map((m) => PlateMatchView.from(m)) };
+    return {
+      plate: l.plate,
+      matches: l.matches.map((m) => PlateMatchView.from(m)),
+    };
   }
 }
 
@@ -153,13 +167,15 @@ export class GuardVisitorParkingView {
   endsAt: Date;
   @ApiProperty({
     type: Boolean,
-    description: 'For a visitor pass: the guard verifies the pass, and sees this booking there.',
+    description:
+      'For a visitor pass: the guard verifies the pass, and sees this booking there.',
   })
   hasPass: boolean;
   @ApiProperty({
     type: String,
     nullable: true,
-    description: 'For a booking without a pass only: the name the household gave.',
+    description:
+      'For a booking without a pass only: the name the household gave.',
   })
   visitorName: string | null;
 

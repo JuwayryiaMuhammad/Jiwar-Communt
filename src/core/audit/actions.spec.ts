@@ -91,6 +91,8 @@ describe('audit catalog', () => {
         'parking_slot',
         'visitor_parking_area',
         'visitor_parking_booking',
+        'vehicle_fine',
+        'vehicle_fine_payment',
       ]).toContain(def.target);
     }
   });

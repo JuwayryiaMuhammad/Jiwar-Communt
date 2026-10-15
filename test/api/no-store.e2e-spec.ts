@@ -731,6 +731,84 @@ describe('API v0 — no-store', () => {
       }),
   });
 
+  /** A's home takes many vehicles here (ADR 0045): raised once. */
+  let vehiclesRaised: Promise<unknown> | null = null;
+  const roomForVehicles = () =>
+    (vehiclesRaised ??= as('manager', 'PATCH', '/staff/vehicle-settings', {
+      maxVehiclesPerUnit: 20,
+    }));
+  /** A new pending vehicle of A's home: its id. */
+  const aVehicle = async () => {
+    await roomForVehicles();
+    const res = await as('owner', 'POST', `/units/${w.a.homeUnitId}/vehicles`, {
+      plate: `NS ${String(Math.floor(Math.random() * 1e6)).padStart(6, '0')}`,
+      makeAndModel: 'No-store car',
+      color: 'Red',
+      type: 'car',
+    });
+    return body<{ id: string }>(res).id;
+  };
+  /** An active vehicle of A's home: its id. */
+  const anActiveVehicle = async () => {
+    const id = await aVehicle();
+    await as('manager', 'POST', `/staff/vehicles/${id}/approve`, {
+      version: 1,
+      stickerNumber: `NS-${uniqueSuffix()}`.slice(0, 20).toUpperCase(),
+      permitValidUntil: localDay(100),
+    });
+    return id;
+  };
+  const VEHICLE_CALLS = (): Record<string, () => Promise<Response>> => ({
+    'GET /units/{unitId}/vehicles': () =>
+      as('owner', 'GET', `/units/${w.a.homeUnitId}/vehicles`),
+    'POST /units/{unitId}/vehicles': async () => {
+      await roomForVehicles();
+      return as('owner', 'POST', `/units/${w.a.homeUnitId}/vehicles`, {
+        plate: 'NS 1',
+        makeAndModel: 'No-store car',
+        color: 'Red',
+        type: 'car',
+      });
+    },
+    'GET /vehicles/{id}': async () =>
+      as('owner', 'GET', `/vehicles/${await aVehicle()}`),
+    'PATCH /vehicles/{id}': async () =>
+      as('owner', 'PATCH', `/vehicles/${await aVehicle()}`, { color: 'Blue' }),
+    'GET /staff/vehicles': () => as('manager', 'GET', '/staff/vehicles'),
+    'GET /staff/vehicles/{id}': async () =>
+      as('manager', 'GET', `/staff/vehicles/${await aVehicle()}`),
+    'POST /staff/vehicles/{id}/approve': async () =>
+      as('manager', 'POST', `/staff/vehicles/${await aVehicle()}/approve`, {
+        version: 1,
+        stickerNumber: `NS-${uniqueSuffix()}`.slice(0, 20).toUpperCase(),
+        permitValidUntil: localDay(100),
+      }),
+    'POST /staff/vehicles/{id}/reject': async () =>
+      as('manager', 'POST', `/staff/vehicles/${await aVehicle()}/reject`, {
+        version: 1,
+        reasonCode: 'other',
+      }),
+    'POST /staff/vehicles/{id}/renew': async () =>
+      as(
+        'manager',
+        'POST',
+        `/staff/vehicles/${await anActiveVehicle()}/renew`,
+        {
+          permitValidUntil: localDay(200),
+        },
+      ),
+    'POST /staff/vehicles/{id}/remove': async () =>
+      as('manager', 'POST', `/staff/vehicles/${await aVehicle()}/remove`, {
+        reasonCode: 'other',
+      }),
+    'GET /staff/vehicle-settings': () =>
+      as('manager', 'GET', '/staff/vehicle-settings'),
+    'PATCH /staff/vehicle-settings': () =>
+      as('manager', 'PATCH', '/staff/vehicle-settings', {
+        maxVehiclesPerUnit: 20,
+      }),
+  });
+
   const CALLS: Record<string, () => Promise<Response>> = {
     // Community life (ADR 0040): every response is no-store.
     'GET /community/settings': () => asManager('GET', '/community/settings'),
@@ -1812,6 +1890,7 @@ describe('API v0 — no-store', () => {
         reasonCode: 'no_action',
       }),
     ...FACILITY_CALLS(),
+    ...VEHICLE_CALLS(),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

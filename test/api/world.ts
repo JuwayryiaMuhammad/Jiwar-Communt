@@ -31,6 +31,7 @@ import { PostsService } from '../../src/neighbours/posts/posts.service';
 import { BookingsService } from '../../src/facilities/bookings/bookings.service';
 import { ClosuresService } from '../../src/facilities/closures/closures.service';
 import { ClubService } from '../../src/facilities/club/club.service';
+import { VehiclesService } from '../../src/gate/vehicles/vehicles.service';
 import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
 import { ALL_WEEK, at, day } from '../setup/facilities';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
@@ -189,6 +190,8 @@ export interface World {
   aClubPlanId: string;
   /** One of A's, open every day, roomy, for valid bookings. */
   aFacilityId: string;
+  /** B's vehicles and parking (ADR 0045): a pending vehicle of B's home. */
+  bVehicleId: string;
   bDeviceId: string;
   /** A personal-data export B's owner asked for (ADR 0036). */
   bExportId: string;
@@ -739,7 +742,17 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     });
     return { membershipId: membership.membership.id, paymentId: payment.id };
   });
+  // Vehicles and parking (ADR 0045).
+  const bVehicle = await asBOwner(() =>
+    h.moduleRef.get(VehiclesService).create(b.homeUnitId, {
+      plate: 'ب و 1234',
+      makeAndModel: 'World car',
+      color: 'Grey',
+      type: 'car',
+    }),
+  );
   return {
+    bVehicleId: bVehicle.vehicle.id,
     bClubPlanId: bClubPlan.id,
     aClubPlanId: aClubPlan.id,
     bMembershipId: bClub.membershipId,

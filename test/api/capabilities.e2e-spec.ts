@@ -130,6 +130,11 @@ describe('API v0 — capabilities drive access', () => {
       },
     },
     {
+      // Vehicles (ADR 0045): listing the unit's vehicles is `vehicles`.
+      flag: 'vehicles',
+      run: (token, u) => call(w, 'GET', `/units/${u}/vehicles`, { token }),
+    },
+    {
       // Maintenance (ADR 0032): opening a ticket on the unit is `tickets`.
       flag: 'tickets',
       run: (token, u) =>
@@ -181,6 +186,7 @@ describe('API v0 — capabilities drive access', () => {
       gateEntry: false,
       visitConsent: false,
       parcels: false,
+      vehicles: false,
       tickets: false,
     });
   });
@@ -197,6 +203,7 @@ describe('API v0 — capabilities drive access', () => {
       gateEntry: true,
       visitConsent: true,
       parcels: true,
+      vehicles: true,
       tickets: true,
     });
   });

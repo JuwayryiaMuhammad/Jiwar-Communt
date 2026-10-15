@@ -13,6 +13,7 @@ import {
   PHASE_4_COVERAGE,
   R1_COVERAGE,
   RESIDENT_SCREENS_COVERAGE,
+  VEHICLES_COVERAGE,
 } from '../setup/audit-coverage-split';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import {
@@ -496,6 +497,7 @@ describe('Audit coverage — neighbours', () => {
           ...MANAGEMENT_COVERAGE,
           ...ENGAGEMENT_COVERAGE,
           ...FACILITIES_COVERAGE,
+          ...VEHICLES_COVERAGE,
         ]).not.toContain(key);
       }
       expect([...covered].sort()).toEqual([...NEIGHBOURS_COVERAGE].sort());

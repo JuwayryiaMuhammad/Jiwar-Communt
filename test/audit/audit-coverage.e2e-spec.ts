@@ -35,6 +35,7 @@ import {
   PHASE_4_COVERAGE,
   R1_COVERAGE,
   RESIDENT_SCREENS_COVERAGE,
+  VEHICLES_COVERAGE,
 } from '../setup/audit-coverage-split';
 import { loginViaOtp } from '../setup/login';
 import { waitForOtp } from '../setup/mailpit';
@@ -319,11 +320,13 @@ describe('Audit coverage', () => {
             'household.manage',
             'neighbours.board',
             'neighbours.complain',
+            'parking.report',
             'profile.photo',
             'requests.create',
             'suggestions.create',
             'tickets.create',
             'units.read',
+            'vehicles.register',
             'visitors.invite',
             'workers.manage',
           ],
@@ -845,6 +848,7 @@ describe('Audit coverage', () => {
         ...ENGAGEMENT_COVERAGE,
         ...NEIGHBOURS_COVERAGE,
         ...FACILITIES_COVERAGE,
+        ...VEHICLES_COVERAGE,
       ];
       for (const key of elsewhere) expect(all).toContain(key);
       const mine = all.filter((k) => !elsewhere.includes(k)).sort();

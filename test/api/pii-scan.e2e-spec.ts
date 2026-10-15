@@ -916,6 +916,18 @@ describe('API v0 — PII leak scan', () => {
       primaryToken,
       { facilityId: w.aFacilityId, startsAt: at(day(3), 21).toISOString() },
     );
+    // Vehicles (ADR 0045): the primary's car on their home.
+    const piiVehicle = await idOf(
+      'POST',
+      `/units/${unit.id}/vehicles`,
+      primaryToken,
+      {
+        plate: 'PII 4321',
+        makeAndModel: 'PII car',
+        color: 'Grey',
+        type: 'car',
+      },
+    );
 
     /** One id for every param of the path, or each param by name. */
     type Ids = string | Record<string, string>;
@@ -1030,6 +1042,9 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/club-membership': unit.id,
       '/staff/club/units/{unitId}/people': unit.id,
       '/staff/club-memberships/{id}': piiMembership,
+      '/units/{unitId}/vehicles': unit.id,
+      '/vehicles/{id}': piiVehicle,
+      '/staff/vehicles/{id}': piiVehicle,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

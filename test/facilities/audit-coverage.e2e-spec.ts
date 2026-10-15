@@ -14,6 +14,7 @@ import {
   PHASE_4_COVERAGE,
   R1_COVERAGE,
   RESIDENT_SCREENS_COVERAGE,
+  VEHICLES_COVERAGE,
 } from '../setup/audit-coverage-split';
 import {
   at,
@@ -480,6 +481,7 @@ describe('Audit coverage — facilities', () => {
           ...MANAGEMENT_COVERAGE,
           ...ENGAGEMENT_COVERAGE,
           ...NEIGHBOURS_COVERAGE,
+          ...VEHICLES_COVERAGE,
         ]).not.toContain(key);
       }
       expect([...covered].sort()).toEqual([...FACILITIES_COVERAGE].sort());

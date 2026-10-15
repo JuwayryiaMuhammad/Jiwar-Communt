@@ -705,6 +705,31 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'reason_code IS NULL is tested first; the list runs only on a value',
   },
+  // Vehicles and parking (ADR 0045).
+  vehicle_settings_ranges: {},
+  vehicle_counters_last_number: {},
+  vehicles_number_positive: {},
+  vehicles_text_length: {},
+  vehicles_version_positive: {},
+  // Nullable columns only under IS [NOT] NULL; status is NOT NULL.
+  vehicles_state_shape: {},
+  vehicles_removed_by: {
+    guarded:
+      'removal_side IS NULL is tested first; the comparison runs only on a value',
+  },
+  vehicles_sticker_shape: {
+    guarded:
+      'sticker_number IS NULL is tested first; the pattern runs only on a value',
+  },
+  vehicles_rejection_reason: {
+    guarded:
+      'rejection_reason IS NULL is tested first; the list runs only on a value',
+  },
+  vehicles_removal_reason: {
+    guarded:
+      'removal_reason IS NULL is tested first; the lists run only on a value, by removal_side, which the state shape sets with it',
+  },
+  vehicle_stickers_number_shape: {},
 };
 
 interface Check {

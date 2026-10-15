@@ -5687,6 +5687,135 @@ export interface paths {
         patch: operations["FacilitySettingsController_update"];
         trace?: never;
     };
+    "/api/v1/staff/vehicle-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the vehicle and parking settings */
+        get: operations["VehicleSettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change the vehicle and parking settings
+         * @description A lower limit leaves what a unit holds already.
+         */
+        patch: operations["VehicleSettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/vehicles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the compound’s vehicles
+         * @description `status=pending` is the approvals queue, oldest first.
+         */
+        get: operations["StaffVehiclesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/vehicles/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a vehicle with its licence photo */
+        get: operations["StaffVehiclesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/vehicles/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve a pending vehicle: a sticker and a permit’s last day
+         * @description As read (`version`, VEHICLE_CHANGED). One active permit per plate (VEHICLE_PLATE_ACTIVE); a sticker number is issued once, ever.
+         */
+        post: operations["StaffVehiclesController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/vehicles/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject a pending vehicle, with a reason code */
+        post: operations["StaffVehiclesController_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/vehicles/{id}/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove a vehicle, with a reason code */
+        post: operations["StaffVehiclesController_remove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/vehicles/{id}/renew": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Renew an active permit: a new last day */
+        post: operations["StaffVehiclesController_renew"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/suggestion-board": {
         parameters: {
             query?: never;
@@ -6897,6 +7026,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/vehicles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the unit’s vehicles
+         * @description For whoever holds `vehicles` on the unit. Removed vehicles are gone.
+         */
+        get: operations["VehiclesController_list"];
+        put?: never;
+        /**
+         * Register a vehicle for the unit
+         * @description `pending` until the staff approve it. At most the compound’s `maxVehiclesPerUnit` pending or active vehicles per unit (VEHICLE_LIMIT_REACHED).
+         */
+        post: operations["VehiclesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/visitor-passes": {
         parameters: {
             query?: never;
@@ -6948,6 +7101,31 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vehicles/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one of the unit’s vehicles */
+        get: operations["VehiclesController_get"];
+        put?: never;
+        post?: never;
+        /**
+         * Remove a vehicle
+         * @description Its registrant or the unit’s primary. Final: its sticker and permit are void; the licence photo is deleted 30 days later.
+         */
+        delete: operations["VehiclesController_remove"];
+        options?: never;
+        head?: never;
+        /**
+         * Edit a vehicle
+         * @description Its registrant or the unit’s primary (VEHICLE_ACTION_NOT_ALLOWED). A new plate sends it back to `pending` and voids its sticker; colour, model, type and the photo keep its status.
+         */
+        patch: operations["VehiclesController_update"];
         trace?: never;
     };
     "/api/v1/visitor-passes/{id}": {
@@ -7528,6 +7706,14 @@ export interface components {
              * @description Corrects a mistyped unit.
              */
             unitId?: string;
+        };
+        ApproveVehicleDto: {
+            /** @description The permit’s last local day: after today, at most 731 days ahead (PERMIT_DATE_OUT_OF_RANGE). */
+            permitValidUntil: string;
+            /** @description Upper-cased. Issued once in the compound, ever (DUPLICATE_RESOURCE on stickerNumber). */
+            stickerNumber: string;
+            /** @description The `version` the staff read (VEHICLE_CHANGED otherwise). */
+            version: number;
         };
         ApprovedRegistrationView: {
             /** Format: uuid */
@@ -8956,6 +9142,23 @@ export interface components {
             /** @description Unit code, unique within the compound, e.g. `B2-104`. */
             code: string;
             floor?: number;
+        };
+        CreateVehicleDto: {
+            /** @example Silver */
+            color: string;
+            /**
+             * Format: uuid
+             * @description A finalized `vehicle_licence` upload of the caller (FILE_NOT_AVAILABLE otherwise).
+             */
+            licencePhotoFileId?: string;
+            /** @example Hyundai Elantra */
+            makeAndModel: string;
+            /**
+             * @description Arabic letters, Latin letters, Western or Arabic-Indic digits and spaces; tidied (trimmed, single spaces, Latin upper case), at most 12 characters after that (INVALID_FORMAT, params.maxLength).
+             * @example ق ب ط ١٢٣٤
+             */
+            plate: string;
+            type: components["schemas"]["VehicleType"];
         };
         CreateVisitorPassDto: {
             kind: components["schemas"]["VisitorPassKind"];
@@ -11599,6 +11802,16 @@ export interface components {
             /** @description From the closed list `parcelReject`: not_ours, not_expected, other. */
             reasonCode: string;
         };
+        RejectVehicleDto: {
+            /** @description From the closed list `vehicleReject`. */
+            reasonCode: string;
+            /** @description The `version` the staff read (VEHICLE_CHANGED otherwise). */
+            version: number;
+        };
+        RenewVehicleDto: {
+            /** @description The new last local day: after today, not before the current one, at most 731 days ahead. */
+            permitValidUntil: string;
+        };
         ReplaceClubPeopleDto: {
             /** @description Whom it covers: the unit’s people now (PERSON_NOT_OF_UNIT). */
             people: components["schemas"]["ClubPersonRefDto"][];
@@ -12882,6 +13095,10 @@ export interface components {
             data: components["schemas"]["StaffPostView"][];
             nextCursor: string | null;
         };
+        StaffRemoveVehicleDto: {
+            /** @description From the closed list `vehicleStaffRemove`. */
+            reasonCode: string;
+        };
         StaffReportView: {
             /** @description Who posted. */
             author: components["schemas"]["ReportPartyView"];
@@ -13154,6 +13371,68 @@ export interface components {
             /** Format: uuid */
             unitId: string | null;
             updates: components["schemas"]["StaffSuggestionUpdateView"][];
+        };
+        StaffVehicleDetailView: {
+            color: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            decidedBy: components["schemas"]["AccountRefView"] | null;
+            /** Format: uuid */
+            id: string;
+            /** @description A presigned URL, valid for minutes. */
+            licencePhotoUrl: string | null;
+            makeAndModel: string;
+            /** @description `expires_soon` within 30 days of `permitValidUntil`, `expired` after it: read when asked, never stored. `removed` only on staff views. */
+            permitStatus: components["schemas"]["VehiclePermitStatus"];
+            permitValidUntil: string | null;
+            plate: string;
+            /** @example V-2048 */
+            reference: string;
+            registeredBy: components["schemas"]["AccountRefView"];
+            rejectionReason: string | null;
+            removalReason: string | null;
+            removalSide: components["schemas"]["VehicleRemovalSide"] | null;
+            /** Format: date-time */
+            removedAt: string | null;
+            /** @description Null for the system’s removal. */
+            removedBy: components["schemas"]["AccountRefView"] | null;
+            status: components["schemas"]["VehicleStatus"];
+            stickerNumber: string | null;
+            type: components["schemas"]["VehicleType"];
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+            /** @description Name it when approving or rejecting: a plate changed since is VEHICLE_CHANGED. */
+            version: number;
+        };
+        StaffVehicleView: {
+            color: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            makeAndModel: string;
+            /** @description `expires_soon` within 30 days of `permitValidUntil`, `expired` after it: read when asked, never stored. `removed` only on staff views. */
+            permitStatus: components["schemas"]["VehiclePermitStatus"];
+            permitValidUntil: string | null;
+            plate: string;
+            /** @example V-2048 */
+            reference: string;
+            registeredBy: components["schemas"]["AccountRefView"];
+            status: components["schemas"]["VehicleStatus"];
+            stickerNumber: string | null;
+            type: components["schemas"]["VehicleType"];
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+            /** @description Name it when approving or rejecting: a plate changed since is VEHICLE_CHANGED. */
+            version: number;
+        };
+        StaffVehicleViewList: {
+            data: components["schemas"]["StaffVehicleView"][];
+            nextCursor: string | null;
         };
         /**
          * @description - `always_allow`: the guard lets them in and logs the entry.
@@ -14006,6 +14285,29 @@ export interface components {
             /** @description Applies to requests opened or reopened from now on; a running cycle keeps its due time. */
             targetResponseHours?: number;
         };
+        UpdateVehicleDto: {
+            /** @description Keeps the status. */
+            color?: string;
+            /**
+             * Format: uuid
+             * @description A new `vehicle_licence` upload replaces the photo; `null` removes it. Keeps the status.
+             */
+            licencePhotoFileId?: string | null;
+            /** @description Keeps the status. */
+            makeAndModel?: string;
+            /** @description Arabic letters, Latin letters, Western or Arabic-Indic digits and spaces; tidied (trimmed, single spaces, Latin upper case), at most 12 characters after that (INVALID_FORMAT, params.maxLength). A new plate sends the vehicle back to `pending` and voids its sticker; the same plate typed differently changes nothing. */
+            plate?: string;
+            /** @description Keeps the status. */
+            type?: components["schemas"]["VehicleType"];
+        };
+        UpdateVehicleSettingsDto: {
+            /** @description Visitor parking bookings a unit holds at once (not yet ended). */
+            maxActiveVisitorParkingBookings?: number;
+            /** @description Pending or active vehicles per unit. */
+            maxVehiclesPerUnit?: number;
+            /** @description The longest visitor parking booking, in hours. */
+            visitorParkingMaxHours?: number;
+        };
         UpdateWelcomeTemplateDto: {
             /** @description The emergency numbers, in Arabic. */
             emergencyAr?: string | null;
@@ -14036,6 +14338,53 @@ export interface components {
             method: "PUT";
             /** @description Presigned; shown once. */
             url: string;
+        };
+        /**
+         * @description `expires_soon` within 30 days of `permitValidUntil`, `expired` after it: read when asked, never stored. `removed` only on staff views.
+         * @enum {string}
+         */
+        VehiclePermitStatus: "pending" | "active" | "expires_soon" | "expired" | "rejected" | "removed";
+        /** @enum {string} */
+        VehicleRemovalSide: "resident" | "staff" | "system";
+        VehicleSettingsResponse: {
+            /** @description Visitor parking bookings a unit holds at once (not yet ended). */
+            maxActiveVisitorParkingBookings: number;
+            /** @description Pending or active vehicles per unit. */
+            maxVehiclesPerUnit: number;
+            /** @description The longest visitor parking booking, in hours. */
+            visitorParkingMaxHours: number;
+        };
+        /** @enum {string} */
+        VehicleStatus: "pending" | "active" | "rejected" | "removed";
+        /** @enum {string} */
+        VehicleType: "car" | "motorcycle" | "van";
+        VehicleView: {
+            /** @description The caller registered it or is the unit’s primary: may edit and remove it. */
+            canManage: boolean;
+            color: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description A presigned URL, valid for minutes: never cache it. */
+            licencePhotoUrl: string | null;
+            makeAndModel: string;
+            /** @description `expires_soon` within 30 days of `permitValidUntil`, `expired` after it: read when asked, never stored. `removed` only on staff views. */
+            permitStatus: components["schemas"]["VehiclePermitStatus"];
+            /** @description The last local day the permit is valid, `YYYY-MM-DD`. */
+            permitValidUntil: string | null;
+            /** @description As typed, tidied (ADR 0043). */
+            plate: string;
+            /** @example V-2048 */
+            reference: string;
+            /** @description From the closed list `vehicleReject`, while rejected. */
+            rejectionReason: string | null;
+            stickerNumber: string | null;
+            type: components["schemas"]["VehicleType"];
+        };
+        VehicleViewList: {
+            data: components["schemas"]["VehicleView"][];
+            nextCursor: string | null;
         };
         VerifyDisplayView: {
             capacity: string | null;
@@ -23314,6 +23663,195 @@ export interface operations {
             };
         };
     };
+    VehicleSettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleSettingsResponse"];
+                };
+            };
+        };
+    };
+    VehicleSettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateVehicleSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleSettingsResponse"];
+                };
+            };
+        };
+    };
+    StaffVehiclesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `pending` lists the oldest first; anything else the newest first. */
+                status?: components["schemas"]["VehiclePermitStatus"];
+                unitCode?: string;
+                /** @description Matched by the plate’s key: spaces and the digits’ script do not matter. */
+                plate?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffVehicleViewList"];
+                };
+            };
+        };
+    };
+    StaffVehiclesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffVehicleDetailView"];
+                };
+            };
+        };
+    };
+    StaffVehiclesController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApproveVehicleDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffVehicleDetailView"];
+                };
+            };
+        };
+    };
+    StaffVehiclesController_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectVehicleDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffVehicleDetailView"];
+                };
+            };
+        };
+    };
+    StaffVehiclesController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffRemoveVehicleDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffVehiclesController_renew: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenewVehicleDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffVehicleDetailView"];
+                };
+            };
+        };
+    };
     SuggestionBoardController_list: {
         parameters: {
             query?: {
@@ -25231,6 +25769,55 @@ export interface operations {
             };
         };
     };
+    VehiclesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleViewList"];
+                };
+            };
+        };
+    };
+    VehiclesController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateVehicleDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleView"];
+                };
+            };
+        };
+    };
     VisitorsController_list: {
         parameters: {
             query?: {
@@ -25352,6 +25939,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UnitEngagementView"];
+                };
+            };
+        };
+    };
+    VehiclesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleView"];
+                };
+            };
+        };
+    };
+    VehiclesController_remove: {
+        parameters: {
+            query?: {
+                /** @description From the closed list `vehicleRemove`. */
+                reasonCode?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    VehiclesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateVehicleDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleView"];
                 };
             };
         };

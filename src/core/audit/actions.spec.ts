@@ -87,6 +87,7 @@ describe('audit catalog', () => {
         'club_plan',
         'club_membership',
         'club_payment',
+        'vehicle',
       ]).toContain(def.target);
     }
   });

@@ -655,6 +655,26 @@ export const AUDIT_ACTIONS = {
   'club_payment.recorded': { log: 'tenant', target: 'club_payment' },
   // metadata: membershipId, unitId, reversesId, reasonCode.
   'club_payment.reversed': { log: 'tenant', target: 'club_payment' },
+  // Vehicles and parking (ADR 0045). Ids, codes, statuses and days by
+  // value; a plate only as { changed: true } (`plate` is always
+  // sensitive), never a name.
+  // metadata: unitId, number, type, licencePhoto (boolean).
+  'vehicle.registered': { log: 'tenant', target: 'vehicle' },
+  // changes: makeAndModel, color, type, licencePhoto (a file id), plate
+  // (changed only, when the same plate is typed differently); metadata: unitId.
+  'vehicle.updated': { log: 'tenant', target: 'vehicle' },
+  // changes: plate (changed only); metadata: unitId, previousStatus, version.
+  'vehicle.plate_changed': { log: 'tenant', target: 'vehicle' },
+  // metadata: unitId, stickerNumber, permitValidUntil, version.
+  'vehicle.approved': { log: 'tenant', target: 'vehicle' },
+  // metadata: unitId, reasonCode, version.
+  'vehicle.rejected': { log: 'tenant', target: 'vehicle' },
+  // metadata: unitId, from, to (local days).
+  'vehicle.renewed': { log: 'tenant', target: 'vehicle' },
+  // metadata: unitId, side, reasonCode, previousStatus.
+  'vehicle.removed': { log: 'tenant', target: 'vehicle' },
+  // changes: the three settings.
+  'vehicle.settings_changed': { log: 'tenant', target: 'tenant' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

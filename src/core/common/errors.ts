@@ -437,6 +437,27 @@ export const ErrorCode = {
   CLUB_PAYMENT_NOT_FOUND: 'CLUB_PAYMENT_NOT_FOUND',
   /** It was reversed already (409). */
   CLUB_PAYMENT_ALREADY_REVERSED: 'CLUB_PAYMENT_ALREADY_REVERSED',
+  // vehicles and parking (ADR 0045)
+  /**
+   * Unknown, another compound's or removed; for a resident also another
+   * unit's, or one where they do not hold `vehicles`: one answer.
+   */
+  VEHICLE_NOT_FOUND: 'VEHICLE_NOT_FOUND',
+  /** The caller's capabilities on the unit carry no `vehicles` (403). */
+  VEHICLES_NOT_ALLOWED: 'VEHICLES_NOT_ALLOWED',
+  /** Only the vehicle's registrant or the unit's primary edits or removes it (403). */
+  VEHICLE_ACTION_NOT_ALLOWED: 'VEHICLE_ACTION_NOT_ALLOWED',
+  /** The unit has params.max pending or active vehicles already (409). */
+  VEHICLE_LIMIT_REACHED: 'VEHICLE_LIMIT_REACHED',
+  /** Its status does not take the action (409, params.status). */
+  VEHICLE_INVALID_TRANSITION: 'VEHICLE_INVALID_TRANSITION',
+  /**
+   * Its plate changed since the staff read it (409, params.version: the
+   * current one): read it again before deciding.
+   */
+  VEHICLE_CHANGED: 'VEHICLE_CHANGED',
+  /** Another vehicle of the compound holds an active permit for this plate (409). */
+  VEHICLE_PLATE_ACTIVE: 'VEHICLE_PLATE_ACTIVE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -556,6 +577,9 @@ export const FieldErrorCode = {
   PAID_ON_OUT_OF_RANGE: 'PAID_ON_OUT_OF_RANGE',
   /** Not one of the unit's residing occupancies or household members now. */
   PERSON_NOT_OF_UNIT: 'PERSON_NOT_OF_UNIT',
+  // vehicles and parking (ADR 0045)
+  /** A permit's last day is after today and at most params.max (a local day). */
+  PERMIT_DATE_OUT_OF_RANGE: 'PERMIT_DATE_OUT_OF_RANGE',
 } as const;
 
 export type FieldErrorCode =

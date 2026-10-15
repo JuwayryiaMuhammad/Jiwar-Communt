@@ -356,4 +356,23 @@ export const REASON_CODES = {
   bookingSuspensionLift: ['staff_error', 'exception_granted', 'other'],
   // Why the accountant reverses a club payment recorded by mistake.
   clubPaymentReverse: ['entered_in_error', 'duplicate', 'refunded', 'other'],
+  // Vehicles and parking (ADR 0045). Why the staff reject a vehicle, why a
+  // resident removes one and why the staff do.
+  vehicleReject: [
+    'licence_missing',
+    'licence_unreadable',
+    'plate_mismatch',
+    'not_resident_vehicle',
+    'other',
+  ],
+  vehicleRemove: ['sold', 'no_longer_used', 'registered_in_error', 'other'],
+  vehicleStaffRemove: [
+    'permit_revoked',
+    'vehicle_left_compound',
+    'duplicate',
+    'other',
+  ],
+  // Written by the system only: the registrant no longer holds `vehicles`
+  // on the unit (left, deactivated or erased).
+  vehicleSystemRemove: ['registrant_left'],
 } as const;

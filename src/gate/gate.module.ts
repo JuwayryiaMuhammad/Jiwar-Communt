@@ -46,9 +46,21 @@ import { PassTokens } from './visitors/pass-tokens';
 import { StandingInstructionsService } from './visitors/standing-instructions.service';
 import { VisitorPassesService } from './visitors/visitor-passes.service';
 import { VisitorsController } from './visitors/visitors.controller';
+import { StaffVehiclesService } from './vehicles/staff-vehicles.service';
+import { VehicleCore } from './vehicles/vehicle-core';
+import { VehicleProvisioning } from './vehicles/vehicle-provisioning';
+import { VehicleSettingsService } from './vehicles/vehicle-settings.service';
+import { VehicleSweeps } from './vehicles/vehicle-sweeps';
+import {
+  StaffVehiclesController,
+  VehicleSettingsController,
+  VehiclesController,
+} from './vehicles/vehicles.controller';
+import { VehiclesService } from './vehicles/vehicles.service';
 
 /**
- * The gate domain (ADR 0028). It imports core freely and the community
+ * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
+ * vehicles and parking (ADR 0045). It imports core freely and the community
  * domain only through src/community/index.ts (ADR 0015).
  */
 @Module({
@@ -73,6 +85,9 @@ import { VisitorsController } from './visitors/visitors.controller';
     ResidentParcelsController,
     ManagerParcelsController,
     ParcelSettingsController,
+    VehiclesController,
+    StaffVehiclesController,
+    VehicleSettingsController,
   ],
   providers: [
     GatesService,
@@ -100,6 +115,12 @@ import { VisitorsController } from './visitors/visitors.controller';
     ParcelSettingsService,
     ParcelSweeps,
     GateExportSections,
+    VehicleCore,
+    VehicleProvisioning,
+    VehiclesService,
+    StaffVehiclesService,
+    VehicleSettingsService,
+    VehicleSweeps,
   ],
 })
 export class GateModule {}

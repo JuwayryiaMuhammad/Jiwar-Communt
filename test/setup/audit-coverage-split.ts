@@ -291,3 +291,15 @@ export const FACILITIES_COVERAGE: readonly string[] = [
   'club_payment.recorded',
   'club_payment.reversed',
 ];
+
+/** Vehicles and parking (ADR 0045): test/vehicles/audit-coverage. */
+export const VEHICLES_COVERAGE: readonly string[] = [
+  'vehicle.registered',
+  'vehicle.updated',
+  'vehicle.plate_changed',
+  'vehicle.approved',
+  'vehicle.rejected',
+  'vehicle.renewed',
+  'vehicle.removed',
+  'vehicle.settings_changed',
+];

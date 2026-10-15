@@ -17131,6 +17131,502 @@
     {
       "item": [
         {
+          "name": "Get the vehicle and parking settings",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vehicle-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vehicle-settings"
+            }
+          }
+        },
+        {
+          "name": "Change the vehicle and parking settings",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"maxActiveVisitorParkingBookings\": 1,\n  \"maxVehiclesPerUnit\": 1,\n  \"visitorParkingMaxHours\": 1\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `maxActiveVisitorParkingBookings` | number |  | Visitor parking bookings a unit holds at once (not yet ended). |\n| `maxVehiclesPerUnit` | number |  | Pending or active vehicles per unit. |\n| `visitorParkingMaxHours` | number |  | The longest visitor parking booking, in hours. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vehicle-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vehicle-settings"
+            }
+          }
+        },
+        {
+          "name": "List the compound’s vehicles",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vehicles"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "`pending` lists the oldest first; anything else the newest first.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "unitCode",
+                  "value": ""
+                },
+                {
+                  "description": "Matched by the plate’s key: spaces and the digits’ script do not matter.",
+                  "disabled": true,
+                  "key": "plate",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vehicles"
+            }
+          }
+        },
+        {
+          "name": "Get a vehicle with its licence photo",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vehicles",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vehicles/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve a pending vehicle: a sticker and a permit’s last day",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"version\": 0,\n  \"stickerNumber\": \"\",\n  \"permitValidUntil\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `permitValidUntil` | string | yes | The permit’s last local day: after today, at most 731 days ahead (PERMIT_DATE_OUT_OF_RANGE). |\n| `stickerNumber` | string | yes | Upper-cased. Issued once in the compound, ever (DUPLICATE_RESOURCE on stickerNumber). |\n| `version` | number | yes | The `version` the staff read (VEHICLE_CHANGED otherwise). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vehicles",
+                ":id",
+                "approve"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vehicles/:id/approve",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reject a pending vehicle, with a reason code",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"version\": 0,\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `vehicleReject`. |\n| `version` | number | yes | The `version` the staff read (VEHICLE_CHANGED otherwise). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vehicles",
+                ":id",
+                "reject"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vehicles/:id/reject",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remove a vehicle, with a reason code",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `vehicleStaffRemove`. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vehicles",
+                ":id",
+                "remove"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vehicles/:id/remove",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Renew an active permit: a new last day",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"permitValidUntil\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `permitValidUntil` | string | yes | The new last local day: after today, not before the current one, at most 731 days ahead. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vehicles",
+                ":id",
+                "renew"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vehicles/:id/renew",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the unit’s vehicles",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "vehicles"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/vehicles",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Register a vehicle for the unit",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"plate\": \"ق ب ط ١٢٣٤\",\n  \"makeAndModel\": \"Hyundai Elantra\",\n  \"color\": \"Silver\",\n  \"type\": \"car\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `color` | string | yes |  |\n| `licencePhotoFileId` | string (uuid) |  | A finalized `vehicle_licence` upload of the caller (FILE_NOT_AVAILABLE otherwise). |\n| `makeAndModel` | string | yes |  |\n| `plate` | string | yes | Arabic letters, Latin letters, Western or Arabic-Indic digits and spaces; tidied (trimmed, single spaces, Latin upper case), at most 12 characters after that (INVALID_FORMAT, params.maxLength). |\n| `type` | `car` \\| `motorcycle` \\| `van` | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "vehicles"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/vehicles",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get one of the unit’s vehicles",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "vehicles",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/vehicles/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Edit a vehicle",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"color\": \"\",\n  \"licencePhotoFileId\": \"\",\n  \"makeAndModel\": \"\",\n  \"plate\": \"\",\n  \"type\": \"car\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `color` | string |  | Keeps the status. |\n| `licencePhotoFileId` | string (uuid) |  | A new `vehicle_licence` upload replaces the photo; `null` removes it. Keeps the status. |\n| `makeAndModel` | string |  | Keeps the status. |\n| `plate` | string |  | Arabic letters, Latin letters, Western or Arabic-Indic digits and spaces; tidied (trimmed, single spaces, Latin upper case), at most 12 characters after that (INVALID_FORMAT, params.maxLength). A new plate sends the vehicle back to `pending` and voids its sticker; the same plate typed differently changes nothing. |\n| `type` | `car` \\| `motorcycle` \\| `van` |  | Keeps the status. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "vehicles",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/vehicles/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remove a vehicle",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "vehicles",
+                ":id"
+              ],
+              "query": [
+                {
+                  "description": "From the closed list `vehicleRemove`.",
+                  "disabled": true,
+                  "key": "reasonCode",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/vehicles/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "name": "vehicles"
+    },
+    {
+      "item": [
+        {
           "name": "Get the household's gate instructions",
           "request": {
             "description": "**Responses:** 200",

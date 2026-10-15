@@ -17,6 +17,8 @@ const SENSITIVE_FIELDS = [
   'email',
   'birthDate', // derived from the national ID
   'accessCode', // a domestic worker's gate code (ADR 0017)
+  'plate', // a vehicle plate (ADR 0045)
+  'vehiclePlate',
 ];
 // Broad on purpose: any future `newPassword`, `temporaryPassword`,
 // `passwordResetCode`, `apiToken`… is withheld by default.

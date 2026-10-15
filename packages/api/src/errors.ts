@@ -219,6 +219,14 @@ const ERROR_TEXT: Record<string, string> = {
   CLUB_MEMBERSHIP_EXISTS: 'This unit already has a membership.',
   CLUB_PAYMENT_NOT_FOUND: 'This payment does not exist.',
   CLUB_PAYMENT_ALREADY_REVERSED: 'This payment was reversed already.',
+  // Vehicles and parking (ADR 0045).
+  VEHICLE_NOT_FOUND: 'This vehicle does not exist.',
+  VEHICLES_NOT_ALLOWED: 'This person may not register vehicles for this unit.',
+  VEHICLE_ACTION_NOT_ALLOWED: 'Only the person who registered the vehicle, or the unit’s primary resident, may change it.',
+  VEHICLE_LIMIT_REACHED: 'The unit has as many vehicles as the compound allows.',
+  VEHICLE_INVALID_TRANSITION: 'The vehicle has moved on, so this is no longer possible. Refresh to see where it stands.',
+  VEHICLE_CHANGED: 'The vehicle’s plate changed since you opened it. Check it again before deciding.',
+  VEHICLE_PLATE_ACTIVE: 'Another vehicle already holds an active permit for this plate.',
 };
 
 const FIELD_TEXT: Record<string, string> = {
@@ -283,6 +291,7 @@ const FIELD_TEXT: Record<string, string> = {
   PLAN_NOT_AVAILABLE: 'Pick an active plan.',
   PAID_ON_OUT_OF_RANGE: 'Not in the future, and at most 90 days ago.',
   PERSON_NOT_OF_UNIT: 'Not one of the unit’s people now.',
+  PERMIT_DATE_OUT_OF_RANGE: 'Pick a day after today, at most two years ahead.',
 };
 
 export function errorText(error: unknown): string {

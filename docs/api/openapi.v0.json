@@ -767,6 +767,30 @@
         },
         "type": "object"
       },
+      "ApproveVehicleDto": {
+        "properties": {
+          "permitValidUntil": {
+            "description": "The permit’s last local day: after today, at most 731 days ahead (PERMIT_DATE_OUT_OF_RANGE).",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "stickerNumber": {
+            "description": "Upper-cased. Issued once in the compound, ever (DUPLICATE_RESOURCE on stickerNumber).",
+            "pattern": "^[A-Za-z0-9-]{1,20}$",
+            "type": "string"
+          },
+          "version": {
+            "description": "The `version` the staff read (VEHICLE_CHANGED otherwise).",
+            "type": "number"
+          }
+        },
+        "required": [
+          "version",
+          "stickerNumber",
+          "permitValidUntil"
+        ],
+        "type": "object"
+      },
       "ApprovedRegistrationView": {
         "properties": {
           "accountId": {
@@ -5285,6 +5309,47 @@
         },
         "required": [
           "code"
+        ],
+        "type": "object"
+      },
+      "CreateVehicleDto": {
+        "properties": {
+          "color": {
+            "example": "Silver",
+            "maxLength": 30,
+            "minLength": 1,
+            "type": "string"
+          },
+          "licencePhotoFileId": {
+            "description": "A finalized `vehicle_licence` upload of the caller (FILE_NOT_AVAILABLE otherwise).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "makeAndModel": {
+            "example": "Hyundai Elantra",
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "plate": {
+            "description": "Arabic letters, Latin letters, Western or Arabic-Indic digits and spaces; tidied (trimmed, single spaces, Latin upper case), at most 12 characters after that (INVALID_FORMAT, params.maxLength).",
+            "example": "ق ب ط ١٢٣٤",
+            "maxLength": 12,
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehicleType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "plate",
+          "makeAndModel",
+          "color",
+          "type"
         ],
         "type": "object"
       },
@@ -14051,6 +14116,36 @@
         ],
         "type": "object"
       },
+      "RejectVehicleDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `vehicleReject`.",
+            "type": "string"
+          },
+          "version": {
+            "description": "The `version` the staff read (VEHICLE_CHANGED otherwise).",
+            "type": "number"
+          }
+        },
+        "required": [
+          "version",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "RenewVehicleDto": {
+        "properties": {
+          "permitValidUntil": {
+            "description": "The new last local day: after today, not before the current one, at most 731 days ahead.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "permitValidUntil"
+        ],
+        "type": "object"
+      },
       "ReplaceClubPeopleDto": {
         "properties": {
           "people": {
@@ -18491,6 +18586,18 @@
         ],
         "type": "object"
       },
+      "StaffRemoveVehicleDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `vehicleStaffRemove`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "StaffReportView": {
         "properties": {
           "author": {
@@ -19394,6 +19501,257 @@
           "done",
           "createdAt",
           "updates"
+        ],
+        "type": "object"
+      },
+      "StaffVehicleDetailView": {
+        "properties": {
+          "color": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "licencePhotoUrl": {
+            "description": "A presigned URL, valid for minutes.",
+            "nullable": true,
+            "type": "string"
+          },
+          "makeAndModel": {
+            "type": "string"
+          },
+          "permitStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehiclePermitStatus"
+              }
+            ],
+            "description": "`expires_soon` within 30 days of `permitValidUntil`, `expired` after it: read when asked, never stored. `removed` only on staff views."
+          },
+          "permitValidUntil": {
+            "nullable": true,
+            "type": "string"
+          },
+          "plate": {
+            "type": "string"
+          },
+          "reference": {
+            "example": "V-2048",
+            "type": "string"
+          },
+          "registeredBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "rejectionReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "removalReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "removalSide": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehicleRemovalSide"
+              }
+            ],
+            "nullable": true
+          },
+          "removedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "removedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Null for the system’s removal.",
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehicleStatus"
+              }
+            ]
+          },
+          "stickerNumber": {
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehicleType"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "version": {
+            "description": "Name it when approving or rejecting: a plate changed since is VEHICLE_CHANGED.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "unitId",
+          "unitCode",
+          "plate",
+          "makeAndModel",
+          "color",
+          "type",
+          "status",
+          "permitStatus",
+          "permitValidUntil",
+          "stickerNumber",
+          "version",
+          "registeredBy",
+          "createdAt",
+          "rejectionReason",
+          "licencePhotoUrl",
+          "decidedBy",
+          "decidedAt",
+          "removedAt",
+          "removalSide",
+          "removalReason",
+          "removedBy"
+        ],
+        "type": "object"
+      },
+      "StaffVehicleView": {
+        "properties": {
+          "color": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "makeAndModel": {
+            "type": "string"
+          },
+          "permitStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehiclePermitStatus"
+              }
+            ],
+            "description": "`expires_soon` within 30 days of `permitValidUntil`, `expired` after it: read when asked, never stored. `removed` only on staff views."
+          },
+          "permitValidUntil": {
+            "nullable": true,
+            "type": "string"
+          },
+          "plate": {
+            "type": "string"
+          },
+          "reference": {
+            "example": "V-2048",
+            "type": "string"
+          },
+          "registeredBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehicleStatus"
+              }
+            ]
+          },
+          "stickerNumber": {
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehicleType"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "version": {
+            "description": "Name it when approving or rejecting: a plate changed since is VEHICLE_CHANGED.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "unitId",
+          "unitCode",
+          "plate",
+          "makeAndModel",
+          "color",
+          "type",
+          "status",
+          "permitStatus",
+          "permitValidUntil",
+          "stickerNumber",
+          "version",
+          "registeredBy",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StaffVehicleViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffVehicleView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -22234,6 +22592,65 @@
         },
         "type": "object"
       },
+      "UpdateVehicleDto": {
+        "properties": {
+          "color": {
+            "description": "Keeps the status.",
+            "maxLength": 30,
+            "minLength": 1,
+            "type": "string"
+          },
+          "licencePhotoFileId": {
+            "description": "A new `vehicle_licence` upload replaces the photo; `null` removes it. Keeps the status.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "makeAndModel": {
+            "description": "Keeps the status.",
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "plate": {
+            "description": "Arabic letters, Latin letters, Western or Arabic-Indic digits and spaces; tidied (trimmed, single spaces, Latin upper case), at most 12 characters after that (INVALID_FORMAT, params.maxLength). A new plate sends the vehicle back to `pending` and voids its sticker; the same plate typed differently changes nothing.",
+            "maxLength": 12,
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehicleType"
+              }
+            ],
+            "description": "Keeps the status."
+          }
+        },
+        "type": "object"
+      },
+      "UpdateVehicleSettingsDto": {
+        "properties": {
+          "maxActiveVisitorParkingBookings": {
+            "description": "Visitor parking bookings a unit holds at once (not yet ended).",
+            "maximum": 20,
+            "minimum": 1,
+            "type": "number"
+          },
+          "maxVehiclesPerUnit": {
+            "description": "Pending or active vehicles per unit.",
+            "maximum": 20,
+            "minimum": 1,
+            "type": "number"
+          },
+          "visitorParkingMaxHours": {
+            "description": "The longest visitor parking booking, in hours.",
+            "maximum": 24,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
       "UpdateWelcomeTemplateDto": {
         "properties": {
           "emergencyAr": {
@@ -22333,6 +22750,164 @@
           "method",
           "headers",
           "expiresAt"
+        ],
+        "type": "object"
+      },
+      "VehiclePermitStatus": {
+        "description": "`expires_soon` within 30 days of `permitValidUntil`, `expired` after it: read when asked, never stored. `removed` only on staff views.",
+        "enum": [
+          "pending",
+          "active",
+          "expires_soon",
+          "expired",
+          "rejected",
+          "removed"
+        ],
+        "type": "string"
+      },
+      "VehicleRemovalSide": {
+        "enum": [
+          "resident",
+          "staff",
+          "system"
+        ],
+        "type": "string"
+      },
+      "VehicleSettingsResponse": {
+        "properties": {
+          "maxActiveVisitorParkingBookings": {
+            "description": "Visitor parking bookings a unit holds at once (not yet ended).",
+            "type": "number"
+          },
+          "maxVehiclesPerUnit": {
+            "description": "Pending or active vehicles per unit.",
+            "type": "number"
+          },
+          "visitorParkingMaxHours": {
+            "description": "The longest visitor parking booking, in hours.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "maxVehiclesPerUnit",
+          "visitorParkingMaxHours",
+          "maxActiveVisitorParkingBookings"
+        ],
+        "type": "object"
+      },
+      "VehicleStatus": {
+        "enum": [
+          "pending",
+          "active",
+          "rejected",
+          "removed"
+        ],
+        "type": "string"
+      },
+      "VehicleType": {
+        "enum": [
+          "car",
+          "motorcycle",
+          "van"
+        ],
+        "type": "string"
+      },
+      "VehicleView": {
+        "properties": {
+          "canManage": {
+            "description": "The caller registered it or is the unit’s primary: may edit and remove it.",
+            "type": "boolean"
+          },
+          "color": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "licencePhotoUrl": {
+            "description": "A presigned URL, valid for minutes: never cache it.",
+            "nullable": true,
+            "type": "string"
+          },
+          "makeAndModel": {
+            "type": "string"
+          },
+          "permitStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehiclePermitStatus"
+              }
+            ],
+            "description": "`expires_soon` within 30 days of `permitValidUntil`, `expired` after it: read when asked, never stored. `removed` only on staff views."
+          },
+          "permitValidUntil": {
+            "description": "The last local day the permit is valid, `YYYY-MM-DD`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "plate": {
+            "description": "As typed, tidied (ADR 0043).",
+            "type": "string"
+          },
+          "reference": {
+            "example": "V-2048",
+            "type": "string"
+          },
+          "rejectionReason": {
+            "description": "From the closed list `vehicleReject`, while rejected.",
+            "nullable": true,
+            "type": "string"
+          },
+          "stickerNumber": {
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehicleType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "plate",
+          "makeAndModel",
+          "color",
+          "type",
+          "permitStatus",
+          "permitValidUntil",
+          "stickerNumber",
+          "rejectionReason",
+          "licencePhotoUrl",
+          "canManage",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "VehicleViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/VehicleView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -40069,6 +40644,374 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/vehicle-settings": {
+      "get": {
+        "operationId": "VehicleSettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the vehicle and parking settings",
+        "tags": [
+          "vehicles"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "A lower limit leaves what a unit holds already.",
+        "operationId": "VehicleSettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVehicleSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change the vehicle and parking settings",
+        "tags": [
+          "vehicles"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/vehicles": {
+      "get": {
+        "description": "`status=pending` is the approvals queue, oldest first.",
+        "operationId": "StaffVehiclesController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`pending` lists the oldest first; anything else the newest first.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/VehiclePermitStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitCode",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Matched by the plate’s key: spaces and the digits’ script do not matter.",
+            "in": "query",
+            "name": "plate",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffVehicleViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the compound’s vehicles",
+        "tags": [
+          "vehicles"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/vehicles/{id}": {
+      "get": {
+        "operationId": "StaffVehiclesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffVehicleDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a vehicle with its licence photo",
+        "tags": [
+          "vehicles"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/vehicles/{id}/approve": {
+      "post": {
+        "description": "As read (`version`, VEHICLE_CHANGED). One active permit per plate (VEHICLE_PLATE_ACTIVE); a sticker number is issued once, ever.",
+        "operationId": "StaffVehiclesController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveVehicleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffVehicleDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve a pending vehicle: a sticker and a permit’s last day",
+        "tags": [
+          "vehicles"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/vehicles/{id}/reject": {
+      "post": {
+        "operationId": "StaffVehiclesController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectVehicleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffVehicleDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reject a pending vehicle, with a reason code",
+        "tags": [
+          "vehicles"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/vehicles/{id}/remove": {
+      "post": {
+        "operationId": "StaffVehiclesController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffRemoveVehicleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a vehicle, with a reason code",
+        "tags": [
+          "vehicles"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/vehicles/{id}/renew": {
+      "post": {
+        "operationId": "StaffVehiclesController_renew",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenewVehicleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffVehicleDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Renew an active permit: a new last day",
+        "tags": [
+          "vehicles"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/suggestion-board": {
       "get": {
         "operationId": "SuggestionBoardController_list",
@@ -43696,6 +44639,101 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/units/{unitId}/vehicles": {
+      "get": {
+        "description": "For whoever holds `vehicles` on the unit. Removed vehicles are gone.",
+        "operationId": "VehiclesController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the unit’s vehicles",
+        "tags": [
+          "vehicles"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "`pending` until the staff approve it. At most the compound’s `maxVehiclesPerUnit` pending or active vehicles per unit (VEHICLE_LIMIT_REACHED).",
+        "operationId": "VehiclesController_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVehicleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register a vehicle for the unit",
+        "tags": [
+          "vehicles"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/units/{unitId}/visitor-passes": {
       "get": {
         "operationId": "VisitorsController_list",
@@ -43952,6 +44990,130 @@
         "tags": [
           "workers"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/vehicles/{id}": {
+      "delete": {
+        "description": "Its registrant or the unit’s primary. Final: its sticker and permit are void; the licence photo is deleted 30 days later.",
+        "operationId": "VehiclesController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "From the closed list `vehicleRemove`.",
+            "in": "query",
+            "name": "reasonCode",
+            "required": false,
+            "schema": {
+              "default": "other",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a vehicle",
+        "tags": [
+          "vehicles"
+        ],
+        "x-stability": "draft"
+      },
+      "get": {
+        "operationId": "VehiclesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one of the unit’s vehicles",
+        "tags": [
+          "vehicles"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "Its registrant or the unit’s primary (VEHICLE_ACTION_NOT_ALLOWED). A new plate sends it back to `pending` and voids its sticker; colour, model, type and the photo keep its status.",
+        "operationId": "VehiclesController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVehicleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit a vehicle",
+        "tags": [
+          "vehicles"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

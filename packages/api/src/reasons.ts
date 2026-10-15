@@ -67,6 +67,10 @@ export const REASON_CODES = {
   facilityClosureLift: ['reopened_early', 'created_in_error', 'other'],
   bookingSuspensionLift: ['staff_error', 'exception_granted', 'other'],
   clubPaymentReverse: ['entered_in_error', 'duplicate', 'refunded', 'other'],
+  vehicleReject: ['licence_missing', 'licence_unreadable', 'plate_mismatch', 'not_resident_vehicle', 'other'],
+  vehicleRemove: ['sold', 'no_longer_used', 'registered_in_error', 'other'],
+  vehicleStaffRemove: ['permit_revoked', 'vehicle_left_compound', 'duplicate', 'other'],
+  vehicleSystemRemove: ['registrant_left'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

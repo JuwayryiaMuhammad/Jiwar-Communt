@@ -8,6 +8,7 @@ import { TenantLifecycle } from '../../src/core/tenant-settings/tenant-lifecycle
 import { EngagementProvisioning } from '../../src/engagement/provisioning';
 import { FacilitiesProvisioning } from '../../src/facilities/provisioning';
 import { ParcelProvisioning } from '../../src/gate/parcels/parcel-provisioning';
+import { VehicleProvisioning } from '../../src/gate/vehicles/vehicle-provisioning';
 import { MaintenanceProvisioning } from '../../src/maintenance/provisioning';
 import { ManagementProvisioning } from '../../src/management/provisioning';
 import { NeighboursProvisioning } from '../../src/neighbours/provisioning';
@@ -25,6 +26,7 @@ const provisioner = new RoleProvisioner(CODE_ACCESS_CATALOG);
 export const tenantLifecycle = new TenantLifecycle();
 new MaintenanceProvisioning(tenantLifecycle).onModuleInit();
 new ParcelProvisioning(tenantLifecycle).onModuleInit();
+new VehicleProvisioning(tenantLifecycle).onModuleInit();
 new ManagementProvisioning(tenantLifecycle).onModuleInit();
 new EngagementProvisioning(tenantLifecycle).onModuleInit();
 new NeighboursProvisioning(tenantLifecycle).onModuleInit();

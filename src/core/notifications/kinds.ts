@@ -979,6 +979,36 @@ export const NOTIFICATION_KINDS = {
     target: 'club_membership',
     params: {},
   },
+  // Vehicles and parking (ADR 0045). No kind is critical. They target the
+  // vehicle and carry a reason's code at most: never a plate, a unit or a
+  // name. Never to the one who acted.
+  /** The staff approved a vehicle: to its registrant. */
+  'vehicle.approved': {
+    priority: 'normal',
+    category: 'vehicles',
+    critical: false,
+    target: 'vehicle',
+    params: {},
+  },
+  /** The staff rejected it; the reason is a code. */
+  'vehicle.rejected': {
+    priority: 'normal',
+    category: 'vehicles',
+    critical: false,
+    target: 'vehicle',
+    params: { reason: {} },
+  },
+  /**
+   * Its permit's last day is within 30 days: to its registrant (or the
+   * unit's primary), once per last day.
+   */
+  'vehicle.permit_expiring': {
+    priority: 'normal',
+    category: 'vehicles',
+    critical: false,
+    target: 'vehicle',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

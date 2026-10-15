@@ -220,4 +220,18 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   club_payment_records_receipt_key: ['receiptNumber'],
   // Inserted with ON CONFLICT DO NOTHING.
   club_expiry_reminders_once: null,
+  // Vehicles and parking (ADR 0045).
+  vehicles_tenant_id_id_key: null,
+  // Numbers come from the counter under its row lock: a collision is a bug.
+  vehicles_number_key: null,
+  // Checked under the plate's advisory lock first (VEHICLE_PLATE_ACTIVE): a race.
+  vehicles_one_active_plate: null,
+  vehicle_stickers_tenant_id_id_key: null,
+  // A sticker number is issued once in the compound; the service answers
+  // the same before it can fire.
+  vehicle_stickers_number_key: ['stickerNumber'],
+  // Backs the vehicle's own sticker foreign key; implied by the one above.
+  vehicle_stickers_vehicle_number_key: null,
+  // Inserted with ON CONFLICT DO NOTHING.
+  vehicle_expiry_reminders_once: null,
 };

@@ -213,6 +213,15 @@ export class CommunityGatePort {
     return isPrimary(tx, unitId, accountId);
   }
 
+  /** The unit's primary resident now, or null (ADR 0045: who is told). */
+  async primaryOf(tx: TenantTxClient, unitId: string): Promise<string | null> {
+    const row = await tx.unitOccupancy.findFirst({
+      where: { unitId, status: 'active', isPrimary: true },
+      select: { accountId: true },
+    });
+    return row?.accountId ?? null;
+  }
+
   /** The caller runs the unit's household: its primary or a `household` delegate. */
   async requireHousehold(tx: TenantTxClient, unitId: string): Promise<void> {
     await this.household.require(tx, unitId, 'household');

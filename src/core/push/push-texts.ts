@@ -1041,6 +1041,36 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'ينتهي اشتراكك في النادي خلال أسبوع.',
     },
   },
+  'vehicle.approved': {
+    en: {
+      title: 'Vehicle approved',
+      body: 'Your vehicle’s parking permit is now active.',
+    },
+    ar: {
+      title: 'تمت الموافقة على المركبة',
+      body: 'أصبح تصريح ركن مركبتك ساريًا.',
+    },
+  },
+  'vehicle.rejected': {
+    en: {
+      title: 'Vehicle not approved',
+      body: 'Your vehicle registration was not approved. Open the app to see why.',
+    },
+    ar: {
+      title: 'لم تتم الموافقة على المركبة',
+      body: 'لم تتم الموافقة على تسجيل مركبتك. افتح التطبيق لمعرفة السبب.',
+    },
+  },
+  'vehicle.permit_expiring': {
+    en: {
+      title: 'Parking permit expiring',
+      body: 'A vehicle’s parking permit expires within 30 days. Contact the management office to renew it.',
+    },
+    ar: {
+      title: 'تصريح الركن قارب على الانتهاء',
+      body: 'ينتهي تصريح ركن إحدى المركبات خلال 30 يومًا. تواصل مع مكتب الإدارة لتجديده.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

@@ -69,6 +69,7 @@ import { RESIDENTS_ROUTES } from './residents';
 import { SECURITY_ROUTES } from './security';
 import { UNIT_STATES_ROUTES } from './unit-states';
 import { UNITS_ROUTES } from './units';
+import { VEHICLE_ROUTES } from './vehicles';
 import { VISITORS_ROUTES } from './visitors';
 import { WORKERS_ROUTES } from './workers';
 
@@ -134,4 +135,5 @@ export const ROUTES: Row[] = [
   ...CLOSURE_ROUTES,
   ...SUSPENSION_ROUTES,
   ...CLUB_ROUTES,
+  ...VEHICLE_ROUTES,
 ];

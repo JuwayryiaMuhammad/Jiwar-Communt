@@ -47,6 +47,21 @@
         ],
         "type": "object"
       },
+      "AcceptGateServiceDto": {
+        "properties": {
+          "etaMinutes": {
+            "description": "The minutes you expect to take: required for accessibility help and an escort.",
+            "enum": [
+              2,
+              5,
+              10,
+              15
+            ],
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
       "AccessCodeView": {
         "properties": {
           "accessCode": {
@@ -2887,6 +2902,24 @@
         "properties": {
           "reasonCode": {
             "description": "From the closed list `reviewClear`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "CloseGateServiceDto": {
+        "properties": {
+          "note": {
+            "description": "Security’s own words, kept for the management.",
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "From the closed list `gateServiceClose`.",
             "type": "string"
           }
         },
@@ -19830,6 +19863,27 @@
         ],
         "type": "object"
       },
+      "ServiceLocationView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "unitCode",
+          "building"
+        ],
+        "type": "object"
+      },
       "ServiceMemberView": {
         "properties": {
           "firstName": {
@@ -22111,6 +22165,279 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/StaffFineView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffGateServiceView": {
+        "properties": {
+          "acceptedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "assistanceKind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssistanceKind"
+              }
+            ],
+            "description": "accessibility only.",
+            "nullable": true
+          },
+          "cancelSide": {
+            "description": "`system`: the requester was erased.",
+            "enum": [
+              "requester",
+              "system"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "closeNote": {
+            "nullable": true,
+            "type": "string"
+          },
+          "closeReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateServiceCloseReason"
+              }
+            ],
+            "nullable": true
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "description": "suspicious only; null once the requester was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "etaMinutes": {
+            "enum": [
+              2,
+              5,
+              10,
+              15
+            ],
+            "nullable": true,
+            "type": "number"
+          },
+          "fromPlace": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceView"
+              }
+            ],
+            "description": "accessibility and escort.",
+            "nullable": true,
+            "type": "object"
+          },
+          "gate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceGateView"
+              }
+            ],
+            "description": "lane only.",
+            "nullable": true,
+            "type": "object"
+          },
+          "handledBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FirstNameRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "handler": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResponderView"
+              }
+            ],
+            "description": "Who accepted it: a first name and the phone of their gate (else the compound’s duty phone). Never their own.",
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "isMine": {
+            "description": "The caller handles it.",
+            "type": "boolean"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateServiceKind"
+              }
+            ]
+          },
+          "laneReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LaneReason"
+              }
+            ],
+            "description": "lane only.",
+            "nullable": true
+          },
+          "location": {
+            "$ref": "#/components/schemas/ServiceLocationView"
+          },
+          "member": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceMemberView"
+              }
+            ],
+            "description": "accessibility only: the household member helped; null for the requester.",
+            "nullable": true,
+            "type": "object"
+          },
+          "minutesAway": {
+            "description": "The minutes security picked, counted down from when they accepted; null before, once closed and when none was given.",
+            "nullable": true,
+            "type": "number"
+          },
+          "notes": {
+            "description": "lane only; null once the requester was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "photoUrl": {
+            "description": "suspicious only: a presigned URL of the photo, valid for minutes.",
+            "nullable": true,
+            "type": "string"
+          },
+          "place": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceView"
+              }
+            ],
+            "description": "suspicious only.",
+            "nullable": true,
+            "type": "object"
+          },
+          "reference": {
+            "description": "A- for accessibility help, S- for the other services.",
+            "example": "S-0042",
+            "type": "string"
+          },
+          "requestedBy": {
+            "$ref": "#/components/schemas/FirstNameRefView"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateServiceStatus"
+              }
+            ],
+            "description": "`open`: waiting for security; `accepted`: someone is coming; `in_progress`: being done; `closed`; `cancelled` (by the requester while open, or because the requester left)."
+          },
+          "toPlace": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceView"
+              }
+            ],
+            "description": "escort; accessibility, where null means the unit.",
+            "nullable": true,
+            "type": "object"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "wantedAt": {
+            "description": "When the help is wanted: the request’s time plus `when`.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "when": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateServiceWhen"
+              }
+            ],
+            "description": "accessibility and escort.",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "kind",
+          "status",
+          "createdAt",
+          "unitId",
+          "assistanceKind",
+          "member",
+          "fromPlace",
+          "toPlace",
+          "place",
+          "when",
+          "wantedAt",
+          "description",
+          "photoUrl",
+          "laneReason",
+          "gate",
+          "notes",
+          "minutesAway",
+          "handler",
+          "acceptedAt",
+          "startedAt",
+          "closedAt",
+          "closeReason",
+          "cancelledAt",
+          "location",
+          "requestedBy",
+          "handledBy",
+          "isMine",
+          "etaMinutes",
+          "closeNote",
+          "cancelSide"
+        ],
+        "type": "object"
+      },
+      "StaffGateServiceViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffGateServiceView"
             },
             "type": "array"
           },
@@ -33281,6 +33608,247 @@
         "tags": [
           "gate"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/gate-services": {
+      "get": {
+        "description": "`status=open` is the queue, oldest first. A guard needs an open shift (NO_OPEN_SHIFT).",
+        "operationId": "GateServiceHandlersController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/GateServiceStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/GateServiceKind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGateServiceViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the gate service requests",
+        "tags": [
+          "gate-services"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/gate-services/{id}": {
+      "get": {
+        "operationId": "GateServiceHandlersController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGateServiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a gate service request",
+        "tags": [
+          "gate-services"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/gate-services/{id}/accept": {
+      "post": {
+        "description": "With the minutes you expect to take for accessibility help and an escort. The first wins (GATE_SERVICE_NOT_OPEN for the others); the requester is told.",
+        "operationId": "GateServiceHandlersController_accept",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptGateServiceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGateServiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accept an open request",
+        "tags": [
+          "gate-services"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/gate-services/{id}/close": {
+      "post": {
+        "description": "An open one: anyone here (a duplicate, say). One accepted: its handler, or a `gate_services.handle` holder. The requester is told.",
+        "operationId": "GateServiceHandlersController_close",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseGateServiceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGateServiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close a request",
+        "tags": [
+          "gate-services"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/gate-services/{id}/start": {
+      "post": {
+        "operationId": "GateServiceHandlersController_start",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGateServiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start a request you accepted",
+        "tags": [
+          "gate-services"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

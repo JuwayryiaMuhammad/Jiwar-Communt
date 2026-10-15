@@ -1161,6 +1161,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'طلب أحد السكان مساعدة من الأمن. افتح التطبيق للرد.',
     },
   },
+  'gate_service.accepted': {
+    en: {
+      title: 'Security accepted your request',
+      body: 'Security accepted your request and is on it.',
+    },
+    ar: {
+      title: 'قبل الأمن طلبك',
+      body: 'قبل الأمن طلبك ويعمل عليه.',
+    },
+  },
+  'gate_service.closed': {
+    en: {
+      title: 'Request closed',
+      body: 'Security closed your request. The details are in the app.',
+    },
+    ar: {
+      title: 'تم إغلاق الطلب',
+      body: 'أغلق الأمن طلبك. التفاصيل في التطبيق.',
+    },
+  },
   'emergency.cancelled': {
     en: {
       title: 'Emergency cancelled',

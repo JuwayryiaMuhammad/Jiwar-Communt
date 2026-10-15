@@ -650,8 +650,18 @@ describe('API v0 — no-store', () => {
       toPlaceId: w.aPlaceId,
       when: 'in_30',
     });
-  /** An open escort request of A's owner: its id. */
-  const aService = async () => body<{ id: string }>(await anEscort()).id;
+  /**
+   * A fresh open escort request of A's owner: its id. Its open ones are
+   * cancelled first, so the unit's three-open limit never answers instead.
+   */
+  const aService = async () => {
+    const open = body<{ data: { id: string }[] }>(
+      await as('owner', 'GET', '/me/gate-services?status=open&kind=escort'),
+    ).data;
+    for (const r of open)
+      await as('owner', 'POST', `/gate-services/${r.id}/cancel`);
+    return body<{ id: string }>(await anEscort()).id;
+  };
 
   /** Emergencies and gate services (ADR 0047). */
   const SAFETY_CALLS = (): Record<string, () => Promise<Response>> => ({
@@ -727,6 +737,25 @@ describe('API v0 — no-store', () => {
       as('owner', 'GET', `/gate-services/${await aService()}`),
     'POST /gate-services/{id}/cancel': async () =>
       as('owner', 'POST', `/gate-services/${await aService()}/cancel`),
+    'GET /gate/gate-services': () =>
+      asGuard('GET', '/gate/gate-services?status=open'),
+    'GET /gate/gate-services/{id}': async () =>
+      asGuard('GET', `/gate/gate-services/${await aService()}`),
+    'POST /gate/gate-services/{id}/accept': async () =>
+      asGuard('POST', `/gate/gate-services/${await aService()}/accept`, {
+        etaMinutes: 10,
+      }),
+    'POST /gate/gate-services/{id}/start': async () => {
+      const id = await aService();
+      await asGuard('POST', `/gate/gate-services/${id}/accept`, {
+        etaMinutes: 5,
+      }).expect(200);
+      return asGuard('POST', `/gate/gate-services/${id}/start`);
+    },
+    'POST /gate/gate-services/{id}/close': async () =>
+      asGuard('POST', `/gate/gate-services/${await aService()}/close`, {
+        reasonCode: 'duplicate',
+      }),
     'POST /emergencies/{id}/on-my-way': async () =>
       as(
         'family',

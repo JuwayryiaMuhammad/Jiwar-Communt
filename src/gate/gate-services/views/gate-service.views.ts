@@ -1,6 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { GateServiceKind, GateServiceStatus } from '@prisma/client';
-import { firstNameOf } from '../../../core/common/http/personal';
+import {
+  firstNameOf,
+  firstNameRef,
+  FirstNameRefView,
+} from '../../../core/common/http/personal';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { ResponderView } from '../../emergencies/views/emergency.views';
 import { PlaceView } from '../../places/views/place.views';
@@ -212,6 +216,55 @@ export class GateServiceView extends GateServiceBaseView {
     return {
       ...GateServiceBaseView.base(r),
       canCancel: r.request.status === 'open',
+    };
+  }
+}
+
+export class ServiceLocationView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  unitId: string;
+  @ApiProperty({ type: String })
+  unitCode: string;
+  @ApiProperty({ type: String, nullable: true })
+  building: string | null;
+}
+
+/**
+ * A request as security and the management see it (ADR 0047): who asked
+ * (a first name), from which unit, what they wrote and their photo, who
+ * handles it and their note. Never a resident's phone.
+ */
+export class StaffGateServiceView extends GateServiceBaseView {
+  @ApiProperty({ type: ServiceLocationView })
+  location: ServiceLocationView;
+  @ApiProperty({ type: FirstNameRefView })
+  requestedBy: FirstNameRefView;
+  @ApiProperty({ type: FirstNameRefView, nullable: true })
+  handledBy: FirstNameRefView | null;
+  @ApiProperty({ type: Boolean, description: 'The caller handles it.' })
+  isMine: boolean;
+  @ApiProperty({ type: Number, nullable: true, enum: [2, 5, 10, 15] })
+  etaMinutes: number | null;
+  @ApiProperty({ type: String, nullable: true })
+  closeNote: string | null;
+  @ApiProperty({
+    enum: ['requester', 'system'],
+    nullable: true,
+    description: '`system`: the requester was erased.',
+  })
+  cancelSide: string | null;
+
+  static from(r: GateServiceRecord, me: string): StaffGateServiceView {
+    const q = r.request;
+    return {
+      ...GateServiceBaseView.base(r),
+      location: { ...r.location },
+      requestedBy: firstNameRef(r.requester),
+      handledBy: r.handler && firstNameRef(r.handler),
+      isMine: q.handledById === me,
+      etaMinutes: q.etaMinutes,
+      closeNote: q.closeNote,
+      cancelSide: q.cancelSide,
     };
   }
 }

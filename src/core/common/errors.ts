@@ -536,6 +536,12 @@ export const ErrorCode = {
   GATE_SERVICE_LIMIT_REACHED: 'GATE_SERVICE_LIMIT_REACHED',
   /** It is not open any more: accepted, closed or cancelled (409, params.status). */
   GATE_SERVICE_NOT_OPEN: 'GATE_SERVICE_NOT_OPEN',
+  /** Only the one who accepted it starts it (403). */
+  GATE_SERVICE_NOT_HANDLER: 'GATE_SERVICE_NOT_HANDLER',
+  /** Nobody accepted it yet, or it is over (409, params.status). */
+  GATE_SERVICE_NOT_ACCEPTED: 'GATE_SERVICE_NOT_ACCEPTED',
+  /** It is closed or cancelled already (409, params.status). */
+  GATE_SERVICE_CLOSED: 'GATE_SERVICE_CLOSED',
   /**
    * The server holds no PAYMENT_CREDENTIALS_KEY, so no credential can be
    * stored and online payment cannot be turned on (503, ADR 0046).

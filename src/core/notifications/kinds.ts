@@ -1102,6 +1102,22 @@ export const NOTIFICATION_KINDS = {
     target: 'gate_service_request',
     params: { serviceKind: {} },
   },
+  /** Security accepted it, with their minutes when given: the requester. */
+  'gate_service.accepted': {
+    priority: 'normal',
+    category: 'safety',
+    critical: false,
+    target: 'gate_service_request',
+    params: { serviceKind: {}, etaMinutes: { optional: true } },
+  },
+  /** Security closed it, with a reason's code: the requester. */
+  'gate_service.closed': {
+    priority: 'normal',
+    category: 'safety',
+    critical: false,
+    target: 'gate_service_request',
+    params: { serviceKind: {}, reason: {} },
+  },
   // Finance (ADR 0046). No kind is critical, and none carries a param: never
   // an amount, a number, a unit or a name. To every account that sees the
   // unit's money (capabilities.financeView).

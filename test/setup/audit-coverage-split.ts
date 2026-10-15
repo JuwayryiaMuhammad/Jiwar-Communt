@@ -366,4 +366,7 @@ export const SAFETY_COVERAGE: readonly string[] = [
   'emergency.resolved',
   'gate_service.requested',
   'gate_service.cancelled',
+  'gate_service.accepted',
+  'gate_service.started',
+  'gate_service.closed',
 ];

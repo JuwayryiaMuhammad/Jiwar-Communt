@@ -100,6 +100,8 @@ import { SafetyCore } from './safety/safety-core';
 import { GateServicesController } from './gate-services/gate-services.controller';
 import { GateServicesService } from './gate-services/gate-services.service';
 import { GateServiceRecords } from './gate-services/gate-service-records';
+import { GateServiceHandlersController } from './gate-services/gate-service-handlers.controller';
+import { GateServiceHandlersService } from './gate-services/gate-service-handlers.service';
 
 /**
  * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
@@ -148,6 +150,7 @@ import { GateServiceRecords } from './gate-services/gate-service-records';
     EmergenciesController,
     EmergencyRespondersController,
     GateServicesController,
+    GateServiceHandlersController,
   ],
   providers: [
     GatesService,
@@ -200,6 +203,7 @@ import { GateServiceRecords } from './gate-services/gate-service-records';
     EmergencyRespondersService,
     GateServiceRecords,
     GateServicesService,
+    GateServiceHandlersService,
   ],
 })
 export class GateModule {}

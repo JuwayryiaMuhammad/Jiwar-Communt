@@ -52,4 +52,46 @@ describe('Gate services — concurrency', () => {
       ),
     ).toBe(3);
   });
+
+  it('three guards accept at once: one handler', async () => {
+    const unit = await x.unit(s.c);
+    const owner = await x.owner(s.c, unit.id);
+    const { id } = (await escort(owner, unit.id).expect(201)).body as {
+      id: string;
+    };
+    const res = await Promise.all(
+      guards.map((g) =>
+        x.http('post', `/gate/gate-services/${id}/accept`, g.token, {
+          etaMinutes: 5,
+        }),
+      ),
+    );
+    expect(res.map((r) => r.status).sort()).toEqual([200, 409, 409]);
+    expect(
+      (await x.told(s.c, owner.id, id)).filter(
+        (n) => n.kind === 'gate_service.accepted',
+      ),
+    ).toHaveLength(1);
+  });
+
+  it('a cancel racing an accept: one of them, never both', async () => {
+    for (let round = 0; round < 3; round++) {
+      const unit = await x.unit(s.c);
+      const owner = await x.owner(s.c, unit.id);
+      const { id } = (await escort(owner, unit.id).expect(201)).body as {
+        id: string;
+      };
+      const [cancel, accept] = await Promise.all([
+        x.http('post', `/gate-services/${id}/cancel`, owner.token),
+        x.http('post', `/gate/gate-services/${id}/accept`, guards[0].token, {
+          etaMinutes: 2,
+        }),
+      ]);
+      expect([cancel.status, accept.status].sort()).toEqual([200, 409]);
+      const row = await x.inTx(s.c, (tx) =>
+        tx.gateServiceRequest.findUniqueOrThrow({ where: { id } }),
+      );
+      expect(row.status).toBe(cancel.status === 200 ? 'cancelled' : 'accepted');
+    }
+  });
 });

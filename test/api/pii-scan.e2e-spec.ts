@@ -1165,6 +1165,7 @@ describe('API v0 — PII leak scan', () => {
       '/emergencies/{id}': piiEmergency,
       '/gate/emergencies/{id}': piiEmergency,
       '/gate-services/{id}': piiGateService,
+      '/gate/gate-services/{id}': piiGateService,
       // ADR 0046: last four characters at most, never a name.
       '/platform/tenants/{id}/payment-gateway': a.tenantId,
       '/staff/invoice-batches/{id}': piiInvoice.batchId,

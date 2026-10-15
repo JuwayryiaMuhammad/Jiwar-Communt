@@ -773,6 +773,12 @@ export const AUDIT_ACTIONS = {
   'gate_service.requested': { log: 'tenant', target: 'gate_service_request' },
   // metadata: from (the status), side (requester | system), reasonCode.
   'gate_service.cancelled': { log: 'tenant', target: 'gate_service_request' },
+  // metadata: etaMinutes (or null), gateId (the handler's shift, or null).
+  'gate_service.accepted': { log: 'tenant', target: 'gate_service_request' },
+  // No metadata: the handler is the actor.
+  'gate_service.started': { log: 'tenant', target: 'gate_service_request' },
+  // metadata: from, reasonCode, note (a boolean: never the words).
+  'gate_service.closed': { log: 'tenant', target: 'gate_service_request' },
   // No metadata: the member is the actor.
   'emergency.family_on_my_way': { log: 'tenant', target: 'emergency' },
 

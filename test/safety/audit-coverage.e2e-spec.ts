@@ -235,6 +235,53 @@ describe('Audit coverage — emergencies and gate services', () => {
     });
   });
 
+  describe('gate services, security', () => {
+    it('accepted, started and closed: minutes, gate, codes; the note as a boolean', async () => {
+      const guard = await x.guardOnDuty(s.c);
+      const home = await x.unit(s.c);
+      const owner = await x.owner(s.c, home.id);
+      const places = await x.places(owner);
+      const r = (
+        await x
+          .http('post', '/escort-requests', owner.token, {
+            unitId: home.id,
+            fromPlaceId: places.parking.id,
+            toPlaceId: places.phase_a.id,
+            when: 'in_15',
+          })
+          .expect(201)
+      ).body as { id: string };
+      const act = (step: string, body: object = {}) =>
+        x
+          .http(
+            'post',
+            `/gate/gate-services/${r.id}/${step}`,
+            guard.token,
+            body,
+          )
+          .expect(200);
+      await act('accept', { etaMinutes: 5 });
+      const a = await single('gate_service.accepted', r.id);
+      expect(a).toMatchObject(by(guard, 'gate_service_request'));
+      expect(a.metadata).toEqual({ etaMinutes: 5, gateId: guard.gateId });
+      await act('start');
+      const st = await single('gate_service.started', r.id);
+      expect(st).toMatchObject(by(guard, 'gate_service_request'));
+      expect(st.metadata ?? null).toBeNull();
+      await act('close', { reasonCode: 'done', note: WORDS });
+      const c = await single('gate_service.closed', r.id);
+      expect(c).toMatchObject(by(guard, 'gate_service_request'));
+      expect(c.metadata).toEqual({
+        from: 'in_progress',
+        reasonCode: 'done',
+        note: true,
+      });
+      await x
+        .http('post', '/gate/shifts/end', guard.token)
+        .expect((res) => expect(res.status).toBeLessThan(300));
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every emergencies and gate services entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

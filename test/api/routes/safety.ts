@@ -453,3 +453,96 @@ export const GATE_SERVICE_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** Gate services, security's side (ADR 0047). */
+export const GATE_SERVICE_HANDLER_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/gate/gate-services',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'waiting' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: {
+            allowed: ['open', 'accepted', 'in_progress', 'closed', 'cancelled'],
+          },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/gate/gate-services/{id}',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bGateServiceId }),
+      code: 'GATE_SERVICE_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/gate-services/{id}/accept',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bGateServiceId }),
+      code: 'GATE_SERVICE_NOT_FOUND',
+      body: () => ({ etaMinutes: 5 }),
+    },
+    invalid: {
+      body: { etaMinutes: 4 },
+      fields: [
+        {
+          field: 'etaMinutes',
+          code: 'INVALID_VALUE',
+          params: { allowed: [2, 5, 10, 15] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/gate-services/{id}/start',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bGateServiceId }),
+      code: 'GATE_SERVICE_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/gate-services/{id}/close',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bGateServiceId }),
+      code: 'GATE_SERVICE_NOT_FOUND',
+      body: () => ({ reasonCode: 'done' }),
+    },
+    invalid: {
+      body: { reasonCode: 'done', note: '' },
+      fields: [
+        { field: 'note', code: 'INVALID_LENGTH', params: { min: 1, max: 500 } },
+      ],
+    },
+    noStore: true,
+  },
+];

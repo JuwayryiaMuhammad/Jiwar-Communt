@@ -11,7 +11,12 @@ import {
 import { PageQueryDto } from '../../../core/common/http/list';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { withParams } from '../../../core/common/validation/validation-errors';
-import type { WhenCode } from '../../safety/safety-rules';
+import {
+  ETA_MINUTES,
+  type EtaMinutes,
+  type WhenCode,
+} from '../../safety/safety-rules';
+import { CLOSE_NOTE } from '../gate-service-handlers.service';
 import { DESCRIPTION, NOTES } from '../gate-services.service';
 
 const WHEN = REASON_CODES.gateServiceWhen;
@@ -163,3 +168,38 @@ export class MyGateServicesQueryDto extends PageQueryDto {
   )
   kind?: GateServiceKind;
 }
+
+export class AcceptGateServiceDto {
+  @ApiProperty({
+    enum: ETA_MINUTES,
+    required: false,
+    description:
+      'The minutes you expect to take: required for accessibility help and an escort.',
+  })
+  @IsOptional()
+  @IsIn(ETA_MINUTES, withParams({ allowed: [...ETA_MINUTES] }))
+  etaMinutes?: EtaMinutes;
+}
+
+export class CloseGateServiceDto {
+  @ApiProperty({
+    type: String,
+    description: 'From the closed list `gateServiceClose`.',
+  })
+  @IsString()
+  reasonCode: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    minLength: CLOSE_NOTE.min,
+    maxLength: CLOSE_NOTE.max,
+    description: 'Security’s own words, kept for the management.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(CLOSE_NOTE.min, CLOSE_NOTE.max, withParams({ ...CLOSE_NOTE }))
+  note?: string;
+}
+
+export class StaffGateServicesQueryDto extends MyGateServicesQueryDto {}

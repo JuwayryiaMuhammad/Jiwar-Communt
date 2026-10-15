@@ -1633,6 +1633,100 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/gate-services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the gate service requests
+         * @description `status=open` is the queue, oldest first. A guard needs an open shift (NO_OPEN_SHIFT).
+         */
+        get: operations["GateServiceHandlersController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/gate-services/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a gate service request */
+        get: operations["GateServiceHandlersController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/gate-services/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept an open request
+         * @description With the minutes you expect to take for accessibility help and an escort. The first wins (GATE_SERVICE_NOT_OPEN for the others); the requester is told.
+         */
+        post: operations["GateServiceHandlersController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/gate-services/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Close a request
+         * @description An open one: anyone here (a duplicate, say). One accepted: its handler, or a `gate_services.handle` holder. The requester is told.
+         */
+        post: operations["GateServiceHandlersController_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/gate-services/{id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start a request you accepted */
+        post: operations["GateServiceHandlersController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/gates": {
         parameters: {
             query?: never;
@@ -8834,6 +8928,13 @@ export interface components {
              */
             etaMinutes: 2 | 5 | 10 | 15;
         };
+        AcceptGateServiceDto: {
+            /**
+             * @description The minutes you expect to take: required for accessibility help and an escort.
+             * @enum {number}
+             */
+            etaMinutes?: 2 | 5 | 10 | 15;
+        };
         AccessCodeView: {
             /** @description 8 digits, shown once. */
             accessCode: string | null;
@@ -9680,6 +9781,12 @@ export interface components {
         };
         ClearReviewFlagDto: {
             /** @description From the closed list `reviewClear`. */
+            reasonCode: string;
+        };
+        CloseGateServiceDto: {
+            /** @description Security’s own words, kept for the management. */
+            note?: string;
+            /** @description From the closed list `gateServiceClose`. */
             reasonCode: string;
         };
         CloseParkingReportDto: {
@@ -14905,6 +15012,12 @@ export interface components {
             /** @example Main gate */
             name: string;
         };
+        ServiceLocationView: {
+            building: string | null;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
         ServiceMemberView: {
             firstName: string | null;
             /** Format: uuid */
@@ -15555,6 +15668,79 @@ export interface components {
         };
         StaffFineViewList: {
             data: components["schemas"]["StaffFineView"][];
+            nextCursor: string | null;
+        };
+        StaffGateServiceView: {
+            /** Format: date-time */
+            acceptedAt: string | null;
+            /** @description accessibility only. */
+            assistanceKind: components["schemas"]["AssistanceKind"] | null;
+            /**
+             * @description `system`: the requester was erased.
+             * @enum {string|null}
+             */
+            cancelSide: "requester" | "system" | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            closeNote: string | null;
+            closeReason: components["schemas"]["GateServiceCloseReason"] | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description suspicious only; null once the requester was erased. */
+            description: string | null;
+            /** @enum {number|null} */
+            etaMinutes: 2 | 5 | 10 | 15 | null;
+            /** @description accessibility and escort. */
+            fromPlace: components["schemas"]["PlaceView"] | null;
+            /** @description lane only. */
+            gate: components["schemas"]["ServiceGateView"] | null;
+            handledBy: components["schemas"]["FirstNameRefView"] | null;
+            /** @description Who accepted it: a first name and the phone of their gate (else the compound’s duty phone). Never their own. */
+            handler: components["schemas"]["ResponderView"] | null;
+            /** Format: uuid */
+            id: string;
+            /** @description The caller handles it. */
+            isMine: boolean;
+            kind: components["schemas"]["GateServiceKind"];
+            /** @description lane only. */
+            laneReason: components["schemas"]["LaneReason"] | null;
+            location: components["schemas"]["ServiceLocationView"];
+            /** @description accessibility only: the household member helped; null for the requester. */
+            member: components["schemas"]["ServiceMemberView"] | null;
+            /** @description The minutes security picked, counted down from when they accepted; null before, once closed and when none was given. */
+            minutesAway: number | null;
+            /** @description lane only; null once the requester was erased. */
+            notes: string | null;
+            /** @description suspicious only: a presigned URL of the photo, valid for minutes. */
+            photoUrl: string | null;
+            /** @description suspicious only. */
+            place: components["schemas"]["PlaceView"] | null;
+            /**
+             * @description A- for accessibility help, S- for the other services.
+             * @example S-0042
+             */
+            reference: string;
+            requestedBy: components["schemas"]["FirstNameRefView"];
+            /** Format: date-time */
+            startedAt: string | null;
+            /** @description `open`: waiting for security; `accepted`: someone is coming; `in_progress`: being done; `closed`; `cancelled` (by the requester while open, or because the requester left). */
+            status: components["schemas"]["GateServiceStatus"];
+            /** @description escort; accessibility, where null means the unit. */
+            toPlace: components["schemas"]["PlaceView"] | null;
+            /** Format: uuid */
+            unitId: string;
+            /**
+             * Format: date-time
+             * @description When the help is wanted: the request’s time plus `when`.
+             */
+            wantedAt: string | null;
+            /** @description accessibility and escort. */
+            when: components["schemas"]["GateServiceWhen"] | null;
+        };
+        StaffGateServiceViewList: {
+            data: components["schemas"]["StaffGateServiceView"][];
             nextCursor: string | null;
         };
         StaffMessageDto: {
@@ -19990,6 +20176,123 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EntryView"];
+                };
+            };
+        };
+    };
+    GateServiceHandlersController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["GateServiceStatus"];
+                kind?: components["schemas"]["GateServiceKind"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGateServiceViewList"];
+                };
+            };
+        };
+    };
+    GateServiceHandlersController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGateServiceView"];
+                };
+            };
+        };
+    };
+    GateServiceHandlersController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptGateServiceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGateServiceView"];
+                };
+            };
+        };
+    };
+    GateServiceHandlersController_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseGateServiceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGateServiceView"];
+                };
+            };
+        };
+    };
+    GateServiceHandlersController_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGateServiceView"];
                 };
             };
         };

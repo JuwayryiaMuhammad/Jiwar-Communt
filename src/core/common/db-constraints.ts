@@ -289,4 +289,11 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   payment_gateway_events_tenant_id_id_key: null,
   // The claim: inserted with ON CONFLICT DO NOTHING.
   finance_payments_gateway_transaction_key: null,
+  // Emergencies and gate services (ADR 0047).
+  places_tenant_id_id_key: null,
+  // Only the provisioning writes a key, once per compound.
+  places_key_key: null,
+  // Two places in service never share a name, in either language.
+  places_active_name_en_key: ['nameEn'],
+  places_active_name_ar_key: ['nameAr'],
 };

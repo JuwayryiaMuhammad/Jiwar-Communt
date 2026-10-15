@@ -5025,6 +5025,33 @@
         ],
         "type": "object"
       },
+      "CreatePlaceDto": {
+        "properties": {
+          "nameAr": {
+            "example": "المرحلة ج",
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Phase C",
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "position": {
+            "description": "Lower first; 0 by default.",
+            "maximum": 1000,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
       "CreatePollDto": {
         "properties": {
           "audience": {
@@ -11189,6 +11216,77 @@
         ],
         "type": "object"
       },
+      "ManagedPlaceView": {
+        "properties": {
+          "active": {
+            "description": "Retired places are offered no more; requests keep them.",
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceKey"
+              }
+            ],
+            "description": "One of the defaults every compound starts with, for the app to name in its own words; null for a place the management added.",
+            "nullable": true
+          },
+          "nameAr": {
+            "example": "المرحلة ب",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Phase B",
+            "type": "string"
+          },
+          "position": {
+            "description": "Lower first.",
+            "type": "number"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameEn",
+          "nameAr",
+          "position",
+          "active",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "ManagedPlaceViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ManagedPlaceView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ManagementActorSide": {
         "description": "Who cancelled it; `system` when its request closed.",
         "enum": [
@@ -14553,6 +14651,70 @@
           "cycle",
           "url",
           "expiresAt"
+        ],
+        "type": "object"
+      },
+      "PlaceKey": {
+        "description": "One of the defaults every compound starts with, for the app to name in its own words; null for a place the management added.",
+        "enum": [
+          "main_gate",
+          "north_gate",
+          "phase_a",
+          "phase_b",
+          "clubhouse",
+          "parking",
+          "other"
+        ],
+        "type": "string"
+      },
+      "PlaceView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceKey"
+              }
+            ],
+            "description": "One of the defaults every compound starts with, for the app to name in its own words; null for a place the management added.",
+            "nullable": true
+          },
+          "nameAr": {
+            "example": "المرحلة ب",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Phase B",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
+      "PlaceViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PlaceView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -25448,6 +25610,30 @@
         },
         "type": "object"
       },
+      "UpdatePlaceDto": {
+        "properties": {
+          "active": {
+            "description": "False retires the place: offered no more, kept by requests.",
+            "type": "boolean"
+          },
+          "nameAr": {
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "position": {
+            "maximum": 1000,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
       "UpdatePollDto": {
         "properties": {
           "audience": {
@@ -29494,6 +29680,36 @@
         "summary": "Cancel an event and tell those who are going",
         "tags": [
           "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/places": {
+      "get": {
+        "description": "Those in service, in the management’s order: the `placeId`, `fromPlaceId` and `toPlaceId` of a gate service request.",
+        "operationId": "CommunityPlacesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaceViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the compound’s places",
+        "tags": [
+          "places"
         ],
         "x-no-store": true,
         "x-stability": "draft"
@@ -41114,6 +41330,122 @@
         "tags": [
           "admin"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/places": {
+      "get": {
+        "operationId": "PlacesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagedPlaceViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List every place, retired ones too",
+        "tags": [
+          "places"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Two places in service never share a name (409 DUPLICATE_RESOURCE).",
+        "operationId": "PlacesController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlaceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagedPlaceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a place",
+        "tags": [
+          "places"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/places/{id}": {
+      "patch": {
+        "description": "A place is never deleted: requests point at it.",
+        "operationId": "PlacesController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePlaceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagedPlaceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename, reorder, retire or restore a place",
+        "tags": [
+          "places"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

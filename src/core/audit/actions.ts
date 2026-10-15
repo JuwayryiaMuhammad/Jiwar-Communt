@@ -734,6 +734,19 @@ export const AUDIT_ACTIONS = {
   // metadata: fineId. The fine's own rows never name the report.
   'parking_report.converted': { log: 'tenant', target: 'parking_report' },
 
+  // Emergencies and gate services (ADR 0047).
+  // changes: key, position and active by value; the names as changed.
+  'place.created': {
+    log: 'tenant',
+    target: 'place',
+    sensitive: ['nameEn', 'nameAr'],
+  },
+  'place.updated': {
+    log: 'tenant',
+    target: 'place',
+    sensitive: ['nameEn', 'nameAr'],
+  },
+
   // Finance (ADR 0046). The gateway's credentials are never recorded, not
   // even their last four characters: metadata names the fields that
   // changed (`fieldsChanged`) and the mode.

@@ -16086,6 +16086,126 @@
     {
       "item": [
         {
+          "name": "List the compound’s places",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "places"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/places"
+            }
+          }
+        },
+        {
+          "name": "List every place, retired ones too",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "places"
+              ],
+              "raw": "{{baseUrl}}/api/v1/places"
+            }
+          }
+        },
+        {
+          "name": "Add a place",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"nameEn\": \"Phase C\",\n  \"nameAr\": \"المرحلة ج\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n| `position` | number |  | Lower first; 0 by default. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "places"
+              ],
+              "raw": "{{baseUrl}}/api/v1/places"
+            }
+          }
+        },
+        {
+          "name": "Rename, reorder, retire or restore a place",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"active\": false,\n  \"nameAr\": \"\",\n  \"nameEn\": \"\",\n  \"position\": 0\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `active` | boolean |  | False retires the place: offered no more, kept by requests. |\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n| `position` | number |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "places",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/places/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "name": "places"
+    },
+    {
+      "item": [
+        {
           "name": "Get my notification preferences",
           "request": {
             "description": "**Responses:** 200",

@@ -916,6 +916,12 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'period_starts_on IS NULL and period_ends_on IS NULL are tested first; the comparison runs only on two values',
   },
+  // Emergencies and gate services (ADR 0047).
+  places_key: {
+    guarded: 'key IS NULL is tested first; the list runs only on a value',
+  },
+  places_names_length: {},
+  places_position_range: {},
 };
 
 interface Check {

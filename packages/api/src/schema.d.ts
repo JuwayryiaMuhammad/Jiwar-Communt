@@ -713,6 +713,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/community/places": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the compound’s places
+         * @description Those in service, in the management’s order: the `placeId`, `fromPlaceId` and `toPlaceId` of a gate service request.
+         */
+        get: operations["CommunityPlacesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/community/polls": {
         parameters: {
             query?: never;
@@ -4709,6 +4729,47 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/places": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List every place, retired ones too */
+        get: operations["PlacesController_list"];
+        put?: never;
+        /**
+         * Add a place
+         * @description Two places in service never share a name (409 DUPLICATE_RESOURCE).
+         */
+        post: operations["PlacesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/places/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Rename, reorder, retire or restore a place
+         * @description A place is never deleted: requests point at it.
+         */
+        patch: operations["PlacesController_update"];
         trace?: never;
     };
     "/api/v1/platform/audit": {
@@ -9948,6 +10009,14 @@ export interface components {
             /** @description The unit’s code (UNIT_CODE_UNKNOWN). */
             unitCode: string;
         };
+        CreatePlaceDto: {
+            /** @example المرحلة ج */
+            nameAr: string;
+            /** @example Phase C */
+            nameEn: string;
+            /** @description Lower first; 0 by default. */
+            position?: number;
+        };
         CreatePollDto: {
             /** @description Whose units vote. Absent: the whole compound, everyone. A poll put to the `owners` is voted by a unit’s owner; any other by its primary occupant or a member given `polls_vote`. */
             audience?: components["schemas"]["AudienceDto"];
@@ -11853,6 +11922,28 @@ export interface components {
             email: string;
             phone: string;
         };
+        ManagedPlaceView: {
+            /** @description Retired places are offered no more; requests keep them. */
+            active: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description One of the defaults every compound starts with, for the app to name in its own words; null for a place the management added. */
+            key: components["schemas"]["PlaceKey"] | null;
+            /** @example المرحلة ب */
+            nameAr: string;
+            /** @example Phase B */
+            nameEn: string;
+            /** @description Lower first. */
+            position: number;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ManagedPlaceViewList: {
+            data: components["schemas"]["ManagedPlaceView"][];
+            nextCursor: string | null;
+        };
         /**
          * @description Who cancelled it; `system` when its request closed.
          * @enum {string}
@@ -12876,6 +12967,25 @@ export interface components {
             kind: components["schemas"]["TicketAttachmentKind"];
             /** @description A presigned GET, valid until `expiresAt`. */
             url: string | null;
+        };
+        /**
+         * @description One of the defaults every compound starts with, for the app to name in its own words; null for a place the management added.
+         * @enum {string}
+         */
+        PlaceKey: "main_gate" | "north_gate" | "phase_a" | "phase_b" | "clubhouse" | "parking" | "other";
+        PlaceView: {
+            /** Format: uuid */
+            id: string;
+            /** @description One of the defaults every compound starts with, for the app to name in its own words; null for a place the management added. */
+            key: components["schemas"]["PlaceKey"] | null;
+            /** @example المرحلة ب */
+            nameAr: string;
+            /** @example Phase B */
+            nameEn: string;
+        };
+        PlaceViewList: {
+            data: components["schemas"]["PlaceView"][];
+            nextCursor: string | null;
         };
         PlateLookupDto: {
             /** @description As read off the car: spaces and the digits’ script do not matter (INVALID_FORMAT otherwise). */
@@ -16077,6 +16187,13 @@ export interface components {
             code?: string;
             place?: string;
         };
+        UpdatePlaceDto: {
+            /** @description False retires the place: offered no more, kept by requests. */
+            active?: boolean;
+            nameAr?: string;
+            nameEn?: string;
+            position?: number;
+        };
         UpdatePollDto: {
             /** @description Whose units vote. Absent: the whole compound, everyone. A poll put to the `owners` is voted by a unit’s owner; any other by its primary occupant or a member given `polls_vote`. */
             audience?: components["schemas"]["AudienceDto"];
@@ -17836,6 +17953,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    CommunityPlacesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaceViewList"];
+                };
             };
         };
     };
@@ -24086,6 +24222,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PermissionViewList"];
+                };
+            };
+        };
+    };
+    PlacesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagedPlaceViewList"];
+                };
+            };
+        };
+    };
+    PlacesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePlaceDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagedPlaceView"];
+                };
+            };
+        };
+    };
+    PlacesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePlaceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagedPlaceView"];
                 };
             };
         };

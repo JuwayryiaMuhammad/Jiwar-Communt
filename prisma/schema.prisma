@@ -5605,3 +5605,25 @@ model PaymentGatewayEvent {
   @@map("payment_gateway_events")
 }
 
+// ============================================================================
+// Phase G6a — emergencies and gate services (ADR 0047)
+// ============================================================================
+
+/// A place of the compound (ADR 0047): where security meets, walks with or
+/// looks. The seven defaults carry a `key`; the manager's own carry none.
+/// Never deleted: requests point at it.
+model Place {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  key       String?
+  nameAr    String   @map("name_ar")
+  nameEn    String   @map("name_en")
+  position  Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, position, id], map: "places_order_idx")
+  @@map("places")
+}

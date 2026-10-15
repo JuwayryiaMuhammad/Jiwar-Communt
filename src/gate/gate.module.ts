@@ -82,10 +82,17 @@ import {
 import { ParkingSweeps } from './parking/parking-sweeps';
 import { StaffParkingService } from './parking/staff-parking.service';
 import { VisitorParkingService } from './parking/visitor-parking.service';
+import {
+  CommunityPlacesController,
+  PlacesController,
+} from './places/places.controller';
+import { PlaceProvisioning } from './places/place-provisioning';
+import { PlacesService } from './places/places.service';
 
 /**
  * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
- * vehicles and parking (ADR 0045). It imports core freely and the community
+ * vehicles and parking (ADR 0045), and emergencies and gate services
+ * (ADR 0047). It imports core freely and the community
  * domain only through src/community/index.ts (ADR 0015).
  */
 @Module({
@@ -123,6 +130,8 @@ import { VisitorParkingService } from './parking/visitor-parking.service';
     FinePaymentsController,
     MyParkingReportsController,
     StaffParkingReportsController,
+    CommunityPlacesController,
+    PlacesController,
   ],
   providers: [
     GatesService,
@@ -165,6 +174,8 @@ import { VisitorParkingService } from './parking/visitor-parking.service';
     ParkingReportsService,
     VehiclesLifecycle,
     VehicleExportSections,
+    PlaceProvisioning,
+    PlacesService,
   ],
 })
 export class GateModule {}

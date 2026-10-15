@@ -1,0 +1,129 @@
+import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
+import { auditReaders } from '../setup/audit';
+import {
+  COMMUNITY_COVERAGE,
+  ENGAGEMENT_COVERAGE,
+  FACILITIES_COVERAGE,
+  FILES_COVERAGE,
+  FINANCE_COVERAGE,
+  MAINTENANCE_COVERAGE,
+  MANAGEMENT_COVERAGE,
+  NEIGHBOURS_COVERAGE,
+  PARCELS_COVERAGE,
+  PHASE_2_2_COVERAGE,
+  PHASE_4_COVERAGE,
+  R1_COVERAGE,
+  RESIDENT_SCREENS_COVERAGE,
+  SAFETY_COVERAGE,
+  VEHICLES_COVERAGE,
+} from '../setup/audit-coverage-split';
+import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { safetyHelpers, type Who } from '../setup/safety';
+
+/**
+ * One scenario per emergencies and gate services catalog entry (ADR 0014,
+ * 0047): actor, target, changes and metadata — ids, codes, statuses and
+ * numbers by value; a place's names only as changed, never what a resident
+ * wrote.
+ */
+const covered = new Set<string>();
+
+/** Words typed in every scenario: no audit row may hold them. */
+const WORDS = 'Audit-visible words 7731';
+
+describe('Audit coverage — emergencies and gate services', () => {
+  let h: HttpHarness;
+  let x: ReturnType<typeof safetyHelpers>;
+  let s: Awaited<ReturnType<ReturnType<typeof safetyHelpers>['setUp']>>;
+  let read: ReturnType<typeof auditReaders>;
+
+  beforeAll(async () => {
+    h = await createHttpHarness();
+    x = safetyHelpers(h);
+    s = await x.setUp('Safety Audit Court');
+    read = auditReaders(h);
+  }, 180_000);
+
+  afterAll(() => h.close());
+
+  async function rows(action: string, targetId: string) {
+    const found = await read.tenant(s.c.tenantId, { action, targetId });
+    covered.add(action);
+    for (const row of found) expect(JSON.stringify(row)).not.toContain(WORDS);
+    return found;
+  }
+  async function single(action: string, targetId: string) {
+    const found = await rows(action, targetId);
+    expect(found).toHaveLength(1);
+    return found[0];
+  }
+  const by = (who: Who, targetType: string) => ({
+    actorType: 'account',
+    actorId: who.id,
+    targetType,
+  });
+
+  describe('places', () => {
+    it('created and updated: key, position and state by value, names as changed', async () => {
+      const created = (
+        await x
+          .http('post', '/places', s.manager.token, {
+            nameEn: WORDS,
+            nameAr: 'مكان المراجعة',
+            position: 7,
+          })
+          .expect(201)
+      ).body as { id: string };
+      const c = await single('place.created', created.id);
+      expect(c).toMatchObject(by(s.manager, 'place'));
+      expect(c.changes).toEqual({
+        nameEn: { changed: true },
+        nameAr: { changed: true },
+        position: { from: null, to: 7 },
+        active: { from: null, to: true },
+      });
+      await x
+        .http('patch', `/places/${created.id}`, s.manager.token, {
+          nameEn: `${WORDS} B`,
+          active: false,
+        })
+        .expect(200);
+      const u = await single('place.updated', created.id);
+      expect(u).toMatchObject(by(s.manager, 'place'));
+      expect(u.changes).toEqual({
+        nameEn: { changed: true },
+        active: { from: true, to: false },
+      });
+    });
+  });
+
+  describe('catalog completeness', () => {
+    it('every emergencies and gate services entry has a scenario above, and no other suite claims it', () => {
+      const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];
+      for (const key of SAFETY_COVERAGE) {
+        expect(all).toContain(key);
+        expect([
+          ...COMMUNITY_COVERAGE,
+          ...PHASE_2_2_COVERAGE,
+          ...PHASE_4_COVERAGE,
+          ...FILES_COVERAGE,
+          ...MAINTENANCE_COVERAGE,
+          ...PARCELS_COVERAGE,
+          ...R1_COVERAGE,
+          ...RESIDENT_SCREENS_COVERAGE,
+          ...MANAGEMENT_COVERAGE,
+          ...ENGAGEMENT_COVERAGE,
+          ...NEIGHBOURS_COVERAGE,
+          ...FACILITIES_COVERAGE,
+          ...VEHICLES_COVERAGE,
+          ...FINANCE_COVERAGE,
+        ]).not.toContain(key);
+      }
+      expect([...covered].sort()).toEqual([...SAFETY_COVERAGE].sort());
+      // And nothing of the domain is left out of the list.
+      expect(
+        all.filter((k) => /^(place|emergency|gate_service)\./.test(k)).sort(),
+      ).toEqual([...SAFETY_COVERAGE].sort());
+    });
+  });
+});

@@ -404,6 +404,17 @@ export const REASON_CODES = {
     'duplicate',
     'not_a_violation',
   ],
+  // The places every compound starts with (ADR 0047): keys, not reasons,
+  // kept here so the dashboards share the list.
+  placeKey: [
+    'main_gate',
+    'north_gate',
+    'phase_a',
+    'phase_b',
+    'clubhouse',
+    'parking',
+    'other',
+  ],
   // Why the staff credit part or all of an invoice (ADR 0046).
   creditNote: ['billing_error', 'waiver', 'duplicate', 'goodwill', 'other'],
   // Why the office reverses a payment it recorded (ADR 0046).

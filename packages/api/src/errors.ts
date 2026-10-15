@@ -250,6 +250,7 @@ const ERROR_TEXT: Record<string, string> = {
   PARKING_REPORT_NOT_ALLOWED: 'Only residents report parking.',
   PARKING_REPORT_LIMIT_REACHED: 'As many reports are open as a resident may have.',
   PARKING_REPORT_CLOSED: 'This report was dealt with already.',
+  PLACE_NOT_FOUND: 'This place does not exist.',
   STEP_UP_REQUIRED: 'Confirm with the code we email you first.',
   STEP_UP_CODE_INVALID: 'That code is wrong or has expired.',
   PAYMENT_VAULT_UNAVAILABLE: 'The server is not set up to store payment credentials yet. Ask the platform team.',

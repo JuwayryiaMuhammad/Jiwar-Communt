@@ -349,3 +349,12 @@ export const FINANCE_COVERAGE: readonly string[] = [
   'payment.verification_contradicted',
   'payment.duplicate_charge',
 ];
+
+/**
+ * G6a entries (ADR 0047), covered by test/safety/audit-coverage.e2e-spec.ts:
+ * places, emergencies and gate service requests.
+ */
+export const SAFETY_COVERAGE: readonly string[] = [
+  'place.created',
+  'place.updated',
+];

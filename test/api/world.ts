@@ -224,6 +224,9 @@ export interface World {
   bFinePaymentId: string;
   /** A parking report of B's tenant. */
   bParkingReportId: string;
+  /** One of B's places (seeded, ADR 0047), and one of A's for valid bodies. */
+  bPlaceId: string;
+  aPlaceId: string;
   bDeviceId: string;
   /** A personal-data export B's owner asked for (ADR 0036). */
   bExportId: string;
@@ -839,6 +842,15 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
         .get(ParkingReportsService)
         .create({ plate: 'ب و 1234', location: 'World ramp' }),
   );
+  const [bPlace, aPlace] = await Promise.all(
+    [b, a].map((side) =>
+      helpers.asManager(side, () =>
+        helpers.prisma.tenant.place.findFirstOrThrow({
+          where: { key: 'phase_b' },
+        }),
+      ),
+    ),
+  );
   const bFinance = await helpers.asManager(b, async () => {
     const batch = await h.moduleRef.get(InvoicesService).issue({
       target: 'unit',
@@ -896,6 +908,8 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bInvoiceBatchId: bFinance.batchId,
     bInvoiceId: bFinance.invoiceId,
     bParkingReportId: bParkingReport.id,
+    bPlaceId: bPlace.id,
+    aPlaceId: aPlace.id,
     bFineId: bFine.fine.id,
     bFinePaymentId: bFinePayment.id,
     bVehicleId: bVehicle.vehicle.id,

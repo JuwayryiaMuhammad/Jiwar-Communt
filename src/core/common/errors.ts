@@ -510,6 +510,9 @@ export const ErrorCode = {
   PARKING_REPORT_LIMIT_REACHED: 'PARKING_REPORT_LIMIT_REACHED',
   /** It was closed or turned into a fine already (409, params.status). */
   PARKING_REPORT_CLOSED: 'PARKING_REPORT_CLOSED',
+  // Emergencies and gate services (ADR 0047).
+  /** Unknown, another compound's, or (where one in service is needed) retired. */
+  PLACE_NOT_FOUND: 'PLACE_NOT_FOUND',
   /**
    * The server holds no PAYMENT_CREDENTIALS_KEY, so no credential can be
    * stored and online payment cannot be turned on (503, ADR 0046).

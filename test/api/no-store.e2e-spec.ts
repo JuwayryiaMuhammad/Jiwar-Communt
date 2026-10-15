@@ -619,6 +619,19 @@ describe('API v0 — no-store', () => {
       );
       return body<{ id: string }>(res).id;
     })());
+  /** Emergencies and gate services (ADR 0047). */
+  const SAFETY_CALLS = (): Record<string, () => Promise<Response>> => ({
+    'GET /community/places': () => as('owner', 'GET', '/community/places'),
+    'GET /places': () => as('manager', 'GET', '/places'),
+    'POST /places': () =>
+      as('manager', 'POST', '/places', {
+        nameEn: `NS ${uniqueSuffix()}`,
+        nameAr: `مكان ${uniqueSuffix()}`,
+      }),
+    'PATCH /places/{id}': () =>
+      as('manager', 'PATCH', `/places/${w.aPlaceId}`, { position: 40 }),
+  });
+
   const FINANCE_CALLS = (): Record<string, () => Promise<Response>> => ({
     'POST /units/{unitId}/payment-sessions': async () => {
       await anOpenCheckout();
@@ -2164,6 +2177,7 @@ describe('API v0 — no-store', () => {
     ...FACILITY_CALLS(),
     ...VEHICLE_CALLS(),
     ...FINANCE_CALLS(),
+    ...SAFETY_CALLS(),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

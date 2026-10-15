@@ -9,6 +9,7 @@ import { EngagementProvisioning } from '../../src/engagement/provisioning';
 import { FacilitiesProvisioning } from '../../src/facilities/provisioning';
 import { FinanceProvisioning } from '../../src/finance/provisioning';
 import { ParcelProvisioning } from '../../src/gate/parcels/parcel-provisioning';
+import { PlaceProvisioning } from '../../src/gate/places/place-provisioning';
 import { VehicleProvisioning } from '../../src/gate/vehicles/vehicle-provisioning';
 import { MaintenanceProvisioning } from '../../src/maintenance/provisioning';
 import { ManagementProvisioning } from '../../src/management/provisioning';
@@ -33,6 +34,7 @@ new EngagementProvisioning(tenantLifecycle).onModuleInit();
 new NeighboursProvisioning(tenantLifecycle).onModuleInit();
 new FacilitiesProvisioning(tenantLifecycle).onModuleInit();
 new FinanceProvisioning(tenantLifecycle).onModuleInit();
+new PlaceProvisioning(tenantLifecycle).onModuleInit();
 
 /**
  * Generated phones and national IDs live in a space hand-written test values

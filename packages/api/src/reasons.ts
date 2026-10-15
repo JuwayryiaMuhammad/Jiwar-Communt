@@ -78,6 +78,8 @@ export const REASON_CODES = {
   vehicleFineCancel: ['appeal_accepted', 'issued_in_error', 'duplicate', 'other'],
   vehicleFinePaymentReverse: ['entered_in_error', 'refunded', 'other'],
   parkingReportClose: ['resolved', 'vehicle_not_found', 'duplicate', 'not_a_violation'],
+  // Emergencies and gate services (ADR 0047).
+  placeKey: ['main_gate', 'north_gate', 'phase_a', 'phase_b', 'clubhouse', 'parking', 'other'],
   creditNote: ['billing_error', 'waiver', 'duplicate', 'goodwill', 'other'],
   paymentReverse: ['entered_in_error', 'duplicate', 'bounced_cheque', 'other'],
 } as const;

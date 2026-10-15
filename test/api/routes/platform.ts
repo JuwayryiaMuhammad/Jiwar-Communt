@@ -200,4 +200,25 @@ export const PLATFORM_ROUTES: Row[] = [
       fields: [{ field: 'identifierHash', code: 'INVALID_FORMAT' }],
     },
   },
+  {
+    method: 'POST',
+    path: '/platform/step-up',
+    auth: 'platform',
+    denied: 'restricted',
+    foreign: 'none',
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/platform/step-up/verify',
+    auth: 'platform',
+    denied: 'restricted',
+    foreign: 'none',
+    invalid: {
+      body: { code: '12' },
+      fields: [
+        { field: 'code', code: 'INVALID_FORMAT', params: { length: 6 } },
+      ],
+    },
+  },
 ];

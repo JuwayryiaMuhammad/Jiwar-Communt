@@ -757,6 +757,10 @@ export const SECURITY_EVENTS = [
   'platform.login_failed',
   'platform.login_locked',
   'platform.login_succeeded',
+  // Platform step-up (ADR 0046): a fresh code before a sensitive action.
+  'platform.step_up_requested',
+  'platform.step_up_verified',
+  'platform.step_up_failed',
   'invite.token_invalid',
   // "Not me" (ADR 0023): the phone left the account.
   'account.phone_reassigned',

@@ -39662,6 +39662,65 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/platform/step-up": {
+      "post": {
+        "operationId": "PlatformStepUpController_request",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Email me a step-up code for a sensitive action",
+        "tags": [
+          "platform"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/platform/step-up/verify": {
+      "post": {
+        "operationId": "PlatformStepUpController_verify",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StepUpCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StepUpView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Verify the step-up code on this platform session",
+        "tags": [
+          "platform"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/platform/tenants": {
       "get": {
         "operationId": "TenantsController_list",

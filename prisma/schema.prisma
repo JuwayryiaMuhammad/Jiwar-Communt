@@ -627,6 +627,9 @@ model PlatformSession {
   revokedAt        DateTime? @map("revoked_at") @db.Timestamptz(3)
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   lastUsedAt       DateTime? @map("last_used_at") @db.Timestamptz(3)
+  /// Platform step-up (ADR 0046): until then, the session's next sensitive
+  /// action may run once.
+  stepUpUntil      DateTime? @map("step_up_until") @db.Timestamptz(3)
 
   admin PlatformAdmin @relation(fields: [adminId], references: [id])
 

@@ -10,6 +10,8 @@ import { PlatformAuthService } from './platform-auth.service';
 import { PlatformBootstrapService } from './platform-bootstrap.service';
 import { PLATFORM_JWT, platformJwtProvider } from './platform-jwt';
 import { PlatformSessionService } from './platform-session.service';
+import { PlatformStepUpController } from './platform-step-up.controller';
+import { PlatformStepUpService } from './platform-step-up.service';
 import { TenantsService } from './tenants.service';
 
 /** The platform owner's side of the system (ADR 0011), under `/platform`. */
@@ -19,6 +21,7 @@ import { TenantsService } from './tenants.service';
     PlatformAuthController,
     TenantsController,
     PlatformAuditController,
+    PlatformStepUpController,
   ],
   providers: [
     platformJwtProvider,
@@ -28,6 +31,7 @@ import { TenantsService } from './tenants.service';
     PlatformBootstrapService,
     PermissionSyncService,
     TenantsService,
+    PlatformStepUpService,
   ],
   exports: [
     PLATFORM_JWT,
@@ -36,6 +40,7 @@ import { TenantsService } from './tenants.service';
     PlatformAuthGuard,
     PermissionSyncService,
     TenantsService,
+    PlatformStepUpService,
   ],
 })
 export class PlatformModule {}

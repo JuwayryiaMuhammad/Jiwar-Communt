@@ -17,6 +17,8 @@ export interface AppClsStore extends ClsStore {
   /** Platform routes only (ADR 0011); never set together with tenantId. */
   platformAdminId?: string;
   platformScope?: 'full' | 'password_change';
+  /** The platform session behind a full platform token (`sid`). */
+  platformSessionId?: string;
   /** Set by TenantTx while a tenant transaction callback is running. */
   inTenantTx?: boolean;
   /**

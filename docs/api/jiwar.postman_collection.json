@@ -673,6 +673,62 @@
           }
         },
         {
+          "name": "Email me a step-up code for a sensitive action",
+          "request": {
+            "description": "**Responses:** 202",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "platform",
+                "step-up"
+              ],
+              "raw": "{{baseUrl}}/api/v1/platform/step-up"
+            }
+          }
+        },
+        {
+          "name": "Verify the step-up code on this platform session",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"code\": \"000000\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | string | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "platform",
+                "step-up",
+                "verify"
+              ],
+              "raw": "{{baseUrl}}/api/v1/platform/step-up/verify"
+            }
+          }
+        },
+        {
           "name": "List compounds",
           "request": {
             "description": "**Responses:** 200",

@@ -88,6 +88,7 @@ export class PlatformAuthGuard implements CanActivate {
 
     this.cls.set('platformAdminId', claims.sub);
     this.cls.set('platformScope', claims.scp);
+    if (claims.scp === 'full') this.cls.set('platformSessionId', claims.sid);
     return true;
   }
 }

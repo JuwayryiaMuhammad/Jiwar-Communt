@@ -81,10 +81,14 @@ export class IdentifierHasher {
 
   /**
    * The key of a step-up code (ADR 0036): what the code unlocks — one
-   * session, or one email action token — so a code issued for one can never
+   * session, one email action token, or one platform session (ADR 0046) —
+   * so a code issued for one can never
    * be used for another.
    */
-  stepUpKey(scope: 'session' | 'action-token', id: string): string {
+  stepUpKey(
+    scope: 'session' | 'action-token' | 'platform-session',
+    id: string,
+  ): string {
     return this.hmac(`step-up:${scope}:${id}`);
   }
 

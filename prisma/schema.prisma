@@ -5714,3 +5714,65 @@ model EmergencyFamilyAlert {
   @@map("emergency_family_alerts")
 }
 
+enum GateServiceKind {
+  accessibility
+  suspicious
+  escort
+  lane
+
+  @@map("gate_service_kind")
+}
+
+enum GateServiceStatus {
+  open
+  accepted
+  in_progress
+  closed
+  cancelled
+
+  @@map("gate_service_status")
+}
+
+/// What a resident asks security for (ADR 0047): accessibility help, a
+/// suspicious-activity report, an escort or a lane at a gate. Moves forward
+/// only (a trigger); the resident's words and photo go once, at erasure.
+model GateServiceRequest {
+  id             String            @id @db.Uuid
+  tenantId       String            @map("tenant_id") @db.Uuid
+  number         Int
+  kind           GateServiceKind
+  status         GateServiceStatus @default(open)
+  unitId         String            @map("unit_id") @db.Uuid
+  requestedById  String            @map("requested_by_account_id") @db.Uuid
+  assistanceKind String?           @map("assistance_kind")
+  memberId       String?           @map("member_id") @db.Uuid
+  fromPlaceId    String?           @map("from_place_id") @db.Uuid
+  toPlaceId      String?           @map("to_place_id") @db.Uuid
+  placeId        String?           @map("place_id") @db.Uuid
+  whenCode       String?           @map("when_code")
+  wantedAt       DateTime?         @map("wanted_at") @db.Timestamptz(3)
+  description    String?
+  photoFileId    String?           @map("photo_file_id") @db.Uuid
+  laneReason     String?           @map("lane_reason")
+  gateId         String?           @map("gate_id") @db.Uuid
+  notes          String?
+  textClearedAt  DateTime?         @map("text_cleared_at") @db.Timestamptz(3)
+  handledById    String?           @map("handled_by_account_id") @db.Uuid
+  etaMinutes     Int?              @map("eta_minutes")
+  acceptedAt     DateTime?         @map("accepted_at") @db.Timestamptz(3)
+  startedAt      DateTime?         @map("started_at") @db.Timestamptz(3)
+  closedAt       DateTime?         @map("closed_at") @db.Timestamptz(3)
+  closedById     String?           @map("closed_by_account_id") @db.Uuid
+  closeReason    String?           @map("close_reason")
+  closeNote      String?           @map("close_note")
+  cancelledAt    DateTime?         @map("cancelled_at") @db.Timestamptz(3)
+  cancelSide     String?           @map("cancel_side")
+  cancelReason   String?           @map("cancel_reason")
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, createdAt, id], map: "gate_service_requests_status_idx")
+  @@map("gate_service_requests")
+}
+

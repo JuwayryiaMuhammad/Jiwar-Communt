@@ -1,12 +1,21 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { REASON_CODES } from '../../core/common/reasons';
-import { ETA_MINUTES, minutesAway, safetyReference } from './safety-rules';
+import {
+  ETA_MINUTES,
+  minutesAway,
+  safetyReference,
+  seriesOf,
+  WHEN_OFFSET_MINUTES,
+} from './safety-rules';
 
 const read = (path: string) =>
   readFileSync(join(__dirname, '../../..', path), 'utf8');
 const emergencies = read(
   'prisma/migrations/20261025090500_emergencies/migration.sql',
+).replace(/\s+/g, ' ');
+const services = read(
+  'prisma/migrations/20261025090600_gate_service_requests/migration.sql',
 ).replace(/\s+/g, ' ');
 const mirror = read('packages/api/src/reasons.ts');
 const quoted = (list: readonly string[]) =>
@@ -79,4 +88,33 @@ describe('the emergencies’ lists (ADR 0047)', () => {
       expect(mirror).toContain(`${list}: [${q}]`);
     },
   );
+});
+
+describe('the gate service requests’ lists (ADR 0047)', () => {
+  it.each([
+    'assistanceKind',
+    'gateServiceWhen',
+    'laneReason',
+    'gateServiceClose',
+  ] as const)('%s matches its CHECK and the dashboards’ mirror', (list) => {
+    const q = quoted(REASON_CODES[list]);
+    expect(services).toContain(`IN (${q})`);
+    expect(mirror).toContain(`${list}: [${q}]`);
+  });
+
+  it('the when codes are the offsets; the minutes match their CHECK', () => {
+    expect(Object.keys(WHEN_OFFSET_MINUTES)).toEqual([
+      ...REASON_CODES.gateServiceWhen,
+    ]);
+    expect(services).toContain(`"eta_minutes" IN (${ETA_MINUTES.join(', ')})`);
+  });
+
+  it('accessibility is numbered A-, the rest S-', () => {
+    expect(seriesOf('accessibility')).toEqual({
+      series: 'accessibility',
+      prefix: 'A',
+    });
+    for (const kind of ['suspicious', 'escort', 'lane'] as const)
+      expect(seriesOf(kind)).toEqual({ series: 'service', prefix: 'S' });
+  });
 });

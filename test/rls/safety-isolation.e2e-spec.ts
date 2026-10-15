@@ -5,6 +5,7 @@ import {
   counterRow,
   emergencyRow,
   familyAlertRow,
+  gateServiceRow,
   placeRow,
 } from '../setup/safety-rows';
 
@@ -65,6 +66,16 @@ const TABLES: Table[] = [
         accountId: link.accountId,
       }),
     key: 'emergency_id',
+  },
+  {
+    table: 'gate_service_requests',
+    insert: (tx, own, link) =>
+      gateServiceRow(tx, {
+        tenantId: own.tenantId,
+        unitId: link.unitId,
+        requestedById: link.accountId,
+        placeId: link.placeId,
+      }),
   },
 ];
 

@@ -82,6 +82,10 @@ export const REASON_CODES = {
   placeKey: ['main_gate', 'north_gate', 'phase_a', 'phase_b', 'clubhouse', 'parking', 'other'],
   emergencyCancel: ['false_alarm', 'resolved_ourselves', 'other'],
   emergencyResolve: ['handled', 'false_alarm', 'transferred_ambulance', 'transferred_civil_defense', 'other'],
+  assistanceKind: ['wheelchair', 'walk_with', 'golf_cart', 'bags'],
+  gateServiceWhen: ['now', 'in_15', 'in_30'],
+  laneReason: ['ambulance', 'fire_truck', 'moving_truck', 'large_delivery'],
+  gateServiceClose: ['done', 'not_found', 'no_show', 'duplicate', 'not_possible'],
   creditNote: ['billing_error', 'waiver', 'duplicate', 'goodwill', 'other'],
   paymentReverse: ['entered_in_error', 'duplicate', 'bounced_cheque', 'other'],
 } as const;

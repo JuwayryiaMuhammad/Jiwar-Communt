@@ -39,3 +39,20 @@ export function minutesAway(
   const left = r.etaMinutes - (now.getTime() - r.acceptedAt.getTime()) / MINUTE;
   return Math.max(0, Math.ceil(left));
 }
+
+/** Gate service requests: when the resident wants the help, from now. */
+export const WHEN_OFFSET_MINUTES = { now: 0, in_15: 15, in_30: 30 } as const;
+export type WhenCode = keyof typeof WHEN_OFFSET_MINUTES;
+
+export type GateServiceKindName =
+  'accessibility' | 'suspicious' | 'escort' | 'lane';
+
+/** A- numbers for accessibility help, S- for the other services. */
+export function seriesOf(kind: GateServiceKindName): {
+  series: 'accessibility' | 'service';
+  prefix: SafetyPrefix;
+} {
+  return kind === 'accessibility'
+    ? { series: 'accessibility', prefix: 'A' }
+    : { series: 'service', prefix: 'S' };
+}

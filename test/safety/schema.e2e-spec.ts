@@ -2,7 +2,12 @@ import { Client } from 'pg';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
-import { emergencyRow, familyAlertRow } from '../setup/safety-rows';
+import {
+  emergencyRow,
+  familyAlertRow,
+  gateServiceRow,
+  placeRow,
+} from '../setup/safety-rows';
 import { required } from '../setup/test-env';
 
 /**
@@ -19,6 +24,8 @@ describe('Safety tables — CHECKs, triggers and privileges', () => {
   let unitId: string;
   let otherUnitId: string;
   let emergencyId: string;
+  let requestId: string;
+  let placeId: string;
 
   beforeAll(async () => {
     h = await createDbHarness();
@@ -34,6 +41,13 @@ describe('Safety tables — CHECKs, triggers and privileges', () => {
           reportedById: accountId,
         });
         await familyAlertRow(tx, { tenantId, emergencyId, accountId });
+        placeId = await placeRow(tx, tenantId);
+        requestId = await gateServiceRow(tx, {
+          tenantId,
+          unitId,
+          requestedById: accountId,
+          placeId,
+        });
       }),
     );
     app = new Client({ connectionString: process.env.DATABASE_URL });
@@ -85,6 +99,7 @@ describe('Safety tables — CHECKs, triggers and privileges', () => {
       'safety_counters',
       'emergencies',
       'emergency_family_alerts',
+      'gate_service_requests',
     ])
       expect({ table, ...(await privileges(table)) }).toEqual({
         table,
@@ -259,6 +274,200 @@ describe('Safety tables — CHECKs, triggers and privileges', () => {
           `DELETE FROM emergency_family_alerts WHERE ${alert()}`,
         ),
       ).rejects.toThrow(/never deleted/);
+    });
+  });
+
+  describe('gate service requests', () => {
+    const req = () => `id = '${requestId}'`;
+    const acceptSql = () =>
+      `UPDATE gate_service_requests SET status = 'accepted', handled_by_account_id = '${accountId}', accepted_at = now() WHERE ${req()}`;
+    const close = (reason = 'done') =>
+      `UPDATE gate_service_requests SET status = 'closed', closed_at = now(), closed_by_account_id = '${accountId}', close_reason = '${reason}' WHERE ${req()}`;
+
+    it('keeps what it asks', async () => {
+      for (const set of [
+        'number = number + 1',
+        `kind = 'escort'`,
+        `unit_id = '${otherUnitId}'`,
+        'place_id = NULL',
+        "created_at = now() - interval '1 day'",
+        `description = 'Other words'`,
+      ])
+        await expect(
+          asApp(`UPDATE gate_service_requests SET ${set} WHERE ${req()}`),
+        ).rejects.toThrow(/keeps what it asks/);
+    });
+
+    it('moves forward only; handled once per step; over is over', async () => {
+      await expect(
+        asApp(
+          acceptSql(),
+          `UPDATE gate_service_requests SET status = 'open', handled_by_account_id = NULL, accepted_at = NULL WHERE ${req()}`,
+        ),
+      ).rejects.toThrow(/moves forward only/);
+      await expect(
+        asApp(
+          acceptSql(),
+          `UPDATE gate_service_requests SET accepted_at = now() + interval '1 minute' WHERE ${req()}`,
+        ),
+      ).rejects.toThrow(/moves forward only/);
+      await expect(
+        asApp(
+          close(),
+          `UPDATE gate_service_requests SET close_note = 'Later words' WHERE ${req()}`,
+        ),
+      ).rejects.toThrow(/moves forward only/);
+      // The legal path, and then the erasure's clearing still goes.
+      await expect(
+        asApp(
+          acceptSql(),
+          `UPDATE gate_service_requests SET status = 'in_progress', started_at = now() WHERE ${req()}`,
+          close('not_found'),
+          `UPDATE gate_service_requests SET description = NULL, text_cleared_at = now() WHERE ${req()}`,
+        ),
+      ).resolves.toBeDefined();
+    });
+
+    it('the words go once, all together', async () => {
+      await expect(
+        asApp(
+          `UPDATE gate_service_requests SET description = NULL, text_cleared_at = now() WHERE ${req()}`,
+          `UPDATE gate_service_requests SET text_cleared_at = now() + interval '1 minute' WHERE ${req()}`,
+        ),
+      ).rejects.toThrow(/keeps what it asks/);
+      await expect(
+        asApp(
+          `UPDATE gate_service_requests SET text_cleared_at = now() WHERE ${req()}`,
+        ),
+      ).rejects.toThrow(/keeps what it asks/);
+    });
+
+    it('is never deleted, even by its owner', async () => {
+      await expect(
+        attempt(migrator, `DELETE FROM gate_service_requests WHERE ${req()}`),
+      ).rejects.toThrow(/never deleted/);
+    });
+
+    const insert = (cols: Record<string, string>) => {
+      const all = {
+        id: 'gen_random_uuid()',
+        tenant_id: `'${tenantId}'`,
+        number: String(700_000 + Math.floor(Math.random() * 99_999)),
+        unit_id: `'${unitId}'`,
+        requested_by_account_id: `'${accountId}'`,
+        updated_at: 'now()',
+        ...cols,
+      };
+      return `INSERT INTO gate_service_requests (${Object.keys(all).join(', ')}) VALUES (${Object.values(all).join(', ')})`;
+    };
+
+    it.each([
+      [
+        'a lane without its gate',
+        () => insert({ kind: `'lane'`, lane_reason: `'ambulance'` }),
+        /gate_service_requests_kind_shape/,
+      ],
+      [
+        'an escort without its destination',
+        () =>
+          insert({
+            kind: `'escort'`,
+            from_place_id: `'${placeId}'`,
+            when_code: `'now'`,
+            wanted_at: 'now()',
+          }),
+        /gate_service_requests_kind_shape/,
+      ],
+      [
+        'a suspicious report with a lane’s notes',
+        () =>
+          insert({
+            kind: `'suspicious'`,
+            place_id: `'${placeId}'`,
+            description: `'Words'`,
+            notes: `'Notes'`,
+          }),
+        /gate_service_requests_kind_shape/,
+      ],
+      [
+        'help for a member on an escort',
+        () =>
+          insert({
+            kind: `'escort'`,
+            from_place_id: `'${placeId}'`,
+            to_place_id: `'${placeId}'`,
+            when_code: `'now'`,
+            wanted_at: 'now()',
+            member_id: 'gen_random_uuid()',
+          }),
+        /gate_service_requests_kind_shape/,
+      ],
+      [
+        'an unknown kind of help',
+        () =>
+          insert({
+            kind: `'accessibility'`,
+            assistance_kind: `'piggyback'`,
+            from_place_id: `'${placeId}'`,
+            when_code: `'now'`,
+            wanted_at: 'now()',
+          }),
+        /gate_service_requests_assistance_kind/,
+      ],
+      [
+        'an unknown time',
+        () =>
+          insert({
+            kind: `'escort'`,
+            from_place_id: `'${placeId}'`,
+            to_place_id: `'${placeId}'`,
+            when_code: `'tomorrow'`,
+            wanted_at: 'now()',
+          }),
+        /gate_service_requests_when/,
+      ],
+    ])('refuses %s', async (_what, sql, check) => {
+      await expect(asApp(sql())).rejects.toThrow(check);
+    });
+
+    it.each([
+      [
+        'accepted without minutes or a handler',
+        () =>
+          `UPDATE gate_service_requests SET status = 'accepted' WHERE ${req()}`,
+        /gate_service_requests_state_shape/,
+      ],
+      [
+        'minutes off the list',
+        () =>
+          `UPDATE gate_service_requests SET status = 'accepted', handled_by_account_id = '${accountId}', accepted_at = now(), eta_minutes = 7 WHERE ${req()}`,
+        /gate_service_requests_eta/,
+      ],
+      [
+        'closed without a reason',
+        () =>
+          `UPDATE gate_service_requests SET status = 'closed', closed_at = now(), closed_by_account_id = '${accountId}' WHERE ${req()}`,
+        /gate_service_requests_state_shape/,
+      ],
+      [
+        'a reason off the list',
+        () => close('vanished'),
+        /gate_service_requests_close_reason/,
+      ],
+      [
+        'the requester cancelling an accepted one',
+        () =>
+          `${acceptSql()}; UPDATE gate_service_requests SET status = 'cancelled', cancelled_at = now(), cancel_side = 'requester' WHERE ${req()}`,
+        /gate_service_requests_cancel/,
+      ],
+      [
+        'the system cancelling without a reason',
+        () =>
+          `UPDATE gate_service_requests SET status = 'cancelled', cancelled_at = now(), cancel_side = 'system' WHERE ${req()}`,
+        /gate_service_requests_cancel/,
+      ],
+    ])('refuses %s', async (_what, sql, check) => {
+      await expect(asApp(sql())).rejects.toThrow(check);
     });
   });
 });

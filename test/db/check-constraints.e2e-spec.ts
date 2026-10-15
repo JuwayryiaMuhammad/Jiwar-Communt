@@ -961,6 +961,40 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'close_note IS NULL is tested first; the length runs only on a value',
   },
+  gate_service_requests_number_positive: {},
+  // Nullable columns only under IS [NOT] NULL; kind is NOT NULL.
+  gate_service_requests_kind_shape: {},
+  gate_service_requests_assistance_kind: {
+    guarded:
+      'assistance_kind IS NULL is tested first; the list runs only on a value',
+  },
+  gate_service_requests_when: {
+    guarded: 'when_code IS NULL is tested first; the list runs only on a value',
+  },
+  gate_service_requests_lane_reason: {
+    guarded:
+      'lane_reason IS NULL is tested first; the list runs only on a value',
+  },
+  gate_service_requests_close_reason: {
+    guarded:
+      'close_reason IS NULL is tested first; the list runs only on a value',
+  },
+  gate_service_requests_eta: {
+    guarded:
+      'eta_minutes IS NULL is tested first; the list runs only on a value',
+  },
+  gate_service_requests_text_length: {
+    guarded:
+      'each text IS NULL is tested first; the length runs only on a value',
+  },
+  gate_service_requests_text_cleared: {},
+  // Nullable columns only under IS [NOT] NULL; status is NOT NULL.
+  gate_service_requests_state_shape: {},
+  gate_service_requests_cancel: {
+    guarded:
+      'cancel_side IS NULL is tested first; cancel_reason IS NOT NULL before its list',
+  },
+  gate_service_requests_cancel_reason_side: {},
 };
 
 interface Check {

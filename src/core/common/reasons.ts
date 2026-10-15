@@ -426,6 +426,18 @@ export const REASON_CODES = {
     'transferred_civil_defense',
     'other',
   ],
+  // Gate service requests (ADR 0047): what help, when, which lane, and why
+  // security closes one.
+  assistanceKind: ['wheelchair', 'walk_with', 'golf_cart', 'bags'],
+  gateServiceWhen: ['now', 'in_15', 'in_30'],
+  laneReason: ['ambulance', 'fire_truck', 'moving_truck', 'large_delivery'],
+  gateServiceClose: [
+    'done',
+    'not_found',
+    'no_show',
+    'duplicate',
+    'not_possible',
+  ],
   // Why the staff credit part or all of an invoice (ADR 0046).
   creditNote: ['billing_error', 'waiver', 'duplicate', 'goodwill', 'other'],
   // Why the office reverses a payment it recorded (ADR 0046).

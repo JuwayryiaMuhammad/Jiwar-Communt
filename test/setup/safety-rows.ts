@@ -95,3 +95,29 @@ export async function rewindEmergency(id: string, ms: number): Promise<void> {
     await db.end();
   }
 }
+
+/** A suspicious-activity report: the simplest request to write. */
+export async function gateServiceRow(
+  tx: TenantTxClient,
+  input: {
+    tenantId: string;
+    unitId: string;
+    requestedById: string;
+    placeId: string;
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.gateServiceRequest.create({
+    data: {
+      id,
+      tenantId: input.tenantId,
+      number: number(),
+      kind: 'suspicious',
+      unitId: input.unitId,
+      requestedById: input.requestedById,
+      placeId: input.placeId,
+      description: 'Row words',
+    },
+  });
+  return id;
+}

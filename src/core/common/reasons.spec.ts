@@ -62,7 +62,8 @@ describe('requireReasonCode', () => {
     for (const [name, codes] of Object.entries(REASON_CODES)) {
       expect(codes.length).toBeGreaterThan(0);
       expect(new Set(codes).size).toBe(codes.length);
-      for (const code of codes) expect(`${name}:${code}`).toMatch(/:[a-z_]+$/);
+      for (const code of codes)
+        expect(`${name}:${code}`).toMatch(/:[a-z][a-z0-9_]*$/);
     }
   });
 });

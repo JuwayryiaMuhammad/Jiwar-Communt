@@ -7632,6 +7632,294 @@
           }
         },
         {
+          "name": "Read what is owed today by how far past its due date",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "reports",
+                "aging"
+              ],
+              "query": [
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "groupBy",
+                  "value": ""
+                },
+                {
+                  "description": "Units whose building reads exactly this.",
+                  "disabled": true,
+                  "key": "building",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/reports/aging"
+            }
+          }
+        },
+        {
+          "name": "Export the aging report as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "reports",
+                "aging",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "groupBy",
+                  "value": ""
+                },
+                {
+                  "description": "Units whose building reads exactly this.",
+                  "disabled": true,
+                  "key": "building",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/reports/aging/export"
+            }
+          }
+        },
+        {
+          "name": "Read the money received in a period by channel and method",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "reports",
+                "collections"
+              ],
+              "query": [
+                {
+                  "description": "(required) First local day, included.",
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "(required) Last local day, included: at most 366 days after `from`.",
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "groupBy",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/reports/collections?from=&to="
+            }
+          }
+        },
+        {
+          "name": "Export the collections report as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "reports",
+                "collections",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "(required) First local day, included.",
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "(required) Last local day, included: at most 366 days after `from`.",
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "groupBy",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/reports/collections/export?from=&to="
+            }
+          }
+        },
+        {
+          "name": "Read the office’s day per recorder and method, for closing",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "reports",
+                "daily-cash"
+              ],
+              "query": [
+                {
+                  "description": "The local day closed; today when left out.",
+                  "disabled": true,
+                  "key": "day",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/reports/daily-cash"
+            }
+          }
+        },
+        {
+          "name": "Export the office’s day as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "reports",
+                "daily-cash",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "The local day closed; today when left out.",
+                  "disabled": true,
+                  "key": "day",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/reports/daily-cash/export"
+            }
+          }
+        },
+        {
+          "name": "Read what each unit or building owes today, and its credit",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "reports",
+                "outstanding"
+              ],
+              "query": [
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "groupBy",
+                  "value": ""
+                },
+                {
+                  "description": "Units whose building reads exactly this.",
+                  "disabled": true,
+                  "key": "building",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/reports/outstanding"
+            }
+          }
+        },
+        {
+          "name": "Export the outstanding report as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "reports",
+                "outstanding",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "groupBy",
+                  "value": ""
+                },
+                {
+                  "description": "Units whose building reads exactly this.",
+                  "disabled": true,
+                  "key": "building",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/reports/outstanding/export"
+            }
+          }
+        },
+        {
           "name": "List instalment plans, newest first",
           "request": {
             "description": "**Responses:** 200",

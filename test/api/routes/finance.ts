@@ -523,6 +523,50 @@ export const FINANCE_REPORT_ROUTES: Row[] = [
     ...BAD_PERIOD,
     noStore: true,
   },
+  ...(['aging', 'outstanding'] as const).flatMap((name): Row[] =>
+    [false, true].map((exported) => ({
+      method: 'GET',
+      path: `/staff/finance/reports/${name}${exported ? '/export' : ''}`,
+      auth: 'tenant',
+      as: 'manager',
+      denied: 'guard',
+      foreign: 'none',
+      invalid: {
+        query: { groupBy: 'floor' },
+        fields: [
+          {
+            field: 'groupBy',
+            code: 'INVALID_VALUE',
+            params: { allowed: ['unit', 'building'] },
+          },
+        ],
+      },
+      ...(exported ? { noStore: true } : {}),
+    })),
+  ),
+  ...[false, true].map((exported): Row => ({
+    method: 'GET',
+    path: `/staff/finance/reports/collections${exported ? '/export' : ''}`,
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    ...BAD_PERIOD,
+    ...(exported ? { noStore: true } : {}),
+  })),
+  ...[false, true].map((exported): Row => ({
+    method: 'GET',
+    path: `/staff/finance/reports/daily-cash${exported ? '/export' : ''}`,
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { day: 'today' },
+      fields: [{ field: 'day', code: 'INVALID_FORMAT' }],
+    },
+    ...(exported ? { noStore: true } : {}),
+  })),
 ];
 
 const PLAN = {

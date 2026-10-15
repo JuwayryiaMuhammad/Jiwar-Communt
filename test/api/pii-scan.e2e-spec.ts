@@ -1358,6 +1358,10 @@ describe('API v0 — PII leak scan', () => {
     const queries: Record<string, Record<string, string>> = {
       '/staff/finance/ledger': period,
       '/staff/finance/ledger/export': period,
+      '/staff/finance/reports/collections': period,
+      '/staff/finance/reports/collections/export': period,
+      // A page long enough for every notice the fixtures leave.
+      '/me/notifications': { limit: '100' },
     };
 
     const leaks: string[] = [];

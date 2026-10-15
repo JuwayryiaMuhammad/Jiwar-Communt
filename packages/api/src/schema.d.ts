@@ -6557,6 +6557,151 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/finance/reports/aging": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read what is owed today by how far past its due date
+         * @description Not yet due, 1–30, 31–60, 61–90 and 91 days or more; per unit or per building.
+         */
+        get: operations["ReportsController_aging"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/reports/aging/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export the aging report as CSV */
+        get: operations["ReportsController_agingCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/reports/collections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the money received in a period by channel and method
+         * @description A payment counts on the day it was paid, a reversal on the day it was recorded; per day or per month.
+         */
+        get: operations["ReportsController_collections"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/reports/collections/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export the collections report as CSV */
+        get: operations["ReportsController_collectionsCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/reports/daily-cash": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the office’s day per recorder and method, for closing
+         * @description Office payments and their reversals recorded that day, and cash refunds recorded that day less those reversed that day.
+         */
+        get: operations["ReportsController_dailyCash"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/reports/daily-cash/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export the office’s day as CSV */
+        get: operations["ReportsController_dailyCashCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/reports/outstanding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read what each unit or building owes today, and its credit */
+        get: operations["ReportsController_outstanding"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/reports/outstanding/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export the outstanding report as CSV */
+        get: operations["ReportsController_outstandingCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/instalment-plans": {
         parameters: {
             query?: never;
@@ -9300,6 +9445,35 @@ export interface components {
         ActivationView: {
             missing: ("unitType" | "areaSqm" | "building")[];
         };
+        AgingRowView: {
+            building: string | null;
+            /** @description 1–30 days past the due date. */
+            days1to30: string;
+            days31to60: string;
+            days61to90: string;
+            /** @description 91 days or more. */
+            days91plus: string;
+            /** @description Owed, not yet due. */
+            notDue: string;
+            total: string;
+            /** @description Per unit only. */
+            unitCode: string | null;
+            /**
+             * Format: uuid
+             * @description Per unit only.
+             */
+            unitId: string | null;
+        };
+        AgingView: {
+            /**
+             * Format: date
+             * @description Today, local.
+             */
+            asOf: string;
+            rows: components["schemas"]["AgingRowView"][];
+            /** @description Every row added up. */
+            totals: components["schemas"]["AgingRowView"];
+        };
         AnnouncementCreatedView: {
             /** Format: date-time */
             createdAt: string;
@@ -9994,6 +10168,34 @@ export interface components {
             /** Format: uuid */
             caseId: string;
         };
+        CashEventView: {
+            /** @description Signed: what it did to the drawer. */
+            amount: string;
+            /** Format: date-time */
+            at: string;
+            /** @enum {string} */
+            kind: "payment" | "reversal" | "refund" | "refund_reversal";
+            method: string;
+            /** @example RC-000042 */
+            number: string;
+            recordedBy: components["schemas"]["StaffRefView"];
+            reference: string | null;
+            unitCode: string;
+        };
+        CashierRowView: {
+            /** @enum {string} */
+            method: "cash" | "bank_transfer" | "cheque";
+            /** @description received − reversed − refunded */
+            net: string;
+            payments: number;
+            received: string;
+            recordedBy: components["schemas"]["StaffRefView"];
+            refunded: string;
+            /** @description Cash refunds recorded that day, less those reversed that day. */
+            refunds: number;
+            reversals: number;
+            reversed: string;
+        };
         CastVoteDto: {
             /** @description The unit’s choice from now on: one option, or several when the poll allows it. Replaces an earlier choice. */
             optionIds: string[];
@@ -10241,6 +10443,31 @@ export interface components {
             id: string;
             /** Format: uuid */
             membershipId: string | null;
+        };
+        CollectionRowView: {
+            /** @enum {string} */
+            channel: "office" | "online";
+            /** @description Paid in the period. */
+            gross: string;
+            method: string;
+            /** @description gross − reversed */
+            net: string;
+            payments: number;
+            /** @description `YYYY-MM-DD`, or `YYYY-MM` by month. */
+            period: string;
+            reversals: number;
+            /** @description Payments reversed in the period (recorded then). */
+            reversed: string;
+        };
+        CollectionsView: {
+            /** Format: date */
+            from: string;
+            gross: string;
+            net: string;
+            reversed: string;
+            rows: components["schemas"]["CollectionRowView"][];
+            /** Format: date */
+            to: string;
         };
         CommunityAttachmentView: {
             /** @description image/jpeg, image/png, image/webp or application/pdf. */
@@ -11235,6 +11462,14 @@ export interface components {
             timeZone: string;
             /** @description Works and closures under way now. */
             works: components["schemas"]["AnnouncementListItemView"][];
+        };
+        DailyCashView: {
+            /** Format: date */
+            day: string;
+            /** @description In order. */
+            events: components["schemas"]["CashEventView"][];
+            net: string;
+            rows: components["schemas"]["CashierRowView"][];
         };
         /** @enum {string} */
         DataExportStatus: "pending" | "building" | "ready" | "expired" | "failed";
@@ -13820,6 +14055,26 @@ export interface components {
             accounts: components["schemas"]["LoginAccountView"][];
             /** @description Single use, short-lived. Exchange it with POST /auth/select-account. */
             loginTicket: string;
+        };
+        OutstandingRowView: {
+            building: string | null;
+            /** @description Held for its next invoices. */
+            credit: string;
+            /** @description outstanding − credit */
+            net: string;
+            openInvoices: number;
+            outstanding: string;
+            /** @description Of it, past the due date. */
+            overdue: string;
+            unitCode: string | null;
+            /** Format: uuid */
+            unitId: string | null;
+        };
+        OutstandingView: {
+            /** Format: date */
+            asOf: string;
+            rows: components["schemas"]["OutstandingRowView"][];
+            totals: components["schemas"]["OutstandingRowView"];
         };
         /** @enum {string} */
         ParcelActorSide: "guard" | "resident" | "system";
@@ -28555,6 +28810,192 @@ export interface operations {
                 /** @description Units whose building reads exactly this. */
                 building?: string;
                 type?: "invoice" | "credit_note" | "payment" | "payment_reversal" | "refund" | "refund_reversal" | "credit_applied" | "allocation_release";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    ReportsController_aging: {
+        parameters: {
+            query?: {
+                groupBy?: "unit" | "building";
+                /** @description Units whose building reads exactly this. */
+                building?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgingView"];
+                };
+            };
+        };
+    };
+    ReportsController_agingCsv: {
+        parameters: {
+            query?: {
+                groupBy?: "unit" | "building";
+                /** @description Units whose building reads exactly this. */
+                building?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    ReportsController_collections: {
+        parameters: {
+            query: {
+                /** @description First local day, included. */
+                from: string;
+                /** @description Last local day, included: at most 366 days after `from`. */
+                to: string;
+                groupBy?: "day" | "month";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionsView"];
+                };
+            };
+        };
+    };
+    ReportsController_collectionsCsv: {
+        parameters: {
+            query: {
+                /** @description First local day, included. */
+                from: string;
+                /** @description Last local day, included: at most 366 days after `from`. */
+                to: string;
+                groupBy?: "day" | "month";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    ReportsController_dailyCash: {
+        parameters: {
+            query?: {
+                /** @description The local day closed; today when left out. */
+                day?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyCashView"];
+                };
+            };
+        };
+    };
+    ReportsController_dailyCashCsv: {
+        parameters: {
+            query?: {
+                /** @description The local day closed; today when left out. */
+                day?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    ReportsController_outstanding: {
+        parameters: {
+            query?: {
+                groupBy?: "unit" | "building";
+                /** @description Units whose building reads exactly this. */
+                building?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutstandingView"];
+                };
+            };
+        };
+    };
+    ReportsController_outstandingCsv: {
+        parameters: {
+            query?: {
+                groupBy?: "unit" | "building";
+                /** @description Units whose building reads exactly this. */
+                building?: string;
             };
             header?: never;
             path?: never;

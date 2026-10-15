@@ -300,6 +300,87 @@
         ],
         "type": "object"
       },
+      "AgingRowView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "days1to30": {
+            "description": "1–30 days past the due date.",
+            "type": "string"
+          },
+          "days31to60": {
+            "type": "string"
+          },
+          "days61to90": {
+            "type": "string"
+          },
+          "days91plus": {
+            "description": "91 days or more.",
+            "type": "string"
+          },
+          "notDue": {
+            "description": "Owed, not yet due.",
+            "type": "string"
+          },
+          "total": {
+            "type": "string"
+          },
+          "unitCode": {
+            "description": "Per unit only.",
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "description": "Per unit only.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "unitCode",
+          "building",
+          "notDue",
+          "days1to30",
+          "days31to60",
+          "days61to90",
+          "days91plus",
+          "total"
+        ],
+        "type": "object"
+      },
+      "AgingView": {
+        "properties": {
+          "asOf": {
+            "description": "Today, local.",
+            "format": "date",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/AgingRowView"
+            },
+            "type": "array"
+          },
+          "totals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgingRowView"
+              }
+            ],
+            "description": "Every row added up."
+          }
+        },
+        "required": [
+          "asOf",
+          "rows",
+          "totals"
+        ],
+        "type": "object"
+      },
       "AnnouncementCreatedView": {
         "properties": {
           "createdAt": {
@@ -2636,6 +2717,105 @@
         ],
         "type": "object"
       },
+      "CashEventView": {
+        "properties": {
+          "amount": {
+            "description": "Signed: what it did to the drawer.",
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "payment",
+              "reversal",
+              "refund",
+              "refund_reversal"
+            ],
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "number": {
+            "example": "RC-000042",
+            "type": "string"
+          },
+          "recordedBy": {
+            "$ref": "#/components/schemas/StaffRefView"
+          },
+          "reference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "kind",
+          "number",
+          "unitCode",
+          "method",
+          "amount",
+          "reference",
+          "recordedBy"
+        ],
+        "type": "object"
+      },
+      "CashierRowView": {
+        "properties": {
+          "method": {
+            "enum": [
+              "cash",
+              "bank_transfer",
+              "cheque"
+            ],
+            "type": "string"
+          },
+          "net": {
+            "description": "received − reversed − refunded",
+            "type": "string"
+          },
+          "payments": {
+            "type": "number"
+          },
+          "received": {
+            "type": "string"
+          },
+          "recordedBy": {
+            "$ref": "#/components/schemas/StaffRefView"
+          },
+          "refunded": {
+            "type": "string"
+          },
+          "refunds": {
+            "description": "Cash refunds recorded that day, less those reversed that day.",
+            "type": "number"
+          },
+          "reversals": {
+            "type": "number"
+          },
+          "reversed": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "recordedBy",
+          "method",
+          "payments",
+          "received",
+          "reversals",
+          "reversed",
+          "refunds",
+          "refunded",
+          "net"
+        ],
+        "type": "object"
+      },
       "CastVoteDto": {
         "properties": {
           "optionIds": {
@@ -3450,6 +3630,89 @@
           "id",
           "code",
           "membershipId"
+        ],
+        "type": "object"
+      },
+      "CollectionRowView": {
+        "properties": {
+          "channel": {
+            "enum": [
+              "office",
+              "online"
+            ],
+            "type": "string"
+          },
+          "gross": {
+            "description": "Paid in the period.",
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "net": {
+            "description": "gross − reversed",
+            "type": "string"
+          },
+          "payments": {
+            "type": "number"
+          },
+          "period": {
+            "description": "`YYYY-MM-DD`, or `YYYY-MM` by month.",
+            "type": "string"
+          },
+          "reversals": {
+            "type": "number"
+          },
+          "reversed": {
+            "description": "Payments reversed in the period (recorded then).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period",
+          "channel",
+          "method",
+          "payments",
+          "gross",
+          "reversals",
+          "reversed",
+          "net"
+        ],
+        "type": "object"
+      },
+      "CollectionsView": {
+        "properties": {
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "gross": {
+            "type": "string"
+          },
+          "net": {
+            "type": "string"
+          },
+          "reversed": {
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/CollectionRowView"
+            },
+            "type": "array"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "rows",
+          "gross",
+          "reversed",
+          "net"
         ],
         "type": "object"
       },
@@ -6287,6 +6550,37 @@
           "tickets",
           "requests",
           "gates"
+        ],
+        "type": "object"
+      },
+      "DailyCashView": {
+        "properties": {
+          "day": {
+            "format": "date",
+            "type": "string"
+          },
+          "events": {
+            "description": "In order.",
+            "items": {
+              "$ref": "#/components/schemas/CashEventView"
+            },
+            "type": "array"
+          },
+          "net": {
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/CashierRowView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "day",
+          "rows",
+          "events",
+          "net"
         ],
         "type": "object"
       },
@@ -14878,6 +15172,75 @@
         "required": [
           "loginTicket",
           "accounts"
+        ],
+        "type": "object"
+      },
+      "OutstandingRowView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "credit": {
+            "description": "Held for its next invoices.",
+            "type": "string"
+          },
+          "net": {
+            "description": "outstanding − credit",
+            "type": "string"
+          },
+          "openInvoices": {
+            "type": "number"
+          },
+          "outstanding": {
+            "type": "string"
+          },
+          "overdue": {
+            "description": "Of it, past the due date.",
+            "type": "string"
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "unitCode",
+          "building",
+          "openInvoices",
+          "outstanding",
+          "overdue",
+          "credit",
+          "net"
+        ],
+        "type": "object"
+      },
+      "OutstandingView": {
+        "properties": {
+          "asOf": {
+            "format": "date",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/OutstandingRowView"
+            },
+            "type": "array"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/OutstandingRowView"
+          }
+        },
+        "required": [
+          "asOf",
+          "rows",
+          "totals"
         ],
         "type": "object"
       },
@@ -49143,6 +49506,423 @@
           }
         ],
         "summary": "Export the ledger for a period as CSV",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/reports/aging": {
+      "get": {
+        "description": "Not yet due, 1–30, 31–60, 61–90 and 91 days or more; per unit or per building.",
+        "operationId": "ReportsController_aging",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "groupBy",
+            "required": false,
+            "schema": {
+              "default": "unit",
+              "enum": [
+                "unit",
+                "building"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Units whose building reads exactly this.",
+            "in": "query",
+            "name": "building",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read what is owed today by how far past its due date",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/reports/aging/export": {
+      "get": {
+        "operationId": "ReportsController_agingCsv",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "groupBy",
+            "required": false,
+            "schema": {
+              "default": "unit",
+              "enum": [
+                "unit",
+                "building"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Units whose building reads exactly this.",
+            "in": "query",
+            "name": "building",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export the aging report as CSV",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/reports/collections": {
+      "get": {
+        "description": "A payment counts on the day it was paid, a reversal on the day it was recorded; per day or per month.",
+        "operationId": "ReportsController_collections",
+        "parameters": [
+          {
+            "description": "First local day, included.",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last local day, included: at most 366 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "groupBy",
+            "required": false,
+            "schema": {
+              "default": "day",
+              "enum": [
+                "day",
+                "month"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the money received in a period by channel and method",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/reports/collections/export": {
+      "get": {
+        "operationId": "ReportsController_collectionsCsv",
+        "parameters": [
+          {
+            "description": "First local day, included.",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last local day, included: at most 366 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "groupBy",
+            "required": false,
+            "schema": {
+              "default": "day",
+              "enum": [
+                "day",
+                "month"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export the collections report as CSV",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/reports/daily-cash": {
+      "get": {
+        "description": "Office payments and their reversals recorded that day, and cash refunds recorded that day less those reversed that day.",
+        "operationId": "ReportsController_dailyCash",
+        "parameters": [
+          {
+            "description": "The local day closed; today when left out.",
+            "in": "query",
+            "name": "day",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyCashView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the office’s day per recorder and method, for closing",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/reports/daily-cash/export": {
+      "get": {
+        "operationId": "ReportsController_dailyCashCsv",
+        "parameters": [
+          {
+            "description": "The local day closed; today when left out.",
+            "in": "query",
+            "name": "day",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export the office’s day as CSV",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/reports/outstanding": {
+      "get": {
+        "operationId": "ReportsController_outstanding",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "groupBy",
+            "required": false,
+            "schema": {
+              "default": "unit",
+              "enum": [
+                "unit",
+                "building"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Units whose building reads exactly this.",
+            "in": "query",
+            "name": "building",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutstandingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read what each unit or building owes today, and its credit",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/reports/outstanding/export": {
+      "get": {
+        "operationId": "ReportsController_outstandingCsv",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "groupBy",
+            "required": false,
+            "schema": {
+              "default": "unit",
+              "enum": [
+                "unit",
+                "building"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Units whose building reads exactly this.",
+            "in": "query",
+            "name": "building",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export the outstanding report as CSV",
         "tags": [
           "finance"
         ],

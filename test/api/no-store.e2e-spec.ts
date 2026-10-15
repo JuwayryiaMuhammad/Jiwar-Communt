@@ -798,6 +798,19 @@ describe('API v0 — no-store', () => {
   let aDisputeOnce: Promise<{ id: string; invoiceId: string }> | null = null;
   const aDispute = () => (aDisputeOnce ??= aFreshDispute());
   const FINANCE_CALLS = (): Record<string, () => Promise<Response>> => ({
+    ...Object.fromEntries(
+      ['aging', 'outstanding', 'collections', 'daily-cash'].map((name) => [
+        `GET /staff/finance/reports/${name}/export`,
+        () =>
+          call(w, 'GET', `/staff/finance/reports/${name}/export`, {
+            token: w.a.tokens.manager,
+            query:
+              name === 'collections'
+                ? { from: localDay(-30), to: localDay(0) }
+                : {},
+          }),
+      ]),
+    ),
     'GET /staff/finance/ledger/export': () =>
       call(w, 'GET', '/staff/finance/ledger/export', {
         token: w.a.tokens.manager,

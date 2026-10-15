@@ -94,6 +94,25 @@ describe('Gate — plate lookup and visitor parking', () => {
     }
   });
 
+  it('reads the Arabic letter variants as one letter (ADR 0047)', async () => {
+    const home = await v.unit(s.c);
+    const owner = await v.owner(s.c, home.id);
+    const car = await v.register(owner, home.id, { plate: 'أ ى ة ٥٥٧' });
+    for (const typed of ['ا ي ه 557', 'إي ه557', 'آ ى ة ٥٥٧']) {
+      const body = (await lookup(typed).expect(200)).body as {
+        matches: Match[];
+      };
+      expect(body.matches.map((m) => [m.kind, m.plate])).toEqual([
+        ['vehicle', car.plate],
+      ]);
+    }
+    // A letter that is not a variant is another plate.
+    const none = (await lookup('ب ي ه 557').expect(200)).body as {
+      matches: Match[];
+    };
+    expect(none.matches).toEqual([]);
+  });
+
   it('a visitor pass carrying the plate: whether it lets them in now, and its parking', async () => {
     const home = await v.unit(s.c);
     const owner = await v.owner(s.c, home.id);

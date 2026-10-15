@@ -17,22 +17,27 @@ export function normalizePlate(raw: string): string | null {
   return plate;
 }
 
-const ARABIC_INDIC = '٠١٢٣٤٥٦٧٨٩';
+/**
+ * The fold behind `plateKey`, character for character (ADR 0045, 0047):
+ * Arabic-Indic digits as Western ones, and the Arabic letter variants a
+ * keyboard gives as one letter — أ/إ/آ as ا, ى as ي, ة as ه. The
+ * database's generated `plate_key` columns use these two strings in
+ *   translate(replace(plate, ' ', ''), PLATE_FOLD_FROM, PLATE_FOLD_TO)
+ * and a test feeds both the same plates.
+ */
+export const PLATE_FOLD_FROM = '٠١٢٣٤٥٦٧٨٩أإآىة';
+export const PLATE_FOLD_TO = '0123456789ااايه';
 
 /**
- * What two plates are compared by (ADR 0045): a tidied plate without its
- * spaces, its Arabic-Indic digits as Western ones. "ق ب ط ١٢٣٤" and
- * "قبط1234" are one plate. The database computes the same key in a
- * generated `plate_key` column:
- *   translate(replace(plate, ' ', ''), '٠١٢٣٤٥٦٧٨٩', '0123456789')
- * and a test feeds both the same plates. Arabic letter variants are not
- * folded: plates use a closed set of letters.
+ * What two plates are compared by: a tidied plate without its spaces,
+ * folded as above. "ق ب ط ١٢٣٤" and "قبط1234" are one plate, and so are
+ * "أ ب ى 12" and "ا ب ي 12".
  */
 export function plateKey(plate: string): string {
   let key = '';
   for (const ch of plate.replace(/ /g, '')) {
-    const digit = ARABIC_INDIC.indexOf(ch);
-    key += digit >= 0 ? String(digit) : ch;
+    const at = PLATE_FOLD_FROM.indexOf(ch);
+    key += at >= 0 ? PLATE_FOLD_TO[at] : ch;
   }
   return key;
 }

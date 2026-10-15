@@ -135,7 +135,7 @@ When the person who registered a vehicle no longer lives in the unit (they moved
 ## B3 — editing a vehicle (answer)
 
 - **A new plate sends the vehicle back to `pending`.** Its sticker is void and never issued again, its permit is gone (`permitValidUntil: null`, `stickerNumber: null`), and the management decides again.
-  - A plate that is the same plate typed differently (spaces, Arabic-Indic vs Western digits) is not a new plate and changes nothing.
+  - A plate that is the same plate typed differently (spaces, Arabic-Indic vs Western digits, `أ`/`إ`/`آ` vs `ا`, `ى` vs `ي`, `ة` vs `ه`) is not a new plate and changes nothing.
 - **Colour, make and model, type and the licence photo keep the status.** An `active` vehicle stays `active` with its sticker.
 - **A rejected vehicle** with a new plate waits again (`pending`), within the unit's limit. Without a new plate it stays `rejected`.
 
@@ -415,7 +415,7 @@ The plate goes in a body, never in the URL. It shares the guard's rate limit wit
 }
 ```
 
-- **Matching:** by the plate's key. Spaces and Arabic-Indic vs Western digits do not matter.
+- **Matching:** by the plate's key. Spaces, Arabic-Indic vs Western digits and the letter variants `أ`/`إ`/`آ`/`ا`, `ى`/`ي` and `ة`/`ه` do not matter (ADR 0047).
 - **What comes back:** the units' **pending and active** vehicles (`permitStatus` read now, so an expired permit shows `expired`), and the **active** visitor passes carrying the plate that are valid within a day.
   - For a pass, `valid` says whether it lets its visitor in now, else `refusal` (`not_yet_valid | expired | outside_schedule | host_inactive | used | cancelled`).
   - `parking` is its booking holding now, or the next within two hours.
@@ -494,5 +494,4 @@ A removed vehicle's target answers `404 VEHICLE_NOT_FOUND`; open the list instea
 - Service and delivery vehicles; plate-reading cameras.
 - A notification when the management cancels a visitor parking booking (the household sees it cancelled).
 - The reporter is never told what became of a report.
-- Arabic letter variants (`ي`/`ى`, `أ`/`ا`) are not treated as one in plate matching.
 - Emergencies, gate services and the clinic (parts C–D) and later phases.

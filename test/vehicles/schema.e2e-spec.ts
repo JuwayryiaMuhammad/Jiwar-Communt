@@ -1,5 +1,11 @@
 import { Client } from 'pg';
-import { plateKey } from '../../src/core/common/vehicle-plate';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import {
+  PLATE_FOLD_FROM,
+  PLATE_FOLD_TO,
+  plateKey,
+} from '../../src/core/common/vehicle-plate';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
@@ -368,13 +374,40 @@ describe('Vehicles tables — CHECKs, triggers and privileges', () => {
       '٠١٢٣٤٥٦٧٨٩',
       'أ ب ٥',
       'ى ي ٩',
+      // ADR 0047: each letter variant and the letter it is read as.
+      'أ 1',
+      'إ 1',
+      'آ 1',
+      'ا 1',
+      'ى 2',
+      'ي 2',
+      'ة 3',
+      'ه 3',
+      'طة ى أ ١٢',
     ];
     const { rows } = await app.query<{ plate: string; key: string }>(
-      `SELECT p AS plate, translate(replace(p, ' ', ''), '٠١٢٣٤٥٦٧٨٩', '0123456789') AS key
+      `SELECT p AS plate, translate(replace(p, ' ', ''), $2, $3) AS key
          FROM unnest($1::text[]) AS p`,
-      [plates],
+      [plates, PLATE_FOLD_FROM, PLATE_FOLD_TO],
     );
     expect(rows.map((r) => r.key)).toEqual(plates.map((p) => plateKey(p)));
+    expect(new Set(rows.slice(7, 11).map((r) => r.key)).size).toBe(1);
+    expect(rows[11].key).toBe(rows[12].key);
+    expect(rows[13].key).toBe(rows[14].key);
+    expect(rows[15].key).toBe('طهيا12');
+    // The generated columns compute it: one row per table, the stored key.
+    const stored = await h.asTenant(tenantId, () =>
+      h.tenantTx.withTenantTx(async (tx: TenantTxClient) => {
+        const id = await vehicleRow(tx, {
+          tenantId,
+          unitId,
+          registeredById: accountId,
+          plate: 'أ ى ة ٤',
+        });
+        return (await tx.vehicle.findUniqueOrThrow({ where: { id } })).plateKey;
+      }),
+    );
+    expect(stored).toBe(plateKey('ا ي ه 4'));
     // And the generated columns are that expression, on every table.
     const { rows: columns } = await migrator.query<{
       table: string;
@@ -396,5 +429,73 @@ describe('Vehicles tables — CHECKs, triggers and privileges', () => {
         columns.map((c) => c.expr.replace(/"?vehicle_plate"?|"?plate"?/g, 'P')),
       ).size,
     ).toBe(1);
+    expect(columns[0].expr).toContain(PLATE_FOLD_FROM);
+    expect(columns[0].expr).toContain(PLATE_FOLD_TO);
+  });
+
+  describe('the fold migration’s pre-check (ADR 0047)', () => {
+    // The migration's first block, run against a stand-in `vehicles` (a
+    // temporary table comes first on the search path) so that two active
+    // permits can differ only by a letter variant, as they could before.
+    // The stand-in has no RLS, so every compound of the run counts its rows:
+    // the number says nothing here, the refusal does.
+    const precheck = () => {
+      const sql = readFileSync(
+        join(
+          __dirname,
+          '../../prisma/migrations/20261025090000_plate_key_fold/migration.sql',
+        ),
+        'utf8',
+      );
+      const start = sql.indexOf('DO $$');
+      const end = sql.indexOf('END $$;', start) + 'END $$;'.length;
+      return sql.slice(start, end);
+    };
+    async function run(plates: [string, string][]): Promise<void> {
+      await migrator.query('BEGIN');
+      try {
+        await migrator.query(
+          `CREATE TEMP TABLE vehicles (tenant_id uuid, plate text, status text)
+             ON COMMIT DROP`,
+        );
+        for (const [plate, status] of plates)
+          await migrator.query(
+            'INSERT INTO pg_temp.vehicles VALUES ($1, $2, $3)',
+            [tenantId, plate, status],
+          );
+        await migrator.query(precheck());
+      } finally {
+        await migrator.query('ROLLBACK');
+      }
+    }
+
+    it('stops the deployment when two active permits fold to one plate', async () => {
+      await expect(
+        run([
+          ['أ ب 12', 'active'],
+          ['ا ب ١٢', 'active'],
+        ]),
+      ).rejects.toThrow(
+        /plate_key_fold: \d+ plate\(s\) have two active permits/,
+      );
+      await expect(
+        run([
+          ['ى 5', 'active'],
+          ['ي 5', 'active'],
+          ['ة 6', 'active'],
+          ['ه 6', 'active'],
+        ]),
+      ).rejects.toThrow(/plate_key_fold: \d+ plate/);
+    });
+
+    it('lets it through when they do not', async () => {
+      await expect(
+        run([
+          ['أ ب 12', 'active'],
+          ['ا ب 12', 'pending'],
+          ['ا ب 13', 'active'],
+        ]),
+      ).resolves.toBeUndefined();
+    });
   });
 });

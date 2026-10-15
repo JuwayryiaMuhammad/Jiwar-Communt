@@ -93,6 +93,14 @@ const STATUS_TONE: Record<string, Tone> = {
   under_appeal: 'terracotta',
   paid: 'green',
   converted: 'green',
+  // Finance (ADR 0046). `unpaid`, `paid`, `open`, `expired` and
+  // `superseded` are above.
+  partially_paid: 'terracotta',
+  overdue: 'error',
+  credited: 'beige',
+  opening: 'beige',
+  succeeded: 'green',
+  failed: 'error',
 };
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {

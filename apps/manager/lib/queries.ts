@@ -134,6 +134,34 @@ export type FinePayment = Schema<'StaffFinePaymentView'>;
 export type StaffParkingReport = Schema<'StaffParkingReportView'>;
 export type ParkingReportStatus = Schema<'ParkingReportStatus'>;
 
+// Finance (ADR 0046).
+export type GatewayView = Schema<'GatewayView'>;
+export type GatewayEvent = Schema<'GatewayEventView'>;
+export type BillingPlan = Schema<'BillingPlanView'>;
+export type BillingOverride = Schema<'BillingOverrideView'>;
+export type Invoice = Schema<'InvoiceView'>;
+export type InvoiceDetail = Schema<'InvoiceDetailView'>;
+export type InvoiceBatch = Schema<'InvoiceBatchView'>;
+export type InvoiceKind = Schema<'InvoiceKind'>;
+export type Payment = Schema<'PaymentView'>;
+export type PaymentDetail = Schema<'PaymentDetailView'>;
+export type Statement = Schema<'StatementView'>;
+export interface InvoiceFilters {
+  status?: 'unpaid' | 'partially_paid' | 'overdue' | 'paid' | 'credited' | 'open' | '';
+  kind?: InvoiceKind | '';
+  unitId?: string;
+  building?: string;
+  batchId?: string;
+  planId?: string;
+}
+export interface PaymentFilters {
+  channel?: 'office' | 'online' | '';
+  method?: 'cash' | 'bank_transfer' | 'cheque' | 'card' | 'wallet' | '';
+  unitId?: string;
+  from?: string;
+  to?: string;
+}
+
 export interface FineFilters {
   status?: FineStatus | '';
   unitCode?: string;
@@ -309,6 +337,18 @@ export const keys = {
   bookings: (filters: object) => ['staff-bookings', 'list', filters] as const,
   suspensions: (inForce: string) => ['booking-suspensions', inForce] as const,
   suspensionsAll: ['booking-suspensions'] as const,
+  financeGateway: ['finance-gateway'] as const,
+  gatewayEvents: (outcome: string) => ['finance-gateway', 'events', outcome] as const,
+  billingPlans: ['billing-plans'] as const,
+  billingPlan: (id: string) => ['billing-plans', 'detail', id] as const,
+  billingOverrides: (id: string) => ['billing-plans', 'overrides', id] as const,
+  invoicesAll: ['invoices'] as const,
+  invoices: (filters: object) => ['invoices', 'list', filters] as const,
+  invoice: (id: string) => ['invoices', 'detail', id] as const,
+  paymentsAll: ['payments'] as const,
+  payments: (filters: object) => ['payments', 'list', filters] as const,
+  payment: (id: string) => ['payments', 'detail', id] as const,
+  statement: (unitId: string) => ['invoices', 'statement', unitId] as const,
   clubPlans: ['club-plans'] as const,
   clubAll: ['club-memberships'] as const,
   clubMemberships: (state: string) => ['club-memberships', 'list', state] as const,
@@ -489,6 +529,32 @@ export const fetchers = {
     ),
   suspensions: (inForce: 'true' | 'false', cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/staff/booking-suspensions', { params: { query: { inForce, cursor, limit } } })),
+  financeGateway: () => unwrap(api.GET('/api/v1/staff/finance/gateway')),
+  gatewayEvents: (outcome: GatewayEvent['outcome'] | '', cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/finance/gateway-events', {
+        params: { query: { outcome: outcome || undefined, cursor, limit } },
+      }),
+    ),
+  billingPlans: () => unwrap(api.GET('/api/v1/staff/billing-plans')),
+  billingOverrides: (id: string) =>
+    unwrap(api.GET('/api/v1/staff/billing-plans/{id}/overrides', { params: { path: { id } } })),
+  invoices: (filters: InvoiceFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/invoices', {
+        params: { query: { ...(clean(filters) as Record<string, never>), cursor, limit } },
+      }),
+    ),
+  invoice: (id: string) => unwrap(api.GET('/api/v1/staff/invoices/{id}', { params: { path: { id } } })),
+  payments: (filters: PaymentFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/payments', {
+        params: { query: { ...(clean(filters) as Record<string, never>), cursor, limit } },
+      }),
+    ),
+  payment: (id: string) => unwrap(api.GET('/api/v1/staff/payments/{id}', { params: { path: { id } } })),
+  statement: (unitId: string) =>
+    unwrap(api.GET('/api/v1/staff/units/{unitId}/statement', { params: { path: { unitId } } })),
   clubPlans: () => unwrap(api.GET('/api/v1/staff/club-plans')),
   clubMemberships: (state: ClubMembershipState | '') =>
     unwrap(api.GET('/api/v1/staff/club-memberships', { params: { query: state ? { state } : {} } })),

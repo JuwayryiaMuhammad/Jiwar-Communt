@@ -42,6 +42,7 @@ import {
   UserX,
   Vote,
   Wrench,
+  CreditCard,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -258,6 +259,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           show: can('parking_reports.handle'),
         },
         { href: '/parking', label: 'Parking setup', icon: <CircleParking aria-hidden />, show: can('vehicles.manage') },
+      ],
+    },
+    {
+      label: 'Finance',
+      items: [
+        { href: '/finance/plans', label: 'Billing plans', icon: <CalendarClock aria-hidden />, show: can('finance.billing') || can('finance.invoice') },
+        { href: '/finance/gateway', label: 'Online payments', icon: <CreditCard aria-hidden />, show: can('finance.gateway') },
       ],
     },
     {

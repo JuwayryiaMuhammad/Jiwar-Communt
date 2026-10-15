@@ -6,6 +6,7 @@ import {
   allocationRow,
   batchRow,
   creditNoteRow,
+  disputeRow,
   eventRow,
   instalmentPlanRow,
   invoiceRow,
@@ -87,6 +88,12 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
         invoiceId: ids.invoice,
         createdById: accountId,
       });
+      ids.dispute = await disputeRow(tx, {
+        tenantId,
+        unitId,
+        invoiceId: ids.invoice,
+        openedById: accountId,
+      });
       ids.remainder = await invoiceRow(tx, {
         tenantId,
         unitId,
@@ -137,7 +144,7 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
     return rows[0];
   };
 
-  it('the app updates only settings, gateways, counters, plans, overrides, sessions and instalment plans; deletes only overrides', async () => {
+  it('the app updates only settings, gateways, counters, plans, overrides, sessions, instalment plans and disputes; deletes only overrides', async () => {
     const updatable: string[] = [];
     const deletable: string[] = [];
     for (const table of [
@@ -158,6 +165,7 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
       'payment_gateway_events',
       'receipt_links',
       'instalment_plans',
+      'invoice_disputes',
     ]) {
       const p = await privileges(table);
       expect({
@@ -182,6 +190,7 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
       'billing_plan_overrides',
       'payment_sessions',
       'instalment_plans',
+      'invoice_disputes',
     ]);
     expect(deletable).toEqual(['billing_plan_overrides']);
   });
@@ -325,6 +334,90 @@ describe('Finance tables — privileges, append-only rows, triggers and bounds',
     await expect(
       attempt(app, note('waiver', `'${ids.instalmentPlan}'`)),
     ).rejects.toThrow(/credit_notes_instalment_plan_link/);
+  });
+
+  it('a dispute’s photo and a gate service’s photo (ADR 0047) are both images of 5 MiB at most: both purposes are in the CHECKs recreated last', async () => {
+    const file = (purpose: string, type: string, size: number) =>
+      attempt(
+        app,
+        `INSERT INTO files (id, tenant_id, owner_account_id, purpose, content_type, size_bytes, status, upload_expires_at)
+         VALUES (gen_random_uuid(), '${tenantId}', '${accountId}', '${purpose}', '${type}', ${size}, 'pending', now())`,
+      );
+    for (const purpose of ['dispute_photo', 'gate_service_photo']) {
+      await file(purpose, 'image/png', 5 * 1024 * 1024);
+      await expect(
+        file(purpose, 'image/png', 5 * 1024 * 1024 + 1),
+      ).rejects.toThrow(/files_size_for_purpose/);
+      await expect(file(purpose, 'application/pdf', 100)).rejects.toThrow(
+        /files_content_type_for_purpose/,
+      );
+    }
+  });
+
+  it('a dispute is decided once and its words cleared once, in either order; nothing else changes (ADR 0048)', async () => {
+    const d = ids.dispute;
+    const reject = `status = 'rejected', decided_at = now(), decided_by_account_id = '${accountId}', decision_reason_code = 'other'`;
+    const clear = `text = NULL, photo_file_id = NULL, text_cleared_at = now()`;
+    await attempt(
+      app,
+      `UPDATE invoice_disputes SET ${reject} WHERE id = '${d}'`,
+    );
+    await attempt(
+      app,
+      `UPDATE invoice_disputes SET ${clear} WHERE id = '${d}'`,
+    );
+    await attempt(
+      app,
+      `UPDATE invoice_disputes SET ${clear} WHERE id = '${d}'`,
+      `UPDATE invoice_disputes SET ${reject} WHERE id = '${d}'`,
+    );
+    for (const change of [
+      `reason_code = 'other'`,
+      `text = 'Other words'`,
+      `invoice_id = '${ids.remainder}'`,
+    ])
+      await expect(
+        attempt(app, `UPDATE invoice_disputes SET ${change} WHERE id = '${d}'`),
+      ).rejects.toThrow(/only a decision/);
+    // Decided once: not again, not back to open.
+    await expect(
+      attempt(
+        app,
+        `UPDATE invoice_disputes SET ${reject} WHERE id = '${d}'`,
+        `UPDATE invoice_disputes SET decision_reason_code = 'outside_policy' WHERE id = '${d}'`,
+      ),
+    ).rejects.toThrow(/only a decision/);
+    await expect(
+      attempt(
+        app,
+        `UPDATE invoice_disputes SET ${reject} WHERE id = '${d}'`,
+        `UPDATE invoice_disputes SET status = 'open', decided_at = NULL, decided_by_account_id = NULL, decision_reason_code = NULL WHERE id = '${d}'`,
+      ),
+    ).rejects.toThrow(/only a decision/);
+    await expect(
+      attempt(migrator, `DELETE FROM invoice_disputes WHERE id = '${d}'`),
+    ).rejects.toThrow(/only a decision/);
+  });
+
+  it('a dispute is accepted exactly when one credit note on its invoice names it (at commit)', async () => {
+    const d = ids.dispute;
+    const accept = `UPDATE invoice_disputes SET status = 'accepted', decided_at = now(), decided_by_account_id = '${accountId}' WHERE id = '${d}'`;
+    const note = (invoice: string, reason = 'dispute') =>
+      `INSERT INTO credit_notes (id, tenant_id, number, invoice_id, amount, reason_code, created_by_account_id, dispute_id)
+       VALUES (gen_random_uuid(), '${tenantId}', 990000 + floor(random() * 9999)::int, '${invoice}', 1, '${reason}', '${accountId}', '${d}')`;
+    await expect(attempt(app, accept)).rejects.toThrow(
+      /exactly one credit note/,
+    );
+    await expect(attempt(app, note(ids.invoice))).rejects.toThrow(
+      /exactly one credit note/,
+    );
+    await expect(attempt(app, accept, note(ids.remainder))).rejects.toThrow(
+      /exactly one credit note/,
+    );
+    await expect(
+      attempt(app, accept, note(ids.invoice, 'waiver')),
+    ).rejects.toThrow(/credit_notes_dispute_link/);
+    await attempt(app, accept, note(ids.invoice));
   });
 
   describe('at commit', () => {

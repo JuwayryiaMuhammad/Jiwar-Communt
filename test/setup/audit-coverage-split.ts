@@ -351,6 +351,8 @@ export const FINANCE_COVERAGE: readonly string[] = [
   // R6b (ADR 0048).
   'instalment_plan.created',
   'instalment_plan.cancelled',
+  'invoice_dispute.opened',
+  'invoice_dispute.decided',
 ];
 
 /**

@@ -25,7 +25,7 @@ export class CreditNoteView {
   @ApiProperty({
     type: String,
     description:
-      'REASON_CODES.creditNote, or a system reason (REASON_CODES.creditNoteSystem): `instalment_plan`.',
+      'REASON_CODES.creditNote, or a system reason (REASON_CODES.creditNoteSystem): `instalment_plan`, `dispute`.',
   })
   reasonCode: string;
   @ApiProperty({ type: String, format: 'date-time' })
@@ -111,6 +111,16 @@ export class InvoiceRescheduledByView {
   number: string;
 }
 
+/** The latest dispute of an invoice (ADR 0048). */
+export class InvoiceDisputeRefView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String, enum: ['open', 'accepted', 'rejected'] })
+  status: 'open' | 'accepted' | 'rejected';
+  @ApiProperty({ type: Boolean, description: 'The caller opened it.' })
+  mine: boolean;
+}
+
 export class InvoiceDetailView extends InvoiceView {
   @ApiProperty({ type: String, format: 'uuid' })
   batchId: string;
@@ -132,6 +142,13 @@ export class InvoiceDetailView extends InvoiceView {
     description: 'On an invoice an instalment plan took over.',
   })
   rescheduledBy: InvoiceRescheduledByView | null;
+  @ApiProperty({
+    type: InvoiceDisputeRefView,
+    nullable: true,
+    description:
+      'Its latest dispute (ADR 0048): while `open`, the invoice is frozen.',
+  })
+  dispute: InvoiceDisputeRefView | null;
   @ApiProperty({ type: [InvoiceLineView] })
   lines: InvoiceLineView[];
   @ApiProperty({ type: [CreditNoteView] })

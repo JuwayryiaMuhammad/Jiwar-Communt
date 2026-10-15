@@ -143,6 +143,31 @@ export async function instalmentPlanRow(
   return id;
 }
 
+/** An open dispute of `invoiceId` (one open per invoice). */
+export async function disputeRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    unitId: string;
+    invoiceId: string;
+    openedById: string;
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.invoiceDispute.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      invoiceId: r.invoiceId,
+      unitId: r.unitId,
+      openedById: r.openedById,
+      reasonCode: 'wrong_amount',
+      text: 'The amount is wrong',
+    },
+  });
+  return id;
+}
+
 export async function creditNoteRow(
   tx: TenantTxClient,
   r: {

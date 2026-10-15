@@ -965,6 +965,8 @@ model Account {
   creditNotesCreated             CreditNote[]                        @relation("CreditNoteCreator")
   instalmentPlansCreated         InstalmentPlan[]                    @relation("InstalmentPlanCreator")
   instalmentPlansCancelled       InstalmentPlan[]                    @relation("InstalmentPlanCanceller")
+  invoiceDisputesOpened          InvoiceDispute[]                    @relation("InvoiceDisputeOpener")
+  invoiceDisputesDecided         InvoiceDispute[]                    @relation("InvoiceDisputeDecider")
   billingPlansCreated            BillingPlan[]                       @relation("BillingPlanCreator")
   billingPlanOverridesUpdated    BillingPlanOverride[]               @relation("BillingPlanOverrideUpdater")
   financePaymentsRecorded        FinancePayment[]                    @relation("FinancePaymentRecorder")
@@ -1080,6 +1082,7 @@ model Unit {
   invoiceBatches             InvoiceBatch[]
   invoices                   Invoice[]
   instalmentPlans            InstalmentPlan[]
+  invoiceDisputes            InvoiceDispute[]
   billingPlanOverrides       BillingPlanOverride[]
   financePayments            FinancePayment[]
   paymentSessions            PaymentSession[]
@@ -2153,10 +2156,12 @@ enum FilePurpose {
   parking_photo
   /// A vehicle fine's photo (ADR 0045): the staff's.
   vehicle_fine_photo
-
-  @@map("file_purpose")
   /// A suspicious-activity report's photo (ADR 0047), the resident's.
   gate_service_photo
+  /// A resident's photo backing an invoice dispute (ADR 0048).
+  dispute_photo
+
+  @@map("file_purpose")
 }
 
 enum FileStatus {
@@ -5300,6 +5305,7 @@ model Invoice {
   instalmentPlan InstalmentPlan? @relation("InstalmentPlanInstalments", fields: [tenantId, instalmentPlanId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   rescheduledBy  InstalmentPlan? @relation("InstalmentPlanOriginal")
   remainderOf    InstalmentPlan? @relation("InstalmentPlanRemainder")
+  disputes       InvoiceDispute[]
   batch       InvoiceBatch  @relation(fields: [tenantId, batchId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   unit        Unit          @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   createdBy   Account?      @relation("InvoiceCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "invoices_tenant_id_created_by_fkey")
@@ -5350,16 +5356,60 @@ model CreditNote {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   /// Reason `instalment_plan` (ADR 0048): the plan it opened or cancelled.
   instalmentPlanId String? @map("instalment_plan_id") @db.Uuid
+  /// Reason `dispute` (ADR 0048): the dispute whose acceptance wrote it.
+  disputeId        String? @map("dispute_id") @db.Uuid
 
   invoice        Invoice         @relation(fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   createdBy      Account         @relation("CreditNoteCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "credit_notes_tenant_id_created_by_fkey")
   instalmentPlan InstalmentPlan? @relation(fields: [tenantId, instalmentPlanId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  dispute        InvoiceDispute? @relation(fields: [tenantId, disputeId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([tenantId, id])
   @@unique([tenantId, number])
+  @@unique([tenantId, disputeId], map: "credit_notes_one_per_dispute")
   @@index([tenantId, invoiceId, createdAt], map: "credit_notes_invoice_idx")
   @@index([tenantId, instalmentPlanId], map: "credit_notes_instalment_plan_idx")
   @@map("credit_notes")
+}
+
+enum InvoiceDisputeStatus {
+  open
+  accepted
+  rejected
+
+  @@map("invoice_dispute_status")
+}
+
+/// A resident's dispute of an invoice (ADR 0048): a reason's code, optional
+/// words and photo (cleared on the opener's erasure), and the staff's
+/// decision, made once. One open dispute per invoice.
+model InvoiceDispute {
+  id                 String               @id @db.Uuid
+  tenantId           String               @map("tenant_id") @db.Uuid
+  invoiceId          String               @map("invoice_id") @db.Uuid
+  unitId             String               @map("unit_id") @db.Uuid
+  openedById         String               @map("opened_by_account_id") @db.Uuid
+  reasonCode         String               @map("reason_code")
+  text               String?
+  photoFileId        String?              @map("photo_file_id") @db.Uuid
+  textClearedAt      DateTime?            @map("text_cleared_at") @db.Timestamptz(3)
+  status             InvoiceDisputeStatus @default(open)
+  decidedById        String?              @map("decided_by_account_id") @db.Uuid
+  decidedAt          DateTime?            @map("decided_at") @db.Timestamptz(3)
+  decisionReasonCode String?              @map("decision_reason_code")
+  createdAt          DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  invoice    Invoice     @relation(fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  unit       Unit        @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  openedBy   Account     @relation("InvoiceDisputeOpener", fields: [tenantId, openedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "invoice_disputes_tenant_id_opened_by_fkey")
+  decidedBy  Account?    @relation("InvoiceDisputeDecider", fields: [tenantId, decidedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "invoice_disputes_tenant_id_decided_by_fkey")
+  creditNote CreditNote?
+
+  @@unique([tenantId, id])
+  @@index([tenantId, invoiceId, createdAt], map: "invoice_disputes_invoice_idx")
+  @@index([tenantId, createdAt, id], map: "invoice_disputes_created_idx")
+  @@index([tenantId, openedById], map: "invoice_disputes_opened_by_idx")
+  @@map("invoice_disputes")
 }
 
 /// An open invoice's outstanding turned into instalment invoices (ADR

@@ -48,6 +48,28 @@ export const PAID_SQL = Prisma.sql`COALESCE((
    WHERE a.tenant_id = i.tenant_id AND a.invoice_id = i.id
      AND NOT EXISTS (SELECT 1 FROM finance_payments r
                       WHERE r.tenant_id = a.tenant_id AND r.reverses_id = a.payment_id)), 0)`;
+/**
+ * Invoice `i` is under an open dispute (ADR 0048): frozen — no reminder, no
+ * automatic allocation, no payment or credit note naming it.
+ */
+export const DISPUTED_SQL = Prisma.sql`EXISTS (
+  SELECT 1 FROM invoice_disputes d
+   WHERE d.tenant_id = i.tenant_id AND d.invoice_id = i.id
+     AND d.status = 'open')`;
+
+/** Of these invoices, those under an open dispute. */
+export async function disputedAmong(
+  tx: TenantTxClient,
+  invoiceIds: readonly string[],
+): Promise<string[]> {
+  if (!invoiceIds.length) return [];
+  const rows = await tx.invoiceDispute.findMany({
+    where: { invoiceId: { in: [...invoiceIds] }, status: 'open' },
+    select: { invoiceId: true },
+  });
+  return invoiceIds.filter((id) => rows.some((r) => r.invoiceId === id));
+}
+
 /** An instalment plan took invoice `i` over (opened on it, or cancelled it). */
 export const RESCHEDULED_SQL = Prisma.sql`EXISTS (
   SELECT 1 FROM credit_notes c

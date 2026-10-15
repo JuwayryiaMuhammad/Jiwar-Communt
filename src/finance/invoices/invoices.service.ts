@@ -29,6 +29,7 @@ import { allocateUnits } from '../payments/allocation';
 import {
   balancesOf,
   CREDITED_SQL,
+  disputedAmong,
   filterSql,
   PAID_SQL,
   RESCHEDULED_SQL,
@@ -60,6 +61,10 @@ const invalid = (fields: FieldError[]) =>
 
 export const invoiceNotFound = () =>
   appError.notFound(ErrorCode.INVOICE_NOT_FOUND, 'Invoice not found');
+
+/** The invoice is frozen by an open dispute (ADR 0048). */
+export const invoiceDisputed = () =>
+  appError.conflict(ErrorCode.INVOICE_DISPUTED, 'Under an open dispute');
 
 const unitNotFound = () =>
   appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
@@ -313,6 +318,9 @@ export class InvoicesService implements OnModuleInit {
       const invoice = await tx.invoice.findUnique({ where: { id: invoiceId } });
       if (!invoice) throw invoiceNotFound();
       await this.access.lockUnits(tx, [invoice.unitId]);
+      // A disputed invoice is credited only by its dispute's decision.
+      if ((await disputedAmong(tx, [invoiceId])).length)
+        throw invoiceDisputed();
       const balance = (await balancesOf(tx, [invoiceId])).get(invoiceId)!;
       const amount = money(dto.amount);
       if (amount.gt(balance.outstanding))
@@ -526,6 +534,11 @@ export class InvoicesService implements OnModuleInit {
       where: { invoiceId: invoice.id },
       select: { id: true, number: true },
     });
+    const dispute = await tx.invoiceDispute.findFirst({
+      where: { invoiceId: invoice.id },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      select: { id: true, status: true, openedById: true },
+    });
     const allocations = await tx.financeAllocation.findMany({
       where: { invoiceId: invoice.id },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
@@ -558,6 +571,13 @@ export class InvoicesService implements OnModuleInit {
         ? {
             id: rescheduledBy.id,
             number: formatNumber('instalment_plan', rescheduledBy.number),
+          }
+        : null,
+      dispute: dispute
+        ? {
+            id: dispute.id,
+            status: dispute.status,
+            mine: dispute.openedById === this.ctx.accountId,
           }
         : null,
       lines: lines.map((l) => ({

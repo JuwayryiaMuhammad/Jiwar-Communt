@@ -6816,7 +6816,7 @@
               },
               "raw": "{\n  \"purpose\": \"worker_photo\",\n  \"contentType\": \"image/jpeg\",\n  \"size\": 1\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` \\| `vehicle_licence` \\| `parking_photo` \\| `vehicle_fine_photo` \\| `gate_service_photo` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` \\| `vehicle_licence` \\| `parking_photo` \\| `vehicle_fine_photo` \\| `gate_service_photo` \\| `dispute_photo` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -6954,6 +6954,33 @@
           }
         },
         {
+          "name": "Get a dispute of one of my units’ invoices",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoice-disputes",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/invoice-disputes/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get one of my units’ invoices",
           "request": {
             "description": "**Responses:** 200",
@@ -6970,6 +6997,82 @@
                 ":id"
               ],
               "raw": "{{baseUrl}}/api/v1/invoices/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List an invoice’s disputes, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices",
+                ":id",
+                "disputes"
+              ],
+              "raw": "{{baseUrl}}/api/v1/invoices/:id/disputes",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Dispute one of my units’ invoices",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `photoFileId` | string (uuid) |  | A ready file of purpose `dispute_photo` the caller uploaded (POST /files). |\n| `reasonCode` | string | yes | `already_paid`, `wrong_amount`, `not_my_unit`, `service_not_provided`, `duplicate_invoice` or `other` (REASON_CODES.invoiceDispute). |\n| `text` | string |  | The opener’s own words, trimmed. Shown to the opener and to the staff only; cleared when the opener is erased. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invoices",
+                ":id",
+                "disputes"
+              ],
+              "raw": "{{baseUrl}}/api/v1/invoices/:id/disputes",
               "variable": [
                 {
                   "description": "",
@@ -7554,6 +7657,129 @@
                 ":id"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/invoice-batches/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List invoice disputes, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "invoice-disputes"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "unitId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/invoice-disputes"
+            }
+          }
+        },
+        {
+          "name": "Get an invoice dispute with its words and photo",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "invoice-disputes",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/invoice-disputes/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Accept a dispute with a credit note, or reject it with a reason",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"decision\": \"accept\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string |  | On `accept` only: what to credit. |\n| `decision` | `accept` \\| `reject` | yes |  |\n| `reasonCode` | string |  | On `reject` only: `charge_is_correct`, `payment_not_found`, `outside_policy`, `no_longer_owed` or `other` (REASON_CODES.invoiceDisputeReject). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "invoice-disputes",
+                ":id",
+                "decide"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/invoice-disputes/:id/decide",
               "variable": [
                 {
                   "description": "",

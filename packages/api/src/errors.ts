@@ -290,6 +290,12 @@ const ERROR_TEXT: Record<string, string> = {
   INVOICE_NOT_CONVERTIBLE: 'This invoice cannot be split: it is an instalment, already has a plan, or nothing is owed.',
   INSTALMENTS_DONT_ADD_UP: 'The instalments must add up to what the invoice still owes: it changed, split it again.',
   INSTALMENT_PLAN_CLOSED: 'This plan was cancelled or is already settled.',
+  INVOICE_DISPUTED: 'This invoice is under dispute: decide the dispute first.',
+  INVOICE_NOT_DISPUTABLE: 'Nothing is owed on this invoice.',
+  DISPUTE_NOT_FOUND: 'This dispute does not exist.',
+  DISPUTE_ALREADY_OPEN: 'This invoice already has an open dispute.',
+  DISPUTE_ALREADY_DECIDED: 'This dispute was decided already.',
+  DISPUTE_LIMIT_REACHED: 'This invoice was disputed too many times.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

@@ -40,6 +40,26 @@ export class FinanceNotices {
   }
 
   /**
+   * Tells one account, and only while it still sees the unit's money (an
+   * erased, departed or paused opener is told nothing).
+   */
+  async toHolder(
+    tx: TenantTxClient,
+    accountId: string,
+    unitId: string,
+    kind: NotificationKind,
+    targetId: string,
+  ): Promise<number> {
+    const holders = await this.community.financeHolders(tx, unitId);
+    if (!holders.includes(accountId)) return 0;
+    return this.notifier.notify(tx, [accountId], {
+      kind,
+      params: {},
+      targetId,
+    });
+  }
+
+  /**
    * An invoice's notice, once: the unique (invoice, kind) row is claimed
    * first, so of two senders at once (an issue and the sweep, two sweeps)
    * one tells and the other does nothing. True when this call told.

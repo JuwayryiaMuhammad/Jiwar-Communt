@@ -121,6 +121,14 @@ export const FILE_PURPOSES = {
     maxBytes: 5 * MB,
     uploaders: ['gate_services.request'],
   },
+  // A resident's photo backing an invoice dispute (ADR 0048). Residents
+  // have no money permission: any resident may upload one; only someone
+  // who sees the unit's money can attach it to a dispute.
+  dispute_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['units.read'],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

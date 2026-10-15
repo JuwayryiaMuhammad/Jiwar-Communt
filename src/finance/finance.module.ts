@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CommunityFinancePortModule } from '../community';
+import { FilesModule } from '../core/files/files.module';
 import { AccountsModule } from '../core/accounts/accounts.module';
 import { AuthModule } from '../core/auth/auth.module';
 import { PlatformModule } from '../core/platform/platform.module';
@@ -34,6 +35,11 @@ import {
   UnitInstalmentsController,
 } from './instalments/instalments.controller';
 import { InstalmentsService } from './instalments/instalments.service';
+import {
+  StaffDisputesController,
+  UnitDisputesController,
+} from './disputes/disputes.controller';
+import { DisputesService } from './disputes/disputes.service';
 import { FinanceNotices } from './notices/finance-notices';
 import { PaymentSessionsController } from './online/payment-sessions.controller';
 import { GatewayEventsController } from './online/gateway-events.controller';
@@ -57,6 +63,7 @@ import { PaymentsService } from './payments/payments.service';
     AccountsModule,
     AuthModule,
     PlatformModule,
+    FilesModule,
     CommunityFinancePortModule,
   ],
   controllers: [
@@ -66,6 +73,8 @@ import { PaymentsService } from './payments/payments.service';
     UnitInvoicesController,
     StaffInstalmentsController,
     UnitInstalmentsController,
+    StaffDisputesController,
+    UnitDisputesController,
     BillingPlansController,
     StaffPaymentsController,
     UnitPaymentsController,
@@ -80,6 +89,7 @@ import { PaymentsService } from './payments/payments.service';
     FinanceNotices,
     InvoicesService,
     InstalmentsService,
+    DisputesService,
     InvoiceNoticesSweep,
     InvoiceRemindersSweep,
     BillingPlansService,

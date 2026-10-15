@@ -4,23 +4,16 @@ import { FILE_PURPOSES, FILE_TYPES } from './purposes';
 import { matchesSignature } from './signatures';
 
 const migrations = '../../../prisma/migrations';
-/** Both CHECKs as they stand now (ADR 0045 recreated both, ADR 0047 the size). */
+/** Both CHECKs as they stand now (ADR 0048 recreated both, with ADR 0047's purpose). */
 const sizeCheck = readFileSync(
   join(
     __dirname,
     migrations,
-    '20261025090200_safety_file_purpose/migration.sql',
+    '20261026090300_dispute_photo_purpose/migration.sql',
   ),
   'utf8',
 );
-const typeCheck = readFileSync(
-  join(
-    __dirname,
-    migrations,
-    '20261023090200_vehicle_file_purposes/migration.sql',
-  ),
-  'utf8',
-);
+const typeCheck = sizeCheck;
 
 describe('file purposes', () => {
   it('match the CHECKs in the database', () => {
@@ -51,6 +44,9 @@ describe('file purposes', () => {
     );
     expect(sizeCheck).toContain(
       `WHEN 'gate_service_photo' THEN ${FILE_PURPOSES.gate_service_photo.maxBytes}`,
+    );
+    expect(sizeCheck).toContain(
+      `WHEN 'dispute_photo' THEN ${FILE_PURPOSES.dispute_photo.maxBytes}`,
     );
     expect(sizeCheck).toContain(
       `WHEN 'data_export' THEN ${FILE_PURPOSES.data_export.maxBytes}`,
@@ -116,6 +112,9 @@ describe('file purposes', () => {
       FILE_PURPOSES.worker_photo.types,
     );
     expect(FILE_PURPOSES.gate_service_photo.types).toEqual(
+      FILE_PURPOSES.worker_photo.types,
+    );
+    expect(FILE_PURPOSES.dispute_photo.types).toEqual(
       FILE_PURPOSES.worker_photo.types,
     );
     expect(FILE_PURPOSES.data_export.types).toEqual(['application/zip']);

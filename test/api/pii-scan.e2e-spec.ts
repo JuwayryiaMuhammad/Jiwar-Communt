@@ -980,6 +980,14 @@ describe('API v0 — PII leak scan', () => {
         ],
       },
     );
+    // Disputes (ADR 0048): the primary disputes the home's other invoice in
+    // their own words; the staff and the primary read them.
+    const piiDispute = await idOf(
+      'POST',
+      `/invoices/${piiInvoice.invoiceId}/disputes`,
+      primaryToken,
+      { reasonCode: 'service_not_provided', text: 'The pump still leaks' },
+    );
     const piiPlan = await idOf(
       'POST',
       '/staff/billing-plans',
@@ -1217,6 +1225,10 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0048: numbers, amounts and unit codes only.
       '/staff/instalment-plans/{id}': piiInstalmentPlan,
       '/instalment-plans/{id}': piiInstalmentPlan,
+      // The opener's words to the opener and the staff; never a name.
+      '/staff/invoice-disputes/{id}': piiDispute,
+      '/invoice-disputes/{id}': piiDispute,
+      '/invoices/{id}/disputes': piiInvoice.invoiceId,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

@@ -1241,6 +1241,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تم تقسيط فاتورة لوحدتك. افتح التطبيق لمعرفة مواعيد الأقساط.',
     },
   },
+  'invoice.dispute_accepted': {
+    en: {
+      title: 'Dispute accepted',
+      body: 'Your dispute of an invoice was accepted. Open the app for the new amount.',
+    },
+    ar: {
+      title: 'تم قبول الاعتراض',
+      body: 'تم قبول اعتراضك على فاتورة. افتح التطبيق لمعرفة المبلغ الجديد.',
+    },
+  },
+  'invoice.dispute_rejected': {
+    en: {
+      title: 'Dispute not accepted',
+      body: 'Your dispute of an invoice was not accepted. Open the app for the reason.',
+    },
+    ar: {
+      title: 'لم يتم قبول الاعتراض',
+      body: 'لم يتم قبول اعتراضك على فاتورة. افتح التطبيق لمعرفة السبب.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

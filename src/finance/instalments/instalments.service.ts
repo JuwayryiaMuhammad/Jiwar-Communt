@@ -24,8 +24,14 @@ import { CURRENCY, money, show, ZERO } from '../money';
 import { FinanceNotices } from '../notices/finance-notices';
 import { supersedeLive } from '../online/supersede';
 import { allocateUnit } from '../payments/allocation';
-import { balancesOf, CREDITED_SQL, PAID_SQL } from '../invoices/balances';
 import {
+  balancesOf,
+  CREDITED_SQL,
+  disputedAmong,
+  PAID_SQL,
+} from '../invoices/balances';
+import {
+  invoiceDisputed,
   invoiceNotFound,
   InvoicesService,
   MAX_DUE_DAYS,
@@ -163,6 +169,8 @@ export class InstalmentsService implements OnModuleInit {
           },
         ]);
       if (invoice.instalmentPlanId) throw notConvertible('instalment');
+      if ((await disputedAmong(tx, [invoiceId])).length)
+        throw invoiceDisputed();
       if (await tx.instalmentPlan.findFirst({ where: { invoiceId } }))
         throw notConvertible('has_plan');
       const balance = (await balancesOf(tx, [invoiceId])).get(invoiceId)!;
@@ -347,6 +355,16 @@ export class InstalmentsService implements OnModuleInit {
           'The plan is closed',
           { params: { status: 'settled' } },
         );
+      // A disputed instalment waits for its decision.
+      if (
+        (
+          await disputedAmong(
+            tx,
+            open.map((o) => o.invoice.id),
+          )
+        ).length
+      )
+        throw invoiceDisputed();
       const tenantId = plan.tenantId;
       const remainder = open.reduce((sum, o) => sum.add(o.owed), ZERO);
       // COUNTER_ORDER: the credit notes, then the remainder invoice.

@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { newId } from '../../core/common/uuid';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
-import { CREDITED_SQL, PAID_SQL } from '../invoices/balances';
+import { CREDITED_SQL, DISPUTED_SQL, PAID_SQL } from '../invoices/balances';
 import { money, ZERO } from '../money';
 
 /** What a live payment still has to give. */
@@ -40,7 +40,11 @@ async function freeMoney(
     .filter((r) => r.free.gt(ZERO));
 }
 
-/** The unit's invoices still owed, oldest due first (then by number). */
+/**
+ * The unit's invoices still owed, oldest due first (then by number). Only
+ * the invoices a payment names when `only` is given; otherwise none under
+ * an open dispute (ADR 0048): credit never pays what the unit contests.
+ */
 async function owed(
   tx: TenantTxClient,
   unitId: string,
@@ -50,7 +54,7 @@ async function owed(
     SELECT i.id, i.total - ${CREDITED_SQL} - ${PAID_SQL} AS owed
       FROM invoices i
      WHERE i.unit_id = ${unitId}::uuid
-       ${only ? Prisma.sql`AND i.id = ANY(${[...only]}::uuid[])` : Prisma.empty}
+       ${only ? Prisma.sql`AND i.id = ANY(${[...only]}::uuid[])` : Prisma.sql`AND NOT ${DISPUTED_SQL}`}
      ORDER BY i.due_on, i.number`;
   return rows
     .map((r) => ({ id: r.id, owed: money(r.owed) }))

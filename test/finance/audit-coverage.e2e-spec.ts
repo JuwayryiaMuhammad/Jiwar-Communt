@@ -360,6 +360,78 @@ describe('Audit coverage — finance', () => {
     });
   });
 
+  describe('disputes', () => {
+    it('invoice_dispute.opened and .decided: codes, ids and the amount; never the opener’s words', async () => {
+      const disputed = async () => {
+        const { invoiceId } = await f.issue(s.accountant, s.home.id);
+        const res = await f
+          .http('post', `/invoices/${invoiceId}/disputes`, s.owner.token, {
+            reasonCode: 'wrong_amount',
+            text: `${MARKER} the amount is wrong`,
+          })
+          .expect(201);
+        return { invoiceId, id: (res.body as { id: string }).id };
+      };
+      const one = await disputed();
+      const opened = await single('invoice_dispute.opened', one.id);
+      expect(opened).toMatchObject({
+        actorId: s.owner.id,
+        targetType: 'invoice_dispute',
+        changes: null,
+        metadata: {
+          unitId: s.home.id,
+          invoiceId: one.invoiceId,
+          reasonCode: 'wrong_amount',
+          photo: false,
+        },
+      });
+      const accepted = (
+        await f
+          .http(
+            'post',
+            `/staff/invoice-disputes/${one.id}/decide`,
+            s.accountant.token,
+            { decision: 'accept', amount: '200' },
+          )
+          .expect(201)
+      ).body as { decision: { creditNoteId: string } };
+      const decided = await single('invoice_dispute.decided', one.id);
+      expect(decided).toMatchObject({
+        actorId: s.accountant.id,
+        metadata: {
+          unitId: s.home.id,
+          invoiceId: one.invoiceId,
+          decision: 'accept',
+          amount: '200.00',
+          creditNoteId: accepted.decision.creditNoteId,
+        },
+      });
+      const two = await disputed();
+      await f
+        .http(
+          'post',
+          `/staff/invoice-disputes/${two.id}/decide`,
+          s.manager.token,
+          {
+            decision: 'reject',
+            reasonCode: 'charge_is_correct',
+          },
+        )
+        .expect(201);
+      const rejected = await read.tenant(s.c.tenantId, {
+        action: 'invoice_dispute.decided',
+        targetId: two.id,
+      });
+      expect(rejected[0].metadata).toEqual({
+        unitId: s.home.id,
+        invoiceId: two.invoiceId,
+        decision: 'reject',
+        reasonCode: 'charge_is_correct',
+      });
+      expect(JSON.stringify([opened, decided, rejected])).not.toContain(MARKER);
+    });
+  });
+
   describe('billing plans', () => {
     let planId: string;
 
@@ -624,7 +696,7 @@ describe('Audit coverage — finance', () => {
       expect(
         all
           .filter((k) =>
-            /^(finance_gateway|invoice|invoice_batch|credit_note|billing_plan|payment|payment_session|instalment_plan)\.|^tenant\.payment_gateway_|^platform\.step_up_/.test(
+            /^(finance_gateway|invoice|invoice_batch|credit_note|billing_plan|payment|payment_session|instalment_plan|invoice_dispute)\.|^tenant\.payment_gateway_|^platform\.step_up_/.test(
               k,
             ),
           )

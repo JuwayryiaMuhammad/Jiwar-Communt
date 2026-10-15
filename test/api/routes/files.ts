@@ -39,6 +39,7 @@ export const FILES_ROUTES: Row[] = [
               'parking_photo',
               'vehicle_fine_photo',
               'gate_service_photo',
+              'dispute_photo',
             ],
           },
         },

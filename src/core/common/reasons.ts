@@ -442,7 +442,25 @@ export const REASON_CODES = {
   creditNote: ['billing_error', 'waiver', 'duplicate', 'goodwill', 'other'],
   // A credit note the system writes, never picked by staff (ADR 0048): an
   // instalment plan closing an invoice or cancelling its instalments.
-  creditNoteSystem: ['instalment_plan'],
+  creditNoteSystem: ['instalment_plan', 'dispute'],
+  // Why a resident disputes an invoice (ADR 0048).
+  invoiceDispute: [
+    'already_paid',
+    'wrong_amount',
+    'not_my_unit',
+    'service_not_provided',
+    'duplicate_invoice',
+    'other',
+  ],
+  // Why the staff reject a dispute (ADR 0048). `no_longer_owed`: a payment
+  // started before the dispute paid the invoice meanwhile.
+  invoiceDisputeReject: [
+    'charge_is_correct',
+    'payment_not_found',
+    'outside_policy',
+    'no_longer_owed',
+    'other',
+  ],
   // Why the office reverses a payment it recorded (ADR 0046).
   paymentReverse: ['entered_in_error', 'duplicate', 'bounced_cheque', 'other'],
 } as const;

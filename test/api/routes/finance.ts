@@ -320,6 +320,115 @@ export const FINANCE_INSTALMENT_ROUTES: Row[] = [
   },
 ];
 
+/** Invoice disputes (ADR 0048): the opener's words travel, so no-store. */
+export const FINANCE_DISPUTE_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/staff/invoice-disputes',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'pending' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['open', 'accepted', 'rejected'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/invoice-disputes/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bDisputeId }),
+      code: 'DISPUTE_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/invoice-disputes/{id}/decide',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bDisputeId }),
+      body: () => ({ decision: 'reject', reasonCode: 'other' }),
+      code: 'DISPUTE_NOT_FOUND',
+    },
+    invalid: {
+      body: { decision: 'maybe' },
+      fields: [
+        {
+          field: 'decision',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['accept', 'reject'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/invoices/{id}/disputes',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bInvoiceId }),
+      body: () => ({ reasonCode: 'wrong_amount' }),
+      code: 'INVOICE_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: 'wrong_amount', text: '', photoFileId: 'x' },
+      fields: [
+        {
+          field: 'text',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 1000 },
+        },
+        { field: 'photoFileId', code: 'INVALID_UUID' },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/invoices/{id}/disputes',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bInvoiceId }),
+      code: 'INVOICE_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/invoice-disputes/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bDisputeId }),
+      code: 'DISPUTE_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+];
+
 const PLAN = {
   nameEn: 'Service charge',
   nameAr: 'رسوم الخدمات',

@@ -313,4 +313,9 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   instalment_plans_one_per_invoice: null,
   instalment_plans_remainder_key: null,
   invoices_instalment_position_key: null,
+  // Invoice disputes (ADR 0048): one open per invoice and one credit note
+  // per dispute, each checked under the unit's finance lock first.
+  invoice_disputes_tenant_id_id_key: null,
+  invoice_disputes_one_open: null,
+  credit_notes_one_per_dispute: null,
 };

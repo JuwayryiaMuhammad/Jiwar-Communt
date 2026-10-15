@@ -25,7 +25,13 @@ import { FinanceAccess } from '../access';
 import { formatNumber, takeNumbers } from '../counters';
 import { asDate, fromDate } from '../db-clock';
 import { GatewayService } from '../gateway/gateway.service';
-import { balancesOf, CREDITED_SQL, PAID_SQL } from '../invoices/balances';
+import {
+  balancesOf,
+  CREDITED_SQL,
+  DISPUTED_SQL,
+  disputedAmong,
+  PAID_SQL,
+} from '../invoices/balances';
 import { invoiceView, InvoicesService } from '../invoices/invoices.service';
 import { CURRENCY, money, show, ZERO } from '../money';
 import { FinanceNotices } from '../notices/finance-notices';
@@ -386,7 +392,11 @@ export class PaymentsService implements OnModuleInit {
 
   // --------------------------------------------------------------------------
 
-  /** What the invoices named (or all the unit's) still ask for. */
+  /**
+   * What the invoices named (or all the unit's) still ask for. An invoice
+   * under an open dispute is frozen (ADR 0048): naming it is refused, and
+   * it is not part of "all".
+   */
   private async owed(
     tx: TenantTxClient,
     unitId: string,
@@ -408,6 +418,13 @@ export class PaymentsService implements OnModuleInit {
           'Not the unit’s, or nothing owed',
           { params: { invoiceIds: bad } },
         );
+      const disputed = await disputedAmong(tx, named);
+      if (disputed.length)
+        throw appError.conflict(
+          ErrorCode.INVOICE_DISPUTED,
+          'Under an open dispute',
+          { params: { invoiceIds: disputed } },
+        );
       return [...balances.values()].reduce(
         (sum, b) => sum.add(b.outstanding),
         ZERO,
@@ -415,7 +432,8 @@ export class PaymentsService implements OnModuleInit {
     }
     const [{ owed }] = await tx.$queryRaw<{ owed: Prisma.Decimal | null }[]>`
       SELECT SUM(GREATEST(i.total - ${CREDITED_SQL} - ${PAID_SQL}, 0)) AS owed
-        FROM invoices i WHERE i.unit_id = ${unitId}::uuid`;
+        FROM invoices i
+       WHERE i.unit_id = ${unitId}::uuid AND NOT ${DISPUTED_SQL}`;
     return money(owed ?? 0);
   }
 

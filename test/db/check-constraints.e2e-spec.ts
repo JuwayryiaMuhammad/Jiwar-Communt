@@ -869,6 +869,19 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'instalment_position IS NULL is tested first; the range runs only on a value',
   },
   credit_notes_instalment_plan_link: {},
+  // Invoice disputes (ADR 0048). The decision's and the clearing's columns
+  // only under IS [NOT] NULL; reason_code and status are NOT NULL.
+  invoice_disputes_reason: {},
+  invoice_disputes_decision_reason: {
+    guarded:
+      'decision_reason_code IS NULL is tested first; the list runs only on a value',
+  },
+  invoice_disputes_text_length: {
+    guarded: 'text IS NULL is tested first; the length runs only on a value',
+  },
+  invoice_disputes_decision_shape: {},
+  invoice_disputes_cleared_shape: {},
+  credit_notes_dispute_link: {},
   // Nullable columns only under IS [NOT] NULL; kind is NOT NULL.
   finance_payments_kind_shape: {},
   finance_payments_office_shape: {

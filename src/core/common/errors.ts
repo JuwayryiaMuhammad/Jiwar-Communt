@@ -606,6 +606,22 @@ export const ErrorCode = {
   INSTALMENTS_DONT_ADD_UP: 'INSTALMENTS_DONT_ADD_UP',
   /** The plan was cancelled or is settled (409, params.status). */
   INSTALMENT_PLAN_CLOSED: 'INSTALMENT_PLAN_CLOSED',
+  /**
+   * The invoice is under an open dispute, so it is frozen: it cannot be
+   * paid by name, credited, split, or its plan cancelled until the staff
+   * decide (409, params.invoiceIds when a payment named it).
+   */
+  INVOICE_DISPUTED: 'INVOICE_DISPUTED',
+  /** Nothing is owed on it: a paid invoice is not disputed (409). */
+  INVOICE_NOT_DISPUTABLE: 'INVOICE_NOT_DISPUTABLE',
+  /** Unknown, another compound's, or not the caller's to see. */
+  DISPUTE_NOT_FOUND: 'DISPUTE_NOT_FOUND',
+  /** The invoice has an open dispute already (409). */
+  DISPUTE_ALREADY_OPEN: 'DISPUTE_ALREADY_OPEN',
+  /** It was decided already (409, params.status). */
+  DISPUTE_ALREADY_DECIDED: 'DISPUTE_ALREADY_DECIDED',
+  /** The invoice was disputed params.max times already (409). */
+  DISPUTE_LIMIT_REACHED: 'DISPUTE_LIMIT_REACHED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

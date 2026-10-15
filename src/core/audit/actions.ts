@@ -833,6 +833,12 @@ export const AUDIT_ACTIONS = {
   'instalment_plan.created': { log: 'tenant', target: 'instalment_plan' },
   // metadata: unitId, remainder, remainderInvoiceId, creditNoteIds.
   'instalment_plan.cancelled': { log: 'tenant', target: 'instalment_plan' },
+  // metadata: unitId, invoiceId, reasonCode, photo (boolean). Never the
+  // opener's words.
+  'invoice_dispute.opened': { log: 'tenant', target: 'invoice_dispute' },
+  // metadata: unitId, invoiceId, decision; amount and creditNoteId on an
+  // acceptance, reasonCode on a rejection.
+  'invoice_dispute.decided': { log: 'tenant', target: 'invoice_dispute' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

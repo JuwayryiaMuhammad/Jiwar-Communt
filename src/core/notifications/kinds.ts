@@ -1162,6 +1162,22 @@ export const NOTIFICATION_KINDS = {
     target: 'instalment_plan',
     params: {},
   },
+  /** The staff accepted the dispute: a credit note took part or all of the invoice off. To its opener. */
+  'invoice.dispute_accepted': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'invoice_dispute',
+    params: {},
+  },
+  /** The staff rejected the dispute: the invoice stands. To its opener. */
+  'invoice.dispute_rejected': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'invoice_dispute',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

@@ -6196,7 +6196,7 @@
             "type": "string"
           },
           "reasonCode": {
-            "description": "REASON_CODES.creditNote, or a system reason (REASON_CODES.creditNoteSystem): `instalment_plan`.",
+            "description": "REASON_CODES.creditNote, or a system reason (REASON_CODES.creditNoteSystem): `instalment_plan`, `dispute`.",
             "type": "string"
           }
         },
@@ -6369,6 +6369,30 @@
           },
           "reasonCode": {
             "description": "With `cancelled` only, from `vehicleFineCancel` (default `appeal_accepted`).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "type": "object"
+      },
+      "DecideDisputeDto": {
+        "properties": {
+          "amount": {
+            "description": "On `accept` only: what to credit.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "accept",
+              "reject"
+            ],
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "On `reject` only: `charge_is_correct`, `payment_not_found`, `outside_policy`, `no_longer_owed` or `other` (REASON_CODES.invoiceDisputeReject).",
             "type": "string"
           }
         },
@@ -7395,6 +7419,115 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "DisputeDecisionView": {
+        "properties": {
+          "creditNoteId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "creditNoteNumber": {
+            "example": "CN-000031",
+            "nullable": true,
+            "type": "string"
+          },
+          "creditedAmount": {
+            "description": "On an acceptance: what its credit note took off.",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "On a rejection: REASON_CODES.invoiceDisputeReject.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "decidedAt",
+          "reasonCode",
+          "creditedAmount",
+          "creditNoteId",
+          "creditNoteNumber"
+        ],
+        "type": "object"
+      },
+      "DisputeView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DisputeDecisionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "invoiceId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "invoiceNumber": {
+            "example": "INV-000123",
+            "type": "string"
+          },
+          "mine": {
+            "description": "The caller opened it.",
+            "type": "boolean"
+          },
+          "photoUrl": {
+            "description": "A short-lived link to the opener’s photo: to the opener only.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "REASON_CODES.invoiceDispute",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "accepted",
+              "rejected"
+            ],
+            "type": "string"
+          },
+          "text": {
+            "description": "The opener’s words: to the opener only; null once erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "invoiceId",
+          "invoiceNumber",
+          "unitId",
+          "reasonCode",
+          "text",
+          "photoUrl",
+          "mine",
+          "status",
+          "decision",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -9207,7 +9340,8 @@
           "vehicle_licence",
           "parking_photo",
           "vehicle_fine_photo",
-          "gate_service_photo"
+          "gate_service_photo",
+          "dispute_photo"
         ],
         "type": "string"
       },
@@ -11662,6 +11796,16 @@
             ],
             "type": "string"
           },
+          "dispute": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InvoiceDisputeRefView"
+              }
+            ],
+            "description": "Its latest dispute (ADR 0048): while `open`, the invoice is frozen.",
+            "nullable": true,
+            "type": "object"
+          },
           "dueOn": {
             "description": "Local day.",
             "format": "date",
@@ -11773,9 +11917,36 @@
           "plan",
           "instalmentPlan",
           "rescheduledBy",
+          "dispute",
           "lines",
           "creditNotes",
           "allocations"
+        ],
+        "type": "object"
+      },
+      "InvoiceDisputeRefView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "mine": {
+            "description": "The caller opened it.",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "accepted",
+              "rejected"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "mine"
         ],
         "type": "object"
       },
@@ -14512,6 +14683,29 @@
           "weekday",
           "startMinute",
           "endMinute"
+        ],
+        "type": "object"
+      },
+      "OpenDisputeDto": {
+        "properties": {
+          "photoFileId": {
+            "description": "A ready file of purpose `dispute_photo` the caller uploaded (POST /files).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "`already_paid`, `wrong_amount`, `not_my_unit`, `service_not_provided`, `duplicate_invoice` or `other` (REASON_CODES.invoiceDispute).",
+            "type": "string"
+          },
+          "text": {
+            "description": "The opener’s own words, trimmed. Shown to the opener and to the staff only; cleared when the opener is erased.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -21876,6 +22070,106 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/StaffComplaintView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffDisputeView": {
+        "properties": {
+          "cleared": {
+            "description": "The opener was erased: their words and photo are gone.",
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DisputeDecisionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "invoiceId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "invoiceNumber": {
+            "example": "INV-000123",
+            "type": "string"
+          },
+          "outstanding": {
+            "description": "What the invoice owes now: the most an acceptance credits.",
+            "type": "string"
+          },
+          "photoUrl": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "REASON_CODES.invoiceDispute",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "accepted",
+              "rejected"
+            ],
+            "type": "string"
+          },
+          "text": {
+            "description": "The opener’s words; null when none, or once erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "invoiceId",
+          "invoiceNumber",
+          "unitId",
+          "unitCode",
+          "reasonCode",
+          "text",
+          "photoUrl",
+          "cleared",
+          "outstanding",
+          "status",
+          "decision",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StaffDisputeViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffDisputeView"
             },
             "type": "array"
           },
@@ -35596,6 +35890,44 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/invoice-disputes/{id}": {
+      "get": {
+        "operationId": "UnitDisputesController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisputeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a dispute of one of my units’ invoices",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/invoices/{id}": {
       "get": {
         "operationId": "UnitInvoicesController_detail",
@@ -35630,6 +35962,103 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/invoices/{id}/disputes": {
+      "get": {
+        "operationId": "UnitDisputesController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DisputeView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List an invoice’s disputes, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Something must be owed on it, and no other dispute be open. While open, the invoice is frozen: no reminder, and it cannot be paid by name.",
+        "operationId": "UnitDisputesController_open",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenDisputeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisputeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Dispute one of my units’ invoices",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -48381,6 +48810,174 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/invoice-disputes": {
+      "get": {
+        "operationId": "StaffDisputesController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "open",
+                "accepted",
+                "rejected"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffDisputeViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List invoice disputes, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/invoice-disputes/{id}": {
+      "get": {
+        "operationId": "StaffDisputesController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffDisputeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an invoice dispute with its words and photo",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/invoice-disputes/{id}/decide": {
+      "post": {
+        "description": "Once. An acceptance credits at most what the invoice owes now; the opener is told.",
+        "operationId": "StaffDisputesController_decide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideDisputeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffDisputeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accept a dispute with a credit note, or reject it with a reason",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

@@ -6,6 +6,7 @@ import {
   allocationRow,
   batchRow,
   creditNoteRow,
+  disputeRow,
   eventRow,
   gatewayRow,
   instalmentPlanRow,
@@ -132,6 +133,29 @@ const TABLES: Table[] = [
               })
             : link.invoiceId,
         createdById: link.accountId,
+      }),
+  },
+  {
+    // One open per invoice: a fresh invoice of the compound's own.
+    table: 'invoice_disputes',
+    insert: async (tx, own, link) =>
+      disputeRow(tx, {
+        tenantId: own.tenantId,
+        unitId: link.unitId,
+        invoiceId:
+          own === link
+            ? await invoiceRow(tx, {
+                tenantId: own.tenantId,
+                unitId: own.unitId,
+                batchId: await batchRow(tx, {
+                  tenantId: own.tenantId,
+                  unitId: own.unitId,
+                  createdById: own.accountId,
+                }),
+                createdById: own.accountId,
+              })
+            : link.invoiceId,
+        openedById: link.accountId,
       }),
   },
   {

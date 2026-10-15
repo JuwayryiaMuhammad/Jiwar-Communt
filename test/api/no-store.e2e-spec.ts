@@ -764,7 +764,61 @@ describe('API v0 — no-store', () => {
       ),
   });
 
+  /** A fresh invoice of A's home: one dispute per call never collides. */
+  const aFreshInvoice = async (): Promise<string> => {
+    const batch = await call(w, 'POST', '/staff/invoices', {
+      token: w.a.tokens.manager,
+      body: {
+        target: 'unit',
+        unitId: w.a.homeUnitId,
+        kind: 'other',
+        dueOn: localDay(5),
+        lines: [{ descriptionEn: 'Fee', descriptionAr: 'رسم', amount: '10' }],
+      },
+    }).expect(201);
+    const list = await as(
+      'manager',
+      'GET',
+      `/staff/invoices?batchId=${body<{ id: string }>(batch).id}`,
+    );
+    return body<{ data: { id: string }[] }>(list).data[0].id;
+  };
+  /** A's owner disputes a fresh invoice (ADR 0048). */
+  const aFreshDispute = async (): Promise<{
+    id: string;
+    invoiceId: string;
+  }> => {
+    const invoiceId = await aFreshInvoice();
+    const res = await call(w, 'POST', `/invoices/${invoiceId}/disputes`, {
+      token: w.a.tokens.owner,
+      body: { reasonCode: 'wrong_amount', text: 'Not ours' },
+    }).expect(201);
+    return { id: body<{ id: string }>(res).id, invoiceId };
+  };
+  let aDisputeOnce: Promise<{ id: string; invoiceId: string }> | null = null;
+  const aDispute = () => (aDisputeOnce ??= aFreshDispute());
   const FINANCE_CALLS = (): Record<string, () => Promise<Response>> => ({
+    'GET /staff/invoice-disputes': async () => {
+      await aDispute();
+      return as('manager', 'GET', '/staff/invoice-disputes');
+    },
+    'GET /staff/invoice-disputes/{id}': async () =>
+      as('manager', 'GET', `/staff/invoice-disputes/${(await aDispute()).id}`),
+    'POST /staff/invoice-disputes/{id}/decide': async () =>
+      as(
+        'manager',
+        'POST',
+        `/staff/invoice-disputes/${(await aFreshDispute()).id}/decide`,
+        { decision: 'reject', reasonCode: 'charge_is_correct' },
+      ),
+    'POST /invoices/{id}/disputes': async () =>
+      as('owner', 'POST', `/invoices/${await aFreshInvoice()}/disputes`, {
+        reasonCode: 'already_paid',
+      }),
+    'GET /invoices/{id}/disputes': async () =>
+      as('owner', 'GET', `/invoices/${(await aDispute()).invoiceId}/disputes`),
+    'GET /invoice-disputes/{id}': async () =>
+      as('owner', 'GET', `/invoice-disputes/${(await aDispute()).id}`),
     'POST /units/{unitId}/payment-sessions': async () => {
       await anOpenCheckout();
       return as(

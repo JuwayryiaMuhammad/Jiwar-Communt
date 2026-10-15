@@ -3,7 +3,7 @@ import { addDays } from '../../core/common/slots/day-slots';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { localToday } from '../db-clock';
-import { CREDITED_SQL, PAID_SQL } from './balances';
+import { CREDITED_SQL, DISPUTED_SQL, PAID_SQL } from './balances';
 import { FinanceNotices } from '../notices/finance-notices';
 
 export const INVOICE_REMINDERS_SWEEP = 'finance.reminders';
@@ -51,6 +51,9 @@ export class InvoiceRemindersSweep implements OnModuleInit {
             FROM invoices i
            WHERE i.due_on <= ${soon}::date
              AND i.total - ${CREDITED_SQL} - ${PAID_SQL} > 0
+             -- Paused while disputed (ADR 0048): nothing is claimed, so the
+             -- usual rule resumes after the decision.
+             AND NOT ${DISPUTED_SQL}
              AND NOT EXISTS (
                SELECT 1 FROM invoice_notices n
                 WHERE n.tenant_id = i.tenant_id AND n.invoice_id = i.id
@@ -58,9 +61,11 @@ export class InvoiceRemindersSweep implements OnModuleInit {
            ORDER BY i.due_on, i.number LIMIT ${BATCH}`;
       },
       async (tx, tenantId, item) => {
-        // Still owed under the claim: a payment in between tells nothing.
+        // Still owed and not disputed under the claim: a payment or a
+        // dispute in between tells nothing.
         const [{ owed }] = await tx.$queryRaw<{ owed: boolean }[]>`
-          SELECT (i.total - ${CREDITED_SQL} - ${PAID_SQL}) > 0 AS owed
+          SELECT (i.total - ${CREDITED_SQL} - ${PAID_SQL}) > 0
+                 AND NOT ${DISPUTED_SQL} AS owed
             FROM invoices i WHERE i.id = ${item.id}::uuid`;
         if (!owed) return 0;
         return (await this.notices.invoiceNotice(tx, tenantId, item, item.kind))

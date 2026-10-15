@@ -19,7 +19,13 @@ import { formatNumber } from '../counters';
 import { dbNow } from '../db-clock';
 import { CredentialVault } from '../gateway/credential-vault';
 import { GatewayService } from '../gateway/gateway.service';
-import { balancesOf, CREDITED_SQL, PAID_SQL } from '../invoices/balances';
+import {
+  balancesOf,
+  CREDITED_SQL,
+  DISPUTED_SQL,
+  disputedAmong,
+  PAID_SQL,
+} from '../invoices/balances';
 import { money, show, toCents, ZERO } from '../money';
 import {
   PaymobClient,
@@ -351,6 +357,13 @@ export class PaymentSessionsService implements OnModuleInit {
           'Not the unit’s, or nothing owed',
           { params: { invoiceIds: bad } },
         );
+      const disputed = await disputedAmong(tx, named);
+      if (disputed.length)
+        throw appError.conflict(
+          ErrorCode.INVOICE_DISPUTED,
+          'Under an open dispute',
+          { params: { invoiceIds: disputed } },
+        );
       return rows.map((r) => ({
         id: r.id,
         number: r.number,
@@ -364,6 +377,7 @@ export class PaymentSessionsService implements OnModuleInit {
         FROM invoices i
        WHERE i.unit_id = ${unitId}::uuid
          AND i.total - ${CREDITED_SQL} - ${PAID_SQL} > 0
+         AND NOT ${DISPUTED_SQL}
        ORDER BY i.due_on, i.number
        LIMIT 50`;
     if (!rows.length)

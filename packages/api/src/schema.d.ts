@@ -2276,6 +2276,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/invoice-disputes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a dispute of one of my units’ invoices */
+        get: operations["UnitDisputesController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/invoices/{id}": {
         parameters: {
             query?: never;
@@ -2287,6 +2304,27 @@ export interface paths {
         get: operations["UnitInvoicesController_detail"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/invoices/{id}/disputes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List an invoice’s disputes, newest first */
+        get: operations["UnitDisputesController_list"];
+        put?: never;
+        /**
+         * Dispute one of my units’ invoices
+         * @description Something must be owed on it, and no other dispute be open. While open, the invoice is frozen: no reminder, and it cannot be paid by name.
+         */
+        post: operations["UnitDisputesController_open"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6541,6 +6579,60 @@ export interface paths {
         get: operations["StaffInvoicesController_batch"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/invoice-disputes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List invoice disputes, newest first */
+        get: operations["StaffDisputesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/invoice-disputes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an invoice dispute with its words and photo */
+        get: operations["StaffDisputesController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/invoice-disputes/{id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept a dispute with a credit note, or reject it with a reason
+         * @description Once. An acceptance credits at most what the invoice owes now; the opener is told.
+         */
+        post: operations["StaffDisputesController_decide"];
         delete?: never;
         options?: never;
         head?: never;
@@ -11007,7 +11099,7 @@ export interface components {
             invoiceId: string;
             /** @example CN-000012 */
             number: string;
-            /** @description REASON_CODES.creditNote, or a system reason (REASON_CODES.creditNoteSystem): `instalment_plan`. */
+            /** @description REASON_CODES.creditNote, or a system reason (REASON_CODES.creditNoteSystem): `instalment_plan`, `dispute`. */
             reasonCode: string;
         };
         DailyBriefView: {
@@ -11060,6 +11152,14 @@ export interface components {
              */
             decision: "upheld" | "cancelled";
             /** @description With `cancelled` only, from `vehicleFineCancel` (default `appeal_accepted`). */
+            reasonCode?: string;
+        };
+        DecideDisputeDto: {
+            /** @description On `accept` only: what to credit. */
+            amount?: string;
+            /** @enum {string} */
+            decision: "accept" | "reject";
+            /** @description On `reject` only: `charge_is_correct`, `payment_not_found`, `outside_policy`, `no_longer_owed` or `other` (REASON_CODES.invoiceDisputeReject). */
             reasonCode?: string;
         };
         DecisionResponse: {
@@ -11325,6 +11425,41 @@ export interface components {
         DispatchVisitViewList: {
             data: components["schemas"]["DispatchVisitView"][];
             nextCursor: string | null;
+        };
+        DisputeDecisionView: {
+            /** Format: uuid */
+            creditNoteId: string | null;
+            /** @example CN-000031 */
+            creditNoteNumber: string | null;
+            /** @description On an acceptance: what its credit note took off. */
+            creditedAmount: string | null;
+            /** Format: date-time */
+            decidedAt: string;
+            /** @description On a rejection: REASON_CODES.invoiceDisputeReject. */
+            reasonCode: string | null;
+        };
+        DisputeView: {
+            /** Format: date-time */
+            createdAt: string;
+            decision: components["schemas"]["DisputeDecisionView"] | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            invoiceId: string;
+            /** @example INV-000123 */
+            invoiceNumber: string;
+            /** @description The caller opened it. */
+            mine: boolean;
+            /** @description A short-lived link to the opener’s photo: to the opener only. */
+            photoUrl: string | null;
+            /** @description REASON_CODES.invoiceDispute */
+            reasonCode: string;
+            /** @enum {string} */
+            status: "open" | "accepted" | "rejected";
+            /** @description The opener’s words: to the opener only; null once erased. */
+            text: string | null;
+            /** Format: uuid */
+            unitId: string;
         };
         DoneNoteDto: {
             /** @description The photos the note shows from now on: ids it already shows to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). */
@@ -11866,7 +12001,7 @@ export interface components {
             technicianRating: number | null;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -12614,6 +12749,8 @@ export interface components {
             credited: string;
             /** @enum {string} */
             currency: "EGP";
+            /** @description Its latest dispute (ADR 0048): while `open`, the invoice is frozen. */
+            dispute: components["schemas"]["InvoiceDisputeRefView"] | null;
             /**
              * Format: date
              * @description Local day.
@@ -12647,6 +12784,14 @@ export interface components {
             unitCode: string;
             /** Format: uuid */
             unitId: string;
+        };
+        InvoiceDisputeRefView: {
+            /** Format: uuid */
+            id: string;
+            /** @description The caller opened it. */
+            mine: boolean;
+            /** @enum {string} */
+            status: "open" | "accepted" | "rejected";
         };
         InvoiceInstalmentPlanView: {
             count: number;
@@ -13492,6 +13637,17 @@ export interface components {
             startMinute: number;
             /** @description 0 is Sunday, 6 is Saturday. */
             weekday: number;
+        };
+        OpenDisputeDto: {
+            /**
+             * Format: uuid
+             * @description A ready file of purpose `dispute_photo` the caller uploaded (POST /files).
+             */
+            photoFileId?: string;
+            /** @description `already_paid`, `wrong_amount`, `not_my_unit`, `service_not_provided`, `duplicate_invoice` or `other` (REASON_CODES.invoiceDispute). */
+            reasonCode: string;
+            /** @description The opener’s own words, trimmed. Shown to the opener and to the staff only; cleared when the opener is erased. */
+            text?: string;
         };
         OpenPaymentSessionDto: {
             /** @description Omitted or empty: every invoice the unit owes. */
@@ -15713,6 +15869,35 @@ export interface components {
         };
         StaffComplaintViewList: {
             data: components["schemas"]["StaffComplaintView"][];
+            nextCursor: string | null;
+        };
+        StaffDisputeView: {
+            /** @description The opener was erased: their words and photo are gone. */
+            cleared: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            decision: components["schemas"]["DisputeDecisionView"] | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            invoiceId: string;
+            /** @example INV-000123 */
+            invoiceNumber: string;
+            /** @description What the invoice owes now: the most an acceptance credits. */
+            outstanding: string;
+            photoUrl: string | null;
+            /** @description REASON_CODES.invoiceDispute */
+            reasonCode: string;
+            /** @enum {string} */
+            status: "open" | "accepted" | "rejected";
+            /** @description The opener’s words; null when none, or once erased. */
+            text: string | null;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        StaffDisputeViewList: {
+            data: components["schemas"]["StaffDisputeView"][];
             nextCursor: string | null;
         };
         StaffEmergencyView: {
@@ -21292,6 +21477,27 @@ export interface operations {
             };
         };
     };
+    UnitDisputesController_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisputeView"];
+                };
+            };
+        };
+    };
     UnitInvoicesController_detail: {
         parameters: {
             query?: never;
@@ -21309,6 +21515,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvoiceDetailView"];
+                };
+            };
+        };
+    };
+    UnitDisputesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisputeView"][];
+                };
+            };
+        };
+    };
+    UnitDisputesController_open: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpenDisputeDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisputeView"];
                 };
             };
         };
@@ -28121,6 +28376,80 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvoiceBatchView"];
+                };
+            };
+        };
+    };
+    StaffDisputesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "open" | "accepted" | "rejected";
+                unitId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffDisputeViewList"];
+                };
+            };
+        };
+    };
+    StaffDisputesController_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffDisputeView"];
+                };
+            };
+        };
+    };
+    StaffDisputesController_decide: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideDisputeDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffDisputeView"];
                 };
             };
         };

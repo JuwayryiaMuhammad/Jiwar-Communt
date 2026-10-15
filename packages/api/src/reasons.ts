@@ -87,7 +87,9 @@ export const REASON_CODES = {
   laneReason: ['ambulance', 'fire_truck', 'moving_truck', 'large_delivery'],
   gateServiceClose: ['done', 'not_found', 'no_show', 'duplicate', 'not_possible'],
   creditNote: ['billing_error', 'waiver', 'duplicate', 'goodwill', 'other'],
-  creditNoteSystem: ['instalment_plan'],
+  creditNoteSystem: ['instalment_plan', 'dispute'],
+  invoiceDispute: ['already_paid', 'wrong_amount', 'not_my_unit', 'service_not_provided', 'duplicate_invoice', 'other'],
+  invoiceDisputeReject: ['charge_is_correct', 'payment_not_found', 'outside_policy', 'no_longer_owed', 'other'],
   paymentReverse: ['entered_in_error', 'duplicate', 'bounced_cheque', 'other'],
 } as const;
 

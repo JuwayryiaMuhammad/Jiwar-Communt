@@ -3,6 +3,7 @@ import { CommunityFinancePort } from '../../community';
 import { AccountLifecycle } from '../../core/accounts/account-lifecycle';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { dbNow } from '../db-clock';
+import { DisputesService } from '../disputes/disputes.service';
 
 /**
  * What happens to an account's money when it goes (ADR 0046), in the
@@ -14,13 +15,16 @@ import { dbNow } from '../db-clock';
  *   opening one fails, an open one is superseded); a page already paid
  *   still lands through the webhook, the money was taken;
  * - its residence changed: its open checkouts on units it may no longer
- *   pay for stop the same way.
+ *   pay for stop the same way;
+ * - erased: the words and photo of the disputes it opened are cleared
+ *   (ADR 0048); the disputes stay, with their codes and decisions.
  */
 @Injectable()
 export class FinanceLifecycle implements OnModuleInit {
   constructor(
     private readonly lifecycle: AccountLifecycle,
     private readonly community: CommunityFinancePort,
+    private readonly disputes: DisputesService,
   ) {}
 
   onModuleInit(): void {
@@ -30,6 +34,7 @@ export class FinanceLifecycle implements OnModuleInit {
     });
     this.lifecycle.onErasing(async (tx, account) => {
       await this.stop(tx, account.id);
+      await this.disputes.forget(tx, account.id);
       return [];
     });
     this.lifecycle.onFrozen(async (tx, account) => {

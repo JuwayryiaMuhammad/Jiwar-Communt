@@ -5494,12 +5494,15 @@ model FinancePayment {
 /// Which invoice a payment paid, and how much (ADR 0046). Append-only; it
 /// stops counting when its payment is reversed.
 model FinanceAllocation {
-  id        String   @id @db.Uuid
-  tenantId  String   @map("tenant_id") @db.Uuid
-  paymentId String   @map("payment_id") @db.Uuid
-  invoiceId String   @map("invoice_id") @db.Uuid
-  amount    Decimal  @db.Decimal(12, 2)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  id         String   @id @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  paymentId  String   @map("payment_id") @db.Uuid
+  invoiceId  String   @map("invoice_id") @db.Uuid
+  amount     Decimal  @db.Decimal(12, 2)
+  /// Poured from money the unit already held as credit, not in the
+  /// payment's own transaction (ADR 0048; false before R6b).
+  fromCredit Boolean  @default(false) @map("from_credit")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   payment FinancePayment @relation(fields: [tenantId, paymentId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   invoice Invoice        @relation(fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)

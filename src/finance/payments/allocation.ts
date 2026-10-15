@@ -57,11 +57,17 @@ async function owed(
     .filter((r) => r.owed.gt(ZERO));
 }
 
-/** Pours `money` into `invoices` in order; the allocation rows to insert. */
-function pour(
+/**
+ * Pours `money` into `invoices` in order; the allocation rows to insert.
+ * Money of any payment but `fresh` (the one taken in this transaction) was
+ * already the unit's credit: its rows are marked `fromCredit`, which the
+ * ledger shows as "credit applied" (ADR 0048).
+ */
+export function pour(
   tenantId: string,
   payments: FreeMoney[],
   invoices: Owed[],
+  fresh?: string,
 ): Prisma.FinanceAllocationCreateManyInput[] {
   const rows: Prisma.FinanceAllocationCreateManyInput[] = [];
   let i = 0;
@@ -75,6 +81,7 @@ function pour(
         paymentId: p.id,
         invoiceId: inv.id,
         amount: take,
+        fromCredit: p.id !== fresh,
       });
       p.free = p.free.sub(take);
       inv.owed = inv.owed.sub(take);
@@ -107,9 +114,9 @@ export async function applyPayment(
   const payment = await freeMoney(tx, unitId, paymentId);
   let rows: Prisma.FinanceAllocationCreateManyInput[] = [];
   if (named.length)
-    rows = pour(tenantId, payment, await owed(tx, unitId, named));
+    rows = pour(tenantId, payment, await owed(tx, unitId, named), paymentId);
   if (rows.length) await tx.financeAllocation.createMany({ data: rows });
-  return rows.length + (await allocateUnit(tx, tenantId, unitId));
+  return rows.length + (await allocate(tx, tenantId, unitId, paymentId));
 }
 
 export async function allocateUnit(
@@ -117,10 +124,21 @@ export async function allocateUnit(
   tenantId: string,
   unitId: string,
 ): Promise<number> {
+  return allocate(tx, tenantId, unitId);
+}
+
+/** The unit's free money into its owed invoices; `fresh` as in `pour`. */
+async function allocate(
+  tx: TenantTxClient,
+  tenantId: string,
+  unitId: string,
+  fresh?: string,
+): Promise<number> {
   const rows = pour(
     tenantId,
     await freeMoney(tx, unitId),
     await owed(tx, unitId),
+    fresh,
   );
   if (rows.length) await tx.financeAllocation.createMany({ data: rows });
   return rows.length;

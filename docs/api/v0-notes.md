@@ -120,3 +120,15 @@ The full notes for the mobile team, with examples, are in [`notes/gate-card-vehi
 - Parking reports (`POST`/`GET /parking-reports`): about a plate, never a unit; the reported unit never learns who reported.
 - The guard: `POST /gate/plate-lookup`, `GET /gate/visitor-parking`, and `display.parking` on verify.
 - Uploads are `photoFileId` / `licencePhotoFileId` (purposes `vehicle_licence`, `parking_photo`), not `photoUploadId`.
+
+### Gate card — emergencies and gate services (ADR 0047)
+
+The full notes for the mobile team, with examples, are in [`notes/gate-card-emergency-services.md`](notes/gate-card-emergency-services.md).
+
+- Emergencies (`POST /emergencies`, `GET /emergencies/{id}`, `GET /me/emergencies`, `POST …/cancel`, `POST …/on-my-way`): never rate-limited, one open per unit and type (a repeat answers 200 with it); every guard on shift and responder gets a critical push, the family a generic one; nobody accepting in two minutes escalates to the management.
+- The responder is a first name and the gate's phone; `minutesAway` counts down from the minutes they picked (no GPS).
+- `GET /units/{unitId}/emergency-contacts`: the family (for those who live there), the gates' phones, the office, duty and emergency numbers.
+- Gate services (`POST /accessibility-requests`, `/security-reports`, `/escort-requests`, `/lane-requests`, each with `unitId`; `GET /me/gate-services`, `GET /gate-services/{id}`, `POST …/cancel`): for those who live in the unit, 3 open per kind and 20 a day per unit.
+- `GET /community/places`: requests take place ids.
+- The guard: `/gate/emergencies` and `/gate/gate-services`, inside a shift.
+- The clinic (C5, C6) is not built: hide it.

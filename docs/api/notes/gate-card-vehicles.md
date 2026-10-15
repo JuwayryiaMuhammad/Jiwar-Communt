@@ -494,4 +494,4 @@ A removed vehicle's target answers `404 VEHICLE_NOT_FOUND`; open the list instea
 - Service and delivery vehicles; plate-reading cameras.
 - A notification when the management cancels a visitor parking booking (the household sees it cancelled).
 - The reporter is never told what became of a report.
-- Emergencies, gate services and the clinic (parts C–D) and later phases.
+- Emergencies and gate services are in [`gate-card-emergency-services.md`](gate-card-emergency-services.md) (ADR 0047); the clinic (C5, C6) is not built.

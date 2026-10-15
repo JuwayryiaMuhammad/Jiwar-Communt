@@ -546,4 +546,4 @@ New error codes: `STANDING_INSTRUCTION_NOT_FOUND` (404), `STANDING_INSTRUCTION_L
 - **A notification when a visitor is let in by an `always_allow` instruction:** the household is not told. The entry is in the gate log, and the pass-less visitor's request disappears from `GET /me/gate-requests` once decided.
 - **A history of decided gate requests for residents:** `GET /me/gate-requests` shows only pending ones, so the visitor's photo is visible only while the request waits.
 - **Editing a standing instruction:** delete it and add a new one.
-- **Vehicles, parking, emergencies, gate services, clinic:** parts B–D and later phases.
+- **Vehicles and parking** are in [`gate-card-vehicles.md`](gate-card-vehicles.md); **emergencies and gate services** in [`gate-card-emergency-services.md`](gate-card-emergency-services.md); the clinic is not built.

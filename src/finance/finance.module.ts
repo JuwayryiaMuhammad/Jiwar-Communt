@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CommunityFinancePortModule } from '../community';
+import { AccountsModule } from '../core/accounts/accounts.module';
 import { AuthModule } from '../core/auth/auth.module';
 import { PlatformModule } from '../core/platform/platform.module';
 import { FinanceAccess } from './access';
@@ -16,6 +17,8 @@ import {
   FetchPaymobTransport,
   PAYMOB_TRANSPORT,
 } from './paymob/paymob-transport';
+import { FinanceExportSections } from './export/export-sections';
+import { FinanceLifecycle } from './privacy/finance-lifecycle';
 import { FinanceProvisioning } from './provisioning';
 import { ReceiptPageController } from './receipts-public/receipt-page.controller';
 import { ReceiptPageService } from './receipts-public/receipt-page.service';
@@ -45,7 +48,12 @@ import { PaymentsService } from './payments/payments.service';
  * imports it.
  */
 @Module({
-  imports: [AuthModule, PlatformModule, CommunityFinancePortModule],
+  imports: [
+    AccountsModule,
+    AuthModule,
+    PlatformModule,
+    CommunityFinancePortModule,
+  ],
   controllers: [
     GatewayController,
     PlatformGatewayController,
@@ -71,6 +79,8 @@ import { PaymentsService } from './payments/payments.service';
     PaymentSessionsService,
     PaymobWebhookService,
     ReceiptPageService,
+    FinanceLifecycle,
+    FinanceExportSections,
     CredentialVault,
     GatewayService,
     GatewayKeys,

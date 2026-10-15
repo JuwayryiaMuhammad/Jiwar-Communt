@@ -182,6 +182,84 @@ person that the file service may be unavailable and to try later. This
 clears when storage moves to HTTPS (R2, below). Registration has no file
 upload: the API has no upload path for a registrant yet (ADR 0024).
 
+## Online payment (Paymob, ADR 0046)
+
+Each compound may take online payment through its own Paymob account; its
+manager (or the platform owner) enters the credentials in the dashboard.
+The server needs three things, by hand, before the first compound switches
+it on. Until then nothing changes: the app boots without them.
+
+1. **`app.env`: the vault key.** `PAYMENT_CREDENTIALS_KEY` seals every
+   compound's credentials and open checkout secrets. Generate it with
+   `openssl rand -base64 32` (exactly 32 bytes; boot refuses anything else),
+   **different per environment**, never equal to another key in `app.env`
+   (boot refuses an equal value), kept in `app.env` only. Leave
+   `PAYMENT_CREDENTIALS_KEY_VERSION` at `1` until the first rotation.
+2. **`app.env`: the webhook's origin.** Paymob posts each payment's result
+   to `<PAYMENT_WEBHOOK_BASE_URL>/api/v1/public/payments/paymob/<compound id>`;
+   every checkout tells Paymob that address, so nothing is configured in
+   Paymob's dashboard. It must be public HTTPS. On staging the API has no
+   public HTTPS name, so the smallest safe option is the public web pages'
+   name, with one nginx location (step 3):
+
+   ```
+   PAYMENT_WEBHOOK_BASE_URL=https://community.escanestate.com
+   ```
+
+3. **nginx: one location in `community.escanestate.com`'s server block**
+   (the TLS block certbot manages, which today sends everything to the
+   public web pages on 3003). Add it **inside that block, above its
+   `location /`**. `^~` makes it win over `/` (and over any regex location),
+   so the public app never sees these requests, and only this prefix reaches
+   the API: no other API path becomes public through this name.
+
+   ```nginx
+   # Paymob's payment callbacks (ADR 0046): straight to the API, POST only.
+   location ^~ /api/v1/public/payments/paymob/ {
+       limit_except POST { deny all; }
+       client_max_body_size 64k;
+       proxy_pass http://127.0.0.1:3100;
+       proxy_http_version 1.1;
+       proxy_set_header Host $host;
+       proxy_set_header X-Real-IP $remote_addr;
+       proxy_set_header X-Forwarded-For $remote_addr;   # overwritten, as in deploy/nginx.conf
+       proxy_set_header X-Forwarded-Proto $scheme;
+   }
+   ```
+
+   `nginx -t && systemctl reload nginx`, then check from outside:
+   `curl -s -o /dev/null -w '%{http_code}\n' -X POST https://community.escanestate.com/api/v1/public/payments/paymob/00000000-0000-7000-8000-000000000000`
+   answers `401` (refused: unknown compound, no signature) from the API, not
+   the public app's 404; a `GET` answers `403` from nginx. The public app's
+   own `/api` proxy has an allowlist that never includes this path (a test
+   pins it), so the location above is the only way in.
+
+**The boot rule.** Once any compound has online payment switched on (and
+not switched off by the platform), the app refuses to start when
+`PAYMENT_CREDENTIALS_KEY` or `PAYMENT_WEBHOOK_BASE_URL` is missing, or when
+the key of a gateway's version is not in `app.env`; the error names the
+variables and the compound ids. So never remove the key from an environment
+that took payments.
+
+**Rotating the key.** Set a new `PAYMENT_CREDENTIALS_KEY`, raise
+`PAYMENT_CREDENTIALS_KEY_VERSION`, move the old one to
+`PAYMENT_CREDENTIALS_PREVIOUS_KEYS` as `<old version>:<old key>`, deploy,
+then re-seal everything with the current key (running it twice changes
+nothing):
+
+```bash
+ssh root@191.218.163.45 'cd /srv/jiwar-community && docker compose -p jiwar-community run --rm --no-deps app node dist/finance/gateway/reencrypt.cli.js'
+```
+
+Then drop `PAYMENT_CREDENTIALS_PREVIOUS_KEYS` and deploy again.
+
+The other settings have safe defaults: `PAYMOB_BASE_URL`
+(`https://accept.paymob.com`), `PAYMOB_REQUEST_TIMEOUT_MS` (15000),
+`PAYMENT_SESSION_TTL_MINUTES` (30), `RECEIPT_PAGE_RATE_LIMIT_PER_IP` (30).
+The public receipt page is `<PUBLIC_APP_URL>/receipt#<code>` and the page
+Paymob's checkout returns to is `<PUBLIC_APP_URL>/paid`: both ship with the
+public web pages, nothing to install.
+
 ## Server layout
 
 | Path | Contents |

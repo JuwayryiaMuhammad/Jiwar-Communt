@@ -492,6 +492,39 @@ export const FINANCE_REFUND_ROUTES: Row[] = [
   },
 ];
 
+const BAD_PERIOD: Pick<Row, 'invalid'> = {
+  invalid: {
+    query: { from: 'yesterday', to: '2026-01-31' },
+    fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
+  },
+};
+
+/**
+ * The ledger and the finance reports (ADR 0048), each with a CSV twin: the
+ * downloads are no-store.
+ */
+export const FINANCE_REPORT_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/staff/finance/ledger',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    ...BAD_PERIOD,
+  },
+  {
+    method: 'GET',
+    path: '/staff/finance/ledger/export',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    ...BAD_PERIOD,
+    noStore: true,
+  },
+];
+
 const PLAN = {
   nameEn: 'Service charge',
   nameAr: 'رسوم الخدمات',

@@ -12418,6 +12418,116 @@
         ],
         "type": "string"
       },
+      "LedgerEntryView": {
+        "properties": {
+          "amount": {
+            "description": "Positive, two decimals.",
+            "type": "string"
+          },
+          "at": {
+            "description": "Recorded.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "channel": {
+            "description": "A payment’s or a refund’s channel.",
+            "nullable": true,
+            "type": "string"
+          },
+          "credit": {
+            "nullable": true,
+            "type": "string"
+          },
+          "day": {
+            "description": "The local day it counts on: issued, paid or refunded on; otherwise recorded.",
+            "format": "date",
+            "type": "string"
+          },
+          "debit": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "description": "The row’s own id.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "method": {
+            "description": "A payment’s method.",
+            "nullable": true,
+            "type": "string"
+          },
+          "number": {
+            "description": "INV-, CN-, RC- or RF-: the invoice, the credit note, the receipt or the refund (a reversal shows what it reverses; credit applied, the invoice; a release, the credit note).",
+            "type": "string"
+          },
+          "relatedNumber": {
+            "description": "A credit note’s invoice; credit applied’s and a release’s receipt.",
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "invoice",
+              "credit_note",
+              "payment",
+              "payment_reversal",
+              "refund",
+              "refund_reversal",
+              "credit_applied",
+              "allocation_release"
+            ],
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "day",
+          "at",
+          "number",
+          "relatedNumber",
+          "unitId",
+          "unitCode",
+          "building",
+          "channel",
+          "method",
+          "amount",
+          "debit",
+          "credit"
+        ],
+        "type": "object"
+      },
+      "LedgerEntryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/LedgerEntryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "LegalHoldResponse": {
         "properties": {
           "accountId": {
@@ -48842,6 +48952,201 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/ledger": {
+      "get": {
+        "description": "Every invoice, credit note, payment, refund, their reversals, credit applied and released, from the units’ side. Not double-entry.",
+        "operationId": "ReportsController_page",
+        "parameters": [
+          {
+            "description": "First local day, included.",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last local day, included: at most 366 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Units whose building reads exactly this.",
+            "in": "query",
+            "name": "building",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "enum": [
+                "invoice",
+                "credit_note",
+                "payment",
+                "payment_reversal",
+                "refund",
+                "refund_reversal",
+                "credit_applied",
+                "allocation_release"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerEntryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the compound’s ledger for a period, oldest first",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/ledger/export": {
+      "get": {
+        "description": "The same rows as the ledger, every one (EXPORT_TOO_LARGE past the limit).",
+        "operationId": "ReportsController_export",
+        "parameters": [
+          {
+            "description": "First local day, included.",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last local day, included: at most 366 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Units whose building reads exactly this.",
+            "in": "query",
+            "name": "building",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "enum": [
+                "invoice",
+                "credit_note",
+                "payment",
+                "payment_reversal",
+                "refund",
+                "refund_reversal",
+                "credit_applied",
+                "allocation_release"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export the ledger for a period as CSV",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

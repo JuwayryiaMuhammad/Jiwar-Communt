@@ -7517,6 +7517,121 @@
           }
         },
         {
+          "name": "Read the compound’s ledger for a period, oldest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "ledger"
+              ],
+              "query": [
+                {
+                  "description": "(required) First local day, included.",
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "(required) Last local day, included: at most 366 days after `from`.",
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "Units whose building reads exactly this.",
+                  "disabled": true,
+                  "key": "building",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "type",
+                  "value": ""
+                },
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/ledger?from=&to="
+            }
+          }
+        },
+        {
+          "name": "Export the ledger for a period as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "ledger",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "(required) First local day, included.",
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "(required) Last local day, included: at most 366 days after `from`.",
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "Units whose building reads exactly this.",
+                  "disabled": true,
+                  "key": "building",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "type",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/ledger/export?from=&to="
+            }
+          }
+        },
+        {
           "name": "List instalment plans, newest first",
           "request": {
             "description": "**Responses:** 200",

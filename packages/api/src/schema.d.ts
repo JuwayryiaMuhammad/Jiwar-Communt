@@ -6517,6 +6517,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/finance/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the compound’s ledger for a period, oldest first
+         * @description Every invoice, credit note, payment, refund, their reversals, credit applied and released, from the units’ side. Not double-entry.
+         */
+        get: operations["ReportsController_page"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/ledger/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export the ledger for a period as CSV
+         * @description The same rows as the ledger, every one (EXPORT_TOO_LARGE past the limit).
+         */
+        get: operations["ReportsController_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/instalment-plans": {
         parameters: {
             query?: never;
@@ -13037,6 +13077,45 @@ export interface components {
          * @enum {string}
          */
         LaneReason: "ambulance" | "fire_truck" | "moving_truck" | "large_delivery";
+        LedgerEntryView: {
+            /** @description Positive, two decimals. */
+            amount: string;
+            /**
+             * Format: date-time
+             * @description Recorded.
+             */
+            at: string;
+            building: string | null;
+            /** @description A payment’s or a refund’s channel. */
+            channel: string | null;
+            credit: string | null;
+            /**
+             * Format: date
+             * @description The local day it counts on: issued, paid or refunded on; otherwise recorded.
+             */
+            day: string;
+            debit: string | null;
+            /**
+             * Format: uuid
+             * @description The row’s own id.
+             */
+            id: string;
+            /** @description A payment’s method. */
+            method: string | null;
+            /** @description INV-, CN-, RC- or RF-: the invoice, the credit note, the receipt or the refund (a reversal shows what it reverses; credit applied, the invoice; a release, the credit note). */
+            number: string;
+            /** @description A credit note’s invoice; credit applied’s and a release’s receipt. */
+            relatedNumber: string | null;
+            /** @enum {string} */
+            type: "invoice" | "credit_note" | "payment" | "payment_reversal" | "refund" | "refund_reversal" | "credit_applied" | "allocation_release";
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        LedgerEntryViewList: {
+            data: components["schemas"]["LedgerEntryView"][];
+            nextCursor: string | null;
+        };
         LegalHoldResponse: {
             /** Format: uuid */
             accountId: string;
@@ -28430,6 +28509,65 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GatewayEventViewList"];
+                };
+            };
+        };
+    };
+    ReportsController_page: {
+        parameters: {
+            query: {
+                /** @description First local day, included. */
+                from: string;
+                /** @description Last local day, included: at most 366 days after `from`. */
+                to: string;
+                unitId?: string;
+                /** @description Units whose building reads exactly this. */
+                building?: string;
+                type?: "invoice" | "credit_note" | "payment" | "payment_reversal" | "refund" | "refund_reversal" | "credit_applied" | "allocation_release";
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerEntryViewList"];
+                };
+            };
+        };
+    };
+    ReportsController_export: {
+        parameters: {
+            query: {
+                /** @description First local day, included. */
+                from: string;
+                /** @description Last local day, included: at most 366 days after `from`. */
+                to: string;
+                unitId?: string;
+                /** @description Units whose building reads exactly this. */
+                building?: string;
+                type?: "invoice" | "credit_note" | "payment" | "payment_reversal" | "refund" | "refund_reversal" | "credit_applied" | "allocation_release";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
                 };
             };
         };

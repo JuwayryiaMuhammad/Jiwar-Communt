@@ -637,6 +637,8 @@ export const ErrorCode = {
   REFUND_ALREADY_REVERSED: 'REFUND_ALREADY_REVERSED',
   /** Money of this payment was refunded: it cannot be reversed (409). */
   PAYMENT_REFUNDED: 'PAYMENT_REFUNDED',
+  /** More rows than one export holds (422, params.max): narrow the period. */
+  EXPORT_TOO_LARGE: 'EXPORT_TOO_LARGE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -794,6 +796,8 @@ export const FieldErrorCode = {
   DUE_DATES_NOT_INCREASING: 'DUE_DATES_NOT_INCREASING',
   /** Not between params.min and params.max (local days). */
   REFUNDED_ON_OUT_OF_RANGE: 'REFUNDED_ON_OUT_OF_RANGE',
+  /** A period longer than params.maxDays days. */
+  PERIOD_TOO_LONG: 'PERIOD_TOO_LONG',
 } as const;
 
 export type FieldErrorCode =

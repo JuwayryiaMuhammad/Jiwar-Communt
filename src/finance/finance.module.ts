@@ -42,6 +42,9 @@ import {
 import { DisputesService } from './disputes/disputes.service';
 import { RefundsController } from './refunds/refunds.controller';
 import { RefundsService } from './refunds/refunds.service';
+import { ExportLimit } from './reports/csv';
+import { LedgerService } from './reports/ledger.service';
+import { ReportsController } from './reports/reports.controller';
 import { FinanceNotices } from './notices/finance-notices';
 import { PaymentSessionsController } from './online/payment-sessions.controller';
 import { GatewayEventsController } from './online/gateway-events.controller';
@@ -78,6 +81,7 @@ import { PaymentsService } from './payments/payments.service';
     StaffDisputesController,
     UnitDisputesController,
     RefundsController,
+    ReportsController,
     BillingPlansController,
     StaffPaymentsController,
     UnitPaymentsController,
@@ -94,6 +98,8 @@ import { PaymentsService } from './payments/payments.service';
     InstalmentsService,
     DisputesService,
     RefundsService,
+    LedgerService,
+    ExportLimit,
     InvoiceNoticesSweep,
     InvoiceRemindersSweep,
     BillingPlansService,

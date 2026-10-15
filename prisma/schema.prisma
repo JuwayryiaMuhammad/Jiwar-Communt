@@ -5325,6 +5325,7 @@ model Invoice {
   @@index([tenantId, unitId, dueOn, number], map: "invoices_unit_idx")
   @@index([tenantId, createdAt, id], map: "invoices_created_idx")
   @@index([tenantId, dueOn], map: "invoices_due_idx")
+  @@index([tenantId, issuedOn], map: "invoices_issued_idx")
   @@map("invoices")
 }
 
@@ -5372,6 +5373,7 @@ model CreditNote {
   @@unique([tenantId, disputeId], map: "credit_notes_one_per_dispute")
   @@index([tenantId, invoiceId, createdAt], map: "credit_notes_invoice_idx")
   @@index([tenantId, instalmentPlanId], map: "credit_notes_instalment_plan_idx")
+  @@index([tenantId, createdAt, id], map: "credit_notes_created_idx")
   @@map("credit_notes")
 }
 

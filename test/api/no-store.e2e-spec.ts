@@ -798,6 +798,11 @@ describe('API v0 — no-store', () => {
   let aDisputeOnce: Promise<{ id: string; invoiceId: string }> | null = null;
   const aDispute = () => (aDisputeOnce ??= aFreshDispute());
   const FINANCE_CALLS = (): Record<string, () => Promise<Response>> => ({
+    'GET /staff/finance/ledger/export': () =>
+      call(w, 'GET', '/staff/finance/ledger/export', {
+        token: w.a.tokens.manager,
+        query: { from: localDay(-30), to: localDay(0) },
+      }),
     'GET /staff/invoice-disputes': async () => {
       await aDispute();
       return as('manager', 'GET', '/staff/invoice-disputes');

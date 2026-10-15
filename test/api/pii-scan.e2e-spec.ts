@@ -1353,6 +1353,13 @@ describe('API v0 — PII leak scan', () => {
         : given;
     };
 
+    /** Routes that answer only with a query (ADR 0048: a period). */
+    const period = { from: day(-30), to: day(0) };
+    const queries: Record<string, Record<string, string>> = {
+      '/staff/finance/ledger': period,
+      '/staff/finance/ledger/export': period,
+    };
+
     const leaks: string[] = [];
     const seen = new Map<string, string>();
     for (const [name, persona] of Object.entries(personas)) {
@@ -1365,6 +1372,7 @@ describe('API v0 — PII leak scan', () => {
           continue;
         const res = await call(w, 'GET', path, {
           token: r.auth === 'public' ? undefined : persona.token,
+          query: queries[r.path],
         });
         const text = res.text ?? '';
         seen.set(`${name} ${r.path}`, text);

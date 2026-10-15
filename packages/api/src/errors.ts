@@ -300,6 +300,7 @@ const ERROR_TEXT: Record<string, string> = {
   REFUND_EXCEEDS_CREDIT: 'More than the unit’s credit: refund at most what it holds.',
   REFUND_ALREADY_REVERSED: 'This refund was reversed already.',
   PAYMENT_REFUNDED: 'Money of this payment was refunded: reverse the refund first.',
+  EXPORT_TOO_LARGE: 'Too many rows for one export: narrow the period.',
 };
 
 const FIELD_TEXT: Record<string, string> = {
@@ -381,6 +382,7 @@ const FIELD_TEXT: Record<string, string> = {
   STARTS_ON_OUT_OF_RANGE: 'From the first of this month to a year ahead.',
   DUE_DATES_NOT_INCREASING: 'Each instalment must fall due after the one before it.',
   REFUNDED_ON_OUT_OF_RANGE: 'From a month ago to today.',
+  PERIOD_TOO_LONG: 'A period of a year at most.',
 };
 
 export function errorText(error: unknown): string {

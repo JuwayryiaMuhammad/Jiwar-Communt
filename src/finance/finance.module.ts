@@ -18,6 +18,7 @@ import {
 } from './paymob/paymob-transport';
 import { FinanceProvisioning } from './provisioning';
 import { InvoiceNoticesSweep } from './invoices/invoice-notices.sweep';
+import { InvoiceRemindersSweep } from './invoices/invoice-reminders.sweep';
 import {
   StaffInvoicesController,
   UnitInvoicesController,
@@ -61,6 +62,7 @@ import { PaymentsService } from './payments/payments.service';
     FinanceNotices,
     InvoicesService,
     InvoiceNoticesSweep,
+    InvoiceRemindersSweep,
     BillingPlansService,
     PaymentsService,
     PaymentSessionsService,

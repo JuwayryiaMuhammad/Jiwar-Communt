@@ -227,6 +227,14 @@ const ERROR_TEXT: Record<string, string> = {
   VEHICLE_INVALID_TRANSITION: 'The vehicle has moved on, so this is no longer possible. Refresh to see where it stands.',
   VEHICLE_CHANGED: 'The vehicle’s plate changed since you opened it. Check it again before deciding.',
   VEHICLE_PLATE_ACTIVE: 'Another vehicle already holds an active permit for this plate.',
+  PARKING_SLOT_NOT_FOUND: 'This parking slot does not exist.',
+  VISITOR_PARKING_AREA_NOT_FOUND: 'This visitor parking area does not exist.',
+  VISITOR_PARKING_BOOKING_NOT_FOUND: 'This visitor parking booking does not exist.',
+  VISITOR_PARKING_NOT_ALLOWED: 'This person may not book visitor parking for this unit.',
+  VISITOR_PARKING_FULL: 'The area has no space left for that time.',
+  VISITOR_PARKING_LIMIT_REACHED: 'The unit holds as many visitor parking bookings as the compound allows.',
+  VISITOR_PARKING_INVALID_TRANSITION: 'This booking was cancelled already.',
+  VISITOR_PARKING_WINDOW_PASSED: 'This booking has ended.',
 };
 
 const FIELD_TEXT: Record<string, string> = {
@@ -292,6 +300,13 @@ const FIELD_TEXT: Record<string, string> = {
   PAID_ON_OUT_OF_RANGE: 'Not in the future, and at most 90 days ago.',
   PERSON_NOT_OF_UNIT: 'Not one of the unit’s people now.',
   PERMIT_DATE_OUT_OF_RANGE: 'Pick a day after today, at most two years ahead.',
+  AREA_NOT_AVAILABLE: 'Not an active visitor parking area.',
+  PASS_NOT_AVAILABLE: 'Not an active visitor pass of this unit that you manage.',
+  PARKING_TOO_EARLY: 'That start has passed.',
+  PARKING_TOO_FAR: 'Too far ahead.',
+  PARKING_TOO_SHORT: 'Too short.',
+  PARKING_TOO_LONG: 'Longer than the compound allows.',
+  PARKING_OUTSIDE_PASS: 'Outside the visitor pass’s validity.',
 };
 
 export function errorText(error: unknown): string {

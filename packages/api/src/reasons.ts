@@ -71,6 +71,9 @@ export const REASON_CODES = {
   vehicleRemove: ['sold', 'no_longer_used', 'registered_in_error', 'other'],
   vehicleStaffRemove: ['permit_revoked', 'vehicle_left_compound', 'duplicate', 'other'],
   vehicleSystemRemove: ['registrant_left'],
+  visitorParkingResidentCancel: ['no_longer_needed'],
+  visitorParkingStaffCancel: ['area_closed', 'misuse', 'other'],
+  visitorParkingSystemCancel: ['pass_cancelled', 'booker_left'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

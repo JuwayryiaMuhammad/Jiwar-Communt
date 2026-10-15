@@ -675,6 +675,34 @@ export const AUDIT_ACTIONS = {
   'vehicle.removed': { log: 'tenant', target: 'vehicle' },
   // changes: the three settings.
   'vehicle.settings_changed': { log: 'tenant', target: 'tenant' },
+  // metadata: unitId, code, place.
+  'parking_slot.created': { log: 'tenant', target: 'parking_slot' },
+  // changes: code, place.
+  'parking_slot.updated': { log: 'tenant', target: 'parking_slot' },
+  // metadata: unitId, code.
+  'parking_slot.deleted': { log: 'tenant', target: 'parking_slot' },
+  // changes: name (changed only), capacity, active.
+  'visitor_parking_area.created': {
+    log: 'tenant',
+    target: 'visitor_parking_area',
+    sensitive: ['name'],
+  },
+  'visitor_parking_area.updated': {
+    log: 'tenant',
+    target: 'visitor_parking_area',
+    sensitive: ['name'],
+  },
+  // metadata: unitId, areaId, visitorPassId, number, startsAt, endsAt.
+  // Never the visitor's name.
+  'visitor_parking_booking.created': {
+    log: 'tenant',
+    target: 'visitor_parking_booking',
+  },
+  // metadata: unitId, areaId, side, reasonCode.
+  'visitor_parking_booking.cancelled': {
+    log: 'tenant',
+    target: 'visitor_parking_booking',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

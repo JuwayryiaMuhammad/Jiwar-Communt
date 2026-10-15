@@ -27,6 +27,7 @@ import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { PassTokens, type PassSecret } from './pass-tokens';
 import { normalizePlate, PLATE_MAX } from '../../core/common/vehicle-plate';
+import { VisitorParkingService } from '../parking/visitor-parking.service';
 
 export interface NewPass {
   kind: VisitorPassKind;
@@ -154,6 +155,7 @@ export class VisitorPassesService implements OnModuleInit {
     private readonly globalDb: GlobalDbService,
     private readonly idempotency: IdempotencyService,
     private readonly passTokens: PassTokens,
+    private readonly parking: VisitorParkingService,
     config: ConfigService<Env, true>,
   ) {
     this.appUrl = config.get('PUBLIC_APP_URL', { infer: true });
@@ -614,6 +616,8 @@ export class VisitorPassesService implements OnModuleInit {
       targetId: id,
       metadata: { reasonCode },
     });
+    // Its visitor parking not yet ended goes with it (ADR 0045).
+    await this.parking.cancelForPass(tx, id);
   }
 
   /** visitorsInvite on the unit; no place at all is "not found". */

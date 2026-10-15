@@ -5687,6 +5687,42 @@ export interface paths {
         patch: operations["FacilitySettingsController_update"];
         trace?: never;
     };
+    "/api/v1/staff/parking-slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the units’ parking slots */
+        get: operations["ParkingSlotsController_list"];
+        put?: never;
+        /** Give a unit a parking slot */
+        post: operations["ParkingSlotsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/parking-slots/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Take a parking slot away */
+        delete: operations["ParkingSlotsController_remove"];
+        options?: never;
+        head?: never;
+        /** Change a parking slot’s code or place */
+        patch: operations["ParkingSlotsController_update"];
+        trace?: never;
+    };
     "/api/v1/staff/vehicle-settings": {
         parameters: {
             query?: never;
@@ -5810,6 +5846,78 @@ export interface paths {
         put?: never;
         /** Renew an active permit: a new last day */
         post: operations["StaffVehiclesController_renew"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/visitor-parking-areas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the visitor parking areas, retired ones included */
+        get: operations["VisitorAreasController_list"];
+        put?: never;
+        /** Create a visitor parking area */
+        post: operations["VisitorAreasController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/visitor-parking-areas/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename, resize or retire a visitor parking area */
+        patch: operations["VisitorAreasController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/visitor-parking-bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List one day’s visitor parking bookings
+         * @description Those touching the local day (today by default), cancelled ones included, soonest first.
+         */
+        get: operations["StaffVisitorParkingController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/visitor-parking-bookings/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a visitor parking booking, with a reason code */
+        post: operations["StaffVisitorParkingController_cancel"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6991,6 +7099,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/parking": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the unit’s parking slots and the visitor areas’ free spaces
+         * @description For any member of the unit. Free spaces are now’s.
+         */
+        get: operations["UnitParkingController_parking"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/standing-instructions": {
         parameters: {
             query?: never;
@@ -7045,6 +7173,50 @@ export interface paths {
          */
         post: operations["VehiclesController_create"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/visitor-parking-bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the unit’s visitor parking bookings
+         * @description The primary sees every one; anyone else who may invite, their own.
+         */
+        get: operations["UnitParkingController_list"];
+        put?: never;
+        /**
+         * Book a visitor parking space
+         * @description For a visitor pass of the unit or a visitor’s name. Never past the area’s capacity at any instant of the window (VISITOR_PARKING_FULL); at most the compound’s `maxActiveVisitorParkingBookings` not yet ended (VISITOR_PARKING_LIMIT_REACHED).
+         */
+        post: operations["UnitParkingController_book"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/visitor-parking-bookings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Cancel a visitor parking booking
+         * @description Its booker or the unit’s primary, until it ends.
+         */
+        delete: operations["UnitParkingController_cancel"];
         options?: never;
         head?: never;
         patch?: never;
@@ -8903,6 +9075,13 @@ export interface components {
             /** @description As the visitor gives it; shown to the household only. */
             visitorName?: string;
         };
+        CreateParkingSlotDto: {
+            /** @description Upper-cased; once in the compound (DUPLICATE_RESOURCE on code). */
+            code: string;
+            place: string;
+            /** @description The unit’s code (UNIT_CODE_UNKNOWN). */
+            unitCode: string;
+        };
         CreatePollDto: {
             /** @description Whose units vote. Absent: the whole compound, everyone. A poll put to the `owners` is voted by a unit’s owner; any other by its primary occupant or a member given `polls_vote`. */
             audience?: components["schemas"]["AudienceDto"];
@@ -9159,6 +9338,35 @@ export interface components {
              */
             plate: string;
             type: components["schemas"]["VehicleType"];
+        };
+        CreateVisitorAreaDto: {
+            capacity: number;
+            /** @description Once in the compound. */
+            name: string;
+        };
+        CreateVisitorParkingDto: {
+            /**
+             * Format: uuid
+             * @description An active visitor area (AREA_NOT_AVAILABLE).
+             */
+            areaId: string;
+            /**
+             * Format: date-time
+             * @description Whole minutes; 15 minutes to the compound’s `visitorParkingMaxHours` after the start.
+             */
+            endsAt: string;
+            /**
+             * Format: date-time
+             * @description Whole minutes; no earlier than 15 minutes ago, at most 14 days ahead.
+             */
+            startsAt: string;
+            /** @description Without a pass only (FIELD_NOT_ALLOWED with one). Deleted 30 days after the booking ends. */
+            visitorName?: string;
+            /**
+             * Format: uuid
+             * @description An active pass of the unit the caller manages (PASS_NOT_AVAILABLE); the window lies inside its validity (PARKING_OUTSIDE_PASS). Null or absent: give `visitorName`.
+             */
+            visitorPassId?: string | null;
         };
         CreateVisitorPassDto: {
             kind: components["schemas"]["VisitorPassKind"];
@@ -11129,6 +11337,12 @@ export interface components {
         };
         /** @enum {string} */
         ParcelStatus: "held" | "handed_over" | "rejected" | "returned";
+        ParkingSlotRefView: {
+            /** @example B2-117 */
+            code: string;
+            /** @example Basement 2, row C */
+            place: string;
+        };
         PassDetailView: {
             /** @description 6 digits. Active passes, for the host and the primary; null otherwise, and on a pass issued before this field existed (reissue its link). */
             code: string | null;
@@ -12813,6 +13027,10 @@ export interface components {
             /** @description From the closed list `bookingStaffCancel`. */
             reasonCode: string;
         };
+        StaffCancelVisitorParkingDto: {
+            /** @description From the closed list `visitorParkingStaffCancel`. */
+            reasonCode: string;
+        };
         StaffClaimView: {
             claimant: components["schemas"]["AccountRefView"];
             /** Format: date-time */
@@ -13019,6 +13237,21 @@ export interface components {
             /** Format: date-time */
             sentAt: string;
             sentBy: components["schemas"]["AccountRefView"];
+        };
+        StaffParkingSlotView: {
+            code: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            place: string;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        StaffParkingSlotViewList: {
+            data: components["schemas"]["StaffParkingSlotView"][];
+            nextCursor: string | null;
         };
         StaffPollView: {
             audience: components["schemas"]["AudienceView"];
@@ -13432,6 +13665,36 @@ export interface components {
         };
         StaffVehicleViewList: {
             data: components["schemas"]["StaffVehicleView"][];
+            nextCursor: string | null;
+        };
+        StaffVisitorParkingBookingView: {
+            /** Format: uuid */
+            areaId: string;
+            areaName: string;
+            bookedBy: components["schemas"]["AccountRefView"];
+            cancelReason: string | null;
+            cancelSide: components["schemas"]["VisitorParkingCancelSide"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @example P-8741 */
+            reference: string;
+            /** Format: date-time */
+            startsAt: string;
+            status: components["schemas"]["VisitorParkingStatus"];
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+            /** @description Null for a pass’s booking, and 30 days after it ends. */
+            visitorName: string | null;
+            /** Format: uuid */
+            visitorPassId: string | null;
+        };
+        StaffVisitorParkingBookingViewList: {
+            data: components["schemas"]["StaffVisitorParkingBookingView"][];
             nextCursor: string | null;
         };
         /**
@@ -13966,6 +14229,10 @@ export interface components {
             /** Format: date-time */
             startedAt: string;
         };
+        UnitParkingView: {
+            slots: components["schemas"]["ParkingSlotRefView"][];
+            visitorAreas: components["schemas"]["VisitorAreaFreeView"][];
+        };
         UnitReviewFlagView: {
             /** Format: date-time */
             flaggedAt: string;
@@ -14199,6 +14466,10 @@ export interface components {
             /** @description Days a parcel is held before its residents are reminded, once. */
             parcelReminderDays?: number;
         };
+        UpdateParkingSlotDto: {
+            code?: string;
+            place?: string;
+        };
         UpdatePollDto: {
             /** @description Whose units vote. Absent: the whole compound, everyone. A poll put to the `owners` is voted by a unit’s owner; any other by its primary occupant or a member given `polls_vote`. */
             audience?: components["schemas"]["AudienceDto"];
@@ -14307,6 +14578,13 @@ export interface components {
             maxVehiclesPerUnit?: number;
             /** @description The longest visitor parking booking, in hours. */
             visitorParkingMaxHours?: number;
+        };
+        UpdateVisitorAreaDto: {
+            /** @description False retires the area: no new booking, the booked ones stay. */
+            active?: boolean;
+            /** @description A smaller capacity leaves what is booked. */
+            capacity?: number;
+            name?: string;
         };
         UpdateWelcomeTemplateDto: {
             /** @description The emergency numbers, in Arabic. */
@@ -14518,6 +14796,13 @@ export interface components {
              */
             startsAt: string;
         };
+        VisitorAreaFreeView: {
+            /** @description Spaces free now, never below zero. Read it again before booking. */
+            freeSpaces: number;
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
         /** @enum {string} */
         VisitorInstruction: "ask" | "allow" | "deny";
         VisitorPageView: {
@@ -14551,6 +14836,52 @@ export interface components {
             /** @description What the compound tells its visitors. */
             visitorDirections: string | null;
         };
+        VisitorParkingAreaView: {
+            /** @description False: retired, takes no booking. */
+            active: boolean;
+            capacity: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
+        VisitorParkingAreaViewList: {
+            data: components["schemas"]["VisitorParkingAreaView"][];
+            nextCursor: string | null;
+        };
+        VisitorParkingBookingView: {
+            /** Format: uuid */
+            areaId: string;
+            areaName: string;
+            cancelReason: string | null;
+            cancelSide: components["schemas"]["VisitorParkingCancelSide"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description The caller made it. */
+            mine: boolean;
+            /** @example P-8741 */
+            reference: string;
+            /** Format: date-time */
+            startsAt: string;
+            status: components["schemas"]["VisitorParkingStatus"];
+            /** @description The booker’s own bookings only (null for the primary looking at another’s), and null 30 days after it ends. */
+            visitorName: string | null;
+            /** Format: uuid */
+            visitorPassId: string | null;
+        };
+        VisitorParkingBookingViewList: {
+            data: components["schemas"]["VisitorParkingBookingView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        VisitorParkingCancelSide: "resident" | "staff" | "system";
+        /** @enum {string} */
+        VisitorParkingStatus: "confirmed" | "cancelled";
         /**
          * @description Required. The closed list `visitorPassCancel`: `not_needed` (the visit is off), `plans_changed` (another day or other visitors), `other`. Missing: REASON_REQUIRED; outside the list: INVALID_REASON_CODE with `allowed`.
          * @enum {string}
@@ -23663,6 +23994,97 @@ export interface operations {
             };
         };
     };
+    ParkingSlotsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                unitCode?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffParkingSlotViewList"];
+                };
+            };
+        };
+    };
+    ParkingSlotsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateParkingSlotDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffParkingSlotView"];
+                };
+            };
+        };
+    };
+    ParkingSlotsController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ParkingSlotsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateParkingSlotDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffParkingSlotView"];
+                };
+            };
+        };
+    };
     VehicleSettingsController_get: {
         parameters: {
             query?: never;
@@ -23849,6 +24271,119 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["StaffVehicleDetailView"];
                 };
+            };
+        };
+    };
+    VisitorAreasController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitorParkingAreaViewList"];
+                };
+            };
+        };
+    };
+    VisitorAreasController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateVisitorAreaDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitorParkingAreaView"];
+                };
+            };
+        };
+    };
+    VisitorAreasController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateVisitorAreaDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitorParkingAreaView"];
+                };
+            };
+        };
+    };
+    StaffVisitorParkingController_list: {
+        parameters: {
+            query?: {
+                areaId?: string;
+                /** @description A local day of the compound, `YYYY-MM-DD`. Default today. */
+                day?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffVisitorParkingBookingViewList"];
+                };
+            };
+        };
+    };
+    StaffVisitorParkingController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffCancelVisitorParkingDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -25700,6 +26235,27 @@ export interface operations {
             };
         };
     };
+    UnitParkingController_parking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitParkingView"];
+                };
+            };
+        };
+    };
     VisitorsController_listStanding: {
         parameters: {
             query?: never;
@@ -25815,6 +26371,81 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["VehicleView"];
                 };
+            };
+        };
+    };
+    UnitParkingController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description Upcoming: confirmed and not ended, soonest first. Past: ended or cancelled, latest first. */
+                status?: "upcoming" | "past";
+            };
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitorParkingBookingViewList"];
+                };
+            };
+        };
+    };
+    UnitParkingController_book: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateVisitorParkingDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitorParkingBookingView"];
+                };
+            };
+        };
+    };
+    UnitParkingController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

@@ -168,6 +168,76 @@ export function vehicleHelpers(h: HttpHarness) {
     });
   }
 
+  /** A minute-aligned instant `minutes` from now. */
+  const inMinutes = (minutes: number) =>
+    new Date(Math.ceil(Date.now() / 60_000) * 60_000 + minutes * 60_000);
+
+  /** A visitor area of the compound, as the manager: its id. */
+  async function area(c: Compound, manager: Who, capacity = 1) {
+    const res = await http(
+      'post',
+      '/staff/visitor-parking-areas',
+      manager.token,
+      {
+        name: `Area ${uniqueSuffix()}`,
+        capacity,
+      },
+    ).expect(201);
+    return (res.body as { id: string }).id;
+  }
+
+  /** `POST /units/:unitId/visitor-parking-bookings`: the response. */
+  function parkRaw(
+    as: Who,
+    unitId: string,
+    body: {
+      areaId: string;
+      startsAt: Date;
+      endsAt: Date;
+      visitorPassId?: string | null;
+      visitorName?: string;
+    },
+    headers: Record<string, string> = {},
+  ): Promise<Response> {
+    const { startsAt, endsAt, ...rest } = body;
+    return (async () =>
+      await http(
+        'post',
+        `/units/${unitId}/visitor-parking-bookings`,
+        as.token,
+        {
+          ...(rest.visitorPassId ? {} : { visitorName: 'Guest' }),
+          ...rest,
+          startsAt: startsAt.toISOString(),
+          endsAt: endsAt.toISOString(),
+        },
+        headers,
+      ))();
+  }
+
+  /** A visitor pass of the unit (one-time, for the next hours): its id. */
+  async function pass(
+    as: Who,
+    unitId: string,
+    over: Record<string, unknown> = {},
+  ): Promise<string> {
+    const res = await http(
+      'post',
+      `/units/${unitId}/visitor-passes`,
+      as.token,
+      {
+        kind: 'one_time',
+        partySize: 1,
+        validFrom: new Date().toISOString(),
+        validUntil: new Date(Date.now() + 6 * 3_600_000).toISOString(),
+        ...over,
+      },
+    );
+    if (res.status !== 201)
+      throw new Error(`pass: ${res.status} ${JSON.stringify(res.body)}`);
+    return (res.body as { id: string }).id;
+  }
+
   /** A finalized licence photo of `as`. */
   const licence = (as: Who) => files.ready(as.token, 'vehicle_licence');
 
@@ -203,5 +273,9 @@ export function vehicleHelpers(h: HttpHarness) {
     row,
     sweep,
     notifications: e.notifications,
+    inMinutes,
+    area,
+    parkRaw,
+    pass,
   };
 }

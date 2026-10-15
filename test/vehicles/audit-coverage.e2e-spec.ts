@@ -203,6 +203,135 @@ describe('Audit coverage — vehicles and parking', () => {
     });
   });
 
+  describe('parking', () => {
+    const NAME = 'AUDIT-VISITOR-NAME';
+    let slotId: string;
+    let areaId: string;
+    let bookingId: string;
+
+    beforeAll(async () => {
+      slotId = (
+        (
+          await v
+            .http('post', '/staff/parking-slots', s.manager.token, {
+              unitCode: s.home.code,
+              code: 'AUD-1',
+              place: 'Basement 1',
+            })
+            .expect(201)
+        ).body as { id: string }
+      ).id;
+      areaId = (
+        (
+          await v
+            .http('post', '/staff/visitor-parking-areas', s.manager.token, {
+              name: 'AUDIT-AREA-NAME',
+              capacity: 4,
+            })
+            .expect(201)
+        ).body as { id: string }
+      ).id;
+      bookingId = (
+        (
+          await v
+            .parkRaw(s.alice, s.home.id, {
+              areaId,
+              visitorName: NAME,
+              startsAt: v.inMinutes(60),
+              endsAt: v.inMinutes(120),
+            })
+            .then((r) => {
+              expect(r.status).toBe(201);
+              return r;
+            })
+        ).body as { id: string }
+      ).id;
+    });
+
+    it('parking_slot.created / updated / deleted — the unit, code and place', async () => {
+      await v
+        .http('patch', `/staff/parking-slots/${slotId}`, s.manager.token, {
+          place: 'Basement 2',
+        })
+        .expect(200);
+      await v
+        .http('delete', `/staff/parking-slots/${slotId}`, s.manager.token)
+        .expect(204);
+      expect(await single('parking_slot.created', slotId)).toMatchObject({
+        ...by(s.manager, 'parking_slot'),
+        metadata: { unitId: s.home.id, code: 'AUD-1', place: 'Basement 1' },
+      });
+      expect(await single('parking_slot.updated', slotId)).toMatchObject({
+        changes: { place: { from: 'Basement 1', to: 'Basement 2' } },
+        metadata: { unitId: s.home.id },
+      });
+      expect(await single('parking_slot.deleted', slotId)).toMatchObject({
+        metadata: { unitId: s.home.id, code: 'AUD-1' },
+      });
+    });
+
+    it('visitor_parking_area.created / updated — capacity and active by value, the name only as changed', async () => {
+      await v
+        .http(
+          'patch',
+          `/staff/visitor-parking-areas/${areaId}`,
+          s.manager.token,
+          {
+            name: 'AUDIT-AREA-NAME 2',
+            capacity: 5,
+          },
+        )
+        .expect(200);
+      const created = await single('visitor_parking_area.created', areaId);
+      expect(created).toMatchObject(by(s.manager, 'visitor_parking_area'));
+      expect(created.changes).toEqual({
+        name: { changed: true },
+        capacity: { from: null, to: 4 },
+        active: { from: null, to: true },
+      });
+      const updated = await single('visitor_parking_area.updated', areaId);
+      expect(updated.changes).toEqual({
+        name: { changed: true },
+        capacity: { from: 4, to: 5 },
+      });
+      expect(JSON.stringify([created, updated])).not.toContain('AUDIT-AREA');
+    });
+
+    it('visitor_parking_booking.created / cancelled — the unit, area and window; never the visitor’s name', async () => {
+      await v
+        .http(
+          'delete',
+          `/units/${s.home.id}/visitor-parking-bookings/${bookingId}`,
+          s.alice.token,
+        )
+        .expect(204);
+      const created = await single(
+        'visitor_parking_booking.created',
+        bookingId,
+      );
+      expect(created).toMatchObject(by(s.alice, 'visitor_parking_booking'));
+      expect(created.metadata).toEqual({
+        unitId: s.home.id,
+        areaId,
+        visitorPassId: null,
+        number: expect.any(Number) as number,
+        startsAt: expect.any(String) as string,
+        endsAt: expect.any(String) as string,
+      });
+      const cancelled = await single(
+        'visitor_parking_booking.cancelled',
+        bookingId,
+      );
+      expect(cancelled.metadata).toEqual({
+        unitId: s.home.id,
+        areaId,
+        side: 'resident',
+        reasonCode: 'no_longer_needed',
+      });
+      expect(JSON.stringify([created, cancelled])).not.toContain(NAME);
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every vehicles and parking entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

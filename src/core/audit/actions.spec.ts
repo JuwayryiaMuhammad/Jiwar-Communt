@@ -88,6 +88,9 @@ describe('audit catalog', () => {
         'club_membership',
         'club_payment',
         'vehicle',
+        'parking_slot',
+        'visitor_parking_area',
+        'visitor_parking_booking',
       ]).toContain(def.target);
     }
   });

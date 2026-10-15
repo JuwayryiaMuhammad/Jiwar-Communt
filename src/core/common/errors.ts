@@ -458,6 +458,25 @@ export const ErrorCode = {
   VEHICLE_CHANGED: 'VEHICLE_CHANGED',
   /** Another vehicle of the compound holds an active permit for this plate (409). */
   VEHICLE_PLATE_ACTIVE: 'VEHICLE_PLATE_ACTIVE',
+  /** Unknown, or another compound's. */
+  PARKING_SLOT_NOT_FOUND: 'PARKING_SLOT_NOT_FOUND',
+  /** Unknown, or another compound's. */
+  VISITOR_PARKING_AREA_NOT_FOUND: 'VISITOR_PARKING_AREA_NOT_FOUND',
+  /**
+   * Unknown, another compound's; for a resident also one they neither
+   * made nor see as the unit's primary: one answer.
+   */
+  VISITOR_PARKING_BOOKING_NOT_FOUND: 'VISITOR_PARKING_BOOKING_NOT_FOUND',
+  /** The caller's capabilities on the unit carry no `visitorsInvite` (403). */
+  VISITOR_PARKING_NOT_ALLOWED: 'VISITOR_PARKING_NOT_ALLOWED',
+  /** Not one more space of the area is free for the whole window (409). */
+  VISITOR_PARKING_FULL: 'VISITOR_PARKING_FULL',
+  /** The unit holds params.max bookings not yet ended (409). */
+  VISITOR_PARKING_LIMIT_REACHED: 'VISITOR_PARKING_LIMIT_REACHED',
+  /** It was cancelled already (409, params.status). */
+  VISITOR_PARKING_INVALID_TRANSITION: 'VISITOR_PARKING_INVALID_TRANSITION',
+  /** It has ended (409). */
+  VISITOR_PARKING_WINDOW_PASSED: 'VISITOR_PARKING_WINDOW_PASSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -580,6 +599,23 @@ export const FieldErrorCode = {
   // vehicles and parking (ADR 0045)
   /** A permit's last day is after today and at most params.max (a local day). */
   PERMIT_DATE_OUT_OF_RANGE: 'PERMIT_DATE_OUT_OF_RANGE',
+  /** Not an active visitor area of the compound. */
+  AREA_NOT_AVAILABLE: 'AREA_NOT_AVAILABLE',
+  /**
+   * Not an active pass of the unit that the caller manages (its host or the
+   * unit's primary): one answer for an unknown pass too.
+   */
+  PASS_NOT_AVAILABLE: 'PASS_NOT_AVAILABLE',
+  /** A visitor parking booking starts no earlier than params.minutes ago. */
+  PARKING_TOO_EARLY: 'PARKING_TOO_EARLY',
+  /** It starts at most params.days ahead. */
+  PARKING_TOO_FAR: 'PARKING_TOO_FAR',
+  /** It lasts at least params.minutes. */
+  PARKING_TOO_SHORT: 'PARKING_TOO_SHORT',
+  /** It lasts at most params.hours (the compound's setting). */
+  PARKING_TOO_LONG: 'PARKING_TOO_LONG',
+  /** Its window is not inside the pass's (params.validFrom, params.validUntil). */
+  PARKING_OUTSIDE_PASS: 'PARKING_OUTSIDE_PASS',
 } as const;
 
 export type FieldErrorCode =

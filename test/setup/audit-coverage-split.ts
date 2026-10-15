@@ -302,4 +302,11 @@ export const VEHICLES_COVERAGE: readonly string[] = [
   'vehicle.renewed',
   'vehicle.removed',
   'vehicle.settings_changed',
+  'parking_slot.created',
+  'parking_slot.updated',
+  'parking_slot.deleted',
+  'visitor_parking_area.created',
+  'visitor_parking_area.updated',
+  'visitor_parking_booking.created',
+  'visitor_parking_booking.cancelled',
 ];

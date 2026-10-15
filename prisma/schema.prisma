@@ -4917,3 +4917,80 @@ model VehicleExpiryReminder {
   @@unique([tenantId, vehicleId, validUntil], map: "vehicle_expiry_reminders_once")
   @@map("vehicle_expiry_reminders")
 }
+
+enum VisitorParkingStatus {
+  confirmed
+  cancelled
+
+  @@map("visitor_parking_status")
+}
+
+enum VisitorParkingCancelSide {
+  resident
+  staff
+  system
+
+  @@map("visitor_parking_cancel_side")
+}
+
+/// A unit's own parking slot: configuration, kept by the staff.
+model UnitParkingSlot {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  unitId    String   @map("unit_id") @db.Uuid
+  code      String
+  place     String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, code], map: "unit_parking_slots_code_key")
+  @@index([tenantId, unitId, code], map: "unit_parking_slots_unit_idx")
+  @@map("unit_parking_slots")
+}
+
+/// A visitor parking area: never deleted, retired with `active`.
+model VisitorParkingArea {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  name      String
+  capacity  Int
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  bookings VisitorParkingBooking[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, name], map: "visitor_parking_areas_name_key")
+  @@map("visitor_parking_areas")
+}
+
+/// One space of an area for a visitor, for a window. Its window, unit,
+/// area and pass never change; it is cancelled once (trigger).
+model VisitorParkingBooking {
+  id                   String                    @id @db.Uuid
+  tenantId             String                    @map("tenant_id") @db.Uuid
+  number               Int
+  unitId               String                    @map("unit_id") @db.Uuid
+  areaId               String                    @map("area_id") @db.Uuid
+  visitorPassId        String?                   @map("visitor_pass_id") @db.Uuid
+  visitorName          String?                   @map("visitor_name")
+  visitorNameClearedAt DateTime?                 @map("visitor_name_cleared_at") @db.Timestamptz(3)
+  startsAt             DateTime                  @map("starts_at") @db.Timestamptz(3)
+  endsAt               DateTime                  @map("ends_at") @db.Timestamptz(3)
+  status               VisitorParkingStatus      @default(confirmed)
+  bookedById           String                    @map("booked_by_account_id") @db.Uuid
+  cancelledAt          DateTime?                 @map("cancelled_at") @db.Timestamptz(3)
+  cancelledById        String?                   @map("cancelled_by_account_id") @db.Uuid
+  cancelSide           VisitorParkingCancelSide? @map("cancel_side")
+  cancelReason         String?                   @map("cancel_reason")
+  createdAt            DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  area VisitorParkingArea @relation(fields: [tenantId, areaId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "visitor_parking_bookings_number_key")
+  @@index([tenantId, unitId, startsAt, id], map: "visitor_parking_bookings_unit_idx")
+  @@map("visitor_parking_bookings")
+}

@@ -736,6 +736,7 @@ describe('API v0 — no-store', () => {
   const roomForVehicles = () =>
     (vehiclesRaised ??= as('manager', 'PATCH', '/staff/vehicle-settings', {
       maxVehiclesPerUnit: 20,
+      maxActiveVisitorParkingBookings: 20,
     }));
   /** A new pending vehicle of A's home: its id. */
   const aVehicle = async () => {
@@ -757,6 +758,35 @@ describe('API v0 — no-store', () => {
       permitValidUntil: localDay(100),
     });
     return id;
+  };
+  /** A visitor booking of A's home, in A's roomy area, an hour from now. */
+  const aParking = async () => {
+    await roomForVehicles();
+    const start = Math.ceil(Date.now() / 60_000) * 60_000 + 3_600_000;
+    return as(
+      'owner',
+      'POST',
+      `/units/${w.a.homeUnitId}/visitor-parking-bookings`,
+      {
+        areaId: w.aAreaId,
+        visitorName: 'No-store guest',
+        startsAt: new Date(start).toISOString(),
+        endsAt: new Date(start + 1_800_000).toISOString(),
+      },
+    );
+  };
+  /** A new parking slot of A's home. */
+  const aParkingSlot = async () => {
+    const unit = await w.helpers.asManager(w.a, () =>
+      w.helpers.prisma.tenant.unit.findUniqueOrThrow({
+        where: { id: w.a.homeUnitId },
+      }),
+    );
+    return as('manager', 'POST', '/staff/parking-slots', {
+      unitCode: unit.code,
+      code: `NS-${uniqueSuffix()}`.slice(0, 20),
+      place: 'No-store row',
+    });
   };
   const VEHICLE_CALLS = (): Record<string, () => Promise<Response>> => ({
     'GET /units/{unitId}/vehicles': () =>
@@ -803,9 +833,45 @@ describe('API v0 — no-store', () => {
       }),
     'GET /staff/vehicle-settings': () =>
       as('manager', 'GET', '/staff/vehicle-settings'),
+    'GET /units/{unitId}/parking': () =>
+      as('owner', 'GET', `/units/${w.a.homeUnitId}/parking`),
+    'GET /units/{unitId}/visitor-parking-bookings': () =>
+      as('owner', 'GET', `/units/${w.a.homeUnitId}/visitor-parking-bookings`),
+    'POST /units/{unitId}/visitor-parking-bookings': () => aParking(),
+    'GET /staff/parking-slots': () =>
+      as('manager', 'GET', '/staff/parking-slots'),
+    'POST /staff/parking-slots': () => aParkingSlot(),
+    'PATCH /staff/parking-slots/{id}': async () =>
+      as(
+        'manager',
+        'PATCH',
+        `/staff/parking-slots/${body<{ id: string }>(await aParkingSlot()).id}`,
+        { place: 'Moved' },
+      ),
+    'GET /staff/visitor-parking-areas': () =>
+      as('manager', 'GET', '/staff/visitor-parking-areas'),
+    'POST /staff/visitor-parking-areas': () =>
+      as('manager', 'POST', '/staff/visitor-parking-areas', {
+        name: `No-store area ${uniqueSuffix()}`,
+        capacity: 5,
+      }),
+    'PATCH /staff/visitor-parking-areas/{id}': () =>
+      as('manager', 'PATCH', `/staff/visitor-parking-areas/${w.aAreaId}`, {
+        capacity: 500,
+      }),
+    'GET /staff/visitor-parking-bookings': () =>
+      as('manager', 'GET', '/staff/visitor-parking-bookings'),
+    'POST /staff/visitor-parking-bookings/{id}/cancel': async () =>
+      as(
+        'manager',
+        'POST',
+        `/staff/visitor-parking-bookings/${body<{ id: string }>(await aParking()).id}/cancel`,
+        { reasonCode: 'other' },
+      ),
     'PATCH /staff/vehicle-settings': () =>
       as('manager', 'PATCH', '/staff/vehicle-settings', {
         maxVehiclesPerUnit: 20,
+        maxActiveVisitorParkingBookings: 20,
       }),
   });
 

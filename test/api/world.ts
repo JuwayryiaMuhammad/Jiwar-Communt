@@ -32,6 +32,8 @@ import { BookingsService } from '../../src/facilities/bookings/bookings.service'
 import { ClosuresService } from '../../src/facilities/closures/closures.service';
 import { ClubService } from '../../src/facilities/club/club.service';
 import { VehiclesService } from '../../src/gate/vehicles/vehicles.service';
+import { StaffParkingService } from '../../src/gate/parking/staff-parking.service';
+import { VisitorParkingService } from '../../src/gate/parking/visitor-parking.service';
 import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
 import { ALL_WEEK, at, day } from '../setup/facilities';
 import { DispatchService } from '../../src/maintenance/tickets/dispatch.service';
@@ -192,6 +194,12 @@ export interface World {
   aFacilityId: string;
   /** B's vehicles and parking (ADR 0045): a pending vehicle of B's home. */
   bVehicleId: string;
+  /** B's home's parking slot, a visitor area, and B's owner's booking there. */
+  bSlotId: string;
+  bAreaId: string;
+  bParkingBookingId: string;
+  /** One of A's visitor areas, roomy, for valid bookings. */
+  aAreaId: string;
   bDeviceId: string;
   /** A personal-data export B's owner asked for (ADR 0036). */
   bExportId: string;
@@ -751,8 +759,40 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       type: 'car',
     }),
   );
+  const areaOf = (c: typeof a) =>
+    helpers.asManager(c, () =>
+      h.moduleRef
+        .get(StaffParkingService)
+        .createArea({ name: `World area ${uniqueSuffix()}`, capacity: 500 }),
+    );
+  const bArea = await areaOf(b);
+  const aArea = await areaOf(a);
+  const bSlot = await helpers.asManager(b, async () =>
+    h.moduleRef.get(StaffParkingService).createSlot({
+      unitCode: (
+        await helpers.prisma.tenant.unit.findUniqueOrThrow({
+          where: { id: b.homeUnitId },
+        })
+      ).code,
+      code: `W-${uniqueSuffix()}`.slice(0, 20),
+      place: 'World basement',
+    }),
+  );
+  const soon = new Date(Math.ceil(Date.now() / 60_000) * 60_000 + 3_600_000);
+  const bParking = await asBOwner(() =>
+    h.moduleRef.get(VisitorParkingService).book(b.homeUnitId, {
+      areaId: bArea.id,
+      visitorName: 'World visitor',
+      startsAt: soon.toISOString(),
+      endsAt: new Date(soon.getTime() + 3_600_000).toISOString(),
+    }),
+  );
   return {
     bVehicleId: bVehicle.vehicle.id,
+    bSlotId: bSlot.slot.id,
+    bAreaId: bArea.id,
+    bParkingBookingId: bParking.booking.id,
+    aAreaId: aArea.id,
     bClubPlanId: bClubPlan.id,
     aClubPlanId: aClubPlan.id,
     bMembershipId: bClub.membershipId,

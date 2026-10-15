@@ -254,3 +254,232 @@ export const VEHICLE_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+const soon = () => {
+  const start = Math.ceil(Date.now() / 60_000) * 60_000 + 3_600_000;
+  return {
+    startsAt: new Date(start).toISOString(),
+    endsAt: new Date(start + 3_600_000).toISOString(),
+  };
+};
+
+/**
+ * Parking (ADR 0045): a unit's slots and visitor bookings for its people,
+ * the staff's slots, areas and day of bookings. All no-store.
+ */
+export const PARKING_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/units/{unitId}/parking',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.bUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/units/{unitId}/visitor-parking-bookings',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.bUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      query: { status: 'soon' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['upcoming', 'past'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/units/{unitId}/visitor-parking-bookings',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.bUnitId }),
+      code: 'UNIT_NOT_FOUND',
+      body: (w) => ({ areaId: w.aAreaId, visitorName: 'Guest', ...soon() }),
+    },
+    invalid: {
+      body: {
+        areaId: 'x',
+        visitorName: 'Guest',
+        startsAt: 'now',
+        endsAt: 'later',
+      },
+      fields: [
+        { field: 'areaId', code: 'INVALID_UUID' },
+        { field: 'startsAt', code: 'INVALID_FORMAT' },
+        { field: 'endsAt', code: 'INVALID_FORMAT' },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'DELETE',
+    path: '/units/{unitId}/visitor-parking-bookings/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.bUnitId, id: w.bParkingBookingId }),
+      code: 'VISITOR_PARKING_BOOKING_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/staff/parking-slots',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { limit: '0' },
+      fields: [
+        {
+          field: 'limit',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 100 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/parking-slots',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: { unitCode: 'U-1', code: 'A1', place: ' ' },
+      fields: [
+        { field: 'place', code: 'INVALID_LENGTH', params: { min: 1, max: 80 } },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'PATCH',
+    path: '/staff/parking-slots/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bSlotId }),
+      code: 'PARKING_SLOT_NOT_FOUND',
+      body: () => ({ place: 'Elsewhere' }),
+    },
+    invalid: {
+      body: { code: 'X'.repeat(21) },
+      fields: [
+        { field: 'code', code: 'INVALID_LENGTH', params: { min: 1, max: 20 } },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'DELETE',
+    path: '/staff/parking-slots/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bSlotId }),
+      code: 'PARKING_SLOT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/staff/visitor-parking-areas',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/visitor-parking-areas',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: { name: 'Gate 2', capacity: 501 },
+      fields: [
+        {
+          field: 'capacity',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 500 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'PATCH',
+    path: '/staff/visitor-parking-areas/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bAreaId }),
+      code: 'VISITOR_PARKING_AREA_NOT_FOUND',
+      body: () => ({ capacity: 3 }),
+    },
+    invalid: {
+      body: { active: 'no' },
+      fields: [{ field: 'active', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/visitor-parking-bookings',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { day: 'today' },
+      fields: [{ field: 'day', code: 'INVALID_FORMAT' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/visitor-parking-bookings/{id}/cancel',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bParkingBookingId }),
+      code: 'VISITOR_PARKING_BOOKING_NOT_FOUND',
+      body: () => ({ reasonCode: 'other' }),
+    },
+    invalid: {
+      body: {},
+      fields: [{ field: 'reasonCode', code: 'FIELD_REQUIRED' }],
+    },
+    noStore: true,
+  },
+];

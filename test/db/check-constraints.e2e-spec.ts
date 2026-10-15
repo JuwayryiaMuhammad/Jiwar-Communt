@@ -730,6 +730,27 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'removal_reason IS NULL is tested first; the lists run only on a value, by removal_side, which the state shape sets with it',
   },
   vehicle_stickers_number_shape: {},
+  unit_parking_slots_text_length: {},
+  visitor_parking_areas_name_length: {},
+  visitor_parking_areas_capacity: {},
+  visitor_parking_bookings_number_positive: {},
+  visitor_parking_bookings_window: {},
+  // Nullable columns only under IS [NOT] NULL.
+  visitor_parking_bookings_visitor: {},
+  visitor_parking_bookings_visitor_name_length: {
+    guarded:
+      'visitor_name IS NULL is tested first; the length runs only on a value',
+  },
+  // Nullable columns only under IS [NOT] NULL; status is NOT NULL.
+  visitor_parking_bookings_state_shape: {},
+  visitor_parking_bookings_cancelled_by: {
+    guarded:
+      'cancel_side IS NULL is tested first; the comparison runs only on a value',
+  },
+  visitor_parking_bookings_cancel_reason: {
+    guarded:
+      'cancel_reason IS NULL is tested first; the lists run only on a value, by cancel_side, which the state shape sets with it',
+  },
 };
 
 interface Check {

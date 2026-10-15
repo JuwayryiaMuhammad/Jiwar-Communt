@@ -234,4 +234,12 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   vehicle_stickers_vehicle_number_key: null,
   // Inserted with ON CONFLICT DO NOTHING.
   vehicle_expiry_reminders_once: null,
+  unit_parking_slots_tenant_id_id_key: null,
+  // A slot's code is the compound's once.
+  unit_parking_slots_code_key: ['code'],
+  visitor_parking_areas_tenant_id_id_key: null,
+  // An area's name is the compound's once.
+  visitor_parking_areas_name_key: ['name'],
+  visitor_parking_bookings_tenant_id_id_key: null,
+  visitor_parking_bookings_number_key: null,
 };

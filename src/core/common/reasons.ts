@@ -375,4 +375,9 @@ export const REASON_CODES = {
   // Written by the system only: the registrant no longer holds `vehicles`
   // on the unit (left, deactivated or erased).
   vehicleSystemRemove: ['registrant_left'],
+  // Why a visitor parking booking is cancelled, by each side. A resident
+  // gives no reason; the system's: its pass was cancelled, its booker left.
+  visitorParkingResidentCancel: ['no_longer_needed'],
+  visitorParkingStaffCancel: ['area_closed', 'misuse', 'other'],
+  visitorParkingSystemCancel: ['pass_cancelled', 'booker_left'],
 } as const;

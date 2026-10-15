@@ -57,6 +57,15 @@ import {
   VehiclesController,
 } from './vehicles/vehicles.controller';
 import { VehiclesService } from './vehicles/vehicles.service';
+import {
+  ParkingSlotsController,
+  StaffVisitorParkingController,
+  UnitParkingController,
+  VisitorAreasController,
+} from './parking/parking.controller';
+import { ParkingSweeps } from './parking/parking-sweeps';
+import { StaffParkingService } from './parking/staff-parking.service';
+import { VisitorParkingService } from './parking/visitor-parking.service';
 
 /**
  * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
@@ -88,6 +97,10 @@ import { VehiclesService } from './vehicles/vehicles.service';
     VehiclesController,
     StaffVehiclesController,
     VehicleSettingsController,
+    UnitParkingController,
+    ParkingSlotsController,
+    VisitorAreasController,
+    StaffVisitorParkingController,
   ],
   providers: [
     GatesService,
@@ -121,6 +134,9 @@ import { VehiclesService } from './vehicles/vehicles.service';
     StaffVehiclesService,
     VehicleSettingsService,
     VehicleSweeps,
+    VisitorParkingService,
+    StaffParkingService,
+    ParkingSweeps,
   ],
 })
 export class GateModule {}

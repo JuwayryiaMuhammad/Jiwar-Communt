@@ -4681,6 +4681,31 @@
         ],
         "type": "object"
       },
+      "CreateParkingSlotDto": {
+        "properties": {
+          "code": {
+            "description": "Upper-cased; once in the compound (DUPLICATE_RESOURCE on code).",
+            "maxLength": 20,
+            "minLength": 1,
+            "type": "string"
+          },
+          "place": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "unitCode": {
+            "description": "The unit’s code (UNIT_CODE_UNKNOWN).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitCode",
+          "code",
+          "place"
+        ],
+        "type": "object"
+      },
       "CreatePollDto": {
         "properties": {
           "audience": {
@@ -5350,6 +5375,63 @@
           "makeAndModel",
           "color",
           "type"
+        ],
+        "type": "object"
+      },
+      "CreateVisitorAreaDto": {
+        "properties": {
+          "capacity": {
+            "maximum": 500,
+            "minimum": 1,
+            "type": "number"
+          },
+          "name": {
+            "description": "Once in the compound.",
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "capacity"
+        ],
+        "type": "object"
+      },
+      "CreateVisitorParkingDto": {
+        "properties": {
+          "areaId": {
+            "description": "An active visitor area (AREA_NOT_AVAILABLE).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "endsAt": {
+            "description": "Whole minutes; 15 minutes to the compound’s `visitorParkingMaxHours` after the start.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "startsAt": {
+            "description": "Whole minutes; no earlier than 15 minutes ago, at most 14 days ahead.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "visitorName": {
+            "description": "Without a pass only (FIELD_NOT_ALLOWED with one). Deleted 30 days after the booking ends.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "visitorPassId": {
+            "description": "An active pass of the unit the caller manages (PASS_NOT_AVAILABLE); the window lies inside its validity (PARKING_OUTSIDE_PASS). Null or absent: give `visitorName`.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "areaId",
+          "startsAt",
+          "endsAt"
         ],
         "type": "object"
       },
@@ -12043,6 +12125,23 @@
         ],
         "type": "string"
       },
+      "ParkingSlotRefView": {
+        "properties": {
+          "code": {
+            "example": "B2-117",
+            "type": "string"
+          },
+          "place": {
+            "example": "Basement 2, row C",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "place"
+        ],
+        "type": "object"
+      },
       "PassDetailView": {
         "properties": {
           "code": {
@@ -17590,6 +17689,18 @@
         ],
         "type": "object"
       },
+      "StaffCancelVisitorParkingDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `visitorParkingStaffCancel`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "StaffClaimView": {
         "properties": {
           "claimant": {
@@ -18329,6 +18440,59 @@
           "sentBy",
           "recipients",
           "sentAt"
+        ],
+        "type": "object"
+      },
+      "StaffParkingSlotView": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "place": {
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "unitCode",
+          "code",
+          "place",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StaffParkingSlotViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffParkingSlotView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -19741,6 +19905,113 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/StaffVehicleView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffVisitorParkingBookingView": {
+        "properties": {
+          "areaId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "areaName": {
+            "type": "string"
+          },
+          "bookedBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "cancelReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelSide": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorParkingCancelSide"
+              }
+            ],
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reference": {
+            "example": "P-8741",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorParkingStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "visitorName": {
+            "description": "Null for a pass’s booking, and 30 days after it ends.",
+            "nullable": true,
+            "type": "string"
+          },
+          "visitorPassId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "unitId",
+          "unitCode",
+          "areaId",
+          "areaName",
+          "visitorPassId",
+          "visitorName",
+          "startsAt",
+          "endsAt",
+          "status",
+          "cancelSide",
+          "cancelReason",
+          "bookedBy",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StaffVisitorParkingBookingViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffVisitorParkingBookingView"
             },
             "type": "array"
           },
@@ -21576,6 +21847,27 @@
         ],
         "type": "object"
       },
+      "UnitParkingView": {
+        "properties": {
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/ParkingSlotRefView"
+            },
+            "type": "array"
+          },
+          "visitorAreas": {
+            "items": {
+              "$ref": "#/components/schemas/VisitorAreaFreeView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "slots",
+          "visitorAreas"
+        ],
+        "type": "object"
+      },
       "UnitReviewFlagView": {
         "properties": {
           "flaggedAt": {
@@ -22345,6 +22637,21 @@
         },
         "type": "object"
       },
+      "UpdateParkingSlotDto": {
+        "properties": {
+          "code": {
+            "maxLength": 20,
+            "minLength": 1,
+            "type": "string"
+          },
+          "place": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdatePollDto": {
         "properties": {
           "audience": {
@@ -22647,6 +22954,26 @@
             "maximum": 24,
             "minimum": 1,
             "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateVisitorAreaDto": {
+        "properties": {
+          "active": {
+            "description": "False retires the area: no new booking, the booked ones stay.",
+            "type": "boolean"
+          },
+          "capacity": {
+            "description": "A smaller capacity leaves what is booked.",
+            "maximum": 500,
+            "minimum": 1,
+            "type": "number"
+          },
+          "name": {
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
           }
         },
         "type": "object"
@@ -23339,6 +23666,27 @@
         ],
         "type": "object"
       },
+      "VisitorAreaFreeView": {
+        "properties": {
+          "freeSpaces": {
+            "description": "Spaces free now, never below zero. Read it again before booking.",
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "freeSpaces"
+        ],
+        "type": "object"
+      },
       "VisitorInstruction": {
         "enum": [
           "ask",
@@ -23443,6 +23791,169 @@
           "emergencyPhone"
         ],
         "type": "object"
+      },
+      "VisitorParkingAreaView": {
+        "properties": {
+          "active": {
+            "description": "False: retired, takes no booking.",
+            "type": "boolean"
+          },
+          "capacity": {
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "capacity",
+          "active",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "VisitorParkingAreaViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/VisitorParkingAreaView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "VisitorParkingBookingView": {
+        "properties": {
+          "areaId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "areaName": {
+            "type": "string"
+          },
+          "cancelReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelSide": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorParkingCancelSide"
+              }
+            ],
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "mine": {
+            "description": "The caller made it.",
+            "type": "boolean"
+          },
+          "reference": {
+            "example": "P-8741",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorParkingStatus"
+              }
+            ]
+          },
+          "visitorName": {
+            "description": "The booker’s own bookings only (null for the primary looking at another’s), and null 30 days after it ends.",
+            "nullable": true,
+            "type": "string"
+          },
+          "visitorPassId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "areaId",
+          "areaName",
+          "visitorPassId",
+          "visitorName",
+          "startsAt",
+          "endsAt",
+          "status",
+          "cancelSide",
+          "cancelReason",
+          "mine",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "VisitorParkingBookingViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/VisitorParkingBookingView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "VisitorParkingCancelSide": {
+        "enum": [
+          "resident",
+          "staff",
+          "system"
+        ],
+        "type": "string"
+      },
+      "VisitorParkingStatus": {
+        "enum": [
+          "confirmed",
+          "cancelled"
+        ],
+        "type": "string"
       },
       "VisitorPassCancelReason": {
         "description": "Required. The closed list `visitorPassCancel`: `not_needed` (the visit is off), `plans_changed` (another day or other visitors), `other`. Missing: REASON_REQUIRED; outside the list: INVALID_REASON_CODE with `allowed`.",
@@ -40644,6 +41155,177 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/parking-slots": {
+      "get": {
+        "operationId": "ParkingSlotsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitCode",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffParkingSlotViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the units’ parking slots",
+        "tags": [
+          "parking"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ParkingSlotsController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateParkingSlotDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffParkingSlotView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Give a unit a parking slot",
+        "tags": [
+          "parking"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/parking-slots/{id}": {
+      "delete": {
+        "operationId": "ParkingSlotsController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take a parking slot away",
+        "tags": [
+          "parking"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "ParkingSlotsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateParkingSlotDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffParkingSlotView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a parking slot’s code or place",
+        "tags": [
+          "parking"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/vehicle-settings": {
       "get": {
         "operationId": "VehicleSettingsController_get",
@@ -41007,6 +41689,211 @@
         "summary": "Renew an active permit: a new last day",
         "tags": [
           "vehicles"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/visitor-parking-areas": {
+      "get": {
+        "operationId": "VisitorAreasController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisitorParkingAreaViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the visitor parking areas, retired ones included",
+        "tags": [
+          "parking"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "VisitorAreasController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVisitorAreaDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisitorParkingAreaView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a visitor parking area",
+        "tags": [
+          "parking"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/visitor-parking-areas/{id}": {
+      "patch": {
+        "operationId": "VisitorAreasController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVisitorAreaDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisitorParkingAreaView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename, resize or retire a visitor parking area",
+        "tags": [
+          "parking"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/visitor-parking-bookings": {
+      "get": {
+        "description": "Those touching the local day (today by default), cancelled ones included, soonest first.",
+        "operationId": "StaffVisitorParkingController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "areaId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "A local day of the compound, `YYYY-MM-DD`. Default today.",
+            "in": "query",
+            "name": "day",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffVisitorParkingBookingViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List one day’s visitor parking bookings",
+        "tags": [
+          "parking"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/visitor-parking-bookings/{id}/cancel": {
+      "post": {
+        "operationId": "StaffVisitorParkingController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffCancelVisitorParkingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a visitor parking booking, with a reason code",
+        "tags": [
+          "parking"
         ],
         "x-no-store": true,
         "x-stability": "draft"
@@ -44510,6 +45397,45 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/units/{unitId}/parking": {
+      "get": {
+        "description": "For any member of the unit. Free spaces are now’s.",
+        "operationId": "UnitParkingController_parking",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitParkingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the unit’s parking slots and the visitor areas’ free spaces",
+        "tags": [
+          "parking"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/units/{unitId}/standing-instructions": {
       "get": {
         "operationId": "VisitorsController_listStanding",
@@ -44731,6 +45657,174 @@
           "vehicles"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/visitor-parking-bookings": {
+      "get": {
+        "description": "The primary sees every one; anyone else who may invite, their own.",
+        "operationId": "UnitParkingController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "Upcoming: confirmed and not ended, soonest first. Past: ended or cancelled, latest first.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "upcoming",
+              "enum": [
+                "upcoming",
+                "past"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisitorParkingBookingViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the unit’s visitor parking bookings",
+        "tags": [
+          "parking"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "For a visitor pass of the unit or a visitor’s name. Never past the area’s capacity at any instant of the window (VISITOR_PARKING_FULL); at most the compound’s `maxActiveVisitorParkingBookings` not yet ended (VISITOR_PARKING_LIMIT_REACHED).",
+        "operationId": "UnitParkingController_book",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVisitorParkingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisitorParkingBookingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Book a visitor parking space",
+        "tags": [
+          "parking"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/visitor-parking-bookings/{id}": {
+      "delete": {
+        "description": "Its booker or the unit’s primary, until it ends.",
+        "operationId": "UnitParkingController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a visitor parking booking",
+        "tags": [
+          "parking"
+        ],
         "x-stability": "draft"
       }
     },

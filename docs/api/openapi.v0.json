@@ -2258,6 +2258,15 @@
         ],
         "type": "object"
       },
+      "CancelEmergencyDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `emergencyCancel`; optional.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "CancelEventDto": {
         "properties": {
           "reasonCode": {
@@ -7330,6 +7339,29 @@
         ],
         "type": "string"
       },
+      "EmergencyLocationView": {
+        "properties": {
+          "building": {
+            "example": "Building 7",
+            "nullable": true,
+            "type": "string"
+          },
+          "unitCode": {
+            "example": "12",
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "unitCode",
+          "building"
+        ],
+        "type": "object"
+      },
       "EmergencyManagementRole": {
         "description": "`office`: the community office; `duty`: the duty manager; `emergency`: the compound’s emergency number.",
         "enum": [
@@ -7338,6 +7370,161 @@
           "emergency"
         ],
         "type": "string"
+      },
+      "EmergencyStatus": {
+        "description": "`reported`: waiting for a responder; `on_the_way`: one accepted; `arrived`; `resolved`; `cancelled` (by the household).",
+        "enum": [
+          "reported",
+          "on_the_way",
+          "arrived",
+          "resolved",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "EmergencyTimelineStep": {
+        "description": "`security_notified`: responders were told (with the report); `management_notified`: escalated; `family_on_the_way`: one entry per member who answered.",
+        "enum": [
+          "reported",
+          "security_notified",
+          "management_notified",
+          "on_the_way",
+          "arrived",
+          "family_on_the_way",
+          "resolved",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "EmergencyType": {
+        "enum": [
+          "medical",
+          "fire",
+          "security",
+          "facilities"
+        ],
+        "type": "string"
+      },
+      "EmergencyView": {
+        "properties": {
+          "canCancel": {
+            "description": "Open, and the caller is its reporter or the unit’s primary.",
+            "type": "boolean"
+          },
+          "closeReason": {
+            "description": "Closed: a code of `emergencyResolve` (resolved) or `emergencyCancel` (cancelled, may be null).",
+            "nullable": true,
+            "type": "string"
+          },
+          "familyNotified": {
+            "description": "How many of the others who live in the unit were told.",
+            "type": "number"
+          },
+          "familyOnTheWay": {
+            "description": "How many of them answered “on my way”.",
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "location": {
+            "$ref": "#/components/schemas/EmergencyLocationView"
+          },
+          "minutesAway": {
+            "description": "The minutes the responder picked, counted down from when they accepted: null before that and once closed, 0 once arrived.",
+            "nullable": true,
+            "type": "number"
+          },
+          "onMyWay": {
+            "description": "Whether the caller answered “on my way”; null for one who was not alerted (the reporter).",
+            "nullable": true,
+            "type": "boolean"
+          },
+          "reference": {
+            "example": "E-0042",
+            "type": "string"
+          },
+          "reportedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reportedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FirstNameRefView"
+              }
+            ],
+            "description": "Who reported it."
+          },
+          "responder": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResponderView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmergencyStatus"
+              }
+            ],
+            "description": "`reported`: waiting for a responder; `on_the_way`: one accepted; `arrived`; `resolved`; `cancelled` (by the household)."
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineStepView"
+            },
+            "type": "array"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmergencyType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "type",
+          "status",
+          "reportedAt",
+          "location",
+          "reportedBy",
+          "responder",
+          "minutesAway",
+          "familyNotified",
+          "familyOnTheWay",
+          "timeline",
+          "closeReason",
+          "onMyWay",
+          "canCancel"
+        ],
+        "type": "object"
+      },
+      "EmergencyViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/EmergencyView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
       },
       "EngagementDetailView": {
         "properties": {
@@ -16687,6 +16874,27 @@
         ],
         "type": "object"
       },
+      "ReportEmergencyDto": {
+        "properties": {
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmergencyType"
+              }
+            ]
+          },
+          "unitId": {
+            "description": "A unit that gives the caller the emergency button.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "unitId"
+        ],
+        "type": "object"
+      },
       "ReportMatchView": {
         "properties": {
           "permitStatus": {
@@ -18601,6 +18809,26 @@
         },
         "required": [
           "response"
+        ],
+        "type": "object"
+      },
+      "ResponderView": {
+        "properties": {
+          "firstName": {
+            "description": "Their first name; null once erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "phone": {
+            "description": "The phone of the gate where they are on shift; for someone not at a gate, the compound’s duty (else emergency) phone. Never their own.",
+            "example": "+20225550100",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "firstName",
+          "phone"
         ],
         "type": "object"
       },
@@ -24367,6 +24595,32 @@
         "required": [
           "id",
           "code"
+        ],
+        "type": "object"
+      },
+      "TimelineStepView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "firstName": {
+            "description": "`family_on_the_way` only: the member’s first name.",
+            "nullable": true,
+            "type": "string"
+          },
+          "step": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmergencyTimelineStep"
+              }
+            ],
+            "description": "`security_notified`: responders were told (with the report); `management_notified`: escalated; `family_on_the_way`: one entry per member who answered."
+          }
+        },
+        "required": [
+          "step",
+          "at"
         ],
         "type": "object"
       },
@@ -30828,6 +31082,192 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/emergencies": {
+      "post": {
+        "description": "Never rate-limited. Security is told at once (a critical push), and the others who live in the unit too. One open per unit and type: a repeat answers 200 with the open one.",
+        "operationId": "EmergenciesController_report",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportEmergencyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmergencyView"
+                }
+              }
+            },
+            "description": "The open one."
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmergencyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Report an emergency",
+        "tags": [
+          "emergencies"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/emergencies/{id}": {
+      "get": {
+        "operationId": "EmergenciesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmergencyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Follow an emergency",
+        "tags": [
+          "emergencies"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/emergencies/{id}/cancel": {
+      "post": {
+        "description": "Its reporter or the unit’s primary; a reason code is optional. Whoever was going is told.",
+        "operationId": "EmergenciesController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelEmergencyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmergencyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel an open emergency",
+        "tags": [
+          "emergencies"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/emergencies/{id}/on-my-way": {
+      "post": {
+        "description": "For those who were alerted; once.",
+        "operationId": "EmergenciesController_onMyWay",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmergencyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Answer “on my way” to an emergency at home",
+        "tags": [
+          "emergencies"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/erasures": {
       "get": {
         "operationId": "ErasureController_pending",
@@ -37043,6 +37483,70 @@
         "tags": [
           "security"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/emergencies": {
+      "get": {
+        "description": "Newest first; `status=open` to resume one after a restart.",
+        "operationId": "EmergenciesController_mine",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`open`: reported, on the way or arrived; `closed`: resolved or cancelled.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "open",
+                "closed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmergencyViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the emergencies I reported or was alerted to",
+        "tags": [
+          "emergencies"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

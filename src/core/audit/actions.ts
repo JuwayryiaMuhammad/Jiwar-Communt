@@ -751,6 +751,17 @@ export const AUDIT_ACTIONS = {
     target: 'place',
     sensitive: ['nameEn', 'nameAr'],
   },
+  // metadata: number, type, unitId, respondersNotified, familyNotified. The
+  // reporter is the actor. A report that found one open is not recorded
+  // again (nothing was written).
+  'emergency.reported': { log: 'tenant', target: 'emergency' },
+  // metadata: reason (timeout | no_responders), recipients. The actor is
+  // the reporter for no_responders, the system for a timeout.
+  'emergency.escalated': { log: 'tenant', target: 'emergency' },
+  // metadata: from (the status), reasonCode (or null).
+  'emergency.cancelled': { log: 'tenant', target: 'emergency' },
+  // No metadata: the member is the actor.
+  'emergency.family_on_my_way': { log: 'tenant', target: 'emergency' },
 
   // Finance (ADR 0046). The gateway's credentials are never recorded, not
   // even their last four characters: metadata names the fields that

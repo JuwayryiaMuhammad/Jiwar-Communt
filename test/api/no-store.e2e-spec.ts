@@ -619,6 +619,15 @@ describe('API v0 — no-store', () => {
       );
       return body<{ id: string }>(res).id;
     })());
+  /** An open emergency of A's home, reported by its owner: its id. */
+  const anEmergency = async (type: string) =>
+    body<{ id: string }>(
+      await as('owner', 'POST', '/emergencies', {
+        type,
+        unitId: w.a.homeUnitId,
+      }),
+    ).id;
+
   /** Emergencies and gate services (ADR 0047). */
   const SAFETY_CALLS = (): Record<string, () => Promise<Response>> => ({
     'GET /community/places': () => as('owner', 'GET', '/community/places'),
@@ -632,6 +641,24 @@ describe('API v0 — no-store', () => {
       as('manager', 'PATCH', `/places/${w.aPlaceId}`, { position: 40 }),
     'GET /units/{unitId}/emergency-contacts': () =>
       as('owner', 'GET', `/units/${w.a.homeUnitId}/emergency-contacts`),
+    'POST /emergencies': () =>
+      as('owner', 'POST', '/emergencies', {
+        type: 'medical',
+        unitId: w.a.homeUnitId,
+      }),
+    'GET /me/emergencies': () => as('family', 'GET', '/me/emergencies'),
+    'GET /emergencies/{id}': async () =>
+      as('owner', 'GET', `/emergencies/${await anEmergency('medical')}`),
+    'POST /emergencies/{id}/cancel': async () =>
+      as('owner', 'POST', `/emergencies/${await anEmergency('fire')}/cancel`, {
+        reasonCode: 'false_alarm',
+      }),
+    'POST /emergencies/{id}/on-my-way': async () =>
+      as(
+        'family',
+        'POST',
+        `/emergencies/${await anEmergency('security')}/on-my-way`,
+      ),
   });
 
   const FINANCE_CALLS = (): Record<string, () => Promise<Response>> => ({

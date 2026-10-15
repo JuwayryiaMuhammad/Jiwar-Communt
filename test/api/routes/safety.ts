@@ -81,3 +81,93 @@ export const EMERGENCY_CONTACT_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** Emergencies, the household's side (ADR 0047). */
+export const EMERGENCY_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/emergencies',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: () => ({}),
+      code: 'UNIT_NOT_FOUND',
+      body: (w) => ({ type: 'medical', unitId: w.bUnitId }),
+    },
+    invalid: {
+      body: { type: 'flood', unitId: 'nowhere' },
+      fields: [
+        {
+          field: 'type',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['medical', 'fire', 'security', 'facilities'] },
+        },
+        { field: 'unitId', code: 'INVALID_UUID' },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/me/emergencies',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'pending' },
+      fields: [
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['open', 'closed'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/emergencies/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bEmergencyId }),
+      code: 'EMERGENCY_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/emergencies/{id}/cancel',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bEmergencyId }),
+      code: 'EMERGENCY_NOT_FOUND',
+      body: () => ({}),
+    },
+    invalid: {
+      body: { reasonCode: 5 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/emergencies/{id}/on-my-way',
+    auth: 'tenant',
+    as: 'family',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bEmergencyId }),
+      code: 'EMERGENCY_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+];

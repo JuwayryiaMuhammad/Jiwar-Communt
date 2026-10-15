@@ -1111,6 +1111,46 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تم قبول تظلمك وإلغاء المخالفة.',
     },
   },
+  'emergency.reported': {
+    en: {
+      title: 'Emergency reported',
+      body: 'An emergency was reported. Open the app now to respond.',
+    },
+    ar: {
+      title: 'بلاغ طوارئ',
+      body: 'تم الإبلاغ عن حالة طارئة. افتح التطبيق الآن للاستجابة.',
+    },
+  },
+  'emergency.family_alert': {
+    en: {
+      title: 'Emergency',
+      body: 'Emergency reported from your unit',
+    },
+    ar: {
+      title: 'حالة طارئة',
+      body: 'تم الإبلاغ عن حالة طارئة من وحدتك',
+    },
+  },
+  'emergency.escalated': {
+    en: {
+      title: 'Emergency without a responder',
+      body: 'Nobody has answered an emergency yet. Open the app now.',
+    },
+    ar: {
+      title: 'بلاغ طوارئ بلا استجابة',
+      body: 'لم يستجب أحد لبلاغ طوارئ حتى الآن. افتح التطبيق الآن.',
+    },
+  },
+  'emergency.cancelled': {
+    en: {
+      title: 'Emergency cancelled',
+      body: 'The household cancelled the emergency. You can stand down.',
+    },
+    ar: {
+      title: 'تم إلغاء بلاغ الطوارئ',
+      body: 'ألغت الوحدة بلاغ الطوارئ. لا حاجة للتحرك.',
+    },
+  },
   'invoice.issued': {
     en: {
       title: 'New invoice',

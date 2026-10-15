@@ -72,9 +72,15 @@ export class IdempotencyService implements OnModuleInit {
   /**
    * Call first in the action's transaction (before any other write). A
    * no-op without an Idempotency-Key. Throws IdempotencyReplaySignal when a
-   * committed duplicate holds the key.
+   * committed duplicate holds the key. `status` is for an action that
+   * answers with another status than its route's (an emergency reported
+   * again answers 200 with the open one, ADR 0047): a replay answers it too.
    */
-  async claim(tx: TenantTxClient, ref: ResourceRef): Promise<void> {
+  async claim(
+    tx: TenantTxClient,
+    ref: ResourceRef,
+    status?: number,
+  ): Promise<void> {
     const req = this.cls.isActive() ? this.cls.get('idempotency') : undefined;
     if (!req) return;
     if (!this.renderers.has(ref.type))
@@ -92,7 +98,7 @@ export class IdempotencyService implements OnModuleInit {
           route: req.route,
           resourceType: ref.type,
           resourceId: ref.id,
-          responseStatus: req.status,
+          responseStatus: status ?? req.status,
           expiresAt: new Date(Date.now() + IDEMPOTENCY_TTL_MS),
         },
       });

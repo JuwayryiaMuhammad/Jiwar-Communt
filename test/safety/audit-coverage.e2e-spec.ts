@@ -97,6 +97,45 @@ describe('Audit coverage — emergencies and gate services', () => {
     });
   });
 
+  describe('emergencies, the household', () => {
+    it('reported, escalated (nobody to tell), on my way and cancelled: ids, codes and counts', async () => {
+      const home = await x.unit(s.c);
+      const owner = await x.owner(s.c, home.id);
+      const member = await x.family(s.c, home.id, owner);
+      // Nobody on shift and no responder in this compound: escalated at once.
+      const e = await x.report(owner, home.id, 'fire');
+      const r = await single('emergency.reported', e.id);
+      expect(r).toMatchObject(by(owner, 'emergency'));
+      expect(r.metadata).toEqual({
+        number: Number(e.reference.slice(2)),
+        type: 'fire',
+        unitId: home.id,
+        respondersNotified: 0,
+        familyNotified: 1,
+      });
+      const esc = await single('emergency.escalated', e.id);
+      expect(esc).toMatchObject(by(owner, 'emergency'));
+      expect(esc.metadata).toEqual({ reason: 'no_responders', recipients: 1 });
+      await x
+        .http('post', `/emergencies/${e.id}/on-my-way`, member.token)
+        .expect(200);
+      const omw = await single('emergency.family_on_my_way', e.id);
+      expect(omw).toMatchObject(by(member, 'emergency'));
+      expect(omw.metadata ?? null).toBeNull();
+      await x
+        .http('post', `/emergencies/${e.id}/cancel`, owner.token, {
+          reasonCode: 'resolved_ourselves',
+        })
+        .expect(200);
+      const c = await single('emergency.cancelled', e.id);
+      expect(c).toMatchObject(by(owner, 'emergency'));
+      expect(c.metadata).toEqual({
+        from: 'reported',
+        reasonCode: 'resolved_ourselves',
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every emergencies and gate services entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

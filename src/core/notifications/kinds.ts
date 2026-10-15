@@ -1048,6 +1048,41 @@ export const NOTIFICATION_KINDS = {
     target: 'vehicle_fine',
     params: {},
   },
+  // Emergencies (ADR 0047). Every kind is critical: never muted, never held.
+  // They target the emergency and carry its type at most: never a name or a
+  // unit on the lock screen. Never to the one who acted.
+  /** Reported: every guard on an open shift and every responder, now. */
+  'emergency.reported': {
+    priority: 'critical',
+    category: 'safety',
+    critical: true,
+    target: 'emergency',
+    params: { emergencyType: {} },
+  },
+  /** Reported from their unit: the others who live there, generic text. */
+  'emergency.family_alert': {
+    priority: 'critical',
+    category: 'safety',
+    critical: true,
+    target: 'emergency',
+    params: {},
+  },
+  /** Nobody answered in time, or nobody was there to answer: the management. */
+  'emergency.escalated': {
+    priority: 'critical',
+    category: 'safety',
+    critical: true,
+    target: 'emergency',
+    params: { emergencyType: {} },
+  },
+  /** Cancelled by the household: its responder, or those told of it. */
+  'emergency.cancelled': {
+    priority: 'critical',
+    category: 'safety',
+    critical: true,
+    target: 'emergency',
+    params: {},
+  },
   // Finance (ADR 0046). No kind is critical, and none carries a param: never
   // an amount, a number, a unit or a name. To every account that sees the
   // unit's money (capabilities.financeView).

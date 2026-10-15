@@ -107,6 +107,25 @@ export class CommunityGatePort {
     return this.capabilities.holders(tx, unitId, flag);
   }
 
+  /** Each unit's code and building (ADR 0047: where an emergency is). */
+  async unitLocations(
+    tx: TenantTxClient,
+    unitIds: readonly string[],
+  ): Promise<
+    Map<string, { unitId: string; unitCode: string; building: string | null }>
+  > {
+    const units = await tx.unit.findMany({
+      where: { id: { in: [...new Set(unitIds)] } },
+      select: { id: true, code: true, building: true },
+    });
+    return new Map(
+      units.map((u) => [
+        u.id,
+        { unitId: u.id, unitCode: u.code, building: u.building },
+      ]),
+    );
+  }
+
   /**
    * The people who live in the unit (ADR 0047): its residing occupants and
    * its active adult members with an account — the `gateEntry` holders,

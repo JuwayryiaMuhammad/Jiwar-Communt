@@ -513,6 +513,12 @@ export const ErrorCode = {
   // Emergencies and gate services (ADR 0047).
   /** Unknown, another compound's, or (where one in service is needed) retired. */
   PLACE_NOT_FOUND: 'PLACE_NOT_FOUND',
+  /** Unknown, another compound's, or not the caller's to see. */
+  EMERGENCY_NOT_FOUND: 'EMERGENCY_NOT_FOUND',
+  /** Resolved or cancelled already (409, params.status). */
+  EMERGENCY_CLOSED: 'EMERGENCY_CLOSED',
+  /** The caller sees it but may not do this (403): cancel, or "on my way". */
+  EMERGENCY_ACTION_NOT_ALLOWED: 'EMERGENCY_ACTION_NOT_ALLOWED',
   /**
    * The server holds no PAYMENT_CREDENTIALS_KEY, so no credential can be
    * stored and online payment cannot be turned on (503, ADR 0046).

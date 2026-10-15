@@ -357,4 +357,8 @@ export const FINANCE_COVERAGE: readonly string[] = [
 export const SAFETY_COVERAGE: readonly string[] = [
   'place.created',
   'place.updated',
+  'emergency.reported',
+  'emergency.escalated',
+  'emergency.cancelled',
+  'emergency.family_on_my_way',
 ];

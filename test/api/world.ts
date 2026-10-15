@@ -43,6 +43,7 @@ import { VisitorParkingService } from '../../src/gate/parking/visitor-parking.se
 import { FinesService } from '../../src/gate/fines/fines.service';
 import { FinePaymentsService } from '../../src/gate/fines/fine-payments.service';
 import { ParkingReportsService } from '../../src/gate/parking-reports/parking-reports.service';
+import { EmergenciesService } from '../../src/gate/emergencies/emergencies.service';
 import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
 import { ALL_WEEK, at, day } from '../setup/facilities';
 import { addDays } from '../../src/core/common/slots/day-slots';
@@ -227,6 +228,8 @@ export interface World {
   /** One of B's places (seeded, ADR 0047), and one of A's for valid bodies. */
   bPlaceId: string;
   aPlaceId: string;
+  /** An open emergency B's owner reported from B's home (ADR 0047). */
+  bEmergencyId: string;
   bDeviceId: string;
   /** A personal-data export B's owner asked for (ADR 0036). */
   bExportId: string;
@@ -851,6 +854,14 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       ),
     ),
   );
+  const bEmergency = await helpers.as(
+    b,
+    { id: b.ids.owner, type: 'resident' },
+    () =>
+      h.moduleRef
+        .get(EmergenciesService)
+        .report({ type: 'facilities', unitId: b.homeUnitId }),
+  );
   const bFinance = await helpers.asManager(b, async () => {
     const batch = await h.moduleRef.get(InvoicesService).issue({
       target: 'unit',
@@ -910,6 +921,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bParkingReportId: bParkingReport.id,
     bPlaceId: bPlace.id,
     aPlaceId: aPlace.id,
+    bEmergencyId: bEmergency.record.emergency.id,
     bFineId: bFine.fine.id,
     bFinePaymentId: bFinePayment.id,
     bVehicleId: bVehicle.vehicle.id,

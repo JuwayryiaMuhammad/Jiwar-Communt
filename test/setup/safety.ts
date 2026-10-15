@@ -5,6 +5,24 @@ import { vehicleHelpers, type Who } from './vehicles';
 
 export type { Who } from './vehicles';
 
+export interface EmergencyBody {
+  id: string;
+  reference: string;
+  type: string;
+  status: string;
+  reportedAt: string;
+  location: { unitId: string; unitCode: string; building: string | null };
+  reportedBy: { id: string; firstName?: string | null; erased?: true };
+  responder: { firstName: string | null; phone: string | null } | null;
+  minutesAway: number | null;
+  familyNotified: number;
+  familyOnTheWay: number;
+  timeline: { step: string; at: string; firstName?: string | null }[];
+  closeReason: string | null;
+  onMyWay: boolean | null;
+  canCancel: boolean;
+}
+
 export interface PlaceBody {
   id: string;
   key: string | null;
@@ -56,5 +74,51 @@ export function safetyHelpers(h: HttpHarness) {
     );
   }
 
-  return { ...v, v, g, setUp, guardOnDuty, places };
+  /** `POST /emergencies` as `as`: the response. */
+  function reportRaw(
+    as: Who,
+    unitId: string,
+    type = 'medical',
+    headers: Record<string, string> = {},
+  ) {
+    return v.http('post', '/emergencies', as.token, { type, unitId }, headers);
+  }
+
+  /** A report that must make a new emergency: its body. */
+  async function report(
+    as: Who,
+    unitId: string,
+    type = 'medical',
+  ): Promise<EmergencyBody> {
+    const res = await reportRaw(as, unitId, type);
+    if (res.status !== 201)
+      throw new Error(`report: ${res.status} ${JSON.stringify(res.body)}`);
+    return res.body as EmergencyBody;
+  }
+
+  /** `GET /emergencies/:id` as `as`. */
+  async function follow(as: Who, id: string): Promise<EmergencyBody> {
+    return (await v.http('get', `/emergencies/${id}`, as.token).expect(200))
+      .body as EmergencyBody;
+  }
+
+  /** The kinds of the account's notifications about `targetId`, in order. */
+  async function told(c: Compound, accountId: string, targetId: string) {
+    return (await v.notifications(c, accountId))
+      .filter((n) => n.targetId === targetId)
+      .map((n) => ({ kind: n.kind, params: n.params }));
+  }
+
+  return {
+    ...v,
+    v,
+    g,
+    setUp,
+    guardOnDuty,
+    places,
+    reportRaw,
+    report,
+    follow,
+    told,
+  };
 }

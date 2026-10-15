@@ -95,6 +95,7 @@ describe('audit catalog', () => {
         'vehicle_fine_payment',
         'parking_report',
         'place',
+        'emergency',
         'invoice_batch',
         'credit_note',
         'billing_plan',

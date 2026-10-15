@@ -1060,6 +1060,83 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/emergencies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Report an emergency
+         * @description Never rate-limited. Security is told at once (a critical push), and the others who live in the unit too. One open per unit and type: a repeat answers 200 with the open one.
+         */
+        post: operations["EmergenciesController_report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/emergencies/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Follow an emergency */
+        get: operations["EmergenciesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/emergencies/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel an open emergency
+         * @description Its reporter or the unit’s primary; a reason code is optional. Whoever was going is told.
+         */
+        post: operations["EmergenciesController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/emergencies/{id}/on-my-way": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Answer “on my way” to an emergency at home
+         * @description For those who were alerted; once.
+         */
+        post: operations["EmergenciesController_onMyWay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/erasures": {
         parameters: {
             query?: never;
@@ -3238,6 +3315,26 @@ export interface paths {
         put?: never;
         /** "Not me" on an unusual-login alert: freeze my account */
         post: operations["MeDevicesController_notMeFromApp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/emergencies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the emergencies I reported or was alerted to
+         * @description Newest first; `status=open` to resume one after a restart.
+         */
+        get: operations["EmergenciesController_mine"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -9169,6 +9266,10 @@ export interface components {
             /** @description From the closed list `bookingResidentCancel`. */
             reasonCode: string;
         };
+        CancelEmergencyDto: {
+            /** @description From the closed list `emergencyCancel`; optional. */
+            reasonCode?: string;
+        };
         CancelEventDto: {
             /** @description From the closed list `communityEventCancel`. */
             reasonCode: string;
@@ -10757,11 +10858,63 @@ export interface components {
          * @enum {string}
          */
         EmergencyFamilyRole: "owner" | "tenant" | "member";
+        EmergencyLocationView: {
+            /** @example Building 7 */
+            building: string | null;
+            /** @example 12 */
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
         /**
          * @description `office`: the community office; `duty`: the duty manager; `emergency`: the compound’s emergency number.
          * @enum {string}
          */
         EmergencyManagementRole: "office" | "duty" | "emergency";
+        /**
+         * @description `reported`: waiting for a responder; `on_the_way`: one accepted; `arrived`; `resolved`; `cancelled` (by the household).
+         * @enum {string}
+         */
+        EmergencyStatus: "reported" | "on_the_way" | "arrived" | "resolved" | "cancelled";
+        /**
+         * @description `security_notified`: responders were told (with the report); `management_notified`: escalated; `family_on_the_way`: one entry per member who answered.
+         * @enum {string}
+         */
+        EmergencyTimelineStep: "reported" | "security_notified" | "management_notified" | "on_the_way" | "arrived" | "family_on_the_way" | "resolved" | "cancelled";
+        /** @enum {string} */
+        EmergencyType: "medical" | "fire" | "security" | "facilities";
+        EmergencyView: {
+            /** @description Open, and the caller is its reporter or the unit’s primary. */
+            canCancel: boolean;
+            /** @description Closed: a code of `emergencyResolve` (resolved) or `emergencyCancel` (cancelled, may be null). */
+            closeReason: string | null;
+            /** @description How many of the others who live in the unit were told. */
+            familyNotified: number;
+            /** @description How many of them answered “on my way”. */
+            familyOnTheWay: number;
+            /** Format: uuid */
+            id: string;
+            location: components["schemas"]["EmergencyLocationView"];
+            /** @description The minutes the responder picked, counted down from when they accepted: null before that and once closed, 0 once arrived. */
+            minutesAway: number | null;
+            /** @description Whether the caller answered “on my way”; null for one who was not alerted (the reporter). */
+            onMyWay: boolean | null;
+            /** @example E-0042 */
+            reference: string;
+            /** Format: date-time */
+            reportedAt: string;
+            /** @description Who reported it. */
+            reportedBy: components["schemas"]["FirstNameRefView"];
+            responder: components["schemas"]["ResponderView"] | null;
+            /** @description `reported`: waiting for a responder; `on_the_way`: one accepted; `arrived`; `resolved`; `cancelled` (by the household). */
+            status: components["schemas"]["EmergencyStatus"];
+            timeline: components["schemas"]["TimelineStepView"][];
+            type: components["schemas"]["EmergencyType"];
+        };
+        EmergencyViewList: {
+            data: components["schemas"]["EmergencyView"][];
+            nextCursor: string | null;
+        };
         EngagementDetailView: {
             capacity: components["schemas"]["WorkerCapacity"];
             /** Format: date-time */
@@ -13630,6 +13783,14 @@ export interface components {
             /** Format: uuid */
             id: string;
         };
+        ReportEmergencyDto: {
+            type: components["schemas"]["EmergencyType"];
+            /**
+             * Format: uuid
+             * @description A unit that gives the caller the emergency button.
+             */
+            unitId: string;
+        };
         ReportMatchView: {
             permitStatus: components["schemas"]["VehiclePermitStatus"];
             unitCode: string;
@@ -14180,6 +14341,15 @@ export interface components {
         RespondSuggestionDto: {
             /** @description What the staff tell the author. Replaces an earlier answer. */
             response: string;
+        };
+        ResponderView: {
+            /** @description Their first name; null once erased. */
+            firstName: string | null;
+            /**
+             * @description The phone of the gate where they are on shift; for someone not at a gate, the compound’s duty (else emergency) phone. Never their own.
+             * @example +20225550100
+             */
+            phone: string | null;
         };
         ReverseClubPaymentDto: {
             /** @description From the closed list `clubPaymentReverse`. */
@@ -15841,6 +16011,14 @@ export interface components {
             code: string;
             /** Format: uuid */
             id: string;
+        };
+        TimelineStepView: {
+            /** Format: date-time */
+            at: string;
+            /** @description `family_on_the_way` only: the member’s first name. */
+            firstName?: string | null;
+            /** @description `security_notified`: responders were told (with the report); `management_notified`: escalated; `family_on_the_way`: one entry per member who answered. */
+            step: components["schemas"]["EmergencyTimelineStep"];
         };
         TokensView: {
             accessToken: string;
@@ -18564,6 +18742,108 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    EmergenciesController_report: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportEmergencyDto"];
+            };
+        };
+        responses: {
+            /** @description The open one. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmergencyView"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmergencyView"];
+                };
+            };
+        };
+    };
+    EmergenciesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmergencyView"];
+                };
+            };
+        };
+    };
+    EmergenciesController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelEmergencyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmergencyView"];
+                };
+            };
+        };
+    };
+    EmergenciesController_onMyWay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmergencyView"];
+                };
             };
         };
     };
@@ -21937,6 +22217,31 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    EmergenciesController_mine: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `open`: reported, on the way or arrived; `closed`: resolved or cancelled. */
+                status?: "open" | "closed";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmergencyViewList"];
+                };
             };
         };
     };

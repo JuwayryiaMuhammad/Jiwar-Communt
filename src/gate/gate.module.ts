@@ -90,6 +90,11 @@ import { PlaceProvisioning } from './places/place-provisioning';
 import { PlacesService } from './places/places.service';
 import { EmergencyContactsController } from './emergencies/emergency-contacts.controller';
 import { EmergencyContactsService } from './emergencies/emergency-contacts.service';
+import { EmergenciesController } from './emergencies/emergencies.controller';
+import { EmergenciesService } from './emergencies/emergencies.service';
+import { EmergencyEscalation } from './emergencies/emergency-escalation';
+import { EmergencyRecords } from './emergencies/emergency-records';
+import { SafetyCore } from './safety/safety-core';
 
 /**
  * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
@@ -135,6 +140,7 @@ import { EmergencyContactsService } from './emergencies/emergency-contacts.servi
     CommunityPlacesController,
     PlacesController,
     EmergencyContactsController,
+    EmergenciesController,
   ],
   providers: [
     GatesService,
@@ -180,6 +186,10 @@ import { EmergencyContactsService } from './emergencies/emergency-contacts.servi
     PlaceProvisioning,
     PlacesService,
     EmergencyContactsService,
+    SafetyCore,
+    EmergencyRecords,
+    EmergencyEscalation,
+    EmergenciesService,
   ],
 })
 export class GateModule {}

@@ -1014,6 +1014,15 @@ describe('API v0 — PII leak scan', () => {
       },
     );
 
+    // An emergency at home (ADR 0047): the primary reported it, the family
+    // member was alerted.
+    const piiEmergency = await idOf(
+      'POST',
+      '/emergencies',
+      await w.tokenFor(a, primary.id, 'resident'),
+      { type: 'medical', unitId: unit.id },
+    );
+
     /** One id for every param of the path, or each param by name. */
     type Ids = string | Record<string, string>;
     const params: Record<string, Ids> = {
@@ -1138,6 +1147,7 @@ describe('API v0 — PII leak scan', () => {
       '/staff/parking-reports/{id}': piiParkingReport,
       // ADR 0047: the family's phones, for those who live there only.
       '/units/{unitId}/emergency-contacts': unit.id,
+      '/emergencies/{id}': piiEmergency,
       // ADR 0046: last four characters at most, never a name.
       '/platform/tenants/{id}/payment-gateway': a.tenantId,
       '/staff/invoice-batches/{id}': piiInvoice.batchId,

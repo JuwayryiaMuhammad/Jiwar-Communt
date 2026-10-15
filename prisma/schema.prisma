@@ -528,6 +528,8 @@ model Tenant {
   invoiceBatches               InvoiceBatch[]
   invoices                     Invoice[]
   billingPlans                 BillingPlan[]
+  financePayments              FinancePayment[]
+  receiptLinks                 ReceiptLink[]
   announcements      Announcement[]
   communityEvents    CommunityEvent[]
   polls              Poll[]
@@ -962,6 +964,7 @@ model Account {
   creditNotesCreated             CreditNote[]                        @relation("CreditNoteCreator")
   billingPlansCreated            BillingPlan[]                       @relation("BillingPlanCreator")
   billingPlanOverridesUpdated    BillingPlanOverride[]               @relation("BillingPlanOverrideUpdater")
+  financePaymentsRecorded        FinancePayment[]                    @relation("FinancePaymentRecorder")
   neighbourConversationsAuthored NeighbourConversation[]             @relation("NeighbourConversationAuthor")
   neighbourConversationsStarted  NeighbourConversation[]             @relation("NeighbourConversationResponder")
   neighbourConversationMessages  NeighbourConversationMessage[]      @relation("NeighbourConversationMessageSender")
@@ -1072,6 +1075,7 @@ model Unit {
   invoiceBatches             InvoiceBatch[]
   invoices                   Invoice[]
   billingPlanOverrides       BillingPlanOverride[]
+  financePayments            FinancePayment[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -5282,6 +5286,7 @@ model Invoice {
   lines       InvoiceLine[]
   creditNotes CreditNote[]
   notices     InvoiceNotice[]
+  allocations FinanceAllocation[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, number])
@@ -5402,5 +5407,99 @@ model BillingPlanOverride {
   @@unique([tenantId, id])
   @@unique([tenantId, planId, unitId], map: "billing_plan_overrides_one_per_unit")
   @@map("billing_plan_overrides")
+}
+
+enum PaymentKind {
+  payment
+  reversal
+
+  @@map("payment_kind")
+}
+
+enum PaymentChannel {
+  office
+  online
+
+  @@map("payment_channel")
+}
+
+enum PaymentMethod {
+  cash
+  bank_transfer
+  cheque
+  card
+  wallet
+
+  @@map("payment_method")
+}
+
+/// A unit's payment, or the reversal of one made at the office (ADR 0046).
+/// Append-only. Each payment has a receipt: a number and a random code the
+/// public page verifies.
+model FinancePayment {
+  id            String          @id @db.Uuid
+  tenantId      String          @map("tenant_id") @db.Uuid
+  kind          PaymentKind
+  unitId        String          @map("unit_id") @db.Uuid
+  channel       PaymentChannel?
+  method        PaymentMethod?
+  amount        Decimal?        @db.Decimal(12, 2)
+  currency      String?
+  /// The local day it was paid.
+  paidOn        DateTime?       @map("paid_on") @db.Date
+  receiptNumber Int?            @map("receipt_number")
+  receiptCode   String?         @map("receipt_code")
+  /// A transfer's or cheque's reference, as written on it.
+  reference     String?
+  recordedById  String?         @map("recorded_by_account_id") @db.Uuid
+  reversesId    String?         @map("reverses_id") @db.Uuid
+  reasonCode    String?         @map("reason_code")
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  unit        Unit                @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  recordedBy  Account?            @relation("FinancePaymentRecorder", fields: [tenantId, recordedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_payments_tenant_id_recorded_by_fkey")
+  reverses    FinancePayment?     @relation("FinancePaymentReversal", fields: [tenantId, reversesId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_payments_tenant_id_reverses_id_fkey")
+  reversedBy  FinancePayment?     @relation("FinancePaymentReversal")
+  allocations FinanceAllocation[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, reversesId], map: "finance_payments_one_reversal")
+  @@index([tenantId, unitId, createdAt, id], map: "finance_payments_unit_idx")
+  @@index([tenantId, createdAt, id], map: "finance_payments_created_idx")
+  @@map("finance_payments")
+}
+
+/// Which invoice a payment paid, and how much (ADR 0046). Append-only; it
+/// stops counting when its payment is reversed.
+model FinanceAllocation {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  paymentId String   @map("payment_id") @db.Uuid
+  invoiceId String   @map("invoice_id") @db.Uuid
+  amount    Decimal  @db.Decimal(12, 2)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  payment FinancePayment @relation(fields: [tenantId, paymentId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  invoice Invoice        @relation(fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, invoiceId], map: "finance_allocations_invoice_idx")
+  @@index([tenantId, paymentId], map: "finance_allocations_payment_idx")
+  @@map("finance_allocations")
+}
+
+/// Global pointer from a receipt's code to its compound (ADR 0046), read by
+/// the public page before any tenant is known. Only the code's SHA-256.
+model ReceiptLink {
+  codeHash  String   @id @map("code_hash") @db.Char(64)
+  tenantId  String   @map("tenant_id") @db.Uuid
+  paymentId String   @map("payment_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([paymentId], map: "receipt_links_payment_idx")
+  @@map("receipt_links")
 }
 

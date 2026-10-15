@@ -340,3 +340,117 @@ export const FINANCE_BILLING_ROUTES: Row[] = [
     invalid: 'none',
   },
 ];
+
+/** Payments, receipts and statements (ADR 0046). */
+export const FINANCE_PAYMENT_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/staff/payments',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { channel: 'post' },
+      fields: [{ field: 'channel', code: 'INVALID_VALUE' }],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/staff/payments/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bFinancePaymentId }),
+      code: 'PAYMENT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'POST',
+    path: '/staff/units/{unitId}/payments',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      body: () => ({ amount: '10', method: 'cash', paidOn: '2026-10-15' }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      body: { amount: '10', method: 'card', paidOn: '2026-10-15' },
+      fields: [
+        {
+          field: 'method',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['cash', 'bank_transfer', 'cheque'] },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/staff/payments/{id}/reverse',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bFinancePaymentId }),
+      body: () => ({ reasonCode: 'duplicate' }),
+      code: 'PAYMENT_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: 7 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/staff/units/{unitId}/statement',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/units/{unitId}/payments',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/payments/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bFinancePaymentId }),
+      code: 'PAYMENT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/units/{unitId}/statement',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+];

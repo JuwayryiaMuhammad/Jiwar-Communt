@@ -850,6 +850,42 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   invoice_batches_plan_shape: {},
   invoices_plan_shape: {},
+  // Nullable columns only under IS [NOT] NULL; kind is NOT NULL.
+  finance_payments_kind_shape: {},
+  finance_payments_office_shape: {
+    guarded:
+      'channel IS NULL is tested first; the comparisons run only on a payment, whose method is set (kind_shape)',
+  },
+  finance_payments_reference_shape: {
+    guarded:
+      'method IS NULL is tested first; the list runs only on a value, the reference under IS NOT NULL',
+  },
+  finance_payments_reversal_recorder: {},
+  finance_payments_amount: {
+    guarded: 'amount IS NULL is tested first; the range runs only on a value',
+  },
+  finance_payments_currency: {
+    guarded:
+      'currency IS NULL is tested first; the comparison runs only on a value',
+  },
+  finance_payments_receipt_number: {
+    guarded:
+      'receipt_number IS NULL is tested first; the range runs only on a value',
+  },
+  finance_payments_receipt_code_shape: {
+    guarded:
+      'receipt_code IS NULL is tested first; the pattern runs only on a value',
+  },
+  finance_payments_reference_format: {
+    guarded:
+      'reference IS NULL is tested first; the pattern runs only on a value',
+  },
+  finance_payments_reason: {
+    guarded:
+      'reason_code IS NULL is tested first; the list runs only on a value',
+  },
+  finance_allocations_amount: {},
+  receipt_links_code_hash_shape: {},
   invoices_period: {
     guarded:
       'period_starts_on IS NULL and period_ends_on IS NULL are tested first; the comparison runs only on two values',

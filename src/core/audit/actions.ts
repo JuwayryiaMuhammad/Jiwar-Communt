@@ -765,6 +765,11 @@ export const AUDIT_ACTIONS = {
   'billing_plan.override_set': { log: 'tenant', target: 'billing_plan' },
   // metadata: unitId.
   'billing_plan.override_removed': { log: 'tenant', target: 'billing_plan' },
+  // metadata: unitId, channel, method, amount, paidOn, receiptNumber, the
+  // invoices named; never the transfer's or cheque's reference.
+  'payment.recorded': { log: 'tenant', target: 'payment' },
+  // metadata: paymentId, unitId, amount, reasonCode.
+  'payment.reversed': { log: 'tenant', target: 'payment' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

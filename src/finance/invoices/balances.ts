@@ -38,7 +38,11 @@ export interface Balance {
 export const CREDITED_SQL = Prisma.sql`COALESCE((
   SELECT SUM(c.amount) FROM credit_notes c
    WHERE c.tenant_id = i.tenant_id AND c.invoice_id = i.id), 0)`;
-export const PAID_SQL = Prisma.sql`0::numeric`;
+export const PAID_SQL = Prisma.sql`COALESCE((
+  SELECT SUM(a.amount) FROM finance_allocations a
+   WHERE a.tenant_id = i.tenant_id AND a.invoice_id = i.id
+     AND NOT EXISTS (SELECT 1 FROM finance_payments r
+                      WHERE r.tenant_id = a.tenant_id AND r.reverses_id = a.payment_id)), 0)`;
 
 export function statusOf(
   b: Balance,

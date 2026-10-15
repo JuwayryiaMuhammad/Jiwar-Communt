@@ -4660,6 +4660,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/payments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one of my units’ payments and its receipt */
+        get: operations["UnitPaymentsController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/permissions": {
         parameters: {
             query?: never;
@@ -6091,6 +6108,94 @@ export interface paths {
         head?: never;
         /** Change a parking slot’s code or place */
         patch: operations["ParkingSlotsController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List payments, newest first */
+        get: operations["StaffPaymentsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/payments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a payment, its receipt and what it paid */
+        get: operations["StaffPaymentsController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/payments/{id}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverse an office payment, once, with a reason code */
+        post: operations["StaffPaymentsController_reverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/units/{unitId}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record a payment made at the office
+         * @description Cash, a bank transfer or a cheque; at most what is owed. It pays the invoices named first, then the oldest due.
+         */
+        post: operations["StaffPaymentsController_record"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/units/{unitId}/statement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Where a unit stands: owed, credit, latest activity */
+        get: operations["StaffPaymentsController_statement"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/staff/vehicle-fine-payments/{id}/reverse": {
@@ -7618,6 +7723,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List a unit’s payments, newest first */
+        get: operations["UnitPaymentsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/standing-instructions": {
         parameters: {
             query?: never;
@@ -7648,6 +7770,23 @@ export interface paths {
         post?: never;
         /** Delete a standing instruction */
         delete: operations["VisitorsController_deleteStanding"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/statement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Where my unit stands: owed, credit, latest activity */
+        get: operations["UnitPaymentsController_statement"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -12427,6 +12566,97 @@ export interface components {
              */
             period: string;
         };
+        PaymentAllocationView: {
+            amount: string;
+            /** Format: uuid */
+            invoiceId: string;
+            invoiceNumber: string;
+        };
+        /** @enum {string} */
+        PaymentChannel: "office" | "online";
+        PaymentDetailView: {
+            /** @description Paid to invoices (live). */
+            allocated: string;
+            allocations: components["schemas"]["PaymentAllocationView"][];
+            /** @description EGP, two decimals. */
+            amount: string;
+            channel: components["schemas"]["PaymentChannel"];
+            /** Format: date-time */
+            createdAt: string;
+            /** @enum {string} */
+            currency: "EGP";
+            /** Format: uuid */
+            id: string;
+            method: components["schemas"]["PaymentMethod"];
+            /**
+             * Format: date
+             * @description Local day.
+             */
+            paidOn: string;
+            /** @description Anyone may verify it on the public page. */
+            receiptCode: string;
+            /** @example RC-000123 */
+            receiptNumber: string;
+            /** @description `<PUBLIC_APP_URL>/receipt#<code>` */
+            receiptUrl: string;
+            /** @description Who recorded it at the office: in staff views only. */
+            recordedBy: components["schemas"]["StaffRefView"] | null;
+            reference: string | null;
+            reversal: components["schemas"]["PaymentReversalView"] | null;
+            /** @description Not yet paid to any invoice: the unit’s credit. */
+            unallocated: string;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        /** @enum {string} */
+        PaymentMethod: "cash" | "bank_transfer" | "cheque" | "card" | "wallet";
+        PaymentReversalView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description REASON_CODES.paymentReverse */
+            reasonCode: string;
+        };
+        PaymentView: {
+            /** @description Paid to invoices (live). */
+            allocated: string;
+            /** @description EGP, two decimals. */
+            amount: string;
+            channel: components["schemas"]["PaymentChannel"];
+            /** Format: date-time */
+            createdAt: string;
+            /** @enum {string} */
+            currency: "EGP";
+            /** Format: uuid */
+            id: string;
+            method: components["schemas"]["PaymentMethod"];
+            /**
+             * Format: date
+             * @description Local day.
+             */
+            paidOn: string;
+            /** @description Anyone may verify it on the public page. */
+            receiptCode: string;
+            /** @example RC-000123 */
+            receiptNumber: string;
+            /** @description `<PUBLIC_APP_URL>/receipt#<code>` */
+            receiptUrl: string;
+            /** @description Who recorded it at the office: in staff views only. */
+            recordedBy: components["schemas"]["StaffRefView"] | null;
+            reference: string | null;
+            reversal: components["schemas"]["PaymentReversalView"] | null;
+            /** @description Not yet paid to any invoice: the unit’s credit. */
+            unallocated: string;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        PaymentViewList: {
+            data: components["schemas"]["PaymentView"][];
+            nextCursor: string | null;
+        };
         PendingErasureView: {
             /** Format: uuid */
             accountId: string;
@@ -12959,6 +13189,18 @@ export interface components {
             paidOn: string;
             /** @description Once among the compound’s fine payments (DUPLICATE_RESOURCE). */
             receiptNumber: string;
+        };
+        RecordOfficePaymentDto: {
+            /** @description At most what the invoices (named, or all the unit’s) still ask for. */
+            amount: string;
+            /** @description Invoices to pay first (the unit’s, still owed); the rest goes oldest due first. */
+            invoiceIds?: string[];
+            /** @enum {string} */
+            method: "cash" | "bank_transfer" | "cheque";
+            /** @description The local day it was paid: today or up to 31 days ago. */
+            paidOn: string;
+            /** @description For a transfer or a cheque, and only for them. */
+            reference?: string;
         };
         RefreshTokenDto: {
             refreshToken: string;
@@ -13630,6 +13872,10 @@ export interface components {
         };
         ReverseFinePaymentDto: {
             /** @description From the closed list `vehicleFinePaymentReverse`. */
+            reasonCode: string;
+        };
+        ReversePaymentDto: {
+            /** @description `entered_in_error`, `duplicate`, `bounced_cheque` or `other` (REASON_CODES.paymentReverse). */
             reasonCode: string;
         };
         ReviewDto: {
@@ -14499,6 +14745,12 @@ export interface components {
             data: components["schemas"]["StaffPostView"][];
             nextCursor: string | null;
         };
+        StaffRefView: {
+            /** @description None once erased. */
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+        };
         StaffRemoveVehicleDto: {
             /** @description From the closed list `vehicleStaffRemove`. */
             reasonCode: string;
@@ -14900,6 +15152,32 @@ export interface components {
         StartShiftDto: {
             /** Format: uuid */
             gateId: string;
+        };
+        StatementEntryView: {
+            /** @description Positive; the kind says which way it goes. */
+            amount: string;
+            /** Format: date-time */
+            at: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "invoice" | "credit_note" | "payment" | "reversal";
+            /** @description INV-, CN- or RC- number; a reversal shows its payment’s. */
+            number: string;
+        };
+        StatementView: {
+            /** @description Paid beyond what was owed, for its next invoices. */
+            credit: string;
+            /** @description The latest 100 entries, newest first. */
+            entries: components["schemas"]["StatementEntryView"][];
+            /** @description Residents can pay online now. */
+            onlinePayment: boolean;
+            /** @description Every invoice still owed, oldest due first. */
+            openInvoices: components["schemas"]["InvoiceView"][];
+            outstanding: string;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
         };
         StatusHistoryView: {
             /** @description Null for the system. */
@@ -23602,6 +23880,27 @@ export interface operations {
             };
         };
     };
+    UnitPaymentsController_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentDetailView"];
+                };
+            };
+        };
+    };
     RolesController_catalog: {
         parameters: {
             query?: never;
@@ -25940,6 +26239,134 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffParkingSlotView"];
+                };
+            };
+        };
+    };
+    StaffPaymentsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                channel?: components["schemas"]["PaymentChannel"];
+                method?: components["schemas"]["PaymentMethod"];
+                unitId?: string;
+                /** @description Paid on or after. */
+                from?: string;
+                /** @description Paid on or before. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentViewList"];
+                };
+            };
+        };
+    };
+    StaffPaymentsController_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentDetailView"];
+                };
+            };
+        };
+    };
+    StaffPaymentsController_reverse: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReversePaymentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentDetailView"];
+                };
+            };
+        };
+    };
+    StaffPaymentsController_record: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordOfficePaymentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentDetailView"];
+                };
+            };
+        };
+    };
+    StaffPaymentsController_statement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementView"];
                 };
             };
         };
@@ -28321,6 +28748,31 @@ export interface operations {
             };
         };
     };
+    UnitPaymentsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentViewList"];
+                };
+            };
+        };
+    };
     VisitorsController_listStanding: {
         parameters: {
             query?: never;
@@ -28387,6 +28839,27 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    UnitPaymentsController_statement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementView"];
+                };
             };
         };
     };

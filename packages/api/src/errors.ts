@@ -261,6 +261,11 @@ const ERROR_TEXT: Record<string, string> = {
   CREDIT_EXCEEDS_OUTSTANDING: 'A credit note cannot be more than the invoice still asks for.',
   BILLING_PLAN_NOT_FOUND: 'This billing plan does not exist.',
   BILLING_OVERRIDE_NOT_FOUND: 'This unit has no terms of its own in the plan.',
+  PAYMENT_NOT_FOUND: 'This payment does not exist.',
+  PAYMENT_NOT_REVERSIBLE: 'An online payment cannot be reversed here.',
+  PAYMENT_ALREADY_REVERSED: 'This payment was reversed already.',
+  PAYMENT_EXCEEDS_OUTSTANDING: 'More than the unit owes: record at most what is outstanding.',
+  INVOICE_NOT_PAYABLE: 'One of these invoices is not this unit’s, or nothing is owed on it.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

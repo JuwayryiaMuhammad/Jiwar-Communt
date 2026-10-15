@@ -23,6 +23,7 @@ import {
   FINANCE_BILLING_ROUTES,
   FINANCE_GATEWAY_ROUTES,
   FINANCE_INVOICE_ROUTES,
+  FINANCE_PAYMENT_ROUTES,
 } from './finance';
 import { GATE_ROUTES } from './gate';
 import { EXISTING_ROUTES } from './existing';
@@ -156,4 +157,5 @@ export const ROUTES: Row[] = [
   ...FINANCE_GATEWAY_ROUTES,
   ...FINANCE_INVOICE_ROUTES,
   ...FINANCE_BILLING_ROUTES,
+  ...FINANCE_PAYMENT_ROUTES,
 ];

@@ -353,6 +353,67 @@ describe('Audit coverage — finance', () => {
     });
   });
 
+  describe('payments', () => {
+    it('payment.recorded and payment.reversed: amounts, codes and ids; never the reference', async () => {
+      const { invoiceId } = await f.issue(s.manager, s.home.id);
+      const res = await f
+        .http(
+          'post',
+          `/staff/units/${s.home.id}/payments`,
+          s.accountant.token,
+          {
+            amount: '300',
+            method: 'cheque',
+            reference: 'CHQ-AUDIT-991',
+            paidOn: day(0),
+            invoiceIds: [invoiceId],
+          },
+        )
+        .expect(201);
+      const payment = res.body as { id: string; receiptNumber: string };
+      const recorded = await single('payment.recorded', payment.id);
+      expect(recorded).toMatchObject({
+        actorId: s.accountant.id,
+        targetType: 'payment',
+        metadata: {
+          unitId: s.home.id,
+          channel: 'office',
+          method: 'cheque',
+          amount: '300.00',
+          paidOn: day(0),
+          receiptNumber: payment.receiptNumber,
+          invoiceIds: [invoiceId],
+        },
+      });
+      expect(JSON.stringify(recorded)).not.toContain('CHQ-AUDIT-991');
+      const reversal = await f
+        .http(
+          'post',
+          `/staff/payments/${payment.id}/reverse`,
+          s.manager.token,
+          {
+            reasonCode: 'bounced_cheque',
+          },
+        )
+        .expect(201);
+      expect((reversal.body as { id: string }).id).toBe(payment.id);
+      const rows = await read.tenant(s.c.tenantId, {
+        action: 'payment.reversed',
+      });
+      covered.add('payment.reversed');
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        actorId: s.manager.id,
+        metadata: {
+          paymentId: payment.id,
+          unitId: s.home.id,
+          amount: '300.00',
+          reasonCode: 'bounced_cheque',
+        },
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every finance entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

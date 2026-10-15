@@ -79,6 +79,7 @@ export const REASON_CODES = {
   vehicleFinePaymentReverse: ['entered_in_error', 'refunded', 'other'],
   parkingReportClose: ['resolved', 'vehicle_not_found', 'duplicate', 'not_a_violation'],
   creditNote: ['billing_error', 'waiver', 'duplicate', 'goodwill', 'other'],
+  paymentReverse: ['entered_in_error', 'duplicate', 'bounced_cheque', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

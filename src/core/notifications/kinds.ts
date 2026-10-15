@@ -1075,6 +1075,14 @@ export const NOTIFICATION_KINDS = {
     target: 'invoice',
     params: {},
   },
+  /** A payment for the unit, at the office or online; its receipt is in the app. */
+  'payment.received': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'payment',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

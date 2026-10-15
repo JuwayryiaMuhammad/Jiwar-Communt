@@ -13696,6 +13696,313 @@
         ],
         "type": "object"
       },
+      "PaymentAllocationView": {
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "invoiceId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "invoiceNumber": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId",
+          "invoiceNumber",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "PaymentChannel": {
+        "enum": [
+          "office",
+          "online"
+        ],
+        "type": "string"
+      },
+      "PaymentDetailView": {
+        "properties": {
+          "allocated": {
+            "description": "Paid to invoices (live).",
+            "type": "string"
+          },
+          "allocations": {
+            "items": {
+              "$ref": "#/components/schemas/PaymentAllocationView"
+            },
+            "type": "array"
+          },
+          "amount": {
+            "description": "EGP, two decimals.",
+            "type": "string"
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentChannel"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "enum": [
+              "EGP"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentMethod"
+              }
+            ]
+          },
+          "paidOn": {
+            "description": "Local day.",
+            "format": "date",
+            "type": "string"
+          },
+          "receiptCode": {
+            "description": "Anyone may verify it on the public page.",
+            "type": "string"
+          },
+          "receiptNumber": {
+            "example": "RC-000123",
+            "type": "string"
+          },
+          "receiptUrl": {
+            "description": "`<PUBLIC_APP_URL>/receipt#<code>`",
+            "type": "string"
+          },
+          "recordedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffRefView"
+              }
+            ],
+            "description": "Who recorded it at the office: in staff views only.",
+            "nullable": true,
+            "type": "object"
+          },
+          "reference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reversal": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentReversalView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "unallocated": {
+            "description": "Not yet paid to any invoice: the unit’s credit.",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "unitCode",
+          "channel",
+          "method",
+          "amount",
+          "currency",
+          "paidOn",
+          "receiptNumber",
+          "receiptCode",
+          "receiptUrl",
+          "reference",
+          "allocated",
+          "unallocated",
+          "reversal",
+          "recordedBy",
+          "createdAt",
+          "allocations"
+        ],
+        "type": "object"
+      },
+      "PaymentMethod": {
+        "enum": [
+          "cash",
+          "bank_transfer",
+          "cheque",
+          "card",
+          "wallet"
+        ],
+        "type": "string"
+      },
+      "PaymentReversalView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "REASON_CODES.paymentReverse",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reasonCode",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "PaymentView": {
+        "properties": {
+          "allocated": {
+            "description": "Paid to invoices (live).",
+            "type": "string"
+          },
+          "amount": {
+            "description": "EGP, two decimals.",
+            "type": "string"
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentChannel"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "enum": [
+              "EGP"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentMethod"
+              }
+            ]
+          },
+          "paidOn": {
+            "description": "Local day.",
+            "format": "date",
+            "type": "string"
+          },
+          "receiptCode": {
+            "description": "Anyone may verify it on the public page.",
+            "type": "string"
+          },
+          "receiptNumber": {
+            "example": "RC-000123",
+            "type": "string"
+          },
+          "receiptUrl": {
+            "description": "`<PUBLIC_APP_URL>/receipt#<code>`",
+            "type": "string"
+          },
+          "recordedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffRefView"
+              }
+            ],
+            "description": "Who recorded it at the office: in staff views only.",
+            "nullable": true,
+            "type": "object"
+          },
+          "reference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reversal": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentReversalView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "unallocated": {
+            "description": "Not yet paid to any invoice: the unit’s credit.",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "unitCode",
+          "channel",
+          "method",
+          "amount",
+          "currency",
+          "paidOn",
+          "receiptNumber",
+          "receiptCode",
+          "receiptUrl",
+          "reference",
+          "allocated",
+          "unallocated",
+          "reversal",
+          "recordedBy",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "PaymentViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PaymentView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "PendingErasureView": {
         "properties": {
           "accountId": {
@@ -15421,6 +15728,47 @@
         "required": [
           "amount",
           "receiptNumber",
+          "paidOn"
+        ],
+        "type": "object"
+      },
+      "RecordOfficePaymentDto": {
+        "properties": {
+          "amount": {
+            "description": "At most what the invoices (named, or all the unit’s) still ask for.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "invoiceIds": {
+            "description": "Invoices to pay first (the unit’s, still owed); the rest goes oldest due first.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "method": {
+            "enum": [
+              "cash",
+              "bank_transfer",
+              "cheque"
+            ],
+            "type": "string"
+          },
+          "paidOn": {
+            "description": "The local day it was paid: today or up to 31 days ago.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "reference": {
+            "description": "For a transfer or a cheque, and only for them.",
+            "pattern": "^[A-Za-z0-9/-]{1,40}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "method",
           "paidOn"
         ],
         "type": "object"
@@ -17746,6 +18094,18 @@
         "properties": {
           "reasonCode": {
             "description": "From the closed list `vehicleFinePaymentReverse`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "ReversePaymentDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "`entered_in_error`, `duplicate`, `bounced_cheque` or `other` (REASON_CODES.paymentReverse).",
             "type": "string"
           }
         },
@@ -20788,6 +21148,24 @@
         ],
         "type": "object"
       },
+      "StaffRefView": {
+        "properties": {
+          "fullName": {
+            "description": "None once erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ],
+        "type": "object"
+      },
       "StaffRemoveVehicleDto": {
         "properties": {
           "reasonCode": {
@@ -22145,6 +22523,89 @@
         },
         "required": [
           "gateId"
+        ],
+        "type": "object"
+      },
+      "StatementEntryView": {
+        "properties": {
+          "amount": {
+            "description": "Positive; the kind says which way it goes.",
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "invoice",
+              "credit_note",
+              "payment",
+              "reversal"
+            ],
+            "type": "string"
+          },
+          "number": {
+            "description": "INV-, CN- or RC- number; a reversal shows its payment’s.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "number",
+          "amount",
+          "at"
+        ],
+        "type": "object"
+      },
+      "StatementView": {
+        "properties": {
+          "credit": {
+            "description": "Paid beyond what was owed, for its next invoices.",
+            "type": "string"
+          },
+          "entries": {
+            "description": "The latest 100 entries, newest first.",
+            "items": {
+              "$ref": "#/components/schemas/StatementEntryView"
+            },
+            "type": "array"
+          },
+          "onlinePayment": {
+            "description": "Residents can pay online now.",
+            "type": "boolean"
+          },
+          "openInvoices": {
+            "description": "Every invoice still owed, oldest due first.",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceView"
+            },
+            "type": "array"
+          },
+          "outstanding": {
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "unitCode",
+          "outstanding",
+          "credit",
+          "openInvoices",
+          "entries",
+          "onlinePayment"
         ],
         "type": "object"
       },
@@ -40289,6 +40750,43 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/payments/{id}": {
+      "get": {
+        "operationId": "UnitPaymentsController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one of my units’ payments and its receipt",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/permissions": {
       "get": {
         "operationId": "RolesController_catalog",
@@ -44687,6 +45185,287 @@
           "parking"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/payments": {
+      "get": {
+        "operationId": "StaffPaymentsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PaymentChannel"
+            }
+          },
+          {
+            "in": "query",
+            "name": "method",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PaymentMethod"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Paid on or after.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Paid on or before.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List payments, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/payments/{id}": {
+      "get": {
+        "operationId": "StaffPaymentsController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a payment, its receipt and what it paid",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/payments/{id}/reverse": {
+      "post": {
+        "operationId": "StaffPaymentsController_reverse",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReversePaymentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reverse an office payment, once, with a reason code",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/units/{unitId}/payments": {
+      "post": {
+        "description": "Cash, a bank transfer or a cheque; at most what is owed. It pays the invoices named first, then the oldest due.",
+        "operationId": "StaffPaymentsController_record",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordOfficePaymentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a payment made at the office",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/units/{unitId}/statement": {
+      "get": {
+        "operationId": "StaffPaymentsController_statement",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Where a unit stands: owed, credit, latest activity",
+        "tags": [
+          "finance"
+        ],
         "x-stability": "draft"
       }
     },
@@ -49239,6 +50018,63 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/units/{unitId}/payments": {
+      "get": {
+        "operationId": "UnitPaymentsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a unit’s payments, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/units/{unitId}/standing-instructions": {
       "get": {
         "operationId": "VisitorsController_listStanding",
@@ -49364,6 +50200,43 @@
         "summary": "Delete a standing instruction",
         "tags": [
           "visitors"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/statement": {
+      "get": {
+        "operationId": "UnitPaymentsController_statement",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Where my unit stands: owed, credit, latest activity",
+        "tags": [
+          "finance"
         ],
         "x-stability": "draft"
       }

@@ -531,6 +531,19 @@ export const ErrorCode = {
   BILLING_PLAN_NOT_FOUND: 'BILLING_PLAN_NOT_FOUND',
   /** The unit has no terms of its own in the plan. */
   BILLING_OVERRIDE_NOT_FOUND: 'BILLING_OVERRIDE_NOT_FOUND',
+  /** Unknown, another compound's, not a payment, or not the caller's to see. */
+  PAYMENT_NOT_FOUND: 'PAYMENT_NOT_FOUND',
+  /** An online payment is refunded, never reversed (409). */
+  PAYMENT_NOT_REVERSIBLE: 'PAYMENT_NOT_REVERSIBLE',
+  /** It was reversed already (409). */
+  PAYMENT_ALREADY_REVERSED: 'PAYMENT_ALREADY_REVERSED',
+  /**
+   * More than the invoices still ask for: the office never takes credit
+   * (409, params.outstanding).
+   */
+  PAYMENT_EXCEEDS_OUTSTANDING: 'PAYMENT_EXCEEDS_OUTSTANDING',
+  /** Not the unit's, or nothing is owed on it (409, params.invoiceIds). */
+  INVOICE_NOT_PAYABLE: 'INVOICE_NOT_PAYABLE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

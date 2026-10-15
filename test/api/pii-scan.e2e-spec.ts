@@ -941,6 +941,12 @@ describe('API v0 — PII leak scan', () => {
       a.tokens.manager,
       { amount: '50', reasonCode: 'goodwill' },
     );
+    const piiPayment = await idOf(
+      'POST',
+      `/staff/units/${unit.id}/payments`,
+      a.tokens.manager,
+      { amount: '300', method: 'cheque', reference: 'CHQ-77', paidOn: day(0) },
+    );
     const piiPlan = await idOf(
       'POST',
       '/staff/billing-plans',
@@ -1138,6 +1144,11 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/invoices': unit.id,
       '/staff/billing-plans/{id}': piiPlan,
       '/staff/billing-plans/{id}/overrides': piiPlan,
+      '/staff/payments/{id}': piiPayment,
+      '/payments/{id}': piiPayment,
+      '/units/{unitId}/payments': unit.id,
+      '/units/{unitId}/statement': unit.id,
+      '/staff/units/{unitId}/statement': unit.id,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

@@ -1141,6 +1141,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تجاوزت فاتورة لوحدتك تاريخ استحقاقها.',
     },
   },
+  'payment.received': {
+    en: {
+      title: 'Payment received',
+      body: 'A payment for your unit was received. Your receipt is in the app.',
+    },
+    ar: {
+      title: 'تم استلام دفعة',
+      body: 'تم استلام دفعة لوحدتك. الإيصال متاح في التطبيق.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

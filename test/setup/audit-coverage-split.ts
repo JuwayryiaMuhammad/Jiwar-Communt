@@ -340,4 +340,6 @@ export const FINANCE_COVERAGE: readonly string[] = [
   'billing_plan.updated',
   'billing_plan.override_set',
   'billing_plan.override_removed',
+  'payment.recorded',
+  'payment.reversed',
 ];

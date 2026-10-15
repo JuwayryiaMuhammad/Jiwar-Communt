@@ -24,6 +24,11 @@ import {
 } from './invoices/invoices.controller';
 import { InvoicesService } from './invoices/invoices.service';
 import { FinanceNotices } from './notices/finance-notices';
+import {
+  StaffPaymentsController,
+  UnitPaymentsController,
+} from './payments/payments.controller';
+import { PaymentsService } from './payments/payments.service';
 
 /**
  * Finance (ADR 0046): invoices per unit, recurring billing, payments at the
@@ -39,6 +44,8 @@ import { FinanceNotices } from './notices/finance-notices';
     StaffInvoicesController,
     UnitInvoicesController,
     BillingPlansController,
+    StaffPaymentsController,
+    UnitPaymentsController,
   ],
   providers: [
     FinanceProvisioning,
@@ -47,6 +54,7 @@ import { FinanceNotices } from './notices/finance-notices';
     InvoicesService,
     InvoiceNoticesSweep,
     BillingPlansService,
+    PaymentsService,
     CredentialVault,
     GatewayService,
     GatewayKeys,

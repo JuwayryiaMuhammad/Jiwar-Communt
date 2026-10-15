@@ -5,6 +5,7 @@ import { hashPassword } from '../../src/core/platform/password';
 import { PlatformSessionService } from '../../src/core/platform/platform-session.service';
 import { BillingPlansService } from '../../src/finance/billing-plans/billing-plans.service';
 import { InvoicesService } from '../../src/finance/invoices/invoices.service';
+import { PaymentsService } from '../../src/finance/payments/payments.service';
 import { DelegationsService } from '../../src/community/households/delegations.service';
 import { HouseholdsService } from '../../src/community/households/households.service';
 import { MemberPermissionsService } from '../../src/community/households/member-permissions.service';
@@ -199,6 +200,8 @@ export interface World {
   bInvoiceId: string;
   /** One of B's billing plans (ADR 0046). */
   bBillingPlanId: string;
+  /** An office payment of B's invoice (ADR 0046). */
+  bFinancePaymentId: string;
   /** One of A's plans, for valid payment bodies. */
   aClubPlanId: string;
   /** One of A's, open every day, roomy, for valid bookings. */
@@ -858,7 +861,19 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       issueDaysBefore: 0,
       dueDaysAfterIssue: 10,
     });
-    return { batchId: batch.id, invoiceId: invoice.id, planId: plan.id };
+    const payment = await h.moduleRef
+      .get(PaymentsService)
+      .recordOffice(b.homeUnitId, {
+        amount: '200',
+        method: 'cash',
+        paidOn: day(0),
+      });
+    return {
+      batchId: batch.id,
+      invoiceId: invoice.id,
+      planId: plan.id,
+      paymentId: payment.id,
+    };
   });
   return {
     bInvoiceBatchId: bFinance.batchId,
@@ -872,6 +887,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bParkingBookingId: bParking.booking.id,
     aAreaId: aArea.id,
     bBillingPlanId: bFinance.planId,
+    bFinancePaymentId: bFinance.paymentId,
     bClubPlanId: bClubPlan.id,
     aClubPlanId: aClubPlan.id,
     bMembershipId: bClub.membershipId,

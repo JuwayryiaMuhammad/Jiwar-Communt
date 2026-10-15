@@ -271,4 +271,12 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   billing_plan_overrides_one_per_unit: null,
   // The sweep bills under the compound's exclusive lock: a race.
   invoices_one_per_plan_unit_period: null,
+  finance_payments_tenant_id_id_key: null,
+  // Checked under the unit's finance lock first: a race.
+  finance_payments_one_reversal: null,
+  // From the counter, and 128 random bits: a violation is a race or a
+  // collision, and names nothing.
+  finance_payments_receipt_number_key: null,
+  finance_payments_receipt_code_key: null,
+  finance_allocations_tenant_id_id_key: null,
 };

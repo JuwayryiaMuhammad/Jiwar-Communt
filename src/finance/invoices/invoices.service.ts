@@ -24,6 +24,7 @@ import { formatNumber, takeNumbers } from '../counters';
 import { asDate, fromDate, localToday } from '../db-clock';
 import { CURRENCY, MAX_AMOUNT, money, show, ZERO } from '../money';
 import { FinanceNotices } from '../notices/finance-notices';
+import { allocateUnits } from '../payments/allocation';
 import {
   balancesOf,
   CREDITED_SQL,
@@ -265,6 +266,12 @@ export class InvoicesService implements OnModuleInit {
         })),
       ),
     });
+    // A unit holding credit pays its new invoice with it at once.
+    await allocateUnits(
+      tx,
+      tenantId,
+      input.units.map((u) => u.id),
+    );
     const last = first + input.units.length - 1;
     await this.audit.record(tx, {
       action: 'invoice_batch.issued',
@@ -505,6 +512,15 @@ export class InvoicesService implements OnModuleInit {
       where: { invoiceId: invoice.id },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
+    const allocations = await tx.financeAllocation.findMany({
+      where: { invoiceId: invoice.id },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      include: {
+        payment: {
+          select: { receiptNumber: true, reversedBy: { select: { id: true } } },
+        },
+      },
+    });
     return {
       ...view,
       batchId: invoice.batchId,
@@ -523,7 +539,13 @@ export class InvoicesService implements OnModuleInit {
         amount: show(l.amount),
       })),
       creditNotes: notes.map(creditNoteView),
-      allocations: [],
+      allocations: allocations.map((a) => ({
+        paymentId: a.paymentId,
+        receiptNumber: formatNumber('receipt', a.payment.receiptNumber!),
+        amount: show(a.amount),
+        reversed: a.payment.reversedBy !== null,
+        createdAt: a.createdAt,
+      })),
     };
   }
 }

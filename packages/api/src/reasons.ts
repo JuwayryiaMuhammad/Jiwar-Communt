@@ -80,6 +80,8 @@ export const REASON_CODES = {
   parkingReportClose: ['resolved', 'vehicle_not_found', 'duplicate', 'not_a_violation'],
   // Emergencies and gate services (ADR 0047).
   placeKey: ['main_gate', 'north_gate', 'phase_a', 'phase_b', 'clubhouse', 'parking', 'other'],
+  emergencyCancel: ['false_alarm', 'resolved_ourselves', 'other'],
+  emergencyResolve: ['handled', 'false_alarm', 'transferred_ambulance', 'transferred_civil_defense', 'other'],
   creditNote: ['billing_error', 'waiver', 'duplicate', 'goodwill', 'other'],
   paymentReverse: ['entered_in_error', 'duplicate', 'bounced_cheque', 'other'],
 } as const;

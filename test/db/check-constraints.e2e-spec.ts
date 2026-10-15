@@ -930,6 +930,37 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   places_names_length: {},
   places_position_range: {},
+  safety_counters_last_number: {},
+  emergencies_number_positive: {},
+  emergencies_eta: {
+    guarded:
+      'eta_minutes IS NULL is tested first; the list runs only on a value',
+  },
+  emergencies_escalation: {
+    guarded:
+      'escalation_reason IS NULL is tested first; the list runs only on a value',
+  },
+  emergencies_accept_shape: {},
+  emergencies_close_shape: {},
+  // Nullable columns only under IS [NOT] NULL; status is NOT NULL.
+  emergencies_state_shape: {},
+  emergencies_close_side: {
+    guarded:
+      'close_side IS NULL is tested first; the comparisons run only on a value',
+  },
+  emergencies_cancel_reason: {
+    guarded:
+      'close_reason IS NULL is tested first; the list runs only on a value',
+  },
+  emergencies_resolve_reason: {
+    guarded:
+      'close_reason IS NOT NULL is required before the list, so NULL fails',
+  },
+  emergencies_close_reason_open: {},
+  emergencies_close_note_length: {
+    guarded:
+      'close_note IS NULL is tested first; the length runs only on a value',
+  },
 };
 
 interface Check {

@@ -296,4 +296,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // Two places in service never share a name, in either language.
   places_active_name_en_key: ['nameEn'],
   places_active_name_ar_key: ['nameAr'],
+  emergencies_tenant_id_id_key: null,
+  // Numbers come from the counter under its row lock: a collision is a bug.
+  emergencies_number_key: null,
+  // Checked under the unit's emergency lock first, and a violation re-reads
+  // the open one: a race.
+  emergencies_one_open: null,
 };

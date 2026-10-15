@@ -415,6 +415,17 @@ export const REASON_CODES = {
     'parking',
     'other',
   ],
+  // Why the reporter or the unit's primary cancels an emergency (ADR 0047):
+  // optional.
+  emergencyCancel: ['false_alarm', 'resolved_ourselves', 'other'],
+  // How a responder or the management closes an emergency (ADR 0047).
+  emergencyResolve: [
+    'handled',
+    'false_alarm',
+    'transferred_ambulance',
+    'transferred_civil_defense',
+    'other',
+  ],
   // Why the staff credit part or all of an invoice (ADR 0046).
   creditNote: ['billing_error', 'waiver', 'duplicate', 'goodwill', 'other'],
   // Why the office reverses a payment it recorded (ADR 0046).

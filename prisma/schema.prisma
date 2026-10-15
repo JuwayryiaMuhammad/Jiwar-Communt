@@ -5631,3 +5631,86 @@ model Place {
   @@index([tenantId, position, id], map: "places_order_idx")
   @@map("places")
 }
+
+enum SafetyCounterSeries {
+  emergency
+  accessibility
+  service
+
+  @@map("safety_counter_series")
+}
+
+/// A compound's E-, A- and S- numbers, taken under the row lock (ADR 0047).
+model SafetyCounter {
+  tenantId   String              @map("tenant_id") @db.Uuid
+  series     SafetyCounterSeries
+  lastNumber Int                 @default(0) @map("last_number")
+
+  @@id([tenantId, series])
+  @@map("safety_counters")
+}
+
+enum EmergencyType {
+  medical
+  fire
+  security
+  facilities
+
+  @@map("emergency_type")
+}
+
+enum EmergencyStatus {
+  reported
+  on_the_way
+  arrived
+  resolved
+  cancelled
+
+  @@map("emergency_status")
+}
+
+/// An emergency reported from a unit (ADR 0047). Moves forward only (a
+/// trigger); one open per unit and type (a partial unique index).
+model Emergency {
+  id                  String          @id @db.Uuid
+  tenantId            String          @map("tenant_id") @db.Uuid
+  number              Int
+  unitId              String          @map("unit_id") @db.Uuid
+  type                EmergencyType
+  status              EmergencyStatus @default(reported)
+  reportedById        String          @map("reported_by_account_id") @db.Uuid
+  reportedAt          DateTime        @default(now()) @map("reported_at") @db.Timestamptz(3)
+  respondersNotified  Int             @map("responders_notified")
+  escalatedAt         DateTime?       @map("escalated_at") @db.Timestamptz(3)
+  escalationReason    String?         @map("escalation_reason")
+  responderId         String?         @map("responder_account_id") @db.Uuid
+  responderGateId     String?         @map("responder_gate_id") @db.Uuid
+  etaMinutes          Int?            @map("eta_minutes")
+  acceptedAt          DateTime?       @map("accepted_at") @db.Timestamptz(3)
+  arrivedAt           DateTime?       @map("arrived_at") @db.Timestamptz(3)
+  closedAt            DateTime?       @map("closed_at") @db.Timestamptz(3)
+  closedById          String?         @map("closed_by_account_id") @db.Uuid
+  closeSide           String?         @map("close_side")
+  closeReason         String?         @map("close_reason")
+  closeNote           String?         @map("close_note")
+  updatedAt           DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "emergencies_number_key")
+  @@index([tenantId, status, reportedAt, id], map: "emergencies_status_idx")
+  @@map("emergencies")
+}
+
+/// One of the others living in the unit, told of an emergency (ADR 0047),
+/// and their "on my way" (once).
+model EmergencyFamilyAlert {
+  tenantId    String    @map("tenant_id") @db.Uuid
+  emergencyId String    @map("emergency_id") @db.Uuid
+  accountId   String    @map("account_id") @db.Uuid
+  notifiedAt  DateTime  @default(now()) @map("notified_at") @db.Timestamptz(3)
+  onMyWayAt   DateTime? @map("on_my_way_at") @db.Timestamptz(3)
+
+  @@id([tenantId, emergencyId, accountId])
+  @@map("emergency_family_alerts")
+}
+

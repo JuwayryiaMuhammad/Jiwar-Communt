@@ -458,6 +458,36 @@ export const FINANCE_PAYMENT_ROUTES: Row[] = [
 /** Paying online (ADR 0046). */
 export const FINANCE_ONLINE_ROUTES: Row[] = [
   {
+    method: 'GET',
+    path: '/staff/finance/gateway-events',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { outcome: 'lost' },
+      fields: [
+        {
+          field: 'outcome',
+          code: 'INVALID_VALUE',
+          params: {
+            allowed: [
+              'applied',
+              'duplicate',
+              'failed_attempt',
+              'not_final',
+              'verification_pending',
+              'contradicted',
+              'order_mismatch',
+              'amount_mismatch',
+              'unknown_reference',
+            ],
+          },
+        },
+      ],
+    },
+  },
+  {
     method: 'POST',
     path: '/units/{unitId}/payment-sessions',
     auth: 'tenant',

@@ -24,6 +24,7 @@ import {
   type FinanceSetUp,
 } from '../setup/finance';
 import { API, createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { FakePaymob } from '../setup/paymob-fake';
 import { waitForOtp } from '../setup/mailpit';
 
 /**
@@ -42,8 +43,10 @@ describe('Audit coverage — finance', () => {
   let s: FinanceSetUp;
   let read: ReturnType<typeof auditReaders>;
 
+  const paymob = new FakePaymob();
+
   beforeAll(async () => {
-    h = await createHttpHarness();
+    h = await createHttpHarness({ paymob });
     f = financeHelpers(h);
     s = await f.setUp('Finance Audit Court');
     read = auditReaders(h);
@@ -443,6 +446,72 @@ describe('Audit coverage — finance', () => {
         'clientSecret',
       )!;
       expect(JSON.stringify(rows[0])).not.toContain(secret);
+    });
+  });
+
+  describe('the webhook', () => {
+    it('refused, order mismatch, amount mismatch, contradicted, charged twice: the compound and the session only', async () => {
+      const c = await f.setUp('Finance Audit Webhook');
+      const creds = await f.configureGateway(c.manager);
+      const rented = await f.unit(c.c, 'A');
+      const tenant = await f.tenant(c.c, rented.id);
+      await f.issue(c.manager, c.home.id);
+      await f.issue(c.manager, rented.id);
+      const open = async (unitId: string, token: string) => {
+        const res = await f
+          .http('post', `/units/${unitId}/payment-sessions`, token, {})
+          .expect(201);
+        const id = (res.body as { id: string }).id;
+        return { id, intention: paymob.byReference(`jw-${id}`) };
+      };
+      const send = (cb: { hmac: string; body: object }) =>
+        h
+          .http()
+          .post(`${API}/public/payments/paymob/${c.c.tenantId}?hmac=${cb.hmac}`)
+          .send(cb.body);
+      const a = await open(c.home.id, c.owner.token);
+      const b = await open(rented.id, tenant.token);
+      a.intention.paid = true;
+      const good = paymob.callback(a.intention, creds.hmacSecret);
+      await send({ hmac: 'f'.repeat(128), body: good.body }).expect(401);
+      await send(
+        paymob.callback(a.intention, creds.hmacSecret, {}, (obj) => {
+          (obj.order as Record<string, unknown>).merchant_order_id =
+            `jw-${b.id}`;
+        }),
+      ).expect(200);
+      await send(
+        paymob.callback(a.intention, creds.hmacSecret, {
+          amount_cents: a.intention.amountCents + 1,
+        }),
+      ).expect(200);
+      b.intention.paid = true;
+      const real = b.intention.amountCents;
+      b.intention.amountCents = real + 100;
+      await send(
+        paymob.callback(b.intention, creds.hmacSecret, { amount_cents: real }),
+      ).expect(200);
+      await send(good).expect(200);
+      await send(paymob.callback(a.intention, creds.hmacSecret)).expect(200);
+      for (const [event, session] of [
+        ['payment.order_mismatch', b.id],
+        ['payment.amount_mismatch', a.id],
+        ['payment.verification_contradicted', b.id],
+        ['payment.duplicate_charge', a.id],
+      ] as const) {
+        const rows = (await read.security({ event })).filter(
+          (r) => r.tenantId === c.c.tenantId,
+        );
+        covered.add(event);
+        expect(rows).toHaveLength(1);
+        expect(rows[0].metadata).toEqual({ sessionId: session });
+      }
+      const rejected = (
+        await read.security({ event: 'payment.webhook_rejected' })
+      ).filter((r) => r.tenantId === c.c.tenantId);
+      covered.add('payment.webhook_rejected');
+      expect(rejected).toHaveLength(1);
+      expect(rejected[0].metadata).toEqual({ reason: 'hmac' });
     });
   });
 

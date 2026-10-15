@@ -343,4 +343,9 @@ export const FINANCE_COVERAGE: readonly string[] = [
   'payment.recorded',
   'payment.reversed',
   'payment_session.opened',
+  'payment.webhook_rejected',
+  'payment.order_mismatch',
+  'payment.amount_mismatch',
+  'payment.verification_contradicted',
+  'payment.duplicate_charge',
 ];

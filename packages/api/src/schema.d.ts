@@ -5945,6 +5945,23 @@ export interface paths {
         patch: operations["GatewayController_toggle"];
         trace?: never;
     };
+    "/api/v1/staff/finance/gateway-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Paymob's callbacks and what came of them */
+        get: operations["GatewayEventsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/invoice-batches/{id}": {
         parameters: {
             query?: never;
@@ -11239,6 +11256,26 @@ export interface components {
         };
         GateViewList: {
             data: components["schemas"]["GateView"][];
+            nextCursor: string | null;
+        };
+        GatewayEventView: {
+            /** @description EGP, as Paymob signed it. */
+            amount: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description Paymob's transaction id. */
+            gatewayTransactionId: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            outcome: "applied" | "duplicate" | "failed_attempt" | "not_final" | "verification_pending" | "contradicted" | "order_mismatch" | "amount_mismatch" | "unknown_reference";
+            pending: boolean;
+            /** Format: uuid */
+            sessionId: string | null;
+            success: boolean;
+        };
+        GatewayEventViewList: {
+            data: components["schemas"]["GatewayEventView"][];
             nextCursor: string | null;
         };
         GatewayLast4View: {
@@ -26023,6 +26060,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GatewayView"];
+                };
+            };
+        };
+    };
+    GatewayEventsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                outcome?: "applied" | "duplicate" | "failed_attempt" | "not_final" | "verification_pending" | "contradicted" | "order_mismatch" | "amount_mismatch" | "unknown_reference";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GatewayEventViewList"];
                 };
             };
         };

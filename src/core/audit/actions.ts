@@ -800,6 +800,15 @@ export const SECURITY_EVENTS = [
   'platform.step_up_requested',
   'platform.step_up_verified',
   'platform.step_up_failed',
+  // The Paymob webhook (ADR 0046): a call refused (no HMAC match), a signed
+  // callback naming another checkout's order, an amount that is not the
+  // checkout's, Paymob contradicting a signed success, a checkout charged
+  // twice. Compound and session ids only.
+  'payment.webhook_rejected',
+  'payment.order_mismatch',
+  'payment.amount_mismatch',
+  'payment.verification_contradicted',
+  'payment.duplicate_charge',
   'invite.token_invalid',
   // "Not me" (ADR 0023): the phone left the account.
   'account.phone_reassigned',

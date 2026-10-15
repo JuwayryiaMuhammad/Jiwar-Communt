@@ -102,6 +102,7 @@ export default tseslint.config(
       'src/gate/visitors/visitor-page.service.ts',
       'src/finance/gateway/platform-gateway.service.ts',
       'src/finance/gateway/gateway-keys.ts',
+      'src/finance/online/paymob-webhook.service.ts',
       'prisma/seed.ts',
     ],
     rules: {

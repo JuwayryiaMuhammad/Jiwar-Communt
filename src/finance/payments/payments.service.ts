@@ -79,6 +79,8 @@ export interface NewPayment {
   recordedById: string | null;
   /** Invoices it pays first. */
   named: readonly string[];
+  /** Online only: the checkout, Paymob's transaction and who paid. */
+  online?: { sessionId: string; transactionId: string; payerId: string };
 }
 
 const cursor = keysetCursor('createdAt');
@@ -212,6 +214,9 @@ export class PaymentsService implements OnModuleInit {
         receiptCode: code,
         reference: p.reference,
         recordedById: p.recordedById,
+        sessionId: p.online?.sessionId ?? null,
+        gatewayTransactionId: p.online?.transactionId ?? null,
+        payerId: p.online?.payerId ?? null,
       },
     });
     await this.globalDb.in(tx).receiptLink.create({
@@ -229,6 +234,12 @@ export class PaymentsService implements OnModuleInit {
         paidOn: p.paidOn,
         receiptNumber: formatNumber('receipt', receipt),
         ...(p.named.length ? { invoiceIds: [...p.named] } : {}),
+        ...(p.online
+          ? {
+              sessionId: p.online.sessionId,
+              gatewayTransactionId: p.online.transactionId,
+            }
+          : {}),
       },
     });
     await this.notices.toUnit(tx, p.unitId, 'payment.received', id);

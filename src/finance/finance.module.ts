@@ -25,6 +25,9 @@ import {
 import { InvoicesService } from './invoices/invoices.service';
 import { FinanceNotices } from './notices/finance-notices';
 import { PaymentSessionsController } from './online/payment-sessions.controller';
+import { GatewayEventsController } from './online/gateway-events.controller';
+import { PaymobWebhookController } from './online/paymob-webhook.controller';
+import { PaymobWebhookService } from './online/paymob-webhook.service';
 import { PaymentSessionsService } from './online/payment-sessions.service';
 import {
   StaffPaymentsController,
@@ -49,6 +52,8 @@ import { PaymentsService } from './payments/payments.service';
     StaffPaymentsController,
     UnitPaymentsController,
     PaymentSessionsController,
+    PaymobWebhookController,
+    GatewayEventsController,
   ],
   providers: [
     FinanceProvisioning,
@@ -59,6 +64,7 @@ import { PaymentsService } from './payments/payments.service';
     BillingPlansService,
     PaymentsService,
     PaymentSessionsService,
+    PaymobWebhookService,
     CredentialVault,
     GatewayService,
     GatewayKeys,

@@ -9372,6 +9372,81 @@
         ],
         "type": "object"
       },
+      "GatewayEventView": {
+        "properties": {
+          "amount": {
+            "description": "EGP, as Paymob signed it.",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "gatewayTransactionId": {
+            "description": "Paymob's transaction id.",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "applied",
+              "duplicate",
+              "failed_attempt",
+              "not_final",
+              "verification_pending",
+              "contradicted",
+              "order_mismatch",
+              "amount_mismatch",
+              "unknown_reference"
+            ],
+            "type": "string"
+          },
+          "pending": {
+            "type": "boolean"
+          },
+          "sessionId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "sessionId",
+          "gatewayTransactionId",
+          "amount",
+          "success",
+          "pending",
+          "outcome",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "GatewayEventViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GatewayEventView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "GatewayLast4View": {
         "properties": {
           "cardIntegrationId": {
@@ -44701,6 +44776,74 @@
           }
         ],
         "summary": "Set the compound's Paymob credentials (step-up required)",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gateway-events": {
+      "get": {
+        "operationId": "GatewayEventsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "outcome",
+            "required": false,
+            "schema": {
+              "enum": [
+                "applied",
+                "duplicate",
+                "failed_attempt",
+                "not_final",
+                "verification_pending",
+                "contradicted",
+                "order_mismatch",
+                "amount_mismatch",
+                "unknown_reference"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayEventViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List Paymob's callbacks and what came of them",
         "tags": [
           "finance"
         ],

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { backendFetch, errorBody } from './backend';
+import { FORWARDED_RESPONSE_HEADERS, successBody } from './relay';
 import { rejectForeignRequest } from './request-guard';
 import {
   clearSession,
@@ -30,7 +31,6 @@ const FORWARDED_REQUEST_HEADERS = [
   'idempotency-key',
   'user-agent',
 ];
-const FORWARDED_RESPONSE_HEADERS = ['content-type', 'x-request-id'];
 
 /**
  * One per server process. Every route bundle (the proxy, the auth routes)
@@ -150,9 +150,13 @@ export function createBffProxy(config: BffProxyConfig) {
     }
     let payload: BodyInit | null = null;
     if (upstream.status !== 204 && upstream.status !== 304) {
-      const text = await upstream.text();
-      payload = upstream.ok ? text : sanitizeError(text, upstream.status);
-      if (!upstream.ok) resHeaders.set('content-type', 'application/json');
+      if (upstream.ok) {
+        payload = await successBody(upstream);
+      } else {
+        payload = sanitizeError(await upstream.text(), upstream.status);
+        resHeaders.set('content-type', 'application/json');
+        resHeaders.delete('content-disposition');
+      }
     }
     const res = new NextResponse(payload, { status: upstream.status, headers: resHeaders });
     if (renewed) writeSession(res, config.cookiePrefix, renewed);

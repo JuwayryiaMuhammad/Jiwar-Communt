@@ -8,13 +8,20 @@ export type TenantDetail = Schema<'TenantDetailView'>;
 export type Manager = Schema<'ManagerView'>;
 export type SecurityEvent = Schema<'SecurityEventView'>;
 export type AuditEntry = Schema<'PlatformAuditEntryView'>;
+export type PaymentGateway = Schema<'GatewayView'>;
 
 export const keys = {
   tenants: ['tenants'] as const,
   tenant: (id: string) => ['tenants', id] as const,
   events: (filters: object) => ['security-events', filters] as const,
   audit: (filters: object) => ['platform-audit', filters] as const,
+  paymentGateway: (id: string) => ['tenants', id, 'payment-gateway'] as const,
 };
+
+/** A compound's online payment account, masked (ADR 0046). */
+export function getPaymentGateway(id: string) {
+  return unwrap(api.GET('/api/v1/platform/tenants/{id}/payment-gateway', { params: { path: { id } } }));
+}
 
 export function listTenants(cursor?: string, limit = 50) {
   return unwrap(api.GET('/api/v1/platform/tenants', { params: { query: { cursor, limit } } }));

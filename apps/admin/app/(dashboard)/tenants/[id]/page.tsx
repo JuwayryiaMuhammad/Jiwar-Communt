@@ -22,6 +22,7 @@ import { ArrowLeft, Pause, Play, UserPlus } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { emptyManager, ManagerFields, managerPayload, type NewManager } from '@/components/manager-fields';
+import { PaymentGatewayCard } from '@/components/payment-gateway-card';
 import { api } from '@/lib/api';
 import { eventTone } from '@/lib/labels';
 import { getTenant, keys, listAudit, listEvents, type Manager, type TenantDetail } from '@/lib/queries';
@@ -209,6 +210,8 @@ export default function TenantPage() {
                   ]}
                 />
               </Card>
+
+              <PaymentGatewayCard tenantId={t.id} />
 
               <Card flush>
                 <CardHeader title="Security events in this compound" />

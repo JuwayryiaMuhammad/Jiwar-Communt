@@ -15,6 +15,10 @@ import { RateLimitService } from '../../core/redis/rate-limit.service';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { parseEntryQr } from '../entry/entry-secrets';
 import { ResidentVerifier } from '../entry/resident-verifier';
+import {
+  VisitorParkingService,
+  type GuardParking,
+} from '../parking/visitor-parking.service';
 import { ShiftsService } from '../shifts/shifts.service';
 import { capacityOf, EntriesService } from './entries.service';
 import { GateSubjects, type GateSubject, type Refusal } from './subjects';
@@ -51,6 +55,11 @@ export interface VerifyDisplay {
   entriesUsed: number | null;
   /** A visitor pass: how many on it are inside now. */
   insideCount: number | null;
+  /**
+   * A valid visitor pass's parking booking (ADR 0045): holding now, or the
+   * next within two hours. Where and when, never who.
+   */
+  parking: GuardParking | null;
 }
 
 export interface VerifyResult {
@@ -101,6 +110,7 @@ export class VerifyService {
     private readonly tokens: AccessTokens,
     private readonly files: FilesService,
     private readonly residents: ResidentVerifier,
+    private readonly parking: VisitorParkingService,
     config: ConfigService<Env, true>,
   ) {
     this.perMinute = config.get('GATE_VERIFY_RATE_LIMIT_PER_MINUTE', {
@@ -168,6 +178,10 @@ export class VerifyService {
           photoUrl: null,
           entriesUsed: pass?.kind === 'one_time' ? pass.entriesUsed : null,
           insideCount: pass ? inside : null,
+          parking:
+            pass && !refusal
+              ? await this.parking.forPass(tx, pass.id, new Date())
+              : null,
           vehiclePlate:
             !isWorker && !refusal && subject.visitorDetailsId
               ? ((

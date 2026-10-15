@@ -12,6 +12,7 @@ import type {
 } from '../entries.service';
 import { PresignedReadView } from '../../../core/files/views/file.views';
 import type { VerifyDisplay, VerifyResult } from '../verify.service';
+import { GuardParkingView } from '../../vehicles/views/plate-lookup.views';
 
 const REASONS = [
   'unknown_code',
@@ -99,6 +100,14 @@ export class VerifyDisplayView {
   })
   insideCount: number | null;
 
+  @ApiProperty({
+    type: GuardParkingView,
+    nullable: true,
+    description:
+      'A valid visitor pass’s parking booking (ADR 0045): holding now, or the next within two hours. Null otherwise.',
+  })
+  parking: GuardParkingView | null;
+
   static from(d: VerifyDisplay): VerifyDisplayView {
     return {
       unitCode: d.unitCode,
@@ -113,6 +122,7 @@ export class VerifyDisplayView {
       vehiclePlate: d.vehiclePlate,
       entriesUsed: d.entriesUsed,
       insideCount: d.insideCount,
+      parking: GuardParkingView.from(d.parking),
     };
   }
 }

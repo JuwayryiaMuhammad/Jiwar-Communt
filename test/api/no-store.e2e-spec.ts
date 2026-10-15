@@ -833,6 +833,13 @@ describe('API v0 — no-store', () => {
       }),
     'GET /staff/vehicle-settings': () =>
       as('manager', 'GET', '/staff/vehicle-settings'),
+    'POST /gate/plate-lookup': () =>
+      call(w, 'POST', '/gate/plate-lookup', {
+        token: w.a.tokens.guard,
+        body: { plate: 'NS 1' },
+      }),
+    'GET /gate/visitor-parking': () =>
+      call(w, 'GET', '/gate/visitor-parking', { token: w.a.tokens.guard }),
     'GET /units/{unitId}/parking': () =>
       as('owner', 'GET', `/units/${w.a.homeUnitId}/parking`),
     'GET /units/{unitId}/visitor-parking-bookings': () =>

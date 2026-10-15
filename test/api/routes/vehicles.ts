@@ -483,3 +483,32 @@ export const PARKING_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** The guard's side (ADR 0045): `gate.operate`, inside an open shift. */
+export const GATE_VEHICLE_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/gate/plate-lookup',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: { plate: '' },
+      fields: [
+        { field: 'plate', code: 'INVALID_LENGTH', params: { min: 1, max: 40 } },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/gate/visitor-parking',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: 'none',
+    noStore: true,
+  },
+];

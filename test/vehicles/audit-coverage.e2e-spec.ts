@@ -1,5 +1,6 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { auditReaders } from '../setup/audit';
+import { gateHelpers } from '../setup/gate';
 import {
   COMMUNITY_COVERAGE,
   ENGAGEMENT_COVERAGE,
@@ -329,6 +330,23 @@ describe('Audit coverage — vehicles and parking', () => {
         reasonCode: 'no_longer_needed',
       });
       expect(JSON.stringify([created, cancelled])).not.toContain(NAME);
+    });
+  });
+
+  describe('the gate', () => {
+    it('gate.plate_lookup — on the guard’s shift: the ids found and their count, never the plate', async () => {
+      const duty = await gateHelpers(h).onDuty(s.c);
+      const guard = await v.who(s.c, duty.guardId, 'staff');
+      await v
+        .http('post', '/gate/plate-lookup', guard.token, { plate: PLATE })
+        .expect(200);
+      const row = await single('gate.plate_lookup', duty.shiftId);
+      expect(row).toMatchObject(by(guard, 'guard_shift'));
+      expect(row.metadata).toEqual({
+        vehicleIds: [],
+        passIds: [],
+        matches: 0,
+      });
     });
   });
 

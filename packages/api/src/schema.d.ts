@@ -1485,6 +1485,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/plate-lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Look a plate up: the units’ vehicles and the visitors’ passes carrying it
+         * @description The permit’s status, or whether the pass lets its visitor in now and their parking. Never a name. Rate-limited with verify; audited without the plate.
+         */
+        post: operations["GateVehiclesController_lookup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/shifts/current": {
         parameters: {
             query?: never;
@@ -1547,6 +1567,23 @@ export interface paths {
         put?: never;
         /** Verify a code or QR at the gate */
         post: operations["EntriesController_verify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/visitor-parking": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the visitor parking bookings holding now or starting within two hours */
+        get: operations["GateVehiclesController_visitorParking"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -10395,6 +10432,13 @@ export interface components {
             /** Format: uuid */
             id: string;
         };
+        GuardParkingView: {
+            areaName: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: date-time */
+            startsAt: string;
+        };
         GuardRequestResponse: {
             /** Format: date-time */
             createdAt: string;
@@ -10411,6 +10455,26 @@ export interface components {
             standingInstructions: components["schemas"]["GuardInstructionView"][];
             status: components["schemas"]["GateRequestStatus"];
             unitCode: string;
+        };
+        GuardVisitorParkingView: {
+            areaName: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** @description For a visitor pass: the guard verifies the pass, and sees this booking there. */
+            hasPass: boolean;
+            /** Format: uuid */
+            id: string;
+            /** @example P-8741 */
+            reference: string;
+            /** Format: date-time */
+            startsAt: string;
+            unitCode: string;
+            /** @description For a booking without a pass only: the name the household gave. */
+            visitorName: string | null;
+        };
+        GuardVisitorParkingViewList: {
+            data: components["schemas"]["GuardVisitorParkingView"][];
+            nextCursor: string | null;
         };
         HandOverDto: {
             /**
@@ -11566,6 +11630,50 @@ export interface components {
             kind: components["schemas"]["TicketAttachmentKind"];
             /** @description A presigned GET, valid until `expiresAt`. */
             url: string | null;
+        };
+        PlateLookupDto: {
+            /** @description As read off the car: spaces and the digits’ script do not matter (INVALID_FORMAT otherwise). */
+            plate: string;
+        };
+        PlateLookupView: {
+            matches: components["schemas"]["PlateMatchView"][];
+            /** @description The plate looked up, tidied. */
+            plate: string;
+        };
+        PlateMatchView: {
+            /** @enum {string} */
+            kind: "vehicle" | "visitor_pass";
+            pass: components["schemas"]["PlatePassView"] | null;
+            /** @description As it was typed, tidied. */
+            plate: string;
+            unitCode: string;
+            vehicle: components["schemas"]["PlateVehicleView"] | null;
+        };
+        PlatePassView: {
+            /** @description Its visitor parking booking holding now, or the next within two hours. */
+            parking: components["schemas"]["GuardParkingView"] | null;
+            passKind: components["schemas"]["VisitorPassKind"];
+            /**
+             * @description Why not, when it does not.
+             * @enum {string|null}
+             */
+            refusal: "not_yet_valid" | "expired" | "outside_schedule" | "host_inactive" | "used" | "cancelled" | null;
+            /** @description The pass lets its visitor in now. */
+            valid: boolean;
+            /** Format: date-time */
+            validFrom: string;
+            /** Format: date-time */
+            validUntil: string;
+        };
+        PlateVehicleView: {
+            color: string;
+            makeAndModel: string;
+            /** @description Pending or active vehicles only; `expires_soon` and `expired` read now. */
+            permitStatus: components["schemas"]["VehiclePermitStatus"];
+            /** @description The permit’s last local day. */
+            permitValidUntil: string | null;
+            stickerNumber: string | null;
+            type: components["schemas"]["VehicleType"];
         };
         PlatformAuditEntryView: {
             action: string;
@@ -14672,6 +14780,8 @@ export interface components {
             firstName: string | null;
             /** @description A visitor pass: how many on it are inside now. `next` is `in` while there is room and the pass is valid, else `out` while anyone is inside. Null otherwise. */
             insideCount: number | null;
+            /** @description A valid visitor pass’s parking booking (ADR 0045): holding now, or the next within two hours. Null otherwise. */
+            parking: components["schemas"]["GuardParkingView"] | null;
             partySize: number | null;
             passKind: string | null;
             /** @description A valid worker's photo, to compare the face (ADR 0029); null otherwise. */
@@ -17407,6 +17517,29 @@ export interface operations {
             };
         };
     };
+    GateVehiclesController_lookup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlateLookupDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlateLookupView"];
+                };
+            };
+        };
+    };
     ShiftsController_current: {
         parameters: {
             query?: never;
@@ -17493,6 +17626,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VerifyView"];
+                };
+            };
+        };
+    };
+    GateVehiclesController_visitorParking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardVisitorParkingViewList"];
                 };
             };
         };

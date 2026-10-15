@@ -21,6 +21,8 @@ const VERIFY = [
   'display.firstName',
   // A pass's people inside (ADR 0043).
   'display.insideCount',
+  // A valid pass's parking booking (ADR 0045).
+  'display.parking',
   'display.partySize',
   'display.passKind',
   // Null but for a valid worker with a photo (ADR 0029).
@@ -164,6 +166,7 @@ describe('API v0 — verify, entries, inside (ADR 0028)', () => {
         vehiclePlate: null,
         entriesUsed: 0,
         insideCount: 0,
+        parking: null,
       },
     });
     const entered = await io('in').expect(201);

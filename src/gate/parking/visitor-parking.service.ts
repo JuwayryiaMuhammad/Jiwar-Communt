@@ -28,6 +28,7 @@ import {
   DAYS_AHEAD,
   EARLIEST_MINUTES,
   freeSpaces,
+  GUARD_AHEAD_MINUTES,
   MIN_MINUTES,
   peakOverlap,
   VISITOR_NAME,
@@ -38,6 +39,8 @@ export const VISITOR_PARKING_RESOURCE = 'visitor_parking_booking';
 
 const MINUTE = 60_000;
 const DAY = 86_400_000;
+/** The gate's list is bounded: the next two hours of a compound. */
+const GATE_LIMIT = 500;
 
 export interface NewVisitorParking {
   areaId: string;
@@ -53,6 +56,20 @@ export interface ResidentParking {
   areaName: string;
   /** The caller made it: the visitor's name is theirs to see. */
   mine: boolean;
+}
+
+/** A visitor's parking as the guard sees it: where and when, never who. */
+export interface GuardParking {
+  areaName: string;
+  startsAt: Date;
+  endsAt: Date;
+}
+
+/** A booking at the gate: its unit and area. */
+export interface GuardBooking {
+  booking: VisitorParkingBooking;
+  unitCode: string;
+  areaName: string;
 }
 
 export interface UnitParking {
@@ -354,6 +371,60 @@ export class VisitorParkingService implements OnModuleInit {
         now,
       });
     }
+  }
+
+  /**
+   * A pass's parking for the guard: its confirmed booking holding now, else
+   * the next one starting within two hours; null otherwise.
+   */
+  async forPass(
+    tx: TenantTxClient,
+    passId: string,
+    now: Date,
+  ): Promise<GuardParking | null> {
+    const booking = await tx.visitorParkingBooking.findFirst({
+      where: {
+        visitorPassId: passId,
+        status: 'confirmed',
+        endsAt: { gt: now },
+        startsAt: { lte: new Date(now.getTime() + GUARD_AHEAD_MINUTES * MINUTE) },
+      },
+      include: { area: { select: { name: true } } },
+      orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
+    });
+    return booking
+      ? {
+          areaName: booking.area.name,
+          startsAt: booking.startsAt,
+          endsAt: booking.endsAt,
+        }
+      : null;
+  }
+
+  /**
+   * The bookings at the gate now: confirmed, holding now or starting within
+   * two hours, soonest first (a busy compound has dozens).
+   */
+  async atGate(tx: TenantTxClient, now: Date): Promise<GuardBooking[]> {
+    const rows = await tx.visitorParkingBooking.findMany({
+      where: {
+        status: 'confirmed',
+        endsAt: { gt: now },
+        startsAt: { lte: new Date(now.getTime() + GUARD_AHEAD_MINUTES * MINUTE) },
+      },
+      include: { area: { select: { name: true } } },
+      orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
+      take: GATE_LIMIT,
+    });
+    const codes = await this.core.unitCodes(
+      tx,
+      rows.map((b) => b.unitId),
+    );
+    return rows.map((b) => ({
+      booking: b,
+      unitCode: codes.get(b.unitId) ?? '',
+      areaName: b.area.name,
+    }));
   }
 
   /** Cancels a confirmed booking under its row lock, audited. */

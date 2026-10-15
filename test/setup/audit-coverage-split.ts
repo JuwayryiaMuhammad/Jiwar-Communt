@@ -309,4 +309,5 @@ export const VEHICLES_COVERAGE: readonly string[] = [
   'visitor_parking_area.updated',
   'visitor_parking_booking.created',
   'visitor_parking_booking.cancelled',
+  'gate.plate_lookup',
 ];

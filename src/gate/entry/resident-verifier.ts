@@ -64,6 +64,7 @@ export class ResidentVerifier {
         firstName: firstNameOf(found.fullName),
         unitCodes: [...codes.values()].sort(),
         vehiclePlate: null,
+        parking: null,
         entriesUsed: null,
         insideCount: null,
         photoUrl: photo?.url ?? null,

@@ -6675,6 +6675,41 @@
           }
         },
         {
+          "name": "Look a plate up: the units’ vehicles and the visitors’ passes carrying it",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"plate\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `plate` | string | yes | As read off the car: spaces and the digits’ script do not matter (INVALID_FORMAT otherwise). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "plate-lookup"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/plate-lookup"
+            }
+          }
+        },
+        {
           "name": "Get my current shift",
           "request": {
             "description": "**Responses:** 200",
@@ -6795,6 +6830,26 @@
                 "verify"
               ],
               "raw": "{{baseUrl}}/api/v1/gate/verify"
+            }
+          }
+        },
+        {
+          "name": "List the visitor parking bookings holding now or starting within two hours",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "visitor-parking"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/visitor-parking"
             }
           }
         }

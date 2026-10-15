@@ -698,6 +698,9 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'visitor_parking_booking',
   },
+  // The guard's plate lookup, on their shift. metadata: vehicleIds,
+  // passIds, matches. Never the plate, nor a hash of it.
+  'gate.plate_lookup': { log: 'tenant', target: 'guard_shift' },
   // metadata: unitId, areaId, side, reasonCode.
   'visitor_parking_booking.cancelled': {
     log: 'tenant',

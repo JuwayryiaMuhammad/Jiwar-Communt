@@ -104,6 +104,7 @@ describe('Gate — the resident entry QR (ADR 0031)', () => {
           vehiclePlate: null,
           entriesUsed: null,
           insideCount: null,
+          parking: null,
         },
       });
       // Never the full name, a contact or the document.

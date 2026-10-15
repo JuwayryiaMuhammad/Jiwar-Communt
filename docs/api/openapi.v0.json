@@ -9013,6 +9013,27 @@
         ],
         "type": "object"
       },
+      "GuardParkingView": {
+        "properties": {
+          "areaName": {
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "areaName",
+          "startsAt",
+          "endsAt"
+        ],
+        "type": "object"
+      },
       "GuardRequestResponse": {
         "properties": {
           "createdAt": {
@@ -9079,6 +9100,71 @@
           "createdAt",
           "photoUrl",
           "standingInstructions"
+        ],
+        "type": "object"
+      },
+      "GuardVisitorParkingView": {
+        "properties": {
+          "areaName": {
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "hasPass": {
+            "description": "For a visitor pass: the guard verifies the pass, and sees this booking there.",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reference": {
+            "example": "P-8741",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "visitorName": {
+            "description": "For a booking without a pass only: the name the household gave.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "unitCode",
+          "areaName",
+          "startsAt",
+          "endsAt",
+          "hasPass",
+          "visitorName"
+        ],
+        "type": "object"
+      },
+      "GuardVisitorParkingViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GuardVisitorParkingView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -12807,6 +12893,179 @@
           "cycle",
           "url",
           "expiresAt"
+        ],
+        "type": "object"
+      },
+      "PlateLookupDto": {
+        "properties": {
+          "plate": {
+            "description": "As read off the car: spaces and the digits’ script do not matter (INVALID_FORMAT otherwise).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plate"
+        ],
+        "type": "object"
+      },
+      "PlateLookupView": {
+        "properties": {
+          "matches": {
+            "items": {
+              "$ref": "#/components/schemas/PlateMatchView"
+            },
+            "type": "array"
+          },
+          "plate": {
+            "description": "The plate looked up, tidied.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plate",
+          "matches"
+        ],
+        "type": "object"
+      },
+      "PlateMatchView": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "vehicle",
+              "visitor_pass"
+            ],
+            "type": "string"
+          },
+          "pass": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlatePassView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "plate": {
+            "description": "As it was typed, tidied.",
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "vehicle": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlateVehicleView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "kind",
+          "unitCode",
+          "plate",
+          "vehicle",
+          "pass"
+        ],
+        "type": "object"
+      },
+      "PlatePassView": {
+        "properties": {
+          "parking": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardParkingView"
+              }
+            ],
+            "description": "Its visitor parking booking holding now, or the next within two hours.",
+            "nullable": true,
+            "type": "object"
+          },
+          "passKind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VisitorPassKind"
+              }
+            ]
+          },
+          "refusal": {
+            "description": "Why not, when it does not.",
+            "enum": [
+              "not_yet_valid",
+              "expired",
+              "outside_schedule",
+              "host_inactive",
+              "used",
+              "cancelled"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "valid": {
+            "description": "The pass lets its visitor in now.",
+            "type": "boolean"
+          },
+          "validFrom": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "validUntil": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "passKind",
+          "valid",
+          "refusal",
+          "validFrom",
+          "validUntil",
+          "parking"
+        ],
+        "type": "object"
+      },
+      "PlateVehicleView": {
+        "properties": {
+          "color": {
+            "type": "string"
+          },
+          "makeAndModel": {
+            "type": "string"
+          },
+          "permitStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehiclePermitStatus"
+              }
+            ],
+            "description": "Pending or active vehicles only; `expires_soon` and `expired` read now."
+          },
+          "permitValidUntil": {
+            "description": "The permit’s last local day.",
+            "nullable": true,
+            "type": "string"
+          },
+          "stickerNumber": {
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VehicleType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "permitStatus",
+          "permitValidUntil",
+          "stickerNumber",
+          "type",
+          "color",
+          "makeAndModel"
         ],
         "type": "object"
       },
@@ -23259,6 +23518,16 @@
             "nullable": true,
             "type": "number"
           },
+          "parking": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardParkingView"
+              }
+            ],
+            "description": "A valid visitor pass’s parking booking (ADR 0045): holding now, or the next within two hours. Null otherwise.",
+            "nullable": true,
+            "type": "object"
+          },
           "partySize": {
             "nullable": true,
             "type": "number"
@@ -23317,7 +23586,8 @@
           "photoUrl",
           "vehiclePlate",
           "entriesUsed",
-          "insideCount"
+          "insideCount",
+          "parking"
         ],
         "type": "object"
       },
@@ -28936,6 +29206,46 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/gate/plate-lookup": {
+      "post": {
+        "description": "The permit’s status, or whether the pass lets its visitor in now and their parking. Never a name. Rate-limited with verify; audited without the plate.",
+        "operationId": "GateVehiclesController_lookup",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlateLookupDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlateLookupView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Look a plate up: the units’ vehicles and the visitors’ passes carrying it",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/gate/shifts/current": {
       "get": {
         "operationId": "ShiftsController_current",
@@ -29082,6 +29392,35 @@
           }
         ],
         "summary": "Verify a code or QR at the gate",
+        "tags": [
+          "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/visitor-parking": {
+      "get": {
+        "operationId": "GateVehiclesController_visitorParking",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardVisitorParkingViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the visitor parking bookings holding now or starting within two hours",
         "tags": [
           "gate"
         ],

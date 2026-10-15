@@ -770,6 +770,8 @@ export const AUDIT_ACTIONS = {
   'payment.recorded': { log: 'tenant', target: 'payment' },
   // metadata: paymentId, unitId, amount, reasonCode.
   'payment.reversed': { log: 'tenant', target: 'payment' },
+  // metadata: unitId, amount, invoiceIds.
+  'payment_session.opened': { log: 'tenant', target: 'payment_session' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

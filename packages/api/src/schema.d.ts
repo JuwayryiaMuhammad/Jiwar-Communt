@@ -4660,6 +4660,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/payment-sessions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Where a checkout stands */
+        get: operations["PaymentSessionsController_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/payments/{id}": {
         parameters: {
             query?: never;
@@ -7717,6 +7734,26 @@ export interface paths {
         get: operations["UnitParkingController_parking"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/payment-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Open (or reuse) a checkout for some or all of what the unit owes
+         * @description Returns the hosted Paymob page. The unit has one live checkout; the same basket by the same payer reuses it. Poll GET /payment-sessions/{id} afterwards: the return page proves nothing.
+         */
+        post: operations["PaymentSessionsController_open"];
         delete?: never;
         options?: never;
         head?: never;
@@ -12359,6 +12396,10 @@ export interface components {
             /** @description 0 is Sunday, 6 is Saturday. */
             weekday: number;
         };
+        OpenPaymentSessionDto: {
+            /** @description Omitted or empty: every invoice the unit owes. */
+            invoiceIds?: string[];
+        };
         OtpRequestedView: {
             /**
              * @description Stable key for the frontend to translate.
@@ -12618,6 +12659,29 @@ export interface components {
             id: string;
             /** @description REASON_CODES.paymentReverse */
             reasonCode: string;
+        };
+        /** @enum {string} */
+        PaymentSessionStatus: "opening" | "open" | "succeeded" | "failed" | "expired" | "superseded";
+        PaymentSessionView: {
+            amount: string;
+            /** @description The hosted checkout, to the payer only and while open. Rebuilt each time, never stored. */
+            checkoutUrl: string | null;
+            /** @enum {string} */
+            currency: "EGP";
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: uuid */
+            id: string;
+            invoices: components["schemas"]["SessionInvoiceView"][];
+            /**
+             * @description The latest attempt on the hosted page failed; the payer may retry there while it is open.
+             * @enum {string|null}
+             */
+            lastAttempt: "failed" | null;
+            payment: components["schemas"]["SessionPaymentView"] | null;
+            status: components["schemas"]["PaymentSessionStatus"];
+            /** Format: uuid */
+            unitId: string;
         };
         PaymentView: {
             /** @description Paid to invoices (live). */
@@ -14014,6 +14078,18 @@ export interface components {
         SendNoticeDto: {
             /** @description The management’s own words to the unit. The only text of the matter the unit ever reads: never the complaint’s. */
             body: string;
+        };
+        SessionInvoiceView: {
+            /** @description What it owed when the checkout opened. */
+            amount: string;
+            /** Format: uuid */
+            invoiceId: string;
+            number: string;
+        };
+        SessionPaymentView: {
+            /** Format: uuid */
+            id: string;
+            receiptNumber: string;
         };
         SessionView: {
             /** Format: date-time */
@@ -23880,6 +23956,27 @@ export interface operations {
             };
         };
     };
+    PaymentSessionsController_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSessionView"];
+                };
+            };
+        };
+    };
     UnitPaymentsController_detail: {
         parameters: {
             query?: never;
@@ -28744,6 +28841,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UnitParkingView"];
+                };
+            };
+        };
+    };
+    PaymentSessionsController_open: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpenPaymentSessionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSessionView"];
                 };
             };
         };

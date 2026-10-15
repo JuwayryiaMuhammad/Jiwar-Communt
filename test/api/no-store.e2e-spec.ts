@@ -2,6 +2,9 @@ import type { Response } from 'supertest';
 import { newId } from '../../src/core/common/uuid';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { ParcelTokens } from '../../src/gate/parcels/parcel-tokens';
+import { TenantTx } from '../../src/core/database/tenant-tx.service';
+import { GatewayService } from '../../src/finance/gateway/gateway.service';
+import { gatewayBody } from '../setup/finance';
 import { hashPassword } from '../../src/core/platform/password';
 import { fileHelpers } from '../setup/files';
 import { parcelHelpers } from '../setup/parcels';
@@ -585,6 +588,50 @@ describe('API v0 — no-store', () => {
         paidOn: localDay(0),
       },
     );
+  /** A's gateway on, and an invoice owed by A's home: a checkout to open (ADR 0046). */
+  let aCheckout: Promise<string> | null = null;
+  const anOpenCheckout = () =>
+    (aCheckout ??= (async () => {
+      await w.helpers.asManager(w.a, () =>
+        h.moduleRef.get(TenantTx).withTenantTx(async (tx) => {
+          const gateway = h.moduleRef.get(GatewayService);
+          await gateway.set(tx, w.a.tenantId, gatewayBody() as never, {
+            accountId: w.a.ids.manager,
+          });
+          await gateway.setOnline(tx, w.a.tenantId, true);
+        }),
+      );
+      await call(w, 'POST', '/staff/invoices', {
+        token: w.a.tokens.manager,
+        body: {
+          target: 'unit',
+          unitId: w.a.homeUnitId,
+          kind: 'other',
+          dueOn: localDay(5),
+          lines: [{ descriptionEn: 'Fee', descriptionAr: 'رسم', amount: '10' }],
+        },
+      }).expect(201);
+      const res = await as(
+        'owner',
+        'POST',
+        `/units/${w.a.homeUnitId}/payment-sessions`,
+        {},
+      );
+      return body<{ id: string }>(res).id;
+    })());
+  const FINANCE_CALLS = (): Record<string, () => Promise<Response>> => ({
+    'POST /units/{unitId}/payment-sessions': async () => {
+      await anOpenCheckout();
+      return as(
+        'owner',
+        'POST',
+        `/units/${w.a.homeUnitId}/payment-sessions`,
+        {},
+      );
+    },
+    'GET /payment-sessions/{id}': async () =>
+      as('owner', 'GET', `/payment-sessions/${await anOpenCheckout()}`),
+  });
   const FACILITY_CALLS = (): Record<string, () => Promise<Response>> => ({
     'GET /staff/bookings': () => as('manager', 'GET', '/staff/bookings'),
     'GET /staff/bookings/{id}': async () =>
@@ -2091,6 +2138,7 @@ describe('API v0 — no-store', () => {
       }),
     ...FACILITY_CALLS(),
     ...VEHICLE_CALLS(),
+    ...FINANCE_CALLS(),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

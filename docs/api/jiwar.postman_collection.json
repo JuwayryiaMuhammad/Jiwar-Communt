@@ -6559,6 +6559,33 @@
           }
         },
         {
+          "name": "Where a checkout stands",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payment-sessions",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/payment-sessions/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get one of my units’ payments and its receipt",
           "request": {
             "description": "**Responses:** 200",
@@ -7395,6 +7422,54 @@
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/units/:unitId/invoices",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Open (or reuse) a checkout for some or all of what the unit owes",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"invoiceIds\": []\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `invoiceIds` | string[] |  | Omitted or empty: every invoice the unit owes. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "payment-sessions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/payment-sessions",
               "variable": [
                 {
                   "description": "",

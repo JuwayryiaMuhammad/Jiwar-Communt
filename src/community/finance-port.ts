@@ -31,6 +31,18 @@ export class CommunityFinancePort {
     return this.capabilities.placeOf(tx, accountId, unitId);
   }
 
+  /**
+   * Whether the unit's finances are paused by a death review (ADR 0021):
+   * then nobody sees or pays, and the answer says why.
+   */
+  async financePaused(tx: TenantTxClient, unitId: string): Promise<boolean> {
+    const flag = await tx.unitReviewFlag.findFirst({
+      where: { unitId, reason: 'primary_deceased', clearedAt: null },
+      select: { id: true },
+    });
+    return flag !== null;
+  }
+
   /** Every active account that sees the unit's money now: who is told. */
   financeHolders(tx: TenantTxClient, unitId: string): Promise<string[]> {
     return this.capabilities.holders(tx, unitId, 'financeView');

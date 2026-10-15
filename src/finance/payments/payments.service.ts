@@ -29,6 +29,7 @@ import { balancesOf, CREDITED_SQL, PAID_SQL } from '../invoices/balances';
 import { invoiceView, InvoicesService } from '../invoices/invoices.service';
 import { CURRENCY, money, show, ZERO } from '../money';
 import { FinanceNotices } from '../notices/finance-notices';
+import { supersedeLive } from '../online/supersede';
 import { allocateUnit, applyPayment, unitCredit } from './allocation';
 import { newReceiptCode, receiptCodeHash, receiptUrl } from './receipts';
 import type {
@@ -168,6 +169,7 @@ export class PaymentsService implements OnModuleInit {
           'More than is owed',
           { params: { outstanding: show(outstanding) } },
         );
+      await supersedeLive(tx, [unitId]);
       await this.create(tx, id, {
         unitId,
         channel: 'office',

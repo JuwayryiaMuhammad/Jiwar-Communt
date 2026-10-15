@@ -24,6 +24,7 @@ import { formatNumber, takeNumbers } from '../counters';
 import { asDate, fromDate, localToday } from '../db-clock';
 import { CURRENCY, MAX_AMOUNT, money, show, ZERO } from '../money';
 import { FinanceNotices } from '../notices/finance-notices';
+import { supersedeLive } from '../online/supersede';
 import { allocateUnits } from '../payments/allocation';
 import {
   balancesOf,
@@ -331,6 +332,7 @@ export class InvoicesService implements OnModuleInit {
           createdById: this.ctx.accountId,
         },
       });
+      await supersedeLive(tx, [invoice.unitId]);
       await this.audit.record(tx, {
         action: 'credit_note.created',
         targetId: id,

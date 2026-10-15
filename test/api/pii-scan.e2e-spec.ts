@@ -1149,6 +1149,8 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/payments': unit.id,
       '/units/{unitId}/statement': unit.id,
       '/staff/units/{unitId}/statement': unit.id,
+      // A foreign checkout: not found for everyone of A.
+      '/payment-sessions/{id}': w.bPaymentSessionId,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

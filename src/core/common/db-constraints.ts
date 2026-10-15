@@ -279,4 +279,14 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   finance_payments_receipt_number_key: null,
   finance_payments_receipt_code_key: null,
   finance_allocations_tenant_id_id_key: null,
+  payment_sessions_tenant_id_id_key: null,
+  payment_sessions_special_reference_key: null,
+  // Decided under the unit's finance lock: a violation is a race.
+  payment_sessions_one_live_per_unit: null,
+  payment_sessions_payment_id_key: null,
+  payment_session_invoices_tenant_id_id_key: null,
+  payment_session_invoices_once: null,
+  payment_gateway_events_tenant_id_id_key: null,
+  // The claim: inserted with ON CONFLICT DO NOTHING.
+  finance_payments_gateway_transaction_key: null,
 };

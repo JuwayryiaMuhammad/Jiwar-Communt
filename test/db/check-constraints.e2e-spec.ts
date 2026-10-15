@@ -886,6 +886,32 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   finance_allocations_amount: {},
   receipt_links_code_hash_shape: {},
+  finance_payments_online_shape: {
+    guarded:
+      '(channel = online) IS NOT TRUE holds when channel is NULL; the rest runs only on an online payment, whose method is set (kind_shape)',
+  },
+  finance_payments_offline_shape: {
+    guarded:
+      '(channel = online) IS TRUE is false when channel is NULL; the rest is IS NULL only',
+  },
+  finance_payments_transaction_shape: {
+    guarded:
+      'gateway_transaction_id IS NULL is tested first; the pattern runs only on a value',
+  },
+  payment_sessions_amount: {},
+  payment_sessions_currency: {},
+  payment_sessions_reference_shape: {},
+  payment_sessions_dedupe_shape: {},
+  payment_sessions_secret_shape: {},
+  // status is NOT NULL; the nullable columns only under IS [NOT] NULL.
+  payment_sessions_status_shape: {},
+  payment_session_invoices_amount: {},
+  payment_gateway_events_transaction_shape: {},
+  payment_gateway_events_order_shape: {
+    guarded:
+      'gateway_order_id IS NULL is tested first; the pattern runs only on a value',
+  },
+  payment_gateway_events_outcome: {},
   invoices_period: {
     guarded:
       'period_starts_on IS NULL and period_ends_on IS NULL are tested first; the comparison runs only on two values',

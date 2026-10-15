@@ -544,6 +544,19 @@ export const ErrorCode = {
   PAYMENT_EXCEEDS_OUTSTANDING: 'PAYMENT_EXCEEDS_OUTSTANDING',
   /** Not the unit's, or nothing is owed on it (409, params.invoiceIds). */
   INVOICE_NOT_PAYABLE: 'INVOICE_NOT_PAYABLE',
+  /** The unit owes nothing to pay online (409). */
+  NOTHING_TO_PAY: 'NOTHING_TO_PAY',
+  /**
+   * The compound takes no online payment now: not configured, switched off
+   * by its manager or the platform, or the server holds no key (409).
+   */
+  ONLINE_PAYMENT_UNAVAILABLE: 'ONLINE_PAYMENT_UNAVAILABLE',
+  /** Another checkout of the unit is being opened right now (409; retry shortly). */
+  PAYMENT_SESSION_IN_FLIGHT: 'PAYMENT_SESSION_IN_FLIGHT',
+  /** Paymob could not open the checkout (502, params.reason); try again. */
+  PAYMENT_GATEWAY_ERROR: 'PAYMENT_GATEWAY_ERROR',
+  /** Unknown, another compound's, or not the caller's to see. */
+  PAYMENT_SESSION_NOT_FOUND: 'PAYMENT_SESSION_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -751,6 +764,8 @@ export const appError = {
     new AppException(HttpStatus.TOO_MANY_REQUESTS, code, message, extra),
   serviceUnavailable: (code: ErrorCode, message: string, extra?: Extra) =>
     new AppException(HttpStatus.SERVICE_UNAVAILABLE, code, message, extra),
+  badGateway: (code: ErrorCode, message: string, extra?: Extra) =>
+    new AppException(HttpStatus.BAD_GATEWAY, code, message, extra),
 };
 
 /**

@@ -13130,6 +13130,19 @@
         ],
         "type": "object"
       },
+      "OpenPaymentSessionDto": {
+        "properties": {
+          "invoiceIds": {
+            "description": "Omitted or empty: every invoice the unit owes.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "OtpRequestedView": {
         "properties": {
           "code": {
@@ -13870,6 +13883,90 @@
           "id",
           "reasonCode",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "PaymentSessionStatus": {
+        "enum": [
+          "opening",
+          "open",
+          "succeeded",
+          "failed",
+          "expired",
+          "superseded"
+        ],
+        "type": "string"
+      },
+      "PaymentSessionView": {
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "checkoutUrl": {
+            "description": "The hosted checkout, to the payer only and while open. Rebuilt each time, never stored.",
+            "nullable": true,
+            "type": "string"
+          },
+          "currency": {
+            "enum": [
+              "EGP"
+            ],
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "invoices": {
+            "items": {
+              "$ref": "#/components/schemas/SessionInvoiceView"
+            },
+            "type": "array"
+          },
+          "lastAttempt": {
+            "description": "The latest attempt on the hosted page failed; the payer may retry there while it is open.",
+            "enum": [
+              "failed"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "payment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SessionPaymentView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentSessionStatus"
+              }
+            ]
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "status",
+          "amount",
+          "currency",
+          "expiresAt",
+          "invoices",
+          "lastAttempt",
+          "payment",
+          "checkoutUrl"
         ],
         "type": "object"
       },
@@ -18591,6 +18688,43 @@
         },
         "required": [
           "body"
+        ],
+        "type": "object"
+      },
+      "SessionInvoiceView": {
+        "properties": {
+          "amount": {
+            "description": "What it owed when the checkout opened.",
+            "type": "string"
+          },
+          "invoiceId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId",
+          "number",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "SessionPaymentView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "receiptNumber": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "receiptNumber"
         ],
         "type": "object"
       },
@@ -40750,6 +40884,44 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/payment-sessions/{id}": {
+      "get": {
+        "operationId": "PaymentSessionsController_status",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSessionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Where a checkout stands",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/payments/{id}": {
       "get": {
         "operationId": "UnitPaymentsController_detail",
@@ -50013,6 +50185,64 @@
         "summary": "Get the unit’s parking slots and the visitor areas’ free spaces",
         "tags": [
           "parking"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/payment-sessions": {
+      "post": {
+        "description": "Returns the hosted Paymob page. The unit has one live checkout; the same basket by the same payer reuses it. Poll GET /payment-sessions/{id} afterwards: the return page proves nothing.",
+        "operationId": "PaymentSessionsController_open",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenPaymentSessionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSessionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open (or reuse) a checkout for some or all of what the unit owes",
+        "tags": [
+          "finance"
         ],
         "x-no-store": true,
         "x-stability": "draft"

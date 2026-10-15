@@ -454,3 +454,37 @@ export const FINANCE_PAYMENT_ROUTES: Row[] = [
     invalid: 'none',
   },
 ];
+
+/** Paying online (ADR 0046). */
+export const FINANCE_ONLINE_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/units/{unitId}/payment-sessions',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.b.homeUnitId }),
+      body: () => ({}),
+      code: 'UNIT_NOT_FOUND',
+    },
+    invalid: {
+      body: { invoiceIds: 'all' },
+      fields: [{ field: 'invoiceIds', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/payment-sessions/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bPaymentSessionId }),
+      code: 'PAYMENT_SESSION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+];

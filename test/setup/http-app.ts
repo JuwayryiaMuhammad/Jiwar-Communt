@@ -1,3 +1,5 @@
+import { PAYMOB_TRANSPORT } from '../../src/finance/paymob/paymob-transport';
+import { FakePaymob } from './paymob-fake';
 import type { Server } from 'node:http';
 import type { INestApplication, Type } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -54,6 +56,11 @@ export async function createHttpHarness(
      * as on a server with no FCM settings: nothing is queued or sent.
      */
     push?: PushTransport;
+    /**
+     * Paymob (ADR 0046): always a fake, so no suite ever reaches Paymob;
+     * pass one to script it and read what was sent.
+     */
+    paymob?: FakePaymob;
   } = {},
 ): Promise<HttpHarness> {
   const builder = Test.createTestingModule({
@@ -62,6 +69,9 @@ export async function createHttpHarness(
     controllers: opts.controllers ?? [],
   });
   if (opts.push) builder.overrideProvider(PUSH_TRANSPORT).useValue(opts.push);
+  builder
+    .overrideProvider(PAYMOB_TRANSPORT)
+    .useValue(opts.paymob ?? new FakePaymob());
   const moduleRef = await builder.compile();
   const app = moduleRef.createNestApplication({ logger: false });
   configureApp(app);

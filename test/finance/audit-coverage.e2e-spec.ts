@@ -414,6 +414,38 @@ describe('Audit coverage — finance', () => {
     });
   });
 
+  describe('online', () => {
+    it('payment_session.opened: the unit, the amount and the invoices; never Paymob’s secret', async () => {
+      const c = await f.setUp('Finance Audit Online');
+      await f.configureGateway(c.manager);
+      const { invoiceId } = await f.issue(c.manager, c.home.id);
+      const res = await f
+        .http('post', `/units/${c.home.id}/payment-sessions`, c.owner.token, {})
+        .expect(201);
+      const session = res.body as { id: string; checkoutUrl: string };
+      const rows = await read.tenant(c.c.tenantId, {
+        action: 'payment_session.opened',
+        targetId: session.id,
+      });
+      covered.add('payment_session.opened');
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        actorType: 'account',
+        actorId: c.owner.id,
+        targetType: 'payment_session',
+        metadata: {
+          unitId: c.home.id,
+          amount: '1000.00',
+          invoiceIds: [invoiceId],
+        },
+      });
+      const secret = new URL(session.checkoutUrl).searchParams.get(
+        'clientSecret',
+      )!;
+      expect(JSON.stringify(rows[0])).not.toContain(secret);
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every finance entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

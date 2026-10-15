@@ -530,6 +530,7 @@ model Tenant {
   billingPlans                 BillingPlan[]
   financePayments              FinancePayment[]
   receiptLinks                 ReceiptLink[]
+  paymentSessions              PaymentSession[]
   announcements      Announcement[]
   communityEvents    CommunityEvent[]
   polls              Poll[]
@@ -965,6 +966,8 @@ model Account {
   billingPlansCreated            BillingPlan[]                       @relation("BillingPlanCreator")
   billingPlanOverridesUpdated    BillingPlanOverride[]               @relation("BillingPlanOverrideUpdater")
   financePaymentsRecorded        FinancePayment[]                    @relation("FinancePaymentRecorder")
+  financePaymentsPaid            FinancePayment[]                    @relation("FinancePaymentPayer")
+  paymentSessions                PaymentSession[]                    @relation("PaymentSessionPayer")
   neighbourConversationsAuthored NeighbourConversation[]             @relation("NeighbourConversationAuthor")
   neighbourConversationsStarted  NeighbourConversation[]             @relation("NeighbourConversationResponder")
   neighbourConversationMessages  NeighbourConversationMessage[]      @relation("NeighbourConversationMessageSender")
@@ -1076,6 +1079,7 @@ model Unit {
   invoices                   Invoice[]
   billingPlanOverrides       BillingPlanOverride[]
   financePayments            FinancePayment[]
+  paymentSessions            PaymentSession[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, id])
@@ -5287,6 +5291,7 @@ model Invoice {
   creditNotes CreditNote[]
   notices     InvoiceNotice[]
   allocations FinanceAllocation[]
+  sessionInvoices PaymentSessionInvoice[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, number])
@@ -5454,8 +5459,16 @@ model FinancePayment {
   recordedById  String?         @map("recorded_by_account_id") @db.Uuid
   reversesId    String?         @map("reverses_id") @db.Uuid
   reasonCode    String?         @map("reason_code")
+  /// Online only: the checkout, Paymob's transaction (once per compound)
+  /// and who paid.
+  sessionId            String?  @map("session_id") @db.Uuid
+  gatewayTransactionId String?  @map("gateway_transaction_id")
+  payerId              String?  @map("payer_account_id") @db.Uuid
   createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
 
+  session     PaymentSession?     @relation("PaymentSessionPayments", fields: [tenantId, sessionId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_payments_tenant_id_session_id_fkey")
+  payer       Account?            @relation("FinancePaymentPayer", fields: [tenantId, payerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_payments_tenant_id_payer_fkey")
+  settles     PaymentSession?     @relation("PaymentSessionPayment")
   unit        Unit                @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   recordedBy  Account?            @relation("FinancePaymentRecorder", fields: [tenantId, recordedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_payments_tenant_id_recorded_by_fkey")
@@ -5501,5 +5514,90 @@ model ReceiptLink {
 
   @@index([paymentId], map: "receipt_links_payment_idx")
   @@map("receipt_links")
+}
+
+enum PaymentSessionStatus {
+  opening
+  open
+  succeeded
+  failed
+  expired
+  superseded
+
+  @@map("payment_session_status")
+}
+
+/// A hosted checkout for some of a unit's invoices (ADR 0046): one live
+/// per unit; the Paymob client secret sealed by the vault. Only the status
+/// moves (trigger), and only the webhook makes it a payment.
+model PaymentSession {
+  id               String               @id @db.Uuid
+  tenantId         String               @map("tenant_id") @db.Uuid
+  unitId           String               @map("unit_id") @db.Uuid
+  accountId        String               @map("account_id") @db.Uuid
+  amount           Decimal              @db.Decimal(12, 2)
+  currency         String
+  status           PaymentSessionStatus
+  dedupeKey        String               @map("dedupe_key") @db.Char(64)
+  specialReference String               @unique(map: "payment_sessions_special_reference_key") @map("special_reference")
+  intentionId      String?              @map("intention_id")
+  gatewayOrderId   String?              @map("gateway_order_id")
+  clientSecretEnc  Bytes?               @map("client_secret_enc")
+  keyVersion       Int?                 @map("key_version")
+  expiresAt        DateTime             @map("expires_at") @db.Timestamptz(3)
+  resolvedAt       DateTime?            @map("resolved_at") @db.Timestamptz(3)
+  paymentId        String?              @map("payment_id") @db.Uuid
+  createdAt        DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant   Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  unit     Unit                    @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  account  Account                 @relation("PaymentSessionPayer", fields: [tenantId, accountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  payment  FinancePayment?         @relation("PaymentSessionPayment", fields: [tenantId, paymentId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "payment_sessions_tenant_id_payment_id_fkey")
+  payments FinancePayment[]        @relation("PaymentSessionPayments")
+  invoices PaymentSessionInvoice[]
+  events   PaymentGatewayEvent[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, paymentId], map: "payment_sessions_payment_id_key")
+  @@index([tenantId, unitId, createdAt], map: "payment_sessions_unit_idx")
+  @@map("payment_sessions")
+}
+
+/// What a checkout pays: its invoices and what each owed when it opened.
+model PaymentSessionInvoice {
+  id        String  @id @db.Uuid
+  tenantId  String  @map("tenant_id") @db.Uuid
+  sessionId String  @map("session_id") @db.Uuid
+  invoiceId String  @map("invoice_id") @db.Uuid
+  amount    Decimal @db.Decimal(12, 2)
+
+  session PaymentSession @relation(fields: [tenantId, sessionId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  invoice Invoice        @relation(fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, sessionId, invoiceId], map: "payment_session_invoices_once")
+  @@map("payment_session_invoices")
+}
+
+/// A Paymob callback that passed the HMAC, and what came of it (ADR 0046).
+/// Signed scalar fields only. Append-only.
+model PaymentGatewayEvent {
+  id                   String   @id @db.Uuid
+  tenantId             String   @map("tenant_id") @db.Uuid
+  sessionId            String?  @map("session_id") @db.Uuid
+  gatewayTransactionId String   @map("gateway_transaction_id")
+  gatewayOrderId       String?  @map("gateway_order_id")
+  amountCents          BigInt   @map("amount_cents")
+  success              Boolean
+  pending              Boolean
+  outcome              String
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  session PaymentSession? @relation(fields: [tenantId, sessionId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, sessionId, createdAt], map: "payment_gateway_events_session_idx")
+  @@index([tenantId, createdAt, id], map: "payment_gateway_events_created_idx")
+  @@map("payment_gateway_events")
 }
 

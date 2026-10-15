@@ -98,6 +98,7 @@ describe('audit catalog', () => {
         'credit_note',
         'billing_plan',
         'payment',
+        'payment_session',
       ]).toContain(def.target);
     }
   });

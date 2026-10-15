@@ -24,6 +24,8 @@ import {
 } from './invoices/invoices.controller';
 import { InvoicesService } from './invoices/invoices.service';
 import { FinanceNotices } from './notices/finance-notices';
+import { PaymentSessionsController } from './online/payment-sessions.controller';
+import { PaymentSessionsService } from './online/payment-sessions.service';
 import {
   StaffPaymentsController,
   UnitPaymentsController,
@@ -46,6 +48,7 @@ import { PaymentsService } from './payments/payments.service';
     BillingPlansController,
     StaffPaymentsController,
     UnitPaymentsController,
+    PaymentSessionsController,
   ],
   providers: [
     FinanceProvisioning,
@@ -55,6 +58,7 @@ import { PaymentsService } from './payments/payments.service';
     InvoiceNoticesSweep,
     BillingPlansService,
     PaymentsService,
+    PaymentSessionsService,
     CredentialVault,
     GatewayService,
     GatewayKeys,

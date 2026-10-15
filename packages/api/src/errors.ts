@@ -266,6 +266,11 @@ const ERROR_TEXT: Record<string, string> = {
   PAYMENT_ALREADY_REVERSED: 'This payment was reversed already.',
   PAYMENT_EXCEEDS_OUTSTANDING: 'More than the unit owes: record at most what is outstanding.',
   INVOICE_NOT_PAYABLE: 'One of these invoices is not this unit’s, or nothing is owed on it.',
+  NOTHING_TO_PAY: 'Nothing is owed.',
+  ONLINE_PAYMENT_UNAVAILABLE: 'Online payment is not available in this compound now.',
+  PAYMENT_SESSION_IN_FLIGHT: 'A checkout is being opened: try again in a moment.',
+  PAYMENT_GATEWAY_ERROR: 'The payment provider could not open the checkout. Try again.',
+  PAYMENT_SESSION_NOT_FOUND: 'This checkout does not exist.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

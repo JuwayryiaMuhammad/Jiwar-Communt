@@ -6,6 +6,9 @@ import { PlatformSessionService } from '../../src/core/platform/platform-session
 import { BillingPlansService } from '../../src/finance/billing-plans/billing-plans.service';
 import { InvoicesService } from '../../src/finance/invoices/invoices.service';
 import { PaymentsService } from '../../src/finance/payments/payments.service';
+import { GatewayService } from '../../src/finance/gateway/gateway.service';
+import { PaymentSessionsService } from '../../src/finance/online/payment-sessions.service';
+import { gatewayBody } from '../setup/finance';
 import { DelegationsService } from '../../src/community/households/delegations.service';
 import { HouseholdsService } from '../../src/community/households/households.service';
 import { MemberPermissionsService } from '../../src/community/households/member-permissions.service';
@@ -202,6 +205,8 @@ export interface World {
   bBillingPlanId: string;
   /** An office payment of B's invoice (ADR 0046). */
   bFinancePaymentId: string;
+  /** A checkout B's owner opened (B's gateway is on). */
+  bPaymentSessionId: string;
   /** One of A's plans, for valid payment bodies. */
   aClubPlanId: string;
   /** One of A's, open every day, roomy, for valid bookings. */
@@ -868,6 +873,13 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
         method: 'cash',
         paidOn: day(0),
       });
+    await h.moduleRef.get(TenantTx).withTenantTx(async (tx) => {
+      const gateway = h.moduleRef.get(GatewayService);
+      await gateway.set(tx, b.tenantId, gatewayBody() as never, {
+        accountId: b.ids.manager,
+      });
+      await gateway.setOnline(tx, b.tenantId, true);
+    });
     return {
       batchId: batch.id,
       invoiceId: invoice.id,
@@ -875,6 +887,11 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       paymentId: payment.id,
     };
   });
+  const bSession = await helpers.as(
+    b,
+    { id: b.ids.owner, type: 'resident' },
+    () => h.moduleRef.get(PaymentSessionsService).open(b.homeUnitId, {}),
+  );
   return {
     bInvoiceBatchId: bFinance.batchId,
     bInvoiceId: bFinance.invoiceId,
@@ -888,6 +905,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     aAreaId: aArea.id,
     bBillingPlanId: bFinance.planId,
     bFinancePaymentId: bFinance.paymentId,
+    bPaymentSessionId: bSession.id,
     bClubPlanId: bClubPlan.id,
     aClubPlanId: aClubPlan.id,
     bMembershipId: bClub.membershipId,

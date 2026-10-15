@@ -128,6 +128,16 @@ export type VehicleSettings = Schema<'VehicleSettingsResponse'>;
 export type ParkingSlot = Schema<'StaffParkingSlotView'>;
 export type VisitorArea = Schema<'VisitorParkingAreaView'>;
 export type StaffVisitorParking = Schema<'StaffVisitorParkingBookingView'>;
+export type StaffFine = Schema<'StaffFineView'>;
+export type FineStatus = Schema<'VehicleFineStatus'>;
+export type FinePayment = Schema<'StaffFinePaymentView'>;
+export type StaffParkingReport = Schema<'StaffParkingReportView'>;
+export type ParkingReportStatus = Schema<'ParkingReportStatus'>;
+
+export interface FineFilters {
+  status?: FineStatus | '';
+  unitCode?: string;
+}
 
 export interface VehicleFilters {
   status?: VehiclePermitStatus | '';
@@ -313,6 +323,12 @@ export const keys = {
   visitorAreas: ['visitor-areas'] as const,
   visitorParkingAll: ['visitor-parking'] as const,
   visitorParking: (areaId: string, day: string) => ['visitor-parking', areaId, day] as const,
+  finesAll: ['vehicle-fines'] as const,
+  fines: (filters: object) => ['vehicle-fines', 'list', filters] as const,
+  fine: (id: string) => ['vehicle-fines', 'detail', id] as const,
+  parkingReportsAll: ['parking-reports'] as const,
+  parkingReports: (status: string) => ['parking-reports', 'list', status] as const,
+  parkingReport: (id: string) => ['parking-reports', 'detail', id] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -493,6 +509,16 @@ export const fetchers = {
   visitorAreas: () => unwrap(api.GET('/api/v1/staff/visitor-parking-areas')),
   visitorParking: (areaId: string, day: string) =>
     unwrap(api.GET('/api/v1/staff/visitor-parking-bookings', { params: { query: { ...(areaId ? { areaId } : {}), day } } })),
+  fines: (filters: FineFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/vehicle-fines', {
+        params: { query: { ...(clean(filters) as { status?: FineStatus; unitCode?: string }), cursor, limit } },
+      }),
+    ),
+  fine: (id: string) => unwrap(api.GET('/api/v1/staff/vehicle-fines/{id}', { params: { path: { id } } })),
+  parkingReports: (status: ParkingReportStatus | '', cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/parking-reports', { params: { query: { ...(status ? { status } : {}), cursor, limit } } })),
+  parkingReport: (id: string) => unwrap(api.GET('/api/v1/staff/parking-reports/{id}', { params: { path: { id } } })),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

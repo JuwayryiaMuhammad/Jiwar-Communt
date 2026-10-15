@@ -36,6 +36,8 @@ const RULES: Partial<Record<Purpose, { types: readonly ContentType[]; maxBytes: 
     what: 'An image or a PDF, up to 10 MB.',
   },
   neighbour_post_photo: { types: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 5 * 1024 * 1024, what: 'A JPEG, PNG or WebP image, up to 5 MB.' },
+  // A vehicle fine's photo (ADR 0045).
+  vehicle_fine_photo: { types: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 5 * 1024 * 1024, what: 'A JPEG, PNG or WebP image, up to 5 MB.' },
 };
 
 /**

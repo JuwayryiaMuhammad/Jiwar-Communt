@@ -9,6 +9,8 @@ import {
   Car,
   CircleParking,
   ParkingMeter,
+  Siren,
+  Ticket,
   CalendarCheck,
   CalendarClock,
   CalendarDays,
@@ -73,6 +75,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     keys.vehicles({ status: 'pending' }),
     () => fetchers.vehicles({ status: 'pending' }, undefined, 100),
     can('vehicles.manage'),
+  );
+  const appeals = useQueueSize(
+    keys.fines({ status: 'under_appeal' }),
+    () => fetchers.fines({ status: 'under_appeal' }, undefined, 100),
+    can('fines.issue'),
+  );
+  const parkingReports = useQueueSize(
+    keys.parkingReports('open'),
+    () => fetchers.parkingReports('open', undefined, 100),
+    can('parking_reports.handle'),
   );
   const registrations = useQueueSize(
     keys.registrations,
@@ -231,6 +243,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       items: [
         { href: '/vehicles', label: 'Vehicles', icon: <Car aria-hidden />, count: vehiclesToApprove, show: can('vehicles.manage') },
         { href: '/visitor-parking', label: 'Visitor parking', icon: <ParkingMeter aria-hidden />, show: can('vehicles.manage') },
+        {
+          href: '/fines',
+          label: 'Fines',
+          icon: <Ticket aria-hidden />,
+          count: appeals,
+          show: can('fines.issue') || can('fines.billing'),
+        },
+        {
+          href: '/parking-reports',
+          label: 'Parking reports',
+          icon: <Siren aria-hidden />,
+          count: parkingReports,
+          show: can('parking_reports.handle'),
+        },
         { href: '/parking', label: 'Parking setup', icon: <CircleParking aria-hidden />, show: can('vehicles.manage') },
       ],
     },

@@ -62,6 +62,10 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'fines.issue',
       'fines.billing',
       'parking_reports.handle',
+      'finance.gateway',
+      'finance.billing',
+      'finance.invoice',
+      'finance.payments',
     ],
   },
   {
@@ -131,13 +135,21 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
     permissions: ['tickets.dispatch'],
   },
   {
-    // The accountant (ADR 0044, 0045): the club's memberships and the
-    // offline payments that keep them, and the vehicle fines' payments at
-    // the office; nothing else of the compound.
+    // The accountant (ADR 0044, 0045, 0046): the club's memberships and
+    // the offline payments that keep them, the vehicle fines' payments at
+    // the office, and the units' billing plans, invoices, credit notes and
+    // payments. Never the gateway's credentials, and nothing else of the
+    // compound.
     key: 'accountant',
     kind: 'staff',
     kindDefault: false,
-    permissions: ['club.billing', 'fines.billing'],
+    permissions: [
+      'club.billing',
+      'fines.billing',
+      'finance.billing',
+      'finance.invoice',
+      'finance.payments',
+    ],
   },
 ];
 

@@ -704,9 +704,13 @@ describe('Permission sync', () => {
     const report = await sync(base, t);
     expect([...report.added].sort()).toEqual([...r5].sort());
     expect(report.rolesCreated).toEqual(['accountant']);
-    // The role as the code has it now: the fines' payments came with G2.
+    // The role as the code has it now: the fines' payments came with G2,
+    // finance with R6a.
     expect([...(await role(t, 'accountant')).permissions].sort()).toEqual([
       'club.billing',
+      'finance.billing',
+      'finance.invoice',
+      'finance.payments',
       'fines.billing',
     ]);
     for (const key of ['resident', 'family_member']) {
@@ -767,13 +771,21 @@ describe('Permission sync', () => {
         await tenantLifecycle.tenantCreated(tx, t);
       }),
     );
-    expect((await role(t, 'accountant')).permissions).toEqual(['club.billing']);
+    expect([...(await role(t, 'accountant')).permissions].sort()).toEqual([
+      'club.billing',
+      'finance.billing',
+      'finance.invoice',
+      'finance.payments',
+    ]);
 
     const report = await sync(base, t);
     expect([...report.added].sort()).toEqual([...g2].sort());
     expect(report.rolesCreated).toEqual([]);
     expect([...(await role(t, 'accountant')).permissions].sort()).toEqual([
       'club.billing',
+      'finance.billing',
+      'finance.invoice',
+      'finance.payments',
       'fines.billing',
     ]);
     for (const key of ['resident', 'family_member']) {
@@ -791,6 +803,75 @@ describe('Permission sync', () => {
     // works vehicles, fines or reports until a manager says so.
     for (const key of ['guard', 'technician', 'maintenance_supervisor']) {
       for (const permission of g2)
+        expect((await role(t, key)).permissions).not.toContain(permission);
+    }
+    expect(await sync(base, t)).toMatchObject({
+      added: [],
+      rolesCreated: [],
+      rolesChanged: 0,
+    });
+  });
+
+  it('Phase R6a reaches an existing compound: the four finance permissions for the manager, billing, invoices and payments for the accountant (ADR 0046)', async () => {
+    const r6a = [
+      'finance.gateway',
+      'finance.billing',
+      'finance.invoice',
+      'finance.payments',
+    ];
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !r6a.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !r6a.includes(p)),
+      })),
+    };
+    expect(catalogProblems(before)).toEqual([]);
+    const t = newId();
+    await h.globalDb.tenant.create({
+      data: { id: t, name: `Sync R6a compound ${t}` },
+    });
+    await h.asTenant(t, () =>
+      h.tenantTx.withTenantTx(async (tx) => {
+        await new RoleProvisioner(before).provision(tx, t);
+        await tx.tenantSettings.create({ data: { tenantId: t } });
+        await tenantLifecycle.tenantCreated(tx, t);
+      }),
+    );
+
+    const report = await sync(base, t);
+    expect([...report.added].sort()).toEqual([...r6a].sort());
+    expect(report.rolesCreated).toEqual([]);
+    expect(
+      (await role(t, 'accountant')).permissions.filter((p) =>
+        p.startsWith('finance.'),
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        'finance.billing',
+        'finance.invoice',
+        'finance.payments',
+      ]),
+    );
+    expect((await role(t, 'accountant')).permissions).not.toContain(
+      'finance.gateway',
+    );
+    expect((await role(t, 'manager')).permissions).toEqual(
+      expect.arrayContaining(r6a),
+    );
+    // Residents see and pay through capabilities, never a permission; no
+    // other staff role touches money until a manager says so.
+    for (const key of [
+      'resident',
+      'family_member',
+      'guard',
+      'technician',
+      'maintenance_supervisor',
+    ]) {
+      for (const permission of r6a)
         expect((await role(t, key)).permissions).not.toContain(permission);
     }
     expect(await sync(base, t)).toMatchObject({

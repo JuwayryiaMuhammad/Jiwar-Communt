@@ -124,6 +124,17 @@ export const PERMISSIONS = {
   'fines.issue': { kinds: ['staff', 'manager'] },
   'fines.billing': { kinds: ['staff', 'manager'] },
   'parking_reports.handle': { kinds: ['staff', 'manager'] },
+  // Finance (ADR 0046). Residents and family see and pay a unit's invoices
+  // with `units.read` (capabilities.financeView / financePay decide per
+  // unit). `finance.gateway` sets the compound's Paymob account and turns
+  // online payment on or off; `finance.billing` keeps the recurring
+  // billing plans; `finance.invoice` issues invoices and credit notes;
+  // `finance.payments` records payments made at the office, reverses them
+  // and lists every payment (a cashier may hold it alone).
+  'finance.gateway': { kinds: ['manager'] },
+  'finance.billing': { kinds: ['staff', 'manager'] },
+  'finance.invoice': { kinds: ['staff', 'manager'] },
+  'finance.payments': { kinds: ['staff', 'manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

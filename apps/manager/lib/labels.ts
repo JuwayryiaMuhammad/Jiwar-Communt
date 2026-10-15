@@ -62,4 +62,8 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'fines.issue': 'Issue vehicle fines and decide appeals',
   'fines.billing': 'Record vehicle fine payments made at the office',
   'parking_reports.handle': 'Work the parking reports queue: close reports or turn them into fines',
+  'finance.gateway': 'Set the compound’s online payment account and turn online payment on or off',
+  'finance.billing': 'Keep the recurring billing plans and their per-unit amounts',
+  'finance.invoice': 'Issue invoices to units and credit notes, and see unit statements',
+  'finance.payments': 'Record payments made at the office, reverse them, and see every payment',
 };

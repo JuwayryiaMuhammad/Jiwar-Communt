@@ -135,6 +135,18 @@ export const PERMISSIONS = {
   'finance.billing': { kinds: ['staff', 'manager'] },
   'finance.invoice': { kinds: ['staff', 'manager'] },
   'finance.payments': { kinds: ['staff', 'manager'] },
+  // Emergencies and gate services (ADR 0047). Residents and family report
+  // an emergency (capabilities.emergency decides per unit) and ask security
+  // for a service (capabilities.gateEntry: people who live there). A guard
+  // on an open shift responds with `gate.operate`; `emergencies.respond`
+  // makes anyone else a responder (a control room); `emergencies.manage`
+  // watches every emergency, is told when nobody answered, and may answer
+  // or resolve one; `gate_services.handle` works the requests queue.
+  'emergencies.report': { kinds: ['resident', 'family'] },
+  'gate_services.request': { kinds: ['resident', 'family'] },
+  'emergencies.respond': { kinds: ['staff', 'manager'] },
+  'emergencies.manage': { kinds: ['manager'] },
+  'gate_services.handle': { kinds: ['staff', 'manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

@@ -115,6 +115,12 @@ export const FILE_PURPOSES = {
     maxBytes: 5 * MB,
     uploaders: ['fines.issue'],
   },
+  // A suspicious-activity report's photo (ADR 0047), the resident's.
+  gate_service_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['gate_services.request'],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

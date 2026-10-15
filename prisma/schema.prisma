@@ -1686,6 +1686,8 @@ enum NotificationCategory {
   finance
 
   @@map("notification_category")
+  /// Emergencies and the services security gives at the gate (ADR 0047).
+  safety
 }
 
 /// `push`: whether a notification is also pushed to the phone (ADR 0041).
@@ -2146,6 +2148,8 @@ enum FilePurpose {
   vehicle_fine_photo
 
   @@map("file_purpose")
+  /// A suspicious-activity report's photo (ADR 0047), the resident's.
+  gate_service_photo
 }
 
 enum FileStatus {

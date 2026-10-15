@@ -241,7 +241,9 @@ describe('Permission sync', () => {
     // units.read was offered long ago, yet the new role has it.
     expect((await role(t, 'family_member')).permissions).toEqual([
       'community.read',
+      'emergencies.report',
       'facilities.book',
+      'gate_services.request',
       'household.manage',
       'neighbours.board',
       'neighbours.complain',
@@ -275,7 +277,9 @@ describe('Permission sync', () => {
           from: [],
           to: [
             'community.read',
+            'emergencies.report',
             'facilities.book',
+            'gate_services.request',
             'household.manage',
             'neighbours.board',
             'neighbours.complain',
@@ -1128,5 +1132,73 @@ describe('Permission sync', () => {
       'units.export',
     );
     expect((await catalogOf(b)).has('units.export')).toBe(false);
+  });
+
+  it('Phase G6a reaches an existing compound: reporting and requests for residents and family, managing emergencies and handling the requests for the manager; the guard keeps its two (ADR 0047)', async () => {
+    const g6a = [
+      'emergencies.report',
+      'gate_services.request',
+      'emergencies.respond',
+      'emergencies.manage',
+      'gate_services.handle',
+    ];
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !g6a.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !g6a.includes(p)),
+      })),
+    };
+    expect(catalogProblems(before)).toEqual([]);
+    const t = newId();
+    await h.globalDb.tenant.create({
+      data: { id: t, name: `Sync G6a compound ${t}` },
+    });
+    await h.asTenant(t, () =>
+      h.tenantTx.withTenantTx(async (tx) => {
+        await new RoleProvisioner(before).provision(tx, t);
+        await tx.tenantSettings.create({ data: { tenantId: t } });
+        await tenantLifecycle.tenantCreated(tx, t);
+      }),
+    );
+
+    const report = await sync(base, t);
+    // emergencies.respond is offered, and no default role holds it: a
+    // compound gives it to a role of its own (a control room).
+    expect([...report.added].sort()).toEqual([...g6a].sort());
+    expect(report.rolesCreated).toEqual([]);
+    for (const key of ['resident', 'family_member']) {
+      const { permissions } = await role(t, key);
+      expect(permissions).toEqual(
+        expect.arrayContaining(['emergencies.report', 'gate_services.request']),
+      );
+      for (const p of g6a.slice(2)) expect(permissions).not.toContain(p);
+    }
+    const manager = (await role(t, 'manager')).permissions;
+    expect(manager).toEqual(
+      expect.arrayContaining(['emergencies.manage', 'gate_services.handle']),
+    );
+    for (const p of [
+      'emergencies.report',
+      'gate_services.request',
+      'emergencies.respond',
+    ])
+      expect(manager).not.toContain(p);
+    // A guard responds with gate.operate inside a shift.
+    expect((await role(t, 'guard')).permissions).toEqual([
+      'gate.operate',
+      'parcels.handle',
+    ]);
+    for (const key of ['technician', 'maintenance_supervisor', 'accountant'])
+      for (const permission of g6a)
+        expect((await role(t, key)).permissions).not.toContain(permission);
+    expect(await sync(base, t)).toMatchObject({
+      added: [],
+      rolesCreated: [],
+      rolesChanged: 0,
+    });
   });
 });

@@ -66,6 +66,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'finance.billing',
       'finance.invoice',
       'finance.payments',
+      'emergencies.manage',
+      'gate_services.handle',
     ],
   },
   {
@@ -88,6 +90,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'facilities.book',
       'vehicles.register',
       'parking.report',
+      'emergencies.report',
+      'gate_services.request',
     ],
   },
   {
@@ -110,6 +114,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'facilities.book',
       'vehicles.register',
       'parking.report',
+      'emergencies.report',
+      'gate_services.request',
     ],
   },
   {

@@ -8674,7 +8674,8 @@
           "gate_request_photo",
           "vehicle_licence",
           "parking_photo",
-          "vehicle_fine_photo"
+          "vehicle_fine_photo",
+          "gate_service_photo"
         ],
         "type": "string"
       },
@@ -12954,7 +12955,8 @@
           "neighbours",
           "bookings",
           "vehicles",
-          "finance"
+          "finance",
+          "safety"
         ],
         "type": "string"
       },

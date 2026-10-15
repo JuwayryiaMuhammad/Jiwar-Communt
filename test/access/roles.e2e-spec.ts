@@ -90,7 +90,9 @@ describe('Roles', () => {
       name: null,
       permissions: [
         'community.read',
+        'emergencies.report',
         'facilities.book',
+        'gate_services.request',
         'household.delegate',
         'household.manage',
         'neighbours.board',
@@ -240,6 +242,8 @@ describe('Roles', () => {
         'facilities.book',
         'vehicles.register',
         'parking.report',
+        'emergencies.report',
+        'gate_services.request',
       ]),
     );
     expect(await version()).toBe(before);

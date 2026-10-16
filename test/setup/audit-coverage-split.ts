@@ -419,4 +419,12 @@ export const GUARD_DUTY_COVERAGE: readonly string[] = [
   'guard_task.completed',
   'guard_task.cancelled',
   'guard_task.carried',
+  'guard_swap.requested',
+  'guard_swap.accepted',
+  'guard_swap.declined',
+  'guard_swap.withdrawn',
+  'guard_swap.approved',
+  'guard_swap.rejected',
+  'guard_swap.expired',
+  'guard_swap.cancelled',
 ];

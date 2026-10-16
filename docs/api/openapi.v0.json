@@ -12057,6 +12057,154 @@
         ],
         "type": "string"
       },
+      "GuardSwapCancel": {
+        "description": "Why the system cancelled it.",
+        "enum": [
+          "slot_cancelled",
+          "slot_changed",
+          "guard_left"
+        ],
+        "type": "string"
+      },
+      "GuardSwapReject": {
+        "enum": [
+          "staffing",
+          "too_late",
+          "other"
+        ],
+        "type": "string"
+      },
+      "GuardSwapStatus": {
+        "enum": [
+          "requested",
+          "accepted",
+          "approved",
+          "declined",
+          "rejected",
+          "withdrawn",
+          "cancelled",
+          "expired"
+        ],
+        "type": "string"
+      },
+      "GuardSwapView": {
+        "properties": {
+          "acceptedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "closeReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardSwapCancel"
+              }
+            ],
+            "description": "Why the system cancelled it.",
+            "nullable": true
+          },
+          "colleague": {
+            "$ref": "#/components/schemas/FirstNameRefView"
+          },
+          "colleagueSlot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SwapSlotView"
+              }
+            ],
+            "description": "The colleague’s, in exchange; null for a cover.",
+            "nullable": true,
+            "type": "object"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "description": "The requester’s.",
+            "nullable": true,
+            "type": "string"
+          },
+          "rejectReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardSwapReject"
+              }
+            ],
+            "nullable": true
+          },
+          "requester": {
+            "$ref": "#/components/schemas/FirstNameRefView"
+          },
+          "requesterSlot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SwapSlotView"
+              }
+            ],
+            "description": "The requester’s."
+          },
+          "role": {
+            "description": "What I am in it.",
+            "enum": [
+              "requester",
+              "colleague"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardSwapStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "requesterSlot",
+          "colleagueSlot",
+          "reason",
+          "acceptedAt",
+          "decidedAt",
+          "rejectReason",
+          "closeReason",
+          "createdAt",
+          "requester",
+          "colleague",
+          "role"
+        ],
+        "type": "object"
+      },
+      "GuardSwapViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GuardSwapView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "GuardTaskCancel": {
         "enum": [
           "no_longer_needed",
@@ -20885,6 +21033,21 @@
         ],
         "type": "object"
       },
+      "RejectSwapDto": {
+        "properties": {
+          "reasonCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardSwapReject"
+              }
+            ]
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "RejectVehicleDto": {
         "properties": {
           "reasonCode": {
@@ -21367,6 +21530,34 @@
           "autoCloseDays",
           "appointmentSlotMinutes",
           "appointmentSlotCapacity"
+        ],
+        "type": "object"
+      },
+      "RequestSwapDto": {
+        "properties": {
+          "colleagueId": {
+            "description": "An active guard (GUARD_NOT_ELIGIBLE).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "colleagueSlotId": {
+            "description": "One of the colleague’s slots, in exchange. Absent: the colleague covers mine.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "slotId": {
+            "description": "One of my slots: scheduled, unopened and to come (SLOT_NOT_SWAPPABLE).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slotId",
+          "colleagueId"
         ],
         "type": "object"
       },
@@ -26673,6 +26864,125 @@
         ],
         "type": "object"
       },
+      "StaffGuardSwapView": {
+        "properties": {
+          "acceptedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "closeReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardSwapCancel"
+              }
+            ],
+            "description": "Why the system cancelled it.",
+            "nullable": true
+          },
+          "colleague": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "colleagueSlot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SwapSlotView"
+              }
+            ],
+            "description": "The colleague’s, in exchange; null for a cover.",
+            "nullable": true,
+            "type": "object"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "description": "The requester’s.",
+            "nullable": true,
+            "type": "string"
+          },
+          "rejectReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardSwapReject"
+              }
+            ],
+            "nullable": true
+          },
+          "requester": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "requesterSlot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SwapSlotView"
+              }
+            ],
+            "description": "The requester’s."
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardSwapStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "requesterSlot",
+          "colleagueSlot",
+          "reason",
+          "acceptedAt",
+          "decidedAt",
+          "rejectReason",
+          "closeReason",
+          "createdAt",
+          "requester",
+          "colleague",
+          "decidedBy"
+        ],
+        "type": "object"
+      },
+      "StaffGuardSwapViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffGuardSwapView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StaffGuardTaskView": {
         "properties": {
           "assignee": {
@@ -29304,6 +29614,32 @@
           "status",
           "response",
           "at"
+        ],
+        "type": "object"
+      },
+      "SwapSlotView": {
+        "properties": {
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "post",
+          "startsAt",
+          "endsAt"
         ],
         "type": "object"
       },
@@ -39575,6 +39911,258 @@
         "tags": [
           "gate"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/swaps": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "GuardSwapsController_mine",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardSwapViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my swaps",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "In exchange for one of theirs, or as a cover. A slot is in one live swap at most (409 SWAP_SLOT_BUSY); nobody may be left with overlapping slots (409 ROSTER_OVERLAP). The colleague is told.",
+        "operationId": "GuardSwapsController_request",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestSwapDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardSwapView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask a colleague to take one of my slots",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/swaps/{id}": {
+      "get": {
+        "operationId": "GuardSwapsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardSwapView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a swap of mine",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/swaps/{id}/accept": {
+      "post": {
+        "description": "The roster’s keepers are told, to decide.",
+        "operationId": "GuardSwapsController_accept",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardSwapView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accept a swap I was asked",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/swaps/{id}/decline": {
+      "post": {
+        "operationId": "GuardSwapsController_decline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardSwapView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decline a swap I was asked",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/swaps/{id}/withdraw": {
+      "post": {
+        "operationId": "GuardSwapsController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardSwapView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw a swap I asked for, while undecided",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -56501,6 +57089,201 @@
           }
         ],
         "summary": "End a roster template",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/swaps": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "StaffSwapsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`accepted`: those to decide.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "requested",
+                "accepted",
+                "approved",
+                "declined",
+                "rejected",
+                "withdrawn",
+                "cancelled",
+                "expired"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGuardSwapViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the swaps",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/swaps/{id}": {
+      "get": {
+        "operationId": "StaffSwapsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGuardSwapView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a swap",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/swaps/{id}/approve": {
+      "post": {
+        "description": "The slots get their new guards. Checked again: 409 SWAP_NOT_POSSIBLE (params.reason) when the slots changed, started or a guard left; 409 ROSTER_OVERLAP. Never one of my own (403).",
+        "operationId": "StaffSwapsController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGuardSwapView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve a swap the colleague accepted",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/swaps/{id}/reject": {
+      "post": {
+        "operationId": "StaffSwapsController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectSwapDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGuardSwapView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reject a swap the colleague accepted",
         "tags": [
           "guard-duty"
         ],

@@ -1322,6 +1322,9 @@ describe('API v0 — PII leak scan', () => {
       '/staff/security/handovers/{id}': piiHandover,
       '/staff/security/tasks/{id}': piiTask,
       '/gate/tasks/{id}': piiTask,
+      // A swap of B's: not found for everyone of A.
+      '/gate/swaps/{id}': w.bSwapId,
+      '/staff/security/swaps/{id}': w.bSwapId,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

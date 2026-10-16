@@ -172,3 +172,27 @@ export async function taskPhotoRow(
   });
   return id;
 }
+
+/** A swap request: `slotId` of `requesterId` to `colleagueId`, as a cover. */
+export async function swapRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    requesterId: string;
+    slotId: string;
+    colleagueId: string;
+  },
+): Promise<string> {
+  const id = newId();
+  await tx.guardShiftSwap.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      requesterId: r.requesterId,
+      requesterSlotId: r.slotId,
+      colleagueId: r.colleagueId,
+      reason: 'Row reason',
+    },
+  });
+  return id;
+}

@@ -2087,6 +2087,101 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/swaps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List my swaps
+         * @description Newest first.
+         */
+        get: operations["GuardSwapsController_mine"];
+        put?: never;
+        /**
+         * Ask a colleague to take one of my slots
+         * @description In exchange for one of theirs, or as a cover. A slot is in one live swap at most (409 SWAP_SLOT_BUSY); nobody may be left with overlapping slots (409 ROSTER_OVERLAP). The colleague is told.
+         */
+        post: operations["GuardSwapsController_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/swaps/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a swap of mine */
+        get: operations["GuardSwapsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/swaps/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept a swap I was asked
+         * @description The roster’s keepers are told, to decide.
+         */
+        post: operations["GuardSwapsController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/swaps/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline a swap I was asked */
+        post: operations["GuardSwapsController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/swaps/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw a swap I asked for, while undecided */
+        post: operations["GuardSwapsController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/tasks/{id}": {
         parameters: {
             query?: never;
@@ -7778,6 +7873,80 @@ export interface paths {
          * @description Its slots to come that nobody opened and no swap gave away are cancelled (`template_ended`).
          */
         post: operations["StaffRosterController_endTemplate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/swaps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the swaps
+         * @description Newest first.
+         */
+        get: operations["StaffSwapsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/swaps/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a swap */
+        get: operations["StaffSwapsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/swaps/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve a swap the colleague accepted
+         * @description The slots get their new guards. Checked again: 409 SWAP_NOT_POSSIBLE (params.reason) when the slots changed, started or a guard left; 409 ROSTER_OVERLAP. Never one of my own (403).
+         */
+        post: operations["StaffSwapsController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/swaps/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject a swap the colleague accepted */
+        post: operations["StaffSwapsController_reject"];
         delete?: never;
         options?: never;
         head?: never;
@@ -14079,6 +14248,46 @@ export interface components {
         GuardSlotCancel: "schedule_change" | "guard_unavailable" | "post_closed" | "other";
         /** @enum {string} */
         GuardSlotStatus: "scheduled" | "cancelled";
+        /**
+         * @description Why the system cancelled it.
+         * @enum {string}
+         */
+        GuardSwapCancel: "slot_cancelled" | "slot_changed" | "guard_left";
+        /** @enum {string} */
+        GuardSwapReject: "staffing" | "too_late" | "other";
+        /** @enum {string} */
+        GuardSwapStatus: "requested" | "accepted" | "approved" | "declined" | "rejected" | "withdrawn" | "cancelled" | "expired";
+        GuardSwapView: {
+            /** Format: date-time */
+            acceptedAt: string | null;
+            /** @description Why the system cancelled it. */
+            closeReason: components["schemas"]["GuardSwapCancel"] | null;
+            colleague: components["schemas"]["FirstNameRefView"];
+            /** @description The colleague’s, in exchange; null for a cover. */
+            colleagueSlot: components["schemas"]["SwapSlotView"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description The requester’s. */
+            reason: string | null;
+            rejectReason: components["schemas"]["GuardSwapReject"] | null;
+            requester: components["schemas"]["FirstNameRefView"];
+            /** @description The requester’s. */
+            requesterSlot: components["schemas"]["SwapSlotView"];
+            /**
+             * @description What I am in it.
+             * @enum {string}
+             */
+            role: "requester" | "colleague";
+            status: components["schemas"]["GuardSwapStatus"];
+        };
+        GuardSwapViewList: {
+            data: components["schemas"]["GuardSwapView"][];
+            nextCursor: string | null;
+        };
         /** @enum {string} */
         GuardTaskCancel: "no_longer_needed" | "duplicate" | "unit_reopened" | "other";
         /** @enum {string} */
@@ -16885,6 +17094,9 @@ export interface components {
             /** @description From the closed list `unitPermitReject`. */
             reasonCode: string;
         };
+        RejectSwapDto: {
+            reasonCode: components["schemas"]["GuardSwapReject"];
+        };
         RejectVehicleDto: {
             /** @description From the closed list `vehicleReject`. */
             reasonCode: string;
@@ -17033,6 +17245,24 @@ export interface components {
             appointmentSlotMinutes: number;
             /** @description Days an answered request waits for its author before it closes itself. */
             autoCloseDays: number;
+        };
+        RequestSwapDto: {
+            /**
+             * Format: uuid
+             * @description An active guard (GUARD_NOT_ELIGIBLE).
+             */
+            colleagueId: string;
+            /**
+             * Format: uuid
+             * @description One of the colleague’s slots, in exchange. Absent: the colleague covers mine.
+             */
+            colleagueSlotId?: string;
+            reason?: string;
+            /**
+             * Format: uuid
+             * @description One of my slots: scheduled, unopened and to come (SLOT_NOT_SWAPPABLE).
+             */
+            slotId: string;
         };
         RequestTopicRefView: {
             /** Format: uuid */
@@ -18561,6 +18791,33 @@ export interface components {
             data: components["schemas"]["StaffGuardHandoverView"][];
             nextCursor: string | null;
         };
+        StaffGuardSwapView: {
+            /** Format: date-time */
+            acceptedAt: string | null;
+            /** @description Why the system cancelled it. */
+            closeReason: components["schemas"]["GuardSwapCancel"] | null;
+            colleague: components["schemas"]["AccountRefView"];
+            /** @description The colleague’s, in exchange; null for a cover. */
+            colleagueSlot: components["schemas"]["SwapSlotView"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            decidedBy: components["schemas"]["AccountRefView"] | null;
+            /** Format: uuid */
+            id: string;
+            /** @description The requester’s. */
+            reason: string | null;
+            rejectReason: components["schemas"]["GuardSwapReject"] | null;
+            requester: components["schemas"]["AccountRefView"];
+            /** @description The requester’s. */
+            requesterSlot: components["schemas"]["SwapSlotView"];
+            status: components["schemas"]["GuardSwapStatus"];
+        };
+        StaffGuardSwapViewList: {
+            data: components["schemas"]["StaffGuardSwapView"][];
+            nextCursor: string | null;
+        };
         StaffGuardTaskView: {
             assignee: components["schemas"]["AccountRefView"] | null;
             /** @description From `guardTaskCancel`, or `guardTaskCancelSystem`. */
@@ -19327,6 +19584,15 @@ export interface components {
             /** @description What the staff answered then, if they did. */
             response: string | null;
             status: components["schemas"]["SuggestionStatus"];
+        };
+        SwapSlotView: {
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            post: components["schemas"]["PostView"];
+            /** Format: date-time */
+            startsAt: string;
         };
         TaskUnitView: {
             building: string | null;
@@ -23769,6 +24035,139 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ShiftView"];
+                };
+            };
+        };
+    };
+    GuardSwapsController_mine: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardSwapViewList"];
+                };
+            };
+        };
+    };
+    GuardSwapsController_request: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestSwapDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardSwapView"];
+                };
+            };
+        };
+    };
+    GuardSwapsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardSwapView"];
+                };
+            };
+        };
+    };
+    GuardSwapsController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardSwapView"];
+                };
+            };
+        };
+    };
+    GuardSwapsController_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardSwapView"];
+                };
+            };
+        };
+    };
+    GuardSwapsController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardSwapView"];
                 };
             };
         };
@@ -32625,6 +33024,98 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RosterTemplateView"];
+                };
+            };
+        };
+    };
+    StaffSwapsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `accepted`: those to decide. */
+                status?: "requested" | "accepted" | "approved" | "declined" | "rejected" | "withdrawn" | "cancelled" | "expired";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGuardSwapViewList"];
+                };
+            };
+        };
+    };
+    StaffSwapsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGuardSwapView"];
+                };
+            };
+        };
+    };
+    StaffSwapsController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGuardSwapView"];
+                };
+            };
+        };
+    };
+    StaffSwapsController_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectSwapDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGuardSwapView"];
                 };
             };
         };

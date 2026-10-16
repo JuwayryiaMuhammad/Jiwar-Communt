@@ -6,6 +6,7 @@ import {
 import { HandoverService } from '../../src/gate/handover/handover.service';
 import { RosterService } from '../../src/gate/roster/roster.service';
 import { ShiftsService } from '../../src/gate/shifts/shifts.service';
+import { SwapsService } from '../../src/gate/swaps/swaps.service';
 import { TasksService } from '../../src/gate/tasks/tasks.service';
 import { gateHelpers } from '../setup/gate';
 import type { communityHelpers } from '../setup/community';
@@ -27,6 +28,8 @@ export interface GuardDutyWorld {
   bHandoverId: string;
   /** A custom task for B's gate. */
   bTaskId: string;
+  /** B's guard asks the relief guard to cover B's single slot. */
+  bSwapId: string;
 }
 
 export async function guardDutyWorld(
@@ -78,5 +81,10 @@ export async function guardDutyWorld(
       where: { shiftId: ended.id },
     }),
   );
-  return { ...roster, bHandoverId: handover.id };
+  const swap = await helpers.as(b, { id: b.ids.guard, type: 'staff' }, () =>
+    h.moduleRef
+      .get(SwapsService)
+      .request({ slotId: roster.bRosterSlotId, colleagueId: relief.id }),
+  );
+  return { ...roster, bHandoverId: handover.id, bSwapId: swap.id };
 }

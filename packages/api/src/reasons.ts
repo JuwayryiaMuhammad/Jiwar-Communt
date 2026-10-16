@@ -105,6 +105,8 @@ export const REASON_CODES = {
   guardTaskOutcome: ['all_clear', 'issue_found', 'done'],
   guardTaskCancel: ['no_longer_needed', 'duplicate', 'unit_reopened', 'other'],
   guardTaskCancelSystem: ['assignee_left'],
+  guardSwapReject: ['staffing', 'too_late', 'other'],
+  guardSwapCancel: ['slot_cancelled', 'slot_changed', 'guard_left'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

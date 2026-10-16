@@ -8,6 +8,7 @@ import {
   handoverRow,
   shiftRow,
   slotRow,
+  swapRow,
   taskPhotoRow,
   taskRow,
   templateRow,
@@ -20,6 +21,7 @@ interface Side {
   gateId: string;
   shiftId: string;
   taskId: string;
+  colleagueId: string;
 }
 
 /**
@@ -107,6 +109,23 @@ const TABLES: Table[] = [
         uploadedById: link.accountId,
       }),
   },
+  {
+    table: 'guard_shift_swaps',
+    insert: async (tx, own, link) =>
+      swapRow(tx, {
+        tenantId: own.tenantId,
+        requesterId: link.accountId,
+        // A slot of its own each time: a slot is in one live swap at most.
+        slotId: await slotRow(tx, {
+          tenantId: own.tenantId,
+          guardId: own.accountId,
+          gateId: own.gateId,
+          createdById: own.accountId,
+          inHours: 24 + 2 * ++slots,
+        }),
+        colleagueId: link.colleagueId,
+      }),
+  },
 ];
 
 describe('RLS isolation — guard shifts and tasks tables', () => {
@@ -128,6 +147,7 @@ describe('RLS isolation — guard shifts and tasks tables', () => {
       gateId: '',
       shiftId: '',
       taskId: '',
+      colleagueId: (await createAccountRow(h, tenantId)).id,
     };
     await inTenant(s, async (tx) => {
       s.gateId = await gateRow(tx, tenantId);

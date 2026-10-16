@@ -1275,6 +1275,62 @@ export const NOTIFICATION_KINDS = {
     target: 'unit',
     params: { outcome: {} },
   },
+  /** A colleague asks the guard to take one of their slots. */
+  'guard_swap.requested': {
+    priority: 'normal',
+    category: 'guard_duty',
+    critical: false,
+    target: 'guard_shift_swap',
+    params: {},
+  },
+  /** The colleague accepted: to the roster's keepers, to decide. */
+  'guard_swap.accepted': {
+    priority: 'normal',
+    category: 'guard_duty',
+    critical: false,
+    target: 'guard_shift_swap',
+    params: {},
+  },
+  /** The colleague declined: to the requester. */
+  'guard_swap.declined': {
+    priority: 'normal',
+    category: 'guard_duty',
+    critical: false,
+    target: 'guard_shift_swap',
+    params: {},
+  },
+  /** Approved: the slots have their new guards. To both guards. */
+  'guard_swap.approved': {
+    priority: 'normal',
+    category: 'guard_duty',
+    critical: false,
+    target: 'guard_shift_swap',
+    params: {},
+  },
+  /** Rejected by the roster's keepers. To both guards. */
+  'guard_swap.rejected': {
+    priority: 'normal',
+    category: 'guard_duty',
+    critical: false,
+    target: 'guard_shift_swap',
+    params: {},
+  },
+  /** A slot started before it was decided. To both guards. */
+  'guard_swap.expired': {
+    priority: 'normal',
+    category: 'guard_duty',
+    critical: false,
+    target: 'guard_shift_swap',
+    params: {},
+  },
+  /** The system cancelled it (a slot cancelled or changed, a guard gone). To both guards. */
+  'guard_swap.cancelled': {
+    priority: 'normal',
+    category: 'guard_duty',
+    critical: false,
+    target: 'guard_shift_swap',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

@@ -944,6 +944,20 @@ export const AUDIT_ACTIONS = {
   // A shift's end moved it to the shift's post. metadata: shiftId, gateId
   // or placeId.
   'guard_task.carried': { log: 'tenant', target: 'guard_task' },
+  // Swaps: ids and codes only, never the reason's words. metadata:
+  // requesterSlotId, colleagueId, colleagueSlotId (or null), reason
+  // (whether any).
+  'guard_swap.requested': { log: 'tenant', target: 'guard_shift_swap' },
+  'guard_swap.accepted': { log: 'tenant', target: 'guard_shift_swap' },
+  'guard_swap.declined': { log: 'tenant', target: 'guard_shift_swap' },
+  'guard_swap.withdrawn': { log: 'tenant', target: 'guard_shift_swap' },
+  // metadata: requesterSlotId, colleagueSlotId (the slots given).
+  'guard_swap.approved': { log: 'tenant', target: 'guard_shift_swap' },
+  // metadata: reasonCode.
+  'guard_swap.rejected': { log: 'tenant', target: 'guard_shift_swap' },
+  // The system's. metadata: reason (guardSwapCancel) for a cancel.
+  'guard_swap.expired': { log: 'tenant', target: 'guard_shift_swap' },
+  'guard_swap.cancelled': { log: 'tenant', target: 'guard_shift_swap' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

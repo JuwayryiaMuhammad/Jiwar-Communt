@@ -54,6 +54,8 @@ export function guardDutyCalls(
     });
   };
   const id = (res: Response) => (res.body as { id: string }).id;
+  /** Each swap's slot on a day of its own: A's guard's slots never overlap. */
+  let nextDay = 20;
   /**
    * A handover at A's gate by another guard, ticking the whole checklist:
    * its id, for A's guard (on shift there) to read and acknowledge.
@@ -89,6 +91,27 @@ export function guardDutyCalls(
         gateId: world().a.gateId,
       }),
     );
+  /**
+   * A swap: A's guard asks a relief guard of A to cover a new slot of A's
+   * guard. `accepted`: the relief guard accepted it.
+   */
+  const aSwap = async (accepted = false) => {
+    const w = world();
+    const relief = await gateHelpers(w.h).guard(w.a);
+    const reliefToken = await w.tokenFor(w.a, relief.id, 'staff');
+    const s = id(await slot(nextDay++));
+    const swap = id(
+      await guard('POST', '/gate/swaps', {
+        slotId: s,
+        colleagueId: relief.id,
+      }),
+    );
+    if (accepted)
+      await call(w, 'POST', `/gate/swaps/${swap}/accept`, {
+        token: reliefToken,
+      });
+    return { swap, reliefToken };
+  };
   const anItem = async () =>
     id(
       await manager('POST', '/staff/security/handover-items', {
@@ -139,6 +162,45 @@ export function guardDutyCalls(
         label: 'No-store keys',
       }),
     'GET /gate/my-work': () => guard('GET', '/gate/my-work'),
+    'POST /gate/swaps': async () => {
+      const w = world();
+      const relief = await gateHelpers(w.h).guard(w.a);
+      return guard('POST', '/gate/swaps', {
+        slotId: id(await slot(nextDay++)),
+        colleagueId: relief.id,
+      });
+    },
+    'GET /gate/swaps': () => guard('GET', '/gate/swaps'),
+    'GET /gate/swaps/{id}': async () =>
+      guard('GET', `/gate/swaps/${(await aSwap()).swap}`),
+    'POST /gate/swaps/{id}/accept': async () => {
+      const { swap, reliefToken } = await aSwap();
+      return call(world(), 'POST', `/gate/swaps/${swap}/accept`, {
+        token: reliefToken,
+      });
+    },
+    'POST /gate/swaps/{id}/decline': async () => {
+      const { swap, reliefToken } = await aSwap();
+      return call(world(), 'POST', `/gate/swaps/${swap}/decline`, {
+        token: reliefToken,
+      });
+    },
+    'POST /gate/swaps/{id}/withdraw': async () =>
+      guard('POST', `/gate/swaps/${(await aSwap()).swap}/withdraw`),
+    'GET /staff/security/swaps': () => manager('GET', '/staff/security/swaps'),
+    'GET /staff/security/swaps/{id}': async () =>
+      manager('GET', `/staff/security/swaps/${(await aSwap()).swap}`),
+    'POST /staff/security/swaps/{id}/approve': async () =>
+      manager(
+        'POST',
+        `/staff/security/swaps/${(await aSwap(true)).swap}/approve`,
+      ),
+    'POST /staff/security/swaps/{id}/reject': async () =>
+      manager(
+        'POST',
+        `/staff/security/swaps/${(await aSwap(true)).swap}/reject`,
+        { reasonCode: 'too_late' },
+      ),
     'POST /staff/security/tasks': () =>
       manager('POST', '/staff/security/tasks', {
         kind: 'custom',

@@ -710,6 +710,19 @@ export const ErrorCode = {
   GUARD_TASK_NOT_TAKER: 'GUARD_TASK_NOT_TAKER',
   /** It is done or cancelled, or not in progress yet (409, params.status). */
   GUARD_TASK_CLOSED: 'GUARD_TASK_CLOSED',
+  /** Unknown, another compound's, or not the caller's to see. */
+  SWAP_NOT_FOUND: 'SWAP_NOT_FOUND',
+  /** One of its slots is in another swap already (409). */
+  SWAP_SLOT_BUSY: 'SWAP_SLOT_BUSY',
+  /** It is not at that step any more (409, params.status). */
+  SWAP_CLOSED: 'SWAP_CLOSED',
+  /**
+   * Its slots no longer allow it (409, params.reason: `slot_changed`, a slot
+   * filled, cancelled or given to someone else; `started`; `guard_not_eligible`).
+   */
+  SWAP_NOT_POSSIBLE: 'SWAP_NOT_POSSIBLE',
+  /** Only the colleague answers, only the requester withdraws, and nobody decides their own (403). */
+  SWAP_ACTION_NOT_ALLOWED: 'SWAP_ACTION_NOT_ALLOWED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -883,6 +896,11 @@ export const FieldErrorCode = {
   POST_NOT_AVAILABLE: 'POST_NOT_AVAILABLE',
   /** The unit is not in closed mode (ADR 0020): nothing to inspect. */
   UNIT_NOT_CLOSED: 'UNIT_NOT_CLOSED',
+  /**
+   * Not a slot that may be swapped: the guard's own (or the colleague's),
+   * scheduled, unopened and to come.
+   */
+  SLOT_NOT_SWAPPABLE: 'SLOT_NOT_SWAPPABLE',
 } as const;
 
 export type FieldErrorCode =

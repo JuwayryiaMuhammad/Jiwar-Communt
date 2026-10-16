@@ -153,4 +153,46 @@ describe('the roster’s rules (ADR 0050)', () => {
     ] as const)
       expect(mirror).toContain(`${list}: [${quoted(REASON_CODES[list])}]`);
   });
+
+  it('the tasks’ and the swaps’ lists match their CHECKs and the dashboards’ mirror', () => {
+    const read = (name: string) =>
+      readFileSync(
+        join(__dirname, `../../../prisma/migrations/${name}/migration.sql`),
+        'utf8',
+      ).replace(/\s+/g, ' ');
+    const tasks = read('20261028090700_guard_tasks');
+    const swaps = read('20261028090800_guard_swaps');
+    const mirror = readFileSync(
+      join(__dirname, '../../../packages/api/src/reasons.ts'),
+      'utf8',
+    );
+    const quoted = (l: readonly string[]) => l.map((c) => `'${c}'`).join(', ');
+    expect(tasks).toContain(
+      `"cancel_reason" IN (${quoted([...REASON_CODES.guardTaskCancel, ...REASON_CODES.guardTaskCancelSystem])})`,
+    );
+    expect(tasks).toContain(
+      `"cancel_reason" IN (${quoted(REASON_CODES.guardTaskCancelSystem)})`,
+    );
+    // The outcomes, by kind: the inspection's two, then the custom task's.
+    expect(tasks).toContain(
+      `"outcome" IN (${quoted(REASON_CODES.guardTaskOutcome.slice(0, 2))})`,
+    );
+    expect(tasks).toContain(
+      `"outcome" IN (${quoted(REASON_CODES.guardTaskOutcome.slice(2))})`,
+    );
+    expect(swaps).toContain(
+      `"reject_reason" IN (${quoted(REASON_CODES.guardSwapReject)})`,
+    );
+    expect(swaps).toContain(
+      `"close_reason" IN (${quoted(REASON_CODES.guardSwapCancel)})`,
+    );
+    for (const list of [
+      'guardTaskOutcome',
+      'guardTaskCancel',
+      'guardTaskCancelSystem',
+      'guardSwapReject',
+      'guardSwapCancel',
+    ] as const)
+      expect(mirror).toContain(`${list}: [${quoted(REASON_CODES[list])}]`);
+  });
 });

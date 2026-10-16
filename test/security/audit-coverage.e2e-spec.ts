@@ -1,6 +1,7 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { addDays, localDate } from '../../src/core/common/slots/day-slots';
 import { ROSTER_ATTENDANCE_SWEEP } from '../../src/gate/roster/roster-attendance';
+import { SWAP_EXPIRY_SWEEP } from '../../src/gate/swaps/swaps.service';
 import { auditReaders } from '../setup/audit';
 import {
   COMMUNITY_COVERAGE,
@@ -284,6 +285,114 @@ describe('Audit coverage — guard shifts and tasks', () => {
       const carried = await single('guard_task.carried', mine.id);
       expect(carried).toMatchObject(by(guard, 'guard_task'));
       expect(carried.metadata).toEqual({ shiftId: shift.id, gateId });
+    });
+  });
+
+  describe('swaps', () => {
+    const swapOf = async (a: Who, b: Who, inMinutes: number) => {
+      const slot = await x.slot(supervisor, a.id, { gateId }, inMinutes, 60);
+      const swap = (
+        await x
+          .http('post', '/gate/swaps', a.token, {
+            slotId: slot.id,
+            colleagueId: b.id,
+            reason: WORDS,
+          })
+          .expect(201)
+      ).body as { id: string };
+      return { slot, swap };
+    };
+
+    it('asked, answered, withdrawn, decided, expired and cancelled: ids and codes, never the reason', async () => {
+      const a = await x.guard(s.c);
+      const b = await x.guard(s.c);
+      const day = 24 * 60;
+
+      const first = await swapOf(a, b, 2 * day);
+      const requested = await single('guard_swap.requested', first.swap.id);
+      expect(requested).toMatchObject(by(a, 'guard_shift_swap'));
+      expect(requested.metadata).toEqual({
+        requesterSlotId: first.slot.id,
+        colleagueId: b.id,
+        colleagueSlotId: null,
+        reason: true,
+      });
+      await x
+        .http('post', `/gate/swaps/${first.swap.id}/decline`, b.token)
+        .expect(200);
+      expect(await single('guard_swap.declined', first.swap.id)).toMatchObject(
+        by(b, 'guard_shift_swap'),
+      );
+
+      const second = await swapOf(a, b, 3 * day);
+      await x
+        .http('post', `/gate/swaps/${second.swap.id}/withdraw`, a.token)
+        .expect(200);
+      expect(
+        await single('guard_swap.withdrawn', second.swap.id),
+      ).toMatchObject(by(a, 'guard_shift_swap'));
+
+      const third = await swapOf(a, b, 4 * day);
+      await x
+        .http('post', `/gate/swaps/${third.swap.id}/accept`, b.token)
+        .expect(200);
+      expect(await single('guard_swap.accepted', third.swap.id)).toMatchObject(
+        by(b, 'guard_shift_swap'),
+      );
+      await x
+        .http(
+          'post',
+          `/staff/security/swaps/${third.swap.id}/approve`,
+          supervisor.token,
+        )
+        .expect(200);
+      const approved = await single('guard_swap.approved', third.swap.id);
+      expect(approved).toMatchObject(by(supervisor, 'guard_shift_swap'));
+      expect(approved.metadata).toEqual({
+        requesterSlotId: third.slot.id,
+        colleagueSlotId: null,
+      });
+
+      const fourth = await swapOf(a, b, 5 * day);
+      await x
+        .http('post', `/gate/swaps/${fourth.swap.id}/accept`, b.token)
+        .expect(200);
+      await x
+        .http(
+          'post',
+          `/staff/security/swaps/${fourth.swap.id}/reject`,
+          supervisor.token,
+          {
+            reasonCode: 'too_late',
+          },
+        )
+        .expect(200);
+      expect(
+        (await single('guard_swap.rejected', fourth.swap.id)).metadata,
+      ).toEqual({
+        reasonCode: 'too_late',
+      });
+
+      const fifth = await swapOf(a, b, 40);
+      await x.sweep(SWAP_EXPIRY_SWEEP, new Date(Date.now() + 45 * 60_000));
+      expect(await single('guard_swap.expired', fifth.swap.id)).toMatchObject(
+        system('guard_shift_swap'),
+      );
+
+      const sixth = await swapOf(a, b, 6 * day);
+      await x
+        .http(
+          'post',
+          `/staff/security/roster/slots/${sixth.slot.id}/cancel`,
+          supervisor.token,
+          {
+            reasonCode: 'other',
+          },
+        )
+        .expect(200);
+      const cancelled = await single('guard_swap.cancelled', sixth.swap.id);
+      expect(cancelled).toMatchObject(by(supervisor, 'guard_shift_swap'));
+      expect(cancelled.metadata).toEqual({ reason: 'slot_cancelled' });
     });
   });
 

@@ -1181,6 +1181,23 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded: 'cancel_reason IS NULL is tested first',
   },
   guard_tasks_cleared_shape: {},
+  guard_shift_swaps_not_self: {},
+  guard_shift_swaps_two_slots: {
+    guarded: 'colleague_slot_id IS NULL is tested first',
+  },
+  guard_shift_swaps_reason_length: {
+    guarded: 'reason IS NULL is tested first',
+  },
+  guard_shift_swaps_cleared_shape: {},
+  guard_shift_swaps_accepted_shape: {},
+  guard_shift_swaps_decided_shape: {},
+  guard_shift_swaps_reject_reason: {
+    guarded: 'reject_reason IS NULL is tested first',
+  },
+  guard_shift_swaps_closed_shape: {},
+  guard_shift_swaps_close_reason: {
+    guarded: 'close_reason IS NULL is tested first',
+  },
 };
 
 interface Check {

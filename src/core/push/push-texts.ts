@@ -1361,6 +1361,76 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تفقد الأمن وحدتك المغلقة. النتيجة في التطبيق.',
     },
   },
+  'guard_swap.requested': {
+    en: {
+      title: 'Swap request',
+      body: 'A colleague asks you to take one of their shifts.',
+    },
+    ar: {
+      title: 'طلب تبديل',
+      body: 'يطلب منك زميل أن تأخذ إحدى وردياته.',
+    },
+  },
+  'guard_swap.accepted': {
+    en: {
+      title: 'Swap to decide',
+      body: 'A shift swap awaits your approval.',
+    },
+    ar: {
+      title: 'تبديل بانتظار القرار',
+      body: 'تبديل ورديات بانتظار موافقتك.',
+    },
+  },
+  'guard_swap.declined': {
+    en: {
+      title: 'Swap declined',
+      body: 'Your colleague declined the shift swap.',
+    },
+    ar: {
+      title: 'رُفض التبديل',
+      body: 'رفض زميلك تبديل الوردية.',
+    },
+  },
+  'guard_swap.approved': {
+    en: {
+      title: 'Swap approved',
+      body: 'The shift swap was approved. Check your schedule.',
+    },
+    ar: {
+      title: 'تمت الموافقة على التبديل',
+      body: 'تمت الموافقة على تبديل الوردية. راجع جدولك.',
+    },
+  },
+  'guard_swap.rejected': {
+    en: {
+      title: 'Swap rejected',
+      body: 'The shift swap was not approved.',
+    },
+    ar: {
+      title: 'لم تتم الموافقة على التبديل',
+      body: 'لم تتم الموافقة على تبديل الوردية.',
+    },
+  },
+  'guard_swap.expired': {
+    en: {
+      title: 'Swap expired',
+      body: 'The shift started before the swap was decided.',
+    },
+    ar: {
+      title: 'انتهت مهلة التبديل',
+      body: 'بدأت الوردية قبل البت في التبديل.',
+    },
+  },
+  'guard_swap.cancelled': {
+    en: {
+      title: 'Swap cancelled',
+      body: 'The shift swap no longer applies.',
+    },
+    ar: {
+      title: 'أُلغي التبديل',
+      body: 'لم يعد تبديل الوردية ساريًا.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

@@ -11,6 +11,7 @@ import {
   handoverRow,
   shiftRow,
   slotRow,
+  swapRow,
   taskPhotoRow,
   taskRow,
   templateRow,
@@ -39,6 +40,7 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
   let handoverId: string;
   let taskId: string;
   let photoId: string;
+  let swapId: string;
 
   beforeAll(async () => {
     h = await createDbHarness();
@@ -75,6 +77,18 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
           taskId,
           fileId: await dutyFileRow(tx, tenantId),
           uploadedById: guardId,
+        });
+        swapId = await swapRow(tx, {
+          tenantId,
+          requesterId: guardId,
+          slotId: await slotRow(tx, {
+            tenantId,
+            guardId,
+            gateId,
+            createdById: otherId,
+            inHours: 48,
+          }),
+          colleagueId: otherId,
         });
         shiftId = newId();
         await tx.guardShift.create({
@@ -136,6 +150,7 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
       'guard_handover_items',
       'guard_handovers',
       'guard_tasks',
+      'guard_shift_swaps',
     ])
       expect({ table, ...(await privileges(table)) }).toEqual({
         table,
@@ -156,6 +171,7 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
       'guard_handovers',
       'guard_tasks',
       'guard_task_photos',
+      'guard_shift_swaps',
     ]) {
       await expect(
         attempt(
@@ -572,5 +588,71 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
           /files_content_type_for_purpose/,
         );
     }
+  });
+
+  describe('guard_shift_swaps', () => {
+    const where = () => `id = '${swapId}'`;
+    const accept = `UPDATE guard_shift_swaps SET status = 'accepted', accepted_at = now() WHERE `;
+
+    it('keeps who asked whom for what', async () => {
+      for (const set of [
+        `requester_account_id = '${otherId}'`,
+        `colleague_account_id = '${guardId}'`,
+        `colleague_slot_id = '${slotId}'`,
+        "reason = 'Other words'",
+      ])
+        await expect(
+          asApp(`UPDATE guard_shift_swaps SET ${set} WHERE ${where()}`),
+        ).rejects.toThrow(/keeps who asked whom/);
+    });
+
+    it('moves forward only; decided once, with who; a decision needs an acceptance', async () => {
+      await expect(
+        asApp(
+          `UPDATE guard_shift_swaps SET status = 'approved', decided_at = now(), decided_by_account_id = '${otherId}' WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/keeps who asked whom/);
+      await expect(
+        asApp(
+          accept + where(),
+          `UPDATE guard_shift_swaps SET status = 'approved', decided_at = now() WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/guard_shift_swaps_decided_shape/);
+      await expect(
+        asApp(
+          accept + where(),
+          `UPDATE guard_shift_swaps SET status = 'rejected', decided_at = now(), decided_by_account_id = '${otherId}', reject_reason = 'staffing' WHERE ${where()}`,
+          `UPDATE guard_shift_swaps SET status = 'accepted' WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/keeps who asked whom/);
+      await expect(
+        asApp(
+          `UPDATE guard_shift_swaps SET status = 'cancelled', closed_at = now() WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/guard_shift_swaps_closed_shape/);
+      await asApp(
+        `UPDATE guard_shift_swaps SET status = 'cancelled', closed_at = now(), close_reason = 'guard_left' WHERE ${where()}`,
+      );
+    });
+
+    it('its reason goes once', async () => {
+      const clear = `UPDATE guard_shift_swaps SET reason = NULL, reason_cleared_at = now() WHERE ${where()}`;
+      await asApp(clear);
+      await expect(
+        asApp(
+          clear,
+          `UPDATE guard_shift_swaps SET reason = 'Back' WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/keeps who asked whom/);
+    });
+
+    it('a slot is in one live swap at most, on each side', async () => {
+      const again = `INSERT INTO guard_shift_swaps (id, tenant_id, requester_account_id, requester_slot_id, colleague_account_id, updated_at)
+        SELECT '${newId()}', tenant_id, requester_account_id, requester_slot_id, colleague_account_id, now()
+          FROM guard_shift_swaps WHERE ${where()}`;
+      await expect(asApp(again)).rejects.toThrow(
+        /guard_shift_swaps_live_requester_slot_key/,
+      );
+    });
   });
 });

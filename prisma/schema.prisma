@@ -6376,3 +6376,52 @@ model GuardTaskPhoto {
   @@index([tenantId, taskId], map: "guard_task_photos_task_idx")
   @@map("guard_task_photos")
 }
+
+enum GuardSwapStatus {
+  requested
+  accepted
+  approved
+  declined
+  rejected
+  withdrawn
+  cancelled
+  expired
+
+  @@map("guard_swap_status")
+}
+
+/// A guard asks a colleague to take one of their slots (ADR 0050): in
+/// exchange for one of the colleague's, or as a cover. The colleague
+/// accepts or declines; the roster's keepers approve or reject an accepted
+/// one, and approval gives the slots their new guards. A slot is in one
+/// live swap at most. It keeps who asked whom for what and moves forward
+/// only (trigger).
+model GuardShiftSwap {
+  id              String          @id @db.Uuid
+  tenantId        String          @map("tenant_id") @db.Uuid
+  requesterId     String          @map("requester_account_id") @db.Uuid
+  requesterSlotId String          @map("requester_slot_id") @db.Uuid
+  colleagueId     String          @map("colleague_account_id") @db.Uuid
+  /// The colleague's slot in exchange; null for a cover.
+  colleagueSlotId String?         @map("colleague_slot_id") @db.Uuid
+  /// The requester's words: never in the audit trail or a notification.
+  reason          String?
+  reasonClearedAt DateTime?       @map("reason_cleared_at") @db.Timestamptz(3)
+  status          GuardSwapStatus @default(requested)
+  acceptedAt      DateTime?       @map("accepted_at") @db.Timestamptz(3)
+  decidedAt       DateTime?       @map("decided_at") @db.Timestamptz(3)
+  decidedById     String?         @map("decided_by_account_id") @db.Uuid
+  /// REASON_CODES.guardSwapReject.
+  rejectReason    String?         @map("reject_reason")
+  closedAt        DateTime?       @map("closed_at") @db.Timestamptz(3)
+  /// REASON_CODES.guardSwapCancel, for a swap the system cancelled.
+  closeReason     String?         @map("close_reason")
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, requesterId, createdAt], map: "guard_shift_swaps_requester_idx")
+  @@index([tenantId, colleagueId, createdAt], map: "guard_shift_swaps_colleague_idx")
+  @@index([tenantId, status, createdAt, id], map: "guard_shift_swaps_status_idx")
+  @@map("guard_shift_swaps")
+}

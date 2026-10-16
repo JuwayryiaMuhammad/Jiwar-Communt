@@ -510,4 +510,9 @@ export const REASON_CODES = {
   guardTaskCancel: ['no_longer_needed', 'duplicate', 'unit_reopened', 'other'],
   // A task the system cancels: the guard it was for left.
   guardTaskCancelSystem: ['assignee_left'],
+  // Why the roster's keepers reject a swap the colleague accepted (ADR 0050).
+  guardSwapReject: ['staffing', 'too_late', 'other'],
+  // What the system cancels a live swap for (ADR 0050): a slot cancelled,
+  // a slot given to someone else or filled meanwhile, a guard gone.
+  guardSwapCancel: ['slot_cancelled', 'slot_changed', 'guard_left'],
 } as const;

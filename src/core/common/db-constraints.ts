@@ -76,6 +76,11 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   guard_tasks_tenant_id_id_key: null,
   guard_task_photos_tenant_id_id_key: null,
   guard_task_photos_file_id_key: null,
+  // Swaps (ADR 0050): a slot in one live swap at most, decided under the
+  // slots' locks first (SWAP_SLOT_BUSY); a violation is a race.
+  guard_shift_swaps_tenant_id_id_key: null,
+  guard_shift_swaps_live_requester_slot_key: null,
+  guard_shift_swaps_live_colleague_slot_key: null,
   visitor_details_tenant_id_id_key: null,
   visitor_passes_tenant_id_id_key: null,
   // ADR 0043.

@@ -32,7 +32,12 @@ import {
   FINANCE_REPORT_ROUTES,
 } from './finance';
 import { GATE_ROUTES } from './gate';
-import { HANDOVER_ROUTES, ROSTER_ROUTES, TASK_ROUTES } from './guard-duty';
+import {
+  HANDOVER_ROUTES,
+  ROSTER_ROUTES,
+  SWAP_ROUTES,
+  TASK_ROUTES,
+} from './guard-duty';
 import { EXISTING_ROUTES } from './existing';
 import { HOUSEHOLD_ROUTES } from './household';
 import {
@@ -200,4 +205,5 @@ export const ROUTES: Row[] = [
   ...ROSTER_ROUTES,
   ...HANDOVER_ROUTES,
   ...TASK_ROUTES,
+  ...SWAP_ROUTES,
 ];

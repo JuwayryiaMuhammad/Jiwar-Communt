@@ -125,6 +125,7 @@ describe('audit catalog', () => {
         'board_publication',
         // ADR 0052.
         'patrol_checkpoint',
+        'patrol_route',
       ]).toContain(def.target);
     }
   });

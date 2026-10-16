@@ -40,12 +40,22 @@ export class CheckpointView {
       'When its QR was printed last: an older printout no longer scans.',
   })
   tokenIssuedAt: Date;
+  @ApiProperty({
+    type: Number,
+    description:
+      'How many routes in service walk it now: it is retired only at 0.',
+  })
+  routes: number;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   retiredAt: Date | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
-  static of(c: PatrolCheckpoint, names: DutyNames): CheckpointView {
+  static of(
+    c: PatrolCheckpoint,
+    names: DutyNames,
+    routes: number,
+  ): CheckpointView {
     return {
       id: c.id,
       post: PostView.of(c, names),
@@ -53,6 +63,7 @@ export class CheckpointView {
       nameAr: c.nameAr,
       position: CheckpointPositionView.of(c),
       tokenIssuedAt: c.tokenIssuedAt,
+      routes,
       retiredAt: c.retiredAt,
       createdAt: c.createdAt,
     };

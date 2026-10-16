@@ -29,7 +29,55 @@ export function patrolCalls(
         nameAr: `نقطة ${n} ${Date.now()}`,
       }),
     );
+  /** A route from A's gate walking a new checkpoint: its id. */
+  const aRoute = async () =>
+    id(
+      await manager('POST', '/staff/security/patrols/routes', {
+        gateId: world().a.gateId,
+        nameEn: `No-store round ${++n} ${Date.now()}`,
+        nameAr: `جولة ${n} ${Date.now()}`,
+        version: {
+          checkpointIds: [await aCheckpoint()],
+          ordered: true,
+          expectedMinutes: 20,
+        },
+      }),
+    );
   return {
+    'GET /staff/security/patrols/routes': () =>
+      manager('GET', '/staff/security/patrols/routes'),
+    'POST /staff/security/patrols/routes': async () =>
+      manager('POST', '/staff/security/patrols/routes', {
+        gateId: world().a.gateId,
+        nameEn: `No-store walk ${Date.now()}`,
+        nameAr: `مشي ${Date.now()}`,
+        version: {
+          checkpointIds: [await aCheckpoint()],
+          ordered: false,
+          expectedMinutes: 30,
+        },
+      }),
+    'GET /staff/security/patrols/routes/{id}': async () =>
+      manager('GET', `/staff/security/patrols/routes/${await aRoute()}`),
+    'PATCH /staff/security/patrols/routes/{id}': async () =>
+      manager('PATCH', `/staff/security/patrols/routes/${await aRoute()}`, {
+        nameEn: `No-store renamed ${Date.now()}`,
+      }),
+    'POST /staff/security/patrols/routes/{id}/versions': async () =>
+      manager(
+        'POST',
+        `/staff/security/patrols/routes/${await aRoute()}/versions`,
+        {
+          checkpointIds: [await aCheckpoint(), await aCheckpoint()],
+          ordered: false,
+          expectedMinutes: 25,
+        },
+      ),
+    'POST /staff/security/patrols/routes/{id}/retire': async () =>
+      manager(
+        'POST',
+        `/staff/security/patrols/routes/${await aRoute()}/retire`,
+      ),
     'GET /staff/security/patrols/checkpoints': () =>
       manager('GET', '/staff/security/patrols/checkpoints'),
     'POST /staff/security/patrols/checkpoints': async () =>

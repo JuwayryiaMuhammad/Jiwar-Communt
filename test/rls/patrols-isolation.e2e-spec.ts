@@ -1,7 +1,12 @@
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
-import { checkpointRow } from '../setup/patrol-rows';
+import {
+  checkpointRow,
+  routeRow,
+  routeStopRow,
+  versionRow,
+} from '../setup/patrol-rows';
 import { gateRow } from '../setup/security-rows';
 
 /** What a seed needs from one compound. */
@@ -9,6 +14,11 @@ interface Side {
   tenantId: string;
   accountId: string;
   gateId: string;
+  checkpointId: string;
+  /** A checkpoint on no route yet: a stop may be added for it. */
+  spareCheckpointId: string;
+  routeId: string;
+  versionId: string;
 }
 
 /**
@@ -38,6 +48,36 @@ const TABLES: Table[] = [
         createdById: link.accountId,
       }),
   },
+  {
+    table: 'patrol_routes',
+    insert: async (tx, own, link) =>
+      (
+        await routeRow(tx, {
+          tenantId: own.tenantId,
+          gateId: link.gateId,
+          createdById: link.accountId,
+          checkpointIds: [],
+        })
+      ).routeId,
+  },
+  {
+    table: 'patrol_route_versions',
+    insert: (tx, own, link) =>
+      versionRow(tx, {
+        tenantId: own.tenantId,
+        routeId: link.routeId,
+        createdById: link.accountId,
+      }),
+  },
+  {
+    table: 'patrol_route_checkpoints',
+    insert: (tx, own, link) =>
+      routeStopRow(tx, {
+        tenantId: own.tenantId,
+        versionId: link.versionId,
+        checkpointId: link.spareCheckpointId,
+      }),
+  },
 ];
 
 describe('RLS isolation — patrol tables', () => {
@@ -57,9 +97,29 @@ describe('RLS isolation — patrol tables', () => {
       tenantId,
       accountId: (await createAccountRow(h, tenantId)).id,
       gateId: '',
+      checkpointId: '',
+      spareCheckpointId: '',
+      routeId: '',
+      versionId: '',
     };
     await inTenant(s, async (tx) => {
       s.gateId = await gateRow(tx, tenantId);
+      const checkpoint = () =>
+        checkpointRow(tx, {
+          tenantId,
+          gateId: s.gateId,
+          createdById: s.accountId,
+        });
+      s.checkpointId = await checkpoint();
+      s.spareCheckpointId = await checkpoint();
+      const route = await routeRow(tx, {
+        tenantId,
+        gateId: s.gateId,
+        createdById: s.accountId,
+        checkpointIds: [s.checkpointId],
+      });
+      s.routeId = route.routeId;
+      s.versionId = route.versionId;
     });
     return s;
   };

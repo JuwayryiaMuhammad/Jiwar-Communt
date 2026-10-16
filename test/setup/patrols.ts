@@ -23,6 +23,33 @@ export interface CheckpointBody {
   qrPayload?: string;
 }
 
+export interface RouteBody {
+  id: string;
+  post: PostBody;
+  nameEn: string;
+  nameAr: string;
+  version: {
+    id: string;
+    number: number;
+    ordered: boolean;
+    expectedMinutes: number;
+    windowMinutes: number;
+    schedule: { days: number[]; times: string[] } | null;
+    checkpoints: number;
+    createdAt: string;
+  };
+  retiredAt: string | null;
+  createdAt: string;
+  stops?: {
+    position: number;
+    checkpointId: string;
+    nameEn: string;
+    nameAr: string;
+    location: { lat: number; lng: number; radiusM: number } | null;
+    retired: boolean;
+  }[];
+}
+
 /**
  * Helpers for the patrol suites (ADR 0052), on top of the guard duty ones:
  * checkpoints, routes and runs over HTTP.
@@ -51,5 +78,63 @@ export function patrolHelpers(h: HttpHarness) {
     return res.body as CheckpointBody & { qrPayload: string };
   }
 
-  return { ...x, x, checkpointRaw, checkpoint };
+  /** `POST /staff/security/patrols/routes` as `as`. */
+  function routeRaw(
+    as: Who,
+    body: Record<string, unknown>,
+    headers: Record<string, string> = {},
+  ) {
+    return x.http(
+      'post',
+      '/staff/security/patrols/routes',
+      as.token,
+      {
+        nameEn: `Round ${uniqueSuffix()}`,
+        nameAr: `جولة ${uniqueSuffix()}`,
+        ...body,
+      },
+      headers,
+    );
+  }
+
+  /** A route that must be made, from `post`, walking `checkpointIds`. */
+  async function route(
+    as: Who,
+    post: { gateId?: string; zoneId?: string },
+    checkpointIds: string[],
+    version: Record<string, unknown> = {},
+  ): Promise<RouteBody> {
+    const res = await routeRaw(as, {
+      ...post,
+      version: {
+        checkpointIds,
+        ordered: false,
+        expectedMinutes: 30,
+        ...version,
+      },
+    });
+    if (res.status !== 201)
+      throw new Error(`route: ${res.status} ${JSON.stringify(res.body)}`);
+    return res.body as RouteBody;
+  }
+
+  /** `POST /staff/security/patrols/routes/:id/versions` as `as`. */
+  function versionRaw(as: Who, routeId: string, body: Record<string, unknown>) {
+    return x.http(
+      'post',
+      `/staff/security/patrols/routes/${routeId}/versions`,
+      as.token,
+      body,
+    );
+  }
+
+  return {
+    ...x,
+    x,
+    checkpointRaw,
+    checkpoint,
+    routeRaw,
+    route,
+    versionRaw,
+  };
 }

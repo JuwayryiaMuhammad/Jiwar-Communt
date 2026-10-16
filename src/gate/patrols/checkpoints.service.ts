@@ -30,6 +30,23 @@ const retired = () =>
     'The checkpoint is retired',
   );
 
+/** Per checkpoint: how many routes in service walk it now. */
+export async function routesWalking(
+  tx: TenantTxClient,
+  checkpointIds: readonly string[],
+): Promise<Map<string, number>> {
+  if (!checkpointIds.length) return new Map();
+  const rows = await tx.$queryRaw<{ checkpoint_id: string; n: number }[]>`
+    SELECT rc.checkpoint_id, count(*)::int AS n
+      FROM patrol_route_checkpoints rc
+      JOIN patrol_route_versions v
+        ON v.id = rc.version_id AND v.superseded_at IS NULL
+      JOIN patrol_routes r ON r.id = v.route_id AND r.retired_at IS NULL
+     WHERE rc.checkpoint_id = ANY(${[...checkpointIds]}::uuid[])
+     GROUP BY rc.checkpoint_id`;
+  return new Map(rows.map((r) => [r.checkpoint_id, r.n]));
+}
+
 export interface CheckpointPosition {
   lat: number;
   lng: number;
@@ -185,11 +202,23 @@ export class CheckpointsService {
     });
   }
 
-  /** Retired once, never brought back: its scans stay. */
+  /**
+   * Retired once, never brought back: its scans stay. Not while a route in
+   * service walks it: decided under the row lock, which a new version takes
+   * FOR SHARE, so a version naming it either committed first (IN_USE) or
+   * finds it retired.
+   */
   retire(id: string): Promise<CheckpointView> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const before = await this.lock(tx, id);
       if (before.retiredAt) throw retired();
+      const routes = (await routesWalking(tx, [id])).get(id) ?? 0;
+      if (routes)
+        throw appError.conflict(
+          ErrorCode.PATROL_CHECKPOINT_IN_USE,
+          'A route in service walks this checkpoint',
+          { params: { routes } },
+        );
       const checkpoint = await tx.patrolCheckpoint.update({
         where: { id },
         data: {
@@ -250,7 +279,11 @@ export class CheckpointsService {
     rows: readonly PatrolCheckpoint[],
   ): Promise<CheckpointView[]> {
     const names = await this.names.read(tx, [], rows);
-    return rows.map((c) => CheckpointView.of(c, names));
+    const routes = await routesWalking(
+      tx,
+      rows.map((c) => c.id),
+    );
+    return rows.map((c) => CheckpointView.of(c, names, routes.get(c.id) ?? 0));
   }
 
   private async view(

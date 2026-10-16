@@ -94,6 +94,18 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   patrol_checkpoints_tenant_id_id_key: null,
   patrol_checkpoints_active_name_en_key: ['nameEn'],
   patrol_checkpoints_active_name_ar_key: ['nameAr'],
+  // Two routes in service never share a name; a version's number, its
+  // current version and its stops are internal keys, written under the
+  // route's lock.
+  patrol_routes_tenant_id_id_key: null,
+  patrol_routes_active_name_en_key: ['nameEn'],
+  patrol_routes_active_name_ar_key: ['nameAr'],
+  patrol_route_versions_tenant_id_id_key: null,
+  patrol_route_versions_number_key: null,
+  patrol_route_versions_current_key: null,
+  patrol_route_checkpoints_tenant_id_id_key: null,
+  patrol_route_checkpoints_position_key: null,
+  patrol_route_checkpoints_checkpoint_key: null,
   visitor_details_tenant_id_id_key: null,
   visitor_passes_tenant_id_id_key: null,
   // ADR 0043.

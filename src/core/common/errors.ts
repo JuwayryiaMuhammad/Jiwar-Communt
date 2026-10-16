@@ -798,6 +798,12 @@ export const ErrorCode = {
   PATROL_CHECKPOINT_NOT_FOUND: 'PATROL_CHECKPOINT_NOT_FOUND',
   /** It was retired: nothing changes any more (409). */
   PATROL_CHECKPOINT_RETIRED: 'PATROL_CHECKPOINT_RETIRED',
+  /** A route in service walks it (409, params.routes: how many). */
+  PATROL_CHECKPOINT_IN_USE: 'PATROL_CHECKPOINT_IN_USE',
+  /** Unknown, another compound's, or not the caller's to see. */
+  PATROL_ROUTE_NOT_FOUND: 'PATROL_ROUTE_NOT_FOUND',
+  /** It was retired: nothing changes any more (409). */
+  PATROL_ROUTE_RETIRED: 'PATROL_ROUTE_RETIRED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -981,6 +987,14 @@ export const FieldErrorCode = {
   OWNER_NOT_ELIGIBLE: 'OWNER_NOT_ELIGIBLE',
   /** A board of params.min to params.max seats. */
   BOARD_SIZE: 'BOARD_SIZE',
+  // patrols (ADR 0052)
+  /**
+   * Two start times closer than a run's window (params.minutes), on a day,
+   * over midnight or from Saturday into Sunday.
+   */
+  PATROL_SCHEDULE_OVERLAP: 'PATROL_SCHEDULE_OVERLAP',
+  /** Not a checkpoint in service of this compound. */
+  CHECKPOINT_NOT_AVAILABLE: 'CHECKPOINT_NOT_AVAILABLE',
 } as const;
 
 export type FieldErrorCode =

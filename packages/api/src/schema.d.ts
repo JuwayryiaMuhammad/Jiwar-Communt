@@ -8706,9 +8706,97 @@ export interface paths {
         put?: never;
         /**
          * Retire a checkpoint
-         * @description Once, for good; its scans stay.
+         * @description Once, for good; its scans stay. Not while a route in service walks it (409 PATROL_CHECKPOINT_IN_USE, params.routes).
          */
         post: operations["CheckpointsController_retire"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/routes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the routes
+         * @description Newest first.
+         */
+        get: operations["RoutesController_list"];
+        put?: never;
+        /**
+         * Add a route
+         * @description From a gate or a zone in service (POST_NOT_AVAILABLE), with its first version. Two routes in service never share a name (409 DUPLICATE_RESOURCE).
+         */
+        post: operations["RoutesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/routes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a route
+         * @description Its current version and its checkpoints in order.
+         */
+        get: operations["RoutesController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Rename a route
+         * @description In service only (409 PATROL_ROUTE_RETIRED).
+         */
+        patch: operations["RoutesController_rename"];
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/routes/{id}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retire a route
+         * @description Once, for good: its scheduled runs to come are cancelled; a run under way finishes.
+         */
+        post: operations["RoutesController_retire"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/routes/{id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change what a route asks
+         * @description A new version: checkpoints, order, expected minutes and schedule. The scheduled runs nobody started are made again from it; a run under way keeps its version.
+         */
+        post: operations["RoutesController_newVersion"];
         delete?: never;
         options?: never;
         head?: never;
@@ -12627,6 +12715,8 @@ export interface components {
             qrPayload: string;
             /** Format: date-time */
             retiredAt: string | null;
+            /** @description How many routes in service walk it now: it is retired only at 0. */
+            routes: number;
             /**
              * Format: date-time
              * @description When its QR was printed last: an older printout no longer scans.
@@ -12646,6 +12736,8 @@ export interface components {
             post: components["schemas"]["PostView"];
             /** Format: date-time */
             retiredAt: string | null;
+            /** @description How many routes in service walk it now: it is retired only at 0. */
+            routes: number;
             /**
              * Format: date-time
              * @description When its QR was printed last: an older printout no longer scans.
@@ -13800,6 +13892,20 @@ export interface components {
             guardId: string;
             /** @description The weekly shifts: never overlapping the guard’s other templates or slots (409 ROSTER_OVERLAP). */
             schedule: components["schemas"]["WeeklyScheduleDto"];
+            /**
+             * Format: uuid
+             * @description A place in service, for a post that is not a gate.
+             */
+            zoneId?: string;
+        };
+        CreateRouteDto: {
+            /** Format: uuid */
+            gateId?: string;
+            /** @example جولة السور الليلية */
+            nameAr: string;
+            /** @example Night perimeter */
+            nameEn: string;
+            version: components["schemas"]["RouteVersionDto"];
             /**
              * Format: uuid
              * @description A place in service, for a post that is not a gate.
@@ -17576,6 +17682,47 @@ export interface components {
             data: components["schemas"]["PassView"][];
             nextCursor: string | null;
         };
+        PatrolScheduleDto: {
+            /**
+             * @description 0 = Sunday … 6 = Saturday.
+             * @example [
+             *       0,
+             *       1,
+             *       2,
+             *       3,
+             *       4
+             *     ]
+             */
+            days: number[];
+            /**
+             * @description Each a run’s start (`HH:MM`, the compound’s time). Two starts closer than a run’s window — its expected minutes, 30 at least — are refused (PATROL_SCHEDULE_OVERLAP), over midnight too.
+             * @example [
+             *       "08:00",
+             *       "14:00",
+             *       "22:00"
+             *     ]
+             */
+            times: string[];
+        };
+        PatrolScheduleView: {
+            /**
+             * @example [
+             *       0,
+             *       1,
+             *       2,
+             *       3,
+             *       4
+             *     ]
+             */
+            days: number[];
+            /**
+             * @example [
+             *       "08:00",
+             *       "22:00"
+             *     ]
+             */
+            times: string[];
+        };
         /**
          * @description Pause everything that is not critical: emails are held until the pause ends, never dropped; nothing is pushed during it. `null` ends a pause.
          * @enum {string}
@@ -18722,6 +18869,10 @@ export interface components {
             /** @description The `version` the staff read (VEHICLE_CHANGED otherwise). */
             version: number;
         };
+        RenameRouteDto: {
+            nameAr?: string;
+            nameEn?: string;
+        };
         RenewVehicleDto: {
             /** @description The new last local day: after today, not before the current one, at most 731 days ahead. */
             permitValidUntil: string;
@@ -19550,6 +19701,74 @@ export interface components {
         };
         RosterTemplateViewList: {
             data: components["schemas"]["RosterTemplateView"][];
+            nextCursor: string | null;
+        };
+        RouteDetailView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @example جولة السور الليلية */
+            nameAr: string;
+            /** @example Night perimeter */
+            nameEn: string;
+            post: components["schemas"]["PostView"];
+            /** Format: date-time */
+            retiredAt: string | null;
+            stops: components["schemas"]["RouteStopView"][];
+            version: components["schemas"]["RouteVersionView"];
+        };
+        RouteStopView: {
+            /** Format: uuid */
+            checkpointId: string;
+            location: components["schemas"]["CheckpointPositionView"] | null;
+            nameAr: string;
+            nameEn: string;
+            /** @description 1 for the first. */
+            position: number;
+            /** @description Retired since: a new version must leave it out. */
+            retired: boolean;
+        };
+        RouteVersionDto: {
+            /** @description Checkpoints in service, in the order walked, each once (CHECKPOINT_NOT_AVAILABLE, DUPLICATE_VALUE). */
+            checkpointIds: string[];
+            expectedMinutes: number;
+            /** @description The guard must scan them in this order. */
+            ordered: boolean;
+            /** @description Weekly start times; none: only the runs a guard starts. Runs are made 7 days ahead. */
+            schedule?: components["schemas"]["PatrolScheduleDto"] | null;
+        };
+        RouteVersionView: {
+            /** @description How many checkpoints. */
+            checkpoints: number;
+            /** Format: date-time */
+            createdAt: string;
+            expectedMinutes: number;
+            /** Format: uuid */
+            id: string;
+            /** @description 1 for the first, then up. */
+            number: number;
+            ordered: boolean;
+            schedule: components["schemas"]["PatrolScheduleView"] | null;
+            /** @description How long a scheduled run may be started for, from its start: the expected minutes, 30 at least. */
+            windowMinutes: number;
+        };
+        RouteView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @example جولة السور الليلية */
+            nameAr: string;
+            /** @example Night perimeter */
+            nameEn: string;
+            post: components["schemas"]["PostView"];
+            /** Format: date-time */
+            retiredAt: string | null;
+            version: components["schemas"]["RouteVersionView"];
+        };
+        RouteViewList: {
+            data: components["schemas"]["RouteView"][];
             nextCursor: string | null;
         };
         RsvpDto: {
@@ -36086,6 +36305,151 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CheckpointView"];
+                };
+            };
+        };
+    };
+    RoutesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description Both by default. */
+                status?: "active" | "retired";
+                gateId?: string;
+                zoneId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteViewList"];
+                };
+            };
+        };
+    };
+    RoutesController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRouteDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteDetailView"];
+                };
+            };
+        };
+    };
+    RoutesController_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteDetailView"];
+                };
+            };
+        };
+    };
+    RoutesController_rename: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenameRouteDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteDetailView"];
+                };
+            };
+        };
+    };
+    RoutesController_retire: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteDetailView"];
+                };
+            };
+        };
+    };
+    RoutesController_newVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RouteVersionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteDetailView"];
                 };
             };
         };

@@ -2,7 +2,7 @@ import { Client } from 'pg';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
-import { checkpointRow, rowHash } from '../setup/patrol-rows';
+import { checkpointRow, routeRow, rowHash } from '../setup/patrol-rows';
 import { placeRow } from '../setup/safety-rows';
 import { gateRow } from '../setup/security-rows';
 import { required } from '../setup/test-env';
@@ -22,6 +22,8 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
   let gateId: string;
   let placeId: string;
   let checkpointId: string;
+  let routeId: string;
+  let versionId: string;
 
   beforeAll(async () => {
     h = await createDbHarness();
@@ -37,6 +39,13 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
           gateId,
           createdById: managerId,
         });
+        ({ routeId, versionId } = await routeRow(tx, {
+          tenantId,
+          gateId,
+          createdById: managerId,
+          checkpointIds: [checkpointId],
+          schedule: { days: [1], times: ['08:00'] },
+        }));
       }),
     );
     app = new Client({ connectionString: process.env.DATABASE_URL });
@@ -80,7 +89,11 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
   };
 
   it('the app updates but never deletes or truncates what is kept', async () => {
-    for (const table of ['patrol_checkpoints'])
+    for (const table of [
+      'patrol_checkpoints',
+      'patrol_routes',
+      'patrol_route_versions',
+    ])
       expect({ table, ...(await privileges(table)) }).toEqual({
         table,
         select: true,
@@ -91,8 +104,25 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
       });
   });
 
+  it('what is only ever added is neither changed nor deleted by the app', async () => {
+    for (const table of ['patrol_route_checkpoints'])
+      expect({ table, ...(await privileges(table)) }).toEqual({
+        table,
+        select: true,
+        insert: true,
+        update: false,
+        delete: false,
+        truncate: false,
+      });
+  });
+
   it('nothing kept is deleted or truncated, even by the owner', async () => {
-    for (const table of ['patrol_checkpoints']) {
+    for (const table of [
+      'patrol_checkpoints',
+      'patrol_routes',
+      'patrol_route_versions',
+      'patrol_route_checkpoints',
+    ]) {
       // A row to refuse: a row trigger never fires on a DELETE of none.
       const found = await attempt(
         migrator,
@@ -198,5 +228,100 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
       );
       await asApp(retire(), twin('name_en'));
     });
+  });
+
+  describe('patrol_routes', () => {
+    const where = () => `id = '${routeId}'`;
+    const retire = () =>
+      `UPDATE patrol_routes SET retired_at = now(), retired_by_account_id = '${managerId}' WHERE ${where()}`;
+
+    it('its post never changes; renamed in service; retired once, then nothing changes', async () => {
+      for (const set of [
+        `gate_id = NULL, place_id = '${placeId}'`,
+        `created_by_account_id = '${otherId}'`,
+      ])
+        await expect(
+          asApp(`UPDATE patrol_routes SET ${set} WHERE ${where()}`),
+        ).rejects.toThrow(/its post never changes/);
+      await asApp(
+        `UPDATE patrol_routes SET name_en = 'Renamed' WHERE ${where()}`,
+        retire(),
+      );
+      for (const set of [
+        'retired_at = NULL, retired_by_account_id = NULL',
+        "name_ar = 'بعد'",
+      ])
+        await expect(
+          asApp(retire(), `UPDATE patrol_routes SET ${set} WHERE ${where()}`),
+        ).rejects.toThrow(/retired once/);
+      await expect(
+        asApp('UPDATE patrol_routes SET retired_at = now() WHERE ' + where()),
+      ).rejects.toThrow(/patrol_routes_retired_shape/);
+    });
+  });
+
+  describe('patrol_route_versions', () => {
+    const where = () => `id = '${versionId}'`;
+
+    it('what it says never changes; superseded once', async () => {
+      for (const set of [
+        'ordered = true',
+        'expected_minutes = 60',
+        'schedule = \'{"days": [2], "times": ["09:00"]}\'',
+        'number = 2',
+        `route_id = gen_random_uuid()`,
+      ])
+        await expect(
+          asApp(`UPDATE patrol_route_versions SET ${set} WHERE ${where()}`),
+        ).rejects.toThrow(/what a version says never changes/);
+      const supersede = `UPDATE patrol_route_versions SET superseded_at = now() WHERE ${where()}`;
+      await asApp(supersede);
+      await expect(
+        asApp(
+          supersede,
+          `UPDATE patrol_route_versions SET superseded_at = NULL WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/what a version says never changes/);
+    });
+
+    it('one current version per route; a range for its minutes; a schedule is an object of arrays', async () => {
+      const another = (extra: string) =>
+        `INSERT INTO patrol_route_versions (id, tenant_id, route_id, number, ordered, expected_minutes, schedule, created_by_account_id)
+         VALUES (gen_random_uuid(), '${tenantId}', '${routeId}', 9, false, ${extra}, '${managerId}')`;
+      await expect(asApp(another('30, NULL'))).rejects.toThrow(
+        /patrol_route_versions_current_key/,
+      );
+      await expect(
+        asApp(
+          `UPDATE patrol_route_versions SET superseded_at = now() WHERE ${where()}`,
+          another('4, NULL'),
+        ),
+      ).rejects.toThrow(/patrol_route_versions_expected_range/);
+      await expect(
+        asApp(
+          `UPDATE patrol_route_versions SET superseded_at = now() WHERE ${where()}`,
+          another(`30, '[1]'`),
+        ),
+      ).rejects.toThrow(/patrol_route_versions_schedule_shape/);
+    });
+  });
+
+  it('a version’s stops never change, each checkpoint once, at a position of 1 to 50', async () => {
+    // Through the owner: the app has no UPDATE grant to try with.
+    await expect(
+      attempt(
+        migrator,
+        `UPDATE patrol_route_checkpoints SET position = 2 WHERE version_id = '${versionId}'`,
+      ),
+    ).rejects.toThrow(/append-only/);
+    const stop = (position: number) =>
+      `INSERT INTO patrol_route_checkpoints (id, tenant_id, version_id, position, checkpoint_id)
+       VALUES (gen_random_uuid(), '${tenantId}', '${versionId}', ${position}, '${checkpointId}')`;
+    await expect(asApp(stop(2))).rejects.toThrow(
+      /patrol_route_checkpoints_checkpoint_key/,
+    );
+    await expect(asApp(stop(51))).rejects.toThrow(
+      /patrol_route_checkpoints_position_range/,
+    );
   });
 });

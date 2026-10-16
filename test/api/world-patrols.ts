@@ -1,4 +1,5 @@
 import { CheckpointsService } from '../../src/gate/patrols/checkpoints.service';
+import { RoutesService } from '../../src/gate/patrols/routes.service';
 import type { communityHelpers } from '../setup/community';
 import type { HttpHarness } from '../setup/http-app';
 import type { Side } from './world';
@@ -7,6 +8,8 @@ import type { Side } from './world';
 export interface PatrolsWorld {
   /** A checkpoint at B's gate. */
   bCheckpointId: string;
+  /** A route from B's gate, walking that checkpoint. */
+  bRouteId: string;
 }
 
 export async function patrolsWorld(
@@ -20,6 +23,16 @@ export async function patrolsWorld(
       nameEn: 'World fence',
       nameAr: 'سور العالم',
     });
-    return { bCheckpointId: checkpoint.id };
+    const route = await h.moduleRef.get(RoutesService).create({
+      gateId: b.gateId,
+      nameEn: 'World round',
+      nameAr: 'جولة العالم',
+      version: {
+        checkpointIds: [checkpoint.id],
+        ordered: false,
+        expectedMinutes: 20,
+      },
+    });
+    return { bCheckpointId: checkpoint.id, bRouteId: route.id };
   });
 }

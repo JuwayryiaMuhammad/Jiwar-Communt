@@ -414,4 +414,9 @@ export const GUARD_DUTY_COVERAGE: readonly string[] = [
   'guard_handover_item.updated',
   'guard_handover.recorded',
   'guard_handover.acknowledged',
+  'guard_task.created',
+  'guard_task.taken',
+  'guard_task.completed',
+  'guard_task.cancelled',
+  'guard_task.carried',
 ];

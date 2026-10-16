@@ -1341,6 +1341,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'لم يبدأ أحد أفراد الأمن ورديته ولا يوجد أحد في الخدمة هناك.',
     },
   },
+  'guard_task.assigned': {
+    en: {
+      title: 'New task',
+      body: 'You have a new task. Open your work list.',
+    },
+    ar: {
+      title: 'مهمة جديدة',
+      body: 'لديك مهمة جديدة. افتح قائمة أعمالك.',
+    },
+  },
+  'guard_task.unit_inspected': {
+    en: {
+      title: 'Your unit was inspected',
+      body: 'Security inspected your closed unit. The result is in the app.',
+    },
+    ar: {
+      title: 'تم تفقد وحدتك',
+      body: 'تفقد الأمن وحدتك المغلقة. النتيجة في التطبيق.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

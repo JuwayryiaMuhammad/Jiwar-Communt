@@ -702,6 +702,14 @@ export const ErrorCode = {
   HANDOVER_OWN: 'HANDOVER_OWN',
   /** Someone acknowledged it already (409). */
   HANDOVER_ALREADY_ACKNOWLEDGED: 'HANDOVER_ALREADY_ACKNOWLEDGED',
+  /** Unknown, another compound's, or not the caller's to see. */
+  GUARD_TASK_NOT_FOUND: 'GUARD_TASK_NOT_FOUND',
+  /** Another guard took it first (409). */
+  GUARD_TASK_ALREADY_TAKEN: 'GUARD_TASK_ALREADY_TAKEN',
+  /** Only the guard who took it completes it (403). */
+  GUARD_TASK_NOT_TAKER: 'GUARD_TASK_NOT_TAKER',
+  /** It is done or cancelled, or not in progress yet (409, params.status). */
+  GUARD_TASK_CLOSED: 'GUARD_TASK_CLOSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -873,6 +881,8 @@ export const FieldErrorCode = {
   GUARD_NOT_ELIGIBLE: 'GUARD_NOT_ELIGIBLE',
   /** Not a gate or a zone in service. */
   POST_NOT_AVAILABLE: 'POST_NOT_AVAILABLE',
+  /** The unit is not in closed mode (ADR 0020): nothing to inspect. */
+  UNIT_NOT_CLOSED: 'UNIT_NOT_CLOSED',
 } as const;
 
 export type FieldErrorCode =

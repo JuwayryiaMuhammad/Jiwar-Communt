@@ -42,6 +42,8 @@ export const FILES_ROUTES: Row[] = [
               'dispute_photo',
               'contractor_photo',
               'permit_photo',
+              'guard_task_photo',
+              'found_item_photo',
             ],
           },
         },

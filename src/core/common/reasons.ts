@@ -503,4 +503,11 @@ export const REASON_CODES = {
   // Who ended a roster template (ADR 0050): the management, or the system
   // when the guard left.
   guardTemplateEnd: ['manager', 'guard_left'],
+  // How a guard's task ended (ADR 0050): an inspection all clear or with an
+  // issue found; a custom task done.
+  guardTaskOutcome: ['all_clear', 'issue_found', 'done'],
+  // Why the management cancels a task (ADR 0050).
+  guardTaskCancel: ['no_longer_needed', 'duplicate', 'unit_reopened', 'other'],
+  // A task the system cancels: the guard it was for left.
+  guardTaskCancelSystem: ['assignee_left'],
 } as const;

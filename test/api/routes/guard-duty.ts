@@ -277,3 +277,112 @@ export const HANDOVER_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** The guards' tasks (ADR 0050). */
+export const TASK_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/staff/security/tasks',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: { kind: 'patrol', gateId: 'gate-1' },
+      fields: [
+        { field: 'kind', code: 'INVALID_VALUE' },
+        { field: 'gateId', code: 'INVALID_UUID' },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/security/tasks',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'late' },
+      fields: [{ field: 'status', code: 'INVALID_VALUE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/security/tasks/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bTaskId }),
+      code: 'GUARD_TASK_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/security/tasks/{id}/cancel',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bTaskId }),
+      body: () => ({ reasonCode: 'other' }),
+      code: 'GUARD_TASK_NOT_FOUND',
+    },
+    invalid: {
+      body: {},
+      fields: [{ field: 'reasonCode', code: 'FIELD_REQUIRED' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/gate/tasks/{id}',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bTaskId }),
+      code: 'GUARD_TASK_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/tasks/{id}/take',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bTaskId }),
+      code: 'GUARD_TASK_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/tasks/{id}/complete',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bTaskId }),
+      body: () => ({ outcome: 'done' }),
+      code: 'GUARD_TASK_NOT_FOUND',
+    },
+    invalid: {
+      body: { photoFileIds: ['photo-1'] },
+      fields: [
+        { field: 'outcome', code: 'FIELD_REQUIRED' },
+        { field: 'photoFileIds', code: 'INVALID_UUID' },
+      ],
+    },
+    noStore: true,
+  },
+];

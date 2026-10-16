@@ -135,6 +135,11 @@ import {
 } from './handover/handover.controller';
 import { HandoverService } from './handover/handover.service';
 import { DutyNamesReader } from './roster/duty-names';
+import {
+  GuardTasksController,
+  StaffTasksController,
+} from './tasks/tasks.controller';
+import { TasksService } from './tasks/tasks.service';
 import { RosterAttendance } from './roster/roster-attendance';
 import { RosterCore } from './roster/roster-core';
 import {
@@ -201,6 +206,8 @@ import { RosterService } from './roster/roster.service';
     GuardRosterController,
     GuardHandoverController,
     StaffHandoverController,
+    StaffTasksController,
+    GuardTasksController,
   ],
   providers: [
     GatesService,
@@ -276,6 +283,7 @@ import { RosterService } from './roster/roster.service';
     RosterService,
     RosterAttendance,
     HandoverService,
+    TasksService,
   ],
 })
 export class GateModule {}

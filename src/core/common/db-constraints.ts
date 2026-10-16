@@ -72,6 +72,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   guard_handover_items_tenant_id_id_key: null,
   guard_handovers_tenant_id_id_key: null,
   guard_handovers_shift_key: null,
+  // Tasks (ADR 0050): a photo is attached to one task, once.
+  guard_tasks_tenant_id_id_key: null,
+  guard_task_photos_tenant_id_id_key: null,
+  guard_task_photos_file_id_key: null,
   visitor_details_tenant_id_id_key: null,
   visitor_passes_tenant_id_id_key: null,
   // ADR 0043.

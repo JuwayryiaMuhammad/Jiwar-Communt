@@ -1253,6 +1253,28 @@ export const NOTIFICATION_KINDS = {
     target: 'guard_roster_slot',
     params: {},
   },
+  /**
+   * A task for the guard: theirs, or their post's while they are on shift
+   * there. Its kind only.
+   */
+  'guard_task.assigned': {
+    priority: 'normal',
+    category: 'guard_duty',
+    critical: false,
+    target: 'guard_task',
+    params: { taskKind: {} },
+  },
+  /**
+   * Security inspected the closed unit. To its primary: the outcome's code
+   * only, never a photo, a note or who.
+   */
+  'guard_task.unit_inspected': {
+    priority: 'normal',
+    category: 'household',
+    critical: false,
+    target: 'unit',
+    params: { outcome: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

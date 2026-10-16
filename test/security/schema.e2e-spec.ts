@@ -1,14 +1,18 @@
 import { Client } from 'pg';
 import { newId } from '../../src/core/common/uuid';
+import { FILE_PURPOSES, FILE_TYPES } from '../../src/core/files/purposes';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
 import {
+  dutyFileRow,
   gateRow,
   handoverItemRow,
   handoverRow,
   shiftRow,
   slotRow,
+  taskPhotoRow,
+  taskRow,
   templateRow,
 } from '../setup/security-rows';
 import { required } from '../setup/test-env';
@@ -33,6 +37,8 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
   let endedShiftId: string;
   let itemId: string;
   let handoverId: string;
+  let taskId: string;
+  let photoId: string;
 
   beforeAll(async () => {
     h = await createDbHarness();
@@ -62,6 +68,13 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
           shiftId: endedShiftId,
           guardId,
           gateId,
+        });
+        taskId = await taskRow(tx, { tenantId, gateId, createdById: otherId });
+        photoId = await taskPhotoRow(tx, {
+          tenantId,
+          taskId,
+          fileId: await dutyFileRow(tx, tenantId),
+          uploadedById: guardId,
         });
         shiftId = newId();
         await tx.guardShift.create({
@@ -122,6 +135,7 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
       'guard_roster_slots',
       'guard_handover_items',
       'guard_handovers',
+      'guard_tasks',
     ])
       expect({ table, ...(await privileges(table)) }).toEqual({
         table,
@@ -140,13 +154,15 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
       'guard_roster_slots',
       'guard_handover_items',
       'guard_handovers',
+      'guard_tasks',
+      'guard_task_photos',
     ]) {
       await expect(
         attempt(
           migrator,
           `DELETE FROM "${table}" WHERE tenant_id = '${tenantId}'`,
         ),
-      ).rejects.toThrow(/never deleted/);
+      ).rejects.toThrow(/never deleted|append-only/);
       await expect(
         attempt(migrator, `TRUNCATE "${table}" CASCADE`),
       ).rejects.toThrow(/append-only|immutable|never/);
@@ -420,5 +436,141 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
         ),
       ).rejects.toThrow(/guard_handover_items_label_length/);
     });
+  });
+
+  it('a task’s photo is only ever added: the app neither changes nor deletes one', async () => {
+    expect(await privileges('guard_task_photos')).toEqual({
+      select: true,
+      insert: true,
+      update: false,
+      delete: false,
+      truncate: false,
+    });
+    await expect(
+      attempt(
+        migrator,
+        `UPDATE guard_task_photos SET created_at = now() WHERE id = '${photoId}'`,
+      ),
+    ).rejects.toThrow(/append-only/);
+  });
+
+  describe('guard_tasks', () => {
+    const where = () => `id = '${taskId}'`;
+    const take = (by = guardId) =>
+      `UPDATE guard_tasks SET status = 'in_progress', taken_by_account_id = '${by}', taken_at = now() WHERE ${where()}`;
+    const done = () =>
+      `UPDATE guard_tasks SET status = 'done', done_at = now(), outcome = 'done', result_note = 'Fine' WHERE ${where()}`;
+
+    it('keeps what it asks', async () => {
+      for (const set of [
+        "kind = 'closed_unit_inspection'",
+        "title = 'Other'",
+        "details = 'More'",
+        'due_at = now()',
+        `created_by_account_id = '${guardId}'`,
+      ])
+        await expect(
+          asApp(`UPDATE guard_tasks SET ${set} WHERE ${where()}`),
+        ).rejects.toThrow(/keeps what it asks/);
+      // Another post, without a shift's end: refused.
+      await expect(
+        asApp(
+          `UPDATE guard_tasks SET gate_id = '${otherGateId}' WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/keeps what it asks/);
+    });
+
+    it('moves forward: taken once, done or cancelled finally; carried back to open by a shift’s end', async () => {
+      await expect(
+        asApp(
+          take(),
+          `UPDATE guard_tasks SET taken_by_account_id = '${otherId}' WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/keeps what it asks/);
+      await expect(
+        asApp(
+          take(),
+          done(),
+          `UPDATE guard_tasks SET outcome = 'done', result_note = 'Again' WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/keeps what it asks/);
+      await expect(
+        asApp(
+          take(),
+          done(),
+          `UPDATE guard_tasks SET status = 'open', taken_by_account_id = NULL, taken_at = NULL WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/keeps what it asks/);
+      // Carried: to another post, open, nobody holding it.
+      await asApp(
+        take(),
+        `UPDATE guard_tasks SET status = 'open', taken_by_account_id = NULL, taken_at = NULL, gate_id = '${otherGateId}', carried_from_shift_id = '${endedShiftId}' WHERE ${where()}`,
+      );
+      // An erasure takes the guard's note, once.
+      await asApp(
+        take(),
+        done(),
+        `UPDATE guard_tasks SET result_note = NULL, result_cleared_at = now() WHERE ${where()}`,
+      );
+    });
+
+    it('the shapes hold: one assignee, the outcome of its kind, nobody holding an open one', async () => {
+      await expect(
+        asApp(`UPDATE guard_tasks SET status = 'in_progress' WHERE ${where()}`),
+      ).rejects.toThrow(/guard_tasks_taken_shape/);
+      await expect(
+        asApp(
+          take(),
+          `UPDATE guard_tasks SET status = 'done', done_at = now(), outcome = 'all_clear' WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/guard_tasks_outcome/);
+      await expect(
+        asApp(
+          `INSERT INTO guard_tasks (id, tenant_id, kind, title, gate_id, assignee_account_id, created_by_account_id, updated_at)
+           VALUES ('${newId()}', '${tenantId}', 'custom', 'Two', '${gateId}', '${guardId}', '${otherId}', now())`,
+        ),
+      ).rejects.toThrow(/guard_tasks_one_assignee/);
+      await expect(
+        asApp(
+          `INSERT INTO guard_tasks (id, tenant_id, kind, gate_id, created_by_account_id, updated_at)
+           VALUES ('${newId()}', '${tenantId}', 'closed_unit_inspection', '${gateId}', '${otherId}', now())`,
+        ),
+      ).rejects.toThrow(/guard_tasks_kind_shape/);
+    });
+  });
+
+  it('the file CHECKs recreated last accept every purpose, G3’s and G4’s included: each type it takes at its limit, nothing over it, no other type', async () => {
+    const file = (purpose: string, type: string, size: number) =>
+      asApp(
+        `INSERT INTO files (id, tenant_id, owner_account_id, purpose, content_type, size_bytes, status, upload_expires_at)
+         VALUES (gen_random_uuid(), '${tenantId}', '${guardId}', '${purpose}', '${type}', ${size}, 'pending', now())`,
+      );
+    // Every purpose of the database is one of the code's, and back.
+    const { rows } = await app.query<{ purpose: string }>(
+      `SELECT unnest(enum_range(NULL::file_purpose))::text AS purpose`,
+    );
+    const purposes = rows.map((r) => r.purpose).sort();
+    expect(purposes).toEqual(Object.keys(FILE_PURPOSES).sort());
+    for (const purpose of [
+      'contractor_photo',
+      'permit_photo',
+      'guard_task_photo',
+      'found_item_photo',
+    ])
+      expect(purposes).toContain(purpose);
+    for (const purpose of purposes) {
+      const { types, maxBytes } =
+        FILE_PURPOSES[purpose as keyof typeof FILE_PURPOSES];
+      for (const type of types) await file(purpose, type, maxBytes);
+      await expect(file(purpose, types[0], maxBytes + 1)).rejects.toThrow(
+        /files_size_for_purpose/,
+      );
+      for (const type of FILE_TYPES.filter(
+        (t) => !(types as readonly string[]).includes(t),
+      ))
+        await expect(file(purpose, type, 100)).rejects.toThrow(
+          /files_content_type_for_purpose/,
+        );
+    }
   });
 });

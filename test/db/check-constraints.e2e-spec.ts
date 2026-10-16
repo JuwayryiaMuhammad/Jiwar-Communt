@@ -1161,6 +1161,26 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   guard_handovers_not_own: {
     guarded: 'acknowledged_by_account_id IS NULL is tested first',
   },
+  guard_tasks_one_assignee: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
+  guard_tasks_kind_shape: {},
+  guard_tasks_title_length: { guarded: 'title IS NULL is tested first' },
+  guard_tasks_details_length: { guarded: 'details IS NULL is tested first' },
+  guard_tasks_result_note_length: {
+    guarded: 'result_note IS NULL is tested first',
+  },
+  guard_tasks_taken_shape: {},
+  guard_tasks_done_shape: {},
+  guard_tasks_outcome: { guarded: 'outcome IS NULL is tested first' },
+  guard_tasks_cancel_shape: {},
+  guard_tasks_cancel_reason: {
+    guarded: 'cancel_reason IS NULL is tested first',
+  },
+  guard_tasks_cancelled_by: {
+    guarded: 'cancel_reason IS NULL is tested first',
+  },
+  guard_tasks_cleared_shape: {},
 };
 
 interface Check {

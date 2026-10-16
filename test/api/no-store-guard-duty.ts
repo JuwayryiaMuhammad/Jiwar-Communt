@@ -80,6 +80,15 @@ export function guardDutyCalls(
       )
     ).id;
   };
+  /** A custom task for A's gate, where A's guard is on shift: its id. */
+  const aTask = async () =>
+    id(
+      await manager('POST', '/staff/security/tasks', {
+        kind: 'custom',
+        title: 'No-store task',
+        gateId: world().a.gateId,
+      }),
+    );
   const anItem = async () =>
     id(
       await manager('POST', '/staff/security/handover-items', {
@@ -129,6 +138,28 @@ export function guardDutyCalls(
       manager('POST', '/staff/security/handover-items', {
         label: 'No-store keys',
       }),
+    'POST /staff/security/tasks': () =>
+      manager('POST', '/staff/security/tasks', {
+        kind: 'custom',
+        title: 'No-store task',
+        gateId: world().a.gateId,
+      }),
+    'GET /staff/security/tasks': () => manager('GET', '/staff/security/tasks'),
+    'GET /staff/security/tasks/{id}': async () =>
+      manager('GET', `/staff/security/tasks/${await aTask()}`),
+    'POST /staff/security/tasks/{id}/cancel': async () =>
+      manager('POST', `/staff/security/tasks/${await aTask()}/cancel`, {
+        reasonCode: 'duplicate',
+      }),
+    'GET /gate/tasks/{id}': async () =>
+      guard('GET', `/gate/tasks/${await aTask()}`),
+    'POST /gate/tasks/{id}/take': async () =>
+      guard('POST', `/gate/tasks/${await aTask()}/take`),
+    'POST /gate/tasks/{id}/complete': async () => {
+      const task = await aTask();
+      await guard('POST', `/gate/tasks/${task}/take`);
+      return guard('POST', `/gate/tasks/${task}/complete`, { outcome: 'done' });
+    },
     'PATCH /staff/security/handover-items/{id}': async () =>
       manager('PATCH', `/staff/security/handover-items/${await anItem()}`, {
         position: 5,

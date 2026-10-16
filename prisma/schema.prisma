@@ -2190,6 +2190,10 @@ enum FilePurpose {
   contractor_photo
   /// A material exit's photo of the goods (ADR 0049), the resident's.
   permit_photo
+  /// A guard's photo of a task's work (ADR 0050): a closed unit inspected.
+  guard_task_photo
+  /// A found item's photo, taken at the gate (ADR 0050).
+  found_item_photo
 
   @@map("file_purpose")
 }
@@ -6298,4 +6302,77 @@ model GuardHandover {
   @@index([tenantId, createdAt, id], map: "guard_handovers_created_idx")
   @@index([tenantId, guardAccountId], map: "guard_handovers_guard_idx")
   @@map("guard_handovers")
+}
+
+enum GuardTaskKind {
+  closed_unit_inspection
+  custom
+
+  @@map("guard_task_kind")
+}
+
+enum GuardTaskStatus {
+  open
+  in_progress
+  done
+  cancelled
+
+  @@map("guard_task_status")
+}
+
+/// Work the management gives guards (ADR 0050): a closed unit to inspect,
+/// or a task in its own words, for one guard, a gate or a zone (exactly
+/// one, CHECK). A guard takes it and completes it with an outcome. A
+/// shift's end moves the tasks its guard had to the shift's post. It keeps
+/// what it asks and moves forward only (trigger).
+model GuardTask {
+  id                 String          @id @db.Uuid
+  tenantId           String          @map("tenant_id") @db.Uuid
+  kind               GuardTaskKind
+  /// A custom task's title, the management's words.
+  title              String?
+  details            String?
+  /// The closed unit to inspect.
+  unitId             String?         @map("unit_id") @db.Uuid
+  assigneeId         String?         @map("assignee_account_id") @db.Uuid
+  gateId             String?         @map("gate_id") @db.Uuid
+  placeId            String?         @map("place_id") @db.Uuid
+  dueAt              DateTime?       @map("due_at") @db.Timestamptz(3)
+  createdById        String          @map("created_by_account_id") @db.Uuid
+  status             GuardTaskStatus @default(open)
+  takenById          String?         @map("taken_by_account_id") @db.Uuid
+  takenAt            DateTime?       @map("taken_at") @db.Timestamptz(3)
+  doneAt             DateTime?       @map("done_at") @db.Timestamptz(3)
+  /// REASON_CODES.guardTaskOutcome.
+  outcome            String?
+  /// The guard's words: never in the audit trail or a notification.
+  resultNote         String?         @map("result_note")
+  resultClearedAt    DateTime?       @map("result_cleared_at") @db.Timestamptz(3)
+  cancelledAt        DateTime?       @map("cancelled_at") @db.Timestamptz(3)
+  cancelledById      String?         @map("cancelled_by_account_id") @db.Uuid
+  /// REASON_CODES.guardTaskCancel or guardTaskCancelSystem.
+  cancelReason       String?         @map("cancel_reason")
+  /// The shift whose end last moved it to its post.
+  carriedFromShiftId String?         @map("carried_from_shift_id") @db.Uuid
+  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt, id], map: "guard_tasks_created_idx")
+  @@index([tenantId, unitId], map: "guard_tasks_unit_idx")
+  @@map("guard_tasks")
+}
+
+/// A task's photo, attached at its completion (ADR 0050). Never changes.
+model GuardTaskPhoto {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  taskId       String   @map("task_id") @db.Uuid
+  fileId       String   @unique @map("file_id") @db.Uuid
+  uploadedById String   @map("uploaded_by_account_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, taskId], map: "guard_task_photos_task_idx")
+  @@map("guard_task_photos")
 }

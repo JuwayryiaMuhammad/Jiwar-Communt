@@ -143,6 +143,19 @@ export const FILE_PURPOSES = {
     maxBytes: 5 * MB,
     uploaders: ['permits.request'],
   },
+  // A guard's photo of a task's work (ADR 0050): a closed unit inspected,
+  // a custom task done. Staff only.
+  guard_task_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['gate.operate'],
+  },
+  // A found item's photo (ADR 0050), taken at the gate.
+  found_item_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['gate.operate', 'found_items.manage'],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

@@ -212,6 +212,81 @@ describe('Audit coverage — guard shifts and tasks', () => {
     });
   });
 
+  describe('tasks', () => {
+    it('created, taken, completed; cancelled; carried at a shift’s end: ids, codes and counts, never the words', async () => {
+      const guard = await x.guard(s.c);
+      const shift = await x.start(guard, { gateId });
+      const task = (
+        await x
+          .http('post', '/staff/security/tasks', supervisor.token, {
+            kind: 'custom',
+            title: WORDS,
+            details: WORDS,
+            gateId,
+          })
+          .expect(201)
+      ).body as { id: string };
+      const created = await single('guard_task.created', task.id);
+      expect(created).toMatchObject(by(supervisor, 'guard_task'));
+      expect(created.metadata).toEqual({ kind: 'custom', gateId, told: 1 });
+      await x
+        .http('post', `/gate/tasks/${task.id}/take`, guard.token)
+        .expect(200);
+      const taken = await single('guard_task.taken', task.id);
+      expect(taken).toMatchObject(by(guard, 'guard_task'));
+      expect(taken.metadata).toEqual({ shiftId: shift.id });
+      await x
+        .http('post', `/gate/tasks/${task.id}/complete`, guard.token, {
+          outcome: 'done',
+          note: WORDS,
+        })
+        .expect(200);
+      const completed = await single('guard_task.completed', task.id);
+      expect(completed.metadata).toEqual({
+        outcome: 'done',
+        photos: 0,
+        note: true,
+      });
+
+      const spare = (
+        await x
+          .http('post', '/staff/security/tasks', supervisor.token, {
+            kind: 'custom',
+            title: 'Spare',
+            gateId,
+          })
+          .expect(201)
+      ).body as { id: string };
+      await x
+        .http(
+          'post',
+          `/staff/security/tasks/${spare.id}/cancel`,
+          supervisor.token,
+          {
+            reasonCode: 'duplicate',
+          },
+        )
+        .expect(200);
+      const cancelled = await single('guard_task.cancelled', spare.id);
+      expect(cancelled).toMatchObject(by(supervisor, 'guard_task'));
+      expect(cancelled.metadata).toEqual({ reasonCode: 'duplicate' });
+
+      const mine = (
+        await x
+          .http('post', '/staff/security/tasks', supervisor.token, {
+            kind: 'custom',
+            title: 'Mine',
+            guardId: guard.id,
+          })
+          .expect(201)
+      ).body as { id: string };
+      await x.endRaw(guard).expect(200);
+      const carried = await single('guard_task.carried', mine.id);
+      expect(carried).toMatchObject(by(guard, 'guard_task'));
+      expect(carried.metadata).toEqual({ shiftId: shift.id, gateId });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every guard shifts and tasks entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

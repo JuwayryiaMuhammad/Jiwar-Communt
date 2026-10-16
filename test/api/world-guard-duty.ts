@@ -6,6 +6,7 @@ import {
 import { HandoverService } from '../../src/gate/handover/handover.service';
 import { RosterService } from '../../src/gate/roster/roster.service';
 import { ShiftsService } from '../../src/gate/shifts/shifts.service';
+import { TasksService } from '../../src/gate/tasks/tasks.service';
 import { gateHelpers } from '../setup/gate';
 import type { communityHelpers } from '../setup/community';
 import type { HttpHarness } from '../setup/http-app';
@@ -24,6 +25,8 @@ export interface GuardDutyWorld {
   bHandoverItemId: string;
   /** The handover of a shift another guard of B ended at B's gate. */
   bHandoverId: string;
+  /** A custom task for B's gate. */
+  bTaskId: string;
 }
 
 export async function guardDutyWorld(
@@ -50,10 +53,14 @@ export async function guardDutyWorld(
     const item = await h.moduleRef
       .get(HandoverService)
       .createItem({ label: 'World keys' });
+    const task = await h.moduleRef
+      .get(TasksService)
+      .create({ kind: 'custom', title: 'World task', gateId: b.gateId });
     return {
       bRosterTemplateId: template.id,
       bRosterSlotId: slot.id,
       bHandoverItemId: item.id,
+      bTaskId: task.id,
     };
   });
   const relief = await gateHelpers(h).guard(b);

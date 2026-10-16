@@ -33,6 +33,7 @@ import { fill, paramNames, call } from './request';
 import { ROUTES } from './routes';
 import { buildWorld, sessionOf, type World } from './world';
 import { ShiftsService } from '../../src/gate/shifts/shifts.service';
+import { TasksService } from '../../src/gate/tasks/tasks.service';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import { paymentRow } from '../setup/finance-rows';
@@ -1152,6 +1153,16 @@ describe('API v0 — PII leak scan', () => {
       )
     ).id;
 
+    // A task for A's gate, where A's guard is on shift (ADR 0050): a unit's
+    // code and building at most, never anyone in it.
+    const piiTask = (
+      await manager(() =>
+        h.moduleRef
+          .get(TasksService)
+          .create({ kind: 'custom', title: 'Check lights', gateId: a.gateId }),
+      )
+    ).id;
+
     /** One id for every param of the path, or each param by name. */
     type Ids = string | Record<string, string>;
     const params: Record<string, Ids> = {
@@ -1309,6 +1320,8 @@ describe('API v0 — PII leak scan', () => {
       '/staff/unit-permits/{id}': piiPermit,
       '/gate/unit-permits/{id}': piiPermit,
       '/staff/security/handovers/{id}': piiHandover,
+      '/staff/security/tasks/{id}': piiTask,
+      '/gate/tasks/{id}': piiTask,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

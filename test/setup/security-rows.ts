@@ -112,3 +112,63 @@ export async function handoverRow(
   });
   return id;
 }
+
+/** A ready, attached file of a guard duty purpose. */
+export async function dutyFileRow(
+  tx: TenantTxClient,
+  tenantId: string,
+  purpose: 'guard_task_photo' | 'found_item_photo' = 'guard_task_photo',
+): Promise<string> {
+  const id = newId();
+  const now = new Date();
+  await tx.storedFile.create({
+    data: {
+      id,
+      tenantId,
+      purpose,
+      contentType: 'image/png',
+      sizeBytes: 100,
+      status: 'ready',
+      uploadExpiresAt: now,
+      finalizedAt: now,
+      attachedAt: now,
+    },
+  });
+  return id;
+}
+
+/** A custom task for a gate, open. */
+export async function taskRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; gateId: string; createdById: string },
+): Promise<string> {
+  const id = newId();
+  await tx.guardTask.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      kind: 'custom',
+      title: 'Row task',
+      gateId: r.gateId,
+      createdById: r.createdById,
+    },
+  });
+  return id;
+}
+
+export async function taskPhotoRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; taskId: string; fileId: string; uploadedById: string },
+): Promise<string> {
+  const id = newId();
+  await tx.guardTaskPhoto.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      taskId: r.taskId,
+      fileId: r.fileId,
+      uploadedById: r.uploadedById,
+    },
+  });
+  return id;
+}

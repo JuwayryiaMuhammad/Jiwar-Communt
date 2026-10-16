@@ -74,9 +74,22 @@ class GuardHandoverBodyView {
   createdAt: Date;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   acknowledgedAt: Date | null;
+  @ApiProperty({
+    type: [String],
+    description:
+      'The tasks the end moved to the post, open again for the next guard (`GET /gate/tasks/{id}`).',
+  })
+  carriedTaskIds: string[];
 }
 
-function body(h: GuardHandover, names: DutyNames): GuardHandoverBodyView {
+/** What a handover view reads beside the row. */
+export interface HandoverContext {
+  names: DutyNames;
+  carried: Map<string, string[]>;
+}
+
+function body(h: GuardHandover, c: HandoverContext): GuardHandoverBodyView {
+  const names = c.names;
   return {
     id: h.id,
     shiftId: h.shiftId,
@@ -86,6 +99,7 @@ function body(h: GuardHandover, names: DutyNames): GuardHandoverBodyView {
     notes: h.notes,
     createdAt: h.createdAt,
     acknowledgedAt: h.acknowledgedAt,
+    carriedTaskIds: c.carried.get(h.shiftId) ?? [],
   };
 }
 
@@ -96,13 +110,13 @@ export class GuardHandoverView extends GuardHandoverBodyView {
   @ApiProperty({ type: FirstNameRefView, nullable: true })
   acknowledgedBy: FirstNameRefView | null;
 
-  static from(h: GuardHandover, names: DutyNames): GuardHandoverView {
+  static from(h: GuardHandover, c: HandoverContext): GuardHandoverView {
     const by = h.acknowledgedById
-      ? names.people.get(h.acknowledgedById)
+      ? c.names.people.get(h.acknowledgedById)
       : undefined;
     return {
-      ...body(h, names),
-      guard: firstNameRef(names.people.get(h.guardAccountId)!),
+      ...body(h, c),
+      guard: firstNameRef(c.names.people.get(h.guardAccountId)!),
       acknowledgedBy: by ? firstNameRef(by) : null,
     };
   }
@@ -115,13 +129,13 @@ export class StaffGuardHandoverView extends GuardHandoverBodyView {
   @ApiProperty({ type: AccountRefView, nullable: true })
   acknowledgedBy: AccountRefView | null;
 
-  static of(h: GuardHandover, names: DutyNames): StaffGuardHandoverView {
+  static of(h: GuardHandover, c: HandoverContext): StaffGuardHandoverView {
     const by = h.acknowledgedById
-      ? names.people.get(h.acknowledgedById)
+      ? c.names.people.get(h.acknowledgedById)
       : undefined;
     return {
-      ...body(h, names),
-      guard: accountRef(names.people.get(h.guardAccountId)!),
+      ...body(h, c),
+      guard: accountRef(c.names.people.get(h.guardAccountId)!),
       acknowledgedBy: by ? accountRef(by) : null,
     };
   }

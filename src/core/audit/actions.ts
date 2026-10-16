@@ -932,6 +932,18 @@ export const AUDIT_ACTIONS = {
   'guard_handover.recorded': { log: 'tenant', target: 'guard_handover' },
   // metadata: shiftId (the acknowledging guard's).
   'guard_handover.acknowledged': { log: 'tenant', target: 'guard_handover' },
+  // metadata: kind, unitId (an inspection), guardId, gateId or placeId,
+  // told (how many guards). Never the title or details.
+  'guard_task.created': { log: 'tenant', target: 'guard_task' },
+  // metadata: shiftId (the guard's open shift).
+  'guard_task.taken': { log: 'tenant', target: 'guard_task' },
+  // metadata: outcome, photos (how many), note (whether any).
+  'guard_task.completed': { log: 'tenant', target: 'guard_task' },
+  // metadata: reasonCode.
+  'guard_task.cancelled': { log: 'tenant', target: 'guard_task' },
+  // A shift's end moved it to the shift's post. metadata: shiftId, gateId
+  // or placeId.
+  'guard_task.carried': { log: 'tenant', target: 'guard_task' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

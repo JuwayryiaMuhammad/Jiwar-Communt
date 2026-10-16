@@ -163,6 +163,23 @@ export class CommunityGatePort {
   }
 
   /**
+   * Since when each unit is in closed mode (ADR 0020), or null when it is
+   * not: what a closed-unit inspection asks (ADR 0050). A plain read: the
+   * gate never locks a unit's row (ADR 0044, 0045); a unit reopened while
+   * its inspection is made is cancelled by the management (`unit_reopened`).
+   */
+  async closedSince(
+    tx: TenantTxClient,
+    unitIds: readonly string[],
+  ): Promise<Map<string, Date | null>> {
+    const units = await tx.unit.findMany({
+      where: { id: { in: [...new Set(unitIds)] } },
+      select: { id: true, closedSince: true },
+    });
+    return new Map(units.map((u) => [u.id, u.closedSince]));
+  }
+
+  /**
    * The people who live in the unit (ADR 0047): its residing occupants and
    * its active adult members with an account — the `gateEntry` holders,
    * never a landlord, a pending or removed member, a minor or an ended

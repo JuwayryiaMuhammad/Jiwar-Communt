@@ -23,6 +23,7 @@ import {
   GuardHandoverView,
   ManagedGuardHandoverItemView,
   StaffGuardHandoverView,
+  type HandoverContext,
 } from './views/handover.views';
 
 /** The most active items one checklist has. */
@@ -350,17 +351,27 @@ export class HandoverService implements OnModuleInit {
   private async views<V>(
     tx: TenantTxClient,
     rows: GuardHandover[],
-    view: (
-      h: GuardHandover,
-      names: Awaited<ReturnType<DutyNamesReader['read']>>,
-    ) => V,
+    view: (h: GuardHandover, c: HandoverContext) => V,
   ): Promise<V[]> {
     const names = await this.names.read(
       tx,
       rows.flatMap((r) => [r.guardAccountId, r.acknowledgedById]),
       rows,
     );
-    return rows.map((r) => view(r, names));
+    const tasks = rows.length
+      ? await tx.guardTask.findMany({
+          where: { carriedFromShiftId: { in: rows.map((r) => r.shiftId) } },
+          select: { id: true, carriedFromShiftId: true },
+          orderBy: { id: 'asc' },
+        })
+      : [];
+    const carried = new Map<string, string[]>();
+    for (const t of tasks)
+      carried.set(t.carriedFromShiftId!, [
+        ...(carried.get(t.carriedFromShiftId!) ?? []),
+        t.id,
+      ]);
+    return rows.map((r) => view(r, { names, carried }));
   }
 }
 

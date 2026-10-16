@@ -2474,6 +2474,21 @@
         ],
         "type": "object"
       },
+      "CancelGuardTaskDto": {
+        "properties": {
+          "reasonCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardTaskCancel"
+              }
+            ]
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "CancelInstalmentPlanDto": {
         "properties": {
           "dueOn": {
@@ -4182,6 +4197,33 @@
         ],
         "type": "object"
       },
+      "CompleteGuardTaskDto": {
+        "properties": {
+          "note": {
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardTaskOutcome"
+              }
+            ],
+            "description": "An inspection: `all_clear` or `issue_found`; a custom task: `done`."
+          },
+          "photoFileIds": {
+            "description": "Finalized `guard_task_photo` files of the caller, 5 at most; an inspection needs one at least.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome"
+        ],
+        "type": "object"
+      },
       "CompleteInviteDto": {
         "properties": {
           "code": {
@@ -5520,6 +5562,53 @@
           },
           "visitorName": {
             "description": "As the visitor gives it; shown to the household only.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "type": "object"
+      },
+      "CreateGuardTaskDto": {
+        "properties": {
+          "details": {
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "dueAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "gateId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "guardId": {
+            "description": "For one guard: exactly one of `guardId`, `gateId`, `zoneId`.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardTaskKind"
+              }
+            ]
+          },
+          "title": {
+            "description": "Required for a custom task; not for an inspection.",
+            "maxLength": 120,
+            "type": "string"
+          },
+          "unitId": {
+            "description": "An inspection’s unit, in closed mode (UNIT_NOT_CLOSED).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "zoneId": {
+            "description": "A place in service.",
+            "format": "uuid",
             "type": "string"
           }
         },
@@ -10025,7 +10114,9 @@
           "gate_service_photo",
           "dispute_photo",
           "contractor_photo",
-          "permit_photo"
+          "permit_photo",
+          "guard_task_photo",
+          "found_item_photo"
         ],
         "type": "string"
       },
@@ -11751,6 +11842,13 @@
             "nullable": true,
             "type": "object"
           },
+          "carriedTaskIds": {
+            "description": "The tasks the end moved to the post, open again for the next guard (`GET /gate/tasks/{id}`).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "checklist": {
             "items": {
               "$ref": "#/components/schemas/GuardTickedItemView"
@@ -11802,6 +11900,7 @@
           "notes",
           "createdAt",
           "acknowledgedAt",
+          "carriedTaskIds",
           "guard",
           "acknowledgedBy"
         ],
@@ -11957,6 +12056,176 @@
           "cancelled"
         ],
         "type": "string"
+      },
+      "GuardTaskCancel": {
+        "enum": [
+          "no_longer_needed",
+          "duplicate",
+          "unit_reopened",
+          "other"
+        ],
+        "type": "string"
+      },
+      "GuardTaskKind": {
+        "enum": [
+          "closed_unit_inspection",
+          "custom"
+        ],
+        "type": "string"
+      },
+      "GuardTaskOutcome": {
+        "enum": [
+          "all_clear",
+          "issue_found",
+          "done"
+        ],
+        "type": "string"
+      },
+      "GuardTaskStatus": {
+        "enum": [
+          "open",
+          "in_progress",
+          "done",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "GuardTaskView": {
+        "properties": {
+          "assignee": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FirstNameRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "cancelReason": {
+            "description": "From `guardTaskCancel`, or `guardTaskCancelSystem`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "carried": {
+            "description": "A shift’s end moved it here from the guard who had it.",
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "details": {
+            "nullable": true,
+            "type": "string"
+          },
+          "doneAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "dueAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardTaskKind"
+              }
+            ]
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardTaskOutcome"
+              }
+            ],
+            "nullable": true
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/PresignedReadView"
+            },
+            "type": "array"
+          },
+          "post": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostView"
+              }
+            ],
+            "description": "For a gate or a zone; null for one guard (`assignee`).",
+            "nullable": true,
+            "type": "object"
+          },
+          "resultNote": {
+            "description": "The guard’s.",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardTaskStatus"
+              }
+            ]
+          },
+          "takenAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "takenBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FirstNameRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "title": {
+            "description": "A custom task’s, the management’s words; null for an inspection (the app names it).",
+            "nullable": true,
+            "type": "string"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaskUnitView"
+              }
+            ],
+            "description": "The closed unit to inspect: where it is, nobody in it.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "details",
+          "unit",
+          "post",
+          "dueAt",
+          "status",
+          "takenAt",
+          "doneAt",
+          "outcome",
+          "resultNote",
+          "photos",
+          "cancelReason",
+          "carried",
+          "createdAt",
+          "assignee",
+          "takenBy"
+        ],
+        "type": "object"
       },
       "GuardTemplateEnd": {
         "enum": [
@@ -26210,6 +26479,13 @@
             "nullable": true,
             "type": "object"
           },
+          "carriedTaskIds": {
+            "description": "The tasks the end moved to the post, open again for the next guard (`GET /gate/tasks/{id}`).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "checklist": {
             "items": {
               "$ref": "#/components/schemas/GuardTickedItemView"
@@ -26261,6 +26537,7 @@
           "notes",
           "createdAt",
           "acknowledgedAt",
+          "carriedTaskIds",
           "guard",
           "acknowledgedBy"
         ],
@@ -26271,6 +26548,166 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/StaffGuardHandoverView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffGuardTaskView": {
+        "properties": {
+          "assignee": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "cancelReason": {
+            "description": "From `guardTaskCancel`, or `guardTaskCancelSystem`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "carried": {
+            "description": "A shift’s end moved it here from the guard who had it.",
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "details": {
+            "nullable": true,
+            "type": "string"
+          },
+          "doneAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "dueAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardTaskKind"
+              }
+            ]
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardTaskOutcome"
+              }
+            ],
+            "nullable": true
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/PresignedReadView"
+            },
+            "type": "array"
+          },
+          "post": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostView"
+              }
+            ],
+            "description": "For a gate or a zone; null for one guard (`assignee`).",
+            "nullable": true,
+            "type": "object"
+          },
+          "resultNote": {
+            "description": "The guard’s.",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardTaskStatus"
+              }
+            ]
+          },
+          "takenAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "takenBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "title": {
+            "description": "A custom task’s, the management’s words; null for an inspection (the app names it).",
+            "nullable": true,
+            "type": "string"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaskUnitView"
+              }
+            ],
+            "description": "The closed unit to inspect: where it is, nobody in it.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "details",
+          "unit",
+          "post",
+          "dueAt",
+          "status",
+          "takenAt",
+          "doneAt",
+          "outcome",
+          "resultNote",
+          "photos",
+          "cancelReason",
+          "carried",
+          "createdAt",
+          "assignee",
+          "takenBy",
+          "createdBy"
+        ],
+        "type": "object"
+      },
+      "StaffGuardTaskViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffGuardTaskView"
             },
             "type": "array"
           },
@@ -28756,6 +29193,27 @@
           "status",
           "response",
           "at"
+        ],
+        "type": "object"
+      },
+      "TaskUnitView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "unitCode",
+          "building"
         ],
         "type": "object"
       },
@@ -38976,6 +39434,133 @@
         "tags": [
           "gate"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/tasks/{id}": {
+      "get": {
+        "description": "Mine, my post’s while on shift there, or one I took.",
+        "operationId": "GuardTasksController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardTaskView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a task of mine or of my post",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/tasks/{id}/complete": {
+      "post": {
+        "description": "An outcome of its kind, a note, photos (an inspection: one at least). An inspection’s outcome is told to the unit’s primary.",
+        "operationId": "GuardTasksController_complete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteGuardTaskDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardTaskView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Complete a task I took",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/tasks/{id}/take": {
+      "post": {
+        "description": "On shift, an open task of mine or of my post: the first to take it wins (409 GUARD_TASK_ALREADY_TAKEN).",
+        "operationId": "GuardTasksController_take",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardTaskView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take a task",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -55775,6 +56360,245 @@
           }
         ],
         "summary": "End a roster template",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/tasks": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "StaffTasksController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "open",
+                "in_progress",
+                "done",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "enum": [
+                "closed_unit_inspection",
+                "custom"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "guardId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "gateId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "zoneId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGuardTaskViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the tasks",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "A closed unit to inspect (UNIT_NOT_CLOSED otherwise) or a custom task, for one guard, a gate or a zone. The guard, or the guards on shift at the post, are told (`guard_task.assigned`).",
+        "operationId": "StaffTasksController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGuardTaskDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGuardTaskView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Give the guards a task",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/tasks/{id}": {
+      "get": {
+        "operationId": "StaffTasksController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGuardTaskView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a task",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/tasks/{id}/cancel": {
+      "post": {
+        "description": "While open or in progress (409 GUARD_TASK_CLOSED).",
+        "operationId": "StaffTasksController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelGuardTaskDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGuardTaskView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a task",
         "tags": [
           "guard-duty"
         ],

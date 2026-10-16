@@ -1,5 +1,5 @@
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
-import { securityHelpers } from '../setup/security';
+import { securityHelpers, type Who } from '../setup/security';
 
 /**
  * ADR 0050, the guards' work decided one at a time: a handover is
@@ -18,6 +18,15 @@ describe('Guard work under concurrency', () => {
   }, 120_000);
 
   afterAll(() => h.close());
+
+  /** Ends a guard's shift ticking the whole checklist (a race adds items). */
+  const end = async (g: Who) => {
+    const items = (
+      (await x.http('get', '/gate/handover-items', g.token).expect(200))
+        .body as { data: { id: string }[] }
+    ).data.map((it) => it.id);
+    return x.endRaw(g, { checklist: items });
+  };
 
   it('two guards acknowledging one handover: one wins', async () => {
     for (let i = 0; i < 5; i++) {
@@ -79,6 +88,73 @@ describe('Guard work under concurrency', () => {
         expect((await x.shiftRow(s.c, shift.id)).endedAt).toBeNull();
         await x.endRaw(guard, { checklist: [...active, newId] }).expect(200);
       }
+    }
+  });
+
+  it('two guards taking one task: one wins', async () => {
+    const supervisor = await x.supervisor(s.c);
+    for (let i = 0; i < 5; i++) {
+      const gateId = (await x.g.gate(s.c)).id;
+      const a = await x.guard(s.c);
+      const b = await x.guard(s.c);
+      await x.start(a, { gateId });
+      await x.start(b, { gateId });
+      const task = (
+        await x
+          .http('post', '/staff/security/tasks', supervisor.token, {
+            kind: 'custom',
+            title: `Race ${i}`,
+            gateId,
+          })
+          .expect(201)
+      ).body as { id: string };
+      const path = `/gate/tasks/${task.id}/take`;
+      const results = await Promise.all([
+        x.http('post', path, a.token),
+        x.http('post', path, b.token),
+      ]);
+      expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
+      expect((await end(a)).status).toBe(200);
+      expect((await end(b)).status).toBe(200);
+    }
+  });
+
+  it('a shift ending while another guard takes its guard’s task: never held by the one who left', async () => {
+    const supervisor = await x.supervisor(s.c);
+    for (let i = 0; i < 5; i++) {
+      const gateId = (await x.g.gate(s.c)).id;
+      const leaving = await x.guard(s.c);
+      const other = await x.guard(s.c);
+      await x.start(leaving, { gateId });
+      await x.start(other, { gateId });
+      const task = (
+        await x
+          .http('post', '/staff/security/tasks', supervisor.token, {
+            kind: 'custom',
+            title: `Carry race ${i}`,
+            gateId,
+          })
+          .expect(201)
+      ).body as { id: string };
+      await x
+        .http('post', `/gate/tasks/${task.id}/take`, leaving.token)
+        .expect(200);
+      const [ended, taken] = await Promise.all([
+        end(leaving),
+        x.http('post', `/gate/tasks/${task.id}/take`, other.token),
+      ]);
+      expect(ended.status).toBe(200);
+      expect([200, 409]).toContain(taken.status);
+      const row = await x.inTx(s.c, (tx) =>
+        tx.guardTask.findUniqueOrThrow({ where: { id: task.id } }),
+      );
+      expect(row.takenById).not.toBe(leaving.id);
+      expect(row).toMatchObject(
+        taken.status === 200
+          ? { status: 'in_progress', takenById: other.id }
+          : { status: 'open', takenById: null },
+      );
+      expect((await end(other)).status).toBe(200);
     }
   });
 });

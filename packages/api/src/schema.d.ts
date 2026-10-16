@@ -2067,6 +2067,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/tasks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a task of mine or of my post
+         * @description Mine, my post’s while on shift there, or one I took.
+         */
+        get: operations["GuardTasksController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/tasks/{id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Complete a task I took
+         * @description An outcome of its kind, a note, photos (an inspection: one at least). An inspection’s outcome is told to the unit’s primary.
+         */
+        post: operations["GuardTasksController_complete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/tasks/{id}/take": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take a task
+         * @description On shift, an open task of mine or of my post: the first to take it wins (409 GUARD_TASK_ALREADY_TAKEN).
+         */
+        post: operations["GuardTasksController_take"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/unit-permits": {
         parameters: {
             query?: never;
@@ -7704,6 +7764,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the tasks
+         * @description Newest first.
+         */
+        get: operations["StaffTasksController_list"];
+        put?: never;
+        /**
+         * Give the guards a task
+         * @description A closed unit to inspect (UNIT_NOT_CLOSED otherwise) or a custom task, for one guard, a gate or a zone. The guard, or the guards on shift at the post, are told (`guard_task.assigned`).
+         */
+        post: operations["StaffTasksController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/tasks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a task */
+        get: operations["StaffTasksController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/tasks/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel a task
+         * @description While open or in progress (409 GUARD_TASK_CLOSED).
+         */
+        post: operations["StaffTasksController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/unit-permits": {
         parameters: {
             query?: never;
@@ -10963,6 +11084,9 @@ export interface components {
             /** @description From the closed list `vehicleFineCancel`. */
             reasonCode: string;
         };
+        CancelGuardTaskDto: {
+            reasonCode: components["schemas"]["GuardTaskCancel"];
+        };
         CancelInstalmentPlanDto: {
             /** @description When the remainder invoice falls due: from today to 366 days ahead. */
             dueOn: string;
@@ -11467,6 +11591,13 @@ export interface components {
             open: number;
             total: number;
         };
+        CompleteGuardTaskDto: {
+            note?: string;
+            /** @description An inspection: `all_clear` or `issue_found`; a custom task: `done`. */
+            outcome: components["schemas"]["GuardTaskOutcome"];
+            /** @description Finalized `guard_task_photo` files of the caller, 5 at most; an inspection needs one at least. */
+            photoFileIds?: string[];
+        };
         CompleteInviteDto: {
             code: string;
             /** @description The token from the invitation link. */
@@ -11926,6 +12057,31 @@ export interface components {
             unitCode?: string;
             /** @description As the visitor gives it; shown to the household only. */
             visitorName?: string;
+        };
+        CreateGuardTaskDto: {
+            details?: string;
+            /** Format: date-time */
+            dueAt?: string;
+            /** Format: uuid */
+            gateId?: string;
+            /**
+             * Format: uuid
+             * @description For one guard: exactly one of `guardId`, `gateId`, `zoneId`.
+             */
+            guardId?: string;
+            kind: components["schemas"]["GuardTaskKind"];
+            /** @description Required for a custom task; not for an inspection. */
+            title?: string;
+            /**
+             * Format: uuid
+             * @description An inspection’s unit, in closed mode (UNIT_NOT_CLOSED).
+             */
+            unitId?: string;
+            /**
+             * Format: uuid
+             * @description A place in service.
+             */
+            zoneId?: string;
         };
         CreateHandoverItemDto: {
             label: string;
@@ -13370,7 +13526,7 @@ export interface components {
             technicianRating: number | null;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -13840,6 +13996,8 @@ export interface components {
             /** Format: date-time */
             acknowledgedAt: string | null;
             acknowledgedBy: components["schemas"]["FirstNameRefView"] | null;
+            /** @description The tasks the end moved to the post, open again for the next guard (`GET /gate/tasks/{id}`). */
+            carriedTaskIds: string[];
             checklist: components["schemas"]["GuardTickedItemView"][];
             /** Format: date-time */
             createdAt: string;
@@ -13901,6 +14059,45 @@ export interface components {
         GuardSlotCancel: "schedule_change" | "guard_unavailable" | "post_closed" | "other";
         /** @enum {string} */
         GuardSlotStatus: "scheduled" | "cancelled";
+        /** @enum {string} */
+        GuardTaskCancel: "no_longer_needed" | "duplicate" | "unit_reopened" | "other";
+        /** @enum {string} */
+        GuardTaskKind: "closed_unit_inspection" | "custom";
+        /** @enum {string} */
+        GuardTaskOutcome: "all_clear" | "issue_found" | "done";
+        /** @enum {string} */
+        GuardTaskStatus: "open" | "in_progress" | "done" | "cancelled";
+        GuardTaskView: {
+            assignee: components["schemas"]["FirstNameRefView"] | null;
+            /** @description From `guardTaskCancel`, or `guardTaskCancelSystem`. */
+            cancelReason: string | null;
+            /** @description A shift’s end moved it here from the guard who had it. */
+            carried: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            details: string | null;
+            /** Format: date-time */
+            doneAt: string | null;
+            /** Format: date-time */
+            dueAt: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["GuardTaskKind"];
+            outcome: components["schemas"]["GuardTaskOutcome"] | null;
+            photos: components["schemas"]["PresignedReadView"][];
+            /** @description For a gate or a zone; null for one guard (`assignee`). */
+            post: components["schemas"]["PostView"] | null;
+            /** @description The guard’s. */
+            resultNote: string | null;
+            status: components["schemas"]["GuardTaskStatus"];
+            /** Format: date-time */
+            takenAt: string | null;
+            takenBy: components["schemas"]["FirstNameRefView"] | null;
+            /** @description A custom task’s, the management’s words; null for an inspection (the app names it). */
+            title: string | null;
+            /** @description The closed unit to inspect: where it is, nobody in it. */
+            unit: components["schemas"]["TaskUnitView"] | null;
+        };
         /** @enum {string} */
         GuardTemplateEnd: "manager" | "guard_left";
         GuardTickedItemView: {
@@ -18297,6 +18494,8 @@ export interface components {
             /** Format: date-time */
             acknowledgedAt: string | null;
             acknowledgedBy: components["schemas"]["AccountRefView"] | null;
+            /** @description The tasks the end moved to the post, open again for the next guard (`GET /gate/tasks/{id}`). */
+            carriedTaskIds: string[];
             checklist: components["schemas"]["GuardTickedItemView"][];
             /** Format: date-time */
             createdAt: string;
@@ -18313,6 +18512,42 @@ export interface components {
         };
         StaffGuardHandoverViewList: {
             data: components["schemas"]["StaffGuardHandoverView"][];
+            nextCursor: string | null;
+        };
+        StaffGuardTaskView: {
+            assignee: components["schemas"]["AccountRefView"] | null;
+            /** @description From `guardTaskCancel`, or `guardTaskCancelSystem`. */
+            cancelReason: string | null;
+            /** @description A shift’s end moved it here from the guard who had it. */
+            carried: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: components["schemas"]["AccountRefView"];
+            details: string | null;
+            /** Format: date-time */
+            doneAt: string | null;
+            /** Format: date-time */
+            dueAt: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["GuardTaskKind"];
+            outcome: components["schemas"]["GuardTaskOutcome"] | null;
+            photos: components["schemas"]["PresignedReadView"][];
+            /** @description For a gate or a zone; null for one guard (`assignee`). */
+            post: components["schemas"]["PostView"] | null;
+            /** @description The guard’s. */
+            resultNote: string | null;
+            status: components["schemas"]["GuardTaskStatus"];
+            /** Format: date-time */
+            takenAt: string | null;
+            takenBy: components["schemas"]["AccountRefView"] | null;
+            /** @description A custom task’s, the management’s words; null for an inspection (the app names it). */
+            title: string | null;
+            /** @description The closed unit to inspect: where it is, nobody in it. */
+            unit: components["schemas"]["TaskUnitView"] | null;
+        };
+        StaffGuardTaskViewList: {
+            data: components["schemas"]["StaffGuardTaskView"][];
             nextCursor: string | null;
         };
         StaffMessageDto: {
@@ -19045,6 +19280,12 @@ export interface components {
             /** @description What the staff answered then, if they did. */
             response: string | null;
             status: components["schemas"]["SuggestionStatus"];
+        };
+        TaskUnitView: {
+            building: string | null;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
         };
         /**
          * @description A technician who never set it is `unavailable`.
@@ -23462,6 +23703,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ShiftView"];
+                };
+            };
+        };
+    };
+    GuardTasksController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardTaskView"];
+                };
+            };
+        };
+    };
+    GuardTasksController_complete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteGuardTaskDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardTaskView"];
+                };
+            };
+        };
+    };
+    GuardTasksController_take: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardTaskView"];
                 };
             };
         };
@@ -32251,6 +32559,106 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RosterTemplateView"];
+                };
+            };
+        };
+    };
+    StaffTasksController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "open" | "in_progress" | "done" | "cancelled";
+                kind?: "closed_unit_inspection" | "custom";
+                guardId?: string;
+                gateId?: string;
+                zoneId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGuardTaskViewList"];
+                };
+            };
+        };
+    };
+    StaffTasksController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateGuardTaskDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGuardTaskView"];
+                };
+            };
+        };
+    };
+    StaffTasksController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGuardTaskView"];
+                };
+            };
+        };
+    };
+    StaffTasksController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelGuardTaskDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGuardTaskView"];
                 };
             };
         };

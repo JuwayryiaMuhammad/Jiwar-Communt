@@ -5,11 +5,7 @@ import { RequestContext } from '../../core/common/cls/request-context';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import { invalid } from '../../core/common/localized';
 import { REASON_CODES, requireReasonCodeOnly } from '../../core/common/reasons';
-import {
-  addDays,
-  localDate,
-  zonedInstant,
-} from '../../core/common/slots/day-slots';
+import { addDays, localDate } from '../../core/common/slots/day-slots';
 import { checkWeeklySchedule } from '../../core/common/slots/weekly-schedule';
 import { newId } from '../../core/common/uuid';
 import {
@@ -20,13 +16,14 @@ import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { dbNow } from '../db-clock';
 import { GuardGateView } from '../gates/views/gate.views';
 import { PlaceView } from '../places/views/place.views';
-import { dateOnly, RosterCore } from './roster-core';
+import { DutyNamesReader } from './duty-names';
 import {
-  dayCount,
-  LATE_AFTER_MINUTES,
-  MAX_RANGE_DAYS,
-  MAX_SLOT_MINUTES,
-} from './roster-rules';
+  dateOnly,
+  isCalendarDay,
+  RosterCore,
+  type Period,
+} from './roster-core';
+import { LATE_AFTER_MINUTES, MAX_SLOT_MINUTES } from './roster-rules';
 import {
   GuardAttendanceView,
   MySlotView,
@@ -57,14 +54,6 @@ const templateNotFound = () =>
 const slotNotFound = () =>
   appError.notFound(ErrorCode.ROSTER_SLOT_NOT_FOUND, 'Roster slot not found');
 
-/** A period of the compound's days, as instants. */
-interface Period {
-  from: string;
-  to: string;
-  start: Date;
-  end: Date;
-}
-
 /**
  * The guards' roster (ADR 0050): weekly templates that repeat and single
  * slots, kept by `guard_roster.manage`; each guard reads their own.
@@ -80,6 +69,7 @@ export class RosterService implements OnModuleInit {
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
     private readonly core: RosterCore,
+    private readonly namesReader: DutyNamesReader,
   ) {}
 
   onModuleInit(): void {
@@ -649,38 +639,11 @@ export class RosterService implements OnModuleInit {
   // Helpers
   // --------------------------------------------------------------------------
 
-  /**
-   * The compound's days `from` … `to` (default today and the 13 after),
-   * at most MAX_RANGE_DAYS, as instants from the first day's midnight to
-   * the midnight after the last.
-   */
-  private async period(
+  private period(
     tx: TenantTxClient,
     q: { from?: string; to?: string },
   ): Promise<Period> {
-    const tz = await this.core.timeZone(tx);
-    const from = q.from ?? localDate(await dbNow(tx), tz);
-    const to = q.to ?? addDays(from, 13);
-    const fields: Parameters<typeof invalid>[0] = [];
-    if (!isCalendarDay(from))
-      fields.push({ field: 'from', code: FieldErrorCode.INVALID_VALUE });
-    if (!isCalendarDay(to))
-      fields.push({ field: 'to', code: FieldErrorCode.INVALID_VALUE });
-    else if (to < from)
-      fields.push({ field: 'to', code: FieldErrorCode.ENDS_BEFORE_START });
-    else if (dayCount(from, to) > MAX_RANGE_DAYS)
-      fields.push({
-        field: 'to',
-        code: FieldErrorCode.PERIOD_TOO_LONG,
-        params: { maxDays: MAX_RANGE_DAYS },
-      });
-    if (fields.length) throw invalid(fields);
-    return {
-      from,
-      to,
-      start: midnight(from, tz),
-      end: midnight(addDays(to, 1), tz),
-    };
+    return this.core.period(tx, q);
   }
 
   async templateView(
@@ -703,7 +666,7 @@ export class RosterService implements OnModuleInit {
   }
 
   /** Names for a set of rows: their guards, gates and zones. */
-  async names(
+  names(
     tx: TenantTxClient,
     rows: readonly {
       guardAccountId: string;
@@ -711,47 +674,17 @@ export class RosterService implements OnModuleInit {
       placeId: string | null;
     }[],
   ): Promise<RosterNames> {
-    const gateIds = [
-      ...new Set(rows.flatMap((r) => (r.gateId ? [r.gateId] : []))),
-    ];
-    const placeIds = [
-      ...new Set(rows.flatMap((r) => (r.placeId ? [r.placeId] : []))),
-    ];
-    const people = await this.peopleRows(
+    return this.namesReader.read(
       tx,
       rows.map((r) => r.guardAccountId),
+      rows,
     );
-    const gates = gateIds.length
-      ? await tx.gate.findMany({
-          where: { id: { in: gateIds } },
-          select: { id: true, name: true },
-        })
-      : [];
-    const zones = placeIds.length
-      ? await tx.place.findMany({ where: { id: { in: placeIds } } })
-      : [];
-    return {
-      people,
-      gates: new Map(gates.map((g) => [g.id, g.name])),
-      zones: new Map(zones.map((z) => [z.id, PlaceView.from(z)])),
-    };
-  }
-
-  private async peopleRows(tx: TenantTxClient, ids: readonly string[]) {
-    const unique = [...new Set(ids)];
-    const rows = unique.length
-      ? await tx.account.findMany({
-          where: { id: { in: unique } },
-          select: { id: true, fullName: true, status: true },
-        })
-      : [];
-    return new Map(rows.map((r) => [r.id, r]));
   }
 
   private async people(tx: TenantTxClient, ids: readonly string[]) {
-    const rows = await this.peopleRows(tx, ids);
+    const { people } = await this.namesReader.read(tx, ids, []);
     return new Map(
-      [...rows].map(([id, r]) => [
+      [...people].map(([id, r]) => [
         id,
         r.status === 'erased'
           ? { id, erased: true as const }
@@ -779,22 +712,8 @@ export class RosterService implements OnModuleInit {
   }
 }
 
-/** A real calendar day (`2026-02-30` is not). */
-export function isCalendarDay(day: string): boolean {
-  return addDays(day, 0) === day;
-}
-
 function maxDay(...days: string[]): string {
   return days.reduce((a, b) => (a > b ? a : b));
-}
-
-/** The first instant of a compound day (a day the clock skips starts later). */
-function midnight(day: string, tz: string): Date {
-  for (let m = 0; m < 180; m++) {
-    const at = zonedInstant(day, m, tz);
-    if (at) return at;
-  }
-  throw new Error(`No instant for ${day} in ${tz}`);
 }
 
 function overlapOf(i: { startsAt: Date; endsAt: Date }) {

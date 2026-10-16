@@ -150,6 +150,68 @@ describe('Audit coverage — guard shifts and tasks', () => {
     });
   });
 
+  describe('the handover', () => {
+    it('items created and updated: position and state by value, the label as changed', async () => {
+      const item = (
+        await x
+          .http('post', '/staff/security/handover-items', supervisor.token, {
+            label: WORDS,
+            position: 4,
+          })
+          .expect(201)
+      ).body as { id: string };
+      const created = await single('guard_handover_item.created', item.id);
+      expect(created).toMatchObject(by(supervisor, 'guard_handover_item'));
+      expect(created.changes).toEqual({
+        label: { changed: true },
+        position: { from: null, to: 4 },
+        active: { from: null, to: true },
+      });
+      await x
+        .http(
+          'patch',
+          `/staff/security/handover-items/${item.id}`,
+          supervisor.token,
+          {
+            label: `${WORDS} again`,
+            active: false,
+          },
+        )
+        .expect(200);
+      const updated = await single('guard_handover_item.updated', item.id);
+      expect(updated.changes).toEqual({
+        label: { changed: true },
+        active: { from: true, to: false },
+      });
+    });
+
+    it('recorded at the end, with counts; acknowledged by the next guard', async () => {
+      const one = await x.guard(s.c);
+      const two = await x.guard(s.c);
+      const shift = await x.start(one, { gateId });
+      await x.endRaw(one, { notes: WORDS }).expect(200);
+      const handover = await x.inTx(s.c, (tx) =>
+        tx.guardHandover.findFirstOrThrow({ where: { shiftId: shift.id } }),
+      );
+      const recorded = await single('guard_handover.recorded', handover.id);
+      expect(recorded).toMatchObject(by(one, 'guard_handover'));
+      expect(recorded.metadata).toEqual({
+        shiftId: shift.id,
+        kind: 'guard',
+        items: 0,
+        notes: true,
+      });
+      const next = await x.start(two, { gateId });
+      await x
+        .http('post', `/gate/handovers/${handover.id}/acknowledge`, two.token)
+        .expect(200);
+      const acked = await single('guard_handover.acknowledged', handover.id);
+      expect(acked).toMatchObject(by(two, 'guard_handover'));
+      expect(acked.metadata).toEqual({ shiftId: next.id });
+      await x.endRaw(two).expect(200);
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every guard shifts and tasks entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];
@@ -179,7 +241,7 @@ describe('Audit coverage — guard shifts and tasks', () => {
       expect(
         all
           .filter((k) =>
-            /^(guard_roster|guard_shift|guard_handover|guard_task|guard_swap|guard_instruction|found_item)\./.test(
+            /^(guard_roster|guard_shift|guard_handover|guard_handover_item|guard_task|guard_swap|guard_instruction|found_item)\./.test(
               k,
             ),
           )

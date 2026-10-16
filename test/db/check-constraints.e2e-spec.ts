@@ -1109,9 +1109,13 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   gate_service_requests_cancel_reason_side: {},
   // Guard shifts and tasks (ADR 0050).
   guard_shifts_one_post: { guarded: 'num_nonnulls() counts NULLs: never NULL' },
-  guard_shifts_minutes_at_end: { guarded: 'num_nonnulls() counts NULLs: never NULL' },
+  guard_shifts_minutes_at_end: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
   guard_shifts_minutes_range: { guarded: 'COALESCE() of each: never NULL' },
-  guard_roster_templates_one_post: { guarded: 'num_nonnulls() counts NULLs: never NULL' },
+  guard_roster_templates_one_post: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
   guard_roster_templates_until_after_from: {
     guarded: 'effective_until IS NULL is tested first',
   },
@@ -1123,7 +1127,9 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   guard_roster_templates_end_by: {
     guarded: 'end_reason IS NULL is tested first',
   },
-  guard_roster_slots_one_post: { guarded: 'num_nonnulls() counts NULLs: never NULL' },
+  guard_roster_slots_one_post: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
   guard_roster_slots_ends_after_start: {},
   guard_roster_slots_at_most_a_day: {},
   guard_roster_slots_made_by: {},
@@ -1137,6 +1143,23 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   guard_roster_slots_filled_shape: {},
   guard_roster_slots_late_minutes_range: {
     guarded: 'late_minutes IS NULL is tested first',
+  },
+  guard_handover_items_label_length: {},
+  guard_handover_items_position_range: {},
+  guard_handovers_one_post: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
+  guard_handovers_checklist_shape: {},
+  guard_handovers_system_shape: {},
+  guard_handovers_notes_length: {
+    guarded: 'notes IS NULL is tested first',
+  },
+  guard_handovers_cleared_shape: {},
+  guard_handovers_ack_is_complete: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
+  guard_handovers_not_own: {
+    guarded: 'acknowledged_by_account_id IS NULL is tested first',
   },
 };
 

@@ -5528,6 +5528,25 @@
         ],
         "type": "object"
       },
+      "CreateHandoverItemDto": {
+        "properties": {
+          "label": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "position": {
+            "default": 0,
+            "maximum": 1000,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "type": "object"
+      },
       "CreateLaneRequestDto": {
         "properties": {
           "gateId": {
@@ -8504,6 +8523,23 @@
           "data",
           "nextCursor"
         ],
+        "type": "object"
+      },
+      "EndShiftDto": {
+        "properties": {
+          "checklist": {
+            "description": "The ids of the checklist items ticked: every active one (422 HANDOVER_CHECKLIST_INCOMPLETE, params.missing). A retired one is ignored.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "notes": {
+            "description": "For the next guard and the management.",
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "EngagementDetailView": {
@@ -11650,6 +11686,146 @@
         ],
         "type": "object"
       },
+      "GuardHandoverItemView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 120,
+            "type": "string"
+          },
+          "position": {
+            "description": "Lower first.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "position"
+        ],
+        "type": "object"
+      },
+      "GuardHandoverItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GuardHandoverItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GuardHandoverKind": {
+        "description": "`system`: the system ended the shift (its post out of service, its guard gone); no checklist, no notes.",
+        "enum": [
+          "guard",
+          "system"
+        ],
+        "type": "string"
+      },
+      "GuardHandoverView": {
+        "properties": {
+          "acknowledgedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "acknowledgedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FirstNameRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "checklist": {
+            "items": {
+              "$ref": "#/components/schemas/GuardTickedItemView"
+            },
+            "type": "array"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "guard": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FirstNameRefView"
+              }
+            ],
+            "description": "Who handed over."
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardHandoverKind"
+              }
+            ],
+            "description": "`system`: the system ended the shift (its post out of service, its guard gone); no checklist, no notes."
+          },
+          "notes": {
+            "nullable": true,
+            "type": "string"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "shiftId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "shiftId",
+          "post",
+          "kind",
+          "checklist",
+          "notes",
+          "createdAt",
+          "acknowledgedAt",
+          "guard",
+          "acknowledgedBy"
+        ],
+        "type": "object"
+      },
+      "GuardHandoverViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GuardHandoverView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "GuardInstructionView": {
         "properties": {
           "action": {
@@ -11788,6 +11964,23 @@
           "guard_left"
         ],
         "type": "string"
+      },
+      "GuardTickedItemView": {
+        "properties": {
+          "itemId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "label": {
+            "description": "As it read when ticked.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId",
+          "label"
+        ],
+        "type": "object"
       },
       "GuardVisitorParkingView": {
         "properties": {
@@ -13781,6 +13974,62 @@
         "required": [
           "email",
           "phone"
+        ],
+        "type": "object"
+      },
+      "ManagedGuardHandoverItemView": {
+        "properties": {
+          "active": {
+            "description": "Retired items are asked no more; handovers keep them.",
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 120,
+            "type": "string"
+          },
+          "position": {
+            "description": "Lower first.",
+            "type": "number"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "position",
+          "active",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "ManagedGuardHandoverItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ManagedGuardHandoverItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -23568,6 +23817,10 @@
             "nullable": true,
             "type": "number"
           },
+          "pendingHandovers": {
+            "description": "While open: handovers at this post nobody acknowledged, of the last day (`GET /gate/handovers/pending`).",
+            "type": "number"
+          },
           "scheduledEnd": {
             "format": "date-time",
             "nullable": true,
@@ -23603,7 +23856,8 @@
           "endedAt",
           "scheduledStart",
           "scheduledEnd",
-          "lateMinutes"
+          "lateMinutes",
+          "pendingHandovers"
         ],
         "type": "object"
       },
@@ -25926,6 +26180,97 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/StaffGateServiceView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffGuardHandoverView": {
+        "properties": {
+          "acknowledgedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "acknowledgedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "checklist": {
+            "items": {
+              "$ref": "#/components/schemas/GuardTickedItemView"
+            },
+            "type": "array"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "guard": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Who handed over."
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardHandoverKind"
+              }
+            ],
+            "description": "`system`: the system ended the shift (its post out of service, its guard gone); no checklist, no notes."
+          },
+          "notes": {
+            "nullable": true,
+            "type": "string"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "shiftId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "shiftId",
+          "post",
+          "kind",
+          "checklist",
+          "notes",
+          "createdAt",
+          "acknowledgedAt",
+          "guard",
+          "acknowledgedBy"
+        ],
+        "type": "object"
+      },
+      "StaffGuardHandoverViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffGuardHandoverView"
             },
             "type": "array"
           },
@@ -30634,6 +30979,25 @@
               }
             ],
             "description": "Inactive ends the shifts open at the gate."
+          }
+        },
+        "type": "object"
+      },
+      "UpdateHandoverItemDto": {
+        "properties": {
+          "active": {
+            "description": "False retires it; true brings it back.",
+            "type": "boolean"
+          },
+          "label": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "position": {
+            "maximum": 1000,
+            "minimum": 0,
+            "type": "number"
           }
         },
         "type": "object"
@@ -37857,6 +38221,105 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/gate/handover-items": {
+      "get": {
+        "description": "The active items, in order: every one is ticked to end.",
+        "operationId": "GuardHandoverController_items",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardHandoverItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the checklist to tick when ending my shift",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/handovers/pending": {
+      "get": {
+        "description": "Of the last day, nobody acknowledged, not mine. Needs an open shift (403 NO_OPEN_SHIFT).",
+        "operationId": "GuardHandoverController_pending",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardHandoverViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the handovers waiting at my post",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/handovers/{id}/acknowledge": {
+      "post": {
+        "description": "Once: 409 HANDOVER_ALREADY_ACKNOWLEDGED for the next. Never my own (403 HANDOVER_OWN). It blocks nothing: gate work goes on without it.",
+        "operationId": "GuardHandoverController_acknowledge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardHandoverView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Acknowledge a handover at my post",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/gate/inside": {
       "get": {
         "operationId": "EntriesController_inside",
@@ -38420,6 +38883,7 @@
     },
     "/api/v1/gate/shifts/end": {
       "post": {
+        "description": "Every active item of the compound’s handover checklist ticked (422 HANDOVER_CHECKLIST_INCOMPLETE), and notes if any. The next guard at the post acknowledges the handover.",
         "operationId": "ShiftsController_end",
         "parameters": [
           {
@@ -38432,6 +38896,16 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EndShiftDto"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {
@@ -38449,7 +38923,7 @@
             "bearer": []
           }
         ],
-        "summary": "End my shift",
+        "summary": "End my shift, handing over",
         "tags": [
           "gate"
         ],
@@ -54710,6 +55184,241 @@
           }
         ],
         "summary": "List the guards the roster may schedule",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/handover-items": {
+      "get": {
+        "operationId": "StaffHandoverController_items",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagedGuardHandoverItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the checklist, retired items too",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "At most 30 active (409 HANDOVER_CHECKLIST_FULL).",
+        "operationId": "StaffHandoverController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHandoverItemDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagedGuardHandoverItemView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a checklist item",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/handover-items/{id}": {
+      "patch": {
+        "description": "An item is never deleted: handovers keep it.",
+        "operationId": "StaffHandoverController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateHandoverItemDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagedGuardHandoverItemView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename, reorder, retire or restore a checklist item",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/handovers": {
+      "get": {
+        "description": "Made on the compound’s days `from` … `to` (default the last seven), 31 at most.",
+        "operationId": "StaffHandoverController_list",
+        "parameters": [
+          {
+            "description": "The first day, `YYYY-MM-DD`. Default today.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, inclusive. Default 13 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "gateId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "zoneId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "enum": [
+                "pending",
+                "acknowledged"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGuardHandoverViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the handovers",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/handovers/{id}": {
+      "get": {
+        "operationId": "StaffHandoverController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGuardHandoverView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a handover",
         "tags": [
           "guard-duty"
         ],

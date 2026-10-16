@@ -67,6 +67,11 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   guard_roster_slots_tenant_id_id_key: null,
   guard_roster_slots_shift_key: null,
   guard_roster_slots_template_start_key: null,
+  // The handover (ADR 0050): one per shift, written in the end's
+  // transaction.
+  guard_handover_items_tenant_id_id_key: null,
+  guard_handovers_tenant_id_id_key: null,
+  guard_handovers_shift_key: null,
   visitor_details_tenant_id_id_key: null,
   visitor_passes_tenant_id_id_key: null,
   // ADR 0043.

@@ -9793,10 +9793,24 @@
           }
         },
         {
-          "name": "End my shift",
+          "name": "End my shift, handing over",
           "request": {
-            "description": "**Responses:** 200",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"checklist\": [],\n  \"notes\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `checklist` | string[] |  | The ids of the checklist items ticked: every active one (422 HANDOVER_CHECKLIST_INCOMPLETE, params.missing). A retired one is ignored. |\n| `notes` | string |  | For the next guard and the management. |\n\n**Responses:** 200",
             "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
               {
                 "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
                 "key": "Idempotency-Key",
@@ -10562,6 +10576,76 @@
     {
       "item": [
         {
+          "name": "List the checklist to tick when ending my shift",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "handover-items"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/handover-items"
+            }
+          }
+        },
+        {
+          "name": "List the handovers waiting at my post",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "handovers",
+                "pending"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/handovers/pending"
+            }
+          }
+        },
+        {
+          "name": "Acknowledge a handover at my post",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "handovers",
+                ":id",
+                "acknowledge"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/handovers/:id/acknowledge",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Read my schedule",
           "request": {
             "description": "**Responses:** 200",
@@ -10689,6 +10773,189 @@
                 "guards"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/security/guards"
+            }
+          }
+        },
+        {
+          "name": "List the checklist, retired items too",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "handover-items"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/handover-items"
+            }
+          }
+        },
+        {
+          "name": "Add a checklist item",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"label\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `label` | string | yes |  |\n| `position` | number |  |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "handover-items"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/handover-items"
+            }
+          }
+        },
+        {
+          "name": "Rename, reorder, retire or restore a checklist item",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"active\": false,\n  \"label\": \"\",\n  \"position\": 0\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `active` | boolean |  | False retires it; true brings it back. |\n| `label` | string |  |  |\n| `position` | number |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "handover-items",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/handover-items/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the handovers",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "handovers"
+              ],
+              "query": [
+                {
+                  "description": "The first day, `YYYY-MM-DD`. Default today.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, inclusive. Default 13 days after `from`.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "gateId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "zoneId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "state",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/handovers"
+            }
+          }
+        },
+        {
+          "name": "Get a handover",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "handovers",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/handovers/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         },

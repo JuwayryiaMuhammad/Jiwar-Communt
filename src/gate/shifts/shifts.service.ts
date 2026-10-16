@@ -31,6 +31,8 @@ export interface ShiftRecord {
   endedAt: Date | null;
   /** The roster slot it filled (ADR 0050), if any. */
   slot: { startsAt: Date; endsAt: Date; lateMinutes: number | null } | null;
+  /** While open: handovers waiting at its post, of the last day (ADR 0050). */
+  pendingHandovers: number;
 }
 
 /** The caller's open shift at a gate: where and under which shift an action happens. */
@@ -54,6 +56,8 @@ export type ShiftPost =
   { gateId: string; placeId: null } | { gateId: null; placeId: string };
 
 export const SHIFT_RESOURCE = 'guard_shift';
+/** What the next guard is shown: handovers of the last day (ADR 0050). */
+export const PENDING_HANDOVER_MS = 24 * 3_600_000;
 
 /** What a start hook is told: the shift that just opened. */
 export interface StartedShift {
@@ -70,10 +74,19 @@ export type ShiftStartHandler = (
   shift: StartedShift,
 ) => Promise<void>;
 
+/** What the guard hands over when they end their shift (ADR 0050). */
+export interface ShiftEndInput {
+  /** The checklist items ticked. */
+  checklist?: string[];
+  notes?: string;
+}
+
 /** What an end hook is told: the shift that just ended, and why. */
 export interface EndedShift extends StartedShift {
   endedAt: Date;
   reason: string;
+  /** The guard's handover: present when the guard ended it (`guard`). */
+  handover: ShiftEndInput | null;
 }
 
 /** Runs in the end's transaction, after the shift row is closed. */
@@ -270,12 +283,16 @@ export class ShiftsService implements OnModuleInit {
     });
   }
 
-  /** `Idempotency-Key`: a retry replays the ended shift. */
-  end(): Promise<ShiftRecord> {
+  /**
+   * The guard ends their shift, handing over (ADR 0050): the end hooks
+   * check the checklist and record it. `Idempotency-Key`: a retry replays
+   * the ended shift.
+   */
+  end(input: ShiftEndInput = {}): Promise<ShiftRecord> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const open = await this.requireOnDuty(tx);
       await this.idempotency.claim(tx, { type: SHIFT_RESOURCE, id: open.id });
-      await this.close(tx, open.id, 'guard');
+      await this.close(tx, open.id, 'guard', input);
       return this.record(tx, open.id);
     });
   }
@@ -316,6 +333,7 @@ export class ShiftsService implements OnModuleInit {
     tx: TenantTxClient,
     shiftId: string,
     reason: string,
+    handover: ShiftEndInput | null = null,
   ): Promise<void> {
     const endedAt = await dbNow(tx);
     const { count } = await tx.guardShift.updateMany({
@@ -333,7 +351,7 @@ export class ShiftsService implements OnModuleInit {
       select: DUTY_SELECT,
     });
     for (const handler of this.ended)
-      await handler(tx, { ...s, endedAt, reason });
+      await handler(tx, { ...s, endedAt, reason, handover });
   }
 
   private async record(tx: TenantTxClient, id: string): Promise<ShiftRecord> {
@@ -348,6 +366,16 @@ export class ShiftsService implements OnModuleInit {
       where: { shiftId: id },
       select: { startsAt: true, endsAt: true, lateMinutes: true },
     });
+    const pendingHandovers = s.endedAt
+      ? 0
+      : await tx.guardHandover.count({
+          where: {
+            ...(s.gateId ? { gateId: s.gateId } : { placeId: s.placeId }),
+            acknowledgedAt: null,
+            guardAccountId: { not: s.guardAccountId },
+            createdAt: { gte: new Date(Date.now() - PENDING_HANDOVER_MS) },
+          },
+        });
     return {
       id: s.id,
       gateId: s.gateId,
@@ -356,6 +384,7 @@ export class ShiftsService implements OnModuleInit {
       startedAt: s.startedAt,
       endedAt: s.endedAt,
       slot,
+      pendingHandovers,
     };
   }
 }

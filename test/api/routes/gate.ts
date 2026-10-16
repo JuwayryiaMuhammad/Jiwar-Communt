@@ -92,7 +92,13 @@ export const GATE_ROUTES: Row[] = [
     as: 'guard',
     denied: 'owner',
     foreign: 'none',
-    invalid: 'none',
+    invalid: {
+      body: { notes: 7, checklist: ['item-1'] },
+      fields: [
+        { field: 'checklist', code: 'INVALID_UUID' },
+        { field: 'notes', code: 'INVALID_TYPE' },
+      ],
+    },
   },
   {
     method: 'GET',

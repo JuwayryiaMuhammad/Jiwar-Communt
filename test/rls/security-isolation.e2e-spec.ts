@@ -1,13 +1,21 @@
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
-import { gateRow, slotRow, templateRow } from '../setup/security-rows';
+import {
+  gateRow,
+  handoverItemRow,
+  handoverRow,
+  shiftRow,
+  slotRow,
+  templateRow,
+} from '../setup/security-rows';
 
 /** What a seed needs from one compound. */
 interface Side {
   tenantId: string;
   accountId: string;
   gateId: string;
+  shiftId: string;
 }
 
 /**
@@ -52,6 +60,29 @@ const TABLES: Table[] = [
         inHours: 24 + 2 * ++slots,
       }),
   },
+  {
+    table: 'guard_handover_items',
+    insert: (tx, own) => handoverItemRow(tx, own.tenantId),
+    linked: false,
+  },
+  {
+    table: 'guard_handovers',
+    insert: async (tx, own, link) =>
+      handoverRow(tx, {
+        tenantId: own.tenantId,
+        // A shift of its own each time: one handover per shift.
+        shiftId:
+          own === link
+            ? await shiftRow(tx, {
+                tenantId: own.tenantId,
+                guardId: own.accountId,
+                gateId: own.gateId,
+              })
+            : link.shiftId,
+        guardId: link.accountId,
+        gateId: link.gateId,
+      }),
+  },
 ];
 
 describe('RLS isolation — guard shifts and tasks tables', () => {
@@ -71,9 +102,15 @@ describe('RLS isolation — guard shifts and tasks tables', () => {
       tenantId,
       accountId: (await createAccountRow(h, tenantId)).id,
       gateId: '',
+      shiftId: '',
     };
     await inTenant(s, async (tx) => {
       s.gateId = await gateRow(tx, tenantId);
+      s.shiftId = await shiftRow(tx, {
+        tenantId,
+        guardId: s.accountId,
+        gateId: s.gateId,
+      });
     });
     return s;
   };

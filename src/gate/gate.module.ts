@@ -129,6 +129,12 @@ import { MaterialEntriesService } from './permits/material-entries.service';
 import { PermitLifecycle } from './permits/permit-lifecycle';
 import { PermitExportSections } from './permits/permit-export-sections';
 import { GatePermitsService } from './permits/gate-permits.service';
+import {
+  GuardHandoverController,
+  StaffHandoverController,
+} from './handover/handover.controller';
+import { HandoverService } from './handover/handover.service';
+import { DutyNamesReader } from './roster/duty-names';
 import { RosterAttendance } from './roster/roster-attendance';
 import { RosterCore } from './roster/roster-core';
 import {
@@ -193,6 +199,8 @@ import { RosterService } from './roster/roster.service';
     MaterialEntriesController,
     StaffRosterController,
     GuardRosterController,
+    GuardHandoverController,
+    StaffHandoverController,
   ],
   providers: [
     GatesService,
@@ -263,9 +271,11 @@ import { RosterService } from './roster/roster.service';
     MaterialEntriesService,
     PermitLifecycle,
     PermitExportSections,
+    DutyNamesReader,
     RosterCore,
     RosterService,
     RosterAttendance,
+    HandoverService,
   ],
 })
 export class GateModule {}

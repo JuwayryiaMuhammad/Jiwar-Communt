@@ -32,6 +32,7 @@ import {
 import { fill, paramNames, call } from './request';
 import { ROUTES } from './routes';
 import { buildWorld, sessionOf, type World } from './world';
+import { ShiftsService } from '../../src/gate/shifts/shifts.service';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import { paymentRow } from '../setup/finance-rows';
@@ -1136,6 +1137,20 @@ describe('API v0 — PII leak scan', () => {
     await call(w, 'POST', `/staff/unit-permits/${piiPermit}/approve`, {
       token: a.tokens.manager,
     }).expect(200);
+    // A handover at A's gate (ADR 0050): a guard's words to the next guard
+    // and the management; first names to guards, full names to the staff.
+    const relief = await gateHelpers(h).guard(a);
+    const ended = await c.as(a, { id: relief.id, type: 'staff' }, async () => {
+      await h.moduleRef.get(ShiftsService).start({ gateId: a.gateId });
+      return h.moduleRef.get(ShiftsService).end({ notes: 'Gate quiet' });
+    });
+    const piiHandover = (
+      await manager(() =>
+        c.prisma.tenant.guardHandover.findFirstOrThrow({
+          where: { shiftId: ended.id },
+        }),
+      )
+    ).id;
 
     /** One id for every param of the path, or each param by name. */
     type Ids = string | Record<string, string>;
@@ -1293,6 +1308,7 @@ describe('API v0 — PII leak scan', () => {
       '/permits/{id}': piiPermit,
       '/staff/unit-permits/{id}': piiPermit,
       '/gate/unit-permits/{id}': piiPermit,
+      '/staff/security/handovers/{id}': piiHandover,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

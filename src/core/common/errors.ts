@@ -687,6 +687,21 @@ export const ErrorCode = {
   ROSTER_SLOT_NOT_FOUND: 'ROSTER_SLOT_NOT_FOUND',
   /** A shift filled it, or it was cancelled (409, params.status: `filled`, `cancelled`). */
   ROSTER_SLOT_CLOSED: 'ROSTER_SLOT_CLOSED',
+  /**
+   * Every active item of the handover checklist must be ticked (422,
+   * params.missing: their ids).
+   */
+  HANDOVER_CHECKLIST_INCOMPLETE: 'HANDOVER_CHECKLIST_INCOMPLETE',
+  /** The checklist has params.max active items already (409). */
+  HANDOVER_CHECKLIST_FULL: 'HANDOVER_CHECKLIST_FULL',
+  /** Unknown, or another compound's. */
+  HANDOVER_ITEM_NOT_FOUND: 'HANDOVER_ITEM_NOT_FOUND',
+  /** Unknown, another compound's, or not at the caller's post. */
+  HANDOVER_NOT_FOUND: 'HANDOVER_NOT_FOUND',
+  /** A guard does not acknowledge their own handover (403). */
+  HANDOVER_OWN: 'HANDOVER_OWN',
+  /** Someone acknowledged it already (409). */
+  HANDOVER_ALREADY_ACKNOWLEDGED: 'HANDOVER_ALREADY_ACKNOWLEDGED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

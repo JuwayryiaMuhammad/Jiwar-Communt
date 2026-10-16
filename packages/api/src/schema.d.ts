@@ -1767,6 +1767,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/handover-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the checklist to tick when ending my shift
+         * @description The active items, in order: every one is ticked to end.
+         */
+        get: operations["GuardHandoverController_items"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/handovers/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the handovers waiting at my post
+         * @description Of the last day, nobody acknowledged, not mine. Needs an open shift (403 NO_OPEN_SHIFT).
+         */
+        get: operations["GuardHandoverController_pending"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/handovers/{id}/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Acknowledge a handover at my post
+         * @description Once: 409 HANDOVER_ALREADY_ACKNOWLEDGED for the next. Never my own (403 HANDOVER_OWN). It blocks nothing: gate work goes on without it.
+         */
+        post: operations["GuardHandoverController_acknowledge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/inside": {
         parameters: {
             query?: never;
@@ -1976,7 +2036,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** End my shift */
+        /**
+         * End my shift, handing over
+         * @description Every active item of the compound’s handover checklist ticked (422 HANDOVER_CHECKLIST_INCOMPLETE), and notes if any. The next guard at the post acknowledges the handover.
+         */
         post: operations["ShiftsController_end"];
         delete?: never;
         options?: never;
@@ -7458,6 +7521,84 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/handover-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the checklist, retired items too */
+        get: operations["StaffHandoverController_items"];
+        put?: never;
+        /**
+         * Add a checklist item
+         * @description At most 30 active (409 HANDOVER_CHECKLIST_FULL).
+         */
+        post: operations["StaffHandoverController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/handover-items/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Rename, reorder, retire or restore a checklist item
+         * @description An item is never deleted: handovers keep it.
+         */
+        patch: operations["StaffHandoverController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/security/handovers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the handovers
+         * @description Made on the compound’s days `from` … `to` (default the last seven), 31 at most.
+         */
+        get: operations["StaffHandoverController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/handovers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a handover */
+        get: operations["StaffHandoverController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/security/posts": {
         parameters: {
             query?: never;
@@ -11786,6 +11927,11 @@ export interface components {
             /** @description As the visitor gives it; shown to the household only. */
             visitorName?: string;
         };
+        CreateHandoverItemDto: {
+            label: string;
+            /** @default 0 */
+            position: number;
+        };
         CreateLaneRequestDto: {
             /**
              * Format: uuid
@@ -12774,6 +12920,12 @@ export interface components {
             data: components["schemas"]["EmergencyView"][];
             nextCursor: string | null;
         };
+        EndShiftDto: {
+            /** @description The ids of the checklist items ticked: every active one (422 HANDOVER_CHECKLIST_INCOMPLETE, params.missing). A retired one is ignored. */
+            checklist?: string[];
+            /** @description For the next guard and the management. */
+            notes?: string;
+        };
         EngagementDetailView: {
             capacity: components["schemas"]["WorkerCapacity"];
             /** Format: date-time */
@@ -13668,6 +13820,44 @@ export interface components {
             data: components["schemas"]["GuardGateView"][];
             nextCursor: string | null;
         };
+        GuardHandoverItemView: {
+            /** Format: uuid */
+            id: string;
+            label: string;
+            /** @description Lower first. */
+            position: number;
+        };
+        GuardHandoverItemViewList: {
+            data: components["schemas"]["GuardHandoverItemView"][];
+            nextCursor: string | null;
+        };
+        /**
+         * @description `system`: the system ended the shift (its post out of service, its guard gone); no checklist, no notes.
+         * @enum {string}
+         */
+        GuardHandoverKind: "guard" | "system";
+        GuardHandoverView: {
+            /** Format: date-time */
+            acknowledgedAt: string | null;
+            acknowledgedBy: components["schemas"]["FirstNameRefView"] | null;
+            checklist: components["schemas"]["GuardTickedItemView"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** @description Who handed over. */
+            guard: components["schemas"]["FirstNameRefView"];
+            /** Format: uuid */
+            id: string;
+            /** @description `system`: the system ended the shift (its post out of service, its guard gone); no checklist, no notes. */
+            kind: components["schemas"]["GuardHandoverKind"];
+            notes: string | null;
+            post: components["schemas"]["PostView"];
+            /** Format: uuid */
+            shiftId: string;
+        };
+        GuardHandoverViewList: {
+            data: components["schemas"]["GuardHandoverView"][];
+            nextCursor: string | null;
+        };
         GuardInstructionView: {
             /**
              * @description - `always_allow`: the guard lets them in and logs the entry.
@@ -13713,6 +13903,12 @@ export interface components {
         GuardSlotStatus: "scheduled" | "cancelled";
         /** @enum {string} */
         GuardTemplateEnd: "manager" | "guard_left";
+        GuardTickedItemView: {
+            /** Format: uuid */
+            itemId: string;
+            /** @description As it read when ticked. */
+            label: string;
+        };
         GuardVisitorParkingView: {
             areaName: string;
             /** Format: date-time */
@@ -14386,6 +14582,23 @@ export interface components {
             /** Format: email */
             email: string;
             phone: string;
+        };
+        ManagedGuardHandoverItemView: {
+            /** @description Retired items are asked no more; handovers keep them. */
+            active: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            label: string;
+            /** @description Lower first. */
+            position: number;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ManagedGuardHandoverItemViewList: {
+            data: components["schemas"]["ManagedGuardHandoverItemView"][];
+            nextCursor: string | null;
         };
         ManagedPlaceView: {
             /** @description Retired places are offered no more; requests keep them. */
@@ -17414,6 +17627,8 @@ export interface components {
             id: string;
             /** @description Minutes after the slot’s start the shift opened; more than ten is late. Null for an unscheduled shift. */
             lateMinutes: number | null;
+            /** @description While open: handovers at this post nobody acknowledged, of the last day (`GET /gate/handovers/pending`). */
+            pendingHandovers: number;
             /** Format: date-time */
             scheduledEnd: string | null;
             /**
@@ -18076,6 +18291,28 @@ export interface components {
         };
         StaffGateServiceViewList: {
             data: components["schemas"]["StaffGateServiceView"][];
+            nextCursor: string | null;
+        };
+        StaffGuardHandoverView: {
+            /** Format: date-time */
+            acknowledgedAt: string | null;
+            acknowledgedBy: components["schemas"]["AccountRefView"] | null;
+            checklist: components["schemas"]["GuardTickedItemView"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** @description Who handed over. */
+            guard: components["schemas"]["AccountRefView"];
+            /** Format: uuid */
+            id: string;
+            /** @description `system`: the system ended the shift (its post out of service, its guard gone); no checklist, no notes. */
+            kind: components["schemas"]["GuardHandoverKind"];
+            notes: string | null;
+            post: components["schemas"]["PostView"];
+            /** Format: uuid */
+            shiftId: string;
+        };
+        StaffGuardHandoverViewList: {
+            data: components["schemas"]["StaffGuardHandoverView"][];
             nextCursor: string | null;
         };
         StaffMessageDto: {
@@ -19450,6 +19687,12 @@ export interface components {
             phone?: string | null;
             /** @description Inactive ends the shifts open at the gate. */
             status?: components["schemas"]["GateStatus"];
+        };
+        UpdateHandoverItemDto: {
+            /** @description False retires it; true brings it back. */
+            active?: boolean;
+            label?: string;
+            position?: number;
         };
         UpdateLocaleDto: {
             locale: components["schemas"]["Locale"];
@@ -22825,6 +23068,65 @@ export interface operations {
             };
         };
     };
+    GuardHandoverController_items: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardHandoverItemViewList"];
+                };
+            };
+        };
+    };
+    GuardHandoverController_pending: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardHandoverViewList"];
+                };
+            };
+        };
+    };
+    GuardHandoverController_acknowledge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardHandoverView"];
+                };
+            };
+        };
+    };
     EntriesController_inside: {
         parameters: {
             query?: {
@@ -23122,7 +23424,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EndShiftDto"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -31662,6 +31968,121 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RosterGuardViewList"];
+                };
+            };
+        };
+    };
+    StaffHandoverController_items: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagedGuardHandoverItemViewList"];
+                };
+            };
+        };
+    };
+    StaffHandoverController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateHandoverItemDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagedGuardHandoverItemView"];
+                };
+            };
+        };
+    };
+    StaffHandoverController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateHandoverItemDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagedGuardHandoverItemView"];
+                };
+            };
+        };
+    };
+    StaffHandoverController_list: {
+        parameters: {
+            query?: {
+                /** @description The first day, `YYYY-MM-DD`. Default today. */
+                from?: string;
+                /** @description The last day, inclusive. Default 13 days after `from`. */
+                to?: string;
+                gateId?: string;
+                zoneId?: string;
+                state?: "pending" | "acknowledged";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGuardHandoverViewList"];
+                };
+            };
+        };
+    };
+    StaffHandoverController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGuardHandoverView"];
                 };
             };
         };

@@ -916,6 +916,22 @@ export const AUDIT_ACTIONS = {
   // The slot was not opened an hour after its start (the sweep). metadata:
   // unmanned (nobody else on shift at the post), recipients.
   'guard_shift.absent': { log: 'tenant', target: 'guard_roster_slot' },
+  // changes: position and active by value; the label as changed.
+  'guard_handover_item.created': {
+    log: 'tenant',
+    target: 'guard_handover_item',
+    sensitive: ['label'],
+  },
+  'guard_handover_item.updated': {
+    log: 'tenant',
+    target: 'guard_handover_item',
+    sensitive: ['label'],
+  },
+  // metadata: shiftId, kind (guard, system), items (how many ticked), notes
+  // (whether any; never the words).
+  'guard_handover.recorded': { log: 'tenant', target: 'guard_handover' },
+  // metadata: shiftId (the acknowledging guard's).
+  'guard_handover.acknowledged': { log: 'tenant', target: 'guard_handover' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

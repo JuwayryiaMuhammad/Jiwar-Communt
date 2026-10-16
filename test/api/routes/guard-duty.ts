@@ -163,3 +163,117 @@ export const ROSTER_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** The handover (ADR 0050): the guard's side and the management's. */
+export const HANDOVER_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/gate/handover-items',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: 'none',
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/gate/handovers/pending',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: 'none',
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/handovers/{id}/acknowledge',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bHandoverId }),
+      code: 'HANDOVER_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/security/handovers',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { state: 'done' },
+      fields: [{ field: 'state', code: 'INVALID_VALUE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/security/handovers/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bHandoverId }),
+      code: 'HANDOVER_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/security/handover-items',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/security/handover-items',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: { label: '', position: 2000 },
+      fields: [
+        {
+          field: 'label',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 120 },
+        },
+        {
+          field: 'position',
+          code: 'INVALID_NUMBER',
+          params: { min: 0, max: 1000 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'PATCH',
+    path: '/staff/security/handover-items/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bHandoverItemId }),
+      body: () => ({ position: 3 }),
+      code: 'HANDOVER_ITEM_NOT_FOUND',
+    },
+    invalid: {
+      body: { active: 'yes' },
+      fields: [{ field: 'active', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+];

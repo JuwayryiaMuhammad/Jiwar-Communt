@@ -62,3 +62,53 @@ export async function slotRow(
   });
   return id;
 }
+
+/** An ended shift at a gate, an hour long, ending now. */
+export async function shiftRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; guardId: string; gateId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.guardShift.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      guardAccountId: r.guardId,
+      gateId: r.gateId,
+      startedAt: new Date(Date.now() - HOUR),
+      endedAt: new Date(),
+      endReason: 'guard',
+    },
+  });
+  return id;
+}
+
+export async function handoverItemRow(
+  tx: TenantTxClient,
+  tenantId: string,
+): Promise<string> {
+  const id = newId();
+  await tx.guardHandoverItem.create({
+    data: { id, tenantId, label: `Item ${id}` },
+  });
+  return id;
+}
+
+export async function handoverRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; shiftId: string; guardId: string; gateId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.guardHandover.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      shiftId: r.shiftId,
+      guardAccountId: r.guardId,
+      gateId: r.gateId,
+      kind: 'guard',
+      notes: 'Row notes',
+    },
+  });
+  return id;
+}

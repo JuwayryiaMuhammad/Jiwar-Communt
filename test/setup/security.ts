@@ -15,6 +15,7 @@ export interface ShiftBody {
   scheduledStart: string | null;
   scheduledEnd: string | null;
   lateMinutes: number | null;
+  pendingHandovers: number;
 }
 
 export interface SlotBody {

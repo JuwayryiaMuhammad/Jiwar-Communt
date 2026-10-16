@@ -4,6 +4,9 @@ import {
   localDate,
   zonedInstant,
 } from '../../src/core/common/slots/day-slots';
+import { HandoverService } from '../../src/gate/handover/handover.service';
+import { ShiftsService } from '../../src/gate/shifts/shifts.service';
+import { gateHelpers } from '../setup/gate';
 import { call } from './request';
 import type { World } from './world';
 
@@ -17,7 +20,11 @@ const ZONE = 'Africa/Cairo';
 export function guardDutyCalls(
   world: () => World,
 ): Record<string, () => Promise<Response>> {
-  const manager = (method: 'GET' | 'POST', path: string, payload?: object) =>
+  const manager = (
+    method: 'GET' | 'POST' | 'PATCH',
+    path: string,
+    payload?: object,
+  ) =>
     call(world(), method, path, {
       token: world().a.tokens.manager,
       body: payload,
@@ -47,6 +54,38 @@ export function guardDutyCalls(
     });
   };
   const id = (res: Response) => (res.body as { id: string }).id;
+  /**
+   * A handover at A's gate by another guard, ticking the whole checklist:
+   * its id, for A's guard (on shift there) to read and acknowledge.
+   */
+  const aHandover = async () => {
+    const w = world();
+    const relief = await gateHelpers(w.h).guard(w.a);
+    const shifts = w.h.moduleRef.get(ShiftsService);
+    const handover = w.h.moduleRef.get(HandoverService);
+    const ended = await w.helpers.as(
+      w.a,
+      { id: relief.id, type: 'staff' },
+      async () => {
+        await shifts.start({ gateId: w.a.gateId });
+        const items = await handover.activeItems();
+        return shifts.end({ checklist: items.map((i) => i.id) });
+      },
+    );
+    return (
+      await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.guardHandover.findFirstOrThrow({
+          where: { shiftId: ended.id },
+        }),
+      )
+    ).id;
+  };
+  const anItem = async () =>
+    id(
+      await manager('POST', '/staff/security/handover-items', {
+        label: `No-store item ${Date.now()}`,
+      }),
+    );
   return {
     'GET /staff/security/posts': () => manager('GET', '/staff/security/posts'),
     'GET /staff/security/guards': () =>
@@ -73,5 +112,26 @@ export function guardDutyCalls(
     'GET /gate/roster': () => guard('GET', '/gate/roster'),
     'GET /gate/roster/attendance': () =>
       guard('GET', '/gate/roster/attendance'),
+    'GET /gate/handover-items': () => guard('GET', '/gate/handover-items'),
+    'GET /gate/handovers/pending': async () => {
+      await aHandover();
+      return guard('GET', '/gate/handovers/pending');
+    },
+    'POST /gate/handovers/{id}/acknowledge': async () =>
+      guard('POST', `/gate/handovers/${await aHandover()}/acknowledge`),
+    'GET /staff/security/handovers': () =>
+      manager('GET', '/staff/security/handovers'),
+    'GET /staff/security/handovers/{id}': async () =>
+      manager('GET', `/staff/security/handovers/${await aHandover()}`),
+    'GET /staff/security/handover-items': () =>
+      manager('GET', '/staff/security/handover-items'),
+    'POST /staff/security/handover-items': () =>
+      manager('POST', '/staff/security/handover-items', {
+        label: 'No-store keys',
+      }),
+    'PATCH /staff/security/handover-items/{id}': async () =>
+      manager('PATCH', `/staff/security/handover-items/${await anItem()}`, {
+        position: 5,
+      }),
   };
 }

@@ -51,6 +51,13 @@ export class ShiftView {
   })
   lateMinutes: number | null;
 
+  @ApiProperty({
+    type: Number,
+    description:
+      'While open: handovers at this post nobody acknowledged, of the last day (`GET /gate/handovers/pending`).',
+  })
+  pendingHandovers: number;
+
   static from(s: ShiftRecord): ShiftView {
     return {
       id: s.id,
@@ -62,6 +69,7 @@ export class ShiftView {
       scheduledStart: s.slot?.startsAt ?? null,
       scheduledEnd: s.slot?.endsAt ?? null,
       lateMinutes: s.slot?.lateMinutes ?? null,
+      pendingHandovers: s.pendingHandovers,
     };
   }
 }

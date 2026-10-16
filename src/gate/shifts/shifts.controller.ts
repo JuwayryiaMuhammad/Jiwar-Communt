@@ -21,7 +21,7 @@ import {
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import { GatesService } from '../gates/gates.service';
 import { GuardGateView } from '../gates/views/gate.views';
-import { StartShiftDto } from './dto/shifts.dto';
+import { EndShiftDto, StartShiftDto } from './dto/shifts.dto';
 import { ShiftsService } from './shifts.service';
 import { ShiftView } from './views/shift.views';
 
@@ -56,12 +56,16 @@ export class ShiftsController {
   }
 
   @Post('shifts/end')
-  @ApiOperation({ summary: 'End my shift' })
+  @ApiOperation({
+    summary: 'End my shift, handing over',
+    description:
+      'Every active item of the compound’s handover checklist ticked (422 HANDOVER_CHECKLIST_INCOMPLETE), and notes if any. The next guard at the post acknowledges the handover.',
+  })
   @HttpCode(HttpStatus.OK)
   @Idempotent()
   @ApiOkResponse({ type: ShiftView })
-  async end(): Promise<ShiftView> {
-    return ShiftView.from(await this.shifts.end());
+  async end(@Body() dto: EndShiftDto): Promise<ShiftView> {
+    return ShiftView.from(await this.shifts.end(dto));
   }
 
   @Get('shifts/current')

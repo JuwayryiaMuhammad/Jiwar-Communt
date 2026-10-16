@@ -4,15 +4,12 @@ import { accountRef, AccountRefView } from '../../../core/common/http/personal';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { GuardGateView } from '../../gates/views/gate.views';
 import { PlaceView } from '../../places/views/place.views';
+import type { DutyNames } from '../duty-names';
 import { dateOnly } from '../roster-core';
 import { isLate } from '../roster-rules';
 
 /** What a view needs to name a post and people. */
-export interface RosterNames {
-  people: Map<string, { id: string; fullName: string | null; status: string }>;
-  gates: Map<string, string>;
-  zones: Map<string, PlaceView>;
-}
+export type RosterNames = DutyNames;
 
 export class WeeklyWindowView {
   @ApiProperty({ type: String, example: '22:00' })

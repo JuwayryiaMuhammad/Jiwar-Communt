@@ -410,4 +410,8 @@ export const GUARD_DUTY_COVERAGE: readonly string[] = [
   'guard_roster.slot_cancelled',
   'guard_shift.late',
   'guard_shift.absent',
+  'guard_handover_item.created',
+  'guard_handover_item.updated',
+  'guard_handover.recorded',
+  'guard_handover.acknowledged',
 ];

@@ -6247,3 +6247,55 @@ model GuardRosterSlot {
   @@index([tenantId, startsAt, id], map: "guard_roster_slots_start_idx")
   @@map("guard_roster_slots")
 }
+
+enum GuardHandoverKind {
+  guard
+  system
+
+  @@map("guard_handover_kind")
+}
+
+/// One item of the compound's handover checklist (ADR 0050): the
+/// management's words. Retired, never deleted (trigger).
+model GuardHandoverItem {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  label     String
+  position  Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, position, id], map: "guard_handover_items_order_idx")
+  @@map("guard_handover_items")
+}
+
+/// One per ended shift (ADR 0050): the checklist as the guard ticked it and
+/// their notes, or the system's (no checklist) when the system ended the
+/// shift. The next guard at that post acknowledges it, once. It keeps what
+/// it said; the notes go at their author's erasure (trigger).
+model GuardHandover {
+  id                  String            @id @db.Uuid
+  tenantId            String            @map("tenant_id") @db.Uuid
+  shiftId             String            @map("shift_id") @db.Uuid
+  guardAccountId      String            @map("guard_account_id") @db.Uuid
+  gateId              String?           @map("gate_id") @db.Uuid
+  placeId             String?           @map("place_id") @db.Uuid
+  kind                GuardHandoverKind
+  /// `[{ itemId, label }]`, the items as they read when ticked.
+  checklist           Json              @default("[]")
+  /// Free text, may name people: never in the audit trail or a notification.
+  notes               String?
+  notesClearedAt      DateTime?         @map("notes_cleared_at") @db.Timestamptz(3)
+  acknowledgedById    String?           @map("acknowledged_by_account_id") @db.Uuid
+  acknowledgedShiftId String?           @map("acknowledged_shift_id") @db.Uuid
+  acknowledgedAt      DateTime?         @map("acknowledged_at") @db.Timestamptz(3)
+  createdAt           DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, shiftId], map: "guard_handovers_shift_key")
+  @@index([tenantId, createdAt, id], map: "guard_handovers_created_idx")
+  @@index([tenantId, guardAccountId], map: "guard_handovers_guard_idx")
+  @@map("guard_handovers")
+}

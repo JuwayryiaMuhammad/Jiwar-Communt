@@ -3,7 +3,14 @@ import { newId } from '../../src/core/common/uuid';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
-import { gateRow, slotRow, templateRow } from '../setup/security-rows';
+import {
+  gateRow,
+  handoverItemRow,
+  handoverRow,
+  shiftRow,
+  slotRow,
+  templateRow,
+} from '../setup/security-rows';
 import { required } from '../setup/test-env';
 
 /**
@@ -23,6 +30,9 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
   let templateId: string;
   let slotId: string;
   let shiftId: string;
+  let endedShiftId: string;
+  let itemId: string;
+  let handoverId: string;
 
   beforeAll(async () => {
     h = await createDbHarness();
@@ -44,6 +54,14 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
           guardId,
           gateId,
           createdById: otherId,
+        });
+        endedShiftId = await shiftRow(tx, { tenantId, guardId, gateId });
+        itemId = await handoverItemRow(tx, tenantId);
+        handoverId = await handoverRow(tx, {
+          tenantId,
+          shiftId: endedShiftId,
+          guardId,
+          gateId,
         });
         shiftId = newId();
         await tx.guardShift.create({
@@ -102,6 +120,8 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
       'guard_shifts',
       'guard_roster_templates',
       'guard_roster_slots',
+      'guard_handover_items',
+      'guard_handovers',
     ])
       expect({ table, ...(await privileges(table)) }).toEqual({
         table,
@@ -118,6 +138,8 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
       'guard_shifts',
       'guard_roster_templates',
       'guard_roster_slots',
+      'guard_handover_items',
+      'guard_handovers',
     ]) {
       await expect(
         attempt(
@@ -323,6 +345,80 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
       await expect(
         insert('now()', "now() + interval '1 hour'", null),
       ).rejects.toThrow(/guard_roster_slots_made_by/);
+    });
+  });
+
+  describe('guard_handovers', () => {
+    const where = () => `id = '${handoverId}'`;
+    const ack = (by: string) =>
+      `UPDATE guard_handovers SET acknowledged_by_account_id = '${by}', acknowledged_shift_id = '${shiftId}', acknowledged_at = now() WHERE ${where()}`;
+
+    it('keeps what it said', async () => {
+      for (const set of [
+        `guard_account_id = '${otherId}'`,
+        `gate_id = '${otherGateId}'`,
+        "kind = 'system'",
+        `checklist = '[{"itemId":"${itemId}","label":"x"}]'`,
+        "notes = 'Rewritten'",
+      ])
+        await expect(
+          asApp(`UPDATE guard_handovers SET ${set} WHERE ${where()}`),
+        ).rejects.toThrow(/keeps what it said/);
+    });
+
+    it('acknowledged once, never by its author, and completely', async () => {
+      await asApp(ack(otherId));
+      await expect(
+        asApp(
+          ack(otherId),
+          `UPDATE guard_handovers SET acknowledged_at = now() + interval '1 minute' WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/keeps what it said/);
+      await expect(asApp(ack(guardId))).rejects.toThrow(
+        /guard_handovers_not_own/,
+      );
+      await expect(
+        asApp(
+          `UPDATE guard_handovers SET acknowledged_at = now() WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/guard_handovers_ack_is_complete/);
+    });
+
+    it('its notes go once, with the moment they went', async () => {
+      const clear = `UPDATE guard_handovers SET notes = NULL, notes_cleared_at = now() WHERE ${where()}`;
+      await asApp(clear);
+      await expect(
+        asApp(
+          clear,
+          `UPDATE guard_handovers SET notes = 'Back' WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/keeps what it said/);
+      await expect(
+        asApp(`UPDATE guard_handovers SET notes = NULL WHERE ${where()}`),
+      ).rejects.toThrow(/keeps what it said/);
+    });
+
+    it('the system’s handover carries nothing a guard would write', async () => {
+      const shift = newId();
+      await expect(
+        asApp(
+          `INSERT INTO guard_shifts (id, tenant_id, guard_account_id, gate_id, started_at, ended_at, end_reason) VALUES ('${shift}', '${tenantId}', '${otherId}', '${gateId}', now() - interval '1 hour', now(), 'gate_deactivated')`,
+          `INSERT INTO guard_handovers (id, tenant_id, shift_id, guard_account_id, gate_id, kind, notes) VALUES ('${newId()}', '${tenantId}', '${shift}', '${otherId}', '${gateId}', 'system', 'Words')`,
+        ),
+      ).rejects.toThrow(/guard_handovers_system_shape/);
+    });
+  });
+
+  describe('guard_handover_items', () => {
+    it('retired, never deleted; a label of 1 to 120 characters', async () => {
+      await asApp(
+        `UPDATE guard_handover_items SET active = false WHERE id = '${itemId}'`,
+      );
+      await expect(
+        asApp(
+          `UPDATE guard_handover_items SET label = '' WHERE id = '${itemId}'`,
+        ),
+      ).rejects.toThrow(/guard_handover_items_label_length/);
     });
   });
 });

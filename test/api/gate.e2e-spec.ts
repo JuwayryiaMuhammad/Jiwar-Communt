@@ -18,6 +18,7 @@ const SHIFT = [
   'gateName',
   'id',
   'lateMinutes',
+  'pendingHandovers',
   'scheduledEnd',
   'scheduledStart',
   'startedAt',

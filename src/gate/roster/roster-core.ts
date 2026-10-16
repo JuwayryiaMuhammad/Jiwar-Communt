@@ -4,18 +4,35 @@ import { AuditService } from '../../core/audit/audit.service';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import { invalid } from '../../core/common/localized';
-import { addDays, localDate } from '../../core/common/slots/day-slots';
+import {
+  addDays,
+  localDate,
+  zonedInstant,
+} from '../../core/common/slots/day-slots';
 import type { WeeklySchedule } from '../../core/common/slots/weekly-schedule';
 import { newId } from '../../core/common/uuid';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { shiftPostOf, type ShiftPost } from '../shifts/shifts.service';
+import { dbNow } from '../db-clock';
 import {
+  dayCount,
   HORIZON_DAYS,
+  MAX_RANGE_DAYS,
   occurrences,
   overlaps,
   type Interval,
 } from './roster-rules';
+
+/** A period of the compound's days, and the instants it covers. */
+export interface Period {
+  from: string;
+  to: string;
+  /** The first day's first instant. */
+  start: Date;
+  /** The first instant after the last day. */
+  end: Date;
+}
 
 /** A gate or a zone, as a request names it. */
 export interface PostInput {
@@ -68,6 +85,42 @@ export class RosterCore {
 
   async timeZone(tx: TenantTxClient): Promise<string> {
     return (await this.settings.inTx(tx, this.ctx.txTenantId)).timezone;
+  }
+
+  /**
+   * The compound's days `from` … `to`, inclusive, at most MAX_RANGE_DAYS.
+   * Absent, `from` is `back` days before today and `to` is `span` days
+   * after `from`.
+   */
+  async period(
+    tx: TenantTxClient,
+    q: { from?: string; to?: string },
+    defaults: { back: number; span: number } = { back: 0, span: 13 },
+  ): Promise<Period> {
+    const tz = await this.timeZone(tx);
+    const from =
+      q.from ?? addDays(localDate(await dbNow(tx), tz), -defaults.back);
+    const to = q.to ?? addDays(from, defaults.span);
+    const fields: Parameters<typeof invalid>[0] = [];
+    if (!isCalendarDay(from))
+      fields.push({ field: 'from', code: FieldErrorCode.INVALID_VALUE });
+    if (!isCalendarDay(to))
+      fields.push({ field: 'to', code: FieldErrorCode.INVALID_VALUE });
+    else if (to < from)
+      fields.push({ field: 'to', code: FieldErrorCode.ENDS_BEFORE_START });
+    else if (dayCount(from, to) > MAX_RANGE_DAYS)
+      fields.push({
+        field: 'to',
+        code: FieldErrorCode.PERIOD_TOO_LONG,
+        params: { maxDays: MAX_RANGE_DAYS },
+      });
+    if (fields.length) throw invalid(fields);
+    return {
+      from,
+      to,
+      start: midnight(from, tz),
+      end: midnight(addDays(to, 1), tz),
+    };
   }
 
   /**
@@ -310,6 +363,20 @@ export class RosterCore {
     if (!row) return null;
     return tx.guardRosterSlot.findUniqueOrThrow({ where: { id } });
   }
+}
+
+/** A real calendar day (`2026-02-30` is not). */
+export function isCalendarDay(day: string): boolean {
+  return addDays(day, 0) === day;
+}
+
+/** The first instant of a compound day (a day the clock skips starts later). */
+export function midnight(day: string, tz: string): Date {
+  for (let m = 0; m < 180; m++) {
+    const at = zonedInstant(day, m, tz);
+    if (at) return at;
+  }
+  throw new Error(`No instant for ${day} in ${tz}`);
 }
 
 /** A `@db.Date` column as the compound's day, `YYYY-MM-DD`. */

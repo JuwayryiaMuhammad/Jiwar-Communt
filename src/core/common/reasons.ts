@@ -559,4 +559,8 @@ export const REASON_CODES = {
   // Why a run under way ended before every checkpoint was scanned: the
   // guard ended it, or their shift ended.
   patrolRunEnd: ['guard', 'shift_ended'],
+  // Why a guard scans a checkpoint by hand (ADR 0052).
+  patrolManualScan: ['qr_damaged', 'qr_missing', 'nfc_unreadable', 'other'],
+  // What a guard found at a checkpoint (ADR 0052).
+  patrolNoteOutcome: ['all_clear', 'issue_found'],
 } as const;

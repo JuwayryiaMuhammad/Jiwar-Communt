@@ -163,6 +163,13 @@ export const FILE_PURPOSES = {
     maxBytes: 5 * MB,
     uploaders: ['gate.operate', 'found_items.manage'],
   },
+  // A patrol note's photo (ADR 0052): what a guard saw at a checkpoint.
+  // Staff only; it stays when its guard is erased (it shows a place).
+  patrol_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['gate.operate'],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

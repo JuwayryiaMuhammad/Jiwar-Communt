@@ -4,7 +4,10 @@ import type { FieldError } from '../../core/common/errors';
 import { REASON_CODES } from '../../core/common/reasons';
 import {
   checkPatrolSchedule,
+  distanceMetres,
   endStatus,
+  inRunLifetime,
+  orderProblem,
   lateAfter,
   runOccurrences,
   scheduleOverlaps,
@@ -206,6 +209,73 @@ describe('patrol rules (ADR 0052)', () => {
       'patrolRunCancelSystem',
       'patrolRunEnd',
     ] as const)
+      expect(mirror).toContain(`${list}: [${quoted(REASON_CODES[list])}]`);
+  });
+
+  describe('a scan', () => {
+    const at = (iso: string) => new Date(iso);
+
+    it('measures the distance on the earth, in whole metres', () => {
+      const cairo = { lat: 30.0444, lng: 31.2357 };
+      expect(distanceMetres(cairo, cairo)).toBe(0);
+      // A thousandth of a degree of latitude is about 111 metres.
+      expect(distanceMetres(cairo, { lat: 30.0454, lng: 31.2357 })).toBe(111);
+      // Cairo to Alexandria, about 180 km.
+      const alex = { lat: 31.2001, lng: 29.9187 };
+      expect(Math.round(distanceMetres(cairo, alex) / 1000)).toBe(180);
+    });
+
+    it('falls in its run’s lifetime, two minutes either side', () => {
+      const run = {
+        startedAt: at('2026-11-01T08:00:00Z'),
+        endedAt: at('2026-11-01T08:40:00Z'),
+      };
+      const now = at('2026-11-01T09:30:00Z');
+      expect(inRunLifetime(run, at('2026-11-01T07:58:00Z'), now)).toBe(true);
+      expect(inRunLifetime(run, at('2026-11-01T07:57:59Z'), now)).toBe(false);
+      expect(inRunLifetime(run, at('2026-11-01T08:42:00Z'), now)).toBe(true);
+      expect(inRunLifetime(run, at('2026-11-01T08:42:01Z'), now)).toBe(false);
+      // Under way: until now.
+      const live = { startedAt: run.startedAt, endedAt: null };
+      expect(inRunLifetime(live, at('2026-11-01T09:31:00Z'), now)).toBe(true);
+      expect(inRunLifetime(live, at('2026-11-01T09:33:00Z'), now)).toBe(false);
+    });
+
+    it('of an ordered route: the next position, never earlier than the last', () => {
+      const t = at('2026-11-01T08:10:00Z');
+      expect(orderProblem(null, 1, t)).toBeNull();
+      expect(orderProblem(null, 2, t)).toEqual({ expected: 1 });
+      const last = { position: 1, scannedAt: t };
+      expect(orderProblem(last, 2, at('2026-11-01T08:11:00Z'))).toBeNull();
+      expect(orderProblem(last, 3, at('2026-11-01T08:11:00Z'))).toEqual({
+        expected: 2,
+      });
+      expect(orderProblem(last, 2, at('2026-11-01T08:09:00Z'))).toEqual({
+        expected: 2,
+      });
+    });
+  });
+
+  it('the scan and note lists match their CHECKs and the dashboards’ mirror', () => {
+    const sql = readFileSync(
+      join(
+        __dirname,
+        '../../../prisma/migrations/20261030090500_patrol_scans/migration.sql',
+      ),
+      'utf8',
+    ).replace(/\s+/g, ' ');
+    const mirror = readFileSync(
+      join(__dirname, '../../../packages/api/src/reasons.ts'),
+      'utf8',
+    );
+    const quoted = (l: readonly string[]) => l.map((c) => `'${c}'`).join(', ');
+    expect(sql).toContain(
+      `"manual_reason" IN (${quoted(REASON_CODES.patrolManualScan)})`,
+    );
+    expect(sql).toContain(
+      `"outcome" IN (${quoted(REASON_CODES.patrolNoteOutcome)})`,
+    );
+    for (const list of ['patrolManualScan', 'patrolNoteOutcome'] as const)
       expect(mirror).toContain(`${list}: [${quoted(REASON_CODES[list])}]`);
   });
 });

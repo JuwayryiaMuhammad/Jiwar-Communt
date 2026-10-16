@@ -27,7 +27,9 @@ import {
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import { CancelRunDto, RunsQueryDto } from './dto/runs.dto';
+import { NoteDto, ScanDto } from './dto/scans.dto';
 import { GuardPatrolsService } from './guard-patrols.service';
+import { PatrolScansService } from './patrol-scans.service';
 import { StaffRunsService } from './staff-runs.service';
 import {
   GuardRunDetailView,
@@ -36,13 +38,17 @@ import {
   RunDetailView,
   RunView,
 } from './views/run.views';
+import { NoteView, ScanView } from './views/scan.views';
 
 /** A guard's patrols (ADR 0052), inside a shift. */
 @ApiArea('patrols')
 @RequirePermissions('gate.operate')
 @Controller('gate/patrols')
 export class GuardPatrolsController {
-  constructor(private readonly patrols: GuardPatrolsService) {}
+  constructor(
+    private readonly patrols: GuardPatrolsService,
+    private readonly scans: PatrolScansService,
+  ) {}
 
   @Get()
   @NoStore()
@@ -100,6 +106,36 @@ export class GuardPatrolsController {
   @ApiCreatedResponse({ type: GuardRunDetailView })
   startAdhoc(@Param('id', parseId()) id: string): Promise<GuardRunDetailView> {
     return this.patrols.startAdhoc(id);
+  }
+
+  @Post('runs/:id/scans')
+  @NoStore()
+  @ApiOperation({
+    summary: 'Scan a checkpoint',
+    description:
+      'Of my run: its QR or NFC payload, or by hand with a `patrolManualScan` code. The app’s own id records once (offline, a retry); the device’s time must fall in the run’s lifetime. An ordered route takes its checkpoints in order (422 PATROL_OUT_OF_ORDER, params.expected); each once (409 PATROL_CHECKPOINT_ALREADY_SCANNED). Farther than the checkpoint’s radius is kept and flagged. The last one completes the run.',
+  })
+  @ApiCreatedResponse({ type: ScanView })
+  scan(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ScanDto,
+  ): Promise<ScanView> {
+    return this.scans.scan(id, dto);
+  }
+
+  @Post('runs/:id/notes')
+  @NoStore()
+  @ApiOperation({
+    summary: 'Note what I found at a checkpoint',
+    description:
+      'At a scan of my run, one each (409 PATROL_NOTE_EXISTS): an outcome, words, up to three `patrol_photo` files. Under way, or up to 30 minutes after it ended.',
+  })
+  @ApiCreatedResponse({ type: NoteView })
+  note(
+    @Param('id', parseId()) id: string,
+    @Body() dto: NoteDto,
+  ): Promise<NoteView> {
+    return this.scans.note(id, dto);
   }
 
   @Post('runs/:id/end')

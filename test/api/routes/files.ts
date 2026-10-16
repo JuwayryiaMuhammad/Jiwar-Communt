@@ -44,6 +44,7 @@ export const FILES_ROUTES: Row[] = [
               'permit_photo',
               'guard_task_photo',
               'found_item_photo',
+              'patrol_photo',
             ],
           },
         },

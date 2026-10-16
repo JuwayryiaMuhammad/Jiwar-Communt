@@ -1,9 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import type {
   PatrolCheckpoint,
+  PatrolNote,
   PatrolRoute,
   PatrolRouteVersion,
   PatrolRun,
+  PatrolScan,
 } from '@prisma/client';
 import {
   accountRef,
@@ -14,7 +16,14 @@ import {
 import type { DutyNames } from '../../roster/duty-names';
 import { PostView } from '../../roster/views/roster.views';
 import { timeoutAt } from '../patrol-rules';
+import type { PresignedReadView } from '../../../core/files/views/file.views';
 import { CheckpointPositionView } from './checkpoint.views';
+import {
+  GuardStopNoteView,
+  GuardStopScanView,
+  StaffStopNoteView,
+  StaffStopScanView,
+} from './scan.views';
 
 export interface RunContext {
   names: DutyNames;
@@ -22,6 +31,14 @@ export interface RunContext {
   versions: Map<string, PatrolRouteVersion>;
   /** Per version: its checkpoints in the order walked. */
   stops: Map<string, PatrolCheckpoint[]>;
+  /** Per run: its scans by hand, flagged, and received after it ended. */
+  counts: Map<string, { manual: number; suspect: number; late: number }>;
+  /** Per run (details only): its scans. */
+  scans: Map<string, PatrolScan[]>;
+  /** Per scan (details only): its note. */
+  notes: Map<string, PatrolNote>;
+  /** Per note (details only): its photos' read URLs. */
+  photos: Map<string, PresignedReadView[]>;
 }
 
 const KIND = { enum: ['scheduled', 'adhoc'], enumName: 'PatrolRunKind' };
@@ -131,6 +148,19 @@ const person = <V>(
 export class RunView extends RunBodyView {
   @ApiProperty({ type: AccountRefView, nullable: true })
   guard: AccountRefView | null;
+  @ApiProperty({ type: Number, description: 'Scans by hand.' })
+  manualScans: number;
+  @ApiProperty({
+    type: Number,
+    description: 'Scans farther from their checkpoint than its radius.',
+  })
+  suspectScans: number;
+  @ApiProperty({
+    type: Number,
+    description:
+      'Scans that reached the server after the run ended: it was finished offline.',
+  })
+  lateScans: number;
   @ApiProperty({
     enum: [
       'not_needed',
@@ -152,9 +182,13 @@ export class RunView extends RunBodyView {
   cancelledBy: AccountRefView | null;
 
   static of(r: PatrolRun, c: RunContext): RunView {
+    const counts = c.counts.get(r.id);
     return {
       ...body(r, c),
       guard: person(r.guardAccountId, c, accountRef),
+      manualScans: counts?.manual ?? 0,
+      suspectScans: counts?.suspect ?? 0,
+      lateScans: counts?.late ?? 0,
       cancelReason: r.cancelReason,
       cancelledBy: person(r.cancelledById, c, accountRef),
     };
@@ -206,6 +240,35 @@ class RunWalkView {
   stops: RunStopView[];
 }
 
+/** A stop as the management reads it: the scan and the note there. */
+export class StaffRunStopView extends RunStopView {
+  @ApiProperty({ type: StaffStopScanView, nullable: true })
+  scan: StaffStopScanView | null;
+  @ApiProperty({ type: StaffStopNoteView, nullable: true })
+  note: StaffStopNoteView | null;
+}
+
+/** A stop as a guard reads it: scanned or not; a note's outcome. */
+export class GuardRunStopView extends RunStopView {
+  @ApiProperty({ type: GuardStopScanView, nullable: true })
+  scan: GuardStopScanView | null;
+  @ApiProperty({ type: GuardStopNoteView, nullable: true })
+  note: GuardStopNoteView | null;
+}
+
+/** The run's scan and note at each checkpoint of its version. */
+function scanned(r: PatrolRun, c: RunContext, checkpointId: string) {
+  const scan = (c.scans.get(r.id) ?? []).find(
+    (sc) => sc.checkpointId === checkpointId,
+  );
+  const note = scan ? c.notes.get(scan.id) : undefined;
+  return {
+    scan: scan ?? null,
+    note: note ?? null,
+    photos: note ? (c.photos.get(note.id) ?? []) : [],
+  };
+}
+
 function walk(r: PatrolRun, c: RunContext): RunWalkView {
   const version = c.versions.get(r.versionId)!;
   return {
@@ -232,11 +295,23 @@ export class RunDetailView extends RunView {
   expectedMinutes: number;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   timesOutAt: Date | null;
-  @ApiProperty({ type: [RunStopView] })
-  stops: RunStopView[];
+  @ApiProperty({ type: [StaffRunStopView] })
+  stops: StaffRunStopView[];
 
   static from(r: PatrolRun, c: RunContext): RunDetailView {
-    return { ...RunView.of(r, c), ...walk(r, c) };
+    const w = walk(r, c);
+    return {
+      ...RunView.of(r, c),
+      ...w,
+      stops: w.stops.map((stop) => {
+        const at = scanned(r, c, stop.checkpointId);
+        return {
+          ...stop,
+          scan: at.scan ? StaffStopScanView.from(at.scan, r) : null,
+          note: at.note ? StaffStopNoteView.of(at.note, at.photos) : null,
+        };
+      }),
+    };
   }
 }
 
@@ -247,11 +322,34 @@ export class GuardRunDetailView extends GuardRunView {
   expectedMinutes: number;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   timesOutAt: Date | null;
-  @ApiProperty({ type: [RunStopView] })
-  stops: RunStopView[];
+  @ApiProperty({ type: [GuardRunStopView] })
+  stops: GuardRunStopView[];
 
-  static from(r: PatrolRun, c: RunContext): GuardRunDetailView {
-    return { ...GuardRunView.from(r, c), ...walk(r, c) };
+  /** `viewer`: the guard reading; a note's words and photos are its author's. */
+  static forViewer(
+    r: PatrolRun,
+    c: RunContext,
+    viewer: string,
+  ): GuardRunDetailView {
+    const w = walk(r, c);
+    return {
+      ...GuardRunView.from(r, c),
+      ...w,
+      stops: w.stops.map((stop) => {
+        const at = scanned(r, c, stop.checkpointId);
+        return {
+          ...stop,
+          scan: at.scan ? GuardStopScanView.of(at.scan) : null,
+          note: at.note
+            ? GuardStopNoteView.of(
+                at.note,
+                at.note.guardAccountId === viewer,
+                at.photos,
+              )
+            : null,
+        };
+      }),
+    };
   }
 }
 

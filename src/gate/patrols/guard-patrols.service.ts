@@ -123,9 +123,13 @@ export class GuardPatrolsService implements OnModuleInit {
         orderBy: [{ nameEn: 'asc' }, { id: 'asc' }],
       });
       const routeContext = await this.core.routeContext(tx, routes);
-      const c = await this.core.runContext(tx, live ? [live, ...runs] : runs);
+      const c = await this.core.runContext(tx, live ? [live, ...runs] : runs, {
+        photosOf: this.ctx.accountId,
+      });
       return {
-        live: live ? GuardRunDetailView.from(live, c) : null,
+        live: live
+          ? GuardRunDetailView.forViewer(live, c, this.ctx.accountId)
+          : null,
         runs: runs.map((r) => GuardRunView.from(r, c)),
         routes: routes.map((r) => {
           const v = routeContext.versions.get(r.id)!;
@@ -356,6 +360,10 @@ export class GuardPatrolsService implements OnModuleInit {
     tx: TenantTxClient,
     run: PatrolRun,
   ): Promise<GuardRunDetailView> {
-    return GuardRunDetailView.from(run, await this.core.runContext(tx, [run]));
+    return GuardRunDetailView.forViewer(
+      run,
+      await this.core.runContext(tx, [run], { photosOf: this.ctx.accountId }),
+      this.ctx.accountId,
+    );
   }
 }

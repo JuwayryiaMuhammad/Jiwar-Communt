@@ -1491,6 +1491,56 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'أُغلق تصويت للملاك. افتح التطبيق لمعرفة النتيجة.',
     },
   },
+  'governance_election.nominations_opened': {
+    en: {
+      title: 'Stand for the board',
+      body: 'Nominations for the owners’ board are open. Open the app to stand.',
+    },
+    ar: {
+      title: 'الترشح للمجلس',
+      body: 'باب الترشح لمجلس الملاك مفتوح. افتح التطبيق للترشح.',
+    },
+  },
+  'governance_election.opened': {
+    en: {
+      title: 'Elect the board',
+      body: 'Voting for the owners’ board is open. Open the app to cast your unit’s vote.',
+    },
+    ar: {
+      title: 'انتخاب المجلس',
+      body: 'التصويت لمجلس الملاك مفتوح. افتح التطبيق للإدلاء بصوت وحدتك.',
+    },
+  },
+  'governance_election.closing_soon': {
+    en: {
+      title: 'The board election closes soon',
+      body: 'Voting for the board closes within a day and your unit has not voted. Open the app to vote.',
+    },
+    ar: {
+      title: 'انتخاب المجلس يُغلق قريبًا',
+      body: 'يُغلق التصويت للمجلس خلال يوم ولم تصوّت وحدتك بعد. افتح التطبيق للتصويت.',
+    },
+  },
+  'governance_election.awaiting_certification': {
+    en: {
+      title: 'Election to certify',
+      body: 'Voting for the board closed. Open the dashboard to certify the result.',
+    },
+    ar: {
+      title: 'انتخاب بانتظار الاعتماد',
+      body: 'أُغلق التصويت للمجلس. افتح لوحة التحكم لاعتماد النتيجة.',
+    },
+  },
+  'governance_election.cancelled': {
+    en: {
+      title: 'Election cancelled',
+      body: 'An election of the board was cancelled. Open the app to see why.',
+    },
+    ar: {
+      title: 'تم إلغاء انتخاب',
+      body: 'تم إلغاء انتخاب للمجلس. افتح التطبيق لمعرفة السبب.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

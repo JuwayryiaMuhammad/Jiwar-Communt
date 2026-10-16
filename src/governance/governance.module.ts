@@ -7,6 +7,11 @@ import { BoardService } from './board/board.service';
 import { StaffBoardController } from './board/staff-board.controller';
 import { ContestSweeps } from './contests/contest-sweeps';
 import { Contests } from './contests/contests.service';
+import {
+  GovernanceElectionsController,
+  StaffGovernanceElectionsController,
+} from './elections/elections.controller';
+import { GovernanceElectionsService } from './elections/elections.service';
 import { GovernanceNotices } from './governance-notices';
 import {
   GovernancePollsController,
@@ -25,6 +30,8 @@ import { GovernancePollsService } from './polls/polls.service';
     StaffBoardController,
     GovernancePollsController,
     StaffGovernancePollsController,
+    GovernanceElectionsController,
+    StaffGovernanceElectionsController,
   ],
   providers: [
     GovernanceAccess,
@@ -34,6 +41,7 @@ import { GovernancePollsService } from './polls/polls.service';
     Contests,
     ContestSweeps,
     GovernancePollsService,
+    GovernanceElectionsService,
   ],
 })
 export class GovernanceModule {}

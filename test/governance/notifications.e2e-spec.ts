@@ -2,11 +2,7 @@ import {
   CONTEST_CLOSE_SWEEP,
   CONTEST_REMIND_SWEEP,
 } from '../../src/governance/contests/contest-sweeps';
-import {
-  governanceHelpers,
-  shiftContest,
-  type Who,
-} from '../setup/governance';
+import { governanceHelpers, shiftContest, type Who } from '../setup/governance';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 
 const HOUR = 3_600_000;
@@ -59,9 +55,13 @@ describe('Governance — notifications', () => {
     const at = new Date(Date.now() + 30 * HOUR);
     await g.sweep(CONTEST_REMIND_SWEEP, at);
     await g.sweep(CONTEST_REMIND_SWEEP, at);
-    expect(await told(s.owners[0], 'governance_poll.closing_soon', p.id)).toEqual([]);
+    expect(
+      await told(s.owners[0], 'governance_poll.closing_soon', p.id),
+    ).toEqual([]);
     for (const o of s.owners.slice(1))
-      expect(await told(o, 'governance_poll.closing_soon', p.id)).toHaveLength(1);
+      expect(await told(o, 'governance_poll.closing_soon', p.id)).toHaveLength(
+        1,
+      );
   });
 
   it('no reminder for a poll that ran less than a day', async () => {

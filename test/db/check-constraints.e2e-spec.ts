@@ -1277,6 +1277,37 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'key, each label and final_count IS NULL are tested first; the lists, lengths and comparison run only on values',
   },
+  governance_elections_number_positive: {},
+  governance_elections_seats: {},
+  governance_elections_term: {},
+  governance_elections_nominations: {},
+  governance_elections_author_side: {},
+  // Nullable columns only under IS [NOT] NULL.
+  governance_elections_texts: {},
+  governance_elections_text_length: {
+    guarded:
+      'each text IS NULL is tested first; the length runs only on a value',
+  },
+  governance_elections_certified: {
+    guarded:
+      'tie_reason_code IS NULL is tested first; the list runs only on a value',
+  },
+  governance_elections_cancel: {
+    guarded:
+      'cancel_reason_code IS NULL and cancelled_by_account_id IS NULL are tested first; the lists run only on values',
+  },
+  governance_candidates_statement: {
+    guarded:
+      'statement IS NULL is tested first; the length runs only on a value',
+  },
+  governance_candidates_end_shape: {
+    guarded:
+      'reason_code IS NULL and ended_by_account_id IS NULL are tested before each list; status is NOT NULL',
+  },
+  governance_candidates_outcome: {
+    guarded:
+      'outcome IS NULL and final_count IS NULL are tested first; the list and the comparison run only on values',
+  },
 };
 
 interface Check {

@@ -1381,6 +1381,50 @@ export const NOTIFICATION_KINDS = {
     target: 'governance_poll',
     params: { result: {} },
   },
+  /** An election's nominations opened: every owner (who may stand). */
+  'governance_election.nominations_opened': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_election',
+    params: {},
+  },
+  /** An election's voting opened: every elector. */
+  'governance_election.opened': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_election',
+    params: {},
+  },
+  /** An election closes within a day: the electors whose unit has not voted. */
+  'governance_election.closing_soon': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_election',
+    params: {},
+  },
+  /**
+   * Voting closed: the manager certifies it (`governance.manage` holders)
+   * and the sitting board hears it; `tied` (yes | no) when the board has a
+   * tie to resolve first.
+   */
+  'governance_election.awaiting_certification': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_election',
+    params: { tied: {} },
+  },
+  /** An election was cancelled: the sitting board; `reason` its code. */
+  'governance_election.cancelled': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_election',
+    params: { reason: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

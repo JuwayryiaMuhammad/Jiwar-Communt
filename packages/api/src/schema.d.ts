@@ -2546,6 +2546,134 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/governance/elections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the board’s elections
+         * @description Newest first. For the units’ owners; anyone else gets GOVERNANCE_NOT_AVAILABLE (404).
+         */
+        get: operations["GovernanceElectionsController_list"];
+        put?: never;
+        /**
+         * Call an election of the board
+         * @description A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). Owners are told when nominations open. At most 10 polls and elections under way (GOVERNANCE_LIMIT_REACHED).
+         */
+        post: operations["GovernanceElectionsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/governance/elections/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an election
+         * @description Those standing, by name and statement; each one’s votes once voting closed. For the units’ owners; anyone else gets GOVERNANCE_NOT_AVAILABLE (404).
+         */
+        get: operations["GovernanceElectionsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change an election before nominations open
+         * @description A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). Its texts, term and dates; never its seats. Once nominations opened: GOVERNANCE_CONTEST_STARTED.
+         */
+        patch: operations["GovernanceElectionsController_update"];
+        trace?: never;
+    };
+    "/api/v1/governance/elections/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel an election, with a reason code
+         * @description A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). Until it is certified (GOVERNANCE_CONTEST_ENDED). The board is told.
+         */
+        post: operations["GovernanceElectionsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/governance/elections/{id}/candidacy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stand for the board
+         * @description An owner, while nominations are open (GOVERNANCE_NOMINATIONS_CLOSED), once (GOVERNANCE_ALREADY_CANDIDATE); anyone else: GOVERNANCE_CANDIDACY_NOT_ALLOWED.
+         */
+        post: operations["GovernanceElectionsController_stand"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/governance/elections/{id}/candidacy/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw one’s candidacy
+         * @description While nominations are open (GOVERNANCE_NOMINATIONS_CLOSED).
+         */
+        post: operations["GovernanceElectionsController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/governance/elections/{id}/votes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cast a unit’s vote
+         * @description Up to `seats` candidates, once per unit, never changed (GOVERNANCE_ALREADY_VOTED), by the unit’s voting owner when voting opened (GOVERNANCE_NOT_ELECTOR). Always secret: the answer says the vote was taken and when, never what.
+         */
+        post: operations["GovernanceElectionsController_vote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/governance/polls": {
         parameters: {
             query?: never;
@@ -7572,6 +7700,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/governance/elections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the board’s elections
+         * @description Newest first.
+         */
+        get: operations["StaffGovernanceElectionsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/governance/elections/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an election
+         * @description Every candidacy, ended ones too; the counts once voting closed.
+         */
+        get: operations["StaffGovernanceElectionsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/governance/elections/{id}/candidates/{candidateId}/disqualify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take a candidate off the list, with a reason code
+         * @description Until voting opens (GOVERNANCE_CONTEST_STARTED): the list is fixed from then on.
+         */
+        post: operations["StaffGovernanceElectionsController_disqualify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/governance/owners": {
         parameters: {
             query?: never;
@@ -11948,6 +12136,10 @@ export interface components {
             /** @description From the closed list `vehicleFineCancel`. */
             reasonCode: string;
         };
+        CancelGovernanceElectionDto: {
+            /** @description From the closed list `governanceElectionCancel`. */
+            reasonCode: string;
+        };
         CancelGovernancePollDto: {
             /** @description From the closed list `governancePollCancel`. */
             reasonCode: string;
@@ -12073,6 +12265,15 @@ export interface components {
             refunds: number;
             reversals: number;
             reversed: string;
+        };
+        CastElectionVoteDto: {
+            /** @description One to `seats` candidates, each once. */
+            candidateIds: string[];
+            /**
+             * Format: uuid
+             * @description A unit whose vote the caller casts in this election (`myUnits`).
+             */
+            unitId: string;
         };
         CastPollVoteDto: {
             /** @description The one option chosen (yes, no or abstain on a yes/no poll). */
@@ -12944,6 +13145,37 @@ export interface components {
             unitCode?: string;
             /** @description As the visitor gives it; shown to the household only. */
             visitorName?: string;
+        };
+        CreateGovernanceElectionDto: {
+            bodyAr?: string | null;
+            bodyEn?: string | null;
+            /**
+             * Format: date-time
+             * @description When nominations close: 24 hours to 30 days after they open.
+             */
+            nominationsCloseAt: string;
+            /**
+             * Format: date-time
+             * @description When nominations open: absent or past, now; at most 90 days ahead.
+             */
+            nominationsOpenAt?: string;
+            /** @description The seats to fill: each unit picks up to this many candidates. Fixed for good. */
+            seats: number;
+            /** @description How long the elected board sits, from its certification. */
+            termMonths: number;
+            titleAr?: string | null;
+            /** @description English, Arabic or both, each with its body. */
+            titleEn?: string | null;
+            /**
+             * Format: date-time
+             * @description When voting closes: 1 hour to 60 days after it opens.
+             */
+            votingClosesAt: string;
+            /**
+             * Format: date-time
+             * @description When voting opens: from the close of nominations, at most 14 days later.
+             */
+            votingOpensAt: string;
         };
         CreateGovernancePollDto: {
             bodyAr?: string | null;
@@ -13947,6 +14179,10 @@ export interface components {
             /** Format: uuid */
             unitId: string;
         };
+        DisqualifyCandidateDto: {
+            /** @description From the closed list `governanceCandidateDisqualify`. */
+            reasonCode: string;
+        };
         DoneNoteDto: {
             /** @description The photos the note shows from now on: ids it already shows to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). */
             attachmentFileIds?: string[];
@@ -14939,8 +15175,80 @@ export interface components {
              */
             updatedBy: "manager" | "platform" | null;
         };
+        GovernanceCandidacyView: {
+            /** Format: uuid */
+            id: string;
+            reasonCode: string | null;
+            statement: string | null;
+            status: components["schemas"]["GovernanceCandidateStatus"];
+        };
+        /** @enum {string} */
+        GovernanceCandidateOutcome: "elected" | "tied" | "not_elected" | "ineligible";
+        /** @enum {string} */
+        GovernanceCandidateStatus: "nominated" | "withdrawn" | "disqualified";
+        GovernanceCandidateView: {
+            /** @description Null once erased. */
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+            outcome: components["schemas"]["GovernanceCandidateOutcome"] | null;
+            statement: string | null;
+            /** @description Votes, once voting closed; null before. */
+            votes: number | null;
+        };
         /** @enum {string} */
         GovernanceContestStatus: "scheduled" | "open" | "closed" | "cancelled";
+        /** @enum {string} */
+        GovernanceElectionPhase: "upcoming" | "nominating" | "nominations_closed" | "voting" | "closed" | "certified" | "cancelled";
+        GovernanceElectionView: {
+            bodyAr: string | null;
+            bodyEn: string | null;
+            cancelReasonCode: string | null;
+            candidates: components["schemas"]["GovernanceCandidateView"][];
+            /** Format: date-time */
+            certifiedAt: string | null;
+            electorate: number | null;
+            /** Format: uuid */
+            id: string;
+            myCandidacy: components["schemas"]["GovernanceCandidacyView"] | null;
+            myUnits: components["schemas"]["GovernanceVoteUnitView"][];
+            /** Format: date-time */
+            nominationsCloseAt: string;
+            /** Format: date-time */
+            nominationsOpenAt: string;
+            phase: components["schemas"]["GovernanceElectionPhase"];
+            /** @example GE-0001 */
+            reference: string;
+            seats: number;
+            /**
+             * Format: uuid
+             * @description The board term it seated.
+             */
+            termId: string | null;
+            termMonths: number;
+            /** @description Candidates tied across the last seat, once closed: the board resolves the tie. */
+            tiedCandidateIds: string[];
+            titleAr: string | null;
+            titleEn: string | null;
+            /** @description Units that voted so far: shown while open, never the counts. */
+            turnout: number | null;
+            /** Format: date-time */
+            votingClosesAt: string;
+            /** Format: date-time */
+            votingOpensAt: string;
+        };
+        GovernanceElectionViewList: {
+            data: components["schemas"]["GovernanceElectionView"][];
+            nextCursor: string | null;
+        };
+        GovernanceElectionVoteReceipt: {
+            /** Format: uuid */
+            electionId: string;
+            /** Format: uuid */
+            unitId: string | null;
+            /** Format: date-time */
+            votedAt: string | null;
+        };
         GovernanceOwnerView: {
             /** Format: uuid */
             accountId: string;
@@ -19847,6 +20155,64 @@ export interface components {
             data: components["schemas"]["StaffGateServiceView"][];
             nextCursor: string | null;
         };
+        StaffGovernanceCandidateView: {
+            /** Format: uuid */
+            accountId: string;
+            /** @description Null once erased. */
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            nominatedAt: string;
+            outcome: components["schemas"]["GovernanceCandidateOutcome"] | null;
+            reasonCode: string | null;
+            statement: string | null;
+            status: components["schemas"]["GovernanceCandidateStatus"];
+            /** @description Votes, once voting closed; null before. */
+            votes: number | null;
+        };
+        StaffGovernanceElectionView: {
+            /** @enum {string} */
+            authorSide: "manager" | "board";
+            bodyAr: string | null;
+            bodyEn: string | null;
+            cancelReasonCode: string | null;
+            candidates: components["schemas"]["StaffGovernanceCandidateView"][];
+            /** Format: date-time */
+            certifiedAt: string | null;
+            electorate: number | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            nominationsCloseAt: string;
+            /** Format: date-time */
+            nominationsOpenAt: string;
+            phase: components["schemas"]["GovernanceElectionPhase"];
+            /** @example GE-0001 */
+            reference: string;
+            seats: number;
+            /**
+             * Format: uuid
+             * @description The board term it seated.
+             */
+            termId: string | null;
+            termMonths: number;
+            tieReasonCode: string | null;
+            /** @description Candidates tied across the last seat, once closed: the board resolves the tie. */
+            tiedCandidateIds: string[];
+            titleAr: string | null;
+            titleEn: string | null;
+            /** @description Units that voted so far: shown while open, never the counts. */
+            turnout: number | null;
+            /** Format: date-time */
+            votingClosesAt: string;
+            /** Format: date-time */
+            votingOpensAt: string;
+        };
+        StaffGovernanceElectionViewList: {
+            data: components["schemas"]["StaffGovernanceElectionView"][];
+            nextCursor: string | null;
+        };
         StaffGovernancePollView: {
             /** @enum {string} */
             authorSide: "manager" | "board";
@@ -20606,6 +20972,10 @@ export interface components {
         StaffVisitorParkingBookingViewList: {
             data: components["schemas"]["StaffVisitorParkingBookingView"][];
             nextCursor: string | null;
+        };
+        StandForElectionDto: {
+            /** @description A short statement to the owners, shown beside the name. Cleared if the account is erased. */
+            statement?: string;
         };
         /**
          * @description - `always_allow`: the guard lets them in and logs the entry.
@@ -21416,6 +21786,25 @@ export interface components {
             phone?: string | null;
             /** @description Inactive ends the shifts open at the gate. */
             status?: components["schemas"]["GateStatus"];
+        };
+        UpdateGovernanceElectionDto: {
+            bodyAr?: string | null;
+            bodyEn?: string | null;
+            /** Format: date-time */
+            nominationsCloseAt?: string;
+            /**
+             * Format: date-time
+             * @description When nominations open: absent or past, now; at most 90 days ahead.
+             */
+            nominationsOpenAt?: string;
+            termMonths?: number;
+            titleAr?: string | null;
+            /** @description English, Arabic or both, each with its body. */
+            titleEn?: string | null;
+            /** Format: date-time */
+            votingClosesAt?: string;
+            /** Format: date-time */
+            votingOpensAt?: string;
         };
         UpdateGovernancePollDto: {
             bodyAr?: string | null;
@@ -25830,6 +26219,204 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoardTermViewList"];
+                };
+            };
+        };
+    };
+    GovernanceElectionsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                phase?: components["schemas"]["GovernanceElectionPhase"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernanceElectionViewList"];
+                };
+            };
+        };
+    };
+    GovernanceElectionsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateGovernanceElectionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernanceElectionView"];
+                };
+            };
+        };
+    };
+    GovernanceElectionsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernanceElectionView"];
+                };
+            };
+        };
+    };
+    GovernanceElectionsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateGovernanceElectionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernanceElectionView"];
+                };
+            };
+        };
+    };
+    GovernanceElectionsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelGovernanceElectionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernanceElectionView"];
+                };
+            };
+        };
+    };
+    GovernanceElectionsController_stand: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StandForElectionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernanceElectionView"];
+                };
+            };
+        };
+    };
+    GovernanceElectionsController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernanceElectionView"];
+                };
+            };
+        };
+    };
+    GovernanceElectionsController_vote: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CastElectionVoteDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernanceElectionVoteReceipt"];
                 };
             };
         };
@@ -33678,6 +34265,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffBoardTermViewList"];
+                };
+            };
+        };
+    };
+    StaffGovernanceElectionsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                phase?: components["schemas"]["GovernanceElectionPhase"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGovernanceElectionViewList"];
+                };
+            };
+        };
+    };
+    StaffGovernanceElectionsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGovernanceElectionView"];
+                };
+            };
+        };
+    };
+    StaffGovernanceElectionsController_disqualify: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                candidateId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DisqualifyCandidateDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGovernanceElectionView"];
                 };
             };
         };

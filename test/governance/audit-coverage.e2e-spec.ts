@@ -28,6 +28,7 @@ import {
   governanceHelpers,
   lapse,
   shiftContest,
+  shiftElection,
   type StaffTermBody,
   type Who,
 } from '../setup/governance';
@@ -227,6 +228,110 @@ describe('Audit coverage — governance', () => {
         fromStatus: 'open',
         reasonCode: 'board_decision',
         side: 'board',
+      });
+    });
+  });
+
+  describe('elections and candidates', () => {
+    const at = (hours: number) =>
+      new Date(Date.now() + hours * 3_600_000).toISOString();
+
+    it('created and changed: seats, term and dates by value, texts as "changed"', async () => {
+      const e = await g.election(s.manager, {
+        nominationsOpenAt: at(2),
+        nominationsCloseAt: at(30),
+        votingOpensAt: at(30),
+        votingClosesAt: at(54),
+      });
+      const created = await single('governance_election.created', e.id);
+      expect(created).toMatchObject(by(s.manager, 'governance_election'));
+      expect(created.metadata).toEqual({ side: 'manager' });
+      expect(created.changes).toMatchObject({
+        seats: { from: null, to: 3 },
+        termMonths: { from: null, to: 24 },
+        titleEn: { changed: true },
+      });
+      expect(JSON.stringify(created)).not.toContain('The board, 2027');
+      await g
+        .http('patch', `/governance/elections/${e.id}`, s.manager.token, {
+          termMonths: 36,
+        })
+        .expect(200);
+      const changed = await single('governance_election.changed', e.id);
+      expect(changed.changes).toEqual({ termMonths: { from: 24, to: 36 } });
+      await g
+        .http('post', `/governance/elections/${e.id}/cancel`, s.manager.token, {
+          reasonCode: 'postponed',
+        })
+        .expect(200);
+      const cancelled = await single('governance_election.cancelled', e.id);
+      expect(cancelled.metadata).toEqual({
+        fromPhase: 'upcoming',
+        reasonCode: 'postponed',
+        side: 'manager',
+      });
+    });
+
+    it('nominated, withdrawn, disqualified: ids and codes, never the statement', async () => {
+      const e = await g.election(s.manager);
+      const stood = await g.stand(o(0), e.id, 'Words of mine').expect(201);
+      const mine = (stood.body as { myCandidacy: { id: string } }).myCandidacy
+        .id;
+      const nominated = await single('governance_candidate.nominated', mine);
+      expect(nominated).toMatchObject(by(o(0), 'governance_candidate'));
+      expect(nominated.metadata).toEqual({ electionId: e.id, statement: true });
+      expect(JSON.stringify(nominated)).not.toContain('Words of mine');
+      await g
+        .http(
+          'post',
+          `/governance/elections/${e.id}/candidacy/withdraw`,
+          o(0).token,
+        )
+        .expect(200);
+      const withdrawn = await single('governance_candidate.withdrawn', mine);
+      expect(withdrawn.metadata).toEqual({
+        electionId: e.id,
+        side: 'candidate',
+        reasonCode: null,
+      });
+      const other = await g.stand(o(1), e.id).expect(201);
+      const theirs = (other.body as { myCandidacy: { id: string } }).myCandidacy
+        .id;
+      await g
+        .http(
+          'post',
+          `/staff/governance/elections/${e.id}/candidates/${theirs}/disqualify`,
+          s.manager.token,
+          { reasonCode: 'not_eligible' },
+        )
+        .expect(200);
+      const dq = await single('governance_candidate.disqualified', theirs);
+      expect(dq).toMatchObject(by(s.manager, 'governance_candidate'));
+      expect(dq.metadata).toEqual({
+        electionId: e.id,
+        reasonCode: 'not_eligible',
+      });
+    });
+
+    it('opened: electorate and candidates; closed: the counts of seats, never of a candidate', async () => {
+      const e = await g.election(s.manager);
+      await g.stand(o(3), e.id).expect(201);
+      await shiftElection(e.id, -25);
+      await g.sweep(CONTEST_OPEN_SWEEP);
+      const opened = await single('governance_election.opened', e.id);
+      expect(opened).toMatchObject({ actorType: 'system' });
+      expect(opened.metadata).toEqual({ electorate: 5, candidates: 1 });
+      const [candidate] = (await g.electionAs(o(3), e.id)).candidates;
+      await g.electionVote(o(3), e.id, o(3).unitId, [candidate.id]).expect(201);
+      await shiftElection(e.id, -25);
+      await g.sweep(CONTEST_CLOSE_SWEEP);
+      const closed = await single('governance_election.closed', e.id);
+      expect(closed.metadata).toEqual({
+        turnout: 1,
+        electorate: 5,
+        elected: 1,
+        tied: 0,
+        remaining: 0,
       });
     });
   });

@@ -169,3 +169,57 @@ export async function pollRow(
     });
   return id;
 }
+
+let electionNumber = 1;
+
+/**
+ * An election on a contest of its own (nominations open since a day, the
+ * vote tomorrow) with one candidate; its id and the candidate's.
+ */
+export async function electionRows(
+  tx: TenantTxClient,
+  r: { tenantId: string; createdById: string; candidateId?: string },
+): Promise<{ electionId: string; candidateId: string }> {
+  const contestId = newId();
+  const now = Date.now();
+  await tx.governanceContest.create({
+    data: {
+      id: contestId,
+      tenantId: r.tenantId,
+      kind: 'election',
+      secret: true,
+      maxChoices: 3,
+      opensAt: new Date(now + DAY),
+      closesAt: new Date(now + 2 * DAY),
+    },
+  });
+  const electionId = newId();
+  await tx.governanceElection.create({
+    data: {
+      id: electionId,
+      tenantId: r.tenantId,
+      contestId,
+      number: 800_000 + electionNumber++ + Math.floor(Math.random() * 90_000),
+      titleEn: 'An election',
+      bodyEn: 'Its words.',
+      seats: 3,
+      termMonths: 24,
+      nominationsOpenAt: new Date(now - DAY),
+      nominationsCloseAt: new Date(now + DAY),
+      authorSide: 'manager',
+      createdById: r.createdById,
+    },
+  });
+  const candidateId = newId();
+  await tx.governanceCandidate.create({
+    data: {
+      id: candidateId,
+      tenantId: r.tenantId,
+      electionId,
+      accountId: r.candidateId ?? r.createdById,
+      statement: 'A statement',
+      nominatedAt: new Date(now - DAY),
+    },
+  });
+  return { electionId, candidateId };
+}

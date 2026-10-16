@@ -1134,6 +1134,31 @@ describe('API v0 — PII leak scan', () => {
         idLast4: 'QZ7X',
       },
     }).expect(201);
+    // An election of the board with the primary standing (ADR 0051): their
+    // name and statement to the owners, never to anyone else.
+    const piiGovernanceElection = await idOf(
+      'POST',
+      '/governance/elections',
+      a.tokens.manager,
+      {
+        titleEn: 'PII-scan election',
+        bodyEn: 'Three seats.',
+        seats: 3,
+        termMonths: 24,
+        nominationsCloseAt: new Date(Date.now() + 25 * 3_600_000).toISOString(),
+        votingOpensAt: new Date(Date.now() + 25 * 3_600_000).toISOString(),
+        votingClosesAt: new Date(Date.now() + 49 * 3_600_000).toISOString(),
+      },
+    );
+    await call(
+      w,
+      'POST',
+      `/governance/elections/${piiGovernanceElection}/candidacy`,
+      {
+        token: primaryToken,
+        body: { statement: 'PII-STATEMENT-words' },
+      },
+    ).expect(201);
     // An owners' poll (ADR 0051): the board's words; no one's data.
     const piiGovernancePoll = await idOf(
       'POST',
@@ -1349,6 +1374,8 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0051.
       '/governance/polls/{id}': piiGovernancePoll,
       '/staff/governance/polls/{id}': piiGovernancePoll,
+      '/governance/elections/{id}': piiGovernanceElection,
+      '/staff/governance/elections/{id}': piiGovernanceElection,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented
@@ -1568,6 +1595,12 @@ describe('API v0 — PII leak scan', () => {
             'PII-FEEDBACK-comment',
           ])
             if (found(s)) leaks.push(`${name} ${r.path}: ${s}`);
+        // A candidate's statement (ADR 0051): the owners' and the manager's.
+        if (
+          !['manager', 'resident', 'landlord'].includes(name) &&
+          found('PII-STATEMENT-words')
+        )
+          leaks.push(`${name} ${r.path}: a candidate's statement`);
         if (name === 'family' || name === 'technician')
           for (const s of ['PII-AREA-description', 'PII-AREA-text'])
             if (found(s)) leaks.push(`${name} ${r.path}: ${s}`);

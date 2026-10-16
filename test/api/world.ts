@@ -54,6 +54,7 @@ import { permitFileRow, permitWorkerRow } from '../setup/permits-rows';
 import {
   boardMemberRow,
   boardTermRow,
+  electionRows,
   pollRow,
 } from '../setup/governance-rows';
 import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
@@ -261,6 +262,9 @@ export interface World extends GuardDutyWorld {
   bBoardMemberId: string;
   /** A poll of B's (ADR 0051), not opened, written straight into the tables. */
   bGovernancePollId: string;
+  /** An election of B's in nominations, and its candidate (ADR 0051). */
+  bGovernanceElectionId: string;
+  bGovernanceCandidateId: string;
   bDeviceId: string;
   /** A personal-data export B's owner asked for (ADR 0036). */
   bExportId: string;
@@ -959,6 +963,15 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
         pollRow(tx, { tenantId: b.tenantId, createdById: b.ids.manager }),
       ),
   );
+  const bElection = await helpers.asManager(b, () =>
+    h.moduleRef.get(TenantTx).withTenantTx((tx) =>
+      electionRows(tx, {
+        tenantId: b.tenantId,
+        createdById: b.ids.manager,
+        candidateId: b.ids.owner,
+      }),
+    ),
+  );
   const bFinance = await helpers.asManager(b, async () => {
     const batch = await h.moduleRef.get(InvoicesService).issue({
       target: 'unit',
@@ -1074,6 +1087,8 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bPermitGuestId: bPermitEvent.guests[0].id,
     bBoardMemberId,
     bGovernancePollId,
+    bGovernanceElectionId: bElection.electionId,
+    bGovernanceCandidateId: bElection.candidateId,
     bFineId: bFine.fine.id,
     bFinePaymentId: bFinePayment.id,
     bVehicleId: bVehicle.vehicle.id,

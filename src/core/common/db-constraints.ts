@@ -383,4 +383,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   governance_polls_number_key: null,
   governance_poll_options_tenant_id_id_key: null,
   governance_poll_options_position_key: null,
+  governance_elections_tenant_id_id_key: null,
+  governance_elections_contest_key: null,
+  governance_elections_number_key: null,
+  governance_candidates_tenant_id_id_key: null,
+  // Standing twice is refused by the service under the contest's lock.
+  governance_candidates_one_live: null,
 };

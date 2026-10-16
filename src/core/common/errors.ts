@@ -771,6 +771,16 @@ export const ErrorCode = {
   GOVERNANCE_ALREADY_VOTED: 'GOVERNANCE_ALREADY_VOTED',
   /** The compound has params.max polls and elections not yet ended (409). */
   GOVERNANCE_LIMIT_REACHED: 'GOVERNANCE_LIMIT_REACHED',
+  /** Unknown, another compound's, or not the caller's to see (ADR 0051). */
+  GOVERNANCE_ELECTION_NOT_FOUND: 'GOVERNANCE_ELECTION_NOT_FOUND',
+  /** Unknown, or not of this election. */
+  GOVERNANCE_CANDIDATE_NOT_FOUND: 'GOVERNANCE_CANDIDATE_NOT_FOUND',
+  /** Nominations are not open now (409, params.phase). */
+  GOVERNANCE_NOMINATIONS_CLOSED: 'GOVERNANCE_NOMINATIONS_CLOSED',
+  /** Only an owner of a unit stands (403). */
+  GOVERNANCE_CANDIDACY_NOT_ALLOWED: 'GOVERNANCE_CANDIDACY_NOT_ALLOWED',
+  /** The caller stands already (409). */
+  GOVERNANCE_ALREADY_CANDIDATE: 'GOVERNANCE_ALREADY_CANDIDATE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

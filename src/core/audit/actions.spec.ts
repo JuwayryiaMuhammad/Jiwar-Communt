@@ -120,6 +120,8 @@ describe('audit catalog', () => {
         'board_member',
         'governance_poll',
         'governance_contest',
+        'governance_election',
+        'governance_candidate',
       ]).toContain(def.target);
     }
   });

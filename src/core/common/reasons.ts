@@ -527,4 +527,24 @@ export const REASON_CODES = {
     'board_decision',
     'other',
   ],
+  // Why an election is cancelled, by the board or the manager (ADR 0051).
+  governanceElectionCancel: [
+    'created_in_error',
+    'postponed',
+    'board_decision',
+    'other',
+  ],
+  // An election the system cancels: nobody stood when voting opened.
+  governanceElectionSystemCancel: ['no_candidates'],
+  // Why the manager takes a candidate off the list before voting opens.
+  governanceCandidateDisqualify: [
+    'not_eligible',
+    'statement_breaks_rules',
+    'other',
+  ],
+  // A candidacy the system withdraws: the candidate owns no unit any more,
+  // or their account was closed.
+  governanceCandidateSystemWithdraw: ['no_longer_owner', 'account_closed'],
+  // How the board resolved a tie across the last seat.
+  governanceTieBreak: ['board_decision', 'lot_drawn'],
 } as const;

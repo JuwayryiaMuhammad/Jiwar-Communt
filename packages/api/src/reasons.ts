@@ -111,6 +111,11 @@ export const REASON_CODES = {
   boardMemberEnd: ['resigned', 'removed', 'misconduct', 'other'],
   boardMemberSystemEnd: ['no_longer_owner', 'account_closed'],
   governancePollCancel: ['created_in_error', 'superseded', 'board_decision', 'other'],
+  governanceElectionCancel: ['created_in_error', 'postponed', 'board_decision', 'other'],
+  governanceElectionSystemCancel: ['no_candidates'],
+  governanceCandidateDisqualify: ['not_eligible', 'statement_breaks_rules', 'other'],
+  governanceCandidateSystemWithdraw: ['no_longer_owner', 'account_closed'],
+  governanceTieBreak: ['board_decision', 'lot_drawn'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

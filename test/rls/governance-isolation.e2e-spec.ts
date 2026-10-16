@@ -6,6 +6,7 @@ import {
   boardTermRow,
   closedContestRows,
   contestRow,
+  electionRows,
   openContest,
   pollRow,
 } from '../setup/governance-rows';
@@ -135,6 +136,27 @@ const TABLES: Table[] = [
       return o.id;
     },
     linked: false,
+  },
+  {
+    table: 'governance_elections',
+    insert: async (tx, own, link) =>
+      (
+        await electionRows(tx, {
+          tenantId: own.tenantId,
+          createdById: link.accountId,
+        })
+      ).electionId,
+  },
+  {
+    table: 'governance_candidates',
+    insert: async (tx, own, link) =>
+      (
+        await electionRows(tx, {
+          tenantId: own.tenantId,
+          createdById: own.accountId,
+          candidateId: link.accountId,
+        })
+      ).candidateId,
   },
 ];
 

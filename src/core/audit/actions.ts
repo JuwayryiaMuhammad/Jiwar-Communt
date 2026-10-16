@@ -1023,6 +1023,52 @@ export const AUDIT_ACTIONS = {
   // A unit's vote on a poll or an election. metadata: kind, unitId. Never
   // a choice, on a secret contest or an open one.
   'governance.vote_cast': { log: 'tenant', target: 'governance_contest' },
+  // An election put to the owners. changes: number, seats, termMonths, the
+  // four dates, the title and body as "changed"; metadata: side.
+  'governance_election.created': {
+    log: 'tenant',
+    target: 'governance_election',
+    sensitive: ['titleEn', 'titleAr', 'bodyEn', 'bodyAr'],
+  },
+  // Before nominations opened. changes: the same fields.
+  'governance_election.changed': {
+    log: 'tenant',
+    target: 'governance_election',
+    sensitive: ['titleEn', 'titleAr', 'bodyEn', 'bodyAr'],
+  },
+  // Voting opened (system). metadata: electorate, candidates (how many).
+  'governance_election.opened': {
+    log: 'tenant',
+    target: 'governance_election',
+  },
+  // metadata: fromPhase, reasonCode, side (manager | board | system).
+  'governance_election.cancelled': {
+    log: 'tenant',
+    target: 'governance_election',
+  },
+  // Counted at its closing time (system). metadata: turnout, electorate,
+  // elected and tied (how many), remaining (seats a tie leaves to fill).
+  'governance_election.closed': {
+    log: 'tenant',
+    target: 'governance_election',
+  },
+  // An owner stands. metadata: electionId, statement (a boolean: never the
+  // words).
+  'governance_candidate.nominated': {
+    log: 'tenant',
+    target: 'governance_candidate',
+  },
+  // metadata: electionId, side (candidate | system), reasonCode.
+  'governance_candidate.withdrawn': {
+    log: 'tenant',
+    target: 'governance_candidate',
+  },
+  // The manager takes a candidate off the list. metadata: electionId,
+  // reasonCode.
+  'governance_candidate.disqualified': {
+    log: 'tenant',
+    target: 'governance_candidate',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

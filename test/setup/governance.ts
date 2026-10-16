@@ -50,6 +50,29 @@ export interface PollBody {
   rollCall: { unitCode: string; choice: string[] }[] | null;
 }
 
+/** An election as the owners' view returns it. */
+export interface ElectionBody {
+  id: string;
+  reference: string;
+  phase: string;
+  seats: number;
+  electorate: number | null;
+  turnout: number | null;
+  tiedCandidateIds: string[];
+  termId: string | null;
+  certifiedAt: string | null;
+  cancelReasonCode: string | null;
+  candidates: {
+    id: string;
+    fullName: string | null;
+    statement: string | null;
+    votes: number | null;
+    outcome: string | null;
+  }[];
+  myUnits: { unitId: string; voted: boolean; mayVote: boolean }[];
+  myCandidacy: { id: string; status: string; statement: string | null } | null;
+}
+
 /**
  * Rewrites governance rows over a superuser connection with
  * `session_replication_role = replica`, which skips the immutability
@@ -87,6 +110,28 @@ export const shiftContest = (contestId: string, hours: number) =>
       WHERE id = $1`,
     [contestId, hours],
   );
+
+/** Moves an election's dates and its contest's window by `hours`. */
+export const shiftElection = async (electionId: string, hours: number) => {
+  await superuserSql(
+    `UPDATE governance_elections
+        SET nominations_open_at = nominations_open_at + make_interval(hours => $2),
+            nominations_close_at = nominations_close_at + make_interval(hours => $2),
+            created_at = created_at + make_interval(hours => $2)
+      WHERE id = $1`,
+    [electionId, hours],
+  );
+  await superuserSql(
+    `UPDATE governance_contests c
+        SET opens_at = c.opens_at + make_interval(hours => $2),
+            closes_at = c.closes_at + make_interval(hours => $2),
+            opened_at = c.opened_at + make_interval(hours => $2),
+            created_at = c.created_at + make_interval(hours => $2)
+       FROM governance_elections e
+      WHERE e.id = $1 AND c.id = e.contest_id`,
+    [electionId, hours],
+  );
+};
 
 /** Moves a term's end into the past: the board lapses. */
 export const lapse = (termId: string) =>
@@ -209,6 +254,52 @@ export function governanceHelpers(h: HttpHarness) {
   const option = (p: PollBody, key: string) =>
     p.options.find((o) => o.key === key)!.id;
 
+  /**
+   * `POST /governance/elections`: 3 seats, nominations open now for 25
+   * hours (the shortest window is a day, by the server's clock), voting the
+   * day after.
+   */
+  async function election(
+    by: Who,
+    over: Record<string, unknown> = {},
+  ): Promise<ElectionBody> {
+    const at = (hours: number) =>
+      new Date(Date.now() + hours * 3_600_000).toISOString();
+    const res = await http('post', '/governance/elections', by.token, {
+      titleEn: 'The board, 2027',
+      bodyEn: 'Three seats.',
+      seats: 3,
+      termMonths: 24,
+      nominationsCloseAt: at(25),
+      votingOpensAt: at(25),
+      votingClosesAt: at(49),
+      ...over,
+    });
+    if (res.status !== 201)
+      throw new Error(`election: ${res.status} ${JSON.stringify(res.body)}`);
+    return res.body as ElectionBody;
+  }
+
+  const electionAs = async (as: Who, id: string): Promise<ElectionBody> =>
+    (await http('get', `/governance/elections/${id}`, as.token).expect(200))
+      .body as ElectionBody;
+
+  const stand = (as: Who, id: string, statement?: string) =>
+    http('post', `/governance/elections/${id}/candidacy`, as.token, {
+      ...(statement ? { statement } : {}),
+    });
+
+  const electionVote = (
+    as: Who,
+    id: string,
+    unitId: string,
+    candidateIds: string[],
+  ) =>
+    http('post', `/governance/elections/${id}/votes`, as.token, {
+      unitId,
+      candidateIds,
+    });
+
   /** The account's permissions now, as `GET /me` lists them. */
   const permissionsOf = async (as: Who): Promise<string[]> =>
     (
@@ -230,5 +321,9 @@ export function governanceHelpers(h: HttpHarness) {
     castVote,
     option,
     contestOf,
+    election,
+    electionAs,
+    stand,
+    electionVote,
   };
 }

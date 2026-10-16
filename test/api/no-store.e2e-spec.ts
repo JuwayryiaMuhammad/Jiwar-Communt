@@ -18,7 +18,9 @@ import {
 import { buildExports } from '../setup/exports';
 import { waitForMessage, waitForOtp } from '../setup/mailpit';
 import { drainOutbox } from '../setup/outbox';
-import { lapse } from '../setup/governance';
+import { lapse, shiftElection } from '../setup/governance';
+import { SweepRunner } from '../../src/core/sweep/sweep-runner';
+import { CONTEST_OPEN_SWEEP } from '../../src/governance/contests/contest-sweeps';
 import { call } from './request';
 import { ROUTES } from './routes';
 import { inviteBody, minorBody } from './routes/household';
@@ -752,9 +754,48 @@ describe('API v0 — no-store', () => {
       .members.filter((m) => !m.endedAt)
       .at(-1)!.id;
   };
+  /** Ids this suite reads again later: never cancelled to make room. */
+  const keep = new Set<string>();
+  /**
+   * A compound holds 10 polls and elections under way at most: this suite
+   * makes many, so before each one it cancels its own that nobody reads
+   * again.
+   */
+  const makeRoom = async () => {
+    for (const status of ['scheduled', 'open'])
+      for (const p of body<{ data: { id: string }[] }>(
+        await as(
+          'manager',
+          'GET',
+          `/staff/governance/polls?status=${status}&limit=100`,
+        ),
+      ).data)
+        if (!keep.has(p.id))
+          await as('manager', 'POST', `/governance/polls/${p.id}/cancel`, {
+            reasonCode: 'other',
+          }).expect(200);
+    for (const phase of [
+      'upcoming',
+      'nominating',
+      'nominations_closed',
+      'voting',
+    ])
+      for (const e of body<{ data: { id: string }[] }>(
+        await as(
+          'manager',
+          'GET',
+          `/staff/governance/elections?phase=${phase}&limit=100`,
+        ),
+      ).data)
+        if (!keep.has(e.id))
+          await as('manager', 'POST', `/governance/elections/${e.id}/cancel`, {
+            reasonCode: 'other',
+          }).expect(200);
+  };
   /** A poll put by A's manager (open now, unless `opensAt`); its id. */
-  const aGovernancePollOf = async (over: object = {}) =>
-    body<{ id: string }>(
+  const aGovernancePollOf = async (over: object = {}) => {
+    await makeRoom();
+    return body<{ id: string }>(
       await as('manager', 'POST', '/governance/polls', {
         kind: 'yes_no',
         titleEn: 'No-store poll',
@@ -766,8 +807,41 @@ describe('API v0 — no-store', () => {
         ...over,
       }).expect(201),
     ).id;
+  };
+  const electionBodyNow = (over: object = {}) => ({
+    titleEn: 'No-store election',
+    bodyEn: 'Three seats.',
+    seats: 3,
+    termMonths: 24,
+    nominationsCloseAt: new Date(Date.now() + 25 * 3_600_000).toISOString(),
+    votingOpensAt: new Date(Date.now() + 25 * 3_600_000).toISOString(),
+    votingClosesAt: new Date(Date.now() + 49 * 3_600_000).toISOString(),
+    ...over,
+  });
+  /** An election called by A's manager (nominations open now); its id. */
+  const aGovernanceElectionOf = async (over: object = {}) => {
+    await makeRoom();
+    return body<{ id: string }>(
+      await as(
+        'manager',
+        'POST',
+        '/governance/elections',
+        electionBodyNow(over),
+      ).expect(201),
+    ).id;
+  };
+  let oneGovernanceElection: Promise<string> | null = null;
+  const aGovernanceElection = () =>
+    (oneGovernanceElection ??= aGovernanceElectionOf().then((id) => {
+      keep.add(id);
+      return id;
+    }));
   let oneGovernancePoll: Promise<string> | null = null;
-  const aGovernancePoll = () => (oneGovernancePoll ??= aGovernancePollOf());
+  const aGovernancePoll = () =>
+    (oneGovernancePoll ??= aGovernancePollOf().then((id) => {
+      keep.add(id);
+      return id;
+    }));
   const GOVERNANCE_CALLS = (): Record<string, () => Promise<Response>> => ({
     'GET /governance/board': () => as('owner', 'GET', '/governance/board'),
     'GET /governance/board/terms': () =>
@@ -829,8 +903,9 @@ describe('API v0 — no-store', () => {
         optionIds: [poll.options.find((o) => o.key === 'yes')!.id],
       });
     },
-    'POST /governance/polls': () =>
-      as('manager', 'POST', '/governance/polls', {
+    'POST /governance/polls': async () => {
+      await makeRoom();
+      return as('manager', 'POST', '/governance/polls', {
         kind: 'yes_no',
         titleEn: 'No-store poll',
         bodyEn: 'Whether.',
@@ -838,7 +913,8 @@ describe('API v0 — no-store', () => {
         quorumPct: 50,
         thresholdPct: 50,
         closesAt: new Date(Date.now() + 48 * 3_600_000).toISOString(),
-      }),
+      });
+    },
     'PATCH /governance/polls/{id}': async () => {
       const id = await aGovernancePollOf({
         opensAt: new Date(Date.now() + 3_600_000).toISOString(),
@@ -856,6 +932,105 @@ describe('API v0 — no-store', () => {
           reasonCode: 'created_in_error',
         },
       ),
+    'GET /governance/elections': async () => {
+      await aGovernanceElection();
+      return as('owner', 'GET', '/governance/elections');
+    },
+    'GET /governance/elections/{id}': async () =>
+      as(
+        'owner',
+        'GET',
+        `/governance/elections/${await aGovernanceElection()}`,
+      ),
+    'POST /governance/elections/{id}/candidacy': async () =>
+      as(
+        'landlord',
+        'POST',
+        `/governance/elections/${await aGovernanceElectionOf()}/candidacy`,
+        { statement: 'No-store statement' },
+      ),
+    'POST /governance/elections/{id}/candidacy/withdraw': async () => {
+      const id = await aGovernanceElectionOf();
+      await as(
+        'owner',
+        'POST',
+        `/governance/elections/${id}/candidacy`,
+        {},
+      ).expect(201);
+      return as(
+        'owner',
+        'POST',
+        `/governance/elections/${id}/candidacy/withdraw`,
+      );
+    },
+    'POST /governance/elections/{id}/votes': async () => {
+      const id = await aGovernanceElectionOf();
+      await as(
+        'landlord',
+        'POST',
+        `/governance/elections/${id}/candidacy`,
+        {},
+      ).expect(201);
+      await shiftElection(id, -25);
+      await h.moduleRef.get(SweepRunner).run(CONTEST_OPEN_SWEEP, new Date());
+      const e = body<{ candidates: { id: string }[] }>(
+        await as('owner', 'GET', `/governance/elections/${id}`).expect(200),
+      );
+      return as('owner', 'POST', `/governance/elections/${id}/votes`, {
+        unitId: w.a.homeUnitId,
+        candidateIds: [e.candidates[0].id],
+      });
+    },
+    'POST /governance/elections': async () => {
+      await makeRoom();
+      return as('manager', 'POST', '/governance/elections', electionBodyNow());
+    },
+    'PATCH /governance/elections/{id}': async () => {
+      const id = await aGovernanceElectionOf({
+        nominationsOpenAt: new Date(Date.now() + 3_600_000).toISOString(),
+      });
+      return as('manager', 'PATCH', `/governance/elections/${id}`, {
+        termMonths: 36,
+      });
+    },
+    'POST /governance/elections/{id}/cancel': async () =>
+      as(
+        'manager',
+        'POST',
+        `/governance/elections/${await aGovernanceElectionOf()}/cancel`,
+        { reasonCode: 'postponed' },
+      ),
+    'GET /staff/governance/elections': () =>
+      as('manager', 'GET', '/staff/governance/elections'),
+    'GET /staff/governance/elections/{id}': async () =>
+      as(
+        'manager',
+        'GET',
+        `/staff/governance/elections/${await aGovernanceElection()}`,
+      ),
+    'POST /staff/governance/elections/{id}/candidates/{candidateId}/disqualify':
+      async () => {
+        const id = await aGovernanceElectionOf();
+        await as(
+          'landlord',
+          'POST',
+          `/governance/elections/${id}/candidacy`,
+          {},
+        ).expect(201);
+        const e = body<{ candidates: { id: string }[] }>(
+          await as(
+            'manager',
+            'GET',
+            `/staff/governance/elections/${id}`,
+          ).expect(200),
+        );
+        return as(
+          'manager',
+          'POST',
+          `/staff/governance/elections/${id}/candidates/${e.candidates[0].id}/disqualify`,
+          { reasonCode: 'not_eligible' },
+        );
+      },
     'GET /staff/governance/polls': () =>
       as('manager', 'GET', '/staff/governance/polls'),
     'GET /staff/governance/polls/{id}': async () =>

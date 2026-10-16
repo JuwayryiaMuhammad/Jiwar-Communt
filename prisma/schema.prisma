@@ -6753,3 +6753,68 @@ model GovernancePollOption {
   @@unique([tenantId, pollId, position], map: "governance_poll_options_position_key")
   @@map("governance_poll_options")
 }
+
+enum GovernanceCandidateStatus {
+  nominated
+  withdrawn
+  disqualified
+
+  @@map("governance_candidate_status")
+}
+
+/// An election of the board (ADR 0051): nominations, then a secret vote of
+/// up to `seats` candidates per unit (its contest), then a certification
+/// that seats the next board for `termMonths`.
+model GovernanceElection {
+  id                    String    @id @db.Uuid
+  tenantId              String    @map("tenant_id") @db.Uuid
+  contestId             String    @map("contest_id") @db.Uuid
+  number                Int
+  titleEn               String?   @map("title_en")
+  titleAr               String?   @map("title_ar")
+  bodyEn                String?   @map("body_en")
+  bodyAr                String?   @map("body_ar")
+  seats                 Int       @db.SmallInt
+  termMonths            Int       @map("term_months") @db.SmallInt
+  nominationsOpenAt     DateTime  @map("nominations_open_at") @db.Timestamptz(3)
+  nominationsCloseAt    DateTime  @map("nominations_close_at") @db.Timestamptz(3)
+  nominationsNotifiedAt DateTime? @map("nominations_notified_at") @db.Timestamptz(3)
+  authorSide            String    @map("author_side")
+  createdById           String    @map("created_by_account_id") @db.Uuid
+  certifiedAt           DateTime? @map("certified_at") @db.Timestamptz(3)
+  certifiedById         String?   @map("certified_by_account_id") @db.Uuid
+  tieReasonCode         String?   @map("tie_reason_code")
+  cancelReasonCode      String?   @map("cancel_reason_code")
+  cancelledById         String?   @map("cancelled_by_account_id") @db.Uuid
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, contestId], map: "governance_elections_contest_key")
+  @@unique([tenantId, number], map: "governance_elections_number_key")
+  @@index([tenantId, createdAt, id], map: "governance_elections_created_idx")
+  @@map("governance_elections")
+}
+
+/// An owner standing in an election (ADR 0051). The statement is theirs:
+/// an erasure clears it. Ends once, before voting opens; counted once.
+model GovernanceCandidate {
+  id                 String                    @id @db.Uuid
+  tenantId           String                    @map("tenant_id") @db.Uuid
+  electionId         String                    @map("election_id") @db.Uuid
+  accountId          String                    @map("account_id") @db.Uuid
+  statement          String?
+  statementClearedAt DateTime?                 @map("statement_cleared_at") @db.Timestamptz(3)
+  status             GovernanceCandidateStatus @default(nominated)
+  nominatedAt        DateTime                  @map("nominated_at") @db.Timestamptz(3)
+  endedAt            DateTime?                 @map("ended_at") @db.Timestamptz(3)
+  reasonCode         String?                   @map("reason_code")
+  endedById          String?                   @map("ended_by_account_id") @db.Uuid
+  finalCount         Int?                      @map("final_count")
+  outcome            String?
+
+  @@unique([tenantId, id])
+  @@index([tenantId, electionId, nominatedAt, id], map: "governance_candidates_election_idx")
+  @@index([tenantId, accountId], map: "governance_candidates_account_idx")
+  @@map("governance_candidates")
+}

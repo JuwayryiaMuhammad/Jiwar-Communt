@@ -298,3 +298,227 @@ export const GOVERNANCE_POLL_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+const phaseInvalid = {
+  query: { phase: 'maybe' },
+  fields: [
+    {
+      field: 'phase',
+      code: 'INVALID_VALUE',
+      params: {
+        allowed: [
+          'upcoming',
+          'nominating',
+          'nominations_closed',
+          'voting',
+          'closed',
+          'certified',
+          'cancelled',
+        ],
+      },
+    },
+  ],
+};
+
+const electionBody = {
+  titleEn: 'Matrix election',
+  bodyEn: 'Three seats.',
+  seats: 3,
+  termMonths: 24,
+  nominationsOpenAt: '2098-12-01T00:00:00.000Z',
+  nominationsCloseAt: '2098-12-03T00:00:00.000Z',
+  votingOpensAt: '2098-12-03T00:00:00.000Z',
+  votingClosesAt: '2098-12-05T00:00:00.000Z',
+};
+
+/** Elections of the board (ADR 0051). */
+export const GOVERNANCE_ELECTION_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/governance/elections',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: phaseInvalid,
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/governance/elections/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bGovernanceElectionId }),
+      code: 'GOVERNANCE_ELECTION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/governance/elections/{id}/candidacy',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bGovernanceElectionId }),
+      code: 'GOVERNANCE_ELECTION_NOT_FOUND',
+      body: () => ({}),
+    },
+    invalid: {
+      body: { statement: '' },
+      fields: [
+        {
+          field: 'statement',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 500 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/governance/elections/{id}/candidacy/withdraw',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bGovernanceElectionId }),
+      code: 'GOVERNANCE_ELECTION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/governance/elections/{id}/votes',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bGovernanceElectionId }),
+      code: 'GOVERNANCE_ELECTION_NOT_FOUND',
+      body: (w) => ({
+        unitId: w.a.homeUnitId,
+        candidateIds: ['0192f1c2-7a4b-4c3d-8e9f-0a1b2c3d4e5f'],
+      }),
+    },
+    invalid: {
+      body: { unitId: 'x', candidateIds: [] },
+      fields: [
+        { field: 'unitId', code: 'INVALID_UUID' },
+        {
+          field: 'candidateIds',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 15 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/governance/elections',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: { ...electionBody, termMonths: 99 },
+      fields: [
+        {
+          field: 'termMonths',
+          code: 'INVALID_NUMBER',
+          params: { min: 6, max: 60 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'PATCH',
+    path: '/governance/elections/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bGovernanceElectionId }),
+      code: 'GOVERNANCE_ELECTION_NOT_FOUND',
+      body: () => ({}),
+    },
+    invalid: {
+      body: { termMonths: 2 },
+      fields: [
+        {
+          field: 'termMonths',
+          code: 'INVALID_NUMBER',
+          params: { min: 6, max: 60 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/governance/elections/{id}/cancel',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bGovernanceElectionId }),
+      code: 'GOVERNANCE_ELECTION_NOT_FOUND',
+      body: () => ({ reasonCode: 'other' }),
+    },
+    invalid: {
+      body: { reasonCode: 7 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/governance/elections',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: phaseInvalid,
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/governance/elections/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bGovernanceElectionId }),
+      code: 'GOVERNANCE_ELECTION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/governance/elections/{id}/candidates/{candidateId}/disqualify',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({
+        id: w.bGovernanceElectionId,
+        candidateId: w.bGovernanceCandidateId,
+      }),
+      code: 'GOVERNANCE_ELECTION_NOT_FOUND',
+      body: () => ({ reasonCode: 'other' }),
+    },
+    invalid: {
+      body: { reasonCode: 7 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+];

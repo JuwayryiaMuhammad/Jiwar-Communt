@@ -326,6 +326,11 @@ const ERROR_TEXT: Record<string, string> = {
   GOVERNANCE_NOT_ELECTOR: 'You do not cast this unit’s vote.',
   GOVERNANCE_ALREADY_VOTED: 'This unit has voted already.',
   GOVERNANCE_LIMIT_REACHED: 'Too many polls and elections are under way.',
+  GOVERNANCE_ELECTION_NOT_FOUND: 'This election does not exist.',
+  GOVERNANCE_CANDIDATE_NOT_FOUND: 'This candidate is not on the list.',
+  GOVERNANCE_NOMINATIONS_CLOSED: 'Nominations are not open.',
+  GOVERNANCE_CANDIDACY_NOT_ALLOWED: 'Only an owner of a unit can stand.',
+  GOVERNANCE_ALREADY_CANDIDATE: 'You stand in this election already.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

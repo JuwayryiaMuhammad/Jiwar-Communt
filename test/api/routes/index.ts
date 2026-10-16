@@ -76,6 +76,7 @@ import {
 } from './permits';
 import {
   GOVERNANCE_BOARD_ROUTES,
+  GOVERNANCE_ELECTION_ROUTES,
   GOVERNANCE_POLL_ROUTES,
   STAFF_BOARD_ROUTES,
 } from './governance';
@@ -220,4 +221,5 @@ export const ROUTES: Row[] = [
   ...GOVERNANCE_BOARD_ROUTES,
   ...STAFF_BOARD_ROUTES,
   ...GOVERNANCE_POLL_ROUTES,
+  ...GOVERNANCE_ELECTION_ROUTES,
 ];

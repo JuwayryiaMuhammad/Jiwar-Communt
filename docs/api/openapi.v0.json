@@ -2686,6 +2686,18 @@
         ],
         "type": "object"
       },
+      "CancelGovernanceElectionDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `governanceElectionCancel`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "CancelGovernancePollDto": {
         "properties": {
           "reasonCode": {
@@ -3136,6 +3148,30 @@
           "refunds",
           "refunded",
           "net"
+        ],
+        "type": "object"
+      },
+      "CastElectionVoteDto": {
+        "properties": {
+          "candidateIds": {
+            "description": "One to `seats` candidates, each once.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 15,
+            "minItems": 1,
+            "type": "array"
+          },
+          "unitId": {
+            "description": "A unit whose vote the caller casts in this election (`myUnits`).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "candidateIds"
         ],
         "type": "object"
       },
@@ -5849,6 +5885,75 @@
         },
         "required": [
           "kind"
+        ],
+        "type": "object"
+      },
+      "CreateGovernanceElectionDto": {
+        "properties": {
+          "bodyAr": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "nominationsCloseAt": {
+            "description": "When nominations close: 24 hours to 30 days after they open.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "nominationsOpenAt": {
+            "description": "When nominations open: absent or past, now; at most 90 days ahead.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "seats": {
+            "description": "The seats to fill: each unit picks up to this many candidates. Fixed for good.",
+            "maximum": 15,
+            "minimum": 3,
+            "type": "number"
+          },
+          "termMonths": {
+            "description": "How long the elected board sits, from its certification.",
+            "maximum": 60,
+            "minimum": 6,
+            "type": "number"
+          },
+          "titleAr": {
+            "maxLength": 200,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "English, Arabic or both, each with its body.",
+            "maxLength": 200,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "votingClosesAt": {
+            "description": "When voting closes: 1 hour to 60 days after it opens.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "votingOpensAt": {
+            "description": "When voting opens: from the close of nominations, at most 14 days later.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "seats",
+          "termMonths",
+          "nominationsCloseAt",
+          "votingOpensAt",
+          "votingClosesAt"
         ],
         "type": "object"
       },
@@ -8797,6 +8902,18 @@
           "status",
           "decision",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "DisqualifyCandidateDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `governanceCandidateDisqualify`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -12290,6 +12407,91 @@
         ],
         "type": "object"
       },
+      "GovernanceCandidacyView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "statement": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernanceCandidateStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "statement",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "GovernanceCandidateOutcome": {
+        "enum": [
+          "elected",
+          "tied",
+          "not_elected",
+          "ineligible"
+        ],
+        "type": "string"
+      },
+      "GovernanceCandidateStatus": {
+        "enum": [
+          "nominated",
+          "withdrawn",
+          "disqualified"
+        ],
+        "type": "string"
+      },
+      "GovernanceCandidateView": {
+        "properties": {
+          "fullName": {
+            "description": "Null once erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernanceCandidateOutcome"
+              }
+            ],
+            "nullable": true
+          },
+          "statement": {
+            "nullable": true,
+            "type": "string"
+          },
+          "votes": {
+            "description": "Votes, once voting closed; null before.",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "statement",
+          "votes",
+          "outcome"
+        ],
+        "type": "object"
+      },
       "GovernanceContestStatus": {
         "enum": [
           "scheduled",
@@ -12298,6 +12500,196 @@
           "cancelled"
         ],
         "type": "string"
+      },
+      "GovernanceElectionPhase": {
+        "enum": [
+          "upcoming",
+          "nominating",
+          "nominations_closed",
+          "voting",
+          "closed",
+          "certified",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "GovernanceElectionView": {
+        "properties": {
+          "bodyAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelReasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/GovernanceCandidateView"
+            },
+            "type": "array"
+          },
+          "certifiedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "electorate": {
+            "nullable": true,
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "myCandidacy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernanceCandidacyView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "myUnits": {
+            "items": {
+              "$ref": "#/components/schemas/GovernanceVoteUnitView"
+            },
+            "type": "array"
+          },
+          "nominationsCloseAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "nominationsOpenAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "phase": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernanceElectionPhase"
+              }
+            ]
+          },
+          "reference": {
+            "example": "GE-0001",
+            "type": "string"
+          },
+          "seats": {
+            "type": "number"
+          },
+          "termId": {
+            "description": "The board term it seated.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "termMonths": {
+            "type": "number"
+          },
+          "tiedCandidateIds": {
+            "description": "Candidates tied across the last seat, once closed: the board resolves the tie.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "titleAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "turnout": {
+            "description": "Units that voted so far: shown while open, never the counts.",
+            "nullable": true,
+            "type": "number"
+          },
+          "votingClosesAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "votingOpensAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "titleEn",
+          "titleAr",
+          "bodyEn",
+          "bodyAr",
+          "seats",
+          "termMonths",
+          "nominationsOpenAt",
+          "nominationsCloseAt",
+          "votingOpensAt",
+          "votingClosesAt",
+          "phase",
+          "electorate",
+          "turnout",
+          "tiedCandidateIds",
+          "certifiedAt",
+          "termId",
+          "cancelReasonCode",
+          "candidates",
+          "myUnits",
+          "myCandidacy"
+        ],
+        "type": "object"
+      },
+      "GovernanceElectionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GovernanceElectionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GovernanceElectionVoteReceipt": {
+        "properties": {
+          "electionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "votedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "electionId",
+          "unitId",
+          "votedAt"
+        ],
+        "type": "object"
       },
       "GovernanceOwnerView": {
         "properties": {
@@ -28322,6 +28714,217 @@
         ],
         "type": "object"
       },
+      "StaffGovernanceCandidateView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "fullName": {
+            "description": "Null once erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nominatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernanceCandidateOutcome"
+              }
+            ],
+            "nullable": true
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "statement": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernanceCandidateStatus"
+              }
+            ]
+          },
+          "votes": {
+            "description": "Votes, once voting closed; null before.",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "statement",
+          "votes",
+          "outcome",
+          "accountId",
+          "status",
+          "reasonCode",
+          "nominatedAt"
+        ],
+        "type": "object"
+      },
+      "StaffGovernanceElectionView": {
+        "properties": {
+          "authorSide": {
+            "enum": [
+              "manager",
+              "board"
+            ],
+            "type": "string"
+          },
+          "bodyAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelReasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/StaffGovernanceCandidateView"
+            },
+            "type": "array"
+          },
+          "certifiedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "electorate": {
+            "nullable": true,
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nominationsCloseAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "nominationsOpenAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "phase": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernanceElectionPhase"
+              }
+            ]
+          },
+          "reference": {
+            "example": "GE-0001",
+            "type": "string"
+          },
+          "seats": {
+            "type": "number"
+          },
+          "termId": {
+            "description": "The board term it seated.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "termMonths": {
+            "type": "number"
+          },
+          "tieReasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "tiedCandidateIds": {
+            "description": "Candidates tied across the last seat, once closed: the board resolves the tie.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "titleAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "turnout": {
+            "description": "Units that voted so far: shown while open, never the counts.",
+            "nullable": true,
+            "type": "number"
+          },
+          "votingClosesAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "votingOpensAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "titleEn",
+          "titleAr",
+          "bodyEn",
+          "bodyAr",
+          "seats",
+          "termMonths",
+          "nominationsOpenAt",
+          "nominationsCloseAt",
+          "votingOpensAt",
+          "votingClosesAt",
+          "phase",
+          "electorate",
+          "turnout",
+          "tiedCandidateIds",
+          "certifiedAt",
+          "termId",
+          "cancelReasonCode",
+          "candidates",
+          "authorSide",
+          "tieReasonCode"
+        ],
+        "type": "object"
+      },
+      "StaffGovernanceElectionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffGovernanceElectionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StaffGovernancePollView": {
         "properties": {
           "authorSide": {
@@ -31037,6 +31640,17 @@
           "data",
           "nextCursor"
         ],
+        "type": "object"
+      },
+      "StandForElectionDto": {
+        "properties": {
+          "statement": {
+            "description": "A short statement to the owners, shown beside the name. Cleared if the account is erased.",
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "StandingInstructionAction": {
@@ -33777,6 +34391,58 @@
               }
             ],
             "description": "Inactive ends the shifts open at the gate."
+          }
+        },
+        "type": "object"
+      },
+      "UpdateGovernanceElectionDto": {
+        "properties": {
+          "bodyAr": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "nominationsCloseAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "nominationsOpenAt": {
+            "description": "When nominations open: absent or past, now; at most 90 days ahead.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "termMonths": {
+            "maximum": 60,
+            "minimum": 6,
+            "type": "number"
+          },
+          "titleAr": {
+            "maxLength": 200,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "English, Arabic or both, each with its body.",
+            "maxLength": 200,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "votingClosesAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "votingOpensAt": {
+            "format": "date-time",
+            "type": "string"
           }
         },
         "type": "object"
@@ -43010,6 +43676,403 @@
           }
         ],
         "summary": "List the board’s terms",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/governance/elections": {
+      "get": {
+        "description": "Newest first. For the units’ owners; anyone else gets GOVERNANCE_NOT_AVAILABLE (404).",
+        "operationId": "GovernanceElectionsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "phase",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/GovernanceElectionPhase"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernanceElectionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the board’s elections",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). Owners are told when nominations open. At most 10 polls and elections under way (GOVERNANCE_LIMIT_REACHED).",
+        "operationId": "GovernanceElectionsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGovernanceElectionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernanceElectionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call an election of the board",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/governance/elections/{id}": {
+      "get": {
+        "description": "Those standing, by name and statement; each one’s votes once voting closed. For the units’ owners; anyone else gets GOVERNANCE_NOT_AVAILABLE (404).",
+        "operationId": "GovernanceElectionsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernanceElectionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an election",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). Its texts, term and dates; never its seats. Once nominations opened: GOVERNANCE_CONTEST_STARTED.",
+        "operationId": "GovernanceElectionsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGovernanceElectionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernanceElectionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change an election before nominations open",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/governance/elections/{id}/cancel": {
+      "post": {
+        "description": "A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). Until it is certified (GOVERNANCE_CONTEST_ENDED). The board is told.",
+        "operationId": "GovernanceElectionsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelGovernanceElectionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernanceElectionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel an election, with a reason code",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/governance/elections/{id}/candidacy": {
+      "post": {
+        "description": "An owner, while nominations are open (GOVERNANCE_NOMINATIONS_CLOSED), once (GOVERNANCE_ALREADY_CANDIDATE); anyone else: GOVERNANCE_CANDIDACY_NOT_ALLOWED.",
+        "operationId": "GovernanceElectionsController_stand",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StandForElectionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernanceElectionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Stand for the board",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/governance/elections/{id}/candidacy/withdraw": {
+      "post": {
+        "description": "While nominations are open (GOVERNANCE_NOMINATIONS_CLOSED).",
+        "operationId": "GovernanceElectionsController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernanceElectionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw one’s candidacy",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/governance/elections/{id}/votes": {
+      "post": {
+        "description": "Up to `seats` candidates, once per unit, never changed (GOVERNANCE_ALREADY_VOTED), by the unit’s voting owner when voting opened (GOVERNANCE_NOT_ELECTOR). Always secret: the answer says the vote was taken and when, never what.",
+        "operationId": "GovernanceElectionsController_vote",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CastElectionVoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernanceElectionVoteReceipt"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cast a unit’s vote",
         "tags": [
           "governance"
         ],
@@ -57828,6 +58891,161 @@
           }
         ],
         "summary": "List the board’s terms",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/elections": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "StaffGovernanceElectionsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "phase",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/GovernanceElectionPhase"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGovernanceElectionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the board’s elections",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/elections/{id}": {
+      "get": {
+        "description": "Every candidacy, ended ones too; the counts once voting closed.",
+        "operationId": "StaffGovernanceElectionsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGovernanceElectionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an election",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/elections/{id}/candidates/{candidateId}/disqualify": {
+      "post": {
+        "description": "Until voting opens (GOVERNANCE_CONTEST_STARTED): the list is fixed from then on.",
+        "operationId": "StaffGovernanceElectionsController_disqualify",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "candidateId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisqualifyCandidateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGovernanceElectionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take a candidate off the list, with a reason code",
         "tags": [
           "governance"
         ],

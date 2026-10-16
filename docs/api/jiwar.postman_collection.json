@@ -10631,6 +10631,329 @@
           }
         },
         {
+          "name": "List the board’s elections",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "elections"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "phase",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/elections"
+            }
+          }
+        },
+        {
+          "name": "Call an election of the board",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"seats\": 3,\n  \"termMonths\": 6,\n  \"nominationsCloseAt\": \"2026-01-01T09:00:00.000Z\",\n  \"votingOpensAt\": \"2026-01-01T09:00:00.000Z\",\n  \"votingClosesAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  |  |\n| `nominationsCloseAt` | string (date-time) | yes | When nominations close: 24 hours to 30 days after they open. |\n| `nominationsOpenAt` | string (date-time) |  | When nominations open: absent or past, now; at most 90 days ahead. |\n| `seats` | number | yes | The seats to fill: each unit picks up to this many candidates. Fixed for good. |\n| `termMonths` | number | yes | How long the elected board sits, from its certification. |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | English, Arabic or both, each with its body. |\n| `votingClosesAt` | string (date-time) | yes | When voting closes: 1 hour to 60 days after it opens. |\n| `votingOpensAt` | string (date-time) | yes | When voting opens: from the close of nominations, at most 14 days later. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "elections"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/elections"
+            }
+          }
+        },
+        {
+          "name": "Get an election",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "elections",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/elections/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change an election before nominations open",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"bodyAr\": \"\",\n  \"bodyEn\": \"\",\n  \"nominationsCloseAt\": \"2026-01-01T09:00:00.000Z\",\n  \"nominationsOpenAt\": \"2026-01-01T09:00:00.000Z\",\n  \"termMonths\": 6,\n  \"titleAr\": \"\",\n  \"titleEn\": \"\",\n  \"votingClosesAt\": \"2026-01-01T09:00:00.000Z\",\n  \"votingOpensAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  |  |\n| `nominationsCloseAt` | string (date-time) |  |  |\n| `nominationsOpenAt` | string (date-time) |  | When nominations open: absent or past, now; at most 90 days ahead. |\n| `termMonths` | number |  |  |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | English, Arabic or both, each with its body. |\n| `votingClosesAt` | string (date-time) |  |  |\n| `votingOpensAt` | string (date-time) |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "elections",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/elections/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel an election, with a reason code",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `governanceElectionCancel`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "elections",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/elections/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Stand for the board",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"statement\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `statement` | string |  | A short statement to the owners, shown beside the name. Cleared if the account is erased. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "elections",
+                ":id",
+                "candidacy"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/elections/:id/candidacy",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Withdraw one’s candidacy",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "elections",
+                ":id",
+                "candidacy",
+                "withdraw"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/elections/:id/candidacy/withdraw",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cast a unit’s vote",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"unitId\": \"\",\n  \"candidateIds\": [\n    \"\"\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `candidateIds` | string (uuid)[] | yes | One to `seats` candidates, each once. |\n| `unitId` | string (uuid) | yes | A unit whose vote the caller casts in this election (`myUnits`). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "elections",
+                ":id",
+                "votes"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/elections/:id/votes",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the owners’ polls",
           "request": {
             "description": "**Responses:** 200",
@@ -11103,6 +11426,128 @@
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/staff/governance/board/terms"
+            }
+          }
+        },
+        {
+          "name": "List the board’s elections",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "elections"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "phase",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/elections"
+            }
+          }
+        },
+        {
+          "name": "Get an election",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "elections",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/elections/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Take a candidate off the list, with a reason code",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `governanceCandidateDisqualify`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "elections",
+                ":id",
+                "candidates",
+                ":candidateId",
+                "disqualify"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/elections/:id/candidates/:candidateId/disqualify",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "candidateId",
+                  "value": ""
+                }
+              ]
             }
           }
         },

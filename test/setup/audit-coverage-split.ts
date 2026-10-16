@@ -455,4 +455,12 @@ export const GOVERNANCE_COVERAGE: readonly string[] = [
   'governance_poll.cancelled',
   'governance_poll.closed',
   'governance.vote_cast',
+  'governance_election.created',
+  'governance_election.changed',
+  'governance_election.opened',
+  'governance_election.cancelled',
+  'governance_election.closed',
+  'governance_candidate.nominated',
+  'governance_candidate.withdrawn',
+  'governance_candidate.disqualified',
 ];

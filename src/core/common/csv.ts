@@ -1,5 +1,5 @@
 import { StreamableFile } from '@nestjs/common';
-import { appError, ErrorCode } from '../../core/common/errors';
+import { appError, ErrorCode } from './errors';
 
 /** A column: free text (guarded against formulas) or a number we wrote. */
 export interface CsvColumn {

@@ -3,7 +3,7 @@ import { ApiOkResponse, ApiOperation, ApiProduces } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import { ListOf, toList, type ListResponse } from '../../core/common/http/list';
-import { csvFile } from './csv';
+import { csvFile } from '../../core/common/csv';
 import { LedgerFilterDto, LedgerQueryDto } from './dto/ledger.dto';
 import {
   CollectionsQueryDto,

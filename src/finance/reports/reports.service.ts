@@ -13,7 +13,7 @@ import { localToday } from '../db-clock';
 import { CREDITED_SQL, PAID_SQL } from '../invoices/balances';
 import { money, show, ZERO } from '../money';
 import { FREE_SQL } from '../payments/allocation';
-import { toCsv, type CsvColumn } from './csv';
+import { toCsv, type CsvColumn } from '../../core/common/csv';
 import type {
   CollectionsQueryDto,
   DailyCashQueryDto,

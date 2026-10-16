@@ -1,7 +1,7 @@
 import type { Response } from 'supertest';
 import { Prisma } from '@prisma/client';
 import { addDays } from '../../src/core/common/slots/day-slots';
-import { ExportLimit } from '../../src/finance/reports/csv';
+import { ExportLimit } from '../../src/core/common/csv';
 import { day } from '../setup/facilities';
 import { financeHelpers, type FinanceSetUp } from '../setup/finance';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';

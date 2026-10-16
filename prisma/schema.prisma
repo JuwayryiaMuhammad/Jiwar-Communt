@@ -6873,3 +6873,60 @@ model PatrolCheckpoint {
   @@index([tenantId, createdAt, id], map: "patrol_checkpoints_list_idx")
   @@map("patrol_checkpoints")
 }
+
+/// A route a patrol walks (ADR 0052), from a post (a gate or a zone).
+/// What it asks is its current version. Retired, never deleted.
+model PatrolRoute {
+  id          String    @id @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  gateId      String?   @map("gate_id") @db.Uuid
+  placeId     String?   @map("place_id") @db.Uuid
+  nameEn      String    @map("name_en")
+  nameAr      String    @map("name_ar")
+  retiredAt   DateTime? @map("retired_at") @db.Timestamptz(3)
+  retiredById String?   @map("retired_by_account_id") @db.Uuid
+  createdById String    @map("created_by_account_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt, id], map: "patrol_routes_list_idx")
+  @@map("patrol_routes")
+}
+
+/// What a route asks (ADR 0052): its checkpoints in order, whether the
+/// order is enforced, how long it takes and its weekly start times. Never
+/// changes; superseded once by the next.
+model PatrolRouteVersion {
+  id              String    @id @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  routeId         String    @map("route_id") @db.Uuid
+  number          Int
+  ordered         Boolean
+  expectedMinutes Int       @map("expected_minutes")
+  /// `{days, times}`; null: no scheduled runs.
+  schedule        Json?
+  createdById     String    @map("created_by_account_id") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  supersededAt    DateTime? @map("superseded_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, routeId, number], map: "patrol_route_versions_number_key")
+  @@map("patrol_route_versions")
+}
+
+/// A version's checkpoint at its position (ADR 0052). Never changes.
+model PatrolRouteCheckpoint {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  versionId    String   @map("version_id") @db.Uuid
+  position     Int
+  checkpointId String   @map("checkpoint_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, versionId, position], map: "patrol_route_checkpoints_position_key")
+  @@unique([tenantId, versionId, checkpointId], map: "patrol_route_checkpoints_checkpoint_key")
+  @@index([tenantId, checkpointId], map: "patrol_route_checkpoints_used_idx")
+  @@map("patrol_route_checkpoints")
+}

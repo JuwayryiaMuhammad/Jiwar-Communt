@@ -21418,6 +21418,254 @@
               ]
             }
           }
+        },
+        {
+          "name": "List the routes",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "patrols",
+                "routes"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "Both by default.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "gateId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "zoneId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/patrols/routes"
+            }
+          }
+        },
+        {
+          "name": "Add a route",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"nameEn\": \"Night perimeter\",\n  \"nameAr\": \"جولة السور الليلية\",\n  \"version\": {\n    \"checkpointIds\": [\n      \"\"\n    ],\n    \"ordered\": false,\n    \"expectedMinutes\": 5\n  }\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `gateId` | string (uuid) |  |  |\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n| `version` | object | yes |  |\n| `zoneId` | string (uuid) |  | A place in service, for a post that is not a gate. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "patrols",
+                "routes"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/patrols/routes"
+            }
+          }
+        },
+        {
+          "name": "Get a route",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "patrols",
+                "routes",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/patrols/routes/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rename a route",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"nameAr\": \"\",\n  \"nameEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "patrols",
+                "routes",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/patrols/routes/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Retire a route",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "patrols",
+                "routes",
+                ":id",
+                "retire"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/patrols/routes/:id/retire",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change what a route asks",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"checkpointIds\": [\n    \"\"\n  ],\n  \"ordered\": false,\n  \"expectedMinutes\": 5\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `checkpointIds` | string[] | yes | Checkpoints in service, in the order walked, each once (CHECKPOINT_NOT_AVAILABLE, DUPLICATE_VALUE). |\n| `expectedMinutes` | number | yes |  |\n| `ordered` | boolean | yes | The guard must scan them in this order. |\n| `schedule` | object |  | Weekly start times; none: only the runs a guard starts. Runs are made 7 days ahead. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "patrols",
+                "routes",
+                ":id",
+                "versions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/patrols/routes/:id/versions",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
         }
       ],
       "name": "patrols"

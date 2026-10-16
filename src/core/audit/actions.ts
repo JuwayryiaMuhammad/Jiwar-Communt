@@ -1111,6 +1111,21 @@ export const AUDIT_ACTIONS = {
     target: 'patrol_checkpoint',
   },
   'patrol_checkpoint.retired': { log: 'tenant', target: 'patrol_checkpoint' },
+  // A route's post by value, its names as changed; metadata: version,
+  // checkpoints (how many), ordered, expectedMinutes, scheduled (whether).
+  'patrol_route.created': {
+    log: 'tenant',
+    target: 'patrol_route',
+    sensitive: ['nameEn', 'nameAr'],
+  },
+  'patrol_route.renamed': {
+    log: 'tenant',
+    target: 'patrol_route',
+    sensitive: ['nameEn', 'nameAr'],
+  },
+  // metadata: as created.
+  'patrol_route.versioned': { log: 'tenant', target: 'patrol_route' },
+  'patrol_route.retired': { log: 'tenant', target: 'patrol_route' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

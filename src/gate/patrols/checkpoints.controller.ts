@@ -91,7 +91,8 @@ export class CheckpointsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Retire a checkpoint',
-    description: 'Once, for good; its scans stay.',
+    description:
+      'Once, for good; its scans stay. Not while a route in service walks it (409 PATROL_CHECKPOINT_IN_USE, params.routes).',
   })
   @ApiOkResponse({ type: CheckpointView })
   retire(@Param('id', parseId()) id: string): Promise<CheckpointView> {

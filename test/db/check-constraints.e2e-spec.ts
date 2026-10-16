@@ -1322,6 +1322,17 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   patrol_checkpoints_token_hash_shape: {},
   patrol_checkpoints_retired_shape: {},
+  patrol_routes_one_post: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
+  patrol_routes_names_length: {},
+  patrol_routes_retired_shape: {},
+  patrol_route_versions_number_positive: {},
+  patrol_route_versions_expected_range: {},
+  patrol_route_versions_schedule_shape: {
+    guarded: 'schedule IS NULL is tested first',
+  },
+  patrol_route_checkpoints_position_range: {},
 };
 
 interface Check {

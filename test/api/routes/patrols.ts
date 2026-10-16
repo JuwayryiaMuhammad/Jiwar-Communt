@@ -72,3 +72,108 @@ export const CHECKPOINT_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+const SOME_ID = '0199c3d2-6f1a-7c3e-9a51-3b2f6e8d1c40';
+
+/** The routes a patrol walks (ADR 0052): the management's side. */
+export const ROUTE_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/staff/security/patrols/routes',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'gone' },
+      fields: [{ field: 'status', code: 'INVALID_VALUE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/security/patrols/routes',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: {
+        gateId: 'gate-1',
+        nameEn: 'Round',
+        nameAr: 'جولة',
+        version: {
+          checkpointIds: [SOME_ID],
+          ordered: false,
+          expectedMinutes: 30,
+        },
+      },
+      fields: [{ field: 'gateId', code: 'INVALID_UUID' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/security/patrols/routes/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bRouteId }),
+      code: 'PATROL_ROUTE_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'PATCH',
+    path: '/staff/security/patrols/routes/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bRouteId }),
+      body: () => ({ nameEn: 'Foreign' }),
+      code: 'PATROL_ROUTE_NOT_FOUND',
+    },
+    invalid: {
+      body: { nameEn: 7 },
+      fields: [{ field: 'nameEn', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/security/patrols/routes/{id}/versions',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bRouteId }),
+      body: (w) => ({
+        checkpointIds: [w.bCheckpointId],
+        ordered: false,
+        expectedMinutes: 30,
+      }),
+      code: 'PATROL_ROUTE_NOT_FOUND',
+    },
+    invalid: {
+      body: { checkpointIds: ['point-1'], ordered: true, expectedMinutes: 30 },
+      fields: [{ field: 'checkpointIds', code: 'INVALID_UUID' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/security/patrols/routes/{id}/retire',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bRouteId }),
+      code: 'PATROL_ROUTE_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+];

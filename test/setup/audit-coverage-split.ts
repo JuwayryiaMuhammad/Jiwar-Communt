@@ -475,4 +475,8 @@ export const PATROL_COVERAGE: readonly string[] = [
   'patrol_checkpoint.updated',
   'patrol_checkpoint.token_reissued',
   'patrol_checkpoint.retired',
+  'patrol_route.created',
+  'patrol_route.renamed',
+  'patrol_route.versioned',
+  'patrol_route.retired',
 ];

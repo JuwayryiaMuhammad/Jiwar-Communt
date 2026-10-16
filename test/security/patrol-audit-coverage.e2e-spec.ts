@@ -118,6 +118,67 @@ describe('Audit coverage — patrols', () => {
     });
   });
 
+  describe('routes', () => {
+    it('created, renamed, versioned and retired: the post and counts by value, names as changed', async () => {
+      const one = await x.checkpoint(supervisor, { gateId });
+      const two = await x.checkpoint(supervisor, { gateId });
+      const route = (
+        await x
+          .http('post', '/staff/security/patrols/routes', supervisor.token, {
+            gateId,
+            nameEn: `${WORDS} route`,
+            nameAr: 'جولة التدقيق',
+            version: {
+              checkpointIds: [one.id],
+              ordered: true,
+              expectedMinutes: 20,
+            },
+          })
+          .expect(201)
+      ).body as { id: string };
+      const created = await single('patrol_route.created', route.id);
+      expect(created).toMatchObject(by(supervisor, 'patrol_route'));
+      expect(created.changes).toEqual({
+        gateId: { from: null, to: gateId },
+        nameEn: { changed: true },
+        nameAr: { changed: true },
+      });
+      expect(created.metadata).toEqual({
+        version: 1,
+        checkpoints: 1,
+        ordered: true,
+        expectedMinutes: 20,
+        scheduled: false,
+      });
+      const path = `/staff/security/patrols/routes/${route.id}`;
+      await x
+        .http('patch', path, supervisor.token, { nameAr: `${WORDS} ar` })
+        .expect(200);
+      const renamed = await single('patrol_route.renamed', route.id);
+      expect(renamed.changes).toEqual({ nameAr: { changed: true } });
+      await x
+        .http('post', `${path}/versions`, supervisor.token, {
+          checkpointIds: [two.id, one.id],
+          ordered: false,
+          expectedMinutes: 40,
+          schedule: { days: [1], times: ['03:00'] },
+        })
+        .expect(200);
+      const versioned = await single('patrol_route.versioned', route.id);
+      expect(versioned).toMatchObject(by(supervisor, 'patrol_route'));
+      expect(versioned.metadata).toEqual({
+        version: 2,
+        checkpoints: 2,
+        ordered: false,
+        expectedMinutes: 40,
+        scheduled: true,
+      });
+      await x.http('post', `${path}/retire`, supervisor.token).expect(200);
+      const retired = await single('patrol_route.retired', route.id);
+      expect(retired).toMatchObject(by(supervisor, 'patrol_route'));
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every patrols entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

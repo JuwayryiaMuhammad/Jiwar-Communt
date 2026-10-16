@@ -162,3 +162,12 @@ The full notes for the mobile team, with examples, are in [`notes/governance.md`
 - Polls: `GET /governance/polls`, `GET /governance/polls/{id}`, `POST /governance/polls/{id}/votes` (once per unit, never changed; the answer never says what was chosen). On an open vote (`rollCallPublic: true`) say before the vote button that the unit's choice will be visible to owners after the close.
 - Elections: `GET /governance/elections`, `GET /governance/elections/{id}`, `POST …/candidacy`, `POST …/candidacy/withdraw`, `POST …/votes` (up to `seats` candidates, always secret).
 - A sitting board member holds `governance.board` (in `/me` → `permissions`): `POST /governance/polls`, `/governance/elections`, `/governance/publications`, their `PATCH` and `cancel` / `archive`.
+
+### Gate card — patrols (ADR 0052)
+
+The full notes for the guard app are in [`notes/patrols.md`](notes/patrols.md).
+
+- The management: `/staff/security/patrols/checkpoints` (the QR payload answered once, at creation and at a reissue), `/staff/security/patrols/routes` (a change is `POST …/{id}/versions`), `/staff/security/patrols/runs` (detail, cancel, a run's track with `patrols.manage` only) and `/staff/security/patrols/report`.
+- The guard: `GET /gate/patrols` (the board), starting a scheduled run (`/gate/patrols/runs/{id}/start`, the first wins) or one of their own (`/gate/patrols/routes/{id}/start`), scans and notes with the app's own UUIDv7 and the device's time, the track in batches, ending.
+- `GET /staff/security/reports/daily` gains `patrols { scheduled, done, late, missed, incomplete }` per post; its CSV the five last columns `patrols_*`.
+- A new file purpose `patrol_photo`, an export section `patrols/`, three notification kinds `patrol.*` (category `guard_duty`).

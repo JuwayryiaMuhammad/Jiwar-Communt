@@ -271,6 +271,7 @@ const ERROR_TEXT: Record<string, string> = {
   PERMIT_NOT_ACTIVE: 'This permit is over, or not approved.',
   PERMIT_WORKER_NOT_FOUND: 'This worker is not on the permit.',
   PERMIT_GUEST_NOT_FOUND: 'This guest is not on the list.',
+  PERMIT_STARTED: 'The event has started: its guest list is fixed.',
   STEP_UP_REQUIRED: 'Confirm with the code we email you first.',
   STEP_UP_CODE_INVALID: 'That code is wrong or has expired.',
   PAYMENT_VAULT_UNAVAILABLE: 'The server is not set up to store payment credentials yet. Ask the platform team.',

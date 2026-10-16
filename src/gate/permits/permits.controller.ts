@@ -20,11 +20,17 @@ import { ListOf, toList, type ListResponse } from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import {
+  AddPermitGuestsDto,
   AddPermitWorkerDto,
   CancelPermitDto,
+  CreateEventPermitDto,
+  CreateMaterialExitDto,
+  CreateMovePermitDto,
   CreateWorksPermitDto,
   UnitPermitsQueryDto,
 } from './dto/permits.dto';
+import { PermitGuestsService } from './permit-guests.service';
+import { PermitRequestsService } from './permit-requests.service';
 import { PermitWorkersService } from './permit-workers.service';
 import { PermitsService } from './permits.service';
 import { PermitView } from './views/permit.views';
@@ -40,6 +46,8 @@ export class PermitsController {
   constructor(
     private readonly permits: PermitsService,
     private readonly workers: PermitWorkersService,
+    private readonly requests: PermitRequestsService,
+    private readonly guests: PermitGuestsService,
     private readonly ctx: RequestContext,
   ) {}
 
@@ -59,6 +67,51 @@ export class PermitsController {
     @Body() dto: CreateWorksPermitDto,
   ): Promise<PermitView> {
     return this.view(await this.permits.createWorks(unitId, dto));
+  }
+
+  @Post('units/:unitId/permits/moves')
+  @NoStore()
+  @Idempotent()
+  @ApiOperation({
+    summary: 'Ask for a furniture move permit',
+    description: `The unit's primary asks: a work day of the compound and a window inside its work hours, the truck's plate and the items. Pending until the management decides; the guard sees it at the gate and finds it by the plate. ${UNIT_LIMITS}`,
+  })
+  @ApiCreatedResponse({ type: PermitView })
+  async move(
+    @Param('unitId', parseId('unitId')) unitId: string,
+    @Body() dto: CreateMovePermitDto,
+  ): Promise<PermitView> {
+    return this.view(await this.requests.createMove(unitId, dto));
+  }
+
+  @Post('units/:unitId/permits/material-exits')
+  @NoStore()
+  @Idempotent()
+  @ApiOperation({
+    summary: 'Ask to take materials out',
+    description: `The unit's primary asks, in advance: the items, an optional photo, valid for up to seven days. Once approved, the guard checks it at the exit and marks it used: once. Taking materials in needs no permit (the guard logs it). ${UNIT_LIMITS}`,
+  })
+  @ApiCreatedResponse({ type: PermitView })
+  async materialExit(
+    @Param('unitId', parseId('unitId')) unitId: string,
+    @Body() dto: CreateMaterialExitDto,
+  ): Promise<PermitView> {
+    return this.view(await this.requests.createMaterialExit(unitId, dto));
+  }
+
+  @Post('units/:unitId/permits/events')
+  @NoStore()
+  @Idempotent()
+  @ApiOperation({
+    summary: 'Hold a private event with a guest list',
+    description: `Anyone the unit lets invite visitors (PERMIT_NOT_ALLOWED). Up to 20 guests it is approved at once; 21 to 150 waits for the management. The guard checks the guests' names at the gate. ${UNIT_LIMITS}`,
+  })
+  @ApiCreatedResponse({ type: PermitView })
+  async event(
+    @Param('unitId', parseId('unitId')) unitId: string,
+    @Body() dto: CreateEventPermitDto,
+  ): Promise<PermitView> {
+    return this.view(await this.requests.createEvent(unitId, dto));
   }
 
   @Get('units/:unitId/permits')
@@ -118,6 +171,38 @@ export class PermitsController {
     @Body() dto: AddPermitWorkerDto,
   ): Promise<PermitView> {
     return this.view(await this.workers.add(id, dto));
+  }
+
+  @Post('permits/:id/guests')
+  @NoStore()
+  @Idempotent()
+  @ApiOperation({
+    summary: 'Add guests to an event',
+    description:
+      'The host or the unit’s primary, until the event starts (PERMIT_STARTED), never past its guest limit (PERMIT_LIMIT_REACHED, params.scope `guests`): a bigger event is a new request.',
+  })
+  @ApiCreatedResponse({ type: PermitView })
+  async addGuests(
+    @Param('id', parseId()) id: string,
+    @Body() dto: AddPermitGuestsDto,
+  ): Promise<PermitView> {
+    return this.view(await this.guests.add(id, dto.guests));
+  }
+
+  @Post('permits/:id/guests/:guestId/remove')
+  @HttpCode(HttpStatus.OK)
+  @NoStore()
+  @ApiOperation({
+    summary: 'Take a guest off an event’s list',
+    description:
+      'While the event is open; from then on the guard refuses them (`guest_removed`).',
+  })
+  @ApiOkResponse({ type: PermitView })
+  async removeGuest(
+    @Param('id', parseId()) id: string,
+    @Param('guestId', parseId('guestId')) guestId: string,
+  ): Promise<PermitView> {
+    return this.view(await this.guests.remove(id, guestId));
   }
 
   @Post('permits/:id/workers/:workerId/remove')

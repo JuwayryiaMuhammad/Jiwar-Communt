@@ -115,6 +115,8 @@ import { PermitRecords } from './permits/permit-records';
 import { PermitsController } from './permits/permits.controller';
 import { PermitsService } from './permits/permits.service';
 import { PermitWorkersService } from './permits/permit-workers.service';
+import { PermitRequestsService } from './permits/permit-requests.service';
+import { PermitGuestsService } from './permits/permit-guests.service';
 
 /**
  * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
@@ -228,6 +230,8 @@ import { PermitWorkersService } from './permits/permit-workers.service';
     PermitRecords,
     PermitsService,
     PermitWorkersService,
+    PermitRequestsService,
+    PermitGuestsService,
   ],
 })
 export class GateModule {}

@@ -49,6 +49,7 @@ import { ParkingReportsService } from '../../src/gate/parking-reports/parking-re
 import { EmergenciesService } from '../../src/gate/emergencies/emergencies.service';
 import { GateServicesService } from '../../src/gate/gate-services/gate-services.service';
 import { PermitsService } from '../../src/gate/permits/permits.service';
+import { PermitRequestsService } from '../../src/gate/permits/permit-requests.service';
 import { permitFileRow, permitWorkerRow } from '../setup/permits-rows';
 import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
 import { ALL_WEEK, at, day } from '../setup/facilities';
@@ -247,6 +248,9 @@ export interface World {
   /** A pending works permit of B's home, and a worker on it (ADR 0049). */
   bPermitId: string;
   bPermitWorkerId: string;
+  /** An event of B's home approved at once, and one of its guests. */
+  bPermitEventId: string;
+  bPermitGuestId: string;
   bDeviceId: string;
   /** A personal-data export B's owner asked for (ADR 0036). */
   bExportId: string;
@@ -914,6 +918,16 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       }),
     ),
   );
+  const bPermitEvent = await helpers.as(
+    b,
+    { id: b.ids.owner, type: 'resident' },
+    () =>
+      h.moduleRef.get(PermitRequestsService).createEvent(b.homeUnitId, {
+        startsAt: at(day(5), 18),
+        endsAt: at(day(5), 22),
+        guests: [{ fullName: 'B Guest' }],
+      }),
+  );
   const bFinance = await helpers.asManager(b, async () => {
     const batch = await h.moduleRef.get(InvoicesService).issue({
       target: 'unit',
@@ -1023,6 +1037,8 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bGateServiceId: bGateService.request.id,
     bPermitId: bPermit.permit.id,
     bPermitWorkerId,
+    bPermitEventId: bPermitEvent.permit.id,
+    bPermitGuestId: bPermitEvent.guests[0].id,
     bFineId: bFine.fine.id,
     bFinePaymentId: bFinePayment.id,
     bVehicleId: bVehicle.vehicle.id,

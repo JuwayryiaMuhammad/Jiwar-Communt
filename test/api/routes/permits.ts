@@ -80,6 +80,104 @@ export const PERMIT_ROUTES: Row[] = [
     noStore: true,
   },
   {
+    method: 'POST',
+    path: '/units/{unitId}/permits/moves',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.bUnitId }),
+      code: 'UNIT_NOT_FOUND',
+      body: () => ({
+        date: '2099-01-05',
+        window: { from: '10:00', to: '12:00' },
+        truckPlate: 'ABC 123',
+        itemsDescription: 'Sofas',
+      }),
+    },
+    invalid: {
+      body: {
+        date: '2099-01-05',
+        window: { from: '10:00', to: '25:00' },
+        truckPlate: 7,
+        itemsDescription: '',
+      },
+      fields: [
+        { field: 'window.to', code: 'INVALID_FORMAT' },
+        { field: 'truckPlate', code: 'INVALID_TYPE' },
+        {
+          field: 'itemsDescription',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 1000 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/units/{unitId}/permits/material-exits',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.bUnitId }),
+      code: 'UNIT_NOT_FOUND',
+      body: () => ({
+        validFrom: '2099-01-05',
+        validUntil: '2099-01-06',
+        items: [{ name: 'Tiles', quantity: 3 }],
+      }),
+    },
+    invalid: {
+      body: {
+        validFrom: '2099-01-05',
+        validUntil: '2099-01-06',
+        items: [{ name: 'Tiles', quantity: 1.5 }],
+      },
+      fields: [
+        {
+          field: 'items.0.quantity',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 9999 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/units/{unitId}/permits/events',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ unitId: w.bUnitId }),
+      code: 'UNIT_NOT_FOUND',
+      body: () => ({
+        startsAt: '2099-01-05T16:00:00.000Z',
+        endsAt: '2099-01-05T20:00:00.000Z',
+        guests: [{ fullName: 'Matrix Guest' }],
+      }),
+    },
+    invalid: {
+      body: {
+        startsAt: 'tonight',
+        endsAt: '2099-01-05T20:00:00.000Z',
+        guests: [],
+      },
+      fields: [
+        { field: 'startsAt', code: 'INVALID_FORMAT' },
+        {
+          field: 'guests',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 150 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
     method: 'GET',
     path: '/units/{unitId}/permits',
     auth: 'tenant',
@@ -169,6 +267,43 @@ export const PERMIT_ROUTES: Row[] = [
         { field: 'idLast4', code: 'INVALID_FORMAT' },
       ],
     },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/permits/{id}/guests',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bPermitEventId }),
+      code: 'PERMIT_NOT_FOUND',
+      body: () => ({ guests: [{ fullName: 'Matrix Guest' }] }),
+    },
+    invalid: {
+      body: { guests: [{ fullName: 'M' }] },
+      fields: [
+        {
+          field: 'guests.0.fullName',
+          code: 'INVALID_LENGTH',
+          params: { min: 2, max: 120 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/permits/{id}/guests/{guestId}/remove',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bPermitEventId, guestId: w.bPermitGuestId }),
+      code: 'PERMIT_NOT_FOUND',
+      body: () => ({}),
+    },
+    invalid: 'none',
     noStore: true,
   },
   {

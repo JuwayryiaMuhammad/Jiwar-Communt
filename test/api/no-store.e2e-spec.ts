@@ -667,17 +667,26 @@ describe('API v0 — no-store', () => {
    * The live works permits of A's home are cancelled first, so the unit's
    * three-live limit never answers instead.
    */
-  const clearPermits = async () => {
-    const live = body<{ data: { id: string }[] }>(
-      await as(
-        'owner',
-        'GET',
-        `/units/${w.a.homeUnitId}/permits?kind=works&status=pending`,
-      ),
-    ).data;
-    for (const p of live)
-      await as('owner', 'POST', `/permits/${p.id}/cancel`, {});
+  const clearPermits = async (kind = 'works') => {
+    for (const status of ['pending', 'approved']) {
+      const live = body<{ data: { id: string }[] }>(
+        await as(
+          'owner',
+          'GET',
+          `/units/${w.a.homeUnitId}/permits?kind=${kind}&status=${status}`,
+        ),
+      ).data;
+      for (const p of live)
+        await as('owner', 'POST', `/permits/${p.id}/cancel`, {});
+    }
   };
+  /** A small event of A's home, approved at once: the response. */
+  const aPermitEvent = () =>
+    as('owner', 'POST', `/units/${w.a.homeUnitId}/permits/events`, {
+      startsAt: at(localDay(4), 18).toISOString(),
+      endsAt: at(localDay(4), 22).toISOString(),
+      guests: [{ fullName: 'No-store Guest' }],
+    });
   const aWorksBody = {
     workType: 'finishing',
     startsOn: localDay(2),
@@ -727,6 +736,51 @@ describe('API v0 — no-store', () => {
     'POST /permits/{id}/cancel': async () =>
       as('owner', 'POST', `/permits/${await aPermit()}/cancel`, {}),
     'POST /permits/{id}/workers': async () => aWorker(await aPermit()),
+    'POST /units/{unitId}/permits/moves': async () => {
+      await clearPermits('move');
+      return as('owner', 'POST', `/units/${w.a.homeUnitId}/permits/moves`, {
+        date: localDay(3),
+        window: { from: '10:00', to: '12:00' },
+        truckPlate: 'NS 1',
+        itemsDescription: 'Boxes',
+      });
+    },
+    'POST /units/{unitId}/permits/material-exits': async () => {
+      await clearPermits('material_exit');
+      return as(
+        'owner',
+        'POST',
+        `/units/${w.a.homeUnitId}/permits/material-exits`,
+        {
+          validFrom: localDay(1),
+          validUntil: localDay(2),
+          items: [{ name: 'Tiles', quantity: 2 }],
+        },
+      );
+    },
+    'POST /units/{unitId}/permits/events': async () => {
+      await clearPermits('event');
+      return aPermitEvent();
+    },
+    'POST /permits/{id}/guests': async () => {
+      await clearPermits('event');
+      const id = body<{ id: string }>(await aPermitEvent()).id;
+      return as('owner', 'POST', `/permits/${id}/guests`, {
+        guests: [{ fullName: 'No-store Late Guest' }],
+      });
+    },
+    'POST /permits/{id}/guests/{guestId}/remove': async () => {
+      await clearPermits('event');
+      const made = body<{ id: string; event: { guests: { id: string }[] } }>(
+        await aPermitEvent(),
+      );
+      return as(
+        'owner',
+        'POST',
+        `/permits/${made.id}/guests/${made.event.guests[0].id}/remove`,
+        {},
+      );
+    },
     'POST /permits/{id}/workers/{workerId}/remove': async () => {
       const permitId = await aPermit();
       const added = body<{ works: { workers: { id: string }[] } }>(

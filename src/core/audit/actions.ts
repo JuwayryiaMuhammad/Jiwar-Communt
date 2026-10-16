@@ -863,6 +863,8 @@ export const AUDIT_ACTIONS = {
   'unit_permit.worker_added': { log: 'tenant', target: 'unit_permit' },
   // metadata: workerId, side (requester | management), reasonCode.
   'unit_permit.worker_removed': { log: 'tenant', target: 'unit_permit' },
+  // metadata: added, removed, guests (how many now). Never a name or plate.
+  'unit_permit.guests_changed': { log: 'tenant', target: 'unit_permit' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

@@ -143,6 +143,49 @@ describe('Audit coverage — permits', () => {
       for (const row of [r, added, removed, cancelled])
         expect(JSON.stringify(row)).not.toMatch(new RegExp(`${WORDS}|9182`));
     });
+
+    it('an event: requested at once, its guests changed by counts', async () => {
+      const event = await p.event(s.alice, s.home.id, 2, {
+        title: WORDS,
+        guests: [
+          { fullName: WORDS, vehiclePlate: 'AUD 1' },
+          { fullName: 'Second Guest' },
+        ],
+      });
+      const r = await single('unit_permit.requested', event.id);
+      expect(r.metadata).toMatchObject({
+        kind: 'event',
+        approvedAtOnce: true,
+        title: true,
+        guests: 2,
+      });
+      await p
+        .http('post', `/permits/${event.id}/guests`, s.alice.token, {
+          guests: [{ fullName: WORDS }],
+        })
+        .expect(201);
+      await p
+        .http(
+          'post',
+          `/permits/${event.id}/guests/${event.event!.guests[0].id}/remove`,
+          s.alice.token,
+          {},
+        )
+        .expect(200);
+      const found = await read.tenant(s.c.tenantId, {
+        action: 'unit_permit.guests_changed',
+        targetId: event.id,
+      });
+      covered.add('unit_permit.guests_changed');
+      expect(found.map((f) => f.metadata)).toEqual([
+        { added: 1, removed: 0, guests: 3 },
+        { added: 0, removed: 1, guests: 2 },
+      ]);
+      expect(found[0]).toMatchObject(by(s.alice, 'unit_permit'));
+      expect(JSON.stringify([r, ...found])).not.toMatch(
+        new RegExp(`${WORDS}|AUD 1`),
+      );
+    });
   });
 
   describe('catalog completeness', () => {

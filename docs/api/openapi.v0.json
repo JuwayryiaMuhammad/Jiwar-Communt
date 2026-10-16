@@ -300,6 +300,21 @@
         ],
         "type": "object"
       },
+      "AddPermitGuestsDto": {
+        "properties": {
+          "guests": {
+            "description": "Until the event starts (PERMIT_STARTED); never past its guest limit (PERMIT_LIMIT_REACHED, params.scope `guests`).",
+            "items": {
+              "$ref": "#/components/schemas/PermitGuestDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "guests"
+        ],
+        "type": "object"
+      },
       "AddPermitWorkerDto": {
         "properties": {
           "fullName": {
@@ -5276,6 +5291,39 @@
         ],
         "type": "object"
       },
+      "CreateEventPermitDto": {
+        "properties": {
+          "endsAt": {
+            "description": "After `startsAt` (ENDS_BEFORE_START), 24 hours at most (WINDOW_TOO_LONG, params.maxHours); past midnight is fine.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "guests": {
+            "description": "1 to 150 guests. Up to 20 it is approved at once and may hold 20; more waits for the management and may hold as many as were listed.",
+            "items": {
+              "$ref": "#/components/schemas/PermitGuestDto"
+            },
+            "type": "array"
+          },
+          "startsAt": {
+            "description": "Not more than 5 minutes ago (INVALID_VALUE); its local day at most 90 days ahead (DAY_OUT_OF_RANGE).",
+            "format": "date-time",
+            "type": "string"
+          },
+          "title": {
+            "example": "Omar’s birthday",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "startsAt",
+          "endsAt",
+          "guests"
+        ],
+        "type": "object"
+      },
       "CreateFacilityDto": {
         "properties": {
           "cancelCutoffMinutes": {
@@ -5484,6 +5532,77 @@
           "unitId",
           "reason",
           "gateId"
+        ],
+        "type": "object"
+      },
+      "CreateMaterialExitDto": {
+        "properties": {
+          "items": {
+            "description": "What goes out: 1 to 30 lines.",
+            "items": {
+              "$ref": "#/components/schemas/MaterialItemDto"
+            },
+            "type": "array"
+          },
+          "photoFileId": {
+            "description": "A finalized `permit_photo` of the caller: the goods (FILE_NOT_AVAILABLE).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "validFrom": {
+            "description": "The first local day it may be used: from today, at most 90 days ahead (DAY_OUT_OF_RANGE).",
+            "example": "2026-11-05",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "validUntil": {
+            "description": "The last local day: not before `validFrom` (ENDS_BEFORE_START), seven days at most (PERIOD_TOO_LONG).",
+            "example": "2026-11-07",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "validFrom",
+          "validUntil",
+          "items"
+        ],
+        "type": "object"
+      },
+      "CreateMovePermitDto": {
+        "properties": {
+          "date": {
+            "description": "The local day: from today, at most 90 days ahead (DAY_OUT_OF_RANGE); a work day of the compound, not a day off (NOT_A_WORK_DAY).",
+            "example": "2026-11-05",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "itemsDescription": {
+            "example": "Two sofas, a fridge and twenty boxes",
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "truckPlate": {
+            "description": "The truck’s plate. Arabic letters, Latin letters, Western or Arabic-Indic digits and spaces; tidied (trimmed, single spaces, Latin upper case), at most 12 characters after that (INVALID_FORMAT, params.maxLength).",
+            "example": "ن ق ل ٤٥٦",
+            "maxLength": 12,
+            "type": "string"
+          },
+          "window": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PermitHoursDto"
+              }
+            ],
+            "description": "Inside the compound’s work hours (OUTSIDE_WORK_HOURS, params.from and params.to); not over already (INVALID_VALUE on `window.to`)."
+          }
+        },
+        "required": [
+          "date",
+          "window",
+          "truckPlate",
+          "itemsDescription"
         ],
         "type": "object"
       },
@@ -13596,6 +13715,27 @@
         ],
         "type": "object"
       },
+      "MaterialItemDto": {
+        "properties": {
+          "name": {
+            "example": "Old tiles",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "quantity": {
+            "example": 20,
+            "maximum": 9999,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "quantity"
+        ],
+        "type": "object"
+      },
       "MaterialItemView": {
         "properties": {
           "name": {
@@ -16704,6 +16844,26 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "PermitGuestDto": {
+        "properties": {
+          "fullName": {
+            "description": "The guard checks it at the gate.",
+            "example": "Sara Mostafa",
+            "maxLength": 120,
+            "minLength": 2,
+            "type": "string"
+          },
+          "vehiclePlate": {
+            "description": "Their car’s plate, when they drive in. Arabic letters, Latin letters, Western or Arabic-Indic digits and spaces; tidied (trimmed, single spaces, Latin upper case), at most 12 characters after that (INVALID_FORMAT, params.maxLength).",
+            "maxLength": 12,
+            "type": "string"
+          }
+        },
+        "required": [
+          "fullName"
         ],
         "type": "object"
       },
@@ -46295,6 +46455,111 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/permits/{id}/guests": {
+      "post": {
+        "description": "The host or the unit’s primary, until the event starts (PERMIT_STARTED), never past its guest limit (PERMIT_LIMIT_REACHED, params.scope `guests`): a bigger event is a new request.",
+        "operationId": "PermitsController_addGuests",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddPermitGuestsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add guests to an event",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/permits/{id}/guests/{guestId}/remove": {
+      "post": {
+        "description": "While the event is open; from then on the guard refuses them (`guest_removed`).",
+        "operationId": "PermitsController_removeGuest",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "guestId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take a guest off an event’s list",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/permits/{id}/workers": {
       "post": {
         "description": "While the permit is pending, or approved and not ended (PERMIT_NOT_ACTIVE); at most 30 (PERMIT_LIMIT_REACHED, params.scope `workers`). No new approval. The last four of the ID are kept only as a keyed hash: the guard types them from the card at the gate.",
@@ -57391,6 +57656,180 @@
           }
         ],
         "summary": "List a unit’s permits",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/permits/events": {
+      "post": {
+        "description": "Anyone the unit lets invite visitors (PERMIT_NOT_ALLOWED). Up to 20 guests it is approved at once; 21 to 150 waits for the management. The guard checks the guests' names at the gate. A unit holds at most 3 live works permits, 2 moves, 5 material exits and 3 upcoming events (PERMIT_LIMIT_REACHED, params.scope and params.max).",
+        "operationId": "PermitsController_event",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEventPermitDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Hold a private event with a guest list",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/permits/material-exits": {
+      "post": {
+        "description": "The unit's primary asks, in advance: the items, an optional photo, valid for up to seven days. Once approved, the guard checks it at the exit and marks it used: once. Taking materials in needs no permit (the guard logs it). A unit holds at most 3 live works permits, 2 moves, 5 material exits and 3 upcoming events (PERMIT_LIMIT_REACHED, params.scope and params.max).",
+        "operationId": "PermitsController_materialExit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMaterialExitDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask to take materials out",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/permits/moves": {
+      "post": {
+        "description": "The unit's primary asks: a work day of the compound and a window inside its work hours, the truck's plate and the items. Pending until the management decides; the guard sees it at the gate and finds it by the plate. A unit holds at most 3 live works permits, 2 moves, 5 material exits and 3 upcoming events (PERMIT_LIMIT_REACHED, params.scope and params.max).",
+        "operationId": "PermitsController_move",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMovePermitDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask for a furniture move permit",
         "tags": [
           "permits"
         ],

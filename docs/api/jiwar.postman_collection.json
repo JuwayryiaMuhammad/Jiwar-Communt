@@ -18030,6 +18030,89 @@
           }
         },
         {
+          "name": "Add guests to an event",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"guests\": []\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `guests` | object[] | yes | Until the event starts (PERMIT_STARTED); never past its guest limit (PERMIT_LIMIT_REACHED, params.scope `guests`). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permits",
+                ":id",
+                "guests"
+              ],
+              "raw": "{{baseUrl}}/api/v1/permits/:id/guests",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Take a guest off an event’s list",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permits",
+                ":id",
+                "guests",
+                ":guestId",
+                "remove"
+              ],
+              "raw": "{{baseUrl}}/api/v1/permits/:id/guests/:guestId/remove",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "guestId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Add a contractor worker to a works permit",
           "request": {
             "body": {
@@ -18211,6 +18294,153 @@
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/units/:unitId/permits",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Hold a private event with a guest list",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"startsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"endsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"guests\": []\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `endsAt` | string (date-time) | yes | After `startsAt` (ENDS_BEFORE_START), 24 hours at most (WINDOW_TOO_LONG, params.maxHours); past midnight is fine. |\n| `guests` | object[] | yes | 1 to 150 guests. Up to 20 it is approved at once and may hold 20; more waits for the management and may hold as many as were listed. |\n| `startsAt` | string (date-time) | yes | Not more than 5 minutes ago (INVALID_VALUE); its local day at most 90 days ahead (DAY_OUT_OF_RANGE). |\n| `title` | string |  |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "permits",
+                "events"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/permits/events",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ask to take materials out",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"validFrom\": \"2026-11-05\",\n  \"validUntil\": \"2026-11-07\",\n  \"items\": []\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `items` | object[] | yes | What goes out: 1 to 30 lines. |\n| `photoFileId` | string (uuid) |  | A finalized `permit_photo` of the caller: the goods (FILE_NOT_AVAILABLE). |\n| `validFrom` | string | yes | The first local day it may be used: from today, at most 90 days ahead (DAY_OUT_OF_RANGE). |\n| `validUntil` | string | yes | The last local day: not before `validFrom` (ENDS_BEFORE_START), seven days at most (PERIOD_TOO_LONG). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "permits",
+                "material-exits"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/permits/material-exits",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ask for a furniture move permit",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"date\": \"2026-11-05\",\n  \"window\": {\n    \"from\": \"09:00\",\n    \"to\": \"17:00\"\n  },\n  \"truckPlate\": \"ن ق ل ٤٥٦\",\n  \"itemsDescription\": \"Two sofas, a fridge and twenty boxes\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `date` | string | yes | The local day: from today, at most 90 days ahead (DAY_OUT_OF_RANGE); a work day of the compound, not a day off (NOT_A_WORK_DAY). |\n| `itemsDescription` | string | yes |  |\n| `truckPlate` | string | yes | The truck’s plate. Arabic letters, Latin letters, Western or Arabic-Indic digits and spaces; tidied (trimmed, single spaces, Latin upper case), at most 12 characters after that (INVALID_FORMAT, params.maxLength). |\n| `window` | object | yes | Inside the compound’s work hours (OUTSIDE_WORK_HOURS, params.from and params.to); not over already (INVALID_VALUE on `window.to`). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "permits",
+                "moves"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/permits/moves",
               "variable": [
                 {
                   "description": "",

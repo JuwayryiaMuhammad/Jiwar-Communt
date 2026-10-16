@@ -2,19 +2,28 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IdDocumentType, UnitPermitKind } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsDate,
   IsEnum,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   Length,
   Matches,
+  Max,
+  Min,
   ValidateNested,
 } from 'class-validator';
+import { PLATE_MAX } from '../../../core/common/vehicle-plate';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { REASON_CODES } from '../../../core/common/reasons';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { LOCAL_DATE } from '../../vehicles/dto/vehicles.dto';
+import { PERMIT_LIMITS } from '../permit-rules';
 import { PERMIT_VIEW_STATUSES } from '../views/permit.views';
 import { PermitHoursDto } from './permit-settings.dto';
 
@@ -175,4 +184,218 @@ export class AddPermitWorkerDto {
   @IsString()
   @Matches(/^[A-Z0-9]{4}$/)
   idLast4: string;
+}
+
+export const ITEMS_DESCRIPTION = { min: 1, max: 1000 } as const;
+export const ITEM_NAME = { min: 1, max: 80 } as const;
+export const ITEM_QUANTITY = { min: 1, max: 9999 } as const;
+export const EVENT_TITLE = { min: 1, max: 120 } as const;
+const MAX_ITEMS = 30;
+
+const PLATE_TEXT =
+  'Arabic letters, Latin letters, Western or Arabic-Indic digits and spaces; tidied (trimmed, single spaces, Latin upper case), at most 12 characters after that (INVALID_FORMAT, params.maxLength).';
+
+export class CreateMovePermitDto {
+  @ApiProperty({
+    type: String,
+    pattern: LOCAL_DATE.source,
+    example: '2026-11-05',
+    description:
+      'The local day: from today, at most 90 days ahead (DAY_OUT_OF_RANGE); a work day of the compound, not a day off (NOT_A_WORK_DAY).',
+  })
+  @IsString()
+  @Matches(LOCAL_DATE)
+  date: string;
+
+  @ApiProperty({
+    type: PermitHoursDto,
+    description:
+      'Inside the compound’s work hours (OUTSIDE_WORK_HOURS, params.from and params.to); not over already (INVALID_VALUE on `window.to`).',
+  })
+  @ValidateNested()
+  @Type(() => PermitHoursDto)
+  window: PermitHoursDto;
+
+  @ApiProperty({
+    type: String,
+    maxLength: PLATE_MAX,
+    example: 'ن ق ل ٤٥٦',
+    description: `The truck’s plate. ${PLATE_TEXT}`,
+  })
+  @IsString()
+  truckPlate: string;
+
+  @ApiProperty({
+    type: String,
+    minLength: ITEMS_DESCRIPTION.min,
+    maxLength: ITEMS_DESCRIPTION.max,
+    example: 'Two sofas, a fridge and twenty boxes',
+  })
+  @IsString()
+  @Length(
+    ITEMS_DESCRIPTION.min,
+    ITEMS_DESCRIPTION.max,
+    withParams(ITEMS_DESCRIPTION),
+  )
+  itemsDescription: string;
+}
+
+export class MaterialItemDto {
+  @ApiProperty({
+    type: String,
+    minLength: ITEM_NAME.min,
+    maxLength: ITEM_NAME.max,
+    example: 'Old tiles',
+  })
+  @Transform(trim)
+  @IsString()
+  @Length(ITEM_NAME.min, ITEM_NAME.max, withParams(ITEM_NAME))
+  name: string;
+
+  @ApiProperty({
+    type: Number,
+    minimum: ITEM_QUANTITY.min,
+    maximum: ITEM_QUANTITY.max,
+    example: 20,
+  })
+  @IsInt(withParams(ITEM_QUANTITY))
+  @Min(ITEM_QUANTITY.min, withParams(ITEM_QUANTITY))
+  @Max(ITEM_QUANTITY.max, withParams(ITEM_QUANTITY))
+  quantity: number;
+}
+
+export class CreateMaterialExitDto {
+  @ApiProperty({
+    type: String,
+    pattern: LOCAL_DATE.source,
+    example: '2026-11-05',
+    description:
+      'The first local day it may be used: from today, at most 90 days ahead (DAY_OUT_OF_RANGE).',
+  })
+  @IsString()
+  @Matches(LOCAL_DATE)
+  validFrom: string;
+
+  @ApiProperty({
+    type: String,
+    pattern: LOCAL_DATE.source,
+    example: '2026-11-07',
+    description:
+      'The last local day: not before `validFrom` (ENDS_BEFORE_START), seven days at most (PERIOD_TOO_LONG).',
+  })
+  @IsString()
+  @Matches(LOCAL_DATE)
+  validUntil: string;
+
+  @ApiProperty({
+    type: [MaterialItemDto],
+    description: `What goes out: 1 to ${MAX_ITEMS} lines.`,
+  })
+  @IsArray()
+  @ArrayMinSize(1, withParams({ min: 1, max: MAX_ITEMS }))
+  @ArrayMaxSize(MAX_ITEMS, withParams({ min: 1, max: MAX_ITEMS }))
+  @ValidateNested({ each: true })
+  @Type(() => MaterialItemDto)
+  items: MaterialItemDto[];
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'A finalized `permit_photo` of the caller: the goods (FILE_NOT_AVAILABLE).',
+  })
+  @IsOptional()
+  @IsUUID()
+  photoFileId?: string;
+}
+
+export class PermitGuestDto {
+  @ApiProperty({
+    type: String,
+    minLength: PERSON_NAME.min,
+    maxLength: PERSON_NAME.max,
+    example: 'Sara Mostafa',
+    description: 'The guard checks it at the gate.',
+  })
+  @Transform(trim)
+  @IsString()
+  @Length(PERSON_NAME.min, PERSON_NAME.max, withParams(PERSON_NAME))
+  fullName: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    maxLength: PLATE_MAX,
+    description: `Their car’s plate, when they drive in. ${PLATE_TEXT}`,
+  })
+  @IsOptional()
+  @IsString()
+  vehiclePlate?: string;
+}
+
+export class CreateEventPermitDto {
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description:
+      'Not more than 5 minutes ago (INVALID_VALUE); its local day at most 90 days ahead (DAY_OUT_OF_RANGE).',
+  })
+  @Type(() => Date)
+  @IsDate()
+  startsAt: Date;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description:
+      'After `startsAt` (ENDS_BEFORE_START), 24 hours at most (WINDOW_TOO_LONG, params.maxHours); past midnight is fine.',
+  })
+  @Type(() => Date)
+  @IsDate()
+  endsAt: Date;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    minLength: EVENT_TITLE.min,
+    maxLength: EVENT_TITLE.max,
+    example: 'Omar’s birthday',
+  })
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  @Length(EVENT_TITLE.min, EVENT_TITLE.max, withParams(EVENT_TITLE))
+  title?: string;
+
+  @ApiProperty({
+    type: [PermitGuestDto],
+    description: `1 to ${PERMIT_LIMITS.eventGuestsMax} guests. Up to ${PERMIT_LIMITS.eventGuestsWithoutApproval} it is approved at once and may hold ${PERMIT_LIMITS.eventGuestsWithoutApproval}; more waits for the management and may hold as many as were listed.`,
+  })
+  @IsArray()
+  @ArrayMinSize(1, withParams({ min: 1, max: PERMIT_LIMITS.eventGuestsMax }))
+  @ArrayMaxSize(
+    PERMIT_LIMITS.eventGuestsMax,
+    withParams({ min: 1, max: PERMIT_LIMITS.eventGuestsMax }),
+  )
+  @ValidateNested({ each: true })
+  @Type(() => PermitGuestDto)
+  guests: PermitGuestDto[];
+}
+
+export class AddPermitGuestsDto {
+  @ApiProperty({
+    type: [PermitGuestDto],
+    description:
+      'Until the event starts (PERMIT_STARTED); never past its guest limit (PERMIT_LIMIT_REACHED, params.scope `guests`).',
+  })
+  @IsArray()
+  @ArrayMinSize(1, withParams({ min: 1, max: PERMIT_LIMITS.eventGuestsMax }))
+  @ArrayMaxSize(
+    PERMIT_LIMITS.eventGuestsMax,
+    withParams({ min: 1, max: PERMIT_LIMITS.eventGuestsMax }),
+  )
+  @ValidateNested({ each: true })
+  @Type(() => PermitGuestDto)
+  guests: PermitGuestDto[];
 }

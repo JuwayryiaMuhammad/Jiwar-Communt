@@ -566,6 +566,8 @@ export const ErrorCode = {
   PERMIT_WORKER_NOT_FOUND: 'PERMIT_WORKER_NOT_FOUND',
   /** Unknown, or not of this event (ADR 0049). */
   PERMIT_GUEST_NOT_FOUND: 'PERMIT_GUEST_NOT_FOUND',
+  /** The event has started: its guest list takes no one more (409). */
+  PERMIT_STARTED: 'PERMIT_STARTED',
   /**
    * The server holds no PAYMENT_CREDENTIALS_KEY, so no credential can be
    * stored and online payment cannot be turned on (503, ADR 0046).

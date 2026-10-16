@@ -1,6 +1,6 @@
 import type { Response } from 'supertest';
 import type { Compound } from './community';
-import { day } from './facilities';
+import { at, day } from './facilities';
 import type { HttpHarness } from './http-app';
 import { safetyHelpers, type Who } from './safety';
 
@@ -215,6 +215,117 @@ export function permitHelpers(h: HttpHarness) {
     return { permit, worker: permit.works!.workers.at(-1)! };
   }
 
+  /** A move's body: in three days, 10:00–12:00. */
+  const moveBody = (over: Record<string, unknown> = {}) => ({
+    date: day(3),
+    window: { from: '10:00', to: '12:00' },
+    truckPlate: 'ن ق ل ٤٥٦',
+    itemsDescription: 'Two sofas and a fridge',
+    ...over,
+  });
+
+  function moveRaw(
+    as: Who,
+    unitId: string,
+    over: Record<string, unknown> = {},
+    headers: Record<string, string> = {},
+  ) {
+    return http(
+      'post',
+      `/units/${unitId}/permits/moves`,
+      as.token,
+      moveBody(over),
+      headers,
+    );
+  }
+
+  /** A move permit that must be made: its body. */
+  async function move(
+    as: Who,
+    unitId: string,
+    over: Record<string, unknown> = {},
+  ): Promise<PermitBody> {
+    return status(await moveRaw(as, unitId, over), 201).body as PermitBody;
+  }
+
+  /** A material exit's body: from tomorrow, three days, two lines. */
+  const exitBody = (over: Record<string, unknown> = {}) => ({
+    validFrom: day(1),
+    validUntil: day(3),
+    items: [
+      { name: 'Old tiles', quantity: 20 },
+      { name: 'Cement bags', quantity: 4 },
+    ],
+    ...over,
+  });
+
+  function exitRaw(
+    as: Who,
+    unitId: string,
+    over: Record<string, unknown> = {},
+    headers: Record<string, string> = {},
+  ) {
+    return http(
+      'post',
+      `/units/${unitId}/permits/material-exits`,
+      as.token,
+      exitBody(over),
+      headers,
+    );
+  }
+
+  /** A material exit that must be made: its body. */
+  async function exit(
+    as: Who,
+    unitId: string,
+    over: Record<string, unknown> = {},
+  ): Promise<PermitBody> {
+    return status(await exitRaw(as, unitId, over), 201).body as PermitBody;
+  }
+
+  /** `n` guests, the first `withPlates` of them driving. */
+  const guestList = (n: number, withPlates = 0) =>
+    Array.from({ length: n }, (_, i) => ({
+      fullName: `Guest Number ${i + 1}`,
+      ...(i < withPlates ? { vehiclePlate: `GST ${i + 1}` } : {}),
+    }));
+
+  /** An event's body: in two days, 18:00 to 23:00, with `guests` guests. */
+  const eventBody = (guests = 5, over: Record<string, unknown> = {}) => ({
+    startsAt: at(day(2), 18).toISOString(),
+    endsAt: at(day(2), 23).toISOString(),
+    title: 'Birthday',
+    guests: guestList(guests),
+    ...over,
+  });
+
+  function eventRaw(
+    as: Who,
+    unitId: string,
+    guests = 5,
+    over: Record<string, unknown> = {},
+    headers: Record<string, string> = {},
+  ) {
+    return http(
+      'post',
+      `/units/${unitId}/permits/events`,
+      as.token,
+      eventBody(guests, over),
+      headers,
+    );
+  }
+
+  /** An event that must be made: its body. */
+  async function event(
+    as: Who,
+    unitId: string,
+    guests = 5,
+    over: Record<string, unknown> = {},
+  ): Promise<PermitBody> {
+    return status(await eventRaw(as, unitId, guests, over), 201)
+      .body as PermitBody;
+  }
+
   /** `GET /permits/:id` as `as`. */
   async function get(as: Who, id: string): Promise<PermitBody> {
     return (await http('get', `/permits/${id}`, as.token).expect(200))
@@ -251,6 +362,16 @@ export function permitHelpers(h: HttpHarness) {
     get,
     row,
     told,
+    moveBody,
+    moveRaw,
+    move,
+    exitBody,
+    exitRaw,
+    exit,
+    guestList,
+    eventBody,
+    eventRaw,
+    event,
   };
 }
 

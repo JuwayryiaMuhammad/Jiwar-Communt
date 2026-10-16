@@ -361,6 +361,14 @@ export class PermitsService implements OnModuleInit {
     });
   }
 
+  /** The permit read again, with what was written since. */
+  async reload(tx: TenantTxClient, r: PermitRecord): Promise<PermitRecord> {
+    return this.records.load(
+      tx,
+      await tx.unitPermit.findUniqueOrThrow({ where: { id: r.permit.id } }),
+    );
+  }
+
   /** The requester's, or the unit's primary's now; else not found. */
   async visible(tx: TenantTxClient, p: UnitPermit | null): Promise<UnitPermit> {
     if (!p) throw permitNotFound();

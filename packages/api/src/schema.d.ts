@@ -5248,6 +5248,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/permits/{id}/guests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add guests to an event
+         * @description The host or the unit’s primary, until the event starts (PERMIT_STARTED), never past its guest limit (PERMIT_LIMIT_REACHED, params.scope `guests`): a bigger event is a new request.
+         */
+        post: operations["PermitsController_addGuests"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/permits/{id}/guests/{guestId}/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take a guest off an event’s list
+         * @description While the event is open; from then on the guard refuses them (`guest_removed`).
+         */
+        post: operations["PermitsController_removeGuest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/permits/{id}/workers": {
         parameters: {
             query?: never;
@@ -8891,6 +8931,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/permits/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Hold a private event with a guest list
+         * @description Anyone the unit lets invite visitors (PERMIT_NOT_ALLOWED). Up to 20 guests it is approved at once; 21 to 150 waits for the management. The guard checks the guests' names at the gate. A unit holds at most 3 live works permits, 2 moves, 5 material exits and 3 upcoming events (PERMIT_LIMIT_REACHED, params.scope and params.max).
+         */
+        post: operations["PermitsController_event"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/permits/material-exits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask to take materials out
+         * @description The unit's primary asks, in advance: the items, an optional photo, valid for up to seven days. Once approved, the guard checks it at the exit and marks it used: once. Taking materials in needs no permit (the guard logs it). A unit holds at most 3 live works permits, 2 moves, 5 material exits and 3 upcoming events (PERMIT_LIMIT_REACHED, params.scope and params.max).
+         */
+        post: operations["PermitsController_materialExit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/permits/moves": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask for a furniture move permit
+         * @description The unit's primary asks: a work day of the compound and a window inside its work hours, the truck's plate and the items. Pending until the management decides; the guard sees it at the gate and finds it by the plate. A unit holds at most 3 live works permits, 2 moves, 5 material exits and 3 upcoming events (PERMIT_LIMIT_REACHED, params.scope and params.max).
+         */
+        post: operations["PermitsController_move"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/permits/works": {
         parameters: {
             query?: never;
@@ -9605,6 +9705,10 @@ export interface components {
         };
         ActivationView: {
             missing: ("unitType" | "areaSqm" | "building")[];
+        };
+        AddPermitGuestsDto: {
+            /** @description Until the event starts (PERMIT_STARTED); never past its guest limit (PERMIT_LIMIT_REACHED, params.scope `guests`). */
+            guests: components["schemas"]["PermitGuestDto"][];
         };
         AddPermitWorkerDto: {
             /**
@@ -11144,6 +11248,22 @@ export interface components {
             /** @description A language is whole or absent; at least one is there. */
             titleEn?: string | null;
         };
+        CreateEventPermitDto: {
+            /**
+             * Format: date-time
+             * @description After `startsAt` (ENDS_BEFORE_START), 24 hours at most (WINDOW_TOO_LONG, params.maxHours); past midnight is fine.
+             */
+            endsAt: string;
+            /** @description 1 to 150 guests. Up to 20 it is approved at once and may hold 20; more waits for the management and may hold as many as were listed. */
+            guests: components["schemas"]["PermitGuestDto"][];
+            /**
+             * Format: date-time
+             * @description Not more than 5 minutes ago (INVALID_VALUE); its local day at most 90 days ahead (DAY_OUT_OF_RANGE).
+             */
+            startsAt: string;
+            /** @example Omar’s birthday */
+            title?: string;
+        };
         CreateFacilityDto: {
             /** @description A resident cancels a confirmed booking at least this many minutes before it starts. Default 120. */
             cancelCutoffMinutes?: number;
@@ -11221,6 +11341,41 @@ export interface components {
              * @description The caller’s unit: someone who lives there asks.
              */
             unitId: string;
+        };
+        CreateMaterialExitDto: {
+            /** @description What goes out: 1 to 30 lines. */
+            items: components["schemas"]["MaterialItemDto"][];
+            /**
+             * Format: uuid
+             * @description A finalized `permit_photo` of the caller: the goods (FILE_NOT_AVAILABLE).
+             */
+            photoFileId?: string;
+            /**
+             * @description The first local day it may be used: from today, at most 90 days ahead (DAY_OUT_OF_RANGE).
+             * @example 2026-11-05
+             */
+            validFrom: string;
+            /**
+             * @description The last local day: not before `validFrom` (ENDS_BEFORE_START), seven days at most (PERIOD_TOO_LONG).
+             * @example 2026-11-07
+             */
+            validUntil: string;
+        };
+        CreateMovePermitDto: {
+            /**
+             * @description The local day: from today, at most 90 days ahead (DAY_OUT_OF_RANGE); a work day of the compound, not a day off (NOT_A_WORK_DAY).
+             * @example 2026-11-05
+             */
+            date: string;
+            /** @example Two sofas, a fridge and twenty boxes */
+            itemsDescription: string;
+            /**
+             * @description The truck’s plate. Arabic letters, Latin letters, Western or Arabic-Indic digits and spaces; tidied (trimmed, single spaces, Latin upper case), at most 12 characters after that (INVALID_FORMAT, params.maxLength).
+             * @example ن ق ل ٤٥٦
+             */
+            truckPlate: string;
+            /** @description Inside the compound’s work hours (OUTSIDE_WORK_HOURS, params.from and params.to); not over already (INVALID_VALUE on `window.to`). */
+            window: components["schemas"]["PermitHoursDto"];
         };
         CreateParkingReportDto: {
             /** @example Visitor area B, by the gym */
@@ -13767,6 +13922,12 @@ export interface components {
              */
             validUntil: string;
         };
+        MaterialItemDto: {
+            /** @example Old tiles */
+            name: string;
+            /** @example 20 */
+            quantity: number;
+        };
         MaterialItemView: {
             /** @example Old tiles */
             name: string;
@@ -14718,6 +14879,15 @@ export interface components {
         PermissionViewList: {
             data: components["schemas"]["PermissionView"][];
             nextCursor: string | null;
+        };
+        PermitGuestDto: {
+            /**
+             * @description The guard checks it at the gate.
+             * @example Sara Mostafa
+             */
+            fullName: string;
+            /** @description Their car’s plate, when they drive in. Arabic letters, Latin letters, Western or Arabic-Indic digits and spaces; tidied (trimmed, single spaces, Latin upper case), at most 12 characters after that (INVALID_FORMAT, params.maxLength). */
+            vehiclePlate?: string;
         };
         PermitGuestView: {
             /** @description Null once purged, 30 days after the event. */
@@ -27170,6 +27340,56 @@ export interface operations {
             };
         };
     };
+    PermitsController_addGuests: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddPermitGuestsDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitView"];
+                };
+            };
+        };
+    };
+    PermitsController_removeGuest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                guestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitView"];
+                };
+            };
+        };
+    };
     PermitsController_addWorker: {
         parameters: {
             query?: never;
@@ -32853,6 +33073,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PermitViewList"];
+                };
+            };
+        };
+    };
+    PermitsController_event: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEventPermitDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitView"];
+                };
+            };
+        };
+    };
+    PermitsController_materialExit: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateMaterialExitDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitView"];
+                };
+            };
+        };
+    };
+    PermitsController_move: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateMovePermitDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitView"];
                 };
             };
         };

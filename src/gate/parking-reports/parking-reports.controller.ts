@@ -13,6 +13,7 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
+import { PermissionsService } from '../../core/access/permissions.service';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
@@ -78,7 +79,15 @@ export class MyParkingReportsController {
 @RequirePermissions('parking_reports.handle')
 @Controller('staff/parking-reports')
 export class StaffParkingReportsController {
-  constructor(private readonly reports: ParkingReportsService) {}
+  constructor(
+    private readonly reports: ParkingReportsService,
+    private readonly permissions: PermissionsService,
+  ) {}
+
+  /** A guard sees the reporter by first name (ADR 0050). */
+  private async asGuard(): Promise<boolean> {
+    return this.permissions.has('gate.operate');
+  }
 
   @Get()
   @NoStore()
@@ -90,8 +99,9 @@ export class StaffParkingReportsController {
   async list(
     @Query() q: StaffParkingReportsQueryDto,
   ): Promise<ListResponse<StaffParkingReportView>> {
+    const asGuard = await this.asGuard();
     return toList(await this.reports.list(q), (r) =>
-      StaffParkingReportView.from(r),
+      StaffParkingReportView.from(r, asGuard),
     );
   }
 
@@ -104,7 +114,10 @@ export class StaffParkingReportsController {
   async get(
     @Param('id', parseId()) id: string,
   ): Promise<StaffParkingReportView> {
-    return StaffParkingReportView.from(await this.reports.get(id));
+    return StaffParkingReportView.from(
+      await this.reports.get(id),
+      await this.asGuard(),
+    );
   }
 
   @Post(':id/close')
@@ -118,6 +131,7 @@ export class StaffParkingReportsController {
   ): Promise<StaffParkingReportView> {
     return StaffParkingReportView.from(
       await this.reports.close(id, dto.reasonCode),
+      await this.asGuard(),
     );
   }
 
@@ -135,6 +149,9 @@ export class StaffParkingReportsController {
     @Param('id', parseId()) id: string,
     @Body() dto: IssueFineDto,
   ): Promise<StaffParkingReportView> {
-    return StaffParkingReportView.from(await this.reports.convert(id, dto));
+    return StaffParkingReportView.from(
+      await this.reports.convert(id, dto),
+      await this.asGuard(),
+    );
   }
 }

@@ -16,12 +16,13 @@ describe('access catalog', () => {
     }
   });
 
-  it('one kind default per kind: guard for staff, beside the maintenance roles and the accountant', () => {
+  it('one kind default per kind: guard for staff, beside the security supervisor, the maintenance roles and the accountant', () => {
     const staff = CODE_ACCESS_CATALOG.defaultRoles.filter(
       (r) => r.kind === 'staff',
     );
     expect(staff.map((r) => r.key)).toEqual([
       'guard',
+      'security_supervisor',
       'technician',
       'maintenance_supervisor',
       'accountant',

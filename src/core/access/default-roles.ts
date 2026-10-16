@@ -71,6 +71,11 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'finance.refund',
       'finance.reports',
       'permits.manage',
+      'guard_roster.manage',
+      'guard_tasks.manage',
+      'guard_instructions.manage',
+      'guard_reports.read',
+      'found_items.manage',
     ],
   },
   {
@@ -124,11 +129,28 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
     ],
   },
   {
-    // Gate guards (ADR 0028): the gate and its parcels (ADR 0035), inside a shift.
+    // Gate guards (ADR 0028): the gate and its parcels (ADR 0035), inside a
+    // shift, and the wrong-parking reports to close (ADR 0050; turning one
+    // into a fine stays `fines.issue`). Existing compounds' guard roles got
+    // `parking_reports.handle` from migration 20261028090000.
     key: 'guard',
     kindDefault: true,
     kind: 'staff',
-    permissions: ['gate.operate', 'parcels.handle'],
+    permissions: ['gate.operate', 'parcels.handle', 'parking_reports.handle'],
+  },
+  {
+    // The security supervisor (ADR 0050): the guards' roster and swaps,
+    // their tasks and instructions, and the daily report. Not a guard: a
+    // compound adds `gate.operate` to work a gate too.
+    key: 'security_supervisor',
+    kind: 'staff',
+    kindDefault: false,
+    permissions: [
+      'guard_roster.manage',
+      'guard_tasks.manage',
+      'guard_instructions.manage',
+      'guard_reports.read',
+    ],
   },
   {
     // Maintenance technicians (ADR 0032): the tickets assigned to them.

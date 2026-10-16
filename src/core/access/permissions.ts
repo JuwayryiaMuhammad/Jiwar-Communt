@@ -161,6 +161,19 @@ export const PERMISSIONS = {
   // guard sees and records them with `gate.operate`, inside a shift.
   'permits.request': { kinds: ['resident', 'family'] },
   'permits.manage': { kinds: ['staff', 'manager'] },
+  // Guard shifts and tasks (ADR 0050). A guard works inside a shift with
+  // `gate.operate`. `guard_roster.manage` keeps the roster (weekly
+  // templates and single slots), reads attendance and overtime, approves
+  // swaps and keeps the handover checklist; `guard_tasks.manage` gives
+  // guards tasks; `guard_instructions.manage` sends instructions guards
+  // must acknowledge; `guard_reports.read` reads and exports the daily
+  // report; `found_items.manage` receives found items from the gate and
+  // records claims at the office.
+  'guard_roster.manage': { kinds: ['staff', 'manager'] },
+  'guard_tasks.manage': { kinds: ['staff', 'manager'] },
+  'guard_instructions.manage': { kinds: ['staff', 'manager'] },
+  'guard_reports.read': { kinds: ['staff', 'manager'] },
+  'found_items.manage': { kinds: ['staff', 'manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

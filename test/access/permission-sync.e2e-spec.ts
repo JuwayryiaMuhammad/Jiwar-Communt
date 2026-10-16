@@ -1,4 +1,7 @@
 import { Logger } from '@nestjs/common';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { Client } from 'pg';
 import {
   CODE_ACCESS_CATALOG,
   catalogProblems,
@@ -29,6 +32,9 @@ describe('Permission sync', () => {
   });
 
   const base = CODE_ACCESS_CATALOG;
+
+  /** The guard role as the code has it now (G4 added the parking reports). */
+  const GUARD = ['gate.operate', 'parcels.handle', 'parking_reports.handle'];
 
   /** The code catalog plus a new manager-only permission. */
   const withExport: AccessCatalog = {
@@ -394,14 +400,12 @@ describe('Permission sync', () => {
     expect([...report.added].sort()).toEqual([...phase4].sort());
     expect(report.rolesCreated).toEqual([
       'guard',
+      'security_supervisor',
       'technician',
       'maintenance_supervisor',
       'accountant',
     ]);
-    expect((await role(t, 'guard')).permissions).toEqual([
-      'gate.operate',
-      'parcels.handle',
-    ]);
+    expect((await role(t, 'guard')).permissions).toEqual(GUARD);
     expect((await role(t, 'manager')).permissions).toEqual(
       expect.arrayContaining(['gate.manage', 'gate.read']),
     );
@@ -483,10 +487,7 @@ describe('Permission sync', () => {
 
     const report = await sync(base, t);
     expect([...report.added].sort()).toEqual([...g1].sort());
-    expect((await role(t, 'guard')).permissions).toEqual([
-      'gate.operate',
-      'parcels.handle',
-    ]);
+    expect((await role(t, 'guard')).permissions).toEqual(GUARD);
     expect((await role(t, 'manager')).permissions).toContain('parcels.manage');
     // The other staff roles and the residents do not get them.
     for (const key of ['resident', 'family_member', 'technician']) {
@@ -808,12 +809,17 @@ describe('Permission sync', () => {
     expect(manager).toEqual(expect.arrayContaining(g2.slice(2)));
     expect(manager).not.toContain('vehicles.register');
     expect(manager).not.toContain('parking.report');
-    // The guard looks plates up with gate.operate; no other staff role
-    // works vehicles, fines or reports until a manager says so.
+    // The guard looks plates up with gate.operate and closes the reports
+    // (G4, ADR 0050); no other staff role works vehicles, fines or reports
+    // until a manager says so.
     for (const key of ['guard', 'technician', 'maintenance_supervisor']) {
-      for (const permission of g2)
+      for (const permission of g2) {
+        if (key === 'guard' && permission === 'parking_reports.handle')
+          continue;
         expect((await role(t, key)).permissions).not.toContain(permission);
+      }
     }
+    expect((await role(t, 'guard')).permissions).toEqual(GUARD);
     expect(await sync(base, t)).toMatchObject({
       added: [],
       rolesCreated: [],
@@ -994,10 +1000,7 @@ describe('Permission sync', () => {
       expect((await role(t, key)).permissions).toContain('tickets.create');
       expect((await role(t, key)).permissions).not.toContain('tickets.work');
     }
-    expect((await role(t, 'guard')).permissions).toEqual([
-      'gate.operate',
-      'parcels.handle',
-    ]);
+    expect((await role(t, 'guard')).permissions).toEqual(GUARD);
     expect(await sync(base, t)).toMatchObject({
       added: [],
       rolesCreated: [],
@@ -1245,10 +1248,7 @@ describe('Permission sync', () => {
     ])
       expect(manager).not.toContain(p);
     // A guard responds with gate.operate inside a shift.
-    expect((await role(t, 'guard')).permissions).toEqual([
-      'gate.operate',
-      'parcels.handle',
-    ]);
+    expect((await role(t, 'guard')).permissions).toEqual(GUARD);
     for (const key of ['technician', 'maintenance_supervisor', 'accountant'])
       for (const permission of g6a)
         expect((await role(t, key)).permissions).not.toContain(permission);
@@ -1259,7 +1259,7 @@ describe('Permission sync', () => {
     });
   });
 
-  it('Phase G3 reaches an existing compound: permits.request for residents and family, permits.manage for the manager; the guard keeps its two (ADR 0049)', async () => {
+  it('Phase G3 reaches an existing compound: permits.request for residents and family, permits.manage for the manager; the guard keeps its own (ADR 0049)', async () => {
     const g3 = ['permits.request', 'permits.manage'];
     const before: AccessCatalog = {
       ...base,
@@ -1296,10 +1296,7 @@ describe('Permission sync', () => {
     expect(manager).toContain('permits.manage');
     expect(manager).not.toContain('permits.request');
     // A guard sees and records permits with gate.operate inside a shift.
-    expect((await role(t, 'guard')).permissions).toEqual([
-      'gate.operate',
-      'parcels.handle',
-    ]);
+    expect((await role(t, 'guard')).permissions).toEqual(GUARD);
     for (const key of ['technician', 'maintenance_supervisor', 'accountant'])
       for (const permission of g3)
         expect((await role(t, key)).permissions).not.toContain(permission);
@@ -1307,6 +1304,175 @@ describe('Permission sync', () => {
       added: [],
       rolesCreated: [],
       rolesChanged: 0,
+    });
+  });
+
+  describe('Phase G4 (ADR 0050)', () => {
+    const g4 = [
+      'guard_roster.manage',
+      'guard_tasks.manage',
+      'guard_instructions.manage',
+      'guard_reports.read',
+      'found_items.manage',
+    ];
+    /** The catalog before G4: no G4 permission, no supervisor, the guard's two. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !g4.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles
+        .filter((r) => r.key !== 'security_supervisor')
+        .map((r) => ({
+          ...r,
+          permissions: r.permissions.filter(
+            (p) =>
+              !g4.includes(p) &&
+              !(r.key === 'guard' && p === 'parking_reports.handle'),
+          ),
+        })),
+    };
+
+    async function compound(label: string): Promise<string> {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync G4 ${label} ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      return t;
+    }
+
+    it('reaches an existing compound: the five permissions for the manager, the security supervisor created with four; the guard is left to the migration', async () => {
+      const t = await compound('sync');
+      const report = await sync(base, t);
+      expect([...report.added].sort()).toEqual([...g4].sort());
+      expect(report.rolesCreated).toEqual(['security_supervisor']);
+      expect((await role(t, 'manager')).permissions).toEqual(
+        expect.arrayContaining(g4),
+      );
+      expect(
+        [...(await role(t, 'security_supervisor')).permissions].sort(),
+      ).toEqual([
+        'guard_instructions.manage',
+        'guard_reports.read',
+        'guard_roster.manage',
+        'guard_tasks.manage',
+      ]);
+      // parking_reports.handle was offered with G2: the sync never grants
+      // an offered permission again.
+      expect((await role(t, 'guard')).permissions).toEqual([
+        'gate.operate',
+        'parcels.handle',
+      ]);
+      for (const key of [
+        'resident',
+        'family_member',
+        'technician',
+        'maintenance_supervisor',
+        'accountant',
+      ])
+        for (const permission of g4)
+          expect((await role(t, key)).permissions).not.toContain(permission);
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+
+    it('the migration grants parking_reports.handle to each system guard role once, bumping its version, and touches no other role', async () => {
+      const t = await compound('migration');
+      await sync(base, t);
+      const custom = newId();
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx((tx) =>
+          tx.role.create({
+            data: {
+              id: custom,
+              tenantId: t,
+              key: 'night_guard',
+              name: 'Night',
+              kind: 'staff',
+            },
+          }),
+        ),
+      );
+      const versions = async () =>
+        Object.fromEntries(
+          (
+            await h.asTenant(t, () =>
+              h.tenantTx.withTenantTx((tx) =>
+                tx.role.findMany({
+                  select: { key: true, permissionsVersion: true },
+                }),
+              ),
+            )
+          ).map((r) => [r.key, r.permissionsVersion]),
+        );
+      const sql = readFileSync(
+        join(
+          __dirname,
+          '../../prisma/migrations/20261028090000_guard_parking_reports/migration.sql',
+        ),
+        'utf8',
+      );
+      const was = await versions();
+      const migrator = new Client({
+        connectionString: process.env.TEST_MIGRATOR_DATABASE_URL,
+      });
+      await migrator.connect();
+      try {
+        await migrator.query('BEGIN');
+        await migrator.query(sql);
+        await migrator.query(`SELECT set_config('app.tenant_id', $1, true)`, [
+          t,
+        ]);
+        const read = async () =>
+          (
+            await migrator.query<{
+              key: string;
+              permission: string | null;
+              v: number;
+            }>(
+              `SELECT r.key, rp.permission, r.permissions_version AS v
+                 FROM roles r
+                 LEFT JOIN role_permissions rp
+                   ON rp.role_id = r.id AND rp.permission = 'parking_reports.handle'
+                WHERE r.tenant_id = $1::uuid`,
+              [t],
+            )
+          ).rows;
+        const once = await read();
+        const by = (key: string) => once.find((r) => r.key === key)!;
+        expect(by('guard')).toEqual({
+          key: 'guard',
+          permission: 'parking_reports.handle',
+          v: was.guard + 1,
+        });
+        expect(by('night_guard').permission).toBeNull();
+        for (const r of once.filter(
+          (r) => !['guard', 'manager'].includes(r.key),
+        ))
+          expect(r.v).toBe(was[r.key]);
+        // The manager holds it already (G2): unchanged.
+        expect(by('manager').v).toBe(was.manager);
+        // A second run finds nothing to grant.
+        await migrator.query(sql);
+        await migrator.query(`SELECT set_config('app.tenant_id', $1, true)`, [
+          t,
+        ]);
+        expect(await read()).toEqual(once);
+      } finally {
+        await migrator.query('ROLLBACK');
+        await migrator.end();
+      }
     });
   });
 });

@@ -1,6 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ParkingReportStatus, type ParkingReport } from '@prisma/client';
-import { accountRef, AccountRefView } from '../../../core/common/http/personal';
+import {
+  accountRef,
+  AccountRefView,
+  firstNameRef,
+} from '../../../core/common/http/personal';
 import { PERMIT_STATUSES, reference } from '../../vehicles/vehicle-rules';
 import type { StaffReport } from '../parking-reports.service';
 
@@ -51,6 +55,38 @@ export class ReportMatchView {
   permitStatus: string;
 }
 
+/**
+ * Who reported: the full name for the management and the staff, the first
+ * name alone for a guard (ADR 0050: guards see residents by first name).
+ */
+export class ReporterRefView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    description:
+      'For the management and the staff. Absent for a guard, or when erased.',
+  })
+  fullName?: string | null;
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    description:
+      'For a guard (`gate.operate`). Absent otherwise, or when erased.',
+  })
+  firstName?: string | null;
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    enum: [true],
+    description: 'Present (true) only on an erased account.',
+  })
+  erased?: true;
+}
+
 /** A report for security: the reporter, the plate's matches, the outcome. */
 export class StaffParkingReportView {
   @ApiProperty({ type: String, format: 'uuid' })
@@ -58,11 +94,11 @@ export class StaffParkingReportView {
   @ApiProperty({ type: String, example: 'R-3917' })
   reference: string;
   @ApiProperty({
-    type: AccountRefView,
+    type: ReporterRefView,
     description:
-      'Security always sees who reported; the reported unit never does.',
+      'Security always sees who reported (a guard by first name, ADR 0050); the reported unit never does.',
   })
-  reporter: AccountRefView;
+  reporter: ReporterRefView;
   @ApiProperty({ type: String })
   plate: string;
   @ApiProperty({ type: String })
@@ -97,12 +133,13 @@ export class StaffParkingReportView {
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
-  static from(s: StaffReport): StaffParkingReportView {
+  /** `asGuard`: the reporter by first name (the caller holds `gate.operate`). */
+  static from(s: StaffReport, asGuard = false): StaffParkingReportView {
     const r = s.report;
     return {
       id: r.id,
       reference: reference('R', r.number),
-      reporter: accountRef(s.reporter),
+      reporter: asGuard ? firstNameRef(s.reporter) : accountRef(s.reporter),
       plate: r.plate,
       location: r.location,
       note: r.note,

@@ -84,6 +84,7 @@ describe('TenantsService', () => {
       ['maintenance_supervisor', 'staff', true, null],
       ['manager', 'manager', true, null],
       ['resident', 'resident', true, null],
+      ['security_supervisor', 'staff', true, null],
       ['technician', 'staff', true, null],
     ]);
     for (const def of CODE_ACCESS_CATALOG.defaultRoles) {

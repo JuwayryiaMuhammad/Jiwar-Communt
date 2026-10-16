@@ -16209,6 +16209,19 @@ export interface components {
             data: components["schemas"]["ReportedMessageView"][];
             nextCursor: string | null;
         };
+        ReporterRefView: {
+            /**
+             * @description Present (true) only on an erased account.
+             * @enum {boolean}
+             */
+            erased?: true;
+            /** @description For a guard (`gate.operate`). Absent otherwise, or when erased. */
+            firstName?: string | null;
+            /** @description For the management and the staff. Absent for a guard, or when erased. */
+            fullName?: string | null;
+            /** Format: uuid */
+            id: string;
+        };
         RequestCreatedView: {
             /** Format: date-time */
             createdAt: string;
@@ -17704,8 +17717,8 @@ export interface components {
             plate: string;
             /** @example R-3917 */
             reference: string;
-            /** @description Security always sees who reported; the reported unit never does. */
-            reporter: components["schemas"]["AccountRefView"];
+            /** @description Security always sees who reported (a guard by first name, ADR 0050); the reported unit never does. */
+            reporter: components["schemas"]["ReporterRefView"];
             status: components["schemas"]["ParkingReportStatus"];
         };
         StaffParkingReportViewList: {

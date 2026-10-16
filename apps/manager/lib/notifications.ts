@@ -98,6 +98,20 @@ const TEXT: Record<string, (p: P) => string> = {
   'unit_permit.cancelled': (p) => `A permit was cancelled (${words(p.reason)})`,
   'gate_service.accepted': () => 'Security accepted your request',
   'gate_service.closed': (p) => `Security closed your request (${words(p.reason)})`,
+  // Guard shifts and tasks (ADR 0050): codes only, never a name or a post.
+  'guard_shift.absent': () => 'A guard did not start their shift',
+  'guard_shift.absent_unmanned': () => 'A guard did not start their shift and nobody is on duty there',
+  'guard_task.assigned': (p) => `A ${words(p.taskKind)} task for you`,
+  'guard_task.unit_inspected': (p) => `Security inspected your closed unit (${words(p.outcome)})`,
+  'guard_swap.requested': () => 'A colleague asks you to take one of their shifts',
+  'guard_swap.accepted': () => 'A shift swap awaits your decision',
+  'guard_swap.declined': () => 'Your colleague declined the shift swap',
+  'guard_swap.approved': () => 'A shift swap was approved',
+  'guard_swap.rejected': () => 'A shift swap was not approved',
+  'guard_swap.expired': () => 'A shift swap expired: its shift started first',
+  'guard_swap.cancelled': () => 'A shift swap no longer applies',
+  'guard_instruction.issued': () => 'A new instruction to acknowledge',
+  'guard_instruction.urgent': () => 'An urgent instruction to acknowledge',
   'ticket.assigned': (p) => `${ticket(p)} is assigned to you · ${words(p.priority)} · ${words(p.categoryKey)}${inUnit(p)}`,
   'ticket.unassigned': (p) => `${ticket(p)} was given to someone else${inUnit(p)}`,
   'ticket.status_changed': (p) =>
@@ -224,6 +238,12 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
     return can('emergencies.manage') || can('emergencies.respond') ? '/emergencies' : null;
   if (n.targetType === 'gate_service_request') return can('gate_services.handle') ? '/gate-services' : null;
   if (n.targetType === 'unit_permit' && n.targetId) return can('permits.manage') ? `/permits/${n.targetId}` : null;
+  // Guard shifts and tasks (ADR 0050): the keepers' pages. A task, an
+  // instruction or a swap to answer is a guard's, in the app.
+  if (n.targetType === 'guard_roster_slot') return can('guard_roster.manage') ? '/security/roster' : null;
+  if (n.targetType === 'guard_shift_swap') return can('guard_roster.manage') ? '/security/swaps' : null;
+  if (n.targetType === 'guard_task') return can('guard_tasks.manage') ? '/security/tasks' : null;
+  if (n.targetType === 'guard_instruction') return can('guard_instructions.manage') ? '/security/instructions' : null;
   if (n.kind === 'account.deletion_queued') return can('accounts.erase') ? '/deletions' : null;
   if (n.kind === 'account.new_device_login') return '/account';
   if (n.targetType === 'worker_engagement') return can('workers.review') ? '/workers?tab=all' : null;

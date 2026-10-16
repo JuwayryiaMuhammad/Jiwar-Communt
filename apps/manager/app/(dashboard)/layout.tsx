@@ -51,6 +51,13 @@ import {
   Undo2,
   BookOpen,
   ChartColumn,
+  CalendarCog,
+  ClipboardList,
+  Repeat,
+  BellRing,
+  Briefcase,
+  ClipboardPen,
+  FileChartColumn,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -164,6 +171,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     keys.bookings({ status: 'pending' }),
     () => fetchers.bookings({ status: 'pending' }, undefined, 100),
     can('bookings.handle'),
+  );
+
+  // Shift swaps the colleague accepted, to decide (ADR 0050).
+  const swapsToDecide = useQueueSize(
+    keys.swaps('accepted'),
+    () => fetchers.swaps('accepted', undefined, 100),
+    can('guard_roster.manage'),
   );
 
   // Requests the system could not carry out by itself: a manager's to settle.
@@ -320,6 +334,29 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         },
         { href: '/permits/materials', label: 'Materials log', icon: <Package aria-hidden />, show: can('permits.manage') },
         { href: '/permits/settings', label: 'Work hours', icon: <CalendarRange aria-hidden />, show: can('permits.manage') },
+      ],
+    },
+    {
+      label: 'Security',
+      items: [
+        { href: '/security/roster', label: 'Roster', icon: <CalendarCog aria-hidden />, show: can('guard_roster.manage') },
+        {
+          href: '/security/swaps',
+          label: 'Shift swaps',
+          icon: <Repeat aria-hidden />,
+          count: swapsToDecide,
+          show: can('guard_roster.manage'),
+        },
+        { href: '/security/handovers', label: 'Handovers', icon: <ClipboardPen aria-hidden />, show: can('guard_roster.manage') },
+        { href: '/security/tasks', label: 'Guard tasks', icon: <ClipboardList aria-hidden />, show: can('guard_tasks.manage') },
+        {
+          href: '/security/instructions',
+          label: 'Instructions',
+          icon: <BellRing aria-hidden />,
+          show: can('guard_instructions.manage'),
+        },
+        { href: '/security/found-items', label: 'Found at the gate', icon: <Briefcase aria-hidden />, show: can('found_items.manage') },
+        { href: '/security/reports', label: 'Daily report', icon: <FileChartColumn aria-hidden />, show: can('guard_reports.read') },
       ],
     },
     {

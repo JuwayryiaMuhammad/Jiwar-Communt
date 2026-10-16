@@ -61,7 +61,7 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'vehicles.manage': 'Approve vehicles and issue stickers; set up parking slots and visitor areas',
   'fines.issue': 'Issue vehicle fines and decide appeals',
   'fines.billing': 'Record vehicle fine payments made at the office',
-  'parking_reports.handle': 'Work the parking reports queue: close reports or turn them into fines',
+  'parking_reports.handle': 'Work the parking reports queue: close reports, or turn them into fines with fines.issue',
   'finance.gateway': 'Set the compound’s online payment account and turn online payment on or off',
   'finance.billing': 'Keep the recurring billing plans and their per-unit amounts',
   'finance.invoice': 'Issue invoices to units and credit notes, and see unit statements',
@@ -70,4 +70,9 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'finance.reports': 'Read the ledger and the finance reports, and export them as CSV',
   'permits.request': 'Ask for a unit’s permits: works and contractors, moves, material exits, events',
   'permits.manage': 'Decide the units’ permits, remove a contractor, unlock a lockout, set the work hours',
+  'guard_roster.manage': 'Keep the guards’ roster, read their attendance and overtime, decide shift swaps and keep the handover checklist',
+  'guard_tasks.manage': 'Give guards tasks, closed-unit inspections included, and cancel them',
+  'guard_instructions.manage': 'Send guards instructions they acknowledge, and archive them',
+  'guard_reports.read': 'Read and export the guards’ daily report',
+  'found_items.manage': 'Receive found items from the gate and record claims at the office',
 };

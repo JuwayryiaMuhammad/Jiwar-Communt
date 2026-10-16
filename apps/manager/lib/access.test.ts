@@ -31,7 +31,7 @@ test('a staff role that sets up facilities, works bookings or keeps the club ent
   assert.equal(mayEnter({ type: 'staff', permissions: ['gate.operate', 'bookings.handle'] }), true);
   assert.equal(mayEnter({ type: 'staff', permissions: ['club.billing'] }), true);
   // Vehicles, parking, fines and parking reports (ADR 0045).
-  for (const p of ['vehicles.manage', 'fines.issue', 'fines.billing', 'parking_reports.handle'])
+  for (const p of ['vehicles.manage', 'fines.issue', 'fines.billing'])
     assert.equal(mayEnter({ type: 'staff', permissions: ['gate.operate', p] }), true);
 });
 
@@ -71,4 +71,19 @@ test('an answer without permissions admits nobody but a manager', () => {
   assert.equal(mayEnter({}), false);
   assert.equal(mayEnter({ type: 'staff' }), false);
   assert.equal(mayEnter({ type: 'staff', permissions: 'tickets.dispatch' }), false);
+});
+
+test('the guards’ keepers enter; a guard who closes parking reports does not (ADR 0050)', () => {
+  for (const p of ['guard_roster.manage', 'guard_tasks.manage', 'guard_instructions.manage', 'guard_reports.read', 'found_items.manage'])
+    assert.equal(mayEnter({ type: 'staff', permissions: [p] }), true);
+  // The default guard role: the parking reports are closed from the app.
+  assert.equal(mayEnter({ type: 'staff', permissions: ['gate.operate', 'parcels.handle', 'parking_reports.handle'] }), false);
+  // The default security supervisor role.
+  assert.equal(
+    mayEnter({
+      type: 'staff',
+      permissions: ['guard_roster.manage', 'guard_tasks.manage', 'guard_instructions.manage', 'guard_reports.read'],
+    }),
+    true,
+  );
 });

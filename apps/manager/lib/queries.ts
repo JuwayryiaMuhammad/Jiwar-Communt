@@ -133,6 +133,37 @@ export type FineStatus = Schema<'VehicleFineStatus'>;
 export type FinePayment = Schema<'StaffFinePaymentView'>;
 export type StaffParkingReport = Schema<'StaffParkingReportView'>;
 export type ParkingReportStatus = Schema<'ParkingReportStatus'>;
+// Guard shifts and tasks (ADR 0050).
+export type RosterSlot = Schema<'RosterSlotView'>;
+export type RosterTemplate = Schema<'RosterTemplateView'>;
+export type GuardAttendance = Schema<'GuardAttendanceView'>;
+export type RosterPosts = Schema<'RosterPostsView'>;
+export type RosterGuard = Schema<'RosterGuardView'>;
+export type HandoverItem = Schema<'ManagedGuardHandoverItemView'>;
+export type StaffHandover = Schema<'StaffGuardHandoverView'>;
+export type GuardTask = Schema<'StaffGuardTaskView'>;
+export type GuardTaskStatus = Schema<'GuardTaskStatus'>;
+export type GuardTaskKind = Schema<'GuardTaskKind'>;
+export type GuardSwap = Schema<'StaffGuardSwapView'>;
+export type GuardSwapStatus = Schema<'GuardSwapStatus'>;
+export type GuardInstruction = Schema<'StaffGuardInstructionView'>;
+export type GuardInstructionDetail = Schema<'StaffGuardInstructionDetailView'>;
+export type FoundItem = Schema<'StaffFoundItemView'>;
+export type FoundItemStatus = Schema<'FoundItemStatus'>;
+export type DailyReport = Schema<'DailyReportView'>;
+export interface RosterPeriod {
+  from: string;
+  to: string;
+}
+export interface SlotFilters extends RosterPeriod {
+  guardId?: string;
+  gateId?: string;
+  zoneId?: string;
+}
+export interface TaskFilters {
+  status?: GuardTaskStatus | '';
+  kind?: GuardTaskKind | '';
+}
 
 // Emergencies and gate services (ADR 0047).
 export type StaffEmergency = Schema<'StaffEmergencyView'>;
@@ -442,6 +473,27 @@ export const keys = {
   permit: (id: string) => ['unit-permits', 'detail', id] as const,
   materialEntries: ['unit-permits', 'materials'] as const,
   permitSettings: ['permit-settings'] as const,
+  // Guard shifts and tasks (ADR 0050).
+  securityPosts: ['security', 'posts'] as const,
+  securityGuards: ['security', 'guards'] as const,
+  rosterAll: ['security', 'roster'] as const,
+  rosterSlots: (f: object) => ['security', 'roster', 'slots', f] as const,
+  rosterTemplates: (state: string) => ['security', 'roster', 'templates', state] as const,
+  attendance: (f: object) => ['security', 'roster', 'attendance', f] as const,
+  handoverItems: ['security', 'handover-items'] as const,
+  handoversAll: ['security', 'handovers'] as const,
+  handovers: (f: object) => ['security', 'handovers', f] as const,
+  guardTasksAll: ['security', 'tasks'] as const,
+  guardTasks: (f: object) => ['security', 'tasks', 'list', f] as const,
+  guardTask: (id: string) => ['security', 'tasks', 'detail', id] as const,
+  swapsAll: ['security', 'swaps'] as const,
+  swaps: (status: string) => ['security', 'swaps', 'list', status] as const,
+  instructionsAll: ['security', 'instructions'] as const,
+  instructions: (state: string) => ['security', 'instructions', 'list', state] as const,
+  instruction: (id: string) => ['security', 'instructions', 'detail', id] as const,
+  foundItemsAll: ['security', 'found-items'] as const,
+  foundItems: (status: string) => ['security', 'found-items', 'list', status] as const,
+  dailyReport: (date: string, gateId: string) => ['security', 'daily', date, gateId] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -716,6 +768,44 @@ export const fetchers = {
   materialEntries: (cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/staff/material-entries', { params: { query: { cursor, limit } } })),
   permitSettings: () => unwrap(api.GET('/api/v1/staff/permit-settings')),
+  // Guard shifts and tasks (ADR 0050).
+  securityPosts: () => unwrap(api.GET('/api/v1/staff/security/posts')),
+  securityGuards: () => unwrap(api.GET('/api/v1/staff/security/guards')),
+  rosterSlots: (f: SlotFilters) =>
+    unwrap(api.GET('/api/v1/staff/security/roster/slots', { params: { query: clean(f) } })),
+  rosterTemplates: (state: 'live' | 'ended' | '') =>
+    unwrap(api.GET('/api/v1/staff/security/roster/templates', { params: { query: state ? { state } : {} } })),
+  attendance: (f: RosterPeriod & { guardId?: string }) =>
+    unwrap(api.GET('/api/v1/staff/security/attendance', { params: { query: clean(f) } })),
+  handoverItems: () => unwrap(api.GET('/api/v1/staff/security/handover-items')),
+  handovers: (f: RosterPeriod & { state?: 'pending' | 'acknowledged' | '' }) =>
+    unwrap(
+      api.GET('/api/v1/staff/security/handovers', {
+        params: { query: clean(f) as RosterPeriod & { state?: 'pending' | 'acknowledged' } },
+      }),
+    ),
+  guardTasks: (f: TaskFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/security/tasks', {
+        params: { query: { ...(clean(f) as { status?: GuardTaskStatus; kind?: GuardTaskKind }), cursor, limit } },
+      }),
+    ),
+  guardTask: (id: string) => unwrap(api.GET('/api/v1/staff/security/tasks/{id}', { params: { path: { id } } })),
+  swaps: (status: GuardSwapStatus | '', cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/security/swaps', { params: { query: { ...(status ? { status } : {}), cursor, limit } } })),
+  instructions: (state: 'live' | 'archived' | '', cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/security/instructions', { params: { query: { ...(state ? { state } : {}), cursor, limit } } }),
+    ),
+  instruction: (id: string) => unwrap(api.GET('/api/v1/staff/security/instructions/{id}', { params: { path: { id } } })),
+  foundItems: (status: FoundItemStatus | '', cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/security/found-items', { params: { query: { ...(status ? { status } : {}), cursor, limit } } })),
+  dailyReport: (date: string, gateId: string) =>
+    unwrap(
+      api.GET('/api/v1/staff/security/reports/daily', {
+        params: { query: { ...(date ? { date } : {}), ...(gateId ? { gateId } : {}) } },
+      }),
+    ),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

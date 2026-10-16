@@ -161,3 +161,14 @@ test('a permit to decide says its kind, never a name, and leads to the permit fo
   assert.equal(notificationHref(asked, (p) => p === 'permits.manage'), '/permits/p-1');
   assert.equal(notificationHref(asked, () => false), null);
 });
+
+test('the guards’ duty says codes only, and leads a keeper to its page (ADR 0050)', () => {
+  const absent = { kind: 'guard_shift.absent_unmanned', params: {}, targetType: 'guard_roster_slot', targetId: 's1' };
+  assert.equal(notificationText(absent), 'A guard did not start their shift and nobody is on duty there');
+  assert.equal(notificationHref(absent, (p) => p === 'guard_roster.manage'), '/security/roster');
+  assert.equal(notificationHref(absent, () => false), null);
+  const swap = { kind: 'guard_swap.accepted', params: {}, targetType: 'guard_shift_swap', targetId: 'w1' };
+  assert.equal(notificationHref(swap, (p) => p === 'guard_roster.manage'), '/security/swaps');
+  const task = { kind: 'guard_task.assigned', params: { taskKind: 'custom' }, targetType: 'guard_task', targetId: 't1' };
+  assert.equal(notificationText(task), 'A custom task for you');
+});

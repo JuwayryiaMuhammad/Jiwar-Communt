@@ -114,6 +114,13 @@ const STATUS_TONE: Record<string, Tone> = {
   // `revoked` are above.
   approved: 'green',
   used: 'beige',
+  // Guard shifts and tasks (ADR 0050). A swap is `requested`, `accepted`,
+  // `approved`, `declined`, `rejected`, `withdrawn`, `cancelled` or
+  // `expired` (above); a found item is held at the gate or the office,
+  // then claimed.
+  at_gate: 'terracotta',
+  with_management: 'beige',
+  claimed: 'green',
 };
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {

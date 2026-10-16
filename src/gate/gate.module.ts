@@ -155,6 +155,8 @@ import { RoutesController } from './patrols/routes.controller';
 import { RoutesService } from './patrols/routes.service';
 import { GuardPatrolsService } from './patrols/guard-patrols.service';
 import { PatrolScansService } from './patrols/patrol-scans.service';
+import { PatrolExportSections } from './patrols/patrol-export-sections';
+import { PatrolLifecycle } from './patrols/patrol-lifecycle';
 import { PatrolReportService } from './patrols/patrol-report.service';
 import { PatrolReportController } from './patrols/report.controller';
 import { PatrolSweeps } from './patrols/patrol-sweeps';
@@ -352,6 +354,8 @@ import { RosterService } from './roster/roster.service';
     PatrolTrackService,
     PatrolReportService,
     PatrolSweeps,
+    PatrolLifecycle,
+    PatrolExportSections,
   ],
 })
 export class GateModule {}

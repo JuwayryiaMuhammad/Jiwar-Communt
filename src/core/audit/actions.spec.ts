@@ -106,6 +106,7 @@ describe('audit catalog', () => {
         'invoice_dispute',
         'refund',
         'unit_permit',
+        'material_entry',
       ]).toContain(def.target);
     }
   });

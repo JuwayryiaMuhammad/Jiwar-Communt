@@ -1191,6 +1191,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'ألغت الإدارة تصريحك. افتح التطبيق لمعرفة السبب.',
     },
   },
+  'unit_permit.used': {
+    en: {
+      title: 'Goods went out',
+      body: 'The goods on your unit’s permit went out at the gate.',
+    },
+    ar: {
+      title: 'خرجت المواد',
+      body: 'خرجت المواد المذكورة في تصريح وحدتك من البوابة.',
+    },
+  },
   'unit_permit.cancelled': {
     en: {
       title: 'Permit cancelled',

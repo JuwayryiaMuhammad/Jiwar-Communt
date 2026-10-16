@@ -1784,6 +1784,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/material-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Log materials brought in
+         * @description No permit is needed to bring materials in: the guard writes what came, for which unit, and its works permit when there is one. Taking them out needs a material exit.
+         */
+        post: operations["MaterialEntriesController_log"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/parcels": {
         parameters: {
             query?: never;
@@ -1975,6 +1995,26 @@ export interface paths {
         get: operations["GatePermitsController_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/unit-permits/{id}/use": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Let a material exit’s goods out, once
+         * @description After checking the goods against the items and the photo. Refused like an entry (GATE_ENTRY_REFUSED, params.reason `used`, `not_approved`, `not_yet_valid`, `expired`, `cancelled`, `revoked`): one use, whichever gate. The requester is told.
+         */
+        post: operations["GatePermitsController_use"];
         delete?: never;
         options?: never;
         head?: never;
@@ -7076,6 +7116,26 @@ export interface paths {
          * @description The instalments must add up to exactly what the invoice owes now; a credit note closes the original. One push tells the unit.
          */
         post: operations["StaffInstalmentsController_convert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/material-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the materials log
+         * @description Newest first.
+         */
+        get: operations["MaterialEntriesController_list"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -14026,6 +14086,17 @@ export interface components {
         LocaleView: {
             preferredLocale: components["schemas"]["Locale"];
         };
+        LogMaterialEntryDto: {
+            /** @example 20 bags of cement, 4 boxes of tiles */
+            description: string;
+            /**
+             * Format: uuid
+             * @description The unit’s works permit the materials are for, if any.
+             */
+            permitId?: string;
+            /** @example B-12 */
+            unitCode: string;
+        };
         LoginAccountView: {
             /** Format: uuid */
             accountId: string;
@@ -14185,6 +14256,28 @@ export interface components {
             building: string | null;
             /** @description Their first name: only once BOTH sides agreed to show names. Null before. */
             firstName: string | null;
+        };
+        MaterialEntryView: {
+            /** @description What came in, in the guard’s words. */
+            description: string;
+            /** Format: uuid */
+            gateId: string;
+            guard: components["schemas"]["FirstNameRefView"] | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            occurredAt: string;
+            /** Format: uuid */
+            permitId: string | null;
+            /** @example W-0042 */
+            permitReference: string | null;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        MaterialEntryViewList: {
+            data: components["schemas"]["MaterialEntryView"][];
+            nextCursor: string | null;
         };
         MaterialExitDetailsView: {
             /** @description Null once the requester was erased. */
@@ -22283,6 +22376,32 @@ export interface operations {
             };
         };
     };
+    MaterialEntriesController_log: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LogMaterialEntryDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialEntryView"];
+                };
+            };
+        };
+    };
     GateParcelsController_list: {
         parameters: {
             query?: {
@@ -22546,6 +22665,27 @@ export interface operations {
         };
     };
     GatePermitsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GatePermitView"];
+                };
+            };
+        };
+    };
+    GatePermitsController_use: {
         parameters: {
             query?: never;
             header?: never;
@@ -30547,6 +30687,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InstalmentPlanDetailView"];
+                };
+            };
+        };
+    };
+    MaterialEntriesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                unitId?: string;
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialEntryViewList"];
                 };
             };
         };

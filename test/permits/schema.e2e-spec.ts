@@ -122,6 +122,36 @@ describe('Permits tables — CHECKs, triggers and privileges', () => {
       `status = 'approved', decision_source = 'manager', decided_by_account_id = '${accountId}', decided_at = now()`,
     );
 
+  it('the materials log: appended, never changed, never deleted, by anyone', async () => {
+    expect(await privileges('material_entries')).toEqual({
+      select: true,
+      insert: true,
+      update: false,
+      delete: false,
+      truncate: false,
+    });
+    const id = '0192f1c2-7a4b-7c3d-8e9f-0a1b2c3d4e5f';
+    const insert = `INSERT INTO material_entries (id, tenant_id, unit_id, gate_id, shift_id, guard_account_id, description, occurred_at)
+      VALUES ('${id}', '${tenantId}', '${unitId}', gen_random_uuid(), gen_random_uuid(), '${accountId}', 'Cement', now())`;
+    await expect(
+      attempt(
+        migrator,
+        insert,
+        `UPDATE material_entries SET description = 'x' WHERE id = '${id}'`,
+      ),
+    ).rejects.toThrow(/immutable/);
+    await expect(
+      attempt(
+        migrator,
+        insert,
+        `DELETE FROM material_entries WHERE id = '${id}'`,
+      ),
+    ).rejects.toThrow(/immutable/);
+    await expect(asApp(insert.replace("'Cement'", "''"))).rejects.toThrow(
+      /material_entries_description_length/,
+    );
+  });
+
   it('nothing of the domain is deleted or truncated by the app', async () => {
     for (const table of [
       'permit_settings',

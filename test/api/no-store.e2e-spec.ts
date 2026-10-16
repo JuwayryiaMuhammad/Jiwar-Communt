@@ -848,6 +848,36 @@ describe('API v0 — no-store', () => {
       await as('manager', 'POST', `/staff/unit-permits/${id}/approve`, {});
       return asGuard('GET', `/gate/unit-permits/${id}`);
     },
+    'POST /gate/unit-permits/{id}/use': async () => {
+      await clearPermits('material_exit');
+      const id = body<{ id: string }>(
+        await as(
+          'owner',
+          'POST',
+          `/units/${w.a.homeUnitId}/permits/material-exits`,
+          {
+            validFrom: localDay(0),
+            validUntil: localDay(1),
+            items: [{ name: 'Tiles', quantity: 2 }],
+          },
+        ),
+      ).id;
+      await as('manager', 'POST', `/staff/unit-permits/${id}/approve`, {});
+      return asGuard('POST', `/gate/unit-permits/${id}/use`, {});
+    },
+    'POST /gate/material-entries': async () => {
+      const unit = await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.unit.findUniqueOrThrow({
+          where: { id: w.a.homeUnitId },
+        }),
+      );
+      return asGuard('POST', '/gate/material-entries', {
+        unitCode: unit.code,
+        description: 'Cement',
+      });
+    },
+    'GET /staff/material-entries': () =>
+      as('manager', 'GET', '/staff/material-entries'),
     'POST /permits/{id}/workers/{workerId}/remove': async () => {
       const permitId = await aPermit();
       const added = body<{ works: { workers: { id: string }[] } }>(

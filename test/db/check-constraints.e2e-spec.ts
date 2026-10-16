@@ -774,6 +774,7 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'removed_side IS NULL is tested first; remove_reason IS NULL or IS NOT NULL before its list',
   },
   permit_guests_kind: {},
+  material_entries_description_length: {},
   permit_guests_purged: {},
   permit_guests_text: {
     guarded:

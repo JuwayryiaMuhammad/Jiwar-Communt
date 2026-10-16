@@ -1153,6 +1153,14 @@ export const NOTIFICATION_KINDS = {
     target: 'unit_permit',
     params: { permitKind: {}, reason: {} },
   },
+  /** A material exit's goods went out at a gate: the requester. */
+  'unit_permit.used': {
+    priority: 'normal',
+    category: 'permits',
+    critical: false,
+    target: 'unit_permit',
+    params: { permitKind: {} },
+  },
   /**
    * The system cancelled it (nobody decided in time, or its requester
    * left): the requester, or the unit's primary.

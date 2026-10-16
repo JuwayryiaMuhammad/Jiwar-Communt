@@ -871,6 +871,12 @@ export const AUDIT_ACTIONS = {
   'unit_permit.worker_removed': { log: 'tenant', target: 'unit_permit' },
   // metadata: added, removed, guests (how many now). Never a name or plate.
   'unit_permit.guests_changed': { log: 'tenant', target: 'unit_permit' },
+  // A material exit's goods let out at a gate. metadata: kind, unitId,
+  // gateId.
+  'unit_permit.used': { log: 'tenant', target: 'unit_permit' },
+  // A guard logs materials brought in. metadata: unitId, permitId, gateId;
+  // never the guard's words.
+  'material_entry.logged': { log: 'tenant', target: 'material_entry' },
   // The management lifts a contractor ID lockout. metadata: workerId or
   // guardId.
   'unit_permit.lockout_cleared': { log: 'tenant', target: 'unit_permit' },

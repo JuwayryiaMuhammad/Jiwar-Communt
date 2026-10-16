@@ -461,3 +461,56 @@ export class StaffRemoveWorkerDto {
   @IsString()
   reasonCode: string;
 }
+
+export const MATERIAL_DESCRIPTION = { min: 1, max: 280 } as const;
+
+export class LogMaterialEntryDto {
+  @ApiProperty({ type: String, example: 'B-12' })
+  @IsString()
+  @Length(1, 32, withParams({ min: 1, max: 32 }))
+  unitCode: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description: 'The unit’s works permit the materials are for, if any.',
+  })
+  @IsOptional()
+  @IsUUID()
+  permitId?: string;
+
+  @ApiProperty({
+    type: String,
+    minLength: MATERIAL_DESCRIPTION.min,
+    maxLength: MATERIAL_DESCRIPTION.max,
+    example: '20 bags of cement, 4 boxes of tiles',
+  })
+  @Transform(trim)
+  @IsString()
+  @Length(
+    MATERIAL_DESCRIPTION.min,
+    MATERIAL_DESCRIPTION.max,
+    withParams(MATERIAL_DESCRIPTION),
+  )
+  description: string;
+}
+
+export class MaterialEntriesQueryDto extends PageQueryDto {
+  @ApiProperty({ type: String, format: 'uuid', required: false })
+  @IsOptional()
+  @IsUUID()
+  unitId?: string;
+
+  @ApiProperty({ type: String, format: 'date-time', required: false })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  from?: Date;
+
+  @ApiProperty({ type: String, format: 'date-time', required: false })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  to?: Date;
+}

@@ -94,6 +94,7 @@ const TEXT: Record<string, (p: P) => string> = {
   'unit_permit.approved': (p) => `Your permit was approved: ${words(p.permitKind)}`,
   'unit_permit.rejected': (p) => `Your permit was not approved (${words(p.reason)})`,
   'unit_permit.revoked': (p) => `Your permit was revoked (${words(p.reason)})`,
+  'unit_permit.used': () => 'The goods on your permit went out at the gate',
   'unit_permit.cancelled': (p) => `A permit was cancelled (${words(p.reason)})`,
   'gate_service.accepted': () => 'Security accepted your request',
   'gate_service.closed': (p) => `Security closed your request (${words(p.reason)})`,

@@ -485,3 +485,57 @@ export const GATE_PERMIT_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** Material exits at the gate and the materials log (ADR 0049). */
+export const MATERIAL_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/gate/unit-permits/{id}/use',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bPermitId }),
+      code: 'PERMIT_NOT_FOUND',
+      body: () => ({}),
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/material-entries',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: {
+      params: () => ({}),
+      code: 'UNIT_NOT_FOUND',
+      body: (w) => ({ unitCode: w.bUnitCode, description: 'Cement' }),
+    },
+    invalid: {
+      body: { unitCode: 'B-1', description: '' },
+      fields: [
+        {
+          field: 'description',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 280 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/material-entries',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { unitId: 'b-12' },
+      fields: [{ field: 'unitId', code: 'INVALID_UUID' }],
+    },
+    noStore: true,
+  },
+];

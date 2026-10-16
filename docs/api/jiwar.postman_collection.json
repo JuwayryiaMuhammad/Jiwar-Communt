@@ -17960,6 +17960,46 @@
           }
         },
         {
+          "name": "Log materials brought in",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"unitCode\": \"B-12\",\n  \"description\": \"20 bags of cement, 4 boxes of tiles\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `description` | string | yes |  |\n| `permitId` | string (uuid) |  | The unit’s works permit the materials are for, if any. |\n| `unitCode` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "material-entries"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/material-entries"
+            }
+          }
+        },
+        {
           "name": "Find the permits in force today",
           "request": {
             "description": "**Responses:** 200",
@@ -18011,6 +18051,35 @@
                 ":id"
               ],
               "raw": "{{baseUrl}}/api/v1/gate/unit-permits/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Let a material exit’s goods out, once",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "unit-permits",
+                ":id",
+                "use"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/unit-permits/:id/use",
               "variable": [
                 {
                   "description": "",
@@ -18254,6 +18323,58 @@
                   "value": ""
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "Read the materials log",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "material-entries"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/material-entries"
             }
           }
         },

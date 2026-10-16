@@ -121,7 +121,11 @@ import { StaffPermitsController } from './permits/staff-permits.controller';
 import { StaffPermitsService } from './permits/staff-permits.service';
 import { PermitSweeps } from './permits/permit-sweeps';
 import { PermitIdCheck } from './permits/permit-id-check';
-import { GatePermitsController } from './permits/gate-permits.controller';
+import {
+  GatePermitsController,
+  MaterialEntriesController,
+} from './permits/gate-permits.controller';
+import { MaterialEntriesService } from './permits/material-entries.service';
 import { GatePermitsService } from './permits/gate-permits.service';
 
 /**
@@ -177,6 +181,7 @@ import { GatePermitsService } from './permits/gate-permits.service';
     PermitsController,
     StaffPermitsController,
     GatePermitsController,
+    MaterialEntriesController,
   ],
   providers: [
     GatesService,
@@ -244,6 +249,7 @@ import { GatePermitsService } from './permits/gate-permits.service';
     PermitSweeps,
     PermitIdCheck,
     GatePermitsService,
+    MaterialEntriesService,
   ],
 })
 export class GateModule {}

@@ -13495,6 +13495,30 @@
         ],
         "type": "object"
       },
+      "LogMaterialEntryDto": {
+        "properties": {
+          "description": {
+            "example": "20 bags of cement, 4 boxes of tiles",
+            "maxLength": 280,
+            "minLength": 1,
+            "type": "string"
+          },
+          "permitId": {
+            "description": "The unit’s works permit the materials are for, if any.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitCode": {
+            "example": "B-12",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitCode",
+          "description"
+        ],
+        "type": "object"
+      },
       "LoginAccountView": {
         "properties": {
           "accountId": {
@@ -14001,6 +14025,83 @@
         "required": [
           "building",
           "firstName"
+        ],
+        "type": "object"
+      },
+      "MaterialEntryView": {
+        "properties": {
+          "description": {
+            "description": "What came in, in the guard’s words.",
+            "type": "string"
+          },
+          "gateId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "guard": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FirstNameRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "permitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "permitReference": {
+            "example": "W-0042",
+            "nullable": true,
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "unitCode",
+          "permitId",
+          "permitReference",
+          "gateId",
+          "description",
+          "guard",
+          "occurredAt"
+        ],
+        "type": "object"
+      },
+      "MaterialEntryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MaterialEntryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -37003,6 +37104,56 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/gate/material-entries": {
+      "post": {
+        "description": "No permit is needed to bring materials in: the guard writes what came, for which unit, and its works permit when there is one. Taking them out needs a material exit.",
+        "operationId": "MaterialEntriesController_log",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogMaterialEntryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Log materials brought in",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/gate/parcels": {
       "get": {
         "operationId": "GateParcelsController_list",
@@ -37532,6 +37683,45 @@
           }
         ],
         "summary": "Get a permit at the gate",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/unit-permits/{id}/use": {
+      "post": {
+        "description": "After checking the goods against the items and the photo. Refused like an entry (GATE_ENTRY_REFUSED, params.reason `used`, `not_approved`, `not_yet_valid`, `expired`, `cancelled`, `revoked`): one use, whichever gate. The requester is told.",
+        "operationId": "GatePermitsController_use",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatePermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Let a material exit’s goods out, once",
         "tags": [
           "permits"
         ],
@@ -52660,6 +52850,84 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/material-entries": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "MaterialEntriesController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialEntryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the materials log",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

@@ -242,6 +242,42 @@ describe('Audit coverage — permits', () => {
       expect(JSON.stringify([lookup, ...cleared])).not.toContain(WORDS);
     });
 
+    it('goods let out once and materials logged in: ids only, never the guard’s words', async () => {
+      const guard = await p.guardOnDuty(s.c);
+      const exit = await p.exit(s.alice, s.home.id, {
+        validFrom: day(0),
+        validUntil: day(0),
+        items: [{ name: WORDS, quantity: 1 }],
+      });
+      await p.approve(s.manager, exit.id);
+      await p
+        .http('post', `/gate/unit-permits/${exit.id}/use`, guard.token, {})
+        .expect(200);
+      const used = await single('unit_permit.used', exit.id);
+      expect(used).toMatchObject(by(guard, 'unit_permit'));
+      expect(used.metadata).toEqual({
+        kind: 'material_exit',
+        unitId: s.home.id,
+        gateId: guard.gateId,
+      });
+      const logged = (
+        await p
+          .http('post', '/gate/material-entries', guard.token, {
+            unitCode: s.home.code,
+            description: WORDS,
+          })
+          .expect(201)
+      ).body as { id: string };
+      const entry = await single('material_entry.logged', logged.id);
+      expect(entry).toMatchObject(by(guard, 'material_entry'));
+      expect(entry.metadata).toEqual({
+        unitId: s.home.id,
+        permitId: null,
+        gateId: guard.gateId,
+      });
+      expect(JSON.stringify([used, entry])).not.toContain(WORDS);
+    });
+
     it('an event: requested at once, its guests changed by counts', async () => {
       const event = await p.event(s.alice, s.home.id, 2, {
         title: WORDS,

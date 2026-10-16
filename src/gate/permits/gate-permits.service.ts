@@ -191,6 +191,60 @@ export class GatePermitsService {
     });
   }
 
+  /**
+   * The guard checks a material exit at the gate and marks it used: once,
+   * under the permit's row lock, so two gates never both let the goods out.
+   * Refused like an entry (GATE_ENTRY_REFUSED with the reason) unless it is
+   * approved and valid today. The requester is told.
+   */
+  async use(id: string): Promise<GatePermitRecord> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const shift = await this.shifts.requireOpen(tx);
+      const p = await this.records.lock(tx, id);
+      if (p.kind !== 'material_exit') throw permitNotFound();
+      const now = await dbNow(tx);
+      const reason =
+        p.status === 'used'
+          ? 'used'
+          : p.status === 'pending' || p.status === 'rejected'
+            ? 'not_approved'
+            : p.status === 'cancelled'
+              ? 'cancelled'
+              : p.status === 'revoked'
+                ? 'revoked'
+                : now < p.startsAt
+                  ? 'not_yet_valid'
+                  : now >= p.endsAt
+                    ? 'expired'
+                    : null;
+      if (reason)
+        throw appError.conflict(
+          ErrorCode.GATE_ENTRY_REFUSED,
+          'These goods may not go out',
+          { params: { reason } },
+        );
+      const used = await tx.unitPermit.update({
+        where: { id },
+        data: {
+          status: 'used',
+          usedAt: now,
+          usedById: this.ctx.accountId,
+          usedGateId: shift.gateId,
+        },
+      });
+      await this.audit.record(tx, {
+        action: 'unit_permit.used',
+        targetId: id,
+        metadata: { kind: p.kind, unitId: p.unitId, gateId: shift.gateId },
+      });
+      await this.core.notify(tx, [p.requestedById], 'unit_permit.used', id, {
+        permitKind: p.kind,
+      });
+      const [record] = await this.withGate(tx, [used], now, true);
+      return record;
+    });
+  }
+
   private async withGate(
     tx: TenantTxClient,
     rows: UnitPermit[],

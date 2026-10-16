@@ -6137,3 +6137,21 @@ model PermitGuest {
   @@index([tenantId, permitId, createdAt, id], map: "permit_guests_permit_idx")
   @@map("permit_guests")
 }
+
+/// Materials brought in, as the guard logs them (ADR 0049): append-only, no
+/// foreign keys (like gate_entries). The description is staff text.
+model MaterialEntry {
+  id             String   @id @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  unitId         String   @map("unit_id") @db.Uuid
+  permitId       String?  @map("permit_id") @db.Uuid
+  gateId         String   @map("gate_id") @db.Uuid
+  shiftId        String   @map("shift_id") @db.Uuid
+  guardAccountId String   @map("guard_account_id") @db.Uuid
+  description    String
+  occurredAt     DateTime @map("occurred_at") @db.Timestamptz(3)
+  recordedAt     DateTime @default(now()) @map("recorded_at") @db.Timestamptz(3)
+
+  @@index([tenantId, occurredAt(sort: Desc), id(sort: Desc)], map: "material_entries_occurred_idx")
+  @@map("material_entries")
+}

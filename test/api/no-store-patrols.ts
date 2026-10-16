@@ -189,6 +189,8 @@ export function patrolCalls(
       );
       return guard('POST', `/gate/patrols/runs/${run}/end`);
     },
+    'GET /staff/security/patrols/report': () =>
+      manager('GET', '/staff/security/patrols/report'),
     'GET /staff/security/patrols/runs': () =>
       manager('GET', '/staff/security/patrols/runs'),
     'GET /staff/security/patrols/runs/{id}': async () =>

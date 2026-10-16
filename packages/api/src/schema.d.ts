@@ -8899,6 +8899,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/patrols/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the patrol report
+         * @description Per route, the runs planned on the compound’s days asked: scheduled, unscheduled, done, late, missed, incomplete, cancelled; scans by hand, flagged and received late; the average length of a completed run.
+         */
+        get: operations["PatrolReportController_report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/security/patrols/routes": {
         parameters: {
             query?: never;
@@ -9093,7 +9113,7 @@ export interface paths {
         };
         /**
          * Read the daily report
-         * @description Per gate and per zone, for one of the compound’s days: shifts, lateness and absence, tasks, emergencies, gate services, visitors.
+         * @description Per gate and per zone, for one of the compound’s days: shifts, lateness and absence, tasks, emergencies, gate services, visitors, and the patrol runs planned then (ADR 0052).
          */
         get: operations["DailyReportController_daily"];
         put?: never;
@@ -9113,7 +9133,7 @@ export interface paths {
         };
         /**
          * Export the daily report as CSV
-         * @description One row per post; UTF-8 with a byte-order mark, CRLF; text cells guarded against formulas.
+         * @description One row per post; UTF-8 with a byte-order mark, CRLF; text cells guarded against formulas. The patrols’ five counts are the last columns.
          */
         get: operations["DailyReportController_export"];
         put?: never;
@@ -14502,8 +14522,21 @@ export interface components {
             /** @description Visitors in at this gate (passes and gate requests); null for a zone. */
             visitors: number | null;
         };
+        DailyPatrolCountsView: {
+            /** @description Runs completed: every checkpoint scanned (unscheduled ones too). */
+            done: number;
+            /** @description Runs ended with checkpoints not scanned, timed out ones included. */
+            incomplete: number;
+            /** @description Scheduled runs not started 15 minutes after their start. */
+            late: number;
+            /** @description Scheduled runs never started. */
+            missed: number;
+            /** @description Scheduled runs planned this day, cancelled ones left out. */
+            scheduled: number;
+        };
         DailyPostView: {
             counts: components["schemas"]["DailyCountsView"];
+            patrols: components["schemas"]["DailyPatrolCountsView"];
             post: components["schemas"]["PostView"];
             /** @description Started this day. */
             shifts: components["schemas"]["DailyShiftView"][];
@@ -18102,6 +18135,41 @@ export interface components {
         PatrolManualScanReason: "qr_damaged" | "qr_missing" | "nfc_unreadable" | "other";
         /** @enum {string} */
         PatrolNoteOutcome: "all_clear" | "issue_found";
+        PatrolReportRouteView: {
+            /** @description Runs a guard started unscheduled. */
+            adhoc: number;
+            /** @description How long a completed run took, on average, in minutes. */
+            avgMinutes: number | null;
+            cancelled: number;
+            /** @description Completed: every checkpoint scanned. */
+            done: number;
+            /** @description Ended with checkpoints not scanned, timed out ones included. */
+            incomplete: number;
+            late: number;
+            /** @description Scans received after their run ended (finished offline). */
+            lateScans: number;
+            manualScans: number;
+            missed: number;
+            post: components["schemas"]["PostView"];
+            route: components["schemas"]["RunRouteView"];
+            /** @description Scheduled runs, cancelled ones left out. */
+            scheduled: number;
+            suspectScans: number;
+        };
+        PatrolReportView: {
+            /**
+             * Format: date
+             * @example 2026-11-01
+             */
+            from: string;
+            /** @description Each route with runs planned in the period, by name. */
+            routes: components["schemas"]["PatrolReportRouteView"][];
+            /**
+             * Format: date
+             * @example 2026-11-07
+             */
+            to: string;
+        };
         /** @enum {string} */
         PatrolRunCancelReason: "not_needed" | "post_closed" | "other" | "route_changed" | "route_retired" | "post_out_of_service";
         /**
@@ -37187,6 +37255,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CheckpointView"];
+                };
+            };
+        };
+    };
+    PatrolReportController_report: {
+        parameters: {
+            query?: {
+                /** @description The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG). */
+                from?: string;
+                to?: string;
+                routeId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatrolReportView"];
                 };
             };
         };

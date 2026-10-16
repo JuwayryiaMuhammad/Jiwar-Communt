@@ -91,6 +91,7 @@ import { MEMBER_PERMISSIONS_ROUTES } from './member-permissions';
 import {
   CHECKPOINT_ROUTES,
   GUARD_PATROL_ROUTES,
+  PATROL_REPORT_ROUTES,
   ROUTE_ROUTES,
   STAFF_RUN_ROUTES,
 } from './patrols';
@@ -234,4 +235,5 @@ export const ROUTES: Row[] = [
   ...ROUTE_ROUTES,
   ...GUARD_PATROL_ROUTES,
   ...STAFF_RUN_ROUTES,
+  ...PATROL_REPORT_ROUTES,
 ];

@@ -405,3 +405,20 @@ export const STAFF_RUN_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** The patrol report (ADR 0052). */
+export const PATROL_REPORT_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/staff/security/patrols/report',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { routeId: 'route-1' },
+      fields: [{ field: 'routeId', code: 'INVALID_UUID' }],
+    },
+    noStore: true,
+  },
+];

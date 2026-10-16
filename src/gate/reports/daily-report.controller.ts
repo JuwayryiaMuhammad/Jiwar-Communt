@@ -19,7 +19,7 @@ export class DailyReportController {
   @ApiOperation({
     summary: 'Read the daily report',
     description:
-      'Per gate and per zone, for one of the compound’s days: shifts, lateness and absence, tasks, emergencies, gate services, visitors.',
+      'Per gate and per zone, for one of the compound’s days: shifts, lateness and absence, tasks, emergencies, gate services, visitors, and the patrol runs planned then (ADR 0052).',
   })
   @ApiOkResponse({ type: DailyReportView })
   daily(@Query() q: DailyReportQueryDto): Promise<DailyReportView> {
@@ -32,7 +32,7 @@ export class DailyReportController {
   @ApiOperation({
     summary: 'Export the daily report as CSV',
     description:
-      'One row per post; UTF-8 with a byte-order mark, CRLF; text cells guarded against formulas.',
+      'One row per post; UTF-8 with a byte-order mark, CRLF; text cells guarded against formulas. The patrols’ five counts are the last columns.',
   })
   @ApiOkResponse({ schema: { type: 'string' } })
   async export(@Query() q: DailyReportQueryDto): Promise<StreamableFile> {

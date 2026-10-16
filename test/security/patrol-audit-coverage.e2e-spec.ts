@@ -1,4 +1,6 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
+import { newId } from '../../src/core/common/uuid';
+import { PATROL_WATCH_SWEEP } from '../../src/gate/patrols/patrol-sweeps';
 import { auditReaders } from '../setup/audit';
 import {
   COMMUNITY_COVERAGE,
@@ -66,6 +68,11 @@ describe('Audit coverage — patrols', () => {
   const by = (who: Who, targetType: string) => ({
     actorType: 'account',
     actorId: who.id,
+    targetType,
+  });
+  const system = (targetType: string) => ({
+    actorType: 'system',
+    actorId: null,
     targetType,
   });
 
@@ -149,6 +156,7 @@ describe('Audit coverage — patrols', () => {
         ordered: true,
         expectedMinutes: 20,
         scheduled: false,
+        runs: 0,
       });
       const path = `/staff/security/patrols/routes/${route.id}`;
       await x
@@ -172,10 +180,133 @@ describe('Audit coverage — patrols', () => {
         ordered: false,
         expectedMinutes: 40,
         scheduled: true,
+        cancelledRuns: 0,
+        runs: expect.any(Number) as number,
       });
+      const runs = (versioned.metadata as { runs: number }).runs;
+      expect(runs).toBeGreaterThanOrEqual(1);
       await x.http('post', `${path}/retire`, supervisor.token).expect(200);
       const retired = await single('patrol_route.retired', route.id);
       expect(retired).toMatchObject(by(supervisor, 'patrol_route'));
+      expect(retired.metadata).toEqual({ cancelledRuns: runs });
+    });
+  });
+
+  describe('runs', () => {
+    let runGate: string;
+    let route: Awaited<ReturnType<typeof x.route>>;
+    let guard: Who;
+
+    beforeAll(async () => {
+      runGate = (await x.g.gate(s.c)).id;
+      const one = await x.checkpoint(supervisor, { gateId: runGate });
+      const two = await x.checkpoint(supervisor, { gateId: runGate });
+      route = await x.route(supervisor, { gateId: runGate }, [one.id, two.id]);
+      guard = await x.guard(s.c);
+      await x.start(guard, { gateId: runGate });
+    });
+
+    it('started late and ended short by the guard: codes and counts', async () => {
+      const run = await x.runRow(s.c, route, 20);
+      await x.startRunRaw(guard, run.id).expect(200);
+      const shift = await x.inTx(s.c, (tx) =>
+        tx.guardShift.findFirstOrThrow({
+          where: { guardAccountId: guard.id, endedAt: null },
+        }),
+      );
+      const started = await single('patrol_run.started', run.id);
+      expect(started).toMatchObject(by(guard, 'patrol_run'));
+      expect(started.metadata).toEqual({
+        kind: 'scheduled',
+        shiftId: shift.id,
+        late: true,
+      });
+      await x.endRunRaw(guard, run.id).expect(200);
+      const ended = await single('patrol_run.ended', run.id);
+      expect(ended).toMatchObject(by(guard, 'patrol_run'));
+      expect(ended.metadata).toEqual({
+        status: 'incomplete',
+        scanned: 0,
+        total: 2,
+        reason: 'guard',
+        recipients: 2,
+      });
+    });
+
+    it('cancelled by the management with its code, and by the watch at a post out of service', async () => {
+      const run = await x.runRow(s.c, route, -120);
+      await x
+        .http(
+          'post',
+          `/staff/security/patrols/runs/${run.id}/cancel`,
+          supervisor.token,
+          { reasonCode: 'not_needed' },
+        )
+        .expect(200);
+      const cancelled = await single('patrol_run.cancelled', run.id);
+      expect(cancelled).toMatchObject(by(supervisor, 'patrol_run'));
+      expect(cancelled.metadata).toEqual({ reason: 'not_needed' });
+
+      const away = (await x.g.gate(s.c)).id;
+      const point = await x.checkpoint(supervisor, { gateId: away });
+      const there = await x.route(supervisor, { gateId: away }, [point.id]);
+      const closed = await x.runRow(s.c, there, 31, 30);
+      await x
+        .http('patch', `/gates/${away}`, s.manager.token, {
+          status: 'inactive',
+        })
+        .expect(200);
+      await x.sweep(PATROL_WATCH_SWEEP, new Date());
+      const system1 = await single('patrol_run.cancelled', closed.id);
+      expect(system1).toMatchObject(system('patrol_run'));
+      expect(system1.metadata).toEqual({ reason: 'post_out_of_service' });
+    });
+
+    it('late, missed and timed out by the watch: how many were told', async () => {
+      const late = await x.runRow(s.c, route, 16, 60);
+      const missed = await x.runRow(s.c, route, 31, 30);
+      const other = await x.guard(s.c);
+      await x.start(other, { gateId: runGate });
+      const shift = await x.inTx(s.c, (tx) =>
+        tx.guardShift.findFirstOrThrow({
+          where: { guardAccountId: other.id, endedAt: null },
+        }),
+      );
+      const startedAt = new Date(Date.now() - 61 * 60_000);
+      const long = newId();
+      await x.inTx(s.c, (tx) =>
+        tx.patrolRun.create({
+          data: {
+            id: long,
+            tenantId: s.c.tenantId,
+            routeId: route.id,
+            versionId: route.version.id,
+            gateId: runGate,
+            kind: 'adhoc',
+            plannedAt: startedAt,
+            status: 'in_progress',
+            guardAccountId: other.id,
+            shiftId: shift.id,
+            startedAt,
+            checkpointsTotal: 2,
+          },
+        }),
+      );
+      await x.sweep(PATROL_WATCH_SWEEP, new Date());
+      const l = await single('patrol_run.late', late.id);
+      expect(l).toMatchObject(system('patrol_run'));
+      expect(l.metadata).toEqual({ recipients: 2 });
+      const m = await single('patrol_run.missed', missed.id);
+      expect(m).toMatchObject(system('patrol_run'));
+      expect(m.metadata).toEqual({ recipients: 2 });
+      const t = await single('patrol_run.timed_out', long);
+      expect(t).toMatchObject(system('patrol_run'));
+      expect(t.metadata).toEqual({
+        status: 'timed_out',
+        scanned: 0,
+        total: 2,
+        recipients: 2,
+      });
     });
   });
 

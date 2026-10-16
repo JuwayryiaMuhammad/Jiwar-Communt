@@ -1,8 +1,15 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { FieldError } from '../../core/common/errors';
+import { REASON_CODES } from '../../core/common/reasons';
 import {
   checkPatrolSchedule,
+  endStatus,
+  lateAfter,
   runOccurrences,
   scheduleOverlaps,
+  startProblem,
+  timeoutAt,
   windowMinutes,
 } from './patrol-rules';
 
@@ -138,5 +145,67 @@ describe('patrol rules (ADR 0052)', () => {
       expect(first.startsAt.toISOString()).toBe('2026-11-01T06:00:00.000Z');
       expect(first.endsAt.toISOString()).toBe('2026-11-01T06:30:00.000Z');
     });
+  });
+
+  describe('a run', () => {
+    const at = (iso: string) => new Date(iso);
+    const run = {
+      scheduledStart: at('2026-11-01T08:00:00Z'),
+      windowEndsAt: at('2026-11-01T08:30:00Z'),
+    };
+
+    it('is started from 15 minutes before its start until its window ends', () => {
+      expect(startProblem(run, at('2026-11-01T07:44:59Z'))).toBe('too_early');
+      expect(startProblem(run, at('2026-11-01T07:45:00Z'))).toBeNull();
+      expect(startProblem(run, at('2026-11-01T08:29:59Z'))).toBeNull();
+      expect(startProblem(run, at('2026-11-01T08:30:00Z'))).toBe(
+        'window_closed',
+      );
+    });
+
+    it('is late 15 minutes after its start, timed out at twice its minutes', () => {
+      expect(lateAfter(run.scheduledStart).toISOString()).toBe(
+        '2026-11-01T08:15:00.000Z',
+      );
+      expect(timeoutAt(run.scheduledStart, 25).toISOString()).toBe(
+        '2026-11-01T08:50:00.000Z',
+      );
+    });
+
+    it('ends completed only with every checkpoint scanned', () => {
+      expect(endStatus(3, 3)).toBe('completed');
+      expect(endStatus(2, 3)).toBe('incomplete');
+      expect(endStatus(0, 1)).toBe('incomplete');
+    });
+  });
+
+  it('the run lists match their CHECKs and the dashboards’ mirror', () => {
+    const sql = readFileSync(
+      join(
+        __dirname,
+        '../../../prisma/migrations/20261030090200_patrol_runs/migration.sql',
+      ),
+      'utf8',
+    ).replace(/\s+/g, ' ');
+    const mirror = readFileSync(
+      join(__dirname, '../../../packages/api/src/reasons.ts'),
+      'utf8',
+    );
+    const quoted = (l: readonly string[]) => l.map((c) => `'${c}'`).join(', ');
+    expect(sql).toContain(
+      `"cancel_reason" IN (${quoted([...REASON_CODES.patrolRunCancel, ...REASON_CODES.patrolRunCancelSystem])})`,
+    );
+    expect(sql).toContain(
+      `"cancel_reason" IN (${quoted(REASON_CODES.patrolRunCancelSystem)})`,
+    );
+    expect(sql).toContain(
+      `"end_reason" IN (${quoted(REASON_CODES.patrolRunEnd)})`,
+    );
+    for (const list of [
+      'patrolRunCancel',
+      'patrolRunCancelSystem',
+      'patrolRunEnd',
+    ] as const)
+      expect(mirror).toContain(`${list}: [${quoted(REASON_CODES[list])}]`);
   });
 });

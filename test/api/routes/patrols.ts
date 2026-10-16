@@ -177,3 +177,126 @@ export const ROUTE_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** A guard's patrols (ADR 0052), inside a shift. */
+export const GUARD_PATROL_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/gate/patrols',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: 'none',
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/gate/patrols/runs',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: 'none',
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/gate/patrols/runs/{id}',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bRunId }),
+      code: 'PATROL_RUN_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/patrols/runs/{id}/start',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bRunId }),
+      code: 'PATROL_RUN_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/patrols/routes/{id}/start',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bRouteId }),
+      code: 'PATROL_ROUTE_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/patrols/runs/{id}/end',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bRunId }),
+      code: 'PATROL_RUN_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+];
+
+/** The runs as the management reads them (ADR 0052). */
+export const STAFF_RUN_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/staff/security/patrols/runs',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { from: '2026-13-01' },
+      fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/security/patrols/runs/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bRunId }),
+      code: 'PATROL_RUN_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/security/patrols/runs/{id}/cancel',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bRunId }),
+      body: () => ({ reasonCode: 'other' }),
+      code: 'PATROL_RUN_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: 7 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+];

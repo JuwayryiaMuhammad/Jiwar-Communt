@@ -116,6 +116,9 @@ export const REASON_CODES = {
   governanceCandidateDisqualify: ['not_eligible', 'statement_breaks_rules', 'other'],
   governanceCandidateSystemWithdraw: ['no_longer_owner', 'account_closed'],
   governanceTieBreak: ['board_decision', 'lot_drawn'],
+  patrolRunCancel: ['not_needed', 'post_closed', 'other'],
+  patrolRunCancelSystem: ['route_changed', 'route_retired', 'post_out_of_service'],
+  patrolRunEnd: ['guard', 'shift_ended'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

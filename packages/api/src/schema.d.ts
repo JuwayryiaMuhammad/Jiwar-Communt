@@ -2088,6 +2088,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/patrols": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My patrols at my post
+         * @description On shift (403 NO_OPEN_SHIFT): my run under way, the post’s runs to start or started today, and its routes.
+         */
+        get: operations["GuardPatrolsController_board"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/patrols/routes/{id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start a run of my own
+         * @description Of a route in service from my post, on its current version. One run under way per guard (409 PATROL_RUN_ALREADY_LIVE).
+         */
+        post: operations["GuardPatrolsController_startAdhoc"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/patrols/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The runs I started
+         * @description Newest first.
+         */
+        get: operations["GuardPatrolsController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/patrols/runs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A run and its checkpoints
+         * @description Mine, or one of the post where I am on shift.
+         */
+        get: operations["GuardPatrolsController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/patrols/runs/{id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * End my run
+         * @description Completed when every checkpoint was scanned, else incomplete: the roster’s keepers are told. Under way only (409 PATROL_RUN_NOT_LIVE).
+         */
+        post: operations["GuardPatrolsController_end"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/patrols/runs/{id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start a scheduled run
+         * @description At my post, from 15 minutes before its start until its window ends (409 PATROL_RUN_NOT_STARTABLE, params.reason). The first start wins (409 PATROL_ALREADY_STARTED); one run under way per guard (409 PATROL_RUN_ALREADY_LIVE).
+         */
+        post: operations["GuardPatrolsController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/plate-lookup": {
         parameters: {
             query?: never;
@@ -8803,6 +8923,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/patrols/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the runs
+         * @description Planned on the compound’s days asked, newest first.
+         */
+        get: operations["StaffRunsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/runs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a run */
+        get: operations["StaffRunsController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/runs/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel a scheduled run
+         * @description Nobody started it yet (409 PATROL_RUN_CLOSED, params.status); a `patrolRunCancel` code.
+         */
+        post: operations["StaffRunsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/security/posts": {
         parameters: {
             query?: never;
@@ -12234,6 +12411,15 @@ export interface components {
         };
         /** @enum {string} */
         BoardRole: "chair" | "secretary" | "treasurer" | "member";
+        BoardRouteView: {
+            checkpoints: number;
+            expectedMinutes: number;
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+            ordered: boolean;
+        };
         BoardSeatDto: {
             /**
              * Format: uuid
@@ -12474,6 +12660,13 @@ export interface components {
         };
         CancelRosterSlotDto: {
             reasonCode: components["schemas"]["GuardSlotCancel"];
+        };
+        CancelRunDto: {
+            /**
+             * @description Required (REASON_REQUIRED).
+             * @enum {string}
+             */
+            reasonCode?: "not_needed" | "post_closed" | "other";
         };
         CancelVisitorPassDto: {
             /** @description Required. The closed list `visitorPassCancel`: `not_needed` (the visit is off), `plans_changed` (another day or other visitors), `other`. Missing: REASON_REQUIRED; outside the list: INVALID_REASON_CODE with `allowed`. */
@@ -15897,6 +16090,77 @@ export interface components {
             status: components["schemas"]["GateRequestStatus"];
             unitCode: string;
         };
+        GuardRunDetailView: {
+            checkpointsTotal: number;
+            /** @description Why an incomplete run ended. */
+            endReason: components["schemas"]["PatrolRunEndReason"] | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            expectedMinutes: number;
+            guard: components["schemas"]["FirstNameRefView"] | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["PatrolRunKind"];
+            /** @description Not started 15 minutes after its scheduled start. */
+            late: boolean;
+            ordered: boolean;
+            /**
+             * Format: date-time
+             * @description When it was meant: the scheduled start, or an unscheduled run’s start.
+             */
+            plannedAt: string;
+            post: components["schemas"]["PostView"];
+            route: components["schemas"]["RunRouteView"];
+            scannedCount: number;
+            /** Format: date-time */
+            scheduledStart: string | null;
+            /** Format: date-time */
+            startedAt: string | null;
+            status: components["schemas"]["PatrolRunStatus"];
+            stops: components["schemas"]["RunStopView"][];
+            /** Format: date-time */
+            timesOutAt: string | null;
+            /**
+             * Format: date-time
+             * @description A scheduled run may be started from 15 minutes before its start until then.
+             */
+            windowEndsAt: string | null;
+        };
+        GuardRunView: {
+            checkpointsTotal: number;
+            /** @description Why an incomplete run ended. */
+            endReason: components["schemas"]["PatrolRunEndReason"] | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            guard: components["schemas"]["FirstNameRefView"] | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["PatrolRunKind"];
+            /** @description Not started 15 minutes after its scheduled start. */
+            late: boolean;
+            /**
+             * Format: date-time
+             * @description When it was meant: the scheduled start, or an unscheduled run’s start.
+             */
+            plannedAt: string;
+            post: components["schemas"]["PostView"];
+            route: components["schemas"]["RunRouteView"];
+            scannedCount: number;
+            /** Format: date-time */
+            scheduledStart: string | null;
+            /** Format: date-time */
+            startedAt: string | null;
+            status: components["schemas"]["PatrolRunStatus"];
+            /**
+             * Format: date-time
+             * @description A scheduled run may be started from 15 minutes before its start until then.
+             */
+            windowEndsAt: string | null;
+        };
+        GuardRunViewList: {
+            data: components["schemas"]["GuardRunView"][];
+            nextCursor: string | null;
+        };
         /** @enum {string} */
         GuardSlotCancel: "schedule_change" | "guard_unavailable" | "post_closed" | "other";
         /** @enum {string} */
@@ -17682,6 +17946,25 @@ export interface components {
             data: components["schemas"]["PassView"][];
             nextCursor: string | null;
         };
+        PatrolBoardView: {
+            /** @description The caller’s run under way. */
+            live: components["schemas"]["GuardRunDetailView"] | null;
+            /** @description Routes in service from the caller’s post: a run of one may be started any time. */
+            routes: components["schemas"]["BoardRouteView"][];
+            /** @description At the caller’s post: scheduled runs whose window is open or opens within 12 hours, and those started today. */
+            runs: components["schemas"]["GuardRunView"][];
+        };
+        /** @enum {string} */
+        PatrolRunCancelReason: "not_needed" | "post_closed" | "other" | "route_changed" | "route_retired" | "post_out_of_service";
+        /**
+         * @description Why an incomplete run ended.
+         * @enum {string}
+         */
+        PatrolRunEndReason: "guard" | "shift_ended";
+        /** @enum {string} */
+        PatrolRunKind: "scheduled" | "adhoc";
+        /** @enum {string} */
+        PatrolRunStatus: "scheduled" | "in_progress" | "completed" | "incomplete" | "timed_out" | "missed" | "cancelled";
         PatrolScheduleDto: {
             /**
              * @description 0 = Sunday … 6 = Saturday.
@@ -19780,6 +20063,98 @@ export interface components {
              * @description The unit the caller answers from. Required only when the event is put to several of their units.
              */
             unitId?: string;
+        };
+        RunDetailView: {
+            cancelReason: components["schemas"]["PatrolRunCancelReason"] | null;
+            /** @description Null when the system cancelled it. */
+            cancelledBy: components["schemas"]["AccountRefView"] | null;
+            checkpointsTotal: number;
+            /** @description Why an incomplete run ended. */
+            endReason: components["schemas"]["PatrolRunEndReason"] | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            expectedMinutes: number;
+            guard: components["schemas"]["AccountRefView"] | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["PatrolRunKind"];
+            /** @description Not started 15 minutes after its scheduled start. */
+            late: boolean;
+            ordered: boolean;
+            /**
+             * Format: date-time
+             * @description When it was meant: the scheduled start, or an unscheduled run’s start.
+             */
+            plannedAt: string;
+            post: components["schemas"]["PostView"];
+            route: components["schemas"]["RunRouteView"];
+            scannedCount: number;
+            /** Format: date-time */
+            scheduledStart: string | null;
+            /** Format: date-time */
+            startedAt: string | null;
+            status: components["schemas"]["PatrolRunStatus"];
+            stops: components["schemas"]["RunStopView"][];
+            /** Format: date-time */
+            timesOutAt: string | null;
+            /**
+             * Format: date-time
+             * @description A scheduled run may be started from 15 minutes before its start until then.
+             */
+            windowEndsAt: string | null;
+        };
+        RunRouteView: {
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+        };
+        RunStopView: {
+            /** Format: uuid */
+            checkpointId: string;
+            location: components["schemas"]["CheckpointPositionView"] | null;
+            nameAr: string;
+            nameEn: string;
+            /** @description 1 for the first. */
+            position: number;
+        };
+        RunView: {
+            cancelReason: components["schemas"]["PatrolRunCancelReason"] | null;
+            /** @description Null when the system cancelled it. */
+            cancelledBy: components["schemas"]["AccountRefView"] | null;
+            checkpointsTotal: number;
+            /** @description Why an incomplete run ended. */
+            endReason: components["schemas"]["PatrolRunEndReason"] | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            guard: components["schemas"]["AccountRefView"] | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["PatrolRunKind"];
+            /** @description Not started 15 minutes after its scheduled start. */
+            late: boolean;
+            /**
+             * Format: date-time
+             * @description When it was meant: the scheduled start, or an unscheduled run’s start.
+             */
+            plannedAt: string;
+            post: components["schemas"]["PostView"];
+            route: components["schemas"]["RunRouteView"];
+            scannedCount: number;
+            /** Format: date-time */
+            scheduledStart: string | null;
+            /** Format: date-time */
+            startedAt: string | null;
+            status: components["schemas"]["PatrolRunStatus"];
+            /**
+             * Format: date-time
+             * @description A scheduled run may be started from 15 minutes before its start until then.
+             */
+            windowEndsAt: string | null;
+        };
+        RunViewList: {
+            data: components["schemas"]["RunView"][];
+            nextCursor: string | null;
         };
         SecurityEventView: {
             /** Format: uuid */
@@ -26199,6 +26574,138 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GateParcelView"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_board: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatrolBoardView"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_startAdhoc: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardRunDetailView"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_mine: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardRunViewList"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardRunDetailView"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_end: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardRunDetailView"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_start: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardRunDetailView"];
                 };
             };
         };
@@ -36450,6 +36957,83 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RouteDetailView"];
+                };
+            };
+        };
+    };
+    StaffRunsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description The compound’s first day; six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG). */
+                from?: string;
+                to?: string;
+                routeId?: string;
+                gateId?: string;
+                zoneId?: string;
+                status?: "scheduled" | "in_progress" | "completed" | "incomplete" | "timed_out" | "missed" | "cancelled";
+                guardId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunViewList"];
+                };
+            };
+        };
+    };
+    StaffRunsController_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunDetailView"];
+                };
+            };
+        };
+    };
+    StaffRunsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelRunDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunView"];
                 };
             };
         };

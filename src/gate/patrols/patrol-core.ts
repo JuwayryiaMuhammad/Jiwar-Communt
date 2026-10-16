@@ -3,11 +3,13 @@ import type {
   PatrolCheckpoint,
   PatrolRoute,
   PatrolRouteVersion,
+  PatrolRun,
 } from '@prisma/client';
 import { appError, ErrorCode } from '../../core/common/errors';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { DutyNamesReader } from '../roster/duty-names';
 import type { RouteContext } from './views/route.views';
+import type { RunContext } from './views/run.views';
 
 export const routeNotFound = () =>
   appError.notFound(ErrorCode.PATROL_ROUTE_NOT_FOUND, 'Route not found');
@@ -104,5 +106,48 @@ export class PatrolCore {
         versions.map((v) => v.id),
       ),
     };
+  }
+
+  /** What run views need: names, routes, versions and their stops. */
+  async runContext(
+    tx: TenantTxClient,
+    runs: readonly PatrolRun[],
+  ): Promise<RunContext> {
+    const routeIds = [...new Set(runs.map((r) => r.routeId))];
+    const versionIds = [...new Set(runs.map((r) => r.versionId))];
+    const routes = routeIds.length
+      ? await tx.patrolRoute.findMany({ where: { id: { in: routeIds } } })
+      : [];
+    const versions = versionIds.length
+      ? await tx.patrolRouteVersion.findMany({
+          where: { id: { in: versionIds } },
+        })
+      : [];
+    return {
+      names: await this.names.read(
+        tx,
+        runs.flatMap((r) => [r.guardAccountId, r.cancelledById]),
+        runs,
+      ),
+      routes: new Map(routes.map((r) => [r.id, r])),
+      versions: new Map(versions.map((v) => [v.id, v])),
+      stops: await this.stops(tx, versionIds),
+    };
+  }
+
+  /** Whether a post is in service: a gate active, or a zone not retired. */
+  async inService(
+    tx: TenantTxClient,
+    post: { gateId: string | null; placeId: string | null },
+  ): Promise<boolean> {
+    if (post.gateId)
+      return (
+        (await tx.gate.count({
+          where: { id: post.gateId, status: 'active' },
+        })) > 0
+      );
+    return (
+      (await tx.place.count({ where: { id: post.placeId!, active: true } })) > 0
+    );
   }
 }

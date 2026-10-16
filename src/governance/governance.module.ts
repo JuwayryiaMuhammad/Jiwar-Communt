@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CommunityGovernancePortModule } from '../community';
+import { AccountsModule } from '../core/accounts/accounts.module';
 import { EngagementModule } from '../engagement';
 import { GovernanceAccess } from './access';
 import { GovernanceBoardController } from './board/board.controller';
@@ -15,6 +16,8 @@ import {
 import { CertificationService } from './elections/certification.service';
 import { GovernanceElectionsService } from './elections/elections.service';
 import { GovernanceNotices } from './governance-notices';
+import { GovernanceExportSections } from './privacy/governance-export-sections';
+import { GovernanceLifecycle } from './privacy/governance-lifecycle';
 import {
   BoardPublicationsController,
   StaffBoardPublicationsController,
@@ -32,7 +35,7 @@ import { GovernancePollsService } from './polls/polls.service';
  * for the board's notices; nothing imports it.
  */
 @Module({
-  imports: [CommunityGovernancePortModule, EngagementModule],
+  imports: [AccountsModule, CommunityGovernancePortModule, EngagementModule],
   controllers: [
     GovernanceBoardController,
     StaffBoardController,
@@ -54,6 +57,8 @@ import { GovernancePollsService } from './polls/polls.service';
     GovernanceElectionsService,
     CertificationService,
     BoardPublicationsService,
+    GovernanceLifecycle,
+    GovernanceExportSections,
   ],
 })
 export class GovernanceModule {}

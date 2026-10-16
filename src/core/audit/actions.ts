@@ -1069,6 +1069,11 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'governance_candidate',
   },
+  // The candidate's erasure: their statement went. metadata: electionId.
+  'governance_candidate.statement_cleared': {
+    log: 'tenant',
+    target: 'governance_candidate',
+  },
   // The manager certifies the count: the board it seats. metadata: termId,
   // elected ([candidate ids] seated), ineligible ([ids]: winners who own no
   // unit now, their seats left vacant), tied (how many), tieBreak ([ids]

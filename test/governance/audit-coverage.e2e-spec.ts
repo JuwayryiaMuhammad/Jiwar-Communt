@@ -1,5 +1,6 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { auditReaders } from '../setup/audit';
+import { eraseNow } from '../setup/erasure';
 import {
   COMMUNITY_COVERAGE,
   ENGAGEMENT_COVERAGE,
@@ -311,6 +312,21 @@ describe('Audit coverage — governance', () => {
         electionId: e.id,
         reasonCode: 'not_eligible',
       });
+    });
+
+    it('statement_cleared: the candidate’s erasure, by the system', async () => {
+      const e = await g.election(s.manager);
+      const p = await g.x.resident(s.c, [o(4).unitId]);
+      const leaver = await g.who(s.c, p.id, 'resident');
+      const stood = await g.stand(leaver, e.id, 'Gone soon').expect(201);
+      const id = (stood.body as { myCandidacy: { id: string } }).myCandidacy.id;
+      await eraseNow(h, s.c, leaver.id);
+      const cleared = await single(
+        'governance_candidate.statement_cleared',
+        id,
+      );
+      expect(cleared.metadata).toEqual({ electionId: e.id });
+      expect(JSON.stringify(cleared)).not.toContain('Gone soon');
     });
 
     it('opened: electorate and candidates; closed: the counts of seats, never of a candidate', async () => {

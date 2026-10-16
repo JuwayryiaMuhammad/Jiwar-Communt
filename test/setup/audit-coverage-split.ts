@@ -463,6 +463,7 @@ export const GOVERNANCE_COVERAGE: readonly string[] = [
   'governance_candidate.nominated',
   'governance_candidate.withdrawn',
   'governance_candidate.disqualified',
+  'governance_candidate.statement_cleared',
   'governance_election.certified',
   'board_publication.published',
   'board_publication.archived',

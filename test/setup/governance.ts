@@ -152,6 +152,18 @@ export function governanceHelpers(h: HttpHarness) {
   const e = engagementHelpers(h);
   const { http, who } = e;
 
+  /** Ends every active occupancy of the account in the unit: they moved out. */
+  async function moveOut(c: Compound, unitId: string, account: Who) {
+    for (const o of await e.x.occupancies(c, unitId))
+      if (o.accountId === account.id && o.status === 'active')
+        await e.x.asManager(c, () =>
+          e.x.residents.endOccupancy(o.id, {
+            code: 'moved_out',
+            text: 'Moved out',
+          }),
+        );
+  }
+
   /** A unit and the owner who lives there (its primary). */
   async function ownerOfNewUnit(
     c: Compound,
@@ -310,6 +322,7 @@ export function governanceHelpers(h: HttpHarness) {
 
   return {
     ...e,
+    moveOut,
     ownerOfNewUnit,
     setUp,
     appoint,

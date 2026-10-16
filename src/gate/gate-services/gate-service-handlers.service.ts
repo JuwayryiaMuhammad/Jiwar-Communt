@@ -58,10 +58,14 @@ export class GateServiceHandlersService {
     private readonly records: GateServiceRecords,
   ) {}
 
-  /** `open` is the queue, oldest first; anything else newest first. */
+  /**
+   * `open` is the queue, oldest first; anything else newest first.
+   * `handledById` narrows to one handler's (a guard's work list, ADR 0050).
+   */
   list(q: {
-    status?: GateServiceStatus;
+    status?: GateServiceStatus | GateServiceStatus[];
     kind?: GateServiceKind;
+    handledById?: string;
     cursor?: string;
     limit?: number;
   }): Promise<Page<GateServiceRecord>> {
@@ -72,8 +76,13 @@ export class GateServiceHandlersService {
       const rows = await tx.gateServiceRequest.findMany({
         where: {
           AND: [
-            ...(q.status ? [{ status: q.status }] : []),
+            ...(Array.isArray(q.status)
+              ? [{ status: { in: q.status } }]
+              : q.status
+                ? [{ status: q.status }]
+                : []),
             ...(q.kind ? [{ kind: q.kind }] : []),
+            ...(q.handledById ? [{ handledById: q.handledById }] : []),
             ...(page.after(q.cursor) as Prisma.GateServiceRequestWhereInput[]),
           ],
         },

@@ -138,6 +138,7 @@ export function guardDutyCalls(
       manager('POST', '/staff/security/handover-items', {
         label: 'No-store keys',
       }),
+    'GET /gate/my-work': () => guard('GET', '/gate/my-work'),
     'POST /staff/security/tasks': () =>
       manager('POST', '/staff/security/tasks', {
         kind: 'custom',

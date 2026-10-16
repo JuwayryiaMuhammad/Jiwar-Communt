@@ -15429,6 +15429,24 @@
         ],
         "type": "object"
       },
+      "MyGateServicesSection": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffGateServiceView"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "data",
+          "total"
+        ],
+        "type": "object"
+      },
       "MyParkingReportView": {
         "properties": {
           "createdAt": {
@@ -15489,6 +15507,25 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "MyParkingReportsSection": {
+        "properties": {
+          "data": {
+            "description": "Oldest first.",
+            "items": {
+              "$ref": "#/components/schemas/StaffParkingReportView"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "data",
+          "total"
         ],
         "type": "object"
       },
@@ -15949,6 +15986,26 @@
         ],
         "type": "object"
       },
+      "MyTasksSection": {
+        "properties": {
+          "data": {
+            "description": "Due first, then oldest.",
+            "items": {
+              "$ref": "#/components/schemas/GuardTaskView"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "All of them, beyond the 50 shown.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "data",
+          "total"
+        ],
+        "type": "object"
+      },
       "MyUnitView": {
         "properties": {
           "areaSqm": {
@@ -16042,6 +16099,60 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "MyWorkView": {
+        "properties": {
+          "gateServiceQueue": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MyGateServicesSection"
+              }
+            ],
+            "description": "The open requests, oldest first (`/gate/gate-services`). Null off shift.",
+            "nullable": true,
+            "type": "object"
+          },
+          "myGateServices": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MyGateServicesSection"
+              }
+            ],
+            "description": "The requests I accepted, not closed yet. Null off shift.",
+            "nullable": true,
+            "type": "object"
+          },
+          "onShift": {
+            "description": "Whether I am on shift now.",
+            "type": "boolean"
+          },
+          "parkingReports": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MyParkingReportsSection"
+              }
+            ],
+            "description": "The open wrong-parking reports (`/staff/parking-reports`), for a holder of `parking_reports.handle`; null otherwise.",
+            "nullable": true,
+            "type": "object"
+          },
+          "tasks": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MyTasksSection"
+              }
+            ],
+            "description": "Mine, my post’s while on shift there, and those I took: open or in progress (`/gate/tasks/{id}`)."
+          }
+        },
+        "required": [
+          "onShift",
+          "tasks",
+          "gateServiceQueue",
+          "myGateServices",
+          "parkingReports"
         ],
         "type": "object"
       },
@@ -38872,6 +38983,36 @@
         "summary": "Log materials brought in",
         "tags": [
           "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/my-work": {
+      "get": {
+        "description": "My tasks; on shift, the gate services queue and the requests I accepted; with `parking_reports.handle`, the open wrong-parking reports. Each kind shows 50 at most, with its total; each is acted on through its own routes.",
+        "operationId": "MyWorkController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyWorkView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read my work",
+        "tags": [
+          "guard-duty"
         ],
         "x-no-store": true,
         "x-stability": "draft"

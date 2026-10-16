@@ -10646,6 +10646,26 @@
           }
         },
         {
+          "name": "Read my work",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "my-work"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/my-work"
+            }
+          }
+        },
+        {
           "name": "Read my schedule",
           "request": {
             "description": "**Responses:** 200",

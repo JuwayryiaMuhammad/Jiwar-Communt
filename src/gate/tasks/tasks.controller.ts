@@ -24,7 +24,9 @@ import {
   CreateGuardTaskDto,
   StaffGuardTasksQueryDto,
 } from './dto/tasks.dto';
+import { MyWorkService } from './my-work.service';
 import { TasksService } from './tasks.service';
+import { MyWorkView } from './views/my-work.views';
 import { GuardTaskView, StaffGuardTaskView } from './views/task.views';
 
 /** The guards' tasks, as the management gives them (ADR 0050). */
@@ -126,5 +128,25 @@ export class GuardTasksController {
     @Body() dto: CompleteGuardTaskDto,
   ): Promise<GuardTaskView> {
     return this.tasks.complete(id, dto);
+  }
+}
+
+/** A guard's work in one place (ADR 0050): `gate.operate`. */
+@ApiArea('guard-duty')
+@RequirePermissions('gate.operate')
+@Controller('gate/my-work')
+export class MyWorkController {
+  constructor(private readonly work: MyWorkService) {}
+
+  @Get()
+  @NoStore()
+  @ApiOperation({
+    summary: 'Read my work',
+    description:
+      'My tasks; on shift, the gate services queue and the requests I accepted; with `parking_reports.handle`, the open wrong-parking reports. Each kind shows 50 at most, with its total; each is acted on through its own routes.',
+  })
+  @ApiOkResponse({ type: MyWorkView })
+  mine(): Promise<MyWorkView> {
+    return this.work.mine();
   }
 }

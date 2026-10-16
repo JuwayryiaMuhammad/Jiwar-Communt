@@ -1864,6 +1864,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/my-work": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read my work
+         * @description My tasks; on shift, the gate services queue and the requests I accepted; with `parking_reports.handle`, the open wrong-parking reports. Each kind shows 50 at most, with its total; each is acted on through its own routes.
+         */
+        get: operations["MyWorkController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/parcels": {
         parameters: {
             query?: never;
@@ -15125,6 +15145,10 @@ export interface components {
             data: components["schemas"]["MyDelegationView"][];
             nextCursor: string | null;
         };
+        MyGateServicesSection: {
+            data: components["schemas"]["StaffGateServiceView"][];
+            total: number;
+        };
         MyParkingReportView: {
             /** Format: date-time */
             createdAt: string;
@@ -15144,6 +15168,11 @@ export interface components {
         MyParkingReportViewList: {
             data: components["schemas"]["MyParkingReportView"][];
             nextCursor: string | null;
+        };
+        MyParkingReportsSection: {
+            /** @description Oldest first. */
+            data: components["schemas"]["StaffParkingReportView"][];
+            total: number;
         };
         MyPermissionsView: {
             /** @description Never revocable. */
@@ -15283,6 +15312,12 @@ export interface components {
             /** @description Each move and each answer, the oldest first. */
             updates: components["schemas"]["SuggestionUpdateView"][];
         };
+        MyTasksSection: {
+            /** @description Due first, then oldest. */
+            data: components["schemas"]["GuardTaskView"][];
+            /** @description All of them, beyond the 50 shown. */
+            total: number;
+        };
         MyUnitView: {
             /**
              * @description Square metres; the app converts for display.
@@ -15311,6 +15346,18 @@ export interface components {
         MyUnitViewList: {
             data: components["schemas"]["MyUnitView"][];
             nextCursor: string | null;
+        };
+        MyWorkView: {
+            /** @description The open requests, oldest first (`/gate/gate-services`). Null off shift. */
+            gateServiceQueue: components["schemas"]["MyGateServicesSection"] | null;
+            /** @description The requests I accepted, not closed yet. Null off shift. */
+            myGateServices: components["schemas"]["MyGateServicesSection"] | null;
+            /** @description Whether I am on shift now. */
+            onShift: boolean;
+            /** @description The open wrong-parking reports (`/staff/parking-reports`), for a holder of `parking_reports.handle`; null otherwise. */
+            parkingReports: components["schemas"]["MyParkingReportsSection"] | null;
+            /** @description Mine, my post’s while on shift there, and those I took: open or in progress (`/gate/tasks/{id}`). */
+            tasks: components["schemas"]["MyTasksSection"];
         };
         /** @enum {string} */
         NeighbourClaimStatus: "pending" | "handed_over" | "declined" | "withdrawn";
@@ -23413,6 +23460,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MaterialEntryView"];
+                };
+            };
+        };
+    };
+    MyWorkController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyWorkView"];
                 };
             };
         };

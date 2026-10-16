@@ -278,8 +278,18 @@ export const HANDOVER_ROUTES: Row[] = [
   },
 ];
 
-/** The guards' tasks (ADR 0050). */
+/** The guards' tasks (ADR 0050), and a guard's work in one place. */
 export const TASK_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/gate/my-work',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: 'none',
+    invalid: 'none',
+    noStore: true,
+  },
   {
     method: 'POST',
     path: '/staff/security/tasks',

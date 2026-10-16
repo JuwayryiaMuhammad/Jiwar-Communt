@@ -980,6 +980,10 @@ export const AUDIT_ACTIONS = {
   'found_item.claimed': { log: 'tenant', target: 'found_item' },
   // The retention sweep cleared the claimant's name (30 days).
   'found_item.claimant_name_cleared': { log: 'tenant', target: 'found_item' },
+  // A guard's erasure: what they wrote goes, once each (ADR 0050).
+  'guard_handover.notes_cleared': { log: 'tenant', target: 'guard_handover' },
+  'guard_task.result_cleared': { log: 'tenant', target: 'guard_task' },
+  'guard_swap.reason_cleared': { log: 'tenant', target: 'guard_shift_swap' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

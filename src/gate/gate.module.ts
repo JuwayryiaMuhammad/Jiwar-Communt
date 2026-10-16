@@ -146,6 +146,8 @@ import {
   StaffHandoverController,
 } from './handover/handover.controller';
 import { HandoverService } from './handover/handover.service';
+import { GuardDutyExportSections } from './roster/duty-export-sections';
+import { GuardDutyLifecycle } from './roster/duty-lifecycle';
 import { DutyNamesReader } from './roster/duty-names';
 import {
   GuardSwapsController,
@@ -316,6 +318,8 @@ import { RosterService } from './roster/roster.service';
     GuardInstructionsService,
     FoundItemsService,
     DailyReportService,
+    GuardDutyLifecycle,
+    GuardDutyExportSections,
   ],
 })
 export class GateModule {}

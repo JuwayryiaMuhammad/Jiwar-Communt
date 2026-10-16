@@ -434,4 +434,7 @@ export const GUARD_DUTY_COVERAGE: readonly string[] = [
   'found_item.received',
   'found_item.claimed',
   'found_item.claimant_name_cleared',
+  'guard_handover.notes_cleared',
+  'guard_task.result_cleared',
+  'guard_swap.reason_cleared',
 ];

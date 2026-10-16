@@ -4,6 +4,7 @@ import { ROSTER_ATTENDANCE_SWEEP } from '../../src/gate/roster/roster-attendance
 import { FOUND_ITEM_RETENTION_SWEEP } from '../../src/gate/found-items/found-items.service';
 import { SWAP_EXPIRY_SWEEP } from '../../src/gate/swaps/swaps.service';
 import { auditReaders } from '../setup/audit';
+import { eraseNow } from '../setup/erasure';
 import {
   COMMUNITY_COVERAGE,
   ENGAGEMENT_COVERAGE,
@@ -498,6 +499,65 @@ describe('Audit coverage — guard shifts and tasks', () => {
         await single('found_item.claimant_name_cleared', item.id),
       ).toMatchObject(system('found_item'));
       await x.endRaw(guard).expect(200);
+    });
+  });
+
+  describe('a guard erased', () => {
+    it('their handover notes, task notes and swap reasons cleared: one entry each, by the system', async () => {
+      const leaving = await x.guard(s.c);
+      const colleague = await x.guard(s.c);
+      const own = (await x.g.gate(s.c)).id;
+      const shift = await x.start(leaving, { gateId: own });
+      const task = (
+        await x
+          .http('post', '/staff/security/tasks', supervisor.token, {
+            kind: 'custom',
+            title: 'Erasure task',
+            gateId: own,
+          })
+          .expect(201)
+      ).body as { id: string };
+      await x
+        .http('post', `/gate/tasks/${task.id}/take`, leaving.token)
+        .expect(200);
+      await x
+        .http('post', `/gate/tasks/${task.id}/complete`, leaving.token, {
+          outcome: 'done',
+          note: WORDS,
+        })
+        .expect(200);
+      const slot = await x.slot(
+        supervisor,
+        leaving.id,
+        { gateId: own },
+        9 * 24 * 60,
+      );
+      const swap = (
+        await x
+          .http('post', '/gate/swaps', leaving.token, {
+            slotId: slot.id,
+            colleagueId: colleague.id,
+            reason: WORDS,
+          })
+          .expect(201)
+      ).body as { id: string };
+      await x.endRaw(leaving, { notes: WORDS }).expect(200);
+      const handover = await x.inTx(s.c, (tx) =>
+        tx.guardHandover.findFirstOrThrow({ where: { shiftId: shift.id } }),
+      );
+      // Staff are erased once deactivated (active_staff_role).
+      await x
+        .http('patch', `/accounts/${leaving.id}/status`, s.manager.token, {
+          status: 'inactive',
+        })
+        .expect(200);
+      await eraseNow(h, s.c, leaving.id);
+      for (const [action, id, target] of [
+        ['guard_handover.notes_cleared', handover.id, 'guard_handover'],
+        ['guard_task.result_cleared', task.id, 'guard_task'],
+        ['guard_swap.reason_cleared', swap.id, 'guard_shift_swap'],
+      ] as const)
+        expect(await single(action, id)).toMatchObject({ targetType: target });
     });
   });
 

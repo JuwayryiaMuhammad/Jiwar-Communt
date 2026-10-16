@@ -645,3 +645,146 @@ export const INSTRUCTION_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** The gate's lost-and-found register (ADR 0050). */
+export const FOUND_ITEM_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/gate/found-items',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: 'none',
+    invalid: {
+      body: { description: '', placeId: 'place-1' },
+      fields: [
+        {
+          field: 'description',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 500 },
+        },
+        { field: 'placeId', code: 'INVALID_UUID' },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/gate/found-items',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'lost' },
+      fields: [{ field: 'status', code: 'INVALID_VALUE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/gate/found-items/{id}',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bFoundItemId }),
+      code: 'FOUND_ITEM_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/found-items/{id}/claim',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bFoundItemId }),
+      body: () => ({ name: 'Foreign' }),
+      code: 'FOUND_ITEM_NOT_FOUND',
+    },
+    invalid: {
+      body: { name: 7 },
+      fields: [{ field: 'name', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/security/found-items',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: { description: '', placeId: 'place-1' },
+      fields: [
+        {
+          field: 'description',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 500 },
+        },
+        { field: 'placeId', code: 'INVALID_UUID' },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/security/found-items',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'lost' },
+      fields: [{ field: 'status', code: 'INVALID_VALUE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/security/found-items/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bFoundItemId }),
+      code: 'FOUND_ITEM_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/security/found-items/{id}/receive',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bFoundItemId }),
+      code: 'FOUND_ITEM_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/security/found-items/{id}/claim',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bFoundItemId }),
+      body: () => ({ name: 'Foreign' }),
+      code: 'FOUND_ITEM_NOT_FOUND',
+    },
+    invalid: {
+      body: { name: 7 },
+      fields: [{ field: 'name', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+];

@@ -1,6 +1,7 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { addDays, localDate } from '../../src/core/common/slots/day-slots';
 import { ROSTER_ATTENDANCE_SWEEP } from '../../src/gate/roster/roster-attendance';
+import { FOUND_ITEM_RETENTION_SWEEP } from '../../src/gate/found-items/found-items.service';
 import { SWAP_EXPIRY_SWEEP } from '../../src/gate/swaps/swaps.service';
 import { auditReaders } from '../setup/audit';
 import {
@@ -441,6 +442,61 @@ describe('Audit coverage — guard shifts and tasks', () => {
       expect(
         (await single('guard_instruction.archived', i.id)).metadata,
       ).toEqual({ recipients: 1, acknowledged: 1 });
+      await x.endRaw(guard).expect(200);
+    });
+  });
+
+  describe('lost and found', () => {
+    it('registered, received, claimed, its claimant’s name cleared: never the words or the name', async () => {
+      const guard = await x.guard(s.c);
+      const shift = await x.start(guard, { gateId });
+      const item = (
+        await x
+          .http('post', '/gate/found-items', guard.token, {
+            description: WORDS,
+          })
+          .expect(201)
+      ).body as { id: string };
+      const registered = await single('found_item.registered', item.id);
+      expect(registered).toMatchObject(by(guard, 'found_item'));
+      expect(registered.metadata).toEqual({
+        shiftId: shift.id,
+        placeId: null,
+        photos: 0,
+      });
+      await x
+        .http(
+          'post',
+          `/staff/security/found-items/${item.id}/receive`,
+          s.manager.token,
+        )
+        .expect(200);
+      expect(await single('found_item.received', item.id)).toMatchObject(
+        by(s.manager, 'found_item'),
+      );
+      await x
+        .http(
+          'post',
+          `/staff/security/found-items/${item.id}/claim`,
+          s.manager.token,
+          {
+            name: WORDS.slice(0, 20),
+            note: WORDS,
+          },
+        )
+        .expect(200);
+      expect((await single('found_item.claimed', item.id)).metadata).toEqual({
+        unitId: null,
+        name: true,
+        note: true,
+      });
+      await x.sweep(
+        FOUND_ITEM_RETENTION_SWEEP,
+        new Date(Date.now() + 31 * 86_400_000),
+      );
+      expect(
+        await single('found_item.claimant_name_cleared', item.id),
+      ).toMatchObject(system('found_item'));
       await x.endRaw(guard).expect(200);
     });
   });

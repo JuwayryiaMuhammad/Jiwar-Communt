@@ -1656,6 +1656,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/found-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the register
+         * @description Newest first.
+         */
+        get: operations["GuardFoundItemsController_list"];
+        put?: never;
+        /**
+         * Register a found item
+         * @description On shift (403 NO_OPEN_SHIFT): what, where, when, photos. The shift and its post are recorded.
+         */
+        post: operations["GuardFoundItemsController_register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/found-items/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a found item */
+        get: operations["GuardFoundItemsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/found-items/{id}/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record its owner’s claim at the gate
+         * @description While it is held at the gate (409 FOUND_ITEM_CLOSED once the management has it): a unit’s code and/or a name as told, once.
+         */
+        post: operations["GuardFoundItemsController_claim"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/gate-services": {
         parameters: {
             query?: never;
@@ -7733,6 +7794,84 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/found-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the register
+         * @description Newest first.
+         */
+        get: operations["StaffFoundItemsController_list"];
+        put?: never;
+        /** Register a found item at the office */
+        post: operations["StaffFoundItemsController_register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/found-items/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a found item */
+        get: operations["StaffFoundItemsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/found-items/{id}/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record its owner’s claim
+         * @description Held at the gate or at the office; once.
+         */
+        post: operations["StaffFoundItemsController_claim"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/found-items/{id}/receive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Receive a found item from the gate
+         * @description The management holds it now.
+         */
+        post: operations["StaffFoundItemsController_receive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/security/guards": {
         parameters: {
             query?: never;
@@ -11596,6 +11735,13 @@ export interface components {
             id: string;
             status: components["schemas"]["NeighbourClaimStatus"];
         };
+        ClaimFoundItemDto: {
+            /** @description As the claimant gives it; kept 30 days. */
+            name?: string;
+            note?: string;
+            /** @description The owner’s unit (UNIT_CODE_UNKNOWN). With `name`, one at least. */
+            unitCode?: string;
+        };
         ClearReviewFlagDto: {
             /** @description From the closed list `reviewClear`. */
             reasonCode: string;
@@ -13924,6 +14070,41 @@ export interface components {
              * @description The open flag (an existing one when already open).
              */
             flagId: string;
+        };
+        FoundItemClaimView: {
+            /** @description As told; null after 30 days. */
+            name: string | null;
+            note: string | null;
+            /** @description The owner’s unit. */
+            unitCode: string | null;
+        };
+        /** @enum {string} */
+        FoundItemStatus: "at_gate" | "with_management" | "claimed";
+        FoundItemView: {
+            claim: components["schemas"]["FoundItemClaimView"] | null;
+            /** Format: date-time */
+            claimedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            description: string;
+            /** Format: date-time */
+            foundAt: string;
+            /** Format: uuid */
+            id: string;
+            location: string | null;
+            photos: components["schemas"]["PresignedReadView"][];
+            /** @description Where it was found. */
+            place: components["schemas"]["PlaceView"] | null;
+            /** Format: date-time */
+            receivedAt: string | null;
+            /** @description Where it was registered: the post of the guard’s shift; null at the office. */
+            registeredAt: components["schemas"]["PostView"] | null;
+            registeredBy: components["schemas"]["FirstNameRefView"];
+            status: components["schemas"]["FoundItemStatus"];
+        };
+        FoundItemViewList: {
+            data: components["schemas"]["FoundItemView"][];
+            nextCursor: string | null;
         };
         GateContactView: {
             /** Format: uuid */
@@ -17182,6 +17363,22 @@ export interface components {
             data: components["schemas"]["RefundView"][];
             nextCursor: string | null;
         };
+        RegisterFoundItemDto: {
+            description: string;
+            /**
+             * Format: date-time
+             * @description When it was found; default now, never later.
+             */
+            foundAt?: string;
+            location?: string;
+            /** @description Finalized `found_item_photo` files of the caller, 3 at most. */
+            photoFileIds?: string[];
+            /**
+             * Format: uuid
+             * @description Where it was found: a place in service.
+             */
+            placeId?: string;
+        };
         RegisterPushTokenDto: {
             platform: components["schemas"]["PushPlatform"];
             /** @description The FCM registration token of this install (1–4096 characters). Stored to send to; never returned, logged or audited. */
@@ -18878,6 +19075,34 @@ export interface components {
         };
         StaffFineViewList: {
             data: components["schemas"]["StaffFineView"][];
+            nextCursor: string | null;
+        };
+        StaffFoundItemView: {
+            claim: components["schemas"]["FoundItemClaimView"] | null;
+            claimRecordedBy: components["schemas"]["AccountRefView"] | null;
+            /** Format: date-time */
+            claimedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            description: string;
+            /** Format: date-time */
+            foundAt: string;
+            /** Format: uuid */
+            id: string;
+            location: string | null;
+            photos: components["schemas"]["PresignedReadView"][];
+            /** @description Where it was found. */
+            place: components["schemas"]["PlaceView"] | null;
+            /** Format: date-time */
+            receivedAt: string | null;
+            receivedBy: components["schemas"]["AccountRefView"] | null;
+            /** @description Where it was registered: the post of the guard’s shift; null at the office. */
+            registeredAt: components["schemas"]["PostView"] | null;
+            registeredBy: components["schemas"]["AccountRefView"];
+            status: components["schemas"]["FoundItemStatus"];
+        };
+        StaffFoundItemViewList: {
+            data: components["schemas"]["StaffFoundItemView"][];
             nextCursor: string | null;
         };
         StaffGateServiceView: {
@@ -23719,6 +23944,102 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EntryView"];
+                };
+            };
+        };
+    };
+    GuardFoundItemsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "at_gate" | "with_management" | "claimed";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FoundItemViewList"];
+                };
+            };
+        };
+    };
+    GuardFoundItemsController_register: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterFoundItemDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FoundItemView"];
+                };
+            };
+        };
+    };
+    GuardFoundItemsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FoundItemView"];
+                };
+            };
+        };
+    };
+    GuardFoundItemsController_claim: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClaimFoundItemDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FoundItemView"];
                 };
             };
         };
@@ -33028,6 +33349,123 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GuardAttendanceViewList"];
+                };
+            };
+        };
+    };
+    StaffFoundItemsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "at_gate" | "with_management" | "claimed";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFoundItemViewList"];
+                };
+            };
+        };
+    };
+    StaffFoundItemsController_register: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterFoundItemDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFoundItemView"];
+                };
+            };
+        };
+    };
+    StaffFoundItemsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFoundItemView"];
+                };
+            };
+        };
+    };
+    StaffFoundItemsController_claim: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClaimFoundItemDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFoundItemView"];
+                };
+            };
+        };
+    };
+    StaffFoundItemsController_receive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffFoundItemView"];
                 };
             };
         };

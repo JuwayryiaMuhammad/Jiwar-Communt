@@ -1328,6 +1328,9 @@ describe('API v0 — PII leak scan', () => {
       // An instruction of B's: not found for everyone of A.
       '/staff/security/instructions/{id}': w.bInstructionId,
       '/gate/guard-instructions/{id}': w.bInstructionId,
+      // A found item of B's: not found for everyone of A.
+      '/gate/found-items/{id}': w.bFoundItemId,
+      '/staff/security/found-items/{id}': w.bFoundItemId,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

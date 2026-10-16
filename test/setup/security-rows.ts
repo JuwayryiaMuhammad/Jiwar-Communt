@@ -232,3 +232,41 @@ export async function recipientRow(
   });
   return id;
 }
+
+/** An item registered at the office, at a place. */
+export async function foundItemRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; placeId: string; registeredById: string },
+): Promise<string> {
+  const id = newId();
+  const now = new Date();
+  await tx.foundItem.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      description: 'Row wallet',
+      placeId: r.placeId,
+      foundAt: new Date(now.getTime() - 60_000),
+      registeredById: r.registeredById,
+      createdAt: now,
+    },
+  });
+  return id;
+}
+
+export async function foundItemPhotoRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; itemId: string; fileId: string; uploadedById: string },
+): Promise<string> {
+  const id = newId();
+  await tx.foundItemPhoto.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      itemId: r.itemId,
+      fileId: r.fileId,
+      uploadedById: r.uploadedById,
+    },
+  });
+  return id;
+}

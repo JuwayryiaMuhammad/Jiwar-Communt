@@ -121,6 +121,13 @@ export function guardDutyCalls(
         audience: 'all',
       }),
     );
+  /** An item A's guard registered at A's gate: its id. */
+  const aFound = async () =>
+    id(
+      await guard('POST', '/gate/found-items', {
+        description: 'No-store keys',
+      }),
+    );
   const anItem = async () =>
     id(
       await manager('POST', '/staff/security/handover-items', {
@@ -171,6 +178,29 @@ export function guardDutyCalls(
         label: 'No-store keys',
       }),
     'GET /gate/my-work': () => guard('GET', '/gate/my-work'),
+    'POST /gate/found-items': () =>
+      guard('POST', '/gate/found-items', { description: 'No-store wallet' }),
+    'GET /gate/found-items': () => guard('GET', '/gate/found-items'),
+    'GET /gate/found-items/{id}': async () =>
+      guard('GET', `/gate/found-items/${await aFound()}`),
+    'POST /gate/found-items/{id}/claim': async () =>
+      guard('POST', `/gate/found-items/${await aFound()}/claim`, {
+        name: 'Owner',
+      }),
+    'POST /staff/security/found-items': () =>
+      manager('POST', '/staff/security/found-items', {
+        description: 'No-store scarf',
+      }),
+    'GET /staff/security/found-items': () =>
+      manager('GET', '/staff/security/found-items'),
+    'GET /staff/security/found-items/{id}': async () =>
+      manager('GET', `/staff/security/found-items/${await aFound()}`),
+    'POST /staff/security/found-items/{id}/receive': async () =>
+      manager('POST', `/staff/security/found-items/${await aFound()}/receive`),
+    'POST /staff/security/found-items/{id}/claim': async () =>
+      manager('POST', `/staff/security/found-items/${await aFound()}/claim`, {
+        name: 'Owner',
+      }),
     'POST /staff/security/instructions': () =>
       manager('POST', '/staff/security/instructions', {
         title: 'No-store',

@@ -130,6 +130,11 @@ import { PermitLifecycle } from './permits/permit-lifecycle';
 import { PermitExportSections } from './permits/permit-export-sections';
 import { GatePermitsService } from './permits/gate-permits.service';
 import {
+  GuardFoundItemsController,
+  StaffFoundItemsController,
+} from './found-items/found-items.controller';
+import { FoundItemsService } from './found-items/found-items.service';
+import {
   GuardInstructionsController,
   StaffGuardInstructionsController,
 } from './guard-instructions/guard-instructions.controller';
@@ -225,6 +230,8 @@ import { RosterService } from './roster/roster.service';
     StaffSwapsController,
     StaffGuardInstructionsController,
     GuardInstructionsController,
+    GuardFoundItemsController,
+    StaffFoundItemsController,
   ],
   providers: [
     GatesService,
@@ -304,6 +311,7 @@ import { RosterService } from './roster/roster.service';
     MyWorkService,
     SwapsService,
     GuardInstructionsService,
+    FoundItemsService,
   ],
 })
 export class GateModule {}

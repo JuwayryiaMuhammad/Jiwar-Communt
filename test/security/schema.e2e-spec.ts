@@ -3,9 +3,12 @@ import { newId } from '../../src/core/common/uuid';
 import { FILE_PURPOSES, FILE_TYPES } from '../../src/core/files/purposes';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
+import { placeRow } from '../setup/safety-rows';
 import { createAccountRow, createTenant } from '../setup/fixtures';
 import {
   dutyFileRow,
+  foundItemPhotoRow,
+  foundItemRow,
   gateRow,
   handoverItemRow,
   handoverRow,
@@ -45,6 +48,7 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
   let swapId: string;
   let instructionId: string;
   let recipientId: string;
+  let foundId: string;
 
   beforeAll(async () => {
     h = await createDbHarness();
@@ -103,6 +107,17 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
           tenantId,
           instructionId,
           accountId: guardId,
+        });
+        foundId = await foundItemRow(tx, {
+          tenantId,
+          placeId: await placeRow(tx, tenantId),
+          registeredById: guardId,
+        });
+        await foundItemPhotoRow(tx, {
+          tenantId,
+          itemId: foundId,
+          fileId: await dutyFileRow(tx, tenantId, 'found_item_photo'),
+          uploadedById: guardId,
         });
         shiftId = newId();
         await tx.guardShift.create({
@@ -167,6 +182,7 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
       'guard_shift_swaps',
       'guard_instructions',
       'guard_instruction_recipients',
+      'found_items',
     ])
       expect({ table, ...(await privileges(table)) }).toEqual({
         table,
@@ -190,7 +206,15 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
       'guard_shift_swaps',
       'guard_instructions',
       'guard_instruction_recipients',
+      'found_items',
+      'found_item_photos',
     ]) {
+      // A row to refuse: a row trigger never fires on a DELETE of none.
+      const found = await attempt(
+        migrator,
+        `SELECT 1 FROM "${table}" WHERE tenant_id = '${tenantId}' LIMIT 1`,
+      );
+      expect([table, found?.rowCount]).toEqual([table, 1]);
       await expect(
         attempt(
           migrator,
@@ -719,6 +743,52 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
           `UPDATE guard_instruction_recipients SET account_id = '${otherId}' WHERE ${where}`,
         ),
       ).rejects.toThrow(/acknowledged once/);
+    });
+  });
+
+  describe('found_items', () => {
+    const where = () => `id = '${foundId}'`;
+    const claim = (set: string) =>
+      `UPDATE found_items SET status = 'claimed', claimed_at = now(), claim_recorded_by_account_id = '${otherId}', ${set} WHERE ${where()}`;
+
+    it('what was found never changes; it moves forward only', async () => {
+      for (const set of [
+        "description = 'Other'",
+        "found_at = found_at - interval '1 day'",
+        `registered_by_account_id = '${otherId}'`,
+      ])
+        await expect(
+          asApp(`UPDATE found_items SET ${set} WHERE ${where()}`),
+        ).rejects.toThrow(/what was found never changes/);
+      await expect(
+        asApp(
+          claim(
+            "claimant_name = 'Ann', claimant_name_expires_at = now() + interval '30 days'",
+          ),
+          `UPDATE found_items SET status = 'with_management', received_at = now(), received_by_account_id = '${otherId}' WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/what was found never changes/);
+    });
+
+    it('a claim has a claimant, and its name goes once', async () => {
+      await expect(asApp(claim('claim_note = NULL'))).rejects.toThrow(
+        /found_items_claimed_shape/,
+      );
+      const named = claim(
+        "claimant_name = 'Ann', claimant_name_expires_at = now() + interval '30 days'",
+      );
+      const clear = `UPDATE found_items SET claimant_name = NULL, claimant_name_cleared_at = now() WHERE ${where()}`;
+      await asApp(named, clear);
+      await expect(
+        asApp(
+          named,
+          clear,
+          `UPDATE found_items SET claimant_name = 'Back', claimant_name_cleared_at = NULL WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/what was found never changes/);
+      await expect(asApp(claim("claimant_name = 'Ann'"))).rejects.toThrow(
+        /found_items_claimed_shape/,
+      );
     });
   });
 });

@@ -1,8 +1,11 @@
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
+import { placeRow } from '../setup/safety-rows';
 import { createAccountRow, createTenant } from '../setup/fixtures';
 import {
   dutyFileRow,
+  foundItemPhotoRow,
+  foundItemRow,
   gateRow,
   handoverItemRow,
   handoverRow,
@@ -24,6 +27,8 @@ interface Side {
   shiftId: string;
   taskId: string;
   colleagueId: string;
+  placeId: string;
+  itemId: string;
 }
 
 /**
@@ -151,6 +156,25 @@ const TABLES: Table[] = [
         accountId: link.accountId,
       }),
   },
+  {
+    table: 'found_items',
+    insert: (tx, own, link) =>
+      foundItemRow(tx, {
+        tenantId: own.tenantId,
+        placeId: link.placeId,
+        registeredById: link.accountId,
+      }),
+  },
+  {
+    table: 'found_item_photos',
+    insert: async (tx, own, link) =>
+      foundItemPhotoRow(tx, {
+        tenantId: own.tenantId,
+        itemId: link.itemId,
+        fileId: await dutyFileRow(tx, own.tenantId, 'found_item_photo'),
+        uploadedById: link.accountId,
+      }),
+  },
 ];
 
 describe('RLS isolation — guard shifts and tasks tables', () => {
@@ -173,6 +197,8 @@ describe('RLS isolation — guard shifts and tasks tables', () => {
       shiftId: '',
       taskId: '',
       colleagueId: (await createAccountRow(h, tenantId)).id,
+      placeId: '',
+      itemId: '',
     };
     await inTenant(s, async (tx) => {
       s.gateId = await gateRow(tx, tenantId);
@@ -180,6 +206,12 @@ describe('RLS isolation — guard shifts and tasks tables', () => {
         tenantId,
         guardId: s.accountId,
         gateId: s.gateId,
+      });
+      s.placeId = await placeRow(tx, tenantId);
+      s.itemId = await foundItemRow(tx, {
+        tenantId,
+        placeId: s.placeId,
+        registeredById: s.accountId,
       });
       s.taskId = await taskRow(tx, {
         tenantId,

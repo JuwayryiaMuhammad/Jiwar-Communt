@@ -6482,3 +6482,63 @@ model GuardInstructionRecipient {
   @@index([tenantId, accountId, addedAt], map: "guard_instruction_recipients_account_idx")
   @@map("guard_instruction_recipients")
 }
+
+enum FoundItemStatus {
+  at_gate
+  with_management
+  claimed
+
+  @@map("found_item_status")
+}
+
+/// The gate's lost-and-found register (ADR 0050): what security found or
+/// was handed, where, when, photos, who registered it. Claimed at the gate,
+/// or received by the management and claimed at the office. A claimant is
+/// a unit and/or a name as told; the name goes after 30 days. What was found
+/// never changes; it moves forward only (trigger).
+model FoundItem {
+  id                    String          @id @db.Uuid
+  tenantId              String          @map("tenant_id") @db.Uuid
+  description           String
+  /// Where it was found: a place, and/or words.
+  placeId               String?         @map("place_id") @db.Uuid
+  location              String?
+  foundAt               DateTime        @map("found_at") @db.Timestamptz(3)
+  registeredById        String          @map("registered_by_account_id") @db.Uuid
+  /// The registering guard's shift and its post; null at the office.
+  shiftId               String?         @map("shift_id") @db.Uuid
+  gateId                String?         @map("gate_id") @db.Uuid
+  zoneId                String?         @map("zone_id") @db.Uuid
+  status                FoundItemStatus @default(at_gate)
+  receivedAt            DateTime?       @map("received_at") @db.Timestamptz(3)
+  receivedById          String?         @map("received_by_account_id") @db.Uuid
+  claimedAt             DateTime?       @map("claimed_at") @db.Timestamptz(3)
+  claimRecordedById     String?         @map("claim_recorded_by_account_id") @db.Uuid
+  claimantUnitId        String?         @map("claimant_unit_id") @db.Uuid
+  /// As told: personal data, cleared at `claimant_name_expires_at`.
+  claimantName          String?         @map("claimant_name")
+  claimantNameExpiresAt DateTime?       @map("claimant_name_expires_at") @db.Timestamptz(3)
+  claimantNameClearedAt DateTime?       @map("claimant_name_cleared_at") @db.Timestamptz(3)
+  claimNote             String?         @map("claim_note")
+  createdAt             DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, createdAt, id], map: "found_items_status_idx")
+  @@index([tenantId, createdAt, id], map: "found_items_created_idx")
+  @@map("found_items")
+}
+
+/// A found item's photo (ADR 0050). Never changes.
+model FoundItemPhoto {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  itemId       String   @map("item_id") @db.Uuid
+  fileId       String   @unique @map("file_id") @db.Uuid
+  uploadedById String   @map("uploaded_by_account_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, itemId], map: "found_item_photos_item_idx")
+  @@map("found_item_photos")
+}

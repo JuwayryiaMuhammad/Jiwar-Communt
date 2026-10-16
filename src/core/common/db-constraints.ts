@@ -86,6 +86,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   guard_instructions_tenant_id_id_key: null,
   guard_instruction_recipients_tenant_id_id_key: null,
   guard_instruction_recipients_once_key: null,
+  // The gate's lost and found (ADR 0050).
+  found_items_tenant_id_id_key: null,
+  found_item_photos_tenant_id_id_key: null,
+  found_item_photos_file_id_key: null,
   visitor_details_tenant_id_id_key: null,
   visitor_passes_tenant_id_id_key: null,
   // ADR 0043.

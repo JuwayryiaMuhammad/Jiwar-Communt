@@ -1205,6 +1205,23 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   guard_instruction_recipients_ack_after_add: {
     guarded: 'acknowledged_at IS NULL is tested first',
   },
+  found_items_description_length: {},
+  found_items_location_length: { guarded: 'location IS NULL is tested first' },
+  found_items_claim_note_length: {
+    guarded: 'claim_note IS NULL is tested first',
+  },
+  found_items_claimant_name_length: {
+    guarded: 'claimant_name IS NULL is tested first',
+  },
+  found_items_post_shape: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
+  found_items_found_before_registered: {},
+  found_items_received_shape: {},
+  found_items_claimed_shape: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
+  found_items_cleared_shape: {},
 };
 
 interface Check {

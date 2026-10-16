@@ -430,4 +430,8 @@ export const GUARD_DUTY_COVERAGE: readonly string[] = [
   'guard_instruction.issued',
   'guard_instruction.archived',
   'guard_instruction.acknowledged',
+  'found_item.registered',
+  'found_item.received',
+  'found_item.claimed',
+  'found_item.claimant_name_cleared',
 ];

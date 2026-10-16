@@ -727,6 +727,10 @@ export const ErrorCode = {
   GUARD_INSTRUCTION_NOT_FOUND: 'GUARD_INSTRUCTION_NOT_FOUND',
   /** It was archived already (409). */
   GUARD_INSTRUCTION_ARCHIVED: 'GUARD_INSTRUCTION_ARCHIVED',
+  /** Unknown, or another compound's. */
+  FOUND_ITEM_NOT_FOUND: 'FOUND_ITEM_NOT_FOUND',
+  /** It is not where this happens any more (409, params.status). */
+  FOUND_ITEM_CLOSED: 'FOUND_ITEM_CLOSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

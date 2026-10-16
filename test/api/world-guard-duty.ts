@@ -3,6 +3,7 @@ import {
   localDate,
   zonedInstant,
 } from '../../src/core/common/slots/day-slots';
+import { FoundItemsService } from '../../src/gate/found-items/found-items.service';
 import { GuardInstructionsService } from '../../src/gate/guard-instructions/guard-instructions.service';
 import { HandoverService } from '../../src/gate/handover/handover.service';
 import { RosterService } from '../../src/gate/roster/roster.service';
@@ -33,6 +34,8 @@ export interface GuardDutyWorld {
   bSwapId: string;
   /** An instruction to all of B's guards. */
   bInstructionId: string;
+  /** An item B's management registered at the office. */
+  bFoundItemId: string;
 }
 
 export async function guardDutyWorld(
@@ -62,6 +65,9 @@ export async function guardDutyWorld(
     const instruction = await h.moduleRef
       .get(GuardInstructionsService)
       .send({ title: 'World', body: 'World words', audience: 'all' });
+    const found = await h.moduleRef
+      .get(FoundItemsService)
+      .register({ description: 'World umbrella' }, 'office');
     const task = await h.moduleRef
       .get(TasksService)
       .create({ kind: 'custom', title: 'World task', gateId: b.gateId });
@@ -71,6 +77,7 @@ export async function guardDutyWorld(
       bHandoverItemId: item.id,
       bTaskId: task.id,
       bInstructionId: instruction.id,
+      bFoundItemId: found.id,
     };
   });
   const relief = await gateHelpers(h).guard(b);

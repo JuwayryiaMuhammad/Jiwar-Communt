@@ -3190,6 +3190,25 @@
         ],
         "type": "object"
       },
+      "ClaimFoundItemDto": {
+        "properties": {
+          "name": {
+            "description": "As the claimant gives it; kept 30 days.",
+            "maxLength": 80,
+            "type": "string"
+          },
+          "note": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "unitCode": {
+            "description": "The owner’s unit (UNIT_CODE_UNKNOWN). With `name`, one at least.",
+            "maxLength": 40,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ClearReviewFlagDto": {
         "properties": {
           "reasonCode": {
@@ -10383,6 +10402,151 @@
         },
         "required": [
           "flagId"
+        ],
+        "type": "object"
+      },
+      "FoundItemClaimView": {
+        "properties": {
+          "name": {
+            "description": "As told; null after 30 days.",
+            "nullable": true,
+            "type": "string"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitCode": {
+            "description": "The owner’s unit.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitCode",
+          "name",
+          "note"
+        ],
+        "type": "object"
+      },
+      "FoundItemStatus": {
+        "enum": [
+          "at_gate",
+          "with_management",
+          "claimed"
+        ],
+        "type": "string"
+      },
+      "FoundItemView": {
+        "properties": {
+          "claim": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FoundItemClaimView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "claimedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "foundAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "location": {
+            "nullable": true,
+            "type": "string"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/PresignedReadView"
+            },
+            "type": "array"
+          },
+          "place": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceView"
+              }
+            ],
+            "description": "Where it was found.",
+            "nullable": true,
+            "type": "object"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "registeredAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostView"
+              }
+            ],
+            "description": "Where it was registered: the post of the guard’s shift; null at the office.",
+            "nullable": true,
+            "type": "object"
+          },
+          "registeredBy": {
+            "$ref": "#/components/schemas/FirstNameRefView"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FoundItemStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "place",
+          "location",
+          "foundAt",
+          "registeredAt",
+          "status",
+          "receivedAt",
+          "claimedAt",
+          "claim",
+          "photos",
+          "createdAt",
+          "registeredBy"
+        ],
+        "type": "object"
+      },
+      "FoundItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/FoundItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -20903,6 +21067,40 @@
         ],
         "type": "object"
       },
+      "RegisterFoundItemDto": {
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "foundAt": {
+            "description": "When it was found; default now, never later.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "location": {
+            "maxLength": 120,
+            "type": "string"
+          },
+          "photoFileIds": {
+            "description": "Finalized `found_item_photo` files of the caller, 3 at most.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "placeId": {
+            "description": "Where it was found: a place in service.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "description"
+        ],
+        "type": "object"
+      },
       "RegisterPushTokenDto": {
         "properties": {
           "platform": {
@@ -26654,6 +26852,139 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/StaffFineView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffFoundItemView": {
+        "properties": {
+          "claim": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FoundItemClaimView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "claimRecordedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "claimedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "foundAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "location": {
+            "nullable": true,
+            "type": "string"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/PresignedReadView"
+            },
+            "type": "array"
+          },
+          "place": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceView"
+              }
+            ],
+            "description": "Where it was found.",
+            "nullable": true,
+            "type": "object"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "receivedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "registeredAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostView"
+              }
+            ],
+            "description": "Where it was registered: the post of the guard’s shift; null at the office.",
+            "nullable": true,
+            "type": "object"
+          },
+          "registeredBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FoundItemStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "place",
+          "location",
+          "foundAt",
+          "registeredAt",
+          "status",
+          "receivedAt",
+          "claimedAt",
+          "claim",
+          "photos",
+          "createdAt",
+          "registeredBy",
+          "receivedBy",
+          "claimRecordedBy"
+        ],
+        "type": "object"
+      },
+      "StaffFoundItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffFoundItemView"
             },
             "type": "array"
           },
@@ -39196,6 +39527,205 @@
         "tags": [
           "gate"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/found-items": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "GuardFoundItemsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "at_gate",
+                "with_management",
+                "claimed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoundItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the register",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "On shift (403 NO_OPEN_SHIFT): what, where, when, photos. The shift and its post are recorded.",
+        "operationId": "GuardFoundItemsController_register",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterFoundItemDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoundItemView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register a found item",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/found-items/{id}": {
+      "get": {
+        "operationId": "GuardFoundItemsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoundItemView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a found item",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/found-items/{id}/claim": {
+      "post": {
+        "description": "While it is held at the gate (409 FOUND_ITEM_CLOSED once the management has it): a unit’s code and/or a name as told, once.",
+        "operationId": "GuardFoundItemsController_claim",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimFoundItemDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoundItemView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record its owner’s claim at the gate",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -56961,6 +57491,243 @@
           }
         ],
         "summary": "Read the guards’ attendance and overtime",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/found-items": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "StaffFoundItemsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "at_gate",
+                "with_management",
+                "claimed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFoundItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the register",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffFoundItemsController_register",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterFoundItemDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFoundItemView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register a found item at the office",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/found-items/{id}": {
+      "get": {
+        "operationId": "StaffFoundItemsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFoundItemView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a found item",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/found-items/{id}/claim": {
+      "post": {
+        "description": "Held at the gate or at the office; once.",
+        "operationId": "StaffFoundItemsController_claim",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimFoundItemDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFoundItemView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record its owner’s claim",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/found-items/{id}/receive": {
+      "post": {
+        "description": "The management holds it now.",
+        "operationId": "StaffFoundItemsController_receive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffFoundItemView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Receive a found item from the gate",
         "tags": [
           "guard-duty"
         ],

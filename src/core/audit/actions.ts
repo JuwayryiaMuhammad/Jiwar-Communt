@@ -971,6 +971,15 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'guard_instruction',
   },
+  // The gate's lost and found. metadata: shiftId (or null at the office),
+  // placeId, photos. Never the description.
+  'found_item.registered': { log: 'tenant', target: 'found_item' },
+  'found_item.received': { log: 'tenant', target: 'found_item' },
+  // metadata: unitId (or null), name and note (whether any); never the
+  // claimant's name.
+  'found_item.claimed': { log: 'tenant', target: 'found_item' },
+  // The retention sweep cleared the claimant's name (30 days).
+  'found_item.claimant_name_cleared': { log: 'tenant', target: 'found_item' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

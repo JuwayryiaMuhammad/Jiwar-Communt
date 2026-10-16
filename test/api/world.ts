@@ -48,6 +48,8 @@ import { FinePaymentsService } from '../../src/gate/fines/fine-payments.service'
 import { ParkingReportsService } from '../../src/gate/parking-reports/parking-reports.service';
 import { EmergenciesService } from '../../src/gate/emergencies/emergencies.service';
 import { GateServicesService } from '../../src/gate/gate-services/gate-services.service';
+import { PermitsService } from '../../src/gate/permits/permits.service';
+import { permitFileRow, permitWorkerRow } from '../setup/permits-rows';
 import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
 import { ALL_WEEK, at, day } from '../setup/facilities';
 import { addDays } from '../../src/core/common/slots/day-slots';
@@ -242,6 +244,9 @@ export interface World {
   bEmergencyId: string;
   /** An open escort request of B's owner (ADR 0047). */
   bGateServiceId: string;
+  /** A pending works permit of B's home, and a worker on it (ADR 0049). */
+  bPermitId: string;
+  bPermitWorkerId: string;
   bDeviceId: string;
   /** A personal-data export B's owner asked for (ADR 0036). */
   bExportId: string;
@@ -886,6 +891,29 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
         when: 'now',
       }),
   );
+  const bPermit = await helpers.as(
+    b,
+    { id: b.ids.owner, type: 'resident' },
+    () =>
+      h.moduleRef.get(PermitsService).createWorks(b.homeUnitId, {
+        workType: 'renovation',
+        startsOn: day(1),
+        endsOn: day(5),
+        dailyHours: { from: '09:00', to: '17:00' },
+        contractorCompany: 'B Builders',
+        description: 'B works',
+      }),
+  );
+  const bPermitWorkerId = await helpers.asManager(b, () =>
+    h.moduleRef.get(TenantTx).withTenantTx(async (tx) =>
+      permitWorkerRow(tx, {
+        tenantId: b.tenantId,
+        permitId: bPermit.permit.id,
+        addedById: b.ids.owner,
+        photoFileId: await permitFileRow(tx, b.tenantId),
+      }),
+    ),
+  );
   const bFinance = await helpers.asManager(b, async () => {
     const batch = await h.moduleRef.get(InvoicesService).issue({
       target: 'unit',
@@ -993,6 +1021,8 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     aPlaceId: aPlace.id,
     bEmergencyId: bEmergency.record.emergency.id,
     bGateServiceId: bGateService.request.id,
+    bPermitId: bPermit.permit.id,
+    bPermitWorkerId,
     bFineId: bFine.fine.id,
     bFinePaymentId: bFinePayment.id,
     bVehicleId: bVehicle.vehicle.id,

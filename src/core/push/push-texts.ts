@@ -1151,6 +1151,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'أحد المستجيبين في الطريق، خلال {etaMinutes} دقائق تقريبًا.',
     },
   },
+  'unit_permit.requested': {
+    en: {
+      title: 'New permit to decide',
+      body: 'A unit asked for a permit. Open the dashboard to decide.',
+    },
+    ar: {
+      title: 'تصريح جديد للمراجعة',
+      body: 'طلبت إحدى الوحدات تصريحًا. افتح لوحة التحكم للبت فيه.',
+    },
+  },
   'gate_service.requested': {
     en: {
       title: 'New request for security',

@@ -113,6 +113,20 @@ export class IdentifierHasher {
     return this.hmac(`action-token:v1:${purpose}:${id}`);
   }
 
+  /**
+   * The last four characters of a contractor worker's ID (ADR 0049), bound
+   * to the compound and the worker: the guard types them from the card and
+   * only the server can compare. Four characters have few values; without
+   * the pepper none of them can be tried against a stored hash.
+   */
+  hashPermitWorkerIdLast4(
+    tenantId: string,
+    workerId: string,
+    last4: string,
+  ): string {
+    return this.hmac(`permit-worker-id:v1:${tenantId}:${workerId}:${last4}`);
+  }
+
   /** A worker's national ID, to find the same person again (ADR 0017). */
   hashWorkerNationalId(nationalId: string): string {
     return this.hmac(`worker-national-id:${nationalId}`);

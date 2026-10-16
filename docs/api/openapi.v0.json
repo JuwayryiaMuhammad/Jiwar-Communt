@@ -300,6 +300,41 @@
         ],
         "type": "object"
       },
+      "AddPermitWorkerDto": {
+        "properties": {
+          "fullName": {
+            "description": "As on their ID.",
+            "example": "Mahmoud Ali Hassan",
+            "maxLength": 120,
+            "minLength": 2,
+            "type": "string"
+          },
+          "idLast4": {
+            "description": "The last four characters of the ID’s number: four digits for a national ID, four letters or digits for a passport (INVALID_FORMAT). Never the whole number, never a scan. Stored only as a keyed hash: nobody sees it again; the guard types it from the card.",
+            "example": "4821",
+            "type": "string"
+          },
+          "idType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdDocumentType"
+              }
+            ]
+          },
+          "photoFileId": {
+            "description": "A finalized `contractor_photo` of the caller: their face, shown to the guard (FILE_NOT_AVAILABLE).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fullName",
+          "photoFileId",
+          "idType",
+          "idLast4"
+        ],
+        "type": "object"
+      },
       "AgingRowView": {
         "properties": {
           "building": {
@@ -2425,6 +2460,15 @@
         "required": [
           "dueOn"
         ],
+        "type": "object"
+      },
+      "CancelPermitDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `unitPermitCancel`; optional.",
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "CancelVisitorPassDto": {
@@ -6341,6 +6385,58 @@
         ],
         "type": "object"
       },
+      "CreateWorksPermitDto": {
+        "properties": {
+          "contractorCompany": {
+            "example": "Cairo Finishing Co.",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "dailyHours": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PermitHoursDto"
+              }
+            ],
+            "description": "Every day of the period, inside the compound’s work hours (OUTSIDE_WORK_HOURS, params.from and params.to)."
+          },
+          "description": {
+            "example": "New kitchen tiles and painting the living room.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "endsOn": {
+            "description": "The last local day: not before `startsOn` (ENDS_BEFORE_START), 180 days at most (PERIOD_TOO_LONG); the period holds a work day (NOT_A_WORK_DAY).",
+            "example": "2026-11-20",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "startsOn": {
+            "description": "The first local day: from today, at most 90 days ahead (DAY_OUT_OF_RANGE).",
+            "example": "2026-11-01",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "workType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PermitWorkType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "workType",
+          "startsOn",
+          "endsOn",
+          "dailyHours",
+          "contractorCompany",
+          "description"
+        ],
+        "type": "object"
+      },
       "CreatedDelegationView": {
         "properties": {
           "delegateAccountId": {
@@ -8691,6 +8787,37 @@
         "required": [
           "id",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "EventDetailsView": {
+        "properties": {
+          "guestCount": {
+            "description": "Guests on the list now (not removed).",
+            "type": "number"
+          },
+          "guestLimit": {
+            "description": "The guests the event may hold: 20 when approved at once, else the size the management was asked for.",
+            "type": "number"
+          },
+          "guests": {
+            "description": "Every guest, removed ones too, in the order added.",
+            "items": {
+              "$ref": "#/components/schemas/PermitGuestView"
+            },
+            "type": "array"
+          },
+          "title": {
+            "description": "Null when none, or once the host was erased.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "guestLimit",
+          "guestCount",
+          "guests"
         ],
         "type": "object"
       },
@@ -13424,6 +13551,68 @@
         ],
         "type": "object"
       },
+      "MaterialExitDetailsView": {
+        "properties": {
+          "items": {
+            "description": "Null once the requester was erased.",
+            "items": {
+              "$ref": "#/components/schemas/MaterialItemView"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "photo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "description": "The goods, a presigned read valid for minutes; null when none, or once purged or erased.",
+            "nullable": true,
+            "type": "object"
+          },
+          "usedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "validFrom": {
+            "description": "Local.",
+            "example": "2026-11-05",
+            "type": "string"
+          },
+          "validUntil": {
+            "description": "Local.",
+            "example": "2026-11-07",
+            "type": "string"
+          }
+        },
+        "required": [
+          "validFrom",
+          "validUntil",
+          "items",
+          "photo",
+          "usedAt"
+        ],
+        "type": "object"
+      },
+      "MaterialItemView": {
+        "properties": {
+          "name": {
+            "example": "Old tiles",
+            "type": "string"
+          },
+          "quantity": {
+            "example": 20,
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "quantity"
+        ],
+        "type": "object"
+      },
       "MeView": {
         "properties": {
           "email": {
@@ -13695,6 +13884,35 @@
         },
         "required": [
           "body"
+        ],
+        "type": "object"
+      },
+      "MoveDetailsView": {
+        "properties": {
+          "date": {
+            "description": "Local.",
+            "example": "2026-11-05",
+            "type": "string"
+          },
+          "itemsDescription": {
+            "description": "Null once the requester was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "truckPlate": {
+            "description": "Null once purged, 30 days after the move.",
+            "nullable": true,
+            "type": "string"
+          },
+          "window": {
+            "$ref": "#/components/schemas/PermitHoursView"
+          }
+        },
+        "required": [
+          "date",
+          "window",
+          "truckPlate",
+          "itemsDescription"
         ],
         "type": "object"
       },
@@ -16489,6 +16707,35 @@
         ],
         "type": "object"
       },
+      "PermitGuestView": {
+        "properties": {
+          "fullName": {
+            "description": "Null once purged, 30 days after the event.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "removedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "vehiclePlate": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "vehiclePlate",
+          "removedAt"
+        ],
+        "type": "object"
+      },
       "PermitHoursDto": {
         "properties": {
           "from": {
@@ -16501,6 +16748,23 @@
             "description": "`HH:mm`, after `from` (ENDS_BEFORE_START): never overnight.",
             "example": "17:00",
             "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
+      "PermitHoursView": {
+        "properties": {
+          "from": {
+            "example": "09:00",
+            "type": "string"
+          },
+          "to": {
+            "example": "17:00",
             "type": "string"
           }
         },
@@ -16661,6 +16925,278 @@
           "workDays",
           "workHours",
           "daysOff"
+        ],
+        "type": "object"
+      },
+      "PermitView": {
+        "properties": {
+          "cancelReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnitPermitCancelReason"
+              }
+            ],
+            "nullable": true
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledBy": {
+            "enum": [
+              "requester",
+              "system"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decisionSource": {
+            "description": "`auto`: an event of 20 guests or fewer, approved at once. Null while pending.",
+            "enum": [
+              "manager",
+              "auto"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "description": "When it ends (exclusive).",
+            "format": "date-time",
+            "type": "string"
+          },
+          "event": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EventDetailsView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnitPermitKind"
+              }
+            ]
+          },
+          "materialExit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MaterialExitDetailsView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "mine": {
+            "description": "The caller asked for it (else: the unit’s primary sees it).",
+            "type": "boolean"
+          },
+          "move": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MoveDetailsView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "reference": {
+            "description": "W- works, M- moves, X- material exits, E- events. The guard finds a permit by it.",
+            "example": "W-0042",
+            "type": "string"
+          },
+          "rejectReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnitPermitRejectReason"
+              }
+            ],
+            "nullable": true
+          },
+          "requestedBy": {
+            "$ref": "#/components/schemas/FirstNameRefView"
+          },
+          "revokeReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnitPermitRevokeReason"
+              }
+            ],
+            "nullable": true
+          },
+          "revokedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "startsAt": {
+            "description": "When it starts: the first day’s local midnight (works, a material exit), or the window’s start.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PermitViewStatus"
+              }
+            ],
+            "description": "`pending`: waiting for the management; `approved`: in force within its window; `ended`: approved and its window has passed; `rejected`; `cancelled` (by the requester, or by the system: the requester left, or nobody decided in time); `revoked` by the management; `used`: a material exit, at a gate."
+          },
+          "unitCode": {
+            "example": "B-12",
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "works": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorksDetailsView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "kind",
+          "status",
+          "unitId",
+          "unitCode",
+          "startsAt",
+          "endsAt",
+          "createdAt",
+          "decisionSource",
+          "decidedAt",
+          "rejectReason",
+          "revokedAt",
+          "revokeReason",
+          "cancelledAt",
+          "cancelledBy",
+          "cancelReason",
+          "works",
+          "move",
+          "materialExit",
+          "event",
+          "mine",
+          "requestedBy"
+        ],
+        "type": "object"
+      },
+      "PermitViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PermitView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "PermitViewStatus": {
+        "description": "`pending`: waiting for the management; `approved`: in force within its window; `ended`: approved and its window has passed; `rejected`; `cancelled` (by the requester, or by the system: the requester left, or nobody decided in time); `revoked` by the management; `used`: a material exit, at a gate.",
+        "enum": [
+          "pending",
+          "approved",
+          "ended",
+          "rejected",
+          "cancelled",
+          "revoked",
+          "used"
+        ],
+        "type": "string"
+      },
+      "PermitWorkType": {
+        "enum": [
+          "renovation",
+          "finishing"
+        ],
+        "type": "string"
+      },
+      "PermitWorkerView": {
+        "properties": {
+          "addedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "fullName": {
+            "description": "Null once purged, 30 days after the permit ended.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "idType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdDocumentType"
+              }
+            ]
+          },
+          "photo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "description": "Their face, a presigned read valid for minutes; null once purged. The last four of their ID are never shown again.",
+            "nullable": true,
+            "type": "object"
+          },
+          "removedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "removedBy": {
+            "description": "Who removed them.",
+            "enum": [
+              "requester",
+              "management"
+            ],
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "idType",
+          "photo",
+          "addedAt",
+          "removedAt",
+          "removedBy"
         ],
         "type": "object"
       },
@@ -27761,6 +28297,45 @@
         ],
         "type": "object"
       },
+      "UnitPermitCancelReason": {
+        "enum": [
+          "plans_changed",
+          "dates_changed",
+          "contractor_changed",
+          "other",
+          "requester_left",
+          "not_decided"
+        ],
+        "type": "string"
+      },
+      "UnitPermitKind": {
+        "enum": [
+          "works",
+          "move",
+          "material_exit",
+          "event"
+        ],
+        "type": "string"
+      },
+      "UnitPermitRejectReason": {
+        "enum": [
+          "missing_details",
+          "outside_rules",
+          "too_many_guests",
+          "safety_concern",
+          "other"
+        ],
+        "type": "string"
+      },
+      "UnitPermitRevokeReason": {
+        "enum": [
+          "rules_broken",
+          "safety_concern",
+          "complaint",
+          "other"
+        ],
+        "type": "string"
+      },
       "UnitReviewFlagView": {
         "properties": {
           "flaggedAt": {
@@ -30433,6 +31008,67 @@
           "gate"
         ],
         "type": "string"
+      },
+      "WorksDetailsView": {
+        "properties": {
+          "contractorCompany": {
+            "description": "Null once the requester was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "dailyHours": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PermitHoursView"
+              }
+            ],
+            "description": "Every day of the period, in the compound’s time zone."
+          },
+          "description": {
+            "description": "Null once the requester was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "endsOn": {
+            "description": "Local.",
+            "example": "2026-11-20",
+            "type": "string"
+          },
+          "startsOn": {
+            "description": "Local.",
+            "example": "2026-11-01",
+            "type": "string"
+          },
+          "workType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PermitWorkType"
+              }
+            ]
+          },
+          "workerCount": {
+            "description": "Workers on the permit now (not removed).",
+            "type": "number"
+          },
+          "workers": {
+            "description": "Every worker, removed ones too, in the order added.",
+            "items": {
+              "$ref": "#/components/schemas/PermitWorkerView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "workType",
+          "startsOn",
+          "endsOn",
+          "dailyHours",
+          "contractorCompany",
+          "description",
+          "workerCount",
+          "workers"
+        ],
+        "type": "object"
       },
       "WorksDto": {
         "properties": {
@@ -45571,6 +46207,199 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/permits/{id}": {
+      "get": {
+        "description": "The requester’s, or one of the unit the caller is primary of.",
+        "operationId": "PermitsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a permit",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/permits/{id}/cancel": {
+      "post": {
+        "description": "The requester or the unit’s primary, while it is pending, or approved and not ended (PERMIT_NOT_ACTIVE).",
+        "operationId": "PermitsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelPermitDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a permit",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/permits/{id}/workers": {
+      "post": {
+        "description": "While the permit is pending, or approved and not ended (PERMIT_NOT_ACTIVE); at most 30 (PERMIT_LIMIT_REACHED, params.scope `workers`). No new approval. The last four of the ID are kept only as a keyed hash: the guard types them from the card at the gate.",
+        "operationId": "PermitsController_addWorker",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddPermitWorkerDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a contractor worker to a works permit",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/permits/{id}/workers/{workerId}/remove": {
+      "post": {
+        "description": "From then on the guard refuses them (`worker_removed`).",
+        "operationId": "PermitsController_removeWorker",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workerId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take a contractor worker off a works permit",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/places": {
       "get": {
         "operationId": "PlacesController_list",
@@ -56491,6 +57320,139 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/permits": {
+      "get": {
+        "description": "Newest first: every permit of the unit for its primary, the caller’s own for anyone else. Workers’ faces are not presigned here: get one permit for them.",
+        "operationId": "PermitsController_forUnit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/UnitPermitKind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PermitViewStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a unit’s permits",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/permits/works": {
+      "post": {
+        "description": "The unit's primary asks (PERMIT_NOT_ALLOWED); the period and the daily hours fit the compound's rules (`GET /community/permit-rules`). Pending until the management decides; contractor workers are added one by one. A unit holds at most 3 live works permits, 2 moves, 5 material exits and 3 upcoming events (PERMIT_LIMIT_REACHED, params.scope and params.max).",
+        "operationId": "PermitsController_works",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorksPermitDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask for a works permit (renovation or finishing)",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

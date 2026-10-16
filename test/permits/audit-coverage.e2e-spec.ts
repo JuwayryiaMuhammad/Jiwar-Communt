@@ -75,6 +75,76 @@ describe('Audit coverage — permits', () => {
     });
   });
 
+  describe('permits and their workers', () => {
+    /** Words typed in every scenario: no audit row may hold them. */
+    const WORDS = 'Audit-visible words 4471';
+
+    it('requested, a worker added and removed, cancelled: ids, kinds, codes and counts', async () => {
+      // The rules above allow Sunday to Tuesday, 10:00–16:00.
+      const permit = await p.works(s.alice, s.home.id, {
+        description: WORDS,
+        contractorCompany: WORDS,
+        dailyHours: { from: '10:00', to: '16:00' },
+      });
+      const r = await single('unit_permit.requested', permit.id);
+      expect(r).toMatchObject(by(s.alice, 'unit_permit'));
+      expect(r.metadata).toEqual({
+        number: expect.any(Number) as number,
+        kind: 'works',
+        unitId: s.home.id,
+        startsAt: permit.startsAt,
+        endsAt: permit.endsAt,
+        approvedAtOnce: false,
+        workType: 'renovation',
+        dailyFrom: '10:00',
+        dailyTo: '16:00',
+        contractorCompany: true,
+        description: true,
+      });
+      const { worker } = await p.addWorker(s.alice, permit.id, {
+        fullName: WORDS,
+        idLast4: '9182',
+      });
+      const added = await single('unit_permit.worker_added', permit.id);
+      expect(added).toMatchObject(by(s.alice, 'unit_permit'));
+      expect(added.metadata).toEqual({
+        workerId: worker.id,
+        idType: 'national_id',
+        workers: 1,
+      });
+      await p
+        .http(
+          'post',
+          `/permits/${permit.id}/workers/${worker.id}/remove`,
+          s.alice.token,
+          {},
+        )
+        .expect(200);
+      const removed = await single('unit_permit.worker_removed', permit.id);
+      expect(removed.metadata).toEqual({
+        workerId: worker.id,
+        side: 'requester',
+        reasonCode: null,
+      });
+      await p
+        .http('post', `/permits/${permit.id}/cancel`, s.alice.token, {
+          reasonCode: 'plans_changed',
+        })
+        .expect(200);
+      const cancelled = await single('unit_permit.cancelled', permit.id);
+      expect(cancelled).toMatchObject(by(s.alice, 'unit_permit'));
+      expect(cancelled.metadata).toEqual({
+        kind: 'works',
+        unitId: s.home.id,
+        from: 'pending',
+        side: 'requester',
+        reasonCode: 'plans_changed',
+      });
+      for (const row of [r, added, removed, cancelled])
+        expect(JSON.stringify(row)).not.toMatch(new RegExp(`${WORDS}|9182`));
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every permits entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

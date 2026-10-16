@@ -264,6 +264,13 @@ const ERROR_TEXT: Record<string, string> = {
   GATE_SERVICE_NOT_HANDLER: 'Only the one who accepted this request can do this.',
   GATE_SERVICE_NOT_ACCEPTED: 'Nobody has accepted this request yet.',
   GATE_SERVICE_CLOSED: 'This request is closed or cancelled already.',
+  PERMIT_NOT_FOUND: 'This permit does not exist.',
+  PERMIT_NOT_ALLOWED: 'Only the unit’s primary resident can ask for this permit.',
+  PERMIT_LIMIT_REACHED: 'The unit or the permit holds as many as it may for now.',
+  PERMIT_NOT_PENDING: 'This permit is decided already.',
+  PERMIT_NOT_ACTIVE: 'This permit is over, or not approved.',
+  PERMIT_WORKER_NOT_FOUND: 'This worker is not on the permit.',
+  PERMIT_GUEST_NOT_FOUND: 'This guest is not on the list.',
   STEP_UP_REQUIRED: 'Confirm with the code we email you first.',
   STEP_UP_CODE_INVALID: 'That code is wrong or has expired.',
   PAYMENT_VAULT_UNAVAILABLE: 'The server is not set up to store payment credentials yet. Ask the platform team.',
@@ -383,6 +390,9 @@ const FIELD_TEXT: Record<string, string> = {
   DUE_DATES_NOT_INCREASING: 'Each instalment must fall due after the one before it.',
   REFUNDED_ON_OUT_OF_RANGE: 'From a month ago to today.',
   PERIOD_TOO_LONG: 'A period of a year at most.',
+  OUTSIDE_WORK_HOURS: 'Outside the compound’s work hours.',
+  NOT_A_WORK_DAY: 'The compound allows no works or moves that day.',
+  WINDOW_TOO_LONG: 'The window is too long.',
 };
 
 export function errorText(error: unknown): string {

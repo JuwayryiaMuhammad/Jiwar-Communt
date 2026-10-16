@@ -542,6 +542,30 @@ export const ErrorCode = {
   GATE_SERVICE_NOT_ACCEPTED: 'GATE_SERVICE_NOT_ACCEPTED',
   /** It is closed or cancelled already (409, params.status). */
   GATE_SERVICE_CLOSED: 'GATE_SERVICE_CLOSED',
+  /** Unknown, another compound's, or not the caller's to see (ADR 0049). */
+  PERMIT_NOT_FOUND: 'PERMIT_NOT_FOUND',
+  /**
+   * The caller may not ask for this permit (403): works, a move or a
+   * material exit are the unit's primary's; an event needs the unit's
+   * `visitorsInvite`.
+   */
+  PERMIT_NOT_ALLOWED: 'PERMIT_NOT_ALLOWED',
+  /**
+   * The unit (params.scope: `works`, `move`, `material_exit`, `event`) or
+   * the permit (`workers`, `guests`) holds params.max already (409).
+   */
+  PERMIT_LIMIT_REACHED: 'PERMIT_LIMIT_REACHED',
+  /** It is decided already (409, params.status). */
+  PERMIT_NOT_PENDING: 'PERMIT_NOT_PENDING',
+  /**
+   * It is over, or not yet approved where that is needed: ended, rejected,
+   * cancelled, revoked or used (409, params.status).
+   */
+  PERMIT_NOT_ACTIVE: 'PERMIT_NOT_ACTIVE',
+  /** Unknown, or not of this permit (ADR 0049). */
+  PERMIT_WORKER_NOT_FOUND: 'PERMIT_WORKER_NOT_FOUND',
+  /** Unknown, or not of this event (ADR 0049). */
+  PERMIT_GUEST_NOT_FOUND: 'PERMIT_GUEST_NOT_FOUND',
   /**
    * The server holds no PAYMENT_CREDENTIALS_KEY, so no credential can be
    * stored and online payment cannot be turned on (503, ADR 0046).
@@ -798,6 +822,13 @@ export const FieldErrorCode = {
   REFUNDED_ON_OUT_OF_RANGE: 'REFUNDED_ON_OUT_OF_RANGE',
   /** A period longer than params.maxDays days. */
   PERIOD_TOO_LONG: 'PERIOD_TOO_LONG',
+  // permits (ADR 0049)
+  /** Outside the compound's work hours, params.from to params.to (HH:mm). */
+  OUTSIDE_WORK_HOURS: 'OUTSIDE_WORK_HOURS',
+  /** A day the compound allows no works or moves on (none in a period). */
+  NOT_A_WORK_DAY: 'NOT_A_WORK_DAY',
+  /** A window longer than params.maxHours hours. */
+  WINDOW_TOO_LONG: 'WINDOW_TOO_LONG',
 } as const;
 
 export type FieldErrorCode =

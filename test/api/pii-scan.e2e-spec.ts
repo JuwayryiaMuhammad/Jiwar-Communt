@@ -1104,6 +1104,35 @@ describe('API v0 — PII leak scan', () => {
       },
     );
 
+    // A works permit with a contractor worker (ADR 0049): their name to the
+    // household and the management (and the guard at the gate), the last
+    // four of their ID to nobody, ever.
+    const piiPermit = await idOf(
+      'POST',
+      `/units/${unit.id}/permits/works`,
+      primaryToken,
+      {
+        workType: 'renovation',
+        startsOn: day(1),
+        endsOn: day(3),
+        dailyHours: { from: '09:00', to: '17:00' },
+        contractorCompany: 'PII-CONTRACTOR-company',
+        description: 'PII-PERMIT-words',
+      },
+    );
+    await call(w, 'POST', `/permits/${piiPermit}/workers`, {
+      token: primaryToken,
+      body: {
+        fullName: 'PII-CONTRACTOR-name',
+        photoFileId: await fileHelpers(h).ready(
+          primaryToken,
+          'contractor_photo',
+        ),
+        idType: 'passport',
+        idLast4: 'QZ7X',
+      },
+    }).expect(201);
+
     /** One id for every param of the path, or each param by name. */
     type Ids = string | Record<string, string>;
     const params: Record<string, Ids> = {
@@ -1255,6 +1284,9 @@ describe('API v0 — PII leak scan', () => {
       '/invoice-disputes/{id}': piiDispute,
       '/invoices/{id}/disputes': piiInvoice.invoiceId,
       '/staff/refunds/{id}': piiRefund,
+      // ADR 0049: the requester's and the primary's; the last four nowhere.
+      '/units/{unitId}/permits': unit.id,
+      '/permits/{id}': piiPermit,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

@@ -663,8 +663,82 @@ describe('API v0 — no-store', () => {
     return body<{ id: string }>(await anEscort()).id;
   };
 
+  /**
+   * The live works permits of A's home are cancelled first, so the unit's
+   * three-live limit never answers instead.
+   */
+  const clearPermits = async () => {
+    const live = body<{ data: { id: string }[] }>(
+      await as(
+        'owner',
+        'GET',
+        `/units/${w.a.homeUnitId}/permits?kind=works&status=pending`,
+      ),
+    ).data;
+    for (const p of live)
+      await as('owner', 'POST', `/permits/${p.id}/cancel`, {});
+  };
+  const aWorksBody = {
+    workType: 'finishing',
+    startsOn: localDay(2),
+    endsOn: localDay(4),
+    dailyHours: { from: '10:00', to: '14:00' },
+    contractorCompany: 'No-store Builders',
+    description: 'Painting',
+  };
+  /** A fresh pending works permit of A's home: its id. */
+  const aPermit = async () => {
+    await clearPermits();
+    return body<{ id: string }>(
+      await as(
+        'owner',
+        'POST',
+        `/units/${w.a.homeUnitId}/permits/works`,
+        aWorksBody,
+      ),
+    ).id;
+  };
+  const aWorker = async (permitId: string) =>
+    as('owner', 'POST', `/permits/${permitId}/workers`, {
+      fullName: 'No-store Worker',
+      photoFileId: await fileHelpers(h).ready(
+        w.a.tokens.owner,
+        'contractor_photo',
+      ),
+      idType: 'national_id',
+      idLast4: '0001',
+    });
+
   /** Permits and contractors (ADR 0049). */
   const PERMIT_CALLS = (): Record<string, () => Promise<Response>> => ({
+    'POST /units/{unitId}/permits/works': async () => {
+      await clearPermits();
+      return as(
+        'owner',
+        'POST',
+        `/units/${w.a.homeUnitId}/permits/works`,
+        aWorksBody,
+      );
+    },
+    'GET /units/{unitId}/permits': () =>
+      as('owner', 'GET', `/units/${w.a.homeUnitId}/permits`),
+    'GET /permits/{id}': async () =>
+      as('owner', 'GET', `/permits/${await aPermit()}`),
+    'POST /permits/{id}/cancel': async () =>
+      as('owner', 'POST', `/permits/${await aPermit()}/cancel`, {}),
+    'POST /permits/{id}/workers': async () => aWorker(await aPermit()),
+    'POST /permits/{id}/workers/{workerId}/remove': async () => {
+      const permitId = await aPermit();
+      const added = body<{ works: { workers: { id: string }[] } }>(
+        await aWorker(permitId),
+      );
+      return as(
+        'owner',
+        'POST',
+        `/permits/${permitId}/workers/${added.works.workers[0].id}/remove`,
+        {},
+      );
+    },
     'GET /community/permit-rules': () =>
       as('owner', 'GET', '/community/permit-rules'),
     'GET /staff/permit-settings': () =>

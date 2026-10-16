@@ -5208,6 +5208,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/permits/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a permit
+         * @description The requester’s, or one of the unit the caller is primary of.
+         */
+        get: operations["PermitsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/permits/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel a permit
+         * @description The requester or the unit’s primary, while it is pending, or approved and not ended (PERMIT_NOT_ACTIVE).
+         */
+        post: operations["PermitsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/permits/{id}/workers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add a contractor worker to a works permit
+         * @description While the permit is pending, or approved and not ended (PERMIT_NOT_ACTIVE); at most 30 (PERMIT_LIMIT_REACHED, params.scope `workers`). No new approval. The last four of the ID are kept only as a keyed hash: the guard types them from the card at the gate.
+         */
+        post: operations["PermitsController_addWorker"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/permits/{id}/workers/{workerId}/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take a contractor worker off a works permit
+         * @description From then on the guard refuses them (`worker_removed`).
+         */
+        post: operations["PermitsController_removeWorker"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/places": {
         parameters: {
             query?: never;
@@ -8791,6 +8871,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/permits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a unit’s permits
+         * @description Newest first: every permit of the unit for its primary, the caller’s own for anyone else. Workers’ faces are not presigned here: get one permit for them.
+         */
+        get: operations["PermitsController_forUnit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/permits/works": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask for a works permit (renovation or finishing)
+         * @description The unit's primary asks (PERMIT_NOT_ALLOWED); the period and the daily hours fit the compound's rules (`GET /community/permit-rules`). Pending until the management decides; contractor workers are added one by one. A unit holds at most 3 live works permits, 2 moves, 5 material exits and 3 upcoming events (PERMIT_LIMIT_REACHED, params.scope and params.max).
+         */
+        post: operations["PermitsController_works"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/standing-instructions": {
         parameters: {
             query?: never;
@@ -9486,6 +9606,24 @@ export interface components {
         ActivationView: {
             missing: ("unitType" | "areaSqm" | "building")[];
         };
+        AddPermitWorkerDto: {
+            /**
+             * @description As on their ID.
+             * @example Mahmoud Ali Hassan
+             */
+            fullName: string;
+            /**
+             * @description The last four characters of the ID’s number: four digits for a national ID, four letters or digits for a passport (INVALID_FORMAT). Never the whole number, never a scan. Stored only as a keyed hash: nobody sees it again; the guard types it from the card.
+             * @example 4821
+             */
+            idLast4: string;
+            idType: components["schemas"]["IdDocumentType"];
+            /**
+             * Format: uuid
+             * @description A finalized `contractor_photo` of the caller: their face, shown to the guard (FILE_NOT_AVAILABLE).
+             */
+            photoFileId: string;
+        };
         AgingRowView: {
             building: string | null;
             /** @description 1–30 days past the due date. */
@@ -10128,6 +10266,10 @@ export interface components {
         CancelInstalmentPlanDto: {
             /** @description When the remainder invoice falls due: from today to 366 days ahead. */
             dueOn: string;
+        };
+        CancelPermitDto: {
+            /** @description From the closed list `unitPermitCancel`; optional. */
+            reasonCode?: string;
         };
         CancelVisitorPassDto: {
             /** @description Required. The closed list `visitorPassCancel`: `not_needed` (the visit is off), `plans_changed` (another day or other visitors), `other`. Missing: REASON_REQUIRED; outside the list: INVALID_REASON_CODE with `allowed`. */
@@ -11435,6 +11577,25 @@ export interface components {
             /** @description Never returned after creation; deleted with the name. */
             visitorPhone?: string;
         };
+        CreateWorksPermitDto: {
+            /** @example Cairo Finishing Co. */
+            contractorCompany: string;
+            /** @description Every day of the period, inside the compound’s work hours (OUTSIDE_WORK_HOURS, params.from and params.to). */
+            dailyHours: components["schemas"]["PermitHoursDto"];
+            /** @example New kitchen tiles and painting the living room. */
+            description: string;
+            /**
+             * @description The last local day: not before `startsOn` (ENDS_BEFORE_START), 180 days at most (PERIOD_TOO_LONG); the period holds a work day (NOT_A_WORK_DAY).
+             * @example 2026-11-20
+             */
+            endsOn: string;
+            /**
+             * @description The first local day: from today, at most 90 days ahead (DAY_OUT_OF_RANGE).
+             * @example 2026-11-01
+             */
+            startsOn: string;
+            workType: components["schemas"]["PermitWorkType"];
+        };
         CreatedDelegationView: {
             /** Format: uuid */
             delegateAccountId: string;
@@ -12099,6 +12260,16 @@ export interface components {
             createdAt: string;
             /** Format: uuid */
             id: string;
+        };
+        EventDetailsView: {
+            /** @description Guests on the list now (not removed). */
+            guestCount: number;
+            /** @description The guests the event may hold: 20 when approved at once, else the size the management was asked for. */
+            guestLimit: number;
+            /** @description Every guest, removed ones too, in the order added. */
+            guests: components["schemas"]["PermitGuestView"][];
+            /** @description Null when none, or once the host was erased. */
+            title: string | null;
         };
         EventListItemView: {
             /** @description Files it shows. */
@@ -13578,6 +13749,30 @@ export interface components {
             /** @description Their first name: only once BOTH sides agreed to show names. Null before. */
             firstName: string | null;
         };
+        MaterialExitDetailsView: {
+            /** @description Null once the requester was erased. */
+            items: components["schemas"]["MaterialItemView"][] | null;
+            /** @description The goods, a presigned read valid for minutes; null when none, or once purged or erased. */
+            photo: components["schemas"]["PresignedReadView"] | null;
+            /** Format: date-time */
+            usedAt: string | null;
+            /**
+             * @description Local.
+             * @example 2026-11-05
+             */
+            validFrom: string;
+            /**
+             * @description Local.
+             * @example 2026-11-07
+             */
+            validUntil: string;
+        };
+        MaterialItemView: {
+            /** @example Old tiles */
+            name: string;
+            /** @example 20 */
+            quantity: number;
+        };
         MeView: {
             email: string | null;
             fullName: string | null;
@@ -13647,6 +13842,18 @@ export interface components {
         };
         MessageDto: {
             body: string;
+        };
+        MoveDetailsView: {
+            /**
+             * @description Local.
+             * @example 2026-11-05
+             */
+            date: string;
+            /** @description Null once the requester was erased. */
+            itemsDescription: string | null;
+            /** @description Null once purged, 30 days after the move. */
+            truckPlate: string | null;
+            window: components["schemas"]["PermitHoursView"];
         };
         MoveSuggestionDto: {
             /** @description What the staff tell the author. Required to decline. Replaces an earlier answer. */
@@ -14512,6 +14719,15 @@ export interface components {
             data: components["schemas"]["PermissionView"][];
             nextCursor: string | null;
         };
+        PermitGuestView: {
+            /** @description Null once purged, 30 days after the event. */
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            removedAt: string | null;
+            vehiclePlate: string | null;
+        };
         PermitHoursDto: {
             /**
              * @description `HH:mm`, a time of day in the compound's time zone.
@@ -14522,6 +14738,12 @@ export interface components {
              * @description `HH:mm`, after `from` (ENDS_BEFORE_START): never overnight.
              * @example 17:00
              */
+            to: string;
+        };
+        PermitHoursView: {
+            /** @example 09:00 */
+            from: string;
+            /** @example 17:00 */
             to: string;
         };
         PermitLimitsView: {
@@ -14602,6 +14824,86 @@ export interface components {
              */
             workDays: number[];
             workHours: components["schemas"]["PermitHoursDto"];
+        };
+        PermitView: {
+            cancelReason: components["schemas"]["UnitPermitCancelReason"] | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** @enum {string|null} */
+            cancelledBy: "requester" | "system" | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /**
+             * @description `auto`: an event of 20 guests or fewer, approved at once. Null while pending.
+             * @enum {string|null}
+             */
+            decisionSource: "manager" | "auto" | null;
+            /**
+             * Format: date-time
+             * @description When it ends (exclusive).
+             */
+            endsAt: string;
+            event: components["schemas"]["EventDetailsView"] | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["UnitPermitKind"];
+            materialExit: components["schemas"]["MaterialExitDetailsView"] | null;
+            /** @description The caller asked for it (else: the unit’s primary sees it). */
+            mine: boolean;
+            move: components["schemas"]["MoveDetailsView"] | null;
+            /**
+             * @description W- works, M- moves, X- material exits, E- events. The guard finds a permit by it.
+             * @example W-0042
+             */
+            reference: string;
+            rejectReason: components["schemas"]["UnitPermitRejectReason"] | null;
+            requestedBy: components["schemas"]["FirstNameRefView"];
+            revokeReason: components["schemas"]["UnitPermitRevokeReason"] | null;
+            /** Format: date-time */
+            revokedAt: string | null;
+            /**
+             * Format: date-time
+             * @description When it starts: the first day’s local midnight (works, a material exit), or the window’s start.
+             */
+            startsAt: string;
+            /** @description `pending`: waiting for the management; `approved`: in force within its window; `ended`: approved and its window has passed; `rejected`; `cancelled` (by the requester, or by the system: the requester left, or nobody decided in time); `revoked` by the management; `used`: a material exit, at a gate. */
+            status: components["schemas"]["PermitViewStatus"];
+            /** @example B-12 */
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+            works: components["schemas"]["WorksDetailsView"] | null;
+        };
+        PermitViewList: {
+            data: components["schemas"]["PermitView"][];
+            nextCursor: string | null;
+        };
+        /**
+         * @description `pending`: waiting for the management; `approved`: in force within its window; `ended`: approved and its window has passed; `rejected`; `cancelled` (by the requester, or by the system: the requester left, or nobody decided in time); `revoked` by the management; `used`: a material exit, at a gate.
+         * @enum {string}
+         */
+        PermitViewStatus: "pending" | "approved" | "ended" | "rejected" | "cancelled" | "revoked" | "used";
+        /** @enum {string} */
+        PermitWorkType: "renovation" | "finishing";
+        PermitWorkerView: {
+            /** Format: date-time */
+            addedAt: string;
+            /** @description Null once purged, 30 days after the permit ended. */
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+            idType: components["schemas"]["IdDocumentType"];
+            /** @description Their face, a presigned read valid for minutes; null once purged. The last four of their ID are never shown again. */
+            photo: components["schemas"]["PresignedReadView"] | null;
+            /** Format: date-time */
+            removedAt: string | null;
+            /**
+             * @description Who removed them.
+             * @enum {string|null}
+             */
+            removedBy: "requester" | "management" | null;
         };
         PhotoAddedView: {
             /** Format: date-time */
@@ -17858,6 +18160,14 @@ export interface components {
             slots: components["schemas"]["ParkingSlotRefView"][];
             visitorAreas: components["schemas"]["VisitorAreaFreeView"][];
         };
+        /** @enum {string} */
+        UnitPermitCancelReason: "plans_changed" | "dates_changed" | "contractor_changed" | "other" | "requester_left" | "not_decided";
+        /** @enum {string} */
+        UnitPermitKind: "works" | "move" | "material_exit" | "event";
+        /** @enum {string} */
+        UnitPermitRejectReason: "missing_details" | "outside_rules" | "too_many_guests" | "safety_concern" | "other";
+        /** @enum {string} */
+        UnitPermitRevokeReason: "rules_broken" | "safety_concern" | "complaint" | "other";
         UnitReviewFlagView: {
             /** Format: date-time */
             flaggedAt: string;
@@ -18716,6 +19026,29 @@ export interface components {
         };
         /** @enum {string} */
         WorksAreaKind: "road" | "facility" | "gate";
+        WorksDetailsView: {
+            /** @description Null once the requester was erased. */
+            contractorCompany: string | null;
+            /** @description Every day of the period, in the compound’s time zone. */
+            dailyHours: components["schemas"]["PermitHoursView"];
+            /** @description Null once the requester was erased. */
+            description: string | null;
+            /**
+             * @description Local.
+             * @example 2026-11-20
+             */
+            endsOn: string;
+            /**
+             * @description Local.
+             * @example 2026-11-01
+             */
+            startsOn: string;
+            workType: components["schemas"]["PermitWorkType"];
+            /** @description Workers on the permit now (not removed). */
+            workerCount: number;
+            /** @description Every worker, removed ones too, in the order added. */
+            workers: components["schemas"]["PermitWorkerView"][];
+        };
         WorksDto: {
             areaKind: components["schemas"]["WorksAreaKind"];
             /**
@@ -26791,6 +27124,102 @@ export interface operations {
             };
         };
     };
+    PermitsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitView"];
+                };
+            };
+        };
+    };
+    PermitsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelPermitDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitView"];
+                };
+            };
+        };
+    };
+    PermitsController_addWorker: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddPermitWorkerDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitView"];
+                };
+            };
+        };
+    };
+    PermitsController_removeWorker: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                workerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitView"];
+                };
+            };
+        };
+    };
     PlacesController_list: {
         parameters: {
             query?: never;
@@ -32397,6 +32826,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaymentViewList"];
+                };
+            };
+        };
+    };
+    PermitsController_forUnit: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                kind?: components["schemas"]["UnitPermitKind"];
+                status?: components["schemas"]["PermitViewStatus"];
+            };
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitViewList"];
+                };
+            };
+        };
+    };
+    PermitsController_works: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWorksPermitDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitView"];
                 };
             };
         };

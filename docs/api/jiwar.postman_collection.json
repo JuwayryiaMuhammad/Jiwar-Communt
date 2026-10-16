@@ -17960,6 +17960,159 @@
           }
         },
         {
+          "name": "Get a permit",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permits",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/permits/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel a permit",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string |  | From the closed list `unitPermitCancel`; optional. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permits",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/permits/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add a contractor worker to a works permit",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"fullName\": \"Mahmoud Ali Hassan\",\n  \"photoFileId\": \"\",\n  \"idType\": \"national_id\",\n  \"idLast4\": \"4821\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `fullName` | string | yes | As on their ID. |\n| `idLast4` | string | yes | The last four characters of the ID’s number: four digits for a national ID, four letters or digits for a passport (INVALID_FORMAT). Never the whole number, never a scan. Stored only as a keyed hash: nobody sees it again; the guard types it from the card. |\n| `idType` | `national_id` \\| `passport` | yes |  |\n| `photoFileId` | string (uuid) | yes | A finalized `contractor_photo` of the caller: their face, shown to the guard (FILE_NOT_AVAILABLE). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permits",
+                ":id",
+                "workers"
+              ],
+              "raw": "{{baseUrl}}/api/v1/permits/:id/workers",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Take a contractor worker off a works permit",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permits",
+                ":id",
+                "workers",
+                ":workerId",
+                "remove"
+              ],
+              "raw": "{{baseUrl}}/api/v1/permits/:id/workers/:workerId/remove",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "workerId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get the permit rules",
           "request": {
             "description": "**Responses:** 200",
@@ -18011,6 +18164,109 @@
                 "permit-settings"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/permit-settings"
+            }
+          }
+        },
+        {
+          "name": "List a unit’s permits",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "permits"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "kind",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/permits",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ask for a works permit (renovation or finishing)",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"workType\": \"renovation\",\n  \"startsOn\": \"2026-11-01\",\n  \"endsOn\": \"2026-11-20\",\n  \"dailyHours\": {\n    \"from\": \"09:00\",\n    \"to\": \"17:00\"\n  },\n  \"contractorCompany\": \"Cairo Finishing Co.\",\n  \"description\": \"New kitchen tiles and painting the living room.\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contractorCompany` | string | yes |  |\n| `dailyHours` | object | yes | Every day of the period, inside the compound’s work hours (OUTSIDE_WORK_HOURS, params.from and params.to). |\n| `description` | string | yes |  |\n| `endsOn` | string | yes | The last local day: not before `startsOn` (ENDS_BEFORE_START), 180 days at most (PERIOD_TOO_LONG); the period holds a work day (NOT_A_WORK_DAY). |\n| `startsOn` | string | yes | The first local day: from today, at most 90 days ahead (DAY_OUT_OF_RANGE). |\n| `workType` | `renovation` \\| `finishing` | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "permits",
+                "works"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/permits/works",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
             }
           }
         }

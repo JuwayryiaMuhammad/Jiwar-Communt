@@ -3,6 +3,7 @@ import { ApiHeader } from '@nestjs/swagger';
 import {
   IDEMPOTENCY_HEADER,
   IDEMPOTENT_BODYLESS,
+  IDEMPOTENT_OMIT,
   IDEMPOTENT_SECRET,
 } from './idempotency-key';
 import { IdempotencyInterceptor } from './idempotency.interceptor';
@@ -31,14 +32,23 @@ export function IdempotencyHeader() {
  * there can be; so the hash leaves it out. A retry replays as always. The
  * price: the same key with another body replays the first response too,
  * instead of 409 IDEMPOTENCY_CONFLICT.
+ *
+ * `omit`: top-level body fields the hash leaves out, for the same reason as
+ * `bodyless` but for a few fields only (the last four of a contractor's ID,
+ * ADR 0049): the same key with another value of them replays.
  */
 export function Idempotent(
-  options: { secret?: boolean; bodyless?: boolean } = {},
+  options: {
+    secret?: boolean;
+    bodyless?: boolean;
+    omit?: readonly string[];
+  } = {},
 ) {
   return applyDecorators(
     IdempotencyHeader(),
     SetMetadata(IDEMPOTENT_SECRET, options.secret === true),
     SetMetadata(IDEMPOTENT_BODYLESS, options.bodyless === true),
+    SetMetadata(IDEMPOTENT_OMIT, options.omit ?? []),
     UseInterceptors(IdempotencyInterceptor),
   );
 }

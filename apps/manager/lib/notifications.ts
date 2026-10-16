@@ -90,6 +90,7 @@ const TEXT: Record<string, (p: P) => string> = {
   'emergency.family_alert': () => 'An emergency was reported from your unit',
   'emergency.responder_on_the_way': (p) => `A responder is on the way, about ${p.etaMinutes} minutes`,
   'gate_service.requested': (p) => `A resident asked security for ${words(p.serviceKind)}`,
+  'unit_permit.requested': (p) => `A unit asked for a permit: ${words(p.permitKind)}`,
   'gate_service.accepted': () => 'Security accepted your request',
   'gate_service.closed': (p) => `Security closed your request (${words(p.reason)})`,
   'ticket.assigned': (p) => `${ticket(p)} is assigned to you · ${words(p.priority)} · ${words(p.categoryKey)}${inUnit(p)}`,
@@ -217,6 +218,7 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
   if (n.targetType === 'emergency')
     return can('emergencies.manage') || can('emergencies.respond') ? '/emergencies' : null;
   if (n.targetType === 'gate_service_request') return can('gate_services.handle') ? '/gate-services' : null;
+  if (n.targetType === 'unit_permit' && n.targetId) return can('permits.manage') ? `/permits/${n.targetId}` : null;
   if (n.kind === 'account.deletion_queued') return can('accounts.erase') ? '/deletions' : null;
   if (n.kind === 'account.new_device_login') return '/account';
   if (n.targetType === 'worker_engagement') return can('workers.review') ? '/workers?tab=all' : null;

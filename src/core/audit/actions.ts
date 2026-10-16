@@ -850,6 +850,19 @@ export const AUDIT_ACTIONS = {
   // never a name, a plate, a last 4 or what a resident or a guard wrote.
   // changes: workDays, workHours, daysOff by value.
   'permit_settings.changed': { log: 'tenant', target: 'tenant' },
+  // metadata: number, kind, unitId, startsAt, endsAt, approvedAtOnce; works:
+  // workType, dailyFrom, dailyTo, and contractorCompany and description as
+  // booleans; move: window, truckPlate and itemsDescription as booleans;
+  // material exit: itemCount, photo; event: title, guests (counts).
+  'unit_permit.requested': { log: 'tenant', target: 'unit_permit' },
+  // metadata: kind, unitId, from (the status), side (requester | system),
+  // reasonCode.
+  'unit_permit.cancelled': { log: 'tenant', target: 'unit_permit' },
+  // metadata: workerId, idType, workers (how many now). Never the name,
+  // never the last four, not even hashed.
+  'unit_permit.worker_added': { log: 'tenant', target: 'unit_permit' },
+  // metadata: workerId, side (requester | management), reasonCode.
+  'unit_permit.worker_removed': { log: 'tenant', target: 'unit_permit' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

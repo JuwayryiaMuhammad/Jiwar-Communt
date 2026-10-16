@@ -11,6 +11,13 @@ export const IDEMPOTENT_SECRET = 'idempotent:secret';
  * (a ballot, ADR 0040).
  */
 export const IDEMPOTENT_BODYLESS = 'idempotent:bodyless';
+/**
+ * Set by `@Idempotent({ omit: [...] })`: top-level body fields the stored
+ * hash leaves out, because the database must not be able to tell them (the
+ * last four of a contractor's ID, ADR 0049). The rest of the body still
+ * tells two requests apart.
+ */
+export const IDEMPOTENT_OMIT = 'idempotent:omit';
 /** How long a key is remembered (and its response replayed). */
 export const IDEMPOTENCY_TTL_MS = 24 * 3_600_000;
 
@@ -48,6 +55,17 @@ export function requestHash(
   return createHash('sha256')
     .update(stableJson([method, route, params ?? {}, body ?? {}]))
     .digest('hex');
+}
+
+/** The body as the hash sees it: without the `omit` fields. */
+export function hashedBody(body: unknown, omit: readonly string[]): unknown {
+  if (!omit.length || !body || typeof body !== 'object' || Array.isArray(body))
+    return body;
+  return Object.fromEntries(
+    Object.entries(body as Record<string, unknown>).filter(
+      ([key]) => !omit.includes(key),
+    ),
+  );
 }
 
 /**

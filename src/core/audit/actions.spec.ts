@@ -105,6 +105,7 @@ describe('audit catalog', () => {
         'instalment_plan',
         'invoice_dispute',
         'refund',
+        'unit_permit',
       ]).toContain(def.target);
     }
   });

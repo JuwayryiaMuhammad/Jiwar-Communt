@@ -11,7 +11,9 @@ import { ClsService } from 'nestjs-cls';
 import { from, lastValueFrom, type Observable } from 'rxjs';
 import type { AppClsStore } from '../common/cls/app-cls';
 import {
+  hashedBody,
   IDEMPOTENT_BODYLESS,
+  IDEMPOTENT_OMIT,
   IDEMPOTENT_SECRET,
   IdempotencyReplaySignal,
   parseIdempotencyKey,
@@ -47,11 +49,16 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const bodyless =
       this.reflector.get<boolean>(IDEMPOTENT_BODYLESS, context.getHandler()) ===
       true;
+    const omit =
+      this.reflector.get<readonly string[] | undefined>(
+        IDEMPOTENT_OMIT,
+        context.getHandler(),
+      ) ?? [];
     const hash = requestHash(
       req.method,
       route,
       req.params,
-      bodyless ? undefined : req.body,
+      bodyless ? undefined : hashedBody(req.body, omit),
     );
     const secret =
       this.reflector.get<boolean>(IDEMPOTENT_SECRET, context.getHandler()) ===

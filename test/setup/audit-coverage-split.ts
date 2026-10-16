@@ -384,4 +384,10 @@ export const SAFETY_COVERAGE: readonly string[] = [
  * the compound's permit rules, a unit's permits, their contractors and
  * guests, the gate's side of them and the material entries log.
  */
-export const PERMITS_COVERAGE: readonly string[] = ['permit_settings.changed'];
+export const PERMITS_COVERAGE: readonly string[] = [
+  'permit_settings.changed',
+  'unit_permit.requested',
+  'unit_permit.cancelled',
+  'unit_permit.worker_added',
+  'unit_permit.worker_removed',
+];

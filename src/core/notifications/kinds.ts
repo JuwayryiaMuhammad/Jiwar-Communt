@@ -1118,6 +1118,17 @@ export const NOTIFICATION_KINDS = {
     target: 'gate_service_request',
     params: { serviceKind: {}, reason: {} },
   },
+  // Permits (ADR 0049). None is critical. They carry the permit's kind and a
+  // reason's code at most: never a name, a unit, a plate or what was
+  // written.
+  /** A new permit to decide: the `permits.manage` holders. */
+  'unit_permit.requested': {
+    priority: 'normal',
+    category: 'permits',
+    critical: false,
+    target: 'unit_permit',
+    params: { permitKind: {} },
+  },
   // Finance (ADR 0046). No kind is critical, and none carries a param: never
   // an amount, a number, a unit or a name. To every account that sees the
   // unit's money (capabilities.financeView).

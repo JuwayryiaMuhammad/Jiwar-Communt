@@ -8,7 +8,7 @@
  * parking, fines and parking reports (ADR 0045), keeps the units'
  * billing plans, invoices or payments (ADR 0046), watches the
  * emergencies or works the gate service requests (ADR 0047), or reads
- * the finance reports (ADR 0048).
+ * the finance reports (ADR 0048), or decides the units' permits (ADR 0049).
  * Decided from `GET /me`, by the BFF at sign-in and by the shell on every
  * load; the API still checks each call.
  */
@@ -34,6 +34,7 @@ export const ENTRY_PERMISSIONS = [
   'emergencies.respond',
   'gate_services.handle',
   'finance.reports',
+  'permits.manage',
 ] as const;
 
 export function mayEnter(me: { type?: unknown; permissions?: unknown } | null | undefined): boolean {

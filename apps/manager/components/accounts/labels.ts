@@ -26,6 +26,7 @@ export const NOTIFICATION_CATEGORY_TEXT: Record<string, string> = {
   neighbours: 'Neighbours: complaints between units, lost and found, lending, the welcome',
   bookings: 'Bookings of the facilities and the club',
   safety: 'Emergencies and gate services',
+  permits: 'Permits: works and contractors, moves, material exits, events',
 };
 
 /** Personal fields an erasure blanks, as the scope lists them. */

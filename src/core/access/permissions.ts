@@ -153,6 +153,14 @@ export const PERMISSIONS = {
   // and exports them. Instalment plans and disputes are `finance.invoice`.
   'finance.refund': { kinds: ['manager'] },
   'finance.reports': { kinds: ['staff', 'manager'] },
+  // Permits (ADR 0049). Residents and family ask for a unit's permits: the
+  // unit's primary for works, moves and material exits, anyone who may
+  // invite visitors for an event (the service decides per unit);
+  // `permits.manage` decides them, removes a contractor worker, unlocks a
+  // locked-out worker or guard and sets the compound's work hours. The
+  // guard sees and records them with `gate.operate`, inside a shift.
+  'permits.request': { kinds: ['resident', 'family'] },
+  'permits.manage': { kinds: ['staff', 'manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

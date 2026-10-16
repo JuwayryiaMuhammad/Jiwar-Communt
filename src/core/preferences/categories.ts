@@ -25,6 +25,9 @@ export const NOTIFICATION_CATEGORIES = [
   'finance',
   // Emergencies and the services security gives at the gate (ADR 0047).
   'safety',
+  // A unit's permits: works and contractors, moves, material exits and
+  // private events (ADR 0049).
+  'permits',
 ] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 

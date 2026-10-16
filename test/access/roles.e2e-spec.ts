@@ -98,6 +98,7 @@ describe('Roles', () => {
         'neighbours.board',
         'neighbours.complain',
         'parking.report',
+        'permits.request',
         'profile.photo',
         'requests.create',
         'suggestions.create',
@@ -244,6 +245,7 @@ describe('Roles', () => {
         'parking.report',
         'emergencies.report',
         'gate_services.request',
+        'permits.request',
       ]),
     );
     expect(await version()).toBe(before);

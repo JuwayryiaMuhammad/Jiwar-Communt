@@ -68,4 +68,6 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'finance.payments': 'Record payments made at the office, reverse them, and see every payment',
   'finance.refund': 'Refund a unit’s credit and reverse such refunds (asks for a code by email)',
   'finance.reports': 'Read the ledger and the finance reports, and export them as CSV',
+  'permits.request': 'Ask for a unit’s permits: works and contractors, moves, material exits, events',
+  'permits.manage': 'Decide the units’ permits, remove a contractor, unlock a lockout, set the work hours',
 };

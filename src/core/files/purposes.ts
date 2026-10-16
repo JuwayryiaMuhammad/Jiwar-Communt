@@ -129,6 +129,20 @@ export const FILE_PURPOSES = {
     maxBytes: 5 * MB,
     uploaders: ['units.read'],
   },
+  // A contractor worker's face (ADR 0049): uploaded by the resident who
+  // registers the worker on a works permit, shown to the guard, purged 30
+  // days after the permit ends.
+  contractor_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['permits.request'],
+  },
+  // A material exit's photo of the goods (ADR 0049), the resident's.
+  permit_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 5 * MB,
+    uploaders: ['permits.request'],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

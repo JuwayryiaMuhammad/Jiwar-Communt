@@ -1700,6 +1700,8 @@ enum NotificationCategory {
   @@map("notification_category")
   /// Emergencies and the services security gives at the gate (ADR 0047).
   safety
+  /// A unit's permits: works, moves, material exits, events (ADR 0049).
+  permits
 }
 
 /// `push`: whether a notification is also pushed to the phone (ADR 0041).
@@ -2162,6 +2164,10 @@ enum FilePurpose {
   gate_service_photo
   /// A resident's photo backing an invoice dispute (ADR 0048).
   dispute_photo
+  /// A contractor worker's face, shown to the guard (ADR 0049).
+  contractor_photo
+  /// A material exit's photo of the goods (ADR 0049), the resident's.
+  permit_photo
 
   @@map("file_purpose")
 }

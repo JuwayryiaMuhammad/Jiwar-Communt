@@ -70,6 +70,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'gate_services.handle',
       'finance.refund',
       'finance.reports',
+      'permits.manage',
     ],
   },
   {
@@ -94,6 +95,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'parking.report',
       'emergencies.report',
       'gate_services.request',
+      'permits.request',
     ],
   },
   {
@@ -118,6 +120,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'parking.report',
       'emergencies.report',
       'gate_services.request',
+      'permits.request',
     ],
   },
   {

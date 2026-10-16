@@ -325,6 +325,7 @@ describe('Audit coverage', () => {
             'neighbours.board',
             'neighbours.complain',
             'parking.report',
+            'permits.request',
             'profile.photo',
             'requests.create',
             'suggestions.create',

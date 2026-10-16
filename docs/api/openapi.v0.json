@@ -9640,7 +9640,9 @@
           "parking_photo",
           "vehicle_fine_photo",
           "gate_service_photo",
-          "dispute_photo"
+          "dispute_photo",
+          "contractor_photo",
+          "permit_photo"
         ],
         "type": "string"
       },
@@ -14849,7 +14851,8 @@
           "bookings",
           "vehicles",
           "finance",
-          "safety"
+          "safety",
+          "permits"
         ],
         "type": "string"
       },

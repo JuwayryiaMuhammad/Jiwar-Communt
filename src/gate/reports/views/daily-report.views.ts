@@ -106,6 +106,34 @@ export class DailyCountsView {
   materialExits: number | null;
 }
 
+/** The post's patrol runs planned this day (ADR 0052), gates and zones alike. */
+export class DailyPatrolCountsView {
+  @ApiProperty({
+    type: Number,
+    description: 'Scheduled runs planned this day, cancelled ones left out.',
+  })
+  scheduled: number;
+  @ApiProperty({
+    type: Number,
+    description:
+      'Runs completed: every checkpoint scanned (unscheduled ones too).',
+  })
+  done: number;
+  @ApiProperty({
+    type: Number,
+    description: 'Scheduled runs not started 15 minutes after their start.',
+  })
+  late: number;
+  @ApiProperty({ type: Number, description: 'Scheduled runs never started.' })
+  missed: number;
+  @ApiProperty({
+    type: Number,
+    description:
+      'Runs ended with checkpoints not scanned, timed out ones included.',
+  })
+  incomplete: number;
+}
+
 export class DailyPostView {
   @ApiProperty({ type: PostView })
   post: PostView;
@@ -113,6 +141,8 @@ export class DailyPostView {
   shifts: DailyShiftView[];
   @ApiProperty({ type: DailyCountsView })
   counts: DailyCountsView;
+  @ApiProperty({ type: DailyPatrolCountsView })
+  patrols: DailyPatrolCountsView;
 }
 
 export class DailyReportView {

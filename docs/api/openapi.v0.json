@@ -8019,10 +8019,45 @@
         ],
         "type": "object"
       },
+      "DailyPatrolCountsView": {
+        "properties": {
+          "done": {
+            "description": "Runs completed: every checkpoint scanned (unscheduled ones too).",
+            "type": "number"
+          },
+          "incomplete": {
+            "description": "Runs ended with checkpoints not scanned, timed out ones included.",
+            "type": "number"
+          },
+          "late": {
+            "description": "Scheduled runs not started 15 minutes after their start.",
+            "type": "number"
+          },
+          "missed": {
+            "description": "Scheduled runs never started.",
+            "type": "number"
+          },
+          "scheduled": {
+            "description": "Scheduled runs planned this day, cancelled ones left out.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "scheduled",
+          "done",
+          "late",
+          "missed",
+          "incomplete"
+        ],
+        "type": "object"
+      },
       "DailyPostView": {
         "properties": {
           "counts": {
             "$ref": "#/components/schemas/DailyCountsView"
+          },
+          "patrols": {
+            "$ref": "#/components/schemas/DailyPatrolCountsView"
           },
           "post": {
             "$ref": "#/components/schemas/PostView"
@@ -8038,7 +8073,8 @@
         "required": [
           "post",
           "shifts",
-          "counts"
+          "counts",
+          "patrols"
         ],
         "type": "object"
       },
@@ -20108,6 +20144,99 @@
           "issue_found"
         ],
         "type": "string"
+      },
+      "PatrolReportRouteView": {
+        "properties": {
+          "adhoc": {
+            "description": "Runs a guard started unscheduled.",
+            "type": "number"
+          },
+          "avgMinutes": {
+            "description": "How long a completed run took, on average, in minutes.",
+            "nullable": true,
+            "type": "number"
+          },
+          "cancelled": {
+            "type": "number"
+          },
+          "done": {
+            "description": "Completed: every checkpoint scanned.",
+            "type": "number"
+          },
+          "incomplete": {
+            "description": "Ended with checkpoints not scanned, timed out ones included.",
+            "type": "number"
+          },
+          "late": {
+            "type": "number"
+          },
+          "lateScans": {
+            "description": "Scans received after their run ended (finished offline).",
+            "type": "number"
+          },
+          "manualScans": {
+            "type": "number"
+          },
+          "missed": {
+            "type": "number"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "route": {
+            "$ref": "#/components/schemas/RunRouteView"
+          },
+          "scheduled": {
+            "description": "Scheduled runs, cancelled ones left out.",
+            "type": "number"
+          },
+          "suspectScans": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "route",
+          "post",
+          "scheduled",
+          "adhoc",
+          "done",
+          "late",
+          "missed",
+          "incomplete",
+          "cancelled",
+          "manualScans",
+          "suspectScans",
+          "lateScans",
+          "avgMinutes"
+        ],
+        "type": "object"
+      },
+      "PatrolReportView": {
+        "properties": {
+          "from": {
+            "example": "2026-11-01",
+            "format": "date",
+            "type": "string"
+          },
+          "routes": {
+            "description": "Each route with runs planned in the period, by name.",
+            "items": {
+              "$ref": "#/components/schemas/PatrolReportRouteView"
+            },
+            "type": "array"
+          },
+          "to": {
+            "example": "2026-11-07",
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "routes"
+        ],
+        "type": "object"
       },
       "PatrolRunCancelReason": {
         "enum": [
@@ -64616,6 +64745,65 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/security/patrols/report": {
+      "get": {
+        "description": "Per route, the runs planned on the compound’s days asked: scheduled, unscheduled, done, late, missed, incomplete, cancelled; scans by hand, flagged and received late; the average length of a completed run.",
+        "operationId": "PatrolReportController_report",
+        "parameters": [
+          {
+            "description": "The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-11-01",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-11-07",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "routeId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatrolReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the patrol report",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/security/patrols/routes": {
       "get": {
         "description": "Newest first.",
@@ -65201,7 +65389,7 @@
     },
     "/api/v1/staff/security/reports/daily": {
       "get": {
-        "description": "Per gate and per zone, for one of the compound’s days: shifts, lateness and absence, tasks, emergencies, gate services, visitors.",
+        "description": "Per gate and per zone, for one of the compound’s days: shifts, lateness and absence, tasks, emergencies, gate services, visitors, and the patrol runs planned then (ADR 0052).",
         "operationId": "DailyReportController_daily",
         "parameters": [
           {
@@ -65252,7 +65440,7 @@
     },
     "/api/v1/staff/security/reports/daily/export": {
       "get": {
-        "description": "One row per post; UTF-8 with a byte-order mark, CRLF; text cells guarded against formulas.",
+        "description": "One row per post; UTF-8 with a byte-order mark, CRLF; text cells guarded against formulas. The patrols’ five counts are the last columns.",
         "operationId": "DailyReportController_export",
         "parameters": [
           {

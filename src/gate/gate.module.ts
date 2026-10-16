@@ -155,6 +155,8 @@ import { RoutesController } from './patrols/routes.controller';
 import { RoutesService } from './patrols/routes.service';
 import { GuardPatrolsService } from './patrols/guard-patrols.service';
 import { PatrolScansService } from './patrols/patrol-scans.service';
+import { PatrolReportService } from './patrols/patrol-report.service';
+import { PatrolReportController } from './patrols/report.controller';
 import { PatrolSweeps } from './patrols/patrol-sweeps';
 import { PatrolTrackService } from './patrols/patrol-track.service';
 import {
@@ -256,6 +258,7 @@ import { RosterService } from './roster/roster.service';
     RoutesController,
     GuardPatrolsController,
     StaffRunsController,
+    PatrolReportController,
   ],
   providers: [
     GatesService,
@@ -347,6 +350,7 @@ import { RosterService } from './roster/roster.service';
     StaffRunsService,
     PatrolScansService,
     PatrolTrackService,
+    PatrolReportService,
     PatrolSweeps,
   ],
 })

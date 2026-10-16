@@ -109,6 +109,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     () => fetchers.gateServices({ status: 'open' }, undefined, 100),
     can('gate_services.handle'),
   );
+  const permitsToDecide = useQueueSize(
+    keys.permits({ status: 'pending', kind: '', live: false }),
+    () => fetchers.permits({ status: 'pending' }, undefined, 100),
+    can('permits.manage'),
+  );
   const registrations = useQueueSize(
     keys.registrations,
     () => fetchers.registrations(undefined, 100),
@@ -300,6 +305,21 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           count: gateServices,
           show: can('gate_services.handle'),
         },
+      ],
+    },
+    {
+      label: 'Permits',
+      items: [
+        {
+          href: '/permits',
+          label: 'Permits',
+          icon: <ClipboardCheck aria-hidden />,
+          exact: true,
+          count: permitsToDecide,
+          show: can('permits.manage'),
+        },
+        { href: '/permits/materials', label: 'Materials log', icon: <Package aria-hidden />, show: can('permits.manage') },
+        { href: '/permits/settings', label: 'Work hours', icon: <CalendarRange aria-hidden />, show: can('permits.manage') },
       ],
     },
     {

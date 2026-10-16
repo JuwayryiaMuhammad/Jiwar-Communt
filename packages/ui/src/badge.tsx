@@ -110,6 +110,10 @@ const STATUS_TONE: Record<string, Tone> = {
   // be `rescheduled` (above).
   settled: 'green',
   accepted: 'green',
+  // Permits (ADR 0049). `pending`, `ended`, `rejected`, `cancelled` and
+  // `revoked` are above.
+  approved: 'green',
+  used: 'beige',
 };
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {

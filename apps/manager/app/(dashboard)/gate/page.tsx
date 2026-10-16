@@ -37,6 +37,10 @@ const SUBJECT_TEXT: Record<Entry['subjectType'], string> = {
   visitor_pass: 'Visitor',
   worker_engagement: 'Worker',
   gate_request: 'Approved at gate',
+  // Permits (ADR 0049).
+  permit_worker: 'Contractor',
+  event_guest: 'Event guest',
+  move_permit: 'Moving truck',
 };
 
 const EMPTY = { gateId: '', direction: '', subjectType: '', from: '', to: '' };

@@ -154,3 +154,10 @@ test('an emergency or a gate service says the kind, never a name, and leads to i
   assert.equal(notificationText(asked), 'A resident asked security for escort');
   assert.equal(notificationHref(asked, (p) => p === 'gate_services.handle'), '/gate-services');
 });
+
+test('a permit to decide says its kind, never a name, and leads to the permit for whoever decides (ADR 0049)', () => {
+  const asked = n('unit_permit.requested', { permitKind: 'material_exit' }, 'unit_permit', 'p-1');
+  assert.equal(notificationText(asked), 'A unit asked for a permit: material exit');
+  assert.equal(notificationHref(asked, (p) => p === 'permits.manage'), '/permits/p-1');
+  assert.equal(notificationHref(asked, () => false), null);
+});

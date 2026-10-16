@@ -145,6 +145,18 @@ export interface GateServiceFilters {
   kind?: GateServiceKind | '';
 }
 
+// Permits (ADR 0049).
+export type StaffPermit = Schema<'StaffPermitView'>;
+export type PermitKind = Schema<'UnitPermitKind'>;
+export type PermitStatus = Schema<'PermitViewStatus'>;
+export type MaterialEntry = Schema<'MaterialEntryView'>;
+export type PermitSettings = Schema<'PermitSettingsResponse'>;
+export interface PermitFilters {
+  status?: PermitStatus | '';
+  kind?: PermitKind | '';
+  live?: boolean;
+}
+
 // Finance (ADR 0046).
 export type GatewayView = Schema<'GatewayView'>;
 export type GatewayEvent = Schema<'GatewayEventView'>;
@@ -425,6 +437,11 @@ export const keys = {
   gateServices: (filters: object) => ['gate-services', 'list', filters] as const,
   gateService: (id: string) => ['gate-services', 'detail', id] as const,
   places: ['places'] as const,
+  permitsAll: ['unit-permits'] as const,
+  permits: (filters: object) => ['unit-permits', 'list', filters] as const,
+  permit: (id: string) => ['unit-permits', 'detail', id] as const,
+  materialEntries: ['unit-permits', 'materials'] as const,
+  permitSettings: ['permit-settings'] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -682,6 +699,23 @@ export const fetchers = {
     ),
   gateService: (id: string) => unwrap(api.GET('/api/v1/gate/gate-services/{id}', { params: { path: { id } } })),
   places: () => unwrap(api.GET('/api/v1/places')),
+  permits: (filters: PermitFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/unit-permits', {
+        params: {
+          query: {
+            ...(clean({ status: filters.status, kind: filters.kind }) as { status?: PermitStatus; kind?: PermitKind }),
+            ...(filters.live ? { live: true } : {}),
+            cursor,
+            limit,
+          },
+        },
+      }),
+    ),
+  permit: (id: string) => unwrap(api.GET('/api/v1/staff/unit-permits/{id}', { params: { path: { id } } })),
+  materialEntries: (cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/material-entries', { params: { query: { cursor, limit } } })),
+  permitSettings: () => unwrap(api.GET('/api/v1/staff/permit-settings')),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

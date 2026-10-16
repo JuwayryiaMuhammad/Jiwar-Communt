@@ -845,6 +845,11 @@ export const AUDIT_ACTIONS = {
   'refund.recorded': { log: 'tenant', target: 'refund' },
   // metadata: refundId, unitId, amount, reasonCode.
   'refund.reversed': { log: 'tenant', target: 'refund' },
+
+  // Permits (ADR 0049). Ids, kinds, statuses, codes, dates and counts only:
+  // never a name, a plate, a last 4 or what a resident or a guard wrote.
+  // changes: workDays, workHours, daysOff by value.
+  'permit_settings.changed': { log: 'tenant', target: 'tenant' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

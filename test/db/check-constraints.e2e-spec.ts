@@ -715,6 +715,10 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   // Vehicles and parking (ADR 0045).
   vehicle_settings_ranges: {},
+  // Permits (ADR 0049): arrays and NOT NULL minutes only.
+  permit_settings_work_days: {},
+  permit_settings_work_hours: {},
+  permit_settings_days_off: {},
   vehicle_counters_last_number: {},
   vehicles_number_positive: {},
   vehicles_text_length: {},

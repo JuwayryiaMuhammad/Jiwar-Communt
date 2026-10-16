@@ -5977,3 +5977,22 @@ model GateServiceRequest {
   @@map("gate_service_requests")
 }
 
+
+// ============================================================================
+// Phase G3 — permits and contractors (ADR 0049)
+// ============================================================================
+
+/// A compound's permit rules (ADR 0049): the week days and the hours works
+/// and moves may take place in, and dated days off. One row, created with
+/// the compound.
+model PermitSettings {
+  tenantId  String     @id @map("tenant_id") @db.Uuid
+  workDays  Int[]      @default([0, 1, 2, 3, 4, 6]) @map("work_days") @db.SmallInt
+  workFrom  Int        @default(540) @map("work_from") @db.SmallInt
+  workTo    Int        @default(1020) @map("work_to") @db.SmallInt
+  daysOff   DateTime[] @default([]) @map("days_off") @db.Date
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("permit_settings")
+}

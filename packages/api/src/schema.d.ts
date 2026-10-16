@@ -733,6 +733,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/community/permit-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the compound’s permit rules
+         * @description The work days, hours and days off (from today on) works and moves must fit, the time zone they are read in, and the fixed limits.
+         */
+        get: operations["PermitRulesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/community/places": {
         parameters: {
             query?: never;
@@ -7058,6 +7078,27 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/permit-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the permit rules */
+        get: operations["PermitSettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change the permit rules
+         * @description The guard applies the new rules from the next entry; permits already approved keep their own dates and hours.
+         */
+        patch: operations["PermitSettingsController_update"];
         trace?: never;
     };
     "/api/v1/staff/refunds": {
@@ -14471,6 +14512,97 @@ export interface components {
             data: components["schemas"]["PermissionView"][];
             nextCursor: string | null;
         };
+        PermitHoursDto: {
+            /**
+             * @description `HH:mm`, a time of day in the compound's time zone.
+             * @example 09:00
+             */
+            from: string;
+            /**
+             * @description `HH:mm`, after `from` (ENDS_BEFORE_START): never overnight.
+             * @example 17:00
+             */
+            to: string;
+        };
+        PermitLimitsView: {
+            /** @example 100 */
+            daysOff: number;
+            /** @example 150 */
+            eventGuestsMax: number;
+            /**
+             * @description An event of up to this many guests needs no approval.
+             * @example 20
+             */
+            eventGuestsWithoutApproval: number;
+            /** @example 24 */
+            eventMaxHours: number;
+            /** @example 5 */
+            liveMaterialExits: number;
+            /** @example 2 */
+            liveMoves: number;
+            /** @example 3 */
+            liveWorks: number;
+            /** @example 7 */
+            materialExitMaxDays: number;
+            /** @example 90 */
+            maxDaysAhead: number;
+            /** @example 3 */
+            upcomingEvents: number;
+            /** @example 30 */
+            workersPerPermit: number;
+            /** @example 180 */
+            worksMaxDays: number;
+        };
+        PermitRulesResponse: {
+            /**
+             * @description Dated local days off, ascending.
+             * @example [
+             *       "2026-12-25"
+             *     ]
+             */
+            daysOff: string[];
+            limits: components["schemas"]["PermitLimitsView"];
+            /**
+             * @description The compound’s time zone: every time of day is read in it.
+             * @example Africa/Cairo
+             */
+            timeZone: string;
+            /**
+             * @description Week days works and moves may take place on (0 = Sunday).
+             * @example [
+             *       0,
+             *       1,
+             *       2,
+             *       3,
+             *       4,
+             *       6
+             *     ]
+             */
+            workDays: number[];
+            workHours: components["schemas"]["PermitHoursDto"];
+        };
+        PermitSettingsResponse: {
+            /**
+             * @description Dated local days off, ascending.
+             * @example [
+             *       "2026-12-25"
+             *     ]
+             */
+            daysOff: string[];
+            /**
+             * @description Week days works and moves may take place on (0 = Sunday).
+             * @example [
+             *       0,
+             *       1,
+             *       2,
+             *       3,
+             *       4,
+             *       6
+             *     ]
+             */
+            workDays: number[];
+            workHours: components["schemas"]["PermitHoursDto"];
+        };
         PhotoAddedView: {
             /** Format: date-time */
             createdAt: string;
@@ -17972,6 +18104,28 @@ export interface components {
             code?: string;
             place?: string;
         };
+        UpdatePermitSettingsDto: {
+            /**
+             * @description Dated local days with no works and no moves (feasts), at most 100. Replaces the list.
+             * @example [
+             *       "2026-12-25"
+             *     ]
+             */
+            daysOff?: string[];
+            /**
+             * @description The week days works and moves may take place on: 0 = Sunday … 6 = Saturday, at least one.
+             * @example [
+             *       0,
+             *       1,
+             *       2,
+             *       3,
+             *       4,
+             *       6
+             *     ]
+             */
+            workDays?: number[];
+            workHours?: components["schemas"]["PermitHoursDto"];
+        };
         UpdatePlaceDto: {
             /** @description False retires the place: offered no more, kept by requests. */
             active?: boolean;
@@ -19774,6 +19928,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    PermitRulesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitRulesResponse"];
+                };
             };
         };
     };
@@ -29577,6 +29750,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaymentDetailView"];
+                };
+            };
+        };
+    };
+    PermitSettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitSettingsResponse"];
+                };
+            };
+        };
+    };
+    PermitSettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePermitSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermitSettingsResponse"];
                 };
             };
         };

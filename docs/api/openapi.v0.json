@@ -16489,6 +16489,181 @@
         ],
         "type": "object"
       },
+      "PermitHoursDto": {
+        "properties": {
+          "from": {
+            "description": "`HH:mm`, a time of day in the compound's time zone.",
+            "example": "09:00",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "type": "string"
+          },
+          "to": {
+            "description": "`HH:mm`, after `from` (ENDS_BEFORE_START): never overnight.",
+            "example": "17:00",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
+      "PermitLimitsView": {
+        "properties": {
+          "daysOff": {
+            "example": 100,
+            "type": "number"
+          },
+          "eventGuestsMax": {
+            "example": 150,
+            "type": "number"
+          },
+          "eventGuestsWithoutApproval": {
+            "description": "An event of up to this many guests needs no approval.",
+            "example": 20,
+            "type": "number"
+          },
+          "eventMaxHours": {
+            "example": 24,
+            "type": "number"
+          },
+          "liveMaterialExits": {
+            "example": 5,
+            "type": "number"
+          },
+          "liveMoves": {
+            "example": 2,
+            "type": "number"
+          },
+          "liveWorks": {
+            "example": 3,
+            "type": "number"
+          },
+          "materialExitMaxDays": {
+            "example": 7,
+            "type": "number"
+          },
+          "maxDaysAhead": {
+            "example": 90,
+            "type": "number"
+          },
+          "upcomingEvents": {
+            "example": 3,
+            "type": "number"
+          },
+          "workersPerPermit": {
+            "example": 30,
+            "type": "number"
+          },
+          "worksMaxDays": {
+            "example": 180,
+            "type": "number"
+          }
+        },
+        "required": [
+          "liveWorks",
+          "liveMoves",
+          "liveMaterialExits",
+          "upcomingEvents",
+          "workersPerPermit",
+          "eventGuestsWithoutApproval",
+          "eventGuestsMax",
+          "worksMaxDays",
+          "materialExitMaxDays",
+          "eventMaxHours",
+          "maxDaysAhead",
+          "daysOff"
+        ],
+        "type": "object"
+      },
+      "PermitRulesResponse": {
+        "properties": {
+          "daysOff": {
+            "description": "Dated local days off, ascending.",
+            "example": [
+              "2026-12-25"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/PermitLimitsView"
+          },
+          "timeZone": {
+            "description": "The compound’s time zone: every time of day is read in it.",
+            "example": "Africa/Cairo",
+            "type": "string"
+          },
+          "workDays": {
+            "description": "Week days works and moves may take place on (0 = Sunday).",
+            "example": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              6
+            ],
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "workHours": {
+            "$ref": "#/components/schemas/PermitHoursDto"
+          }
+        },
+        "required": [
+          "workDays",
+          "workHours",
+          "daysOff",
+          "timeZone",
+          "limits"
+        ],
+        "type": "object"
+      },
+      "PermitSettingsResponse": {
+        "properties": {
+          "daysOff": {
+            "description": "Dated local days off, ascending.",
+            "example": [
+              "2026-12-25"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workDays": {
+            "description": "Week days works and moves may take place on (0 = Sunday).",
+            "example": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              6
+            ],
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "workHours": {
+            "$ref": "#/components/schemas/PermitHoursDto"
+          }
+        },
+        "required": [
+          "workDays",
+          "workHours",
+          "daysOff"
+        ],
+        "type": "object"
+      },
       "PhotoAddedView": {
         "properties": {
           "createdAt": {
@@ -28403,6 +28578,39 @@
         },
         "type": "object"
       },
+      "UpdatePermitSettingsDto": {
+        "properties": {
+          "daysOff": {
+            "description": "Dated local days with no works and no moves (feasts), at most 100. Replaces the list.",
+            "example": [
+              "2026-12-25"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workDays": {
+            "description": "The week days works and moves may take place on: 0 = Sunday … 6 = Saturday, at least one.",
+            "example": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              6
+            ],
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "workHours": {
+            "$ref": "#/components/schemas/PermitHoursDto"
+          }
+        },
+        "type": "object"
+      },
       "UpdatePlaceDto": {
         "properties": {
           "active": {
@@ -32535,6 +32743,36 @@
         "summary": "Cancel an event and tell those who are going",
         "tags": [
           "community"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/community/permit-rules": {
+      "get": {
+        "description": "The work days, hours and days off (from today on) works and moves must fit, the time zone they are read in, and the fixed limits.",
+        "operationId": "PermitRulesController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitRulesResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the compound’s permit rules",
+        "tags": [
+          "permits"
         ],
         "x-no-store": true,
         "x-stability": "draft"
@@ -51160,6 +51398,73 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/permit-settings": {
+      "get": {
+        "operationId": "PermitSettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the permit rules",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "The guard applies the new rules from the next entry; permits already approved keep their own dates and hours.",
+        "operationId": "PermitSettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePermitSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change the permit rules",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

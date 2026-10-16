@@ -663,6 +663,18 @@ describe('API v0 — no-store', () => {
     return body<{ id: string }>(await anEscort()).id;
   };
 
+  /** Permits and contractors (ADR 0049). */
+  const PERMIT_CALLS = (): Record<string, () => Promise<Response>> => ({
+    'GET /community/permit-rules': () =>
+      as('owner', 'GET', '/community/permit-rules'),
+    'GET /staff/permit-settings': () =>
+      as('manager', 'GET', '/staff/permit-settings'),
+    'PATCH /staff/permit-settings': () =>
+      as('manager', 'PATCH', '/staff/permit-settings', {
+        daysOff: ['2026-12-25'],
+      }),
+  });
+
   /** Emergencies and gate services (ADR 0047). */
   const SAFETY_CALLS = (): Record<string, () => Promise<Response>> => ({
     'GET /community/places': () => as('owner', 'GET', '/community/places'),
@@ -2382,6 +2394,7 @@ describe('API v0 — no-store', () => {
     ...VEHICLE_CALLS(),
     ...FINANCE_CALLS(),
     ...SAFETY_CALLS(),
+    ...PERMIT_CALLS(),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

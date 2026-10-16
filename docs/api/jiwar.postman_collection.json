@@ -17940,6 +17940,86 @@
     {
       "item": [
         {
+          "name": "Get the compound’s permit rules",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "permit-rules"
+              ],
+              "raw": "{{baseUrl}}/api/v1/community/permit-rules"
+            }
+          }
+        },
+        {
+          "name": "Get the permit rules",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "permit-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/permit-settings"
+            }
+          }
+        },
+        {
+          "name": "Change the permit rules",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"daysOff\": [\n    \"2026-12-25\"\n  ],\n  \"workDays\": [\n    0,\n    1,\n    2,\n    3,\n    4,\n    6\n  ],\n  \"workHours\": {\n    \"from\": \"09:00\",\n    \"to\": \"17:00\"\n  }\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `daysOff` | string[] |  | Dated local days with no works and no moves (feasts), at most 100. Replaces the list. |\n| `workDays` | number[] |  | The week days works and moves may take place on: 0 = Sunday … 6 = Saturday, at least one. |\n| `workHours` | object |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "permit-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/permit-settings"
+            }
+          }
+        }
+      ],
+      "name": "permits"
+    },
+    {
+      "item": [
+        {
           "name": "List the compound’s places",
           "request": {
             "description": "**Responses:** 200",

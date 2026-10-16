@@ -378,3 +378,10 @@ export const SAFETY_COVERAGE: readonly string[] = [
   'gate_service.closed',
   'gate_service.text_cleared',
 ];
+
+/**
+ * G3 entries (ADR 0049), covered by test/permits/audit-coverage.e2e-spec.ts:
+ * the compound's permit rules, a unit's permits, their contractors and
+ * guests, the gate's side of them and the material entries log.
+ */
+export const PERMITS_COVERAGE: readonly string[] = ['permit_settings.changed'];

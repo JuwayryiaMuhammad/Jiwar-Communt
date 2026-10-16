@@ -104,11 +104,17 @@ import { GateServicesService } from './gate-services/gate-services.service';
 import { GateServiceRecords } from './gate-services/gate-service-records';
 import { GateServiceHandlersController } from './gate-services/gate-service-handlers.controller';
 import { GateServiceHandlersService } from './gate-services/gate-service-handlers.service';
+import {
+  PermitRulesController,
+  PermitSettingsController,
+} from './permits/permit-settings.controller';
+import { PermitProvisioning } from './permits/permit-provisioning';
+import { PermitSettingsService } from './permits/permit-settings.service';
 
 /**
  * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
- * vehicles and parking (ADR 0045), and emergencies and gate services
- * (ADR 0047). It imports core freely and the community
+ * vehicles and parking (ADR 0045), emergencies and gate services
+ * (ADR 0047), and a unit's permits and contractors (ADR 0049). It imports core freely and the community
  * domain only through src/community/index.ts (ADR 0015).
  */
 @Module({
@@ -153,6 +159,8 @@ import { GateServiceHandlersService } from './gate-services/gate-service-handler
     EmergencyRespondersController,
     GateServicesController,
     GateServiceHandlersController,
+    PermitRulesController,
+    PermitSettingsController,
   ],
   providers: [
     GatesService,
@@ -208,6 +216,8 @@ import { GateServiceHandlersService } from './gate-services/gate-service-handler
     GateServiceHandlersService,
     SafetyLifecycle,
     SafetyExportSections,
+    PermitProvisioning,
+    PermitSettingsService,
   ],
 })
 export class GateModule {}

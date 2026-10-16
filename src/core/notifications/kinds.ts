@@ -1232,6 +1232,27 @@ export const NOTIFICATION_KINDS = {
     target: 'invoice_dispute',
     params: {},
   },
+  // Guard shifts and tasks (ADR 0050). Params are codes at most: never a
+  // name, a unit or a post's name.
+  /**
+   * A guard did not open their slot an hour after its start, and another
+   * guard is on shift at that post. To the roster's keepers.
+   */
+  'guard_shift.absent': {
+    priority: 'normal',
+    category: 'guard_duty',
+    critical: false,
+    target: 'guard_roster_slot',
+    params: {},
+  },
+  /** The same, and nobody is on shift at that post: it is unmanned. */
+  'guard_shift.absent_unmanned': {
+    priority: 'critical',
+    category: 'guard_duty',
+    critical: true,
+    target: 'guard_roster_slot',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

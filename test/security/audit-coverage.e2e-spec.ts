@@ -1,0 +1,190 @@
+import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
+import { addDays, localDate } from '../../src/core/common/slots/day-slots';
+import { ROSTER_ATTENDANCE_SWEEP } from '../../src/gate/roster/roster-attendance';
+import { auditReaders } from '../setup/audit';
+import {
+  COMMUNITY_COVERAGE,
+  ENGAGEMENT_COVERAGE,
+  FACILITIES_COVERAGE,
+  FILES_COVERAGE,
+  FINANCE_COVERAGE,
+  GUARD_DUTY_COVERAGE,
+  MAINTENANCE_COVERAGE,
+  MANAGEMENT_COVERAGE,
+  NEIGHBOURS_COVERAGE,
+  PARCELS_COVERAGE,
+  PERMITS_COVERAGE,
+  PHASE_2_2_COVERAGE,
+  PHASE_4_COVERAGE,
+  R1_COVERAGE,
+  RESIDENT_SCREENS_COVERAGE,
+  SAFETY_COVERAGE,
+  VEHICLES_COVERAGE,
+} from '../setup/audit-coverage-split';
+import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { securityHelpers, type Who } from '../setup/security';
+
+/**
+ * One scenario per guard shifts and tasks catalog entry (ADR 0014, 0050):
+ * actor, target and metadata — ids, codes and counts by value, never what
+ * someone wrote.
+ */
+const covered = new Set<string>();
+
+/** Words typed in every scenario: no audit row may hold them. */
+const WORDS = 'Audit-visible words 5093';
+
+describe('Audit coverage — guard shifts and tasks', () => {
+  let h: HttpHarness;
+  let x: ReturnType<typeof securityHelpers>;
+  let s: Awaited<ReturnType<ReturnType<typeof securityHelpers>['setUp']>>;
+  let read: ReturnType<typeof auditReaders>;
+  let supervisor: Who;
+  let gateId: string;
+
+  beforeAll(async () => {
+    h = await createHttpHarness();
+    x = securityHelpers(h);
+    s = await x.setUp('Guard Duty Audit Court');
+    read = auditReaders(h);
+    supervisor = await x.supervisor(s.c);
+    gateId = (await x.g.gate(s.c)).id;
+  }, 180_000);
+
+  afterAll(() => h.close());
+
+  async function rows(action: string, targetId: string) {
+    const found = await read.tenant(s.c.tenantId, { action, targetId });
+    covered.add(action);
+    for (const row of found) expect(JSON.stringify(row)).not.toContain(WORDS);
+    return found;
+  }
+  async function single(action: string, targetId: string) {
+    const found = await rows(action, targetId);
+    expect(found).toHaveLength(1);
+    return found[0];
+  }
+  const by = (who: Who, targetType: string) => ({
+    actorType: 'account',
+    actorId: who.id,
+    targetType,
+  });
+  const system = (targetType: string) => ({
+    actorType: 'system',
+    actorId: null,
+    targetType,
+  });
+
+  describe('the roster', () => {
+    it('a template created and ended; a slot created and cancelled', async () => {
+      const guard = await x.guard(s.c);
+      const from = addDays(localDate(new Date(), 'Africa/Cairo'), 1);
+      const t = (
+        await x
+          .templateRaw(supervisor, {
+            guardId: guard.id,
+            gateId,
+            schedule: { days: [2], windows: [{ from: '06:00', to: '14:00' }] },
+            effectiveFrom: from,
+          })
+          .expect(201)
+      ).body as { id: string };
+      const created = await single('guard_roster.template_created', t.id);
+      expect(created).toMatchObject(by(supervisor, 'guard_roster_template'));
+      expect(created.metadata).toEqual({
+        guardId: guard.id,
+        gateId,
+        effectiveFrom: from,
+        effectiveUntil: null,
+        slots: 4,
+      });
+      await x
+        .http(
+          'post',
+          `/staff/security/roster/templates/${t.id}/end`,
+          supervisor.token,
+        )
+        .expect(200);
+      const ended = await single('guard_roster.template_ended', t.id);
+      expect(ended).toMatchObject(by(supervisor, 'guard_roster_template'));
+      expect(ended.metadata).toEqual({ reason: 'manager', cancelled: 4 });
+
+      const slot = await x.slot(supervisor, guard.id, { gateId }, 60);
+      const made = await single('guard_roster.slot_created', slot.id);
+      expect(made).toMatchObject(by(supervisor, 'guard_roster_slot'));
+      expect(made.metadata).toEqual({ guardId: guard.id, gateId });
+      await x
+        .http(
+          'post',
+          `/staff/security/roster/slots/${slot.id}/cancel`,
+          supervisor.token,
+          {
+            reasonCode: 'schedule_change',
+          },
+        )
+        .expect(200);
+      const cancelled = await single('guard_roster.slot_cancelled', slot.id);
+      expect(cancelled).toMatchObject(by(supervisor, 'guard_roster_slot'));
+      expect(cancelled.metadata).toEqual({ reason: 'schedule_change' });
+    });
+
+    it('a shift opened late, and a slot nobody opened', async () => {
+      const guard = await x.guard(s.c);
+      const slot = await x.pastSlot(s.c, guard.id, { gateId }, 25);
+      const shift = await x.start(guard, { gateId });
+      const late = await single('guard_shift.late', shift.id);
+      expect(late).toMatchObject(by(guard, 'guard_shift'));
+      expect(late.metadata).toEqual({ slotId: slot.id, minutes: 25 });
+      await x.endRaw(guard).expect(200);
+
+      const absent = await x.pastSlot(
+        s.c,
+        (await x.guard(s.c)).id,
+        { gateId },
+        65,
+      );
+      await x.sweep(ROSTER_ATTENDANCE_SWEEP, new Date());
+      const a = await single('guard_shift.absent', absent.id);
+      expect(a).toMatchObject(system('guard_roster_slot'));
+      expect(a.metadata).toEqual({ unmanned: true, recipients: 2 });
+    });
+  });
+
+  describe('catalog completeness', () => {
+    it('every guard shifts and tasks entry has a scenario above, and no other suite claims it', () => {
+      const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];
+      for (const key of GUARD_DUTY_COVERAGE) {
+        expect(all).toContain(key);
+        expect([
+          ...COMMUNITY_COVERAGE,
+          ...PHASE_2_2_COVERAGE,
+          ...PHASE_4_COVERAGE,
+          ...FILES_COVERAGE,
+          ...MAINTENANCE_COVERAGE,
+          ...PARCELS_COVERAGE,
+          ...R1_COVERAGE,
+          ...RESIDENT_SCREENS_COVERAGE,
+          ...MANAGEMENT_COVERAGE,
+          ...ENGAGEMENT_COVERAGE,
+          ...NEIGHBOURS_COVERAGE,
+          ...FACILITIES_COVERAGE,
+          ...VEHICLES_COVERAGE,
+          ...FINANCE_COVERAGE,
+          ...SAFETY_COVERAGE,
+          ...PERMITS_COVERAGE,
+        ]).not.toContain(key);
+      }
+      expect([...covered].sort()).toEqual([...GUARD_DUTY_COVERAGE].sort());
+      // And nothing of the domain is left out of the list.
+      expect(
+        all
+          .filter((k) =>
+            /^(guard_roster|guard_shift|guard_handover|guard_task|guard_swap|guard_instruction|found_item)\./.test(
+              k,
+            ),
+          )
+          .sort(),
+      ).toEqual([...GUARD_DUTY_COVERAGE].sort());
+    });
+  });
+});

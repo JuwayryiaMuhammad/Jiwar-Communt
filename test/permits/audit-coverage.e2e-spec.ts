@@ -9,6 +9,7 @@ import {
   FACILITIES_COVERAGE,
   FILES_COVERAGE,
   FINANCE_COVERAGE,
+  GUARD_DUTY_COVERAGE,
   MAINTENANCE_COVERAGE,
   MANAGEMENT_COVERAGE,
   NEIGHBOURS_COVERAGE,
@@ -401,6 +402,7 @@ describe('Audit coverage — permits', () => {
           ...VEHICLES_COVERAGE,
           ...FINANCE_COVERAGE,
           ...SAFETY_COVERAGE,
+          ...GUARD_DUTY_COVERAGE,
         ]).not.toContain(key);
       }
       expect([...covered].sort()).toEqual([...PERMITS_COVERAGE].sort());

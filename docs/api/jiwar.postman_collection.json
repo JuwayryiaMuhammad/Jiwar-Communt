@@ -10562,6 +10562,420 @@
     {
       "item": [
         {
+          "name": "Read my schedule",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "roster"
+              ],
+              "query": [
+                {
+                  "description": "The first day, `YYYY-MM-DD`. Default today.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, inclusive. Default 13 days after `from`.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/roster"
+            }
+          }
+        },
+        {
+          "name": "Read my attendance",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "roster",
+                "attendance"
+              ],
+              "query": [
+                {
+                  "description": "The first day, `YYYY-MM-DD`. Default today.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, inclusive. Default 13 days after `from`.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/roster/attendance"
+            }
+          }
+        },
+        {
+          "name": "Read the guards’ attendance and overtime",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "attendance"
+              ],
+              "query": [
+                {
+                  "description": "The first day, `YYYY-MM-DD`. Default today.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, inclusive. Default 13 days after `from`.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "guardId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/attendance"
+            }
+          }
+        },
+        {
+          "name": "List the guards the roster may schedule",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "guards"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/guards"
+            }
+          }
+        },
+        {
+          "name": "List the posts a guard may be scheduled at",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "posts"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/posts"
+            }
+          }
+        },
+        {
+          "name": "Read the roster",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "roster",
+                "slots"
+              ],
+              "query": [
+                {
+                  "description": "The first day, `YYYY-MM-DD`. Default today.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, inclusive. Default 13 days after `from`.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "guardId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "gateId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "zoneId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/roster/slots"
+            }
+          }
+        },
+        {
+          "name": "Add a single slot",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"guardId\": \"\",\n  \"startsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"endsAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `endsAt` | string (date-time) | yes | After the start, a day at most. |\n| `gateId` | string (uuid) |  |  |\n| `guardId` | string (uuid) | yes | An active `gate.operate` holder (GUARD_NOT_ELIGIBLE). |\n| `startsAt` | string (date-time) | yes | In the future. |\n| `zoneId` | string (uuid) |  | A place in service, for a post that is not a gate. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "roster",
+                "slots"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/roster/slots"
+            }
+          }
+        },
+        {
+          "name": "Cancel a slot nobody opened",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"schedule_change\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | `schedule_change` \\| `guard_unavailable` \\| `post_closed` \\| `other` | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "roster",
+                "slots",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/roster/slots/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the roster templates",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "roster",
+                "templates"
+              ],
+              "query": [
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "guardId",
+                  "value": ""
+                },
+                {
+                  "description": "Default: both.",
+                  "disabled": true,
+                  "key": "state",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/roster/templates"
+            }
+          }
+        },
+        {
+          "name": "Add a guard’s weekly roster at a post",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"guardId\": \"\",\n  \"schedule\": {\n    \"days\": [],\n    \"windows\": []\n  },\n  \"effectiveFrom\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `effectiveFrom` | string | yes | Its first day, `YYYY-MM-DD`: today or later. |\n| `effectiveUntil` | string |  | Its last day, inclusive. Absent for no end. |\n| `gateId` | string (uuid) |  |  |\n| `guardId` | string (uuid) | yes | An active `gate.operate` holder (GUARD_NOT_ELIGIBLE). |\n| `schedule` | object | yes | The weekly shifts: never overlapping the guard’s other templates or slots (409 ROSTER_OVERLAP). |\n| `zoneId` | string (uuid) |  | A place in service, for a post that is not a gate. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "roster",
+                "templates"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/roster/templates"
+            }
+          }
+        },
+        {
+          "name": "End a roster template",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "roster",
+                "templates",
+                ":id",
+                "end"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/roster/templates/:id/end",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "name": "guard-duty"
+    },
+    {
+      "item": [
+        {
           "name": "Revoke a household invite",
           "request": {
             "description": "**Responses:** 204",

@@ -24,6 +24,7 @@ import { inviteBody, minorBody } from './routes/household';
 import { ticketBody } from './routes/maintenance';
 import { passBody } from './routes/visitors';
 import { workerBody } from './routes/workers';
+import { guardDutyCalls } from './no-store-guard-duty';
 import { buildWorld, type World } from './world';
 
 import { ALL_WEEK, at, day as localDay } from '../setup/facilities';
@@ -2620,6 +2621,7 @@ describe('API v0 — no-store', () => {
     ...FINANCE_CALLS(),
     ...SAFETY_CALLS(),
     ...PERMIT_CALLS(),
+    ...guardDutyCalls(() => w),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

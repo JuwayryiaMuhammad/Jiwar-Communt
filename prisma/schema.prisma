@@ -493,29 +493,29 @@ model Tenant {
   status    TenantStatus @default(active)
   createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  accounts          Account[]
-  units             Unit[]
-  loginIdentifiers  LoginIdentifier[]
-  roles             Role[]
-  permissionCatalog TenantPermissionCatalog[]
-  inviteTokens      InviteToken[]
-  settings          TenantSettings?
-  registrationLinks RegistrationLink[]
-  visitorPassLinks  VisitorPassLink[]
-  actionTokens      ActionToken[]
-  ticketCategories  TicketCategory[]
-  preventiveServices PreventiveService[]
-  maintenance       MaintenanceSettings?
-  ticketCounter     TicketCounter?
-  parcelSettings    ParcelSettings?
-  parcelCounter     ParcelCounter?
-  managementTopics   ManagementRequestTopic[]
-  managementSettings ManagementRequestSettings?
-  managementOfficeHours ManagementOfficeHours[]
-  managementCounter  ManagementRequestCounter?
-  managementSlots    ManagementAppointmentSlot[]
-  engagementSettings EngagementSettings?
-  suggestionTopics   SuggestionTopic[]
+  accounts                     Account[]
+  units                        Unit[]
+  loginIdentifiers             LoginIdentifier[]
+  roles                        Role[]
+  permissionCatalog            TenantPermissionCatalog[]
+  inviteTokens                 InviteToken[]
+  settings                     TenantSettings?
+  registrationLinks            RegistrationLink[]
+  visitorPassLinks             VisitorPassLink[]
+  actionTokens                 ActionToken[]
+  ticketCategories             TicketCategory[]
+  preventiveServices           PreventiveService[]
+  maintenance                  MaintenanceSettings?
+  ticketCounter                TicketCounter?
+  parcelSettings               ParcelSettings?
+  parcelCounter                ParcelCounter?
+  managementTopics             ManagementRequestTopic[]
+  managementSettings           ManagementRequestSettings?
+  managementOfficeHours        ManagementOfficeHours[]
+  managementCounter            ManagementRequestCounter?
+  managementSlots              ManagementAppointmentSlot[]
+  engagementSettings           EngagementSettings?
+  suggestionTopics             SuggestionTopic[]
   neighbourSettings            NeighbourSettings?
   neighbourComplaintCategories NeighbourComplaintCategory[]
   neighbourComplaintCounter    NeighbourComplaintCounter?
@@ -540,16 +540,16 @@ model Tenant {
   financePayments              FinancePayment[]
   receiptLinks                 ReceiptLink[]
   paymentSessions              PaymentSession[]
-  announcements      Announcement[]
-  communityEvents    CommunityEvent[]
-  polls              Poll[]
-  suggestions        Suggestion[]
-  specialties       Specialty[]
-  dispatchSettings  MaintenanceDispatchSettings?
-  slaSettings       MaintenanceSlaSettings?
+  announcements                Announcement[]
+  communityEvents              CommunityEvent[]
+  polls                        Poll[]
+  suggestions                  Suggestion[]
+  specialties                  Specialty[]
+  dispatchSettings             MaintenanceDispatchSettings?
+  slaSettings                  MaintenanceSlaSettings?
+  standingInstructions         UnitStandingInstruction[]
 
   @@map("tenants")
-  standingInstructions UnitStandingInstruction[]
 }
 
 /// Global login lookup: identifier → accounts, across tenants. No PII: the
@@ -872,81 +872,81 @@ model Account {
   occupancies        UnitOccupancy[]   @relation("OccupancyAccount")
   createdOccupancies UnitOccupancy[]   @relation("OccupancyCreatedBy")
 
-  memberships           HouseholdMember[]         @relation("MemberAccount")
-  addedMembers          HouseholdMember[]         @relation("MemberAddedBy")
-  removedMembers        HouseholdMember[]         @relation("MemberRemovedBy")
-  sentInvites           HouseholdInvite[]         @relation("InviteInvitedBy")
-  acceptedInvites       HouseholdInvite[]         @relation("InviteAcceptedAccount")
-  delegationsGiven      HouseholdDelegation[]     @relation("DelegationDelegator")
-  delegationsHeld       HouseholdDelegation[]     @relation("DelegationDelegate")
-  delegationsRevoked    HouseholdDelegation[]     @relation("DelegationRevokedBy")
-  bannedWorkers         DomesticWorker[]          @relation("WorkerBannedBy")
-  verifiedWorkers       DomesticWorker[]          @relation("WorkerBirthDateVerifiedBy")
-  requestedWorkers      WorkerEngagement[]        @relation("EngagementRequestedBy")
-  reviewedWorkers       WorkerEngagement[]        @relation("EngagementReviewedBy")
-  flagsRaised           UnitReviewFlag[]          @relation("ReviewFlaggedBy")
-  flagsCleared          UnitReviewFlag[]          @relation("ReviewClearedBy")
-  wagesSettled          WorkerWageObligation[]    @relation("WageSettledBy")
-  grantsGiven           HouseholdMemberGrant[]    @relation("GrantGrantedBy")
-  grantsRevoked         HouseholdMemberGrant[]    @relation("GrantRevokedBy")
-  deferredDecided       HouseholdDeferredAction[] @relation("DeferredDecidedBy")
-  casesOpened           WorkerComplianceCase[]    @relation("CaseOpenedBy")
-  casesClosed           WorkerComplianceCase[]    @relation("CaseClosedBy")
-  incidentsReported     WorkerCardIncident[]      @relation("IncidentReportedBy")
-  incidentsClosed       WorkerCardIncident[]      @relation("IncidentClosedBy")
-  freezes               AccountFreeze[]           @relation("FreezeAccount")
-  freezesMade           AccountFreeze[]           @relation("FreezeFrozenBy")
-  freezesLifted         AccountFreeze[]           @relation("FreezeReactivatedBy")
-  registrationsDecided  ResidentRegistration[]    @relation("RegistrationDecidedBy")
-  registrationsApproved ResidentRegistration[]    @relation("RegistrationAccount")
-  deletionRequests      AccountDeletionRequest[]  @relation("DeletionAccount")
-  deletionsCompleted    AccountDeletionRequest[]  @relation("DeletionCompletedBy")
-  legalHolds            LegalHold[]               @relation("HoldAccount")
-  holdsPlaced           LegalHold[]               @relation("HoldPlacedBy")
-  holdsReleased         LegalHold[]               @relation("HoldReleasedBy")
-  notifications         Notification[]            @relation("NotificationAccount")
-  notificationSettings  NotificationSettings?     @relation("NotificationSettingsAccount")
-  channelPrefs          NotificationChannelPref[] @relation("ChannelPrefAccount")
-  consents              AccountConsent[]          @relation("ConsentAccount")
-  knownDevices          KnownDevice[]             @relation("KnownDeviceAccount")
-  dataExports           DataExport[]              @relation("DataExportAccount")
-  idempotencyKeys       IdempotencyKey[]          @relation("IdempotencyAccount")
-  technicianSpecialties TechnicianSpecialty[]     @relation("TechnicianSpecialtyAccount")
-  availability          TechnicianAvailability?   @relation("TechnicianAvailabilityAccount")
-  visitsAsTechnician    TicketVisit[]             @relation("VisitTechnician")
-  visitsAsReceiver      TicketVisit[]             @relation("VisitReceiver")
-  guardShifts           GuardShift[]              @relation("ShiftGuard")
-  hostedPasses          VisitorPass[]             @relation("PassHost")
-  cancelledPasses       VisitorPass[]             @relation("PassCancelledBy")
-  gateInstructions      UnitGateInstruction[]     @relation("InstructionsUpdatedBy")
-  standingInstructions  UnitStandingInstruction[] @relation("StandingInstructionAuthor")
-  gateRequestsMade      GateApprovalRequest[]     @relation("RequestRequestedBy")
-  gateRequestsDecided   GateApprovalRequest[]     @relation("RequestDecidedBy")
-  files                 StoredFile[]              @relation("FileOwner")
-  entryCredentials      EntryCredential[]         @relation("CredentialAccount")
-  ticketsCreated        Ticket[]                  @relation("TicketCreatedBy")
-  ticketsReported       Ticket[]                  @relation("TicketReporter")
-  ticketsWorked         Ticket[]                  @relation("TicketTechnician")
-  ticketFeedback        TicketFeedback[]          @relation("FeedbackAuthor")
-  ticketMessages        TicketMessage[]           @relation("MessageSender")
-  ticketAttachments     TicketAttachment[]        @relation("AttachmentUploader")
-  managementRequestsAuthored ManagementRequest[]           @relation("ManagementRequestAuthor")
-  managementRequestsOpened   ManagementRequest[]           @relation("ManagementRequestOpenedBy")
-  managementRequestsAssigned ManagementRequest[]           @relation("ManagementRequestAssignee")
-  managementMessages         ManagementRequestMessage[]    @relation("ManagementMessageSender")
-  managementAttachments      ManagementRequestAttachment[] @relation("ManagementAttachmentUploader")
-  managementRatings          ManagementRequestRating[]     @relation("ManagementRatingAuthor")
-  announcementsCreated       Announcement[]                @relation("AnnouncementCreator")
-  announcementVersions       AnnouncementVersion[]         @relation("AnnouncementVersionEditor")
-  announcementAttachments    AnnouncementAttachment[]      @relation("AnnouncementAttachmentUploader")
-  communityEventsCreated     CommunityEvent[]              @relation("CommunityEventCreator")
-  eventAttachments           EventAttachment[]             @relation("EventAttachmentUploader")
-  eventRsvps                 EventRsvp[]                   @relation("EventRsvpAccount")
-  pollsCreated               Poll[]                        @relation("PollCreator")
-  suggestionsAuthored        Suggestion[]                  @relation("SuggestionAuthor")
-  suggestionUpdates          SuggestionUpdate[]            @relation("SuggestionUpdateBy")
-  suggestionAttachments      SuggestionAttachment[]        @relation("SuggestionAttachmentUploader")
-  suggestionSupports         SuggestionSupport[]           @relation("SuggestionSupporter")
+  memberships                    HouseholdMember[]                   @relation("MemberAccount")
+  addedMembers                   HouseholdMember[]                   @relation("MemberAddedBy")
+  removedMembers                 HouseholdMember[]                   @relation("MemberRemovedBy")
+  sentInvites                    HouseholdInvite[]                   @relation("InviteInvitedBy")
+  acceptedInvites                HouseholdInvite[]                   @relation("InviteAcceptedAccount")
+  delegationsGiven               HouseholdDelegation[]               @relation("DelegationDelegator")
+  delegationsHeld                HouseholdDelegation[]               @relation("DelegationDelegate")
+  delegationsRevoked             HouseholdDelegation[]               @relation("DelegationRevokedBy")
+  bannedWorkers                  DomesticWorker[]                    @relation("WorkerBannedBy")
+  verifiedWorkers                DomesticWorker[]                    @relation("WorkerBirthDateVerifiedBy")
+  requestedWorkers               WorkerEngagement[]                  @relation("EngagementRequestedBy")
+  reviewedWorkers                WorkerEngagement[]                  @relation("EngagementReviewedBy")
+  flagsRaised                    UnitReviewFlag[]                    @relation("ReviewFlaggedBy")
+  flagsCleared                   UnitReviewFlag[]                    @relation("ReviewClearedBy")
+  wagesSettled                   WorkerWageObligation[]              @relation("WageSettledBy")
+  grantsGiven                    HouseholdMemberGrant[]              @relation("GrantGrantedBy")
+  grantsRevoked                  HouseholdMemberGrant[]              @relation("GrantRevokedBy")
+  deferredDecided                HouseholdDeferredAction[]           @relation("DeferredDecidedBy")
+  casesOpened                    WorkerComplianceCase[]              @relation("CaseOpenedBy")
+  casesClosed                    WorkerComplianceCase[]              @relation("CaseClosedBy")
+  incidentsReported              WorkerCardIncident[]                @relation("IncidentReportedBy")
+  incidentsClosed                WorkerCardIncident[]                @relation("IncidentClosedBy")
+  freezes                        AccountFreeze[]                     @relation("FreezeAccount")
+  freezesMade                    AccountFreeze[]                     @relation("FreezeFrozenBy")
+  freezesLifted                  AccountFreeze[]                     @relation("FreezeReactivatedBy")
+  registrationsDecided           ResidentRegistration[]              @relation("RegistrationDecidedBy")
+  registrationsApproved          ResidentRegistration[]              @relation("RegistrationAccount")
+  deletionRequests               AccountDeletionRequest[]            @relation("DeletionAccount")
+  deletionsCompleted             AccountDeletionRequest[]            @relation("DeletionCompletedBy")
+  legalHolds                     LegalHold[]                         @relation("HoldAccount")
+  holdsPlaced                    LegalHold[]                         @relation("HoldPlacedBy")
+  holdsReleased                  LegalHold[]                         @relation("HoldReleasedBy")
+  notifications                  Notification[]                      @relation("NotificationAccount")
+  notificationSettings           NotificationSettings?               @relation("NotificationSettingsAccount")
+  channelPrefs                   NotificationChannelPref[]           @relation("ChannelPrefAccount")
+  consents                       AccountConsent[]                    @relation("ConsentAccount")
+  knownDevices                   KnownDevice[]                       @relation("KnownDeviceAccount")
+  dataExports                    DataExport[]                        @relation("DataExportAccount")
+  idempotencyKeys                IdempotencyKey[]                    @relation("IdempotencyAccount")
+  technicianSpecialties          TechnicianSpecialty[]               @relation("TechnicianSpecialtyAccount")
+  availability                   TechnicianAvailability?             @relation("TechnicianAvailabilityAccount")
+  visitsAsTechnician             TicketVisit[]                       @relation("VisitTechnician")
+  visitsAsReceiver               TicketVisit[]                       @relation("VisitReceiver")
+  guardShifts                    GuardShift[]                        @relation("ShiftGuard")
+  hostedPasses                   VisitorPass[]                       @relation("PassHost")
+  cancelledPasses                VisitorPass[]                       @relation("PassCancelledBy")
+  gateInstructions               UnitGateInstruction[]               @relation("InstructionsUpdatedBy")
+  standingInstructions           UnitStandingInstruction[]           @relation("StandingInstructionAuthor")
+  gateRequestsMade               GateApprovalRequest[]               @relation("RequestRequestedBy")
+  gateRequestsDecided            GateApprovalRequest[]               @relation("RequestDecidedBy")
+  files                          StoredFile[]                        @relation("FileOwner")
+  entryCredentials               EntryCredential[]                   @relation("CredentialAccount")
+  ticketsCreated                 Ticket[]                            @relation("TicketCreatedBy")
+  ticketsReported                Ticket[]                            @relation("TicketReporter")
+  ticketsWorked                  Ticket[]                            @relation("TicketTechnician")
+  ticketFeedback                 TicketFeedback[]                    @relation("FeedbackAuthor")
+  ticketMessages                 TicketMessage[]                     @relation("MessageSender")
+  ticketAttachments              TicketAttachment[]                  @relation("AttachmentUploader")
+  managementRequestsAuthored     ManagementRequest[]                 @relation("ManagementRequestAuthor")
+  managementRequestsOpened       ManagementRequest[]                 @relation("ManagementRequestOpenedBy")
+  managementRequestsAssigned     ManagementRequest[]                 @relation("ManagementRequestAssignee")
+  managementMessages             ManagementRequestMessage[]          @relation("ManagementMessageSender")
+  managementAttachments          ManagementRequestAttachment[]       @relation("ManagementAttachmentUploader")
+  managementRatings              ManagementRequestRating[]           @relation("ManagementRatingAuthor")
+  announcementsCreated           Announcement[]                      @relation("AnnouncementCreator")
+  announcementVersions           AnnouncementVersion[]               @relation("AnnouncementVersionEditor")
+  announcementAttachments        AnnouncementAttachment[]            @relation("AnnouncementAttachmentUploader")
+  communityEventsCreated         CommunityEvent[]                    @relation("CommunityEventCreator")
+  eventAttachments               EventAttachment[]                   @relation("EventAttachmentUploader")
+  eventRsvps                     EventRsvp[]                         @relation("EventRsvpAccount")
+  pollsCreated                   Poll[]                              @relation("PollCreator")
+  suggestionsAuthored            Suggestion[]                        @relation("SuggestionAuthor")
+  suggestionUpdates              SuggestionUpdate[]                  @relation("SuggestionUpdateBy")
+  suggestionAttachments          SuggestionAttachment[]              @relation("SuggestionAttachmentUploader")
+  suggestionSupports             SuggestionSupport[]                 @relation("SuggestionSupporter")
   neighbourComplaintsAuthored    NeighbourComplaint[]                @relation("NeighbourComplaintAuthor")
   neighbourComplaintMoves        NeighbourComplaintStatusChange[]    @relation("NeighbourComplaintStatusActor")
   neighbourComplaintMessages     NeighbourComplaintMessage[]         @relation("NeighbourComplaintMessageSender")
@@ -990,7 +990,7 @@ model Account {
   neighbourReportsMade           NeighbourConversationReport[]       @relation("NeighbourReporter")
   neighbourReportsClosed         NeighbourConversationReport[]       @relation("NeighbourReportCloser")
   neighbourWelcomes              NeighbourWelcome[]
-  managementAppointments     ManagementAppointment[]       @relation("ManagementAppointmentProposer")
+  managementAppointments         ManagementAppointment[]             @relation("ManagementAppointmentProposer")
 
   @@unique([tenantId, type, email])
   @@unique([tenantId, type, phone])
@@ -1063,26 +1063,26 @@ model Unit {
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  tenant            Tenant                    @relation(fields: [tenantId], references: [id])
-  occupancies       UnitOccupancy[]
-  householdMembers  HouseholdMember[]
-  householdInvites  HouseholdInvite[]
-  delegations       HouseholdDelegation[]
-  workerEngagements WorkerEngagement[]
-  reviewFlags       UnitReviewFlag[]
-  deferredActions   HouseholdDeferredAction[]
-  visitorPasses     VisitorPass[]
-  gateInstructions  UnitGateInstruction[]
-  standingInstructions UnitStandingInstruction[]
-  gateRequests      GateApprovalRequest[]
-  tickets           Ticket[]
-  parcels           Parcel[]
-  managementRequests ManagementRequest[]
-  eventRsvps         EventRsvp[]
-  pollParticipations PollParticipation[]
-  suggestions        Suggestion[]
-  neighbourComplaintsFrom    NeighbourComplaint[] @relation("NeighbourComplaintAuthorUnit")
-  neighbourComplaintsAgainst NeighbourComplaint[] @relation("NeighbourComplaintTargetUnit")
+  tenant                     Tenant                    @relation(fields: [tenantId], references: [id])
+  occupancies                UnitOccupancy[]
+  householdMembers           HouseholdMember[]
+  householdInvites           HouseholdInvite[]
+  delegations                HouseholdDelegation[]
+  workerEngagements          WorkerEngagement[]
+  reviewFlags                UnitReviewFlag[]
+  deferredActions            HouseholdDeferredAction[]
+  visitorPasses              VisitorPass[]
+  gateInstructions           UnitGateInstruction[]
+  standingInstructions       UnitStandingInstruction[]
+  gateRequests               GateApprovalRequest[]
+  tickets                    Ticket[]
+  parcels                    Parcel[]
+  managementRequests         ManagementRequest[]
+  eventRsvps                 EventRsvp[]
+  pollParticipations         PollParticipation[]
+  suggestions                Suggestion[]
+  neighbourComplaintsFrom    NeighbourComplaint[]      @relation("NeighbourComplaintAuthorUnit")
+  neighbourComplaintsAgainst NeighbourComplaint[]      @relation("NeighbourComplaintTargetUnit")
   neighbourPosts             NeighbourPost[]
   neighbourConversations     NeighbourConversation[]
   neighbourWelcomes          NeighbourWelcome[]
@@ -1139,7 +1139,7 @@ model UnitOccupancy {
   registration  ResidentRegistration[]
 
   neighbourWelcome NeighbourWelcome?
-  clubCoverage ClubMembershipPerson[]
+  clubCoverage     ClubMembershipPerson[]
 
   @@unique([tenantId, id])
   @@index([tenantId, accountId])
@@ -1211,7 +1211,7 @@ model HouseholdMember {
   grants          HouseholdMemberGrant[]
   majorityInvites HouseholdInvite[]
   deferredActions HouseholdDeferredAction[]
-  clubCoverage ClubMembershipPerson[]
+  clubCoverage    ClubMembershipPerson[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, id, isMinor])
@@ -1412,16 +1412,16 @@ model UnitReviewFlag {
 /// A wage obligation (ADR 0017, 0022): recorded here, never paid here; a
 /// manager closes it (ADR 0037).
 model WorkerWageObligation {
-  id           String             @id @db.Uuid
-  tenantId     String             @map("tenant_id") @db.Uuid
-  engagementId String             @map("engagement_id") @db.Uuid
-  workerId     String             @map("worker_id") @db.Uuid
-  kind         WageObligationKind
-  createdAt    DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
-  settledAt    DateTime?          @map("settled_at") @db.Timestamptz(3)
-  settledById  String?            @map("settled_by") @db.Uuid
+  id               String             @id @db.Uuid
+  tenantId         String             @map("tenant_id") @db.Uuid
+  engagementId     String             @map("engagement_id") @db.Uuid
+  workerId         String             @map("worker_id") @db.Uuid
+  kind             WageObligationKind
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  settledAt        DateTime?          @map("settled_at") @db.Timestamptz(3)
+  settledById      String?            @map("settled_by") @db.Uuid
   /// Why a manager closed it (ADR 0037); set with the two above, or none.
-  settleReasonCode String?        @map("settle_reason_code")
+  settleReasonCode String?            @map("settle_reason_code")
 
   engagement WorkerEngagement @relation(fields: [tenantId, engagementId], references: [tenantId, id], onUpdate: Restrict)
   worker     DomesticWorker   @relation(fields: [tenantId, workerId], references: [tenantId, id], onUpdate: Restrict)
@@ -1705,12 +1705,14 @@ enum NotificationCategory {
   vehicles
   /// A unit's invoices and payments (ADR 0046).
   finance
-
-  @@map("notification_category")
   /// Emergencies and the services security gives at the gate (ADR 0047).
   safety
   /// A unit's permits: works, moves, material exits, events (ADR 0049).
   permits
+  /// The guards' work: shifts, the roster, tasks, swaps, instructions (ADR 0050).
+  guard_duty
+
+  @@map("notification_category")
 }
 
 /// `push`: whether a notification is also pushed to the phone (ADR 0041).
@@ -1954,15 +1956,21 @@ model Gate {
 /// exactly one (CHECK). At most one open per guard (partial unique index in
 /// SQL). Every gate action records its shift; a zone shift takes none.
 model GuardShift {
-  id             String    @id @db.Uuid
-  tenantId       String    @map("tenant_id") @db.Uuid
-  guardAccountId String    @map("guard_account_id") @db.Uuid
-  gateId         String?   @map("gate_id") @db.Uuid
+  id                 String    @id @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  guardAccountId     String    @map("guard_account_id") @db.Uuid
+  gateId             String?   @map("gate_id") @db.Uuid
   /// The zone, for a shift that is not at a gate.
-  placeId        String?   @map("place_id") @db.Uuid
-  startedAt      DateTime  @default(now()) @map("started_at") @db.Timestamptz(3)
-  endedAt        DateTime? @map("ended_at") @db.Timestamptz(3)
-  endReason      String?   @map("end_reason")
+  placeId            String?   @map("place_id") @db.Uuid
+  startedAt          DateTime  @default(now()) @map("started_at") @db.Timestamptz(3)
+  endedAt            DateTime? @map("ended_at") @db.Timestamptz(3)
+  endReason          String?   @map("end_reason")
+  /// At the end, for a shift that filled a slot: minutes worked beyond the
+  /// slot's length (ADR 0050). Recorded only, no payroll.
+  overtimeMinutes    Int?      @map("overtime_minutes")
+  /// At the end, for a shift that filled no slot: its length. Never
+  /// overtime (ADR 0050).
+  unscheduledMinutes Int?      @map("unscheduled_minutes")
 
   guard    Account               @relation("ShiftGuard", fields: [tenantId, guardAccountId], references: [tenantId, id], onUpdate: Restrict)
   gate     Gate?                 @relation(fields: [tenantId, gateId], references: [tenantId, id], onUpdate: Restrict)
@@ -1978,16 +1986,16 @@ model GuardShift {
 /// A visitor's name and phone (ADR 0028): personal data, deleted by the
 /// retention sweep at `expires_at`; what pointed at it stays.
 model VisitorDetails {
-  id        String   @id @db.Uuid
-  tenantId  String   @map("tenant_id") @db.Uuid
-  fullName  String?  @map("full_name")
-  phone     String?
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  fullName     String?  @map("full_name")
+  phone        String?
   /// Optional (ADR 0043): letters (Arabic or Latin), digits and spaces.
-  vehiclePlate String? @map("vehicle_plate")
+  vehiclePlate String?  @map("vehicle_plate")
   /// Generated by the database from the plate (ADR 0045); never written.
-  plateKey     String? @map("plate_key")
-  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  plateKey     String?  @map("plate_key")
+  expiresAt    DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   passes   VisitorPass[]
   requests GateApprovalRequest[]
@@ -2211,20 +2219,20 @@ model StoredFile {
   attachedAt      DateTime?   @map("attached_at") @db.Timestamptz(3)
   createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  workers  DomesticWorker[]   @relation("WorkerPhoto")
-  accounts Account[]          @relation("AccountPhoto")
-  exports  DataExport[]       @relation("DataExportFile")
-  tickets  TicketAttachment[] @relation("AttachmentFile")
-  parcelPhotos         Parcel[]           @relation("ParcelPhoto")
-  gateRequestPhotos    GateApprovalRequest[] @relation("GateRequestPhoto")
-  parcelHandoverPhotos Parcel[]           @relation("ParcelHandoverPhoto")
-  managementAttachments ManagementRequestAttachment[] @relation("ManagementAttachmentFile")
-  announcementAttachments AnnouncementAttachment[] @relation("AnnouncementAttachmentFile")
-  eventAttachments EventAttachment[] @relation("EventAttachmentFile")
-  suggestionAttachments SuggestionAttachment[] @relation("SuggestionAttachmentFile")
+  workers                       DomesticWorker[]               @relation("WorkerPhoto")
+  accounts                      Account[]                      @relation("AccountPhoto")
+  exports                       DataExport[]                   @relation("DataExportFile")
+  tickets                       TicketAttachment[]             @relation("AttachmentFile")
+  parcelPhotos                  Parcel[]                       @relation("ParcelPhoto")
+  gateRequestPhotos             GateApprovalRequest[]          @relation("GateRequestPhoto")
+  parcelHandoverPhotos          Parcel[]                       @relation("ParcelHandoverPhoto")
+  managementAttachments         ManagementRequestAttachment[]  @relation("ManagementAttachmentFile")
+  announcementAttachments       AnnouncementAttachment[]       @relation("AnnouncementAttachmentFile")
+  eventAttachments              EventAttachment[]              @relation("EventAttachmentFile")
+  suggestionAttachments         SuggestionAttachment[]         @relation("SuggestionAttachmentFile")
   neighbourComplaintAttachments NeighbourComplaintAttachment[] @relation("NeighbourComplaintAttachmentFile")
   neighbourPostPhotos           NeighbourPostPhoto[]           @relation("NeighbourPostPhotoFile")
-  owner    Account?           @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  owner                         Account?                       @relation("FileOwner", fields: [tenantId, ownerAccountId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([tenantId, id])
   @@map("files")
@@ -2428,10 +2436,10 @@ model TicketCategory {
   createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  tickets     Ticket[]
-  specialties CategorySpecialty[]
-  slaTargets  SlaTarget[]
+  tenant             Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  tickets            Ticket[]
+  specialties        CategorySpecialty[]
+  slaTargets         SlaTarget[]
   preventiveServices PreventiveService[]
 
   @@unique([tenantId, id])
@@ -2496,56 +2504,56 @@ model TicketCounter {
 /// Never deleted. `status` is the work, `confirmationStatus` the reporter's
 /// verdict on the last completion; CHECKs tie them together.
 model Ticket {
-  id                 String                    @id @db.Uuid
-  tenantId           String                    @map("tenant_id") @db.Uuid
-  number             Int
-  unitId             String?                   @map("unit_id") @db.Uuid
+  id                  String                    @id @db.Uuid
+  tenantId            String                    @map("tenant_id") @db.Uuid
+  number              Int
+  unitId              String?                   @map("unit_id") @db.Uuid
   /// A short label until common areas have a table. Free text: never in
   /// the audit trail or a notification.
-  commonArea         String?                   @map("common_area")
+  commonArea          String?                   @map("common_area")
   /// The room (ADR 0038); a unit's ticket only, optional.
-  unitLocation       TicketUnitLocation?       @map("unit_location")
-  categoryId         String                    @map("category_id") @db.Uuid
-  createdById        String                    @map("created_by_account_id") @db.Uuid
-  reporterId         String                    @map("reporter_account_id") @db.Uuid
-  priority           TicketPriority
-  status             TicketStatus              @default(new)
-  holdReason         TicketHoldReason?         @map("hold_reason")
-  confirmationStatus TicketConfirmationStatus? @map("confirmation_status")
-  technicianId       String?                   @map("technician_account_id") @db.Uuid
-  cycle              Int                       @default(1)
-  rejectionCount     Int                       @default(0) @map("rejection_count")
+  unitLocation        TicketUnitLocation?       @map("unit_location")
+  categoryId          String                    @map("category_id") @db.Uuid
+  createdById         String                    @map("created_by_account_id") @db.Uuid
+  reporterId          String                    @map("reporter_account_id") @db.Uuid
+  priority            TicketPriority
+  status              TicketStatus              @default(new)
+  holdReason          TicketHoldReason?         @map("hold_reason")
+  confirmationStatus  TicketConfirmationStatus? @map("confirmation_status")
+  technicianId        String?                   @map("technician_account_id") @db.Uuid
+  cycle               Int                       @default(1)
+  rejectionCount      Int                       @default(0) @map("rejection_count")
   /// Free text, may name people: never in the audit trail or a notification.
   /// Null only for a preventive ticket without a note (ADR 0038).
-  description        String?
+  description         String?
   /// ADR 0038. A preventive ticket names its service and the window the
   /// resident asked for; a trigger refuses any later change to the four.
-  kind               TicketKind                @default(repair)
-  preventiveServiceId String?                  @map("preventive_service_id") @db.Uuid
-  requestedStartsAt  DateTime?                 @map("requested_starts_at") @db.Timestamptz(3)
-  requestedEndsAt    DateTime?                 @map("requested_ends_at") @db.Timestamptz(3)
-  createdAt          DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt          DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(3)
-  assignedAt         DateTime?                 @map("assigned_at") @db.Timestamptz(3)
-  completedAt        DateTime?                 @map("completed_at") @db.Timestamptz(3)
-  closedAt           DateTime?                 @map("closed_at") @db.Timestamptz(3)
-  cancelledAt        DateTime?                 @map("cancelled_at") @db.Timestamptz(3)
+  kind                TicketKind                @default(repair)
+  preventiveServiceId String?                   @map("preventive_service_id") @db.Uuid
+  requestedStartsAt   DateTime?                 @map("requested_starts_at") @db.Timestamptz(3)
+  requestedEndsAt     DateTime?                 @map("requested_ends_at") @db.Timestamptz(3)
+  createdAt           DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  assignedAt          DateTime?                 @map("assigned_at") @db.Timestamptz(3)
+  completedAt         DateTime?                 @map("completed_at") @db.Timestamptz(3)
+  closedAt            DateTime?                 @map("closed_at") @db.Timestamptz(3)
+  cancelledAt         DateTime?                 @map("cancelled_at") @db.Timestamptz(3)
   /// ADR 0039: the last thing a resident on the ticket could see happen (a
   /// status or cycle change, a non-internal message, a photo). Kept by
   /// triggers; nothing in the app writes it.
-  lastActivityAt     DateTime                  @default(now()) @map("last_activity_at") @db.Timestamptz(3)
+  lastActivityAt      DateTime                  @default(now()) @map("last_activity_at") @db.Timestamptz(3)
 
-  unit        Unit?              @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
-  category    TicketCategory     @relation(fields: [tenantId, categoryId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
-  createdBy   Account            @relation("TicketCreatedBy", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "tickets_tenant_id_created_by_fkey")
-  reporter    Account            @relation("TicketReporter", fields: [tenantId, reporterId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "tickets_tenant_id_reporter_fkey")
-  technician  Account?           @relation("TicketTechnician", fields: [tenantId, technicianId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "tickets_tenant_id_technician_fkey")
+  unit              Unit?              @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  category          TicketCategory     @relation(fields: [tenantId, categoryId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  createdBy         Account            @relation("TicketCreatedBy", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "tickets_tenant_id_created_by_fkey")
+  reporter          Account            @relation("TicketReporter", fields: [tenantId, reporterId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "tickets_tenant_id_reporter_fkey")
+  technician        Account?           @relation("TicketTechnician", fields: [tenantId, technicianId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "tickets_tenant_id_technician_fkey")
   preventiveService PreventiveService? @relation(fields: [tenantId, preventiveServiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "tickets_tenant_id_preventive_service_id_fkey")
-  feedback    TicketFeedback[]
-  messages    TicketMessage[]
-  attachments TicketAttachment[]
-  visits      TicketVisit[]
-  slaClocks   TicketSlaClock[]
+  feedback          TicketFeedback[]
+  messages          TicketMessage[]
+  attachments       TicketAttachment[]
+  visits            TicketVisit[]
+  slaClocks         TicketSlaClock[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, number])
@@ -3114,38 +3122,38 @@ enum ParcelCredentialKind {
 /// days after the parcel is handed over or returned. The ids of accounts
 /// (guard, recipient) have no foreign key: they name no one.
 model Parcel {
-  id                   String        @id @db.Uuid
-  tenantId             String        @map("tenant_id") @db.Uuid
-  number               Int
-  unitId               String        @map("unit_id") @db.Uuid
-  gateId               String        @map("gate_id") @db.Uuid
-  shiftId              String        @map("shift_id") @db.Uuid
-  receivedById         String        @map("received_by_account_id") @db.Uuid
-  carrier              ParcelCarrier
-  pieces               Int
+  id                  String        @id @db.Uuid
+  tenantId            String        @map("tenant_id") @db.Uuid
+  number              Int
+  unitId              String        @map("unit_id") @db.Uuid
+  gateId              String        @map("gate_id") @db.Uuid
+  shiftId             String        @map("shift_id") @db.Uuid
+  receivedById        String        @map("received_by_account_id") @db.Uuid
+  carrier             ParcelCarrier
+  pieces              Int
   /// The recipient's name as printed on the label. Never shown to a guard
   /// or a manager.
-  labelName            String?       @map("label_name")
-  photoFileId          String?       @map("photo_file_id") @db.Uuid
-  handoverPhotoFileId  String?       @map("handover_photo_file_id") @db.Uuid
-  status               ParcelStatus  @default(held)
-  receivedAt           DateTime      @default(now()) @map("received_at") @db.Timestamptz(3)
-  handedOverAt         DateTime?     @map("handed_over_at") @db.Timestamptz(3)
-  handedOverMethod     ParcelMethod? @map("handed_over_method")
+  labelName           String?       @map("label_name")
+  photoFileId         String?       @map("photo_file_id") @db.Uuid
+  handoverPhotoFileId String?       @map("handover_photo_file_id") @db.Uuid
+  status              ParcelStatus  @default(held)
+  receivedAt          DateTime      @default(now()) @map("received_at") @db.Timestamptz(3)
+  handedOverAt        DateTime?     @map("handed_over_at") @db.Timestamptz(3)
+  handedOverMethod    ParcelMethod? @map("handed_over_method")
   /// The occupant whose entry QR received it (an id, on this row only).
-  handedToId           String?       @map("handed_to_account_id") @db.Uuid
-  rejectedAt           DateTime?     @map("rejected_at") @db.Timestamptz(3)
-  rejectReason         String?       @map("reject_reason")
-  returnedAt           DateTime?     @map("returned_at") @db.Timestamptz(3)
-  returnReason         String?       @map("return_reason")
+  handedToId          String?       @map("handed_to_account_id") @db.Uuid
+  rejectedAt          DateTime?     @map("rejected_at") @db.Timestamptz(3)
+  rejectReason        String?       @map("reject_reason")
+  returnedAt          DateTime?     @map("returned_at") @db.Timestamptz(3)
+  returnReason        String?       @map("return_reason")
   /// Handover or return: the start of the 30 days of retention.
-  closedAt             DateTime?     @map("closed_at") @db.Timestamptz(3)
-  remindedAt           DateTime?     @map("reminded_at") @db.Timestamptz(3)
-  heldLongAt           DateTime?     @map("held_long_at") @db.Timestamptz(3)
-  unclaimableAt        DateTime?     @map("unclaimable_notified_at") @db.Timestamptz(3)
-  dataClearedAt        DateTime?     @map("data_cleared_at") @db.Timestamptz(3)
-  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt            DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  closedAt            DateTime?     @map("closed_at") @db.Timestamptz(3)
+  remindedAt          DateTime?     @map("reminded_at") @db.Timestamptz(3)
+  heldLongAt          DateTime?     @map("held_long_at") @db.Timestamptz(3)
+  unclaimableAt       DateTime?     @map("unclaimable_notified_at") @db.Timestamptz(3)
+  dataClearedAt       DateTime?     @map("data_cleared_at") @db.Timestamptz(3)
+  createdAt           DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   unit          Unit               @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   photo         StoredFile?        @relation("ParcelPhoto", fields: [tenantId, photoFileId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "parcels_tenant_id_photo_file_fkey")
@@ -3163,22 +3171,22 @@ model Parcel {
 /// code. Only HMACs are stored, and only while the credential is live; the
 /// token behind them is derived from PARCEL_TOKEN_KEY (ADR 0035).
 model ParcelCredential {
-  id            String               @id @db.Uuid
-  tenantId      String               @map("tenant_id") @db.Uuid
-  parcelId      String               @map("parcel_id") @db.Uuid
-  kind          ParcelCredentialKind
+  id           String               @id @db.Uuid
+  tenantId     String               @map("tenant_id") @db.Uuid
+  parcelId     String               @map("parcel_id") @db.Uuid
+  kind         ParcelCredentialKind
   /// Collision retries: the token is derived from (credential id, attempt).
-  attempt       Int                  @default(0)
-  codeHash      String?              @map("code_hash") @db.Char(64)
-  qrTokenHash   String?              @map("qr_token_hash") @db.Char(64)
+  attempt      Int                  @default(0)
+  codeHash     String?              @map("code_hash") @db.Char(64)
+  qrTokenHash  String?              @map("qr_token_hash") @db.Char(64)
   /// A delegate's name: personal, kept only while useful (ADR 0035).
-  delegateName  String?              @map("delegate_name")
+  delegateName String?              @map("delegate_name")
   /// The guard who received the parcel, or the occupant who authorized
   /// the delegate (an id, no foreign key).
-  createdById   String               @map("created_by_account_id") @db.Uuid
-  createdAt     DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
-  endedAt       DateTime?            @map("ended_at") @db.Timestamptz(3)
-  endReason     String?              @map("end_reason")
+  createdById  String               @map("created_by_account_id") @db.Uuid
+  createdAt    DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  endedAt      DateTime?            @map("ended_at") @db.Timestamptz(3)
+  endReason    String?              @map("end_reason")
 
   parcel Parcel @relation(fields: [tenantId, parcelId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
 
@@ -3189,16 +3197,16 @@ model ParcelCredential {
 /// Append-only (ADR 0035): SELECT and INSERT for jiwar_app, triggers refuse
 /// the rest for every role. No foreign keys, like gate_entries. No text.
 model ParcelEvent {
-  id             String          @id @db.Uuid
-  tenantId       String          @map("tenant_id") @db.Uuid
-  parcelId       String          @map("parcel_id") @db.Uuid
-  kind           ParcelEventKind
-  actorSide      ParcelActorSide @map("actor_side")
+  id         String          @id @db.Uuid
+  tenantId   String          @map("tenant_id") @db.Uuid
+  parcelId   String          @map("parcel_id") @db.Uuid
+  kind       ParcelEventKind
+  actorSide  ParcelActorSide @map("actor_side")
   /// NULL for the system (a sweep, a lifecycle hook).
-  actorId        String?         @map("actor_account_id") @db.Uuid
-  method         ParcelMethod?
-  reasonCode     String?         @map("reason_code")
-  at             DateTime        @default(now()) @db.Timestamptz(3)
+  actorId    String?         @map("actor_account_id") @db.Uuid
+  method     ParcelMethod?
+  reasonCode String?         @map("reason_code")
+  at         DateTime        @default(now()) @db.Timestamptz(3)
 
   @@index([tenantId, parcelId, at, id], map: "parcel_events_parcel_idx")
   @@map("parcel_events")
@@ -4238,12 +4246,12 @@ model NeighbourPost {
   updatedAt    DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
   erasedAt     DateTime?           @map("erased_at") @db.Timestamptz(3)
 
-  tenant     Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  author     Account                @relation("NeighbourPostAuthor", fields: [tenantId, authorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_posts_tenant_id_author_fkey")
-  authorUnit Unit?                  @relation(fields: [tenantId, authorUnitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_posts_tenant_id_author_unit_fkey")
-  photos     NeighbourPostPhoto[]
-  claims     NeighbourItemClaim[]
-  handover   NeighbourItemHandover?
+  tenant        Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  author        Account                 @relation("NeighbourPostAuthor", fields: [tenantId, authorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_posts_tenant_id_author_fkey")
+  authorUnit    Unit?                   @relation(fields: [tenantId, authorUnitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "neighbour_posts_tenant_id_author_unit_fkey")
+  photos        NeighbourPostPhoto[]
+  claims        NeighbourItemClaim[]
+  handover      NeighbourItemHandover?
   conversations NeighbourConversation[]
 
   @@unique([tenantId, id])
@@ -4324,22 +4332,22 @@ enum NeighbourReportStatus {
 /// one responder. Names show only when both `*RevealAt` are set. Its
 /// parties never change (trigger).
 model NeighbourConversation {
-  id               String    @id @db.Uuid
-  tenantId         String    @map("tenant_id") @db.Uuid
-  postId           String    @map("post_id") @db.Uuid
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  postId            String    @map("post_id") @db.Uuid
   /// The post's author.
-  authorId         String    @map("author_account_id") @db.Uuid
-  responderId      String    @map("responder_account_id") @db.Uuid
+  authorId          String    @map("author_account_id") @db.Uuid
+  responderId       String    @map("responder_account_id") @db.Uuid
   /// The responder's own unit: only its building is ever shown.
-  responderUnitId  String?   @map("responder_unit_id") @db.Uuid
-  authorRevealAt   DateTime? @map("author_reveal_at") @db.Timestamptz(3)
+  responderUnitId   String?   @map("responder_unit_id") @db.Uuid
+  authorRevealAt    DateTime? @map("author_reveal_at") @db.Timestamptz(3)
   responderRevealAt DateTime? @map("responder_reveal_at") @db.Timestamptz(3)
-  closedAt         DateTime? @map("closed_at") @db.Timestamptz(3)
+  closedAt          DateTime? @map("closed_at") @db.Timestamptz(3)
   /// Never shown to a participant: both read the same "closed".
-  closeReason      String?   @map("close_reason")
-  lastMessageAt    DateTime  @map("last_message_at") @db.Timestamptz(3)
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  closeReason       String?   @map("close_reason")
+  lastMessageAt     DateTime  @map("last_message_at") @db.Timestamptz(3)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   tenant        Tenant                         @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   post          NeighbourPost                  @relation(fields: [tenantId, postId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
@@ -4595,45 +4603,45 @@ enum BookingSide {
 /// people. Its facility, unit, booker, times and party never change
 /// (trigger); it is never deleted. An erased booker stays as the tombstone.
 model Booking {
-  id                String         @id @db.Uuid
-  tenantId          String         @map("tenant_id") @db.Uuid
-  facilityId        String         @map("facility_id") @db.Uuid
-  unitId            String         @map("unit_id") @db.Uuid
-  bookedById        String         @map("booked_by_account_id") @db.Uuid
-  startsAt          DateTime       @map("starts_at") @db.Timestamptz(3)
-  endsAt            DateTime       @map("ends_at") @db.Timestamptz(3)
-  guests            Int
+  id               String        @id @db.Uuid
+  tenantId         String        @map("tenant_id") @db.Uuid
+  facilityId       String        @map("facility_id") @db.Uuid
+  unitId           String        @map("unit_id") @db.Uuid
+  bookedById       String        @map("booked_by_account_id") @db.Uuid
+  startsAt         DateTime      @map("starts_at") @db.Timestamptz(3)
+  endsAt           DateTime      @map("ends_at") @db.Timestamptz(3)
+  guests           Int
   /// The booker and their guests: what the booking takes of a slot counted in people.
-  partySize         Int            @map("party_size")
+  partySize        Int           @map("party_size")
   /// The slot overlapped a peak time when it was booked.
-  peak              Boolean
-  status            BookingStatus
+  peak             Boolean
+  status           BookingStatus
   /// Approved or rejected by the staff; null for a booking confirmed at once.
-  decidedById       String?        @map("decided_by_account_id") @db.Uuid
-  decidedAt         DateTime?      @map("decided_at") @db.Timestamptz(3)
-  rejectReason      String?        @map("reject_reason")
-  cancelledSide     BookingSide?   @map("cancelled_side")
-  cancelReason      String?        @map("cancel_reason")
+  decidedById      String?       @map("decided_by_account_id") @db.Uuid
+  decidedAt        DateTime?     @map("decided_at") @db.Timestamptz(3)
+  rejectReason     String?       @map("reject_reason")
+  cancelledSide    BookingSide?  @map("cancelled_side")
+  cancelReason     String?       @map("cancel_reason")
   /// Null when the system cancelled it.
-  cancelledById     String?        @map("cancelled_by_account_id") @db.Uuid
-  cancelledAt       DateTime?      @map("cancelled_at") @db.Timestamptz(3)
-  noShowMarkedById  String?        @map("no_show_marked_by_account_id") @db.Uuid
-  noShowMarkedAt    DateTime?      @map("no_show_marked_at") @db.Timestamptz(3)
+  cancelledById    String?       @map("cancelled_by_account_id") @db.Uuid
+  cancelledAt      DateTime?     @map("cancelled_at") @db.Timestamptz(3)
+  noShowMarkedById String?       @map("no_show_marked_by_account_id") @db.Uuid
+  noShowMarkedAt   DateTime?     @map("no_show_marked_at") @db.Timestamptz(3)
   /// The reminder before the slot was sent (once).
-  remindedAt        DateTime?      @map("reminded_at") @db.Timestamptz(3)
+  remindedAt       DateTime?     @map("reminded_at") @db.Timestamptz(3)
   /// The closure that cancelled it.
-  closureId         String?        @map("closure_id") @db.Uuid
-  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  closureId        String?       @map("closure_id") @db.Uuid
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  facility    Facility @relation(fields: [tenantId, facilityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
-  unit        Unit     @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
-  bookedBy    Account  @relation("BookingBooker", fields: [tenantId, bookedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_booked_by_fkey")
-  decidedBy   Account? @relation("BookingDecider", fields: [tenantId, decidedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_decided_by_fkey")
-  cancelledBy Account? @relation("BookingCanceller", fields: [tenantId, cancelledById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_cancelled_by_fkey")
-  noShowBy    Account? @relation("BookingNoShowMarker", fields: [tenantId, noShowMarkedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_no_show_by_fkey")
-  closure     FacilityClosure? @relation(fields: [tenantId, closureId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_closure_id_fkey")
+  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  facility    Facility           @relation(fields: [tenantId, facilityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  unit        Unit               @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  bookedBy    Account            @relation("BookingBooker", fields: [tenantId, bookedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_booked_by_fkey")
+  decidedBy   Account?           @relation("BookingDecider", fields: [tenantId, decidedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_decided_by_fkey")
+  cancelledBy Account?           @relation("BookingCanceller", fields: [tenantId, cancelledById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_cancelled_by_fkey")
+  noShowBy    Account?           @relation("BookingNoShowMarker", fields: [tenantId, noShowMarkedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_no_show_by_fkey")
+  closure     FacilityClosure?   @relation(fields: [tenantId, closureId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "bookings_tenant_id_closure_id_fkey")
   suspension  BookingSuspension?
 
   @@unique([tenantId, id])
@@ -4672,12 +4680,12 @@ model FacilityClosure {
 
 /// The compound's no-show rules (ADR 0044): one row per compound.
 model FacilitySettings {
-  tenantId          String   @id @map("tenant_id") @db.Uuid
-  noShowThreshold   Int      @default(3) @map("no_show_threshold")
-  noShowWindowDays  Int      @default(30) @map("no_show_window_days")
-  suspensionDays    Int      @default(14) @map("suspension_days")
-  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  tenantId         String   @id @map("tenant_id") @db.Uuid
+  noShowThreshold  Int      @default(3) @map("no_show_threshold")
+  noShowWindowDays Int      @default(30) @map("no_show_window_days")
+  suspensionDays   Int      @default(14) @map("suspension_days")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
@@ -5088,35 +5096,35 @@ enum VehicleFinePaymentKind {
 /// (its words and photo cleared once, on erasure); a decision and a
 /// cancellation are final (trigger). Nothing of a parking report.
 model VehicleFine {
-  id                 String               @id @db.Uuid
-  tenantId           String               @map("tenant_id") @db.Uuid
-  number             Int
-  unitId             String               @map("unit_id") @db.Uuid
-  vehicleId          String?              @map("vehicle_id") @db.Uuid
-  plate              String
+  id                String               @id @db.Uuid
+  tenantId          String               @map("tenant_id") @db.Uuid
+  number            Int
+  unitId            String               @map("unit_id") @db.Uuid
+  vehicleId         String?              @map("vehicle_id") @db.Uuid
+  plate             String
   /// Generated by the database from the plate (ADR 0045); never written.
-  plateKey           String?              @map("plate_key")
-  reason             String
-  note               String?
-  amount             Decimal              @db.Decimal(10, 2)
-  currency           String               @default("EGP")
-  occurredOn         DateTime             @map("occurred_on") @db.Date
-  photoFileId        String?              @map("photo_file_id") @db.Uuid
-  issuedById         String               @map("issued_by_account_id") @db.Uuid
-  status             VehicleFineStatus    @default(unpaid)
-  appealText         String?              @map("appeal_text")
-  appealPhotoFileId  String?              @map("appeal_photo_file_id") @db.Uuid
-  appealedById       String?              @map("appealed_by_account_id") @db.Uuid
-  appealedAt         DateTime?            @map("appealed_at") @db.Timestamptz(3)
-  appealClearedAt    DateTime?            @map("appeal_cleared_at") @db.Timestamptz(3)
-  appealDecision     VehicleFineDecision? @map("appeal_decision")
-  decidedById        String?              @map("decided_by_account_id") @db.Uuid
-  decidedAt          DateTime?            @map("decided_at") @db.Timestamptz(3)
-  cancelReason       String?              @map("cancel_reason")
-  cancelledById      String?              @map("cancelled_by_account_id") @db.Uuid
-  cancelledAt        DateTime?            @map("cancelled_at") @db.Timestamptz(3)
-  createdAt          DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt          DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
+  plateKey          String?              @map("plate_key")
+  reason            String
+  note              String?
+  amount            Decimal              @db.Decimal(10, 2)
+  currency          String               @default("EGP")
+  occurredOn        DateTime             @map("occurred_on") @db.Date
+  photoFileId       String?              @map("photo_file_id") @db.Uuid
+  issuedById        String               @map("issued_by_account_id") @db.Uuid
+  status            VehicleFineStatus    @default(unpaid)
+  appealText        String?              @map("appeal_text")
+  appealPhotoFileId String?              @map("appeal_photo_file_id") @db.Uuid
+  appealedById      String?              @map("appealed_by_account_id") @db.Uuid
+  appealedAt        DateTime?            @map("appealed_at") @db.Timestamptz(3)
+  appealClearedAt   DateTime?            @map("appeal_cleared_at") @db.Timestamptz(3)
+  appealDecision    VehicleFineDecision? @map("appeal_decision")
+  decidedById       String?              @map("decided_by_account_id") @db.Uuid
+  decidedAt         DateTime?            @map("decided_at") @db.Timestamptz(3)
+  cancelReason      String?              @map("cancel_reason")
+  cancelledById     String?              @map("cancelled_by_account_id") @db.Uuid
+  cancelledAt       DateTime?            @map("cancelled_at") @db.Timestamptz(3)
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   payments VehicleFinePayment[]
 
@@ -5274,25 +5282,25 @@ model FinanceCounter {
 /// One issue of invoices by the staff (ADR 0046): one unit, a building, or
 /// every unit. Append-only.
 model InvoiceBatch {
-  id          String             @id @db.Uuid
-  tenantId    String             @map("tenant_id") @db.Uuid
-  target      InvoiceBatchTarget
-  unitId      String?            @map("unit_id") @db.Uuid
-  building    String?
-  kind        InvoiceKind
-  unitCount   Int                @map("unit_count")
-  issuedOn    DateTime           @map("issued_on") @db.Date
-  dueOn       DateTime           @map("due_on") @db.Date
-  createdById String?            @map("created_by_account_id") @db.Uuid
-  createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  id             String             @id @db.Uuid
+  tenantId       String             @map("tenant_id") @db.Uuid
+  target         InvoiceBatchTarget
+  unitId         String?            @map("unit_id") @db.Uuid
+  building       String?
+  kind           InvoiceKind
+  unitCount      Int                @map("unit_count")
+  issuedOn       DateTime           @map("issued_on") @db.Date
+  dueOn          DateTime           @map("due_on") @db.Date
+  createdById    String?            @map("created_by_account_id") @db.Uuid
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
   /// A plan's issue: the plan and the period it bills.
-  planId         String?   @map("plan_id") @db.Uuid
-  periodStartsOn DateTime? @map("period_starts_on") @db.Date
+  planId         String?            @map("plan_id") @db.Uuid
+  periodStartsOn DateTime?          @map("period_starts_on") @db.Date
 
-  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  unit      Unit?     @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  tenant    Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  unit      Unit?        @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   plan      BillingPlan? @relation(fields: [tenantId, planId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "invoice_batches_tenant_id_plan_id_fkey")
-  createdBy Account?  @relation("InvoiceBatchCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "invoice_batches_tenant_id_created_by_fkey")
+  createdBy Account?     @relation("InvoiceBatchCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "invoice_batches_tenant_id_created_by_fkey")
   invoices  Invoice[]
 
   @@unique([tenantId, id])
@@ -5303,39 +5311,39 @@ model InvoiceBatch {
 /// A unit's invoice (ADR 0046): immutable once issued; corrected by credit
 /// notes. What it still asks for is computed, never stored.
 model Invoice {
-  id          String      @id @db.Uuid
-  tenantId    String      @map("tenant_id") @db.Uuid
-  number      Int
-  batchId     String      @map("batch_id") @db.Uuid
-  unitId      String      @map("unit_id") @db.Uuid
-  kind        InvoiceKind
-  total       Decimal     @db.Decimal(12, 2)
-  currency    String
-  issuedOn    DateTime    @map("issued_on") @db.Date
-  dueOn       DateTime    @map("due_on") @db.Date
-  createdById String?     @map("created_by_account_id") @db.Uuid
-  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  id                 String      @id @db.Uuid
+  tenantId           String      @map("tenant_id") @db.Uuid
+  number             Int
+  batchId            String      @map("batch_id") @db.Uuid
+  unitId             String      @map("unit_id") @db.Uuid
+  kind               InvoiceKind
+  total              Decimal     @db.Decimal(12, 2)
+  currency           String
+  issuedOn           DateTime    @map("issued_on") @db.Date
+  dueOn              DateTime    @map("due_on") @db.Date
+  createdById        String?     @map("created_by_account_id") @db.Uuid
+  createdAt          DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
   /// A plan's invoice: the plan and the period it bills, the end excluded.
-  planId         String?   @map("plan_id") @db.Uuid
-  periodStartsOn DateTime? @map("period_starts_on") @db.Date
-  periodEndsOn   DateTime? @map("period_ends_on") @db.Date
+  planId             String?     @map("plan_id") @db.Uuid
+  periodStartsOn     DateTime?   @map("period_starts_on") @db.Date
+  periodEndsOn       DateTime?   @map("period_ends_on") @db.Date
   /// An instalment (ADR 0048): its plan and its place in it, from 1.
-  instalmentPlanId   String? @map("instalment_plan_id") @db.Uuid
-  instalmentPosition Int?    @map("instalment_position")
+  instalmentPlanId   String?     @map("instalment_plan_id") @db.Uuid
+  instalmentPosition Int?        @map("instalment_position")
 
-  plan        BillingPlan?  @relation(fields: [tenantId, planId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "invoices_tenant_id_plan_id_fkey")
-  instalmentPlan InstalmentPlan? @relation("InstalmentPlanInstalments", fields: [tenantId, instalmentPlanId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
-  rescheduledBy  InstalmentPlan? @relation("InstalmentPlanOriginal")
-  remainderOf    InstalmentPlan? @relation("InstalmentPlanRemainder")
-  disputes       InvoiceDispute[]
-  batch       InvoiceBatch  @relation(fields: [tenantId, batchId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
-  unit        Unit          @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
-  createdBy   Account?      @relation("InvoiceCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "invoices_tenant_id_created_by_fkey")
-  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  lines       InvoiceLine[]
-  creditNotes CreditNote[]
-  notices     InvoiceNotice[]
-  allocations FinanceAllocation[]
+  plan            BillingPlan?            @relation(fields: [tenantId, planId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "invoices_tenant_id_plan_id_fkey")
+  instalmentPlan  InstalmentPlan?         @relation("InstalmentPlanInstalments", fields: [tenantId, instalmentPlanId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  rescheduledBy   InstalmentPlan?         @relation("InstalmentPlanOriginal")
+  remainderOf     InstalmentPlan?         @relation("InstalmentPlanRemainder")
+  disputes        InvoiceDispute[]
+  batch           InvoiceBatch            @relation(fields: [tenantId, batchId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  unit            Unit                    @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  createdBy       Account?                @relation("InvoiceCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "invoices_tenant_id_created_by_fkey")
+  tenant          Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  lines           InvoiceLine[]
+  creditNotes     CreditNote[]
+  notices         InvoiceNotice[]
+  allocations     FinanceAllocation[]
   sessionInvoices PaymentSessionInvoice[]
 
   @@unique([tenantId, id])
@@ -5369,23 +5377,23 @@ model InvoiceLine {
 /// Reduces what one invoice asks for (ADR 0046), by a reason's code.
 /// Append-only; no free text.
 model CreditNote {
-  id          String   @id @db.Uuid
-  tenantId    String   @map("tenant_id") @db.Uuid
-  number      Int
-  invoiceId   String   @map("invoice_id") @db.Uuid
-  amount      Decimal  @db.Decimal(12, 2)
-  reasonCode  String   @map("reason_code")
-  createdById String   @map("created_by_account_id") @db.Uuid
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  id               String   @id @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  number           Int
+  invoiceId        String   @map("invoice_id") @db.Uuid
+  amount           Decimal  @db.Decimal(12, 2)
+  reasonCode       String   @map("reason_code")
+  createdById      String   @map("created_by_account_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   /// Reason `instalment_plan` (ADR 0048): the plan it opened or cancelled.
-  instalmentPlanId String? @map("instalment_plan_id") @db.Uuid
+  instalmentPlanId String?  @map("instalment_plan_id") @db.Uuid
   /// Reason `dispute` (ADR 0048): the dispute whose acceptance wrote it.
-  disputeId        String? @map("dispute_id") @db.Uuid
+  disputeId        String?  @map("dispute_id") @db.Uuid
 
-  invoice        Invoice         @relation(fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
-  createdBy      Account         @relation("CreditNoteCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "credit_notes_tenant_id_created_by_fkey")
-  instalmentPlan InstalmentPlan? @relation(fields: [tenantId, instalmentPlanId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
-  dispute        InvoiceDispute? @relation(fields: [tenantId, disputeId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  invoice        Invoice                    @relation(fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  createdBy      Account                    @relation("CreditNoteCreator", fields: [tenantId, createdById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "credit_notes_tenant_id_created_by_fkey")
+  instalmentPlan InstalmentPlan?            @relation(fields: [tenantId, instalmentPlanId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  dispute        InvoiceDispute?            @relation(fields: [tenantId, disputeId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   releases       FinanceAllocationRelease[]
 
   @@unique([tenantId, id])
@@ -5573,39 +5581,39 @@ enum PaymentMethod {
 /// Append-only. Each payment has a receipt: a number and a random code the
 /// public page verifies.
 model FinancePayment {
-  id            String          @id @db.Uuid
-  tenantId      String          @map("tenant_id") @db.Uuid
-  kind          PaymentKind
-  unitId        String          @map("unit_id") @db.Uuid
-  channel       PaymentChannel?
-  method        PaymentMethod?
-  amount        Decimal?        @db.Decimal(12, 2)
-  currency      String?
+  id                   String          @id @db.Uuid
+  tenantId             String          @map("tenant_id") @db.Uuid
+  kind                 PaymentKind
+  unitId               String          @map("unit_id") @db.Uuid
+  channel              PaymentChannel?
+  method               PaymentMethod?
+  amount               Decimal?        @db.Decimal(12, 2)
+  currency             String?
   /// The local day it was paid.
-  paidOn        DateTime?       @map("paid_on") @db.Date
-  receiptNumber Int?            @map("receipt_number")
-  receiptCode   String?         @map("receipt_code")
+  paidOn               DateTime?       @map("paid_on") @db.Date
+  receiptNumber        Int?            @map("receipt_number")
+  receiptCode          String?         @map("receipt_code")
   /// A transfer's or cheque's reference, as written on it.
-  reference     String?
-  recordedById  String?         @map("recorded_by_account_id") @db.Uuid
-  reversesId    String?         @map("reverses_id") @db.Uuid
-  reasonCode    String?         @map("reason_code")
+  reference            String?
+  recordedById         String?         @map("recorded_by_account_id") @db.Uuid
+  reversesId           String?         @map("reverses_id") @db.Uuid
+  reasonCode           String?         @map("reason_code")
   /// Online only: the checkout, Paymob's transaction (once per compound)
   /// and who paid.
-  sessionId            String?  @map("session_id") @db.Uuid
-  gatewayTransactionId String?  @map("gateway_transaction_id")
-  payerId              String?  @map("payer_account_id") @db.Uuid
-  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  sessionId            String?         @map("session_id") @db.Uuid
+  gatewayTransactionId String?         @map("gateway_transaction_id")
+  payerId              String?         @map("payer_account_id") @db.Uuid
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  session     PaymentSession?     @relation("PaymentSessionPayments", fields: [tenantId, sessionId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_payments_tenant_id_session_id_fkey")
-  payer       Account?            @relation("FinancePaymentPayer", fields: [tenantId, payerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_payments_tenant_id_payer_fkey")
-  settles     PaymentSession?     @relation("PaymentSessionPayment")
-  unit        Unit                @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
-  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  recordedBy  Account?            @relation("FinancePaymentRecorder", fields: [tenantId, recordedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_payments_tenant_id_recorded_by_fkey")
-  reverses    FinancePayment?     @relation("FinancePaymentReversal", fields: [tenantId, reversesId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_payments_tenant_id_reverses_id_fkey")
-  reversedBy  FinancePayment?     @relation("FinancePaymentReversal")
-  allocations FinanceAllocation[]
+  session       PaymentSession?       @relation("PaymentSessionPayments", fields: [tenantId, sessionId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_payments_tenant_id_session_id_fkey")
+  payer         Account?              @relation("FinancePaymentPayer", fields: [tenantId, payerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_payments_tenant_id_payer_fkey")
+  settles       PaymentSession?       @relation("PaymentSessionPayment")
+  unit          Unit                  @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  tenant        Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  recordedBy    Account?              @relation("FinancePaymentRecorder", fields: [tenantId, recordedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_payments_tenant_id_recorded_by_fkey")
+  reverses      FinancePayment?       @relation("FinancePaymentReversal", fields: [tenantId, reversesId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "finance_payments_tenant_id_reverses_id_fkey")
+  reversedBy    FinancePayment?       @relation("FinancePaymentReversal")
+  allocations   FinanceAllocation[]
   refundSources FinanceRefundSource[]
 
   @@unique([tenantId, id])
@@ -5695,8 +5703,8 @@ model FinanceAllocation {
   fromCredit Boolean  @default(false) @map("from_credit")
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  payment  FinancePayment              @relation(fields: [tenantId, paymentId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
-  invoice  Invoice                     @relation(fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  payment  FinancePayment             @relation(fields: [tenantId, paymentId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  invoice  Invoice                    @relation(fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   releases FinanceAllocationRelease[]
 
   @@unique([tenantId, id])
@@ -5889,28 +5897,28 @@ enum EmergencyStatus {
 /// An emergency reported from a unit (ADR 0047). Moves forward only (a
 /// trigger); one open per unit and type (a partial unique index).
 model Emergency {
-  id                  String          @id @db.Uuid
-  tenantId            String          @map("tenant_id") @db.Uuid
-  number              Int
-  unitId              String          @map("unit_id") @db.Uuid
-  type                EmergencyType
-  status              EmergencyStatus @default(reported)
-  reportedById        String          @map("reported_by_account_id") @db.Uuid
-  reportedAt          DateTime        @default(now()) @map("reported_at") @db.Timestamptz(3)
-  respondersNotified  Int             @map("responders_notified")
-  escalatedAt         DateTime?       @map("escalated_at") @db.Timestamptz(3)
-  escalationReason    String?         @map("escalation_reason")
-  responderId         String?         @map("responder_account_id") @db.Uuid
-  responderGateId     String?         @map("responder_gate_id") @db.Uuid
-  etaMinutes          Int?            @map("eta_minutes")
-  acceptedAt          DateTime?       @map("accepted_at") @db.Timestamptz(3)
-  arrivedAt           DateTime?       @map("arrived_at") @db.Timestamptz(3)
-  closedAt            DateTime?       @map("closed_at") @db.Timestamptz(3)
-  closedById          String?         @map("closed_by_account_id") @db.Uuid
-  closeSide           String?         @map("close_side")
-  closeReason         String?         @map("close_reason")
-  closeNote           String?         @map("close_note")
-  updatedAt           DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id                 String          @id @db.Uuid
+  tenantId           String          @map("tenant_id") @db.Uuid
+  number             Int
+  unitId             String          @map("unit_id") @db.Uuid
+  type               EmergencyType
+  status             EmergencyStatus @default(reported)
+  reportedById       String          @map("reported_by_account_id") @db.Uuid
+  reportedAt         DateTime        @default(now()) @map("reported_at") @db.Timestamptz(3)
+  respondersNotified Int             @map("responders_notified")
+  escalatedAt        DateTime?       @map("escalated_at") @db.Timestamptz(3)
+  escalationReason   String?         @map("escalation_reason")
+  responderId        String?         @map("responder_account_id") @db.Uuid
+  responderGateId    String?         @map("responder_gate_id") @db.Uuid
+  etaMinutes         Int?            @map("eta_minutes")
+  acceptedAt         DateTime?       @map("accepted_at") @db.Timestamptz(3)
+  arrivedAt          DateTime?       @map("arrived_at") @db.Timestamptz(3)
+  closedAt           DateTime?       @map("closed_at") @db.Timestamptz(3)
+  closedById         String?         @map("closed_by_account_id") @db.Uuid
+  closeSide          String?         @map("close_side")
+  closeReason        String?         @map("close_reason")
+  closeNote          String?         @map("close_note")
+  updatedAt          DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([tenantId, id])
   @@unique([tenantId, number], map: "emergencies_number_key")
@@ -5993,7 +6001,6 @@ model GateServiceRequest {
   @@map("gate_service_requests")
 }
 
-
 // ============================================================================
 // Phase G3 — permits and contractors (ADR 0049)
 // ============================================================================
@@ -6048,48 +6055,48 @@ model PermitCounter {
 /// only (a trigger); the resident's words and photo go once, at erasure;
 /// the plate and the photo once, 30 days after the end.
 model UnitPermit {
-  id                 String           @id @db.Uuid
-  tenantId           String           @map("tenant_id") @db.Uuid
-  number             Int
-  kind               UnitPermitKind
-  status             UnitPermitStatus @default(pending)
-  unitId             String           @map("unit_id") @db.Uuid
-  requestedById      String           @map("requested_by_account_id") @db.Uuid
-  startsAt           DateTime         @map("starts_at") @db.Timestamptz(3)
-  endsAt             DateTime         @map("ends_at") @db.Timestamptz(3)
-  workType           String?          @map("work_type")
-  dailyFrom          Int?             @map("daily_from") @db.SmallInt
-  dailyTo            Int?             @map("daily_to") @db.SmallInt
-  contractorCompany  String?          @map("contractor_company")
-  description        String?
-  truckPlate         String?          @map("truck_plate")
+  id                String           @id @db.Uuid
+  tenantId          String           @map("tenant_id") @db.Uuid
+  number            Int
+  kind              UnitPermitKind
+  status            UnitPermitStatus @default(pending)
+  unitId            String           @map("unit_id") @db.Uuid
+  requestedById     String           @map("requested_by_account_id") @db.Uuid
+  startsAt          DateTime         @map("starts_at") @db.Timestamptz(3)
+  endsAt            DateTime         @map("ends_at") @db.Timestamptz(3)
+  workType          String?          @map("work_type")
+  dailyFrom         Int?             @map("daily_from") @db.SmallInt
+  dailyTo           Int?             @map("daily_to") @db.SmallInt
+  contractorCompany String?          @map("contractor_company")
+  description       String?
+  truckPlate        String?          @map("truck_plate")
   /// Generated by the database from `truck_plate` (ADR 0045, 0047).
-  plateKey           String?          @map("plate_key")
-  itemsDescription   String?          @map("items_description")
-  items              Json?
-  photoFileId        String?          @map("photo_file_id") @db.Uuid
-  usedAt             DateTime?        @map("used_at") @db.Timestamptz(3)
-  usedById           String?          @map("used_by_account_id") @db.Uuid
-  usedGateId         String?          @map("used_gate_id") @db.Uuid
-  title              String?
-  guestLimit         Int?             @map("guest_limit")
-  decisionSource     String?          @map("decision_source")
-  decidedById        String?          @map("decided_by_account_id") @db.Uuid
-  decidedAt          DateTime?        @map("decided_at") @db.Timestamptz(3)
-  rejectReason       String?          @map("reject_reason")
-  staffNote          String?          @map("staff_note")
-  revokedAt          DateTime?        @map("revoked_at") @db.Timestamptz(3)
-  revokedById        String?          @map("revoked_by_account_id") @db.Uuid
-  revokeReason       String?          @map("revoke_reason")
-  revokeNote         String?          @map("revoke_note")
-  cancelledAt        DateTime?        @map("cancelled_at") @db.Timestamptz(3)
-  cancelledById      String?          @map("cancelled_by_account_id") @db.Uuid
-  cancelSide         String?          @map("cancel_side")
-  cancelReason       String?          @map("cancel_reason")
-  textClearedAt      DateTime?        @map("text_cleared_at") @db.Timestamptz(3)
-  purgedAt           DateTime?        @map("purged_at") @db.Timestamptz(3)
-  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt          DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  plateKey          String?          @map("plate_key")
+  itemsDescription  String?          @map("items_description")
+  items             Json?
+  photoFileId       String?          @map("photo_file_id") @db.Uuid
+  usedAt            DateTime?        @map("used_at") @db.Timestamptz(3)
+  usedById          String?          @map("used_by_account_id") @db.Uuid
+  usedGateId        String?          @map("used_gate_id") @db.Uuid
+  title             String?
+  guestLimit        Int?             @map("guest_limit")
+  decisionSource    String?          @map("decision_source")
+  decidedById       String?          @map("decided_by_account_id") @db.Uuid
+  decidedAt         DateTime?        @map("decided_at") @db.Timestamptz(3)
+  rejectReason      String?          @map("reject_reason")
+  staffNote         String?          @map("staff_note")
+  revokedAt         DateTime?        @map("revoked_at") @db.Timestamptz(3)
+  revokedById       String?          @map("revoked_by_account_id") @db.Uuid
+  revokeReason      String?          @map("revoke_reason")
+  revokeNote        String?          @map("revoke_note")
+  cancelledAt       DateTime?        @map("cancelled_at") @db.Timestamptz(3)
+  cancelledById     String?          @map("cancelled_by_account_id") @db.Uuid
+  cancelSide        String?          @map("cancel_side")
+  cancelReason      String?          @map("cancel_reason")
+  textClearedAt     DateTime?        @map("text_cleared_at") @db.Timestamptz(3)
+  purgedAt          DateTime?        @map("purged_at") @db.Timestamptz(3)
+  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([tenantId, id])
   @@unique([tenantId, id, kind], map: "unit_permits_tenant_id_id_kind_key")
@@ -6101,22 +6108,22 @@ model UnitPermit {
 /// of their ID and the last four of its number as a keyed hash only.
 /// Removed once; purged once, 30 days after the permit ends.
 model PermitWorker {
-  id                String         @id @db.Uuid
-  tenantId          String         @map("tenant_id") @db.Uuid
-  permitId          String         @map("permit_id") @db.Uuid
-  permitKind        UnitPermitKind @default(works) @map("permit_kind")
-  fullName          String?        @map("full_name")
-  photoFileId       String?        @map("photo_file_id") @db.Uuid
-  idType            IdDocumentType @map("id_type")
-  idLast4Hash       String?        @map("id_last4_hash") @db.Char(64)
-  addedById         String         @map("added_by_account_id") @db.Uuid
-  removedAt         DateTime?      @map("removed_at") @db.Timestamptz(3)
-  removedById       String?        @map("removed_by_account_id") @db.Uuid
-  removedSide       String?        @map("removed_side")
-  removeReason      String?        @map("remove_reason")
-  purgedAt          DateTime?      @map("purged_at") @db.Timestamptz(3)
-  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id           String         @id @db.Uuid
+  tenantId     String         @map("tenant_id") @db.Uuid
+  permitId     String         @map("permit_id") @db.Uuid
+  permitKind   UnitPermitKind @default(works) @map("permit_kind")
+  fullName     String?        @map("full_name")
+  photoFileId  String?        @map("photo_file_id") @db.Uuid
+  idType       IdDocumentType @map("id_type")
+  idLast4Hash  String?        @map("id_last4_hash") @db.Char(64)
+  addedById    String         @map("added_by_account_id") @db.Uuid
+  removedAt    DateTime?      @map("removed_at") @db.Timestamptz(3)
+  removedById  String?        @map("removed_by_account_id") @db.Uuid
+  removedSide  String?        @map("removed_side")
+  removeReason String?        @map("remove_reason")
+  purgedAt     DateTime?      @map("purged_at") @db.Timestamptz(3)
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([tenantId, id])
   @@index([tenantId, permitId, createdAt, id], map: "permit_workers_permit_idx")
@@ -6161,4 +6168,82 @@ model MaterialEntry {
 
   @@index([tenantId, occurredAt(sort: Desc), id(sort: Desc)], map: "material_entries_occurred_idx")
   @@map("material_entries")
+}
+
+// ============================================================================
+// Phase G4 — guard shifts and tasks (ADR 0050)
+// ============================================================================
+
+enum GuardSlotStatus {
+  scheduled
+  cancelled
+
+  @@map("guard_slot_status")
+}
+
+/// A guard's weekly roster at one post (a gate or a zone, CHECK): a weekly
+/// schedule (src/core/common/slots/weekly-schedule.ts) between two days of
+/// the compound. Made into slots ahead of time. What it says never changes;
+/// it is ended once (trigger).
+model GuardRosterTemplate {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  guardAccountId String    @map("guard_account_id") @db.Uuid
+  gateId         String?   @map("gate_id") @db.Uuid
+  placeId        String?   @map("place_id") @db.Uuid
+  schedule       Json
+  effectiveFrom  DateTime  @map("effective_from") @db.Date
+  /// The last day it applies, inclusive; null for no end.
+  effectiveUntil DateTime? @map("effective_until") @db.Date
+  createdById    String    @map("created_by_account_id") @db.Uuid
+  endedAt        DateTime? @map("ended_at") @db.Timestamptz(3)
+  endedById      String?   @map("ended_by_account_id") @db.Uuid
+  /// REASON_CODES.guardTemplateEnd.
+  endReason      String?   @map("end_reason")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, guardAccountId], map: "guard_roster_templates_guard_idx")
+  @@map("guard_roster_templates")
+}
+
+/// One scheduled shift of one guard at one post (CHECK), a day at most. A
+/// template's slots are made once each (a unique index, cancelled ones
+/// included). It keeps its post and times; it is cancelled, filled by a
+/// shift and marked absent once each; it changes guard only by a swap,
+/// while unopened (trigger).
+model GuardRosterSlot {
+  id             String          @id @db.Uuid
+  tenantId       String          @map("tenant_id") @db.Uuid
+  guardAccountId String          @map("guard_account_id") @db.Uuid
+  gateId         String?         @map("gate_id") @db.Uuid
+  placeId        String?         @map("place_id") @db.Uuid
+  startsAt       DateTime        @map("starts_at") @db.Timestamptz(3)
+  endsAt         DateTime        @map("ends_at") @db.Timestamptz(3)
+  templateId     String?         @map("template_id") @db.Uuid
+  /// Who added a single slot; null for a template's.
+  createdById    String?         @map("created_by_account_id") @db.Uuid
+  status         GuardSlotStatus @default(scheduled)
+  cancelledAt    DateTime?       @map("cancelled_at") @db.Timestamptz(3)
+  cancelledById  String?         @map("cancelled_by_account_id") @db.Uuid
+  /// REASON_CODES.guardSlotCancel.
+  cancelReason   String?         @map("cancel_reason")
+  /// The shift that filled it.
+  shiftId        String?         @map("shift_id") @db.Uuid
+  /// Minutes after the start the shift opened (0 when on time or early).
+  /// Late is more than ten (ADR 0050).
+  lateMinutes    Int?            @map("late_minutes")
+  /// Not opened an hour after its start (the attendance sweep).
+  absentAt       DateTime?       @map("absent_at") @db.Timestamptz(3)
+  /// When a swap last gave it to its guard.
+  swappedAt      DateTime?       @map("swapped_at") @db.Timestamptz(3)
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, shiftId], map: "guard_roster_slots_shift_key")
+  @@index([tenantId, guardAccountId, startsAt], map: "guard_roster_slots_guard_idx")
+  @@index([tenantId, startsAt, id], map: "guard_roster_slots_start_idx")
+  @@map("guard_roster_slots")
 }

@@ -1109,6 +1109,35 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   gate_service_requests_cancel_reason_side: {},
   // Guard shifts and tasks (ADR 0050).
   guard_shifts_one_post: { guarded: 'num_nonnulls() counts NULLs: never NULL' },
+  guard_shifts_minutes_at_end: { guarded: 'num_nonnulls() counts NULLs: never NULL' },
+  guard_shifts_minutes_range: { guarded: 'COALESCE() of each: never NULL' },
+  guard_roster_templates_one_post: { guarded: 'num_nonnulls() counts NULLs: never NULL' },
+  guard_roster_templates_until_after_from: {
+    guarded: 'effective_until IS NULL is tested first',
+  },
+  guard_roster_templates_schedule_shape: {},
+  guard_roster_templates_end_is_complete: {},
+  guard_roster_templates_end_reason: {
+    guarded: 'end_reason IS NULL is tested first',
+  },
+  guard_roster_templates_end_by: {
+    guarded: 'end_reason IS NULL is tested first',
+  },
+  guard_roster_slots_one_post: { guarded: 'num_nonnulls() counts NULLs: never NULL' },
+  guard_roster_slots_ends_after_start: {},
+  guard_roster_slots_at_most_a_day: {},
+  guard_roster_slots_made_by: {},
+  guard_roster_slots_cancel_is_complete: {},
+  guard_roster_slots_cancel_reason: {
+    guarded: 'cancel_reason IS NULL is tested first',
+  },
+  guard_roster_slots_cancelled_by: {
+    guarded: 'cancel_reason IS NULL is tested first',
+  },
+  guard_roster_slots_filled_shape: {},
+  guard_roster_slots_late_minutes_range: {
+    guarded: 'late_minutes IS NULL is tested first',
+  },
 };
 
 interface Check {

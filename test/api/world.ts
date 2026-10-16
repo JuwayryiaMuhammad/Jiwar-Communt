@@ -58,6 +58,7 @@ import { DispatchService } from '../../src/maintenance/tickets/dispatch.service'
 import { TicketsService } from '../../src/maintenance/tickets/tickets.service';
 import { VisitsService } from '../../src/maintenance/visits/visits.service';
 import { communityHelpers, type Compound } from '../setup/community';
+import { guardDutyWorld, type GuardDutyWorld } from './world-guard-duty';
 import { fileHelpers } from '../setup/files';
 import { parcelHelpers } from '../setup/parcels';
 import { gateHelpers } from '../setup/gate';
@@ -110,7 +111,7 @@ export interface Side extends Compound {
   shiftId: string;
 }
 
-export interface World {
+export interface World extends GuardDutyWorld {
   h: HttpHarness;
   helpers: ReturnType<typeof communityHelpers>;
   /** The compound the requests act in. */
@@ -1027,7 +1028,9 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     { id: b.ids.owner, type: 'resident' },
     () => h.moduleRef.get(PaymentSessionsService).open(b.homeUnitId, {}),
   );
+  const guardDuty = await guardDutyWorld(h, helpers, b);
   return {
+    ...guardDuty,
     bInvoiceBatchId: bFinance.batchId,
     bInvoiceId: bFinance.invoiceId,
     bParkingReportId: bParkingReport.id,

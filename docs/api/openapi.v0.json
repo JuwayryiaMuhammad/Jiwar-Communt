@@ -2496,6 +2496,21 @@
         },
         "type": "object"
       },
+      "CancelRosterSlotDto": {
+        "properties": {
+          "reasonCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardSlotCancel"
+              }
+            ]
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "CancelVisitorPassDto": {
         "properties": {
           "reasonCode": {
@@ -6051,6 +6066,82 @@
           "phone",
           "email",
           "units"
+        ],
+        "type": "object"
+      },
+      "CreateRosterSlotDto": {
+        "properties": {
+          "endsAt": {
+            "description": "After the start, a day at most.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "gateId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "guardId": {
+            "description": "An active `gate.operate` holder (GUARD_NOT_ELIGIBLE).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "startsAt": {
+            "description": "In the future.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "zoneId": {
+            "description": "A place in service, for a post that is not a gate.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "guardId",
+          "startsAt",
+          "endsAt"
+        ],
+        "type": "object"
+      },
+      "CreateRosterTemplateDto": {
+        "properties": {
+          "effectiveFrom": {
+            "description": "Its first day, `YYYY-MM-DD`: today or later.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "effectiveUntil": {
+            "description": "Its last day, inclusive. Absent for no end.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "gateId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "guardId": {
+            "description": "An active `gate.operate` holder (GUARD_NOT_ELIGIBLE).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "schedule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WeeklyScheduleDto"
+              }
+            ],
+            "description": "The weekly shifts: never overlapping the guard’s other templates or slots (409 ROSTER_OVERLAP)."
+          },
+          "zoneId": {
+            "description": "A place in service, for a post that is not a gate.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "guardId",
+          "schedule",
+          "effectiveFrom"
         ],
         "type": "object"
       },
@@ -11442,6 +11533,80 @@
         ],
         "type": "object"
       },
+      "GuardAttendanceView": {
+        "properties": {
+          "absent": {
+            "description": "Of them, not opened an hour after the start.",
+            "type": "number"
+          },
+          "filled": {
+            "description": "Of them, filled by a shift.",
+            "type": "number"
+          },
+          "guard": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "late": {
+            "description": "Of them, opened more than ten minutes late.",
+            "type": "number"
+          },
+          "overtimeMinutes": {
+            "description": "Beyond the slots, for shifts that filled one.",
+            "type": "number"
+          },
+          "scheduledMinutes": {
+            "type": "number"
+          },
+          "slots": {
+            "description": "Scheduled slots starting in the period.",
+            "type": "number"
+          },
+          "unscheduledMinutes": {
+            "description": "Their length; never overtime.",
+            "type": "number"
+          },
+          "unscheduledShifts": {
+            "description": "Ended shifts that filled no slot.",
+            "type": "number"
+          },
+          "workedMinutes": {
+            "description": "Every ended shift that started in the period.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "guard",
+          "slots",
+          "filled",
+          "late",
+          "absent",
+          "scheduledMinutes",
+          "workedMinutes",
+          "overtimeMinutes",
+          "unscheduledShifts",
+          "unscheduledMinutes"
+        ],
+        "type": "object"
+      },
+      "GuardAttendanceViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GuardAttendanceView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "GuardGateView": {
         "properties": {
           "id": {
@@ -11600,6 +11765,29 @@
           "standingInstructions"
         ],
         "type": "object"
+      },
+      "GuardSlotCancel": {
+        "enum": [
+          "schedule_change",
+          "guard_unavailable",
+          "post_closed",
+          "other"
+        ],
+        "type": "string"
+      },
+      "GuardSlotStatus": {
+        "enum": [
+          "scheduled",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "GuardTemplateEnd": {
+        "enum": [
+          "manager",
+          "guard_left"
+        ],
+        "type": "string"
       },
       "GuardVisitorParkingView": {
         "properties": {
@@ -14964,6 +15152,100 @@
         ],
         "type": "object"
       },
+      "MySlotView": {
+        "properties": {
+          "absentAt": {
+            "description": "Not opened an hour after its start.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelReason": {
+            "description": "From `guardSlotCancel`, or `guardSlotCancelSystem` when the system cancelled it.",
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "late": {
+            "description": "Opened more than ten minutes after the start.",
+            "type": "boolean"
+          },
+          "lateMinutes": {
+            "description": "Minutes after the start the shift opened; null until it did.",
+            "nullable": true,
+            "type": "number"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "shift": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SlotShiftView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardSlotStatus"
+              }
+            ]
+          },
+          "swappedAt": {
+            "description": "When a swap gave it to this guard.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "post",
+          "startsAt",
+          "endsAt",
+          "status",
+          "cancelReason",
+          "shift",
+          "lateMinutes",
+          "late",
+          "absentAt",
+          "swappedAt"
+        ],
+        "type": "object"
+      },
+      "MySlotViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MySlotView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "MySuggestionListItemView": {
         "properties": {
           "body": {
@@ -15645,7 +15927,8 @@
           "vehicles",
           "finance",
           "safety",
-          "permits"
+          "permits",
+          "guard_duty"
         ],
         "type": "string"
       },
@@ -18762,6 +19045,34 @@
           "id",
           "code",
           "building"
+        ],
+        "type": "object"
+      },
+      "PostView": {
+        "properties": {
+          "gateId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "gateName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "zone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "gateId",
+          "gateName",
+          "zone"
         ],
         "type": "object"
       },
@@ -22481,6 +22792,244 @@
         ],
         "type": "object"
       },
+      "RosterGuardView": {
+        "properties": {
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ],
+        "type": "object"
+      },
+      "RosterGuardViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/RosterGuardView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "RosterPostsView": {
+        "properties": {
+          "gates": {
+            "items": {
+              "$ref": "#/components/schemas/GuardGateView"
+            },
+            "type": "array"
+          },
+          "zones": {
+            "items": {
+              "$ref": "#/components/schemas/PlaceView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "gates",
+          "zones"
+        ],
+        "type": "object"
+      },
+      "RosterSlotView": {
+        "properties": {
+          "absentAt": {
+            "description": "Not opened an hour after its start.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelReason": {
+            "description": "From `guardSlotCancel`, or `guardSlotCancelSystem` when the system cancelled it.",
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "guard": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "late": {
+            "description": "Opened more than ten minutes after the start.",
+            "type": "boolean"
+          },
+          "lateMinutes": {
+            "description": "Minutes after the start the shift opened; null until it did.",
+            "nullable": true,
+            "type": "number"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "shift": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SlotShiftView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardSlotStatus"
+              }
+            ]
+          },
+          "swappedAt": {
+            "description": "When a swap gave it to this guard.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "templateId": {
+            "description": "The template that made it; null for a single slot.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "post",
+          "startsAt",
+          "endsAt",
+          "status",
+          "cancelReason",
+          "shift",
+          "lateMinutes",
+          "late",
+          "absentAt",
+          "swappedAt",
+          "guard",
+          "templateId"
+        ],
+        "type": "object"
+      },
+      "RosterSlotViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/RosterSlotView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "RosterTemplateView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "effectiveFrom": {
+            "example": "2026-11-01",
+            "format": "date",
+            "type": "string"
+          },
+          "effectiveUntil": {
+            "description": "Its last day, inclusive; null for no end.",
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "endReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardTemplateEnd"
+              }
+            ],
+            "nullable": true
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "guard": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/WeeklyScheduleView"
+          }
+        },
+        "required": [
+          "id",
+          "guard",
+          "post",
+          "schedule",
+          "effectiveFrom",
+          "effectiveUntil",
+          "endedAt",
+          "endReason",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "RosterTemplateViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/RosterTemplateView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "RsvpDto": {
         "properties": {
           "guests": {
@@ -23014,6 +23563,22 @@
             "format": "uuid",
             "type": "string"
           },
+          "lateMinutes": {
+            "description": "Minutes after the slot’s start the shift opened; more than ten is late. Null for an unscheduled shift.",
+            "nullable": true,
+            "type": "number"
+          },
+          "scheduledEnd": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "scheduledStart": {
+            "description": "The start of the roster slot this shift filled (ADR 0050); null for an unscheduled shift.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "startedAt": {
             "format": "date-time",
             "type": "string"
@@ -23035,7 +23600,10 @@
           "gateName",
           "zone",
           "startedAt",
-          "endedAt"
+          "endedAt",
+          "scheduledStart",
+          "scheduledEnd",
+          "lateMinutes"
         ],
         "type": "object"
       },
@@ -23251,6 +23819,35 @@
         "required": [
           "startsAt",
           "mode"
+        ],
+        "type": "object"
+      },
+      "SlotShiftView": {
+        "properties": {
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "overtimeMinutes": {
+            "description": "Minutes worked beyond the slot, once the shift ended.",
+            "nullable": true,
+            "type": "number"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "startedAt",
+          "endedAt",
+          "overtimeMinutes"
         ],
         "type": "object"
       },
@@ -31762,6 +32359,86 @@
         ],
         "type": "object"
       },
+      "WeeklyScheduleDto": {
+        "properties": {
+          "days": {
+            "description": "Weekdays, 0 = Sunday … 6 = Saturday.",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/WeeklyWindowDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "days",
+          "windows"
+        ],
+        "type": "object"
+      },
+      "WeeklyScheduleView": {
+        "properties": {
+          "days": {
+            "description": "Weekdays, 0 = Sunday … 6 = Saturday.",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/WeeklyWindowView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "days",
+          "windows"
+        ],
+        "type": "object"
+      },
+      "WeeklyWindowDto": {
+        "properties": {
+          "from": {
+            "example": "22:00",
+            "type": "string"
+          },
+          "to": {
+            "description": "Before `from`: the window runs into the next day.",
+            "example": "06:00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
+      "WeeklyWindowView": {
+        "properties": {
+          "from": {
+            "example": "22:00",
+            "type": "string"
+          },
+          "to": {
+            "description": "Before `from`: the window runs into the next day.",
+            "example": "06:00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
       "WelcomeTemplateView": {
         "properties": {
           "emergencyAr": {
@@ -37606,6 +38283,108 @@
         "summary": "Look a plate up: the units’ vehicles and the visitors’ passes carrying it",
         "tags": [
           "gate"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/roster": {
+      "get": {
+        "description": "The compound’s days `from` … `to`, inclusive (default today and the 13 after), 31 at most (PERIOD_TOO_LONG).",
+        "operationId": "GuardRosterController_mine",
+        "parameters": [
+          {
+            "description": "The first day, `YYYY-MM-DD`. Default today.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, inclusive. Default 13 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MySlotViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read my schedule",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/roster/attendance": {
+      "get": {
+        "description": "The compound’s days `from` … `to`, inclusive (default today and the 13 after), 31 at most (PERIOD_TOO_LONG).",
+        "operationId": "GuardRosterController_attendance",
+        "parameters": [
+          {
+            "description": "The first day, `YYYY-MM-DD`. Default today.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, inclusive. Default 13 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardAttendanceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read my attendance",
+        "tags": [
+          "guard-duty"
         ],
         "x-no-store": true,
         "x-stability": "draft"
@@ -53845,6 +54624,452 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/attendance": {
+      "get": {
+        "description": "The compound’s days `from` … `to`, inclusive (default today and the 13 after), 31 at most (PERIOD_TOO_LONG). Recorded only: no payroll.",
+        "operationId": "StaffRosterController_attendance",
+        "parameters": [
+          {
+            "description": "The first day, `YYYY-MM-DD`. Default today.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, inclusive. Default 13 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "guardId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardAttendanceViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the guards’ attendance and overtime",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/guards": {
+      "get": {
+        "description": "Active accounts holding `gate.operate`.",
+        "operationId": "StaffRosterController_guards",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RosterGuardViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the guards the roster may schedule",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/posts": {
+      "get": {
+        "description": "The gates and the zones (places) in service.",
+        "operationId": "StaffRosterController_posts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RosterPostsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the posts a guard may be scheduled at",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/roster/slots": {
+      "get": {
+        "description": "The compound’s days `from` … `to`, inclusive (default today and the 13 after), 31 at most (PERIOD_TOO_LONG).",
+        "operationId": "StaffRosterController_slots",
+        "parameters": [
+          {
+            "description": "The first day, `YYYY-MM-DD`. Default today.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, inclusive. Default 13 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "guardId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "gateId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "zoneId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "scheduled",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RosterSlotViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the roster",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "In the future, a day at most; never overlapping the guard’s slots or templates (409 ROSTER_OVERLAP).",
+        "operationId": "StaffRosterController_createSlot",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRosterSlotDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RosterSlotView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a single slot",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/roster/slots/{id}/cancel": {
+      "post": {
+        "description": "A filled or cancelled slot: 409 ROSTER_SLOT_CLOSED.",
+        "operationId": "StaffRosterController_cancelSlot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelRosterSlotDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RosterSlotView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a slot nobody opened",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/roster/templates": {
+      "get": {
+        "operationId": "StaffRosterController_templates",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "guardId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Default: both.",
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "enum": [
+                "live",
+                "ended"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RosterTemplateViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the roster templates",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Its slots are made at once, 28 days ahead, and kept so. Never overlapping the guard’s other templates or slots (409 ROSTER_OVERLAP).",
+        "operationId": "StaffRosterController_createTemplate",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRosterTemplateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RosterTemplateView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a guard’s weekly roster at a post",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/roster/templates/{id}/end": {
+      "post": {
+        "description": "Its slots to come that nobody opened and no swap gave away are cancelled (`template_ended`).",
+        "operationId": "StaffRosterController_endTemplate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RosterTemplateView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "End a roster template",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

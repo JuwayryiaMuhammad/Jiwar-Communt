@@ -12,6 +12,7 @@ import {
 } from '../../core/database/tenant-tx.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { dbNow } from '../db-clock';
+import { ShiftView } from './views/shift.views';
 
 /** A zone of the compound: one of its places (ADR 0047, 0050). */
 export interface ShiftZone {
@@ -28,6 +29,8 @@ export interface ShiftRecord {
   zone: ShiftZone | null;
   startedAt: Date;
   endedAt: Date | null;
+  /** The roster slot it filled (ADR 0050), if any. */
+  slot: { startsAt: Date; endsAt: Date; lateMinutes: number | null } | null;
 }
 
 /** The caller's open shift at a gate: where and under which shift an action happens. */
@@ -121,8 +124,11 @@ export class ShiftsService implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
+    // A replay answers what the route answered: the view, not the record.
     this.idempotency.renderer(SHIFT_RESOURCE, (id) =>
-      this.tenantTx.withTenantTx((tx) => this.record(tx, id)),
+      this.tenantTx.withTenantTx(async (tx) =>
+        ShiftView.from(await this.record(tx, id)),
+      ),
     );
     const endOwn = async (
       tx: TenantTxClient,
@@ -208,7 +214,7 @@ export class ShiftsService implements OnModuleInit {
    * the same shift.
    */
   start(input: { gateId?: string; zoneId?: string }): Promise<ShiftRecord> {
-    const post = postOf(input);
+    const post = shiftPostOf(input);
     const guardAccountId = this.ctx.accountId;
     const tenantId = this.ctx.tenantId;
     return this.tenantTx.withTenantTx(async (tx) => {
@@ -338,6 +344,10 @@ export class ShiftsService implements OnModuleInit {
         place: { select: { id: true, key: true, nameEn: true, nameAr: true } },
       },
     });
+    const slot = await tx.guardRosterSlot.findFirst({
+      where: { shiftId: id },
+      select: { startsAt: true, endsAt: true, lateMinutes: true },
+    });
     return {
       id: s.id,
       gateId: s.gateId,
@@ -345,12 +355,16 @@ export class ShiftsService implements OnModuleInit {
       zone: s.place,
       startedAt: s.startedAt,
       endedAt: s.endedAt,
+      slot,
     };
   }
 }
 
 /** A gate or a zone, exactly one (VALIDATION_FAILED otherwise). */
-function postOf(input: { gateId?: string; zoneId?: string }): ShiftPost {
+export function shiftPostOf(input: {
+  gateId?: string;
+  zoneId?: string;
+}): ShiftPost {
   if (input.gateId && !input.zoneId)
     return { gateId: input.gateId, placeId: null };
   if (input.zoneId && !input.gateId)

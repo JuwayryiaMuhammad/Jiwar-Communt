@@ -401,3 +401,13 @@ export const PERMITS_COVERAGE: readonly string[] = [
   'unit_permit.text_cleared',
   'unit_permit.data_purged',
 ];
+
+/** Guard shifts and tasks (ADR 0050): test/security/audit-coverage. */
+export const GUARD_DUTY_COVERAGE: readonly string[] = [
+  'guard_roster.template_created',
+  'guard_roster.template_ended',
+  'guard_roster.slot_created',
+  'guard_roster.slot_cancelled',
+  'guard_shift.late',
+  'guard_shift.absent',
+];

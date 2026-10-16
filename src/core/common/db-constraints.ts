@@ -60,6 +60,13 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   guard_shifts_tenant_id_id_key: null,
   // Checked first and mapped to SHIFT_ALREADY_OPEN; a violation is a race.
   guard_shifts_one_open_per_guard: null,
+  // The roster (ADR 0050): internal keys, never a client's field. A shift
+  // fills one slot (taken under the slot's lock); a template makes each of
+  // its slots once (checked under the guard's lock).
+  guard_roster_templates_tenant_id_id_key: null,
+  guard_roster_slots_tenant_id_id_key: null,
+  guard_roster_slots_shift_key: null,
+  guard_roster_slots_template_start_key: null,
   visitor_details_tenant_id_id_key: null,
   visitor_passes_tenant_id_id_key: null,
   // ADR 0043.

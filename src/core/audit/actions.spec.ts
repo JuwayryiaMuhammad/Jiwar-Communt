@@ -107,6 +107,15 @@ describe('audit catalog', () => {
         'refund',
         'unit_permit',
         'material_entry',
+        // ADR 0050.
+        'guard_roster_template',
+        'guard_roster_slot',
+        'guard_handover_item',
+        'guard_handover',
+        'guard_task',
+        'guard_shift_swap',
+        'guard_instruction',
+        'found_item',
       ]).toContain(def.target);
     }
   });

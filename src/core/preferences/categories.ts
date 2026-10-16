@@ -28,6 +28,9 @@ export const NOTIFICATION_CATEGORIES = [
   // A unit's permits: works and contractors, moves, material exits and
   // private events (ADR 0049).
   'permits',
+  // The guards' work: shifts, the roster, tasks, swaps and instructions
+  // (ADR 0050).
+  'guard_duty',
 ] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 

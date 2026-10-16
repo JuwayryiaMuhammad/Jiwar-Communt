@@ -32,6 +32,7 @@ import {
   FINANCE_REPORT_ROUTES,
 } from './finance';
 import { GATE_ROUTES } from './gate';
+import { ROSTER_ROUTES } from './guard-duty';
 import { EXISTING_ROUTES } from './existing';
 import { HOUSEHOLD_ROUTES } from './household';
 import {
@@ -196,4 +197,5 @@ export const ROUTES: Row[] = [
   ...STAFF_PERMIT_ROUTES,
   ...GATE_PERMIT_ROUTES,
   ...MATERIAL_ROUTES,
+  ...ROSTER_ROUTES,
 ];

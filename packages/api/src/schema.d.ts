@@ -1910,6 +1910,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/roster": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read my schedule
+         * @description The compound’s days `from` … `to`, inclusive (default today and the 13 after), 31 at most (PERIOD_TOO_LONG).
+         */
+        get: operations["GuardRosterController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/roster/attendance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read my attendance
+         * @description The compound’s days `from` … `to`, inclusive (default today and the 13 after), 31 at most (PERIOD_TOO_LONG).
+         */
+        get: operations["GuardRosterController_attendance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/shifts/current": {
         parameters: {
             query?: never;
@@ -7378,6 +7418,151 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/attendance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the guards’ attendance and overtime
+         * @description The compound’s days `from` … `to`, inclusive (default today and the 13 after), 31 at most (PERIOD_TOO_LONG). Recorded only: no payroll.
+         */
+        get: operations["StaffRosterController_attendance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/guards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the guards the roster may schedule
+         * @description Active accounts holding `gate.operate`.
+         */
+        get: operations["StaffRosterController_guards"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the posts a guard may be scheduled at
+         * @description The gates and the zones (places) in service.
+         */
+        get: operations["StaffRosterController_posts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/roster/slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the roster
+         * @description The compound’s days `from` … `to`, inclusive (default today and the 13 after), 31 at most (PERIOD_TOO_LONG).
+         */
+        get: operations["StaffRosterController_slots"];
+        put?: never;
+        /**
+         * Add a single slot
+         * @description In the future, a day at most; never overlapping the guard’s slots or templates (409 ROSTER_OVERLAP).
+         */
+        post: operations["StaffRosterController_createSlot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/roster/slots/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel a slot nobody opened
+         * @description A filled or cancelled slot: 409 ROSTER_SLOT_CLOSED.
+         */
+        post: operations["StaffRosterController_cancelSlot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/roster/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the roster templates */
+        get: operations["StaffRosterController_templates"];
+        put?: never;
+        /**
+         * Add a guard’s weekly roster at a post
+         * @description Its slots are made at once, 28 days ahead, and kept so. Never overlapping the guard’s other templates or slots (409 ROSTER_OVERLAP).
+         */
+        post: operations["StaffRosterController_createTemplate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/roster/templates/{id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * End a roster template
+         * @description Its slots to come that nobody opened and no swap gave away are cancelled (`template_ended`).
+         */
+        post: operations["StaffRosterController_endTemplate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/unit-permits": {
         parameters: {
             query?: never;
@@ -10645,6 +10830,9 @@ export interface components {
             /** @description From the closed list `unitPermitCancel`; optional. */
             reasonCode?: string;
         };
+        CancelRosterSlotDto: {
+            reasonCode: components["schemas"]["GuardSlotCancel"];
+        };
         CancelVisitorPassDto: {
             /** @description Required. The closed list `visitorPassCancel`: `not_needed` (the visit is off), `plans_changed` (another day or other visitors), `other`. Missing: REASON_REQUIRED; outside the list: INVALID_REASON_CODE with `allowed`. */
             reasonCode: components["schemas"]["VisitorPassCancelReason"];
@@ -11816,6 +12004,50 @@ export interface components {
             preferredLocale?: components["schemas"]["Locale"];
             /** @description At least one (checked by the service). */
             units: components["schemas"]["OccupancyInputDto"][];
+        };
+        CreateRosterSlotDto: {
+            /**
+             * Format: date-time
+             * @description After the start, a day at most.
+             */
+            endsAt: string;
+            /** Format: uuid */
+            gateId?: string;
+            /**
+             * Format: uuid
+             * @description An active `gate.operate` holder (GUARD_NOT_ELIGIBLE).
+             */
+            guardId: string;
+            /**
+             * Format: date-time
+             * @description In the future.
+             */
+            startsAt: string;
+            /**
+             * Format: uuid
+             * @description A place in service, for a post that is not a gate.
+             */
+            zoneId?: string;
+        };
+        CreateRosterTemplateDto: {
+            /** @description Its first day, `YYYY-MM-DD`: today or later. */
+            effectiveFrom: string;
+            /** @description Its last day, inclusive. Absent for no end. */
+            effectiveUntil?: string;
+            /** Format: uuid */
+            gateId?: string;
+            /**
+             * Format: uuid
+             * @description An active `gate.operate` holder (GUARD_NOT_ELIGIBLE).
+             */
+            guardId: string;
+            /** @description The weekly shifts: never overlapping the guard’s other templates or slots (409 ROSTER_OVERLAP). */
+            schedule: components["schemas"]["WeeklyScheduleDto"];
+            /**
+             * Format: uuid
+             * @description A place in service, for a post that is not a gate.
+             */
+            zoneId?: string;
         };
         CreateSecurityReportDto: {
             /** @example A man trying car doors in the visitor parking */
@@ -13402,6 +13634,30 @@ export interface components {
             /** @enum {string} */
             permission: "visitors_invite" | "bookings" | "tickets" | "finance" | "unit_security" | "polls_vote";
         };
+        GuardAttendanceView: {
+            /** @description Of them, not opened an hour after the start. */
+            absent: number;
+            /** @description Of them, filled by a shift. */
+            filled: number;
+            guard: components["schemas"]["AccountRefView"];
+            /** @description Of them, opened more than ten minutes late. */
+            late: number;
+            /** @description Beyond the slots, for shifts that filled one. */
+            overtimeMinutes: number;
+            scheduledMinutes: number;
+            /** @description Scheduled slots starting in the period. */
+            slots: number;
+            /** @description Their length; never overtime. */
+            unscheduledMinutes: number;
+            /** @description Ended shifts that filled no slot. */
+            unscheduledShifts: number;
+            /** @description Every ended shift that started in the period. */
+            workedMinutes: number;
+        };
+        GuardAttendanceViewList: {
+            data: components["schemas"]["GuardAttendanceView"][];
+            nextCursor: string | null;
+        };
         GuardGateView: {
             /** Format: uuid */
             id: string;
@@ -13451,6 +13707,12 @@ export interface components {
             status: components["schemas"]["GateRequestStatus"];
             unitCode: string;
         };
+        /** @enum {string} */
+        GuardSlotCancel: "schedule_change" | "guard_unavailable" | "post_closed" | "other";
+        /** @enum {string} */
+        GuardSlotStatus: "scheduled" | "cancelled";
+        /** @enum {string} */
+        GuardTemplateEnd: "manager" | "guard_left";
         GuardVisitorParkingView: {
             areaName: string;
             /** Format: date-time */
@@ -14532,6 +14794,37 @@ export interface components {
             /** Format: uuid */
             unitId: string;
         };
+        MySlotView: {
+            /**
+             * Format: date-time
+             * @description Not opened an hour after its start.
+             */
+            absentAt: string | null;
+            /** @description From `guardSlotCancel`, or `guardSlotCancelSystem` when the system cancelled it. */
+            cancelReason: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description Opened more than ten minutes after the start. */
+            late: boolean;
+            /** @description Minutes after the start the shift opened; null until it did. */
+            lateMinutes: number | null;
+            post: components["schemas"]["PostView"];
+            shift: components["schemas"]["SlotShiftView"] | null;
+            /** Format: date-time */
+            startsAt: string;
+            status: components["schemas"]["GuardSlotStatus"];
+            /**
+             * Format: date-time
+             * @description When a swap gave it to this guard.
+             */
+            swappedAt: string | null;
+        };
+        MySlotViewList: {
+            data: components["schemas"]["MySlotView"][];
+            nextCursor: string | null;
+        };
         MySuggestionListItemView: {
             /** @description The caller’s own words. */
             body: string | null;
@@ -14746,7 +15039,7 @@ export interface components {
             sentAt: string;
         };
         /** @enum {string} */
-        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community" | "neighbours" | "bookings" | "vehicles" | "finance" | "safety" | "permits";
+        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community" | "neighbours" | "bookings" | "vehicles" | "finance" | "safety" | "permits" | "guard_duty";
         NotificationView: {
             /** Format: date-time */
             createdAt: string;
@@ -15742,6 +16035,12 @@ export interface components {
             code: string;
             /** Format: uuid */
             id: string;
+        };
+        PostView: {
+            /** Format: uuid */
+            gateId: string | null;
+            gateName: string | null;
+            zone: components["schemas"]["PlaceView"] | null;
         };
         PreferencesView: {
             categories: components["schemas"]["CategoryPreferenceView"][];
@@ -16871,6 +17170,82 @@ export interface components {
             data: components["schemas"]["RoleView"][];
             nextCursor: string | null;
         };
+        RosterGuardView: {
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+        };
+        RosterGuardViewList: {
+            data: components["schemas"]["RosterGuardView"][];
+            nextCursor: string | null;
+        };
+        RosterPostsView: {
+            gates: components["schemas"]["GuardGateView"][];
+            zones: components["schemas"]["PlaceView"][];
+        };
+        RosterSlotView: {
+            /**
+             * Format: date-time
+             * @description Not opened an hour after its start.
+             */
+            absentAt: string | null;
+            /** @description From `guardSlotCancel`, or `guardSlotCancelSystem` when the system cancelled it. */
+            cancelReason: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            guard: components["schemas"]["AccountRefView"];
+            /** Format: uuid */
+            id: string;
+            /** @description Opened more than ten minutes after the start. */
+            late: boolean;
+            /** @description Minutes after the start the shift opened; null until it did. */
+            lateMinutes: number | null;
+            post: components["schemas"]["PostView"];
+            shift: components["schemas"]["SlotShiftView"] | null;
+            /** Format: date-time */
+            startsAt: string;
+            status: components["schemas"]["GuardSlotStatus"];
+            /**
+             * Format: date-time
+             * @description When a swap gave it to this guard.
+             */
+            swappedAt: string | null;
+            /**
+             * Format: uuid
+             * @description The template that made it; null for a single slot.
+             */
+            templateId: string | null;
+        };
+        RosterSlotViewList: {
+            data: components["schemas"]["RosterSlotView"][];
+            nextCursor: string | null;
+        };
+        RosterTemplateView: {
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: date
+             * @example 2026-11-01
+             */
+            effectiveFrom: string;
+            /**
+             * Format: date
+             * @description Its last day, inclusive; null for no end.
+             */
+            effectiveUntil: string | null;
+            endReason: components["schemas"]["GuardTemplateEnd"] | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            guard: components["schemas"]["AccountRefView"];
+            /** Format: uuid */
+            id: string;
+            post: components["schemas"]["PostView"];
+            schedule: components["schemas"]["WeeklyScheduleView"];
+        };
+        RosterTemplateViewList: {
+            data: components["schemas"]["RosterTemplateView"][];
+            nextCursor: string | null;
+        };
         RsvpDto: {
             /** @description People the caller brings, when going. At most the compound’s limit (INVALID_NUMBER, params.max). Absent: none. */
             guests?: number;
@@ -17037,6 +17412,15 @@ export interface components {
             gateName: string | null;
             /** Format: uuid */
             id: string;
+            /** @description Minutes after the slot’s start the shift opened; more than ten is late. Null for an unscheduled shift. */
+            lateMinutes: number | null;
+            /** Format: date-time */
+            scheduledEnd: string | null;
+            /**
+             * Format: date-time
+             * @description The start of the roster slot this shift filled (ADR 0050); null for an unscheduled shift.
+             */
+            scheduledStart: string | null;
             /** Format: date-time */
             startedAt: string;
             /** @description The zone, for a shift that is not at a gate (ADR 0050); the gate actions refuse it. */
@@ -17105,6 +17489,16 @@ export interface components {
              * @description The start of one of the offered slots, exactly (APPOINTMENT_SLOT_NOT_OFFERED); at least an hour and at most thirty days from now.
              */
             startsAt: string;
+        };
+        SlotShiftView: {
+            /** Format: date-time */
+            endedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description Minutes worked beyond the slot, once the shift ended. */
+            overtimeMinutes: number | null;
+            /** Format: date-time */
+            startedAt: string;
         };
         SpecialtyIdsDto: {
             /** @description The whole set, replacing the current one; empty clears it. Active specialties of the compound only. */
@@ -19630,6 +20024,34 @@ export interface components {
         WarningView: {
             /** @enum {string} */
             code: "WORKER_SCHEDULE_CONFLICT";
+        };
+        WeeklyScheduleDto: {
+            /** @description Weekdays, 0 = Sunday … 6 = Saturday. */
+            days: number[];
+            windows: components["schemas"]["WeeklyWindowDto"][];
+        };
+        WeeklyScheduleView: {
+            /** @description Weekdays, 0 = Sunday … 6 = Saturday. */
+            days: number[];
+            windows: components["schemas"]["WeeklyWindowView"][];
+        };
+        WeeklyWindowDto: {
+            /** @example 22:00 */
+            from: string;
+            /**
+             * @description Before `from`: the window runs into the next day.
+             * @example 06:00
+             */
+            to: string;
+        };
+        WeeklyWindowView: {
+            /** @example 22:00 */
+            from: string;
+            /**
+             * @description Before `from`: the window runs into the next day.
+             * @example 06:00
+             */
+            to: string;
         };
         WelcomeTemplateView: {
             emergencyAr: string | null;
@@ -22619,6 +23041,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlateLookupView"];
+                };
+            };
+        };
+    };
+    GuardRosterController_mine: {
+        parameters: {
+            query?: {
+                /** @description The first day, `YYYY-MM-DD`. Default today. */
+                from?: string;
+                /** @description The last day, inclusive. Default 13 days after `from`. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MySlotViewList"];
+                };
+            };
+        };
+    };
+    GuardRosterController_attendance: {
+        parameters: {
+            query?: {
+                /** @description The first day, `YYYY-MM-DD`. Default today. */
+                from?: string;
+                /** @description The last day, inclusive. Default 13 days after `from`. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardAttendanceView"];
                 };
             };
         };
@@ -31148,6 +31618,218 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RefundView"];
+                };
+            };
+        };
+    };
+    StaffRosterController_attendance: {
+        parameters: {
+            query?: {
+                /** @description The first day, `YYYY-MM-DD`. Default today. */
+                from?: string;
+                /** @description The last day, inclusive. Default 13 days after `from`. */
+                to?: string;
+                guardId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardAttendanceViewList"];
+                };
+            };
+        };
+    };
+    StaffRosterController_guards: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RosterGuardViewList"];
+                };
+            };
+        };
+    };
+    StaffRosterController_posts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RosterPostsView"];
+                };
+            };
+        };
+    };
+    StaffRosterController_slots: {
+        parameters: {
+            query?: {
+                /** @description The first day, `YYYY-MM-DD`. Default today. */
+                from?: string;
+                /** @description The last day, inclusive. Default 13 days after `from`. */
+                to?: string;
+                guardId?: string;
+                gateId?: string;
+                zoneId?: string;
+                status?: "scheduled" | "cancelled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RosterSlotViewList"];
+                };
+            };
+        };
+    };
+    StaffRosterController_createSlot: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRosterSlotDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RosterSlotView"];
+                };
+            };
+        };
+    };
+    StaffRosterController_cancelSlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelRosterSlotDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RosterSlotView"];
+                };
+            };
+        };
+    };
+    StaffRosterController_templates: {
+        parameters: {
+            query?: {
+                guardId?: string;
+                /** @description Default: both. */
+                state?: "live" | "ended";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RosterTemplateViewList"];
+                };
+            };
+        };
+    };
+    StaffRosterController_createTemplate: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRosterTemplateDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RosterTemplateView"];
+                };
+            };
+        };
+    };
+    StaffRosterController_endTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RosterTemplateView"];
                 };
             };
         };

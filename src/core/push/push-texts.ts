@@ -1321,6 +1321,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'لم يتم قبول اعتراضك على فاتورة. افتح التطبيق لمعرفة السبب.',
     },
   },
+  'guard_shift.absent': {
+    en: {
+      title: 'Guard absent',
+      body: 'A guard did not start their shift. Open the roster.',
+    },
+    ar: {
+      title: 'غياب فرد أمن',
+      body: 'لم يبدأ أحد أفراد الأمن ورديته. افتح جدول الورديات.',
+    },
+  },
+  'guard_shift.absent_unmanned': {
+    en: {
+      title: 'Post unmanned',
+      body: 'A guard did not start their shift and nobody is on duty there.',
+    },
+    ar: {
+      title: 'موقع بلا حراسة',
+      body: 'لم يبدأ أحد أفراد الأمن ورديته ولا يوجد أحد في الخدمة هناك.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

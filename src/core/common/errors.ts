@@ -673,6 +673,20 @@ export const ErrorCode = {
   PAYMENT_REFUNDED: 'PAYMENT_REFUNDED',
   /** More rows than one export holds (422, params.max): narrow the period. */
   EXPORT_TOO_LARGE: 'EXPORT_TOO_LARGE',
+  // guard shifts and tasks (ADR 0050)
+  /**
+   * The guard is scheduled then already (409, params.startsAt and
+   * params.endsAt of the clash: a slot, or a template's slot to come).
+   */
+  ROSTER_OVERLAP: 'ROSTER_OVERLAP',
+  /** Unknown, or another compound's. */
+  ROSTER_TEMPLATE_NOT_FOUND: 'ROSTER_TEMPLATE_NOT_FOUND',
+  /** It was ended already (409). */
+  ROSTER_TEMPLATE_ENDED: 'ROSTER_TEMPLATE_ENDED',
+  /** Unknown, another compound's, or not the caller's to see. */
+  ROSTER_SLOT_NOT_FOUND: 'ROSTER_SLOT_NOT_FOUND',
+  /** A shift filled it, or it was cancelled (409, params.status: `filled`, `cancelled`). */
+  ROSTER_SLOT_CLOSED: 'ROSTER_SLOT_CLOSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -839,6 +853,11 @@ export const FieldErrorCode = {
   NOT_A_WORK_DAY: 'NOT_A_WORK_DAY',
   /** A window longer than params.maxHours hours. */
   WINDOW_TOO_LONG: 'WINDOW_TOO_LONG',
+  // guard shifts and tasks (ADR 0050)
+  /** Not an active account holding `gate.operate`. */
+  GUARD_NOT_ELIGIBLE: 'GUARD_NOT_ELIGIBLE',
+  /** Not a gate or a zone in service. */
+  POST_NOT_AVAILABLE: 'POST_NOT_AVAILABLE',
 } as const;
 
 export type FieldErrorCode =

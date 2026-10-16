@@ -490,4 +490,17 @@ export const REASON_CODES = {
   unitPermitRevoke: ['rules_broken', 'safety_concern', 'complaint', 'other'],
   // Why the management removes a contractor worker (ADR 0049).
   permitWorkerRemove: ['misconduct', 'safety_concern', 'not_needed', 'other'],
+  // Why the management cancels a guard's slot (ADR 0050).
+  guardSlotCancel: [
+    'schedule_change',
+    'guard_unavailable',
+    'post_closed',
+    'other',
+  ],
+  // A slot the system cancels, never picked by staff (ADR 0050): its
+  // template ended, or its guard left the compound's service.
+  guardSlotCancelSystem: ['template_ended', 'guard_left'],
+  // Who ended a roster template (ADR 0050): the management, or the system
+  // when the guard left.
+  guardTemplateEnd: ['manager', 'guard_left'],
 } as const;

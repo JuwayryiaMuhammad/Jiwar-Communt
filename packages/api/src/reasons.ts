@@ -99,6 +99,9 @@ export const REASON_CODES = {
   unitPermitReject: ['missing_details', 'outside_rules', 'too_many_guests', 'safety_concern', 'other'],
   unitPermitRevoke: ['rules_broken', 'safety_concern', 'complaint', 'other'],
   permitWorkerRemove: ['misconduct', 'safety_concern', 'not_needed', 'other'],
+  guardSlotCancel: ['schedule_change', 'guard_unavailable', 'post_closed', 'other'],
+  guardSlotCancelSystem: ['template_ended', 'guard_left'],
+  guardTemplateEnd: ['manager', 'guard_left'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

@@ -31,6 +31,26 @@ export class ShiftView {
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   endedAt: Date | null;
 
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'The start of the roster slot this shift filled (ADR 0050); null for an unscheduled shift.',
+  })
+  scheduledStart: Date | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  scheduledEnd: Date | null;
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description:
+      'Minutes after the slot’s start the shift opened; more than ten is late. Null for an unscheduled shift.',
+  })
+  lateMinutes: number | null;
+
   static from(s: ShiftRecord): ShiftView {
     return {
       id: s.id,
@@ -39,6 +59,9 @@ export class ShiftView {
       zone: s.zone,
       startedAt: s.startedAt,
       endedAt: s.endedAt,
+      scheduledStart: s.slot?.startsAt ?? null,
+      scheduledEnd: s.slot?.endsAt ?? null,
+      lateMinutes: s.slot?.lateMinutes ?? null,
     };
   }
 }

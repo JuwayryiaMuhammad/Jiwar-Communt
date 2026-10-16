@@ -29,6 +29,8 @@ const CRITICAL_KINDS = [
   'gate_service.requested',
   'gate.approval_requested',
   'gate.approval_reversed',
+  // ADR 0050.
+  'guard_shift.absent_unmanned',
   'ticket.assigned',
   'ticket.emergency',
   // ADR 0038.

@@ -109,12 +109,18 @@ export class SafetyCore {
   }
 
   /**
-   * The guards on an open shift now — at `gateId` only when given — whose
-   * account is active and still holds `gate.operate`.
+   * The guards on an open shift now — at a gate (`gateId`) or in a zone
+   * (`{ placeId }`, ADR 0050) only when given — whose account is active and
+   * still holds `gate.operate`.
    */
-  async guardsOnShift(tx: TenantTxClient, gateId?: string): Promise<string[]> {
+  async guardsOnShift(
+    tx: TenantTxClient,
+    at?: string | { placeId: string },
+  ): Promise<string[]> {
+    const where =
+      at === undefined ? {} : typeof at === 'string' ? { gateId: at } : at;
     const shifts = await tx.guardShift.findMany({
-      where: { endedAt: null, ...(gateId ? { gateId } : {}) },
+      where: { endedAt: null, ...where },
       select: { guardAccountId: true },
     });
     if (!shifts.length) return [];

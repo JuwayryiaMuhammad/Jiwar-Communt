@@ -129,6 +129,13 @@ import { MaterialEntriesService } from './permits/material-entries.service';
 import { PermitLifecycle } from './permits/permit-lifecycle';
 import { PermitExportSections } from './permits/permit-export-sections';
 import { GatePermitsService } from './permits/gate-permits.service';
+import { RosterAttendance } from './roster/roster-attendance';
+import { RosterCore } from './roster/roster-core';
+import {
+  GuardRosterController,
+  StaffRosterController,
+} from './roster/roster.controller';
+import { RosterService } from './roster/roster.service';
 
 /**
  * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
@@ -184,6 +191,8 @@ import { GatePermitsService } from './permits/gate-permits.service';
     StaffPermitsController,
     GatePermitsController,
     MaterialEntriesController,
+    StaffRosterController,
+    GuardRosterController,
   ],
   providers: [
     GatesService,
@@ -254,6 +263,9 @@ import { GatePermitsService } from './permits/gate-permits.service';
     MaterialEntriesService,
     PermitLifecycle,
     PermitExportSections,
+    RosterCore,
+    RosterService,
+    RosterAttendance,
   ],
 })
 export class GateModule {}

@@ -891,6 +891,31 @@ export const AUDIT_ACTIONS = {
   // The guard's permit lookup, on their shift. metadata: by (unit,
   // reference or id), unitId, permitIds, matches. Never a name or a plate.
   'gate.permit_lookup': { log: 'tenant', target: 'guard_shift' },
+  // Guard shifts and tasks (ADR 0050): ids, codes and counts only.
+  // metadata: guardId, gateId or placeId, effectiveFrom, effectiveUntil,
+  // slots (how many were made).
+  'guard_roster.template_created': {
+    log: 'tenant',
+    target: 'guard_roster_template',
+  },
+  // metadata: reason (guardTemplateEnd), cancelled (its slots to come).
+  'guard_roster.template_ended': {
+    log: 'tenant',
+    target: 'guard_roster_template',
+  },
+  // A single slot. metadata: guardId, gateId or placeId.
+  'guard_roster.slot_created': { log: 'tenant', target: 'guard_roster_slot' },
+  // metadata: reason (guardSlotCancel or guardSlotCancelSystem).
+  'guard_roster.slot_cancelled': {
+    log: 'tenant',
+    target: 'guard_roster_slot',
+  },
+  // The shift opened more than ten minutes after its slot's start.
+  // metadata: slotId, minutes.
+  'guard_shift.late': { log: 'tenant', target: 'guard_shift' },
+  // The slot was not opened an hour after its start (the sweep). metadata:
+  // unmanned (nobody else on shift at the post), recipients.
+  'guard_shift.absent': { log: 'tenant', target: 'guard_roster_slot' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

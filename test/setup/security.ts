@@ -1,3 +1,4 @@
+import { newId } from '../../src/core/common/uuid';
 import type { Compound } from './community';
 import type { HttpHarness } from './http-app';
 import { safetyHelpers, type PlaceBody, type Who } from './safety';
@@ -11,7 +12,49 @@ export interface ShiftBody {
   zone: PlaceBody | null;
   startedAt: string;
   endedAt: string | null;
+  scheduledStart: string | null;
+  scheduledEnd: string | null;
+  lateMinutes: number | null;
 }
+
+export interface SlotBody {
+  id: string;
+  guard?: { id: string; fullName?: string | null };
+  post: {
+    gateId: string | null;
+    gateName: string | null;
+    zone: PlaceBody | null;
+  };
+  startsAt: string;
+  endsAt: string;
+  status: 'scheduled' | 'cancelled';
+  cancelReason: string | null;
+  shift: {
+    id: string;
+    startedAt: string;
+    endedAt: string | null;
+    overtimeMinutes: number | null;
+  } | null;
+  lateMinutes: number | null;
+  late: boolean;
+  absentAt: string | null;
+  swappedAt: string | null;
+  templateId?: string | null;
+}
+
+export interface TemplateBody {
+  id: string;
+  guard: { id: string; fullName?: string | null };
+  post: SlotBody['post'];
+  schedule: { days: number[]; windows: { from: string; to: string }[] };
+  effectiveFrom: string;
+  effectiveUntil: string | null;
+  endedAt: string | null;
+  endReason: string | null;
+  createdAt: string;
+}
+
+const MINUTE = 60_000;
 
 /**
  * Helpers for the guard shifts and tasks suites (ADR 0050), on top of the
@@ -61,6 +104,95 @@ export function securityHelpers(h: HttpHarness) {
     return v.http('post', '/gate/shifts/end', as.token, body, headers);
   }
 
+  /** `POST /staff/security/roster/slots` as `as`. */
+  function slotRaw(
+    as: Who,
+    body: Record<string, unknown>,
+    headers: Record<string, string> = {},
+  ) {
+    return v.http(
+      'post',
+      '/staff/security/roster/slots',
+      as.token,
+      body,
+      headers,
+    );
+  }
+
+  /** A single slot that must be made: its body. */
+  async function slot(
+    as: Who,
+    guardId: string,
+    post: { gateId?: string; zoneId?: string },
+    startsInMinutes: number,
+    lastsMinutes = 480,
+  ): Promise<SlotBody> {
+    const startsAt = new Date(Date.now() + startsInMinutes * MINUTE);
+    const res = await slotRaw(as, {
+      guardId,
+      ...post,
+      startsAt: startsAt.toISOString(),
+      endsAt: new Date(
+        startsAt.getTime() + lastsMinutes * MINUTE,
+      ).toISOString(),
+    });
+    if (res.status !== 201)
+      throw new Error(`slot: ${res.status} ${JSON.stringify(res.body)}`);
+    return res.body as SlotBody;
+  }
+
+  /** `POST /staff/security/roster/templates` as `as`. */
+  function templateRaw(
+    as: Who,
+    body: Record<string, unknown>,
+    headers: Record<string, string> = {},
+  ) {
+    return v.http(
+      'post',
+      '/staff/security/roster/templates',
+      as.token,
+      body,
+      headers,
+    );
+  }
+
+  /**
+   * A slot row written as it would have been in the past (the API makes
+   * future slots only): `startsAgo` minutes before now, `lasts` long.
+   */
+  function pastSlot(
+    c: Compound,
+    guardId: string,
+    post: { gateId?: string; placeId?: string },
+    startsAgo: number,
+    lasts = 480,
+    extra: Record<string, unknown> = {},
+  ) {
+    const startsAt = new Date(Date.now() - startsAgo * MINUTE);
+    return v.inTx(c, (tx) =>
+      tx.guardRosterSlot.create({
+        data: {
+          id: newId(),
+          tenantId: c.tenantId,
+          guardAccountId: guardId,
+          gateId: post.gateId ?? null,
+          placeId: post.placeId ?? null,
+          startsAt,
+          endsAt: new Date(startsAt.getTime() + lasts * MINUTE),
+          createdById: c.managerId,
+          ...extra,
+        },
+      }),
+    );
+  }
+
+  /** A slot's row. */
+  function slotRow(c: Compound, id: string) {
+    return v.inTx(c, (tx) =>
+      tx.guardRosterSlot.findUniqueOrThrow({ where: { id } }),
+    );
+  }
+
   /** The guard's shift row. */
   function shiftRow(c: Compound, id: string) {
     return v.inTx(c, (tx) =>
@@ -77,5 +209,10 @@ export function securityHelpers(h: HttpHarness) {
     start,
     endRaw,
     shiftRow,
+    slotRaw,
+    slot,
+    templateRaw,
+    pastSlot,
+    slotRow,
   };
 }

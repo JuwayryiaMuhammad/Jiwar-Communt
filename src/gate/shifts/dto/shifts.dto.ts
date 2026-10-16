@@ -1,8 +1,20 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsUUID } from 'class-validator';
 
+/** A gate or a zone (one of the compound's places), exactly one (ADR 0050). */
 export class StartShiftDto {
-  @ApiProperty({ type: String, format: 'uuid' })
+  @ApiPropertyOptional({ type: String, format: 'uuid' })
+  @IsOptional()
   @IsUUID()
-  gateId: string;
+  gateId?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    description:
+      'A place in service (`GET /community/places`), for a shift that is not at a gate.',
+  })
+  @IsOptional()
+  @IsUUID()
+  zoneId?: string;
 }

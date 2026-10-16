@@ -44,11 +44,15 @@ export class ShiftsController {
   }
 
   @Post('shifts/start')
-  @ApiOperation({ summary: 'Start my shift at a gate' })
+  @ApiOperation({
+    summary: 'Start my shift at a gate or in a zone',
+    description:
+      'Exactly one of `gateId` and `zoneId`. In a zone, the gate actions answer 403 SHIFT_NOT_AT_GATE.',
+  })
   @Idempotent()
   @ApiCreatedResponse({ type: ShiftView })
   async start(@Body() dto: StartShiftDto): Promise<ShiftView> {
-    return ShiftView.from(await this.shifts.start(dto.gateId));
+    return ShiftView.from(await this.shifts.start(dto));
   }
 
   @Post('shifts/end')

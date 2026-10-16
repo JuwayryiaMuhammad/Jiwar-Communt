@@ -35,7 +35,14 @@ export function gateHelpers(h: HttpHarness) {
   /** The guard's shift at the gate, opened through the service. */
   function startShift(compound: Compound, guardId: string, gateId: string) {
     return c.as(compound, { id: guardId, type: 'staff' }, () =>
-      h.moduleRef.get(ShiftsService).start(gateId),
+      h.moduleRef.get(ShiftsService).start({ gateId }),
+    );
+  }
+
+  /** The guard's shift in a zone (a place, ADR 0050). */
+  function startZoneShift(compound: Compound, guardId: string, zoneId: string) {
+    return c.as(compound, { id: guardId, type: 'staff' }, () =>
+      h.moduleRef.get(ShiftsService).start({ zoneId }),
     );
   }
 
@@ -52,5 +59,5 @@ export function gateHelpers(h: HttpHarness) {
     };
   }
 
-  return { guard, gate, startShift, onDuty };
+  return { guard, gate, startShift, startZoneShift, onDuty };
 }

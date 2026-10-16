@@ -23001,10 +23001,13 @@
             "type": "string"
           },
           "gateId": {
+            "description": "Null for a shift in a zone.",
             "format": "uuid",
+            "nullable": true,
             "type": "string"
           },
           "gateName": {
+            "nullable": true,
             "type": "string"
           },
           "id": {
@@ -23014,12 +23017,23 @@
           "startedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "zone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceView"
+              }
+            ],
+            "description": "The zone, for a shift that is not at a gate (ADR 0050); the gate actions refuse it.",
+            "nullable": true,
+            "type": "object"
           }
         },
         "required": [
           "id",
           "gateId",
           "gateName",
+          "zone",
           "startedAt",
           "endedAt"
         ],
@@ -27409,11 +27423,13 @@
           "gateId": {
             "format": "uuid",
             "type": "string"
+          },
+          "zoneId": {
+            "description": "A place in service (`GET /community/places`), for a shift that is not at a gate.",
+            "format": "uuid",
+            "type": "string"
           }
         },
-        "required": [
-          "gateId"
-        ],
         "type": "object"
       },
       "StatementEntryView": {
@@ -37663,6 +37679,7 @@
     },
     "/api/v1/gate/shifts/start": {
       "post": {
+        "description": "Exactly one of `gateId` and `zoneId`. In a zone, the gate actions answer 403 SHIFT_NOT_AT_GATE.",
         "operationId": "ShiftsController_start",
         "parameters": [
           {
@@ -37702,7 +37719,7 @@
             "bearer": []
           }
         ],
-        "summary": "Start my shift at a gate",
+        "summary": "Start my shift at a gate or in a zone",
         "tags": [
           "gate"
         ],

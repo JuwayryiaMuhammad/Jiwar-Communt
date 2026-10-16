@@ -1950,23 +1950,28 @@ model Gate {
   @@map("gates")
 }
 
-/// A guard on duty at one gate; at most one open per guard (partial unique
-/// index in SQL). Every gate action records its shift.
+/// A guard on duty at one post: a gate, or a zone (a place, ADR 0050);
+/// exactly one (CHECK). At most one open per guard (partial unique index in
+/// SQL). Every gate action records its shift; a zone shift takes none.
 model GuardShift {
   id             String    @id @db.Uuid
   tenantId       String    @map("tenant_id") @db.Uuid
   guardAccountId String    @map("guard_account_id") @db.Uuid
-  gateId         String    @map("gate_id") @db.Uuid
+  gateId         String?   @map("gate_id") @db.Uuid
+  /// The zone, for a shift that is not at a gate.
+  placeId        String?   @map("place_id") @db.Uuid
   startedAt      DateTime  @default(now()) @map("started_at") @db.Timestamptz(3)
   endedAt        DateTime? @map("ended_at") @db.Timestamptz(3)
   endReason      String?   @map("end_reason")
 
   guard    Account               @relation("ShiftGuard", fields: [tenantId, guardAccountId], references: [tenantId, id], onUpdate: Restrict)
-  gate     Gate                  @relation(fields: [tenantId, gateId], references: [tenantId, id], onUpdate: Restrict)
+  gate     Gate?                 @relation(fields: [tenantId, gateId], references: [tenantId, id], onUpdate: Restrict)
+  place    Place?                @relation(fields: [tenantId, placeId], references: [tenantId, id], onUpdate: Restrict)
   requests GateApprovalRequest[]
 
   @@unique([tenantId, id])
   @@index([tenantId, gateId])
+  @@index([tenantId, placeId])
   @@map("guard_shifts")
 }
 
@@ -5836,6 +5841,8 @@ model Place {
   active    Boolean  @default(true)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  shifts GuardShift[]
 
   @@unique([tenantId, id])
   @@index([tenantId, position, id], map: "places_order_idx")

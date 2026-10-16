@@ -105,6 +105,7 @@ const ERROR_TEXT: Record<string, string> = {
   WAGE_PERIOD_ALREADY_PAID: 'That month is already recorded as paid.',
   WAGE_OBLIGATION_NOT_OPEN: 'This worker has no open wage obligation: it was already closed.',
   GATE_NOT_FOUND: 'Gate not found.',
+  SHIFT_NOT_AT_GATE: 'This shift is in a zone, not at a gate.',
   LEGAL_HOLD_ACTIVE: 'This account is on legal hold.',
   SCOPE_CONFIRMATION_MISMATCH: 'The typed phrase does not match.',
   LEGAL_HOLD_NOT_FOUND: 'Legal hold not found, or already released.',

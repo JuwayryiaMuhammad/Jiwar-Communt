@@ -1107,6 +1107,8 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'cancel_side IS NULL is tested first; cancel_reason IS NOT NULL before its list',
   },
   gate_service_requests_cancel_reason_side: {},
+  // Guard shifts and tasks (ADR 0050).
+  guard_shifts_one_post: { guarded: 'num_nonnulls() counts NULLs: never NULL' },
 };
 
 interface Check {

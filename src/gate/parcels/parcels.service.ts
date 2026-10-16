@@ -74,9 +74,11 @@ export class ParcelsService implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    this.shifts.onStarted((tx, shift) =>
-      this.announceRejected(tx, shift.gateId, shift.guardAccountId),
-    );
+    // Parcels wait at a gate: a zone shift has none to announce.
+    this.shifts.onStarted(async (tx, shift) => {
+      if (shift.gateId)
+        await this.announceRejected(tx, shift.gateId, shift.guardAccountId);
+    });
     // A replay of a write that answers with the parcel: the guard's view.
     this.idempotency.renderer(PARCEL_RESOURCE, (id) =>
       this.tenantTx.withTenantTx(async (tx) => {

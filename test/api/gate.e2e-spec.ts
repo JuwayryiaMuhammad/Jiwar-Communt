@@ -12,7 +12,7 @@ import { buildWorld, type World } from './world';
 
 const GATE = ['createdAt', 'id', 'kind', 'name', 'phone', 'status'];
 const GATE_STATUS = ['id', 'name', 'open', 'phone'];
-const SHIFT = ['endedAt', 'gateId', 'gateName', 'id', 'startedAt'];
+const SHIFT = ['endedAt', 'gateId', 'gateName', 'id', 'startedAt', 'zone'];
 
 describe('API v0 — gates and shifts (ADR 0028)', () => {
   let h: HttpHarness;

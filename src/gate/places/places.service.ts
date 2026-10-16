@@ -9,6 +9,7 @@ import {
   TenantTx,
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
+import { ShiftsService } from '../shifts/shifts.service';
 import { MAX_PLACES } from './default-places';
 
 export const placeNotFound = () =>
@@ -41,6 +42,7 @@ export class PlacesService {
     private readonly tenantTx: TenantTx,
     private readonly ctx: RequestContext,
     private readonly audit: AuditService,
+    private readonly shifts: ShiftsService,
   ) {}
 
   /** The places in service, in the manager's order: what an app offers. */
@@ -113,6 +115,11 @@ export class PlacesService {
           targetId: id,
           changes,
         });
+      // A zone retired ends the shifts in it, as a gate deactivated does
+      // (ADR 0050). A start reads the place FOR SHARE: it finished before
+      // and its shift is ended here, or it waits and finds it retired.
+      if (before.active && !place.active)
+        await this.shifts.endAllInZone(tx, id, 'place_retired');
       return place;
     });
   }

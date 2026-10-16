@@ -1953,7 +1953,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Start my shift at a gate */
+        /**
+         * Start my shift at a gate or in a zone
+         * @description Exactly one of `gateId` and `zoneId`. In a zone, the gate actions answer 403 SHIFT_NOT_AT_GATE.
+         */
         post: operations["ShiftsController_start"];
         delete?: never;
         options?: never;
@@ -17026,13 +17029,18 @@ export interface components {
         ShiftView: {
             /** Format: date-time */
             endedAt: string | null;
-            /** Format: uuid */
-            gateId: string;
-            gateName: string;
+            /**
+             * Format: uuid
+             * @description Null for a shift in a zone.
+             */
+            gateId: string | null;
+            gateName: string | null;
             /** Format: uuid */
             id: string;
             /** Format: date-time */
             startedAt: string;
+            /** @description The zone, for a shift that is not at a gate (ADR 0050); the gate actions refuse it. */
+            zone: components["schemas"]["PlaceView"] | null;
         };
         /** @enum {string} */
         SlaClock: "response" | "resolution";
@@ -18285,7 +18293,12 @@ export interface components {
         };
         StartShiftDto: {
             /** Format: uuid */
-            gateId: string;
+            gateId?: string;
+            /**
+             * Format: uuid
+             * @description A place in service (`GET /community/places`), for a shift that is not at a gate.
+             */
+            zoneId?: string;
         };
         StatementEntryView: {
             /** @description Positive; the kind says which way it goes. */

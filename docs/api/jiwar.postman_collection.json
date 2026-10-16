@@ -9820,7 +9820,7 @@
           }
         },
         {
-          "name": "Start my shift at a gate",
+          "name": "Start my shift at a gate or in a zone",
           "request": {
             "body": {
               "mode": "raw",
@@ -9829,9 +9829,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"gateId\": \"\"\n}"
+              "raw": "{\n  \"gateId\": \"\",\n  \"zoneId\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `gateId` | string (uuid) | yes |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `gateId` | string (uuid) |  |  |\n| `zoneId` | string (uuid) |  | A place in service (`GET /community/places`), for a shift that is not at a gate. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",

@@ -121,6 +121,8 @@ export const ErrorCode = {
   GATE_NOT_FOUND: 'GATE_NOT_FOUND',
   /** A gate action needs the caller's open shift (a 403, ADR 0025). */
   NO_OPEN_SHIFT: 'NO_OPEN_SHIFT',
+  /** A gate action, and the open shift is in a zone (a 403, ADR 0050). */
+  SHIFT_NOT_AT_GATE: 'SHIFT_NOT_AT_GATE',
   SHIFT_ALREADY_OPEN: 'SHIFT_ALREADY_OPEN',
   VISITOR_PASS_NOT_FOUND: 'VISITOR_PASS_NOT_FOUND',
   VISITOR_PASS_LIMIT_REACHED: 'VISITOR_PASS_LIMIT_REACHED',

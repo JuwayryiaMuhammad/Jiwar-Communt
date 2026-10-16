@@ -521,4 +521,21 @@ export const GOVERNANCE_ELECTION_ROUTES: Row[] = [
     },
     noStore: true,
   },
+  {
+    method: 'POST',
+    path: '/staff/governance/elections/{id}/certify',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bGovernanceElectionId }),
+      code: 'GOVERNANCE_ELECTION_NOT_FOUND',
+      body: () => ({}),
+    },
+    invalid: {
+      body: { tieBreak: 'x' },
+      fields: [{ field: 'tieBreak', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
 ];

@@ -331,6 +331,7 @@ const ERROR_TEXT: Record<string, string> = {
   GOVERNANCE_NOMINATIONS_CLOSED: 'Nominations are not open.',
   GOVERNANCE_CANDIDACY_NOT_ALLOWED: 'Only an owner of a unit can stand.',
   GOVERNANCE_ALREADY_CANDIDATE: 'You stand in this election already.',
+  GOVERNANCE_NOT_CERTIFIABLE: 'Voting has not been counted yet.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

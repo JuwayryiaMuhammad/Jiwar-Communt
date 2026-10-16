@@ -1425,6 +1425,14 @@ export const NOTIFICATION_KINDS = {
     target: 'governance_election',
     params: { reason: {} },
   },
+  /** An election was certified: its electors and its candidates. */
+  'governance_election.result': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_election',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

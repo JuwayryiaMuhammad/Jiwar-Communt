@@ -7760,6 +7760,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/governance/elections/{id}/certify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Certify an election: the elected board sits
+         * @description Once counted (GOVERNANCE_NOT_CERTIFIABLE), once (GOVERNANCE_CONTEST_ENDED). A tie across the last seat needs the board’s choice (`tieBreak`, `tieReasonCode`). The board before it ends, the new one sits from now for the election’s term, its members told; a winner who owns no unit now leaves the seat vacant.
+         */
+        post: operations["StaffGovernanceElectionsController_certify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/governance/owners": {
         parameters: {
             query?: never;
@@ -12351,6 +12371,12 @@ export interface components {
         CategoryViewList: {
             data: components["schemas"]["CategoryView"][];
             nextCursor: string | null;
+        };
+        CertifyElectionDto: {
+            /** @description Only with a tie across the last seat (`tiedCandidateIds`): the tied candidates the board chose, exactly as many as the seats left. */
+            tieBreak?: string[];
+            /** @description With `tieBreak`: from the closed list `governanceTieBreak`. */
+            tieReasonCode?: string;
         };
         ChangeBoardRoleDto: {
             role: components["schemas"]["BoardRole"];
@@ -34327,6 +34353,34 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["DisqualifyCandidateDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGovernanceElectionView"];
+                };
+            };
+        };
+    };
+    StaffGovernanceElectionsController_certify: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CertifyElectionDto"];
             };
         };
         responses: {

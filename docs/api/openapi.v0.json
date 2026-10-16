@@ -3431,6 +3431,23 @@
         ],
         "type": "object"
       },
+      "CertifyElectionDto": {
+        "properties": {
+          "tieBreak": {
+            "description": "Only with a tie across the last seat (`tiedCandidateIds`): the tied candidates the board chose, exactly as many as the seats left.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "tieReasonCode": {
+            "description": "With `tieBreak`: from the closed list `governanceTieBreak`.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ChangeBoardRoleDto": {
         "properties": {
           "role": {
@@ -59046,6 +59063,64 @@
           }
         ],
         "summary": "Take a candidate off the list, with a reason code",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/elections/{id}/certify": {
+      "post": {
+        "description": "Once counted (GOVERNANCE_NOT_CERTIFIABLE), once (GOVERNANCE_CONTEST_ENDED). A tie across the last seat needs the board’s choice (`tieBreak`, `tieReasonCode`). The board before it ends, the new one sits from now for the election’s term, its members told; a winner who owns no unit now leaves the seat vacant.",
+        "operationId": "StaffGovernanceElectionsController_certify",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CertifyElectionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGovernanceElectionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Certify an election: the elected board sits",
         "tags": [
           "governance"
         ],

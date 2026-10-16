@@ -334,6 +334,41 @@ describe('Audit coverage — governance', () => {
         remaining: 0,
       });
     });
+
+    it('certified: the term and the ids seated, never a name', async () => {
+      const e = (
+        await g
+          .http(
+            'get',
+            '/staff/governance/elections?phase=closed',
+            s.manager.token,
+          )
+          .expect(200)
+      ).body as { data: { id: string; candidates: { id: string }[] }[] };
+      const closed = e.data[0];
+      const res = await g
+        .http(
+          'post',
+          `/staff/governance/elections/${closed.id}/certify`,
+          s.manager.token,
+          {},
+        )
+        .expect(200);
+      const termId = (res.body as { termId: string }).termId;
+      const certified = await single(
+        'governance_election.certified',
+        closed.id,
+      );
+      expect(certified).toMatchObject(by(s.manager, 'governance_election'));
+      expect(certified.metadata).toEqual({
+        termId,
+        elected: [closed.candidates[0].id],
+        ineligible: [],
+        tied: 0,
+        tieBreak: [],
+        tieReasonCode: null,
+      });
+    });
   });
 
   describe('catalog completeness', () => {

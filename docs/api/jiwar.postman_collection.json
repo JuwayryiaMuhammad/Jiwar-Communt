@@ -11552,6 +11552,56 @@
           }
         },
         {
+          "name": "Certify an election: the elected board sits",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"tieBreak\": [],\n  \"tieReasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `tieBreak` | string (uuid)[] |  | Only with a tie across the last seat (`tiedCandidateIds`): the tied candidates the board chose, exactly as many as the seats left. |\n| `tieReasonCode` | string |  | With `tieBreak`: from the closed list `governanceTieBreak`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "elections",
+                ":id",
+                "certify"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/elections/:id/certify",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Find owners for the board",
           "request": {
             "description": "**Responses:** 200",

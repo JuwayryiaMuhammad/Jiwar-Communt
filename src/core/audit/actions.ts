@@ -1069,6 +1069,14 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'governance_candidate',
   },
+  // The manager certifies the count: the board it seats. metadata: termId,
+  // elected ([candidate ids] seated), ineligible ([ids]: winners who own no
+  // unit now, their seats left vacant), tied (how many), tieBreak ([ids]
+  // the board chose), tieReasonCode.
+  'governance_election.certified': {
+    log: 'tenant',
+    target: 'governance_election',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

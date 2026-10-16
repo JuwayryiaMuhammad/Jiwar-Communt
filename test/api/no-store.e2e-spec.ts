@@ -20,7 +20,10 @@ import { waitForMessage, waitForOtp } from '../setup/mailpit';
 import { drainOutbox } from '../setup/outbox';
 import { lapse, shiftElection } from '../setup/governance';
 import { SweepRunner } from '../../src/core/sweep/sweep-runner';
-import { CONTEST_OPEN_SWEEP } from '../../src/governance/contests/contest-sweeps';
+import {
+  CONTEST_CLOSE_SWEEP,
+  CONTEST_OPEN_SWEEP,
+} from '../../src/governance/contests/contest-sweeps';
 import { call } from './request';
 import { ROUTES } from './routes';
 import { inviteBody, minorBody } from './routes/household';
@@ -1000,6 +1003,33 @@ describe('API v0 — no-store', () => {
         `/governance/elections/${await aGovernanceElectionOf()}/cancel`,
         { reasonCode: 'postponed' },
       ),
+    'POST /staff/governance/elections/{id}/certify': async () => {
+      const id = await aGovernanceElectionOf();
+      await as(
+        'landlord',
+        'POST',
+        `/governance/elections/${id}/candidacy`,
+        {},
+      ).expect(201);
+      const sweeps = h.moduleRef.get(SweepRunner);
+      await shiftElection(id, -25);
+      await sweeps.run(CONTEST_OPEN_SWEEP, new Date());
+      const e = body<{ candidates: { id: string }[] }>(
+        await as('owner', 'GET', `/governance/elections/${id}`).expect(200),
+      );
+      await as('owner', 'POST', `/governance/elections/${id}/votes`, {
+        unitId: w.a.homeUnitId,
+        candidateIds: [e.candidates[0].id],
+      }).expect(201);
+      await shiftElection(id, -25);
+      await sweeps.run(CONTEST_CLOSE_SWEEP, new Date());
+      return as(
+        'manager',
+        'POST',
+        `/staff/governance/elections/${id}/certify`,
+        {},
+      );
+    },
     'GET /staff/governance/elections': () =>
       as('manager', 'GET', '/staff/governance/elections'),
     'GET /staff/governance/elections/{id}': async () =>

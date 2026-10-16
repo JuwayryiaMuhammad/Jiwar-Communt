@@ -11,6 +11,7 @@ import {
   GovernanceElectionsController,
   StaffGovernanceElectionsController,
 } from './elections/elections.controller';
+import { CertificationService } from './elections/certification.service';
 import { GovernanceElectionsService } from './elections/elections.service';
 import { GovernanceNotices } from './governance-notices';
 import {
@@ -42,6 +43,7 @@ import { GovernancePollsService } from './polls/polls.service';
     ContestSweeps,
     GovernancePollsService,
     GovernanceElectionsService,
+    CertificationService,
   ],
 })
 export class GovernanceModule {}

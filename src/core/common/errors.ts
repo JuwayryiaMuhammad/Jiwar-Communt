@@ -781,6 +781,11 @@ export const ErrorCode = {
   GOVERNANCE_CANDIDACY_NOT_ALLOWED: 'GOVERNANCE_CANDIDACY_NOT_ALLOWED',
   /** The caller stands already (409). */
   GOVERNANCE_ALREADY_CANDIDATE: 'GOVERNANCE_ALREADY_CANDIDATE',
+  /**
+   * Not counted yet: voting is still open, or its count not written yet
+   * (409, params.phase). Retry once the close ran.
+   */
+  GOVERNANCE_NOT_CERTIFIABLE: 'GOVERNANCE_NOT_CERTIFIABLE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

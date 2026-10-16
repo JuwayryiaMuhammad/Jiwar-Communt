@@ -22,9 +22,11 @@ import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import { ListOf, toList, type ListResponse } from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
+import { CertificationService } from './certification.service';
 import {
   CancelGovernanceElectionDto,
   CastElectionVoteDto,
+  CertifyElectionDto,
   CreateGovernanceElectionDto,
   DisqualifyCandidateDto,
   GovernanceElectionsQueryDto,
@@ -185,7 +187,29 @@ export class GovernanceElectionsController {
 @RequirePermissions('governance.manage')
 @Controller('staff/governance/elections')
 export class StaffGovernanceElectionsController {
-  constructor(private readonly elections: GovernanceElectionsService) {}
+  constructor(
+    private readonly elections: GovernanceElectionsService,
+    private readonly certification: CertificationService,
+  ) {}
+
+  @Post(':id/certify')
+  @HttpCode(HttpStatus.OK)
+  @NoStore()
+  @Idempotent()
+  @ApiOperation({
+    summary: 'Certify an election: the elected board sits',
+    description:
+      'Once counted (GOVERNANCE_NOT_CERTIFIABLE), once (GOVERNANCE_CONTEST_ENDED). A tie across the last seat needs the board’s choice (`tieBreak`, `tieReasonCode`). The board before it ends, the new one sits from now for the election’s term, its members told; a winner who owns no unit now leaves the seat vacant.',
+  })
+  @ApiOkResponse({ type: StaffGovernanceElectionView })
+  async certify(
+    @Param('id', parseId()) id: string,
+    @Body() dto: CertifyElectionDto,
+  ): Promise<StaffGovernanceElectionView> {
+    return StaffGovernanceElectionView.from(
+      await this.certification.certify(id, dto),
+    );
+  }
 
   @Get()
   @NoStore()

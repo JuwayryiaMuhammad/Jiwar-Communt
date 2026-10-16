@@ -225,3 +225,27 @@ export class GovernanceElectionsQueryDto extends PageQueryDto {
   @IsIn(ELECTION_PHASES, withParams({ allowed: [...ELECTION_PHASES] }))
   phase?: ElectionPhase;
 }
+
+export class CertifyElectionDto {
+  @ApiProperty({
+    type: [String],
+    format: 'uuid',
+    required: false,
+    description:
+      'Only with a tie across the last seat (`tiedCandidateIds`): the tied candidates the board chose, exactly as many as the seats left.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(seats.max, withParams({ max: seats.max }))
+  @IsUUID('all', { each: true })
+  tieBreak?: string[];
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    description: 'With `tieBreak`: from the closed list `governanceTieBreak`.',
+  })
+  @IsOptional()
+  @IsString()
+  tieReasonCode?: string;
+}

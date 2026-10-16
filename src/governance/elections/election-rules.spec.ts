@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { REASON_CODES } from '../../core/common/reasons';
+import { addMonths } from './certification.service';
 import {
   electionOutcomes,
   electionPhase,
@@ -133,6 +134,17 @@ describe('the elections’ lists (ADR 0051)', () => {
     expect(elections).toContain(`"cancel_reason_code" = 'no_candidates'`);
     expect(mirror).toContain(
       `governanceElectionSystemCancel: ['no_candidates']`,
+    );
+  });
+});
+
+describe('a term’s months (ADR 0051)', () => {
+  it('calendar months, the month’s last day when the day overflows', () => {
+    expect(addMonths(new Date('2026-11-01T10:00:00Z'), 24).toISOString()).toBe(
+      '2028-11-01T10:00:00.000Z',
+    );
+    expect(addMonths(new Date('2027-01-31T10:00:00Z'), 1).toISOString()).toBe(
+      '2027-02-28T10:00:00.000Z',
     );
   });
 });

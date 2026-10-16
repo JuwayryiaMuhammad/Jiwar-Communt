@@ -331,5 +331,123 @@ describe('Governance — elections', () => {
       ).filter((n) => n.targetId === e.id);
       expect(told[0].params).toEqual({ tied: 'yes' });
     });
+
+    describe('the certification', () => {
+      const certify = (body: object) =>
+        g.http(
+          'post',
+          `/staff/governance/elections/${e.id}/certify`,
+          s.manager.token,
+          body,
+        );
+
+      it('a tie is resolved by the board first: exactly the seats left, from the tied', async () => {
+        expect(code(await certify({}).expect(400))).toBe('REASON_REQUIRED');
+        expect(
+          fields(
+            await certify({
+              tieReasonCode: 'lot_drawn',
+              tieBreak: [ids[1]],
+            }).expect(400),
+          ),
+        ).toEqual([['tieBreak', 'INVALID_LENGTH']]);
+        expect(
+          fields(
+            await certify({
+              tieReasonCode: 'lot_drawn',
+              tieBreak: [ids[0], ids[1]],
+            }).expect(400),
+          ),
+        ).toEqual([['tieBreak', 'INVALID_VALUE']]);
+      });
+
+      it('seats the elected board, ends the one before, and tells everyone; a winner who owns nothing now leaves the seat vacant', async () => {
+        // o(3) stood as ids[2]; deactivated, they own no unit an active account holds.
+        await g
+          .http('patch', `/accounts/${o(3).id}/status`, s.manager.token, {
+            status: 'inactive',
+          })
+          .expect(200);
+        const before = (await g.staffBoard(s.manager))!;
+        const res = await certify({
+          tieReasonCode: 'lot_drawn',
+          tieBreak: [ids[1], ids[2]],
+        }).expect(200);
+        const done = res.body as {
+          phase: string;
+          termId: string;
+          tieReasonCode: string;
+          candidates: { id: string; outcome: string }[];
+        };
+        expect(done).toMatchObject({
+          phase: 'certified',
+          tieReasonCode: 'lot_drawn',
+        });
+        expect(done.candidates.map((c) => [c.id, c.outcome])).toEqual([
+          [ids[0], 'elected'],
+          [ids[1], 'elected'],
+          [ids[2], 'ineligible'],
+          [ids[3], 'not_elected'],
+        ]);
+        const board = (await g.staffBoard(s.manager))!;
+        expect(board).toMatchObject({
+          id: done.termId,
+          source: 'elected',
+          seats: 3,
+          status: 'current',
+        });
+        expect(board.members.map((m) => [m.accountId, m.role])).toEqual([
+          [o(1).id, 'member'],
+          [o(2).id, 'member'],
+        ]);
+        const terms = await g
+          .http('get', '/staff/governance/board/terms', s.manager.token)
+          .expect(200);
+        expect(
+          (terms.body as { data: { id: string; endReason: string | null }[] })
+            .data[1],
+        ).toMatchObject({
+          id: before.id,
+          endReason: 'succeeded',
+        });
+        expect(await g.permissionsOf(o(0))).not.toContain('governance.board');
+        expect(await g.permissionsOf(o(1))).toContain('governance.board');
+        for (const who of [o(1), o(2)])
+          expect(
+            (
+              await g.notifications(s.c, who.id, 'governance_board.seat')
+            ).filter((n) => n.targetId === done.termId),
+          ).toHaveLength(1);
+        for (const who of [o(0), o(4), o(5)])
+          expect(
+            (
+              await g.notifications(s.c, who.id, 'governance_election.result')
+            ).filter((n) => n.targetId === e.id),
+          ).toHaveLength(1);
+        expect(
+          code(
+            await certify({
+              tieReasonCode: 'lot_drawn',
+              tieBreak: [ids[1], ids[2]],
+            }).expect(409),
+          ),
+        ).toBe('GOVERNANCE_CONTEST_ENDED');
+      });
+
+      it('nothing is certified before it is counted', async () => {
+        const next = await g.election(o(1));
+        await g.stand(o(5), next.id).expect(201);
+        await toVoting(next);
+        const res = await g
+          .http(
+            'post',
+            `/staff/governance/elections/${next.id}/certify`,
+            s.manager.token,
+            {},
+          )
+          .expect(409);
+        expect(code(res)).toBe('GOVERNANCE_NOT_CERTIFIABLE');
+      });
+    });
   });
 });

@@ -1541,6 +1541,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تم إلغاء انتخاب للمجلس. افتح التطبيق لمعرفة السبب.',
     },
   },
+  'governance_election.result': {
+    en: {
+      title: 'The board is elected',
+      body: 'The board election’s result was certified. Open the app to see the new board.',
+    },
+    ar: {
+      title: 'تم انتخاب المجلس',
+      body: 'تم اعتماد نتيجة انتخاب المجلس. افتح التطبيق لعرض المجلس الجديد.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

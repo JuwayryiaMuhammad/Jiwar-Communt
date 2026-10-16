@@ -1144,6 +1144,10 @@ export const AUDIT_ACTIONS = {
   // The 30-day purge of the guards' track points, per compound (system):
   // no target. metadata: points (how many).
   'patrol_track.purged': { log: 'tenant', target: 'patrol_run' },
+  // A guard's erasure (ADR 0052): their notes' words go, once each; where
+  // they walked is deleted. metadata: points (how many).
+  'patrol_note.text_cleared': { log: 'tenant', target: 'patrol_note' },
+  'patrol_track.erased': { log: 'tenant', target: 'account' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

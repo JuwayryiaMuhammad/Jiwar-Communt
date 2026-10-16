@@ -127,6 +127,7 @@ describe('audit catalog', () => {
         'patrol_checkpoint',
         'patrol_route',
         'patrol_run',
+        'patrol_note',
       ]).toContain(def.target);
     }
   });

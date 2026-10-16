@@ -3,6 +3,7 @@ import { newId } from '../../src/core/common/uuid';
 import { PATROL_WATCH_SWEEP } from '../../src/gate/patrols/patrol-sweeps';
 import { PATROL_TRACK_PURGE_SWEEP } from '../../src/gate/patrols/patrol-track.service';
 import { auditReaders } from '../setup/audit';
+import { eraseNow } from '../setup/erasure';
 import {
   COMMUNITY_COVERAGE,
   ENGAGEMENT_COVERAGE,
@@ -346,6 +347,41 @@ describe('Audit coverage — patrols', () => {
     });
     expect(purged[0].metadata).toEqual({ points: 2 });
     expect(JSON.stringify(purged[0])).not.toContain('30.1');
+  });
+
+  it('a guard’s erasure: their notes’ words go, by id; their track, how many', async () => {
+    const gate = (await x.g.gate(s.c)).id;
+    const point = await x.checkpoint(supervisor, { gateId: gate });
+    const r = await x.route(supervisor, { gateId: gate }, [point.id]);
+    const leaving = await x.guard(s.c);
+    await x.start(leaving, { gateId: gate });
+    const run = await x.adhoc(leaving, r.id);
+    const scan = (
+      await x
+        .scanRaw(leaving, run.id, { method: 'qr', payload: point.qrPayload })
+        .expect(201)
+    ).body as { id: string };
+    const note = (
+      await x
+        .noteRaw(leaving, run.id, { scanId: scan.id, text: WORDS })
+        .expect(201)
+    ).body as { id: string };
+    await x
+      .http('post', `/gate/patrols/runs/${run.id}/track`, leaving.token, {
+        points: [{ recordedAt: new Date().toISOString(), lat: 30, lng: 31 }],
+      })
+      .expect(200);
+    await x
+      .http('patch', `/accounts/${leaving.id}/status`, s.manager.token, {
+        status: 'inactive',
+      })
+      .expect(200);
+    await eraseNow(h, s.c, leaving.id);
+    const cleared = await single('patrol_note.text_cleared', note.id);
+    expect(cleared.targetType).toBe('patrol_note');
+    const erased = await single('patrol_track.erased', leaving.id);
+    expect(erased.targetType).toBe('account');
+    expect(erased.metadata).toEqual({ points: 1 });
   });
 
   describe('catalog completeness', () => {

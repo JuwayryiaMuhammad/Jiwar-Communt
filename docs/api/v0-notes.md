@@ -132,3 +132,13 @@ The full notes for the mobile team, with examples, are in [`notes/gate-card-emer
 - `GET /community/places`: requests take place ids.
 - The guard: `/gate/emergencies` and `/gate/gate-services`, inside a shift.
 - The clinic (C5, C6) is not built: hide it.
+
+### Permits and contractors (ADR 0049)
+
+The full notes for the mobile team, with examples, are in [`notes/permits.md`](notes/permits.md).
+
+- `GET /community/permit-rules`: the compound's work days, hours and days off, its time zone and the limits.
+- The unit's primary asks for works (`POST /units/{unitId}/permits/works`), a furniture move (`…/moves`) and taking materials out (`…/material-exits`); anyone who may invite visitors holds an event (`…/events`, approved at once up to 20 guests, the management decides 21–150).
+- Contractor workers are added one by one (`POST /permits/{id}/workers`): a name, a face (`contractor_photo`), the ID type and the last four of its number, never shown again.
+- `GET /units/{unitId}/permits`, `GET /permits/{id}`, `POST /permits/{id}/cancel`; guests are added and taken off until the event starts.
+- The guard: `GET /gate/unit-permits` (by unit code or reference) and `GET /gate/unit-permits/{id}`, then `POST /gate/entries` with `permit_worker` (plus `idLast4`), `event_guest` or `move_permit`; `POST /gate/unit-permits/{id}/use` for goods going out; `POST /gate/material-entries` for materials coming in.

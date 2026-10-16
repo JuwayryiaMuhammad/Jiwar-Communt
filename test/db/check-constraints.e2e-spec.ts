@@ -1238,6 +1238,22 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'end_reason IS NULL is tested first; the list runs only on a value',
   },
+  governance_contests_window: {},
+  governance_contests_max_choices: {},
+  governance_contests_election_secret: {},
+  // Nullable columns only under IS [NOT] NULL.
+  governance_contests_state_shape: {},
+  governance_contests_counts: {
+    guarded:
+      'electorate IS NULL and turnout IS NULL are tested first; the comparisons run only on values',
+  },
+  governance_participations_choice_shape: {
+    guarded: 'choice IS NULL is tested first; cardinality runs only on a value',
+  },
+  governance_ballot_boxes_secret: {},
+  governance_ballot_boxes_shape: {},
+  governance_ballots_random_id: {},
+  governance_ballots_choice: {},
 };
 
 interface Check {

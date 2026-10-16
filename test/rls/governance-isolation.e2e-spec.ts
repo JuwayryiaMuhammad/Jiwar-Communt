@@ -1,7 +1,13 @@
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
-import { boardMemberRow, boardTermRow } from '../setup/governance-rows';
+import {
+  boardMemberRow,
+  boardTermRow,
+  closedContestRows,
+  contestRow,
+  openContest,
+} from '../setup/governance-rows';
 
 /** What a seed needs from one compound. */
 interface Side {
@@ -43,6 +49,61 @@ const TABLES: Table[] = [
         accountId: link.accountId,
         addedById: own.accountId,
       }),
+  },
+  {
+    table: 'governance_contests',
+    insert: (tx, own) => contestRow(tx, { tenantId: own.tenantId }),
+    linked: false,
+  },
+  {
+    table: 'governance_electors',
+    insert: async (tx, own, link) => {
+      const contestId = await contestRow(tx, { tenantId: own.tenantId });
+      await openContest(tx, {
+        tenantId: own.tenantId,
+        contestId,
+        electors: [{ unitId: link.unitId, accountId: link.accountId }],
+      });
+      return contestId;
+    },
+    key: 'contest_id',
+  },
+  {
+    // A secret contest's participation, box and ballot rows, as a close
+    // leaves them (the box is gone by then: see the box's own entry).
+    table: 'governance_participations',
+    insert: (tx, own, link) =>
+      closedContestRows(tx, {
+        tenantId: own.tenantId,
+        unitId: link.unitId,
+        accountId: link.accountId,
+      }),
+    key: 'contest_id',
+  },
+  {
+    table: 'governance_ballots',
+    insert: (tx, own) =>
+      closedContestRows(tx, {
+        tenantId: own.tenantId,
+        unitId: own.unitId,
+        accountId: own.accountId,
+      }),
+    key: 'contest_id',
+    linked: false,
+  },
+  {
+    table: 'governance_ballot_boxes',
+    insert: async (tx, own) => {
+      const contestId = await contestRow(tx, { tenantId: own.tenantId });
+      await openContest(tx, {
+        tenantId: own.tenantId,
+        contestId,
+        electors: [],
+      });
+      return contestId;
+    },
+    key: 'contest_id',
+    linked: false,
   },
 ];
 

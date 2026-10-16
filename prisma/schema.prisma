@@ -6606,3 +6606,87 @@ model BoardMember {
   @@index([tenantId, termId, addedAt, id], map: "board_members_term_idx")
   @@map("board_members")
 }
+
+enum GovernanceContestKind {
+  poll
+  election
+
+  @@map("governance_contest_kind")
+}
+
+/// What polls and elections share (ADR 0051): a window, an electorate
+/// snapshotted when it opens, a close or a cancel, once. `secret` and
+/// `maxChoices` never change.
+model GovernanceContest {
+  id          String                @id @db.Uuid
+  tenantId    String                @map("tenant_id") @db.Uuid
+  kind        GovernanceContestKind
+  secret      Boolean
+  maxChoices  Int                   @map("max_choices") @db.SmallInt
+  opensAt     DateTime              @map("opens_at") @db.Timestamptz(3)
+  closesAt    DateTime              @map("closes_at") @db.Timestamptz(3)
+  openedAt    DateTime?             @map("opened_at") @db.Timestamptz(3)
+  electorate  Int?
+  closedAt    DateTime?             @map("closed_at") @db.Timestamptz(3)
+  turnout     Int?
+  cancelledAt DateTime?             @map("cancelled_at") @db.Timestamptz(3)
+  remindedAt  DateTime?             @map("reminded_at") @db.Timestamptz(3)
+  createdAt   DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, id, secret], map: "governance_contests_tenant_id_id_secret_key")
+  @@map("governance_contests")
+}
+
+/// The account that casts a unit's vote in a contest, as it was when the
+/// contest opened (ADR 0051). Append-only, written before the open only.
+model GovernanceElector {
+  tenantId  String @map("tenant_id") @db.Uuid
+  contestId String @map("contest_id") @db.Uuid
+  unitId    String @map("unit_id") @db.Uuid
+  accountId String @map("account_id") @db.Uuid
+
+  @@id([tenantId, contestId, unitId])
+  @@index([tenantId, accountId], map: "governance_electors_account_idx")
+  @@map("governance_electors")
+}
+
+/// A unit took part in a contest (ADR 0051): by whom and when, once. The
+/// choice only when the contest is open (not secret). Append-only.
+model GovernanceParticipation {
+  tenantId       String   @map("tenant_id") @db.Uuid
+  contestId      String   @map("contest_id") @db.Uuid
+  unitId         String   @map("unit_id") @db.Uuid
+  voterAccountId String   @map("voter_account_id") @db.Uuid
+  votedAt        DateTime @map("voted_at") @db.Timestamptz(3)
+  secret         Boolean
+  choice         String[] @db.Uuid
+
+  @@id([tenantId, contestId, unitId])
+  @@index([tenantId, voterAccountId], map: "governance_participations_voter_idx")
+  @@map("governance_participations")
+}
+
+/// A secret contest's ballots while voting is open (ADR 0051): one row,
+/// `{ <random v4 id>: [choice ids] }`. No unit, no account, no time.
+model GovernanceBallotBox {
+  tenantId  String  @map("tenant_id") @db.Uuid
+  contestId String  @map("contest_id") @db.Uuid
+  secret    Boolean @default(true)
+  ballots   Json    @default("{}")
+
+  @@id([tenantId, contestId])
+  @@map("governance_ballot_boxes")
+}
+
+/// A closed secret contest's ballot (ADR 0051): a random v4 id, the contest
+/// and the choice; nothing else. Written at the close, in id order.
+model GovernanceBallot {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  contestId String   @map("contest_id") @db.Uuid
+  choice    String[] @db.Uuid
+
+  @@index([tenantId, contestId], map: "governance_ballots_contest_idx")
+  @@map("governance_ballots")
+}

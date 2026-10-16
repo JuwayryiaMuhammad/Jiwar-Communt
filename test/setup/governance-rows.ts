@@ -55,3 +55,79 @@ export async function boardMemberRow(
   });
   return id;
 }
+
+/** A contest that has not opened; its id. */
+export async function contestRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; secret?: boolean; kind?: 'poll' | 'election' },
+): Promise<string> {
+  const id = newId();
+  await tx.governanceContest.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      kind: r.kind ?? 'poll',
+      secret: r.secret ?? true,
+      maxChoices: 1,
+      opensAt: new Date(Date.now() + DAY),
+      closesAt: new Date(Date.now() + 2 * DAY),
+    },
+  });
+  return id;
+}
+
+/** The contest opens now with its electors (one per unit), and a box when secret. */
+export async function openContest(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    contestId: string;
+    electors: { unitId: string; accountId: string }[];
+  },
+): Promise<void> {
+  for (const e of r.electors)
+    await tx.governanceElector.create({
+      data: { tenantId: r.tenantId, contestId: r.contestId, ...e },
+    });
+  const contest = await tx.governanceContest.update({
+    where: { id: r.contestId },
+    data: { openedAt: new Date(), electorate: r.electors.length },
+  });
+  if (contest.secret)
+    await tx.governanceBallotBox.create({
+      data: { tenantId: r.tenantId, contestId: r.contestId },
+    });
+}
+
+/**
+ * A secret contest that opened, took one vote and closed: its participation
+ * and its one ballot row, as the close writes them. Returns the contest id.
+ */
+export async function closedContestRows(
+  tx: TenantTxClient,
+  r: { tenantId: string; unitId: string; accountId: string },
+): Promise<string> {
+  const contestId = await contestRow(tx, { tenantId: r.tenantId });
+  await openContest(tx, {
+    tenantId: r.tenantId,
+    contestId,
+    electors: [{ unitId: r.unitId, accountId: r.accountId }],
+  });
+  await tx.$executeRaw`
+    INSERT INTO governance_participations
+      (tenant_id, contest_id, unit_id, voter_account_id, voted_at, secret)
+    VALUES (${r.tenantId}::uuid, ${contestId}::uuid, ${r.unitId}::uuid,
+            ${r.accountId}::uuid, now(), true)`;
+  await tx.governanceContest.update({
+    where: { id: contestId },
+    data: { closedAt: new Date(), turnout: 1 },
+  });
+  await tx.$executeRaw`
+    INSERT INTO governance_ballots (id, tenant_id, contest_id, choice)
+    VALUES (gen_random_uuid(), ${r.tenantId}::uuid, ${contestId}::uuid,
+            ARRAY[gen_random_uuid()])`;
+  await tx.governanceBallotBox.delete({
+    where: { tenantId_contestId: { tenantId: r.tenantId, contestId } },
+  });
+  return contestId;
+}

@@ -375,4 +375,6 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   board_members_tenant_id_id_key: null,
   board_members_one_seat: null,
   board_members_one_office: null,
+  governance_contests_tenant_id_id_key: null,
+  governance_contests_tenant_id_id_secret_key: null,
 };

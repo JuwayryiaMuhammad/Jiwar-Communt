@@ -142,3 +142,14 @@ The full notes for the mobile team, with examples, are in [`notes/permits.md`](n
 - Contractor workers are added one by one (`POST /permits/{id}/workers`): a name, a face (`contractor_photo`), the ID type and the last four of its number, never shown again.
 - `GET /units/{unitId}/permits`, `GET /permits/{id}`, `POST /permits/{id}/cancel`; guests are added and taken off until the event starts.
 - The guard: `GET /gate/unit-permits` (by unit code or reference) and `GET /gate/unit-permits/{id}`, then `POST /gate/entries` with `permit_worker` (plus `idLast4`), `event_guest` or `move_permit`; `POST /gate/unit-permits/{id}/use` for goods going out; `POST /gate/material-entries` for materials coming in.
+
+### Gate card — guard shifts and tasks (ADR 0050)
+
+The full notes for the guard app are in [`notes/guard-shifts-tasks.md`](notes/guard-shifts-tasks.md).
+
+- `POST /gate/shifts/start` takes a `gateId` or a `zoneId` (a place). In a zone the gate's actions answer 403 `SHIFT_NOT_AT_GATE`. `ShiftView.gateId` is nullable and the view gains `zone`, the slot's times, `lateMinutes` and `pendingHandovers`.
+- `POST /gate/shifts/end` takes the handover: every active checklist item (`GET /gate/handover-items`) and optional notes; the next guard acknowledges (`/gate/handovers/pending`, `…/{id}/acknowledge`).
+- The roster: `GET /gate/roster` and `…/attendance` for the guard; `/staff/security/roster/*`, `/attendance`, `/posts`, `/guards` for the management. Late is more than 10 minutes, absent not opened by 60; overtime only for scheduled shifts.
+- `GET /gate/my-work`: tasks, the gate services queue and mine, open parking reports (the guard role now closes them), pending instructions.
+- Tasks (`/gate/tasks/{id}`, `…/take`, `…/complete`; `/staff/security/tasks`), swaps (`/gate/swaps`, `/staff/security/swaps`), instructions (`/gate/guard-instructions`, `/staff/security/instructions`), found items (`/gate/found-items`, `/staff/security/found-items`).
+- `GET /staff/security/reports/daily` and `…/export` (CSV). `visitors` is passes and gate requests only; the permits' traffic (ADR 0049) has its own counts: `contractorWorkers`, `eventGuests`, `moveTrucks`, `materialEntries`, `materialExits`.

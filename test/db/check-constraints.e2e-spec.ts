@@ -1333,6 +1333,33 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded: 'schedule IS NULL is tested first',
   },
   patrol_route_checkpoints_position_range: {},
+  patrol_runs_one_post: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
+  patrol_runs_kind_shape: {},
+  patrol_runs_planned: {
+    guarded:
+      'kind_shape gives a scheduled run its start; started_shape gives every other run its started_at: never both NULL',
+  },
+  patrol_runs_window_after_start: {
+    guarded:
+      'scheduled_start IS NULL is tested first; kind_shape gives window_ends_at with it',
+  },
+  patrol_runs_started_shape: {},
+  patrol_runs_ended_shape: {
+    guarded: 'started_at IS NULL and ended_at IS NULL are tested first',
+  },
+  patrol_runs_end_reason: {
+    guarded: 'end_reason IS NULL is tested first',
+  },
+  patrol_runs_cancel_reason: {
+    guarded: 'cancel_reason IS NULL is tested first',
+  },
+  patrol_runs_cancelled_by: {
+    guarded: 'cancel_reason IS NULL is tested first',
+  },
+  patrol_runs_counts: {},
+  patrol_runs_completed_shape: {},
 };
 
 interface Check {

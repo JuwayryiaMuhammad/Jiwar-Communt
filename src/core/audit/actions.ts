@@ -1112,7 +1112,8 @@ export const AUDIT_ACTIONS = {
   },
   'patrol_checkpoint.retired': { log: 'tenant', target: 'patrol_checkpoint' },
   // A route's post by value, its names as changed; metadata: version,
-  // checkpoints (how many), ordered, expectedMinutes, scheduled (whether).
+  // checkpoints (how many), ordered, expectedMinutes, scheduled (whether),
+  // runs (the scheduled runs made).
   'patrol_route.created': {
     log: 'tenant',
     target: 'patrol_route',
@@ -1123,9 +1124,23 @@ export const AUDIT_ACTIONS = {
     target: 'patrol_route',
     sensitive: ['nameEn', 'nameAr'],
   },
-  // metadata: as created.
+  // metadata: as created, and cancelledRuns (the scheduled runs nobody
+  // started, made again from the new version).
   'patrol_route.versioned': { log: 'tenant', target: 'patrol_route' },
+  // metadata: cancelledRuns.
   'patrol_route.retired': { log: 'tenant', target: 'patrol_route' },
+  // metadata: kind, shiftId, late (whether).
+  'patrol_run.started': { log: 'tenant', target: 'patrol_run' },
+  // metadata: status, scanned, total, reason (for an incomplete one),
+  // recipients (the keepers told).
+  'patrol_run.ended': { log: 'tenant', target: 'patrol_run' },
+  // metadata: reason (a patrolRunCancel code, or post_out_of_service).
+  'patrol_run.cancelled': { log: 'tenant', target: 'patrol_run' },
+  // The watch sweep. metadata: recipients.
+  'patrol_run.late': { log: 'tenant', target: 'patrol_run' },
+  'patrol_run.missed': { log: 'tenant', target: 'patrol_run' },
+  // metadata: status, scanned, total, recipients.
+  'patrol_run.timed_out': { log: 'tenant', target: 'patrol_run' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

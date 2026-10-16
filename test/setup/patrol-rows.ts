@@ -130,3 +130,34 @@ export async function versionRow(
   });
   return id;
 }
+
+/** A scheduled run of a version, a day ahead (`inHours` from now). */
+export async function runRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    routeId: string;
+    versionId: string;
+    gateId: string;
+    inHours?: number;
+  },
+): Promise<string> {
+  const id = newId();
+  const scheduledStart = new Date(Date.now() + (r.inHours ?? 24) * 3_600_000);
+  await tx.patrolRun.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      routeId: r.routeId,
+      versionId: r.versionId,
+      gateId: r.gateId,
+      kind: 'scheduled',
+      plannedAt: scheduledStart,
+      scheduledStart,
+      windowEndsAt: new Date(scheduledStart.getTime() + 1_800_000),
+      status: 'scheduled',
+      checkpointsTotal: 1,
+    },
+  });
+  return id;
+}

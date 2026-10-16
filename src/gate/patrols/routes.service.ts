@@ -19,6 +19,7 @@ import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { dbNow } from '../db-clock';
 import { RosterCore } from '../roster/roster-core';
 import { PatrolCore, routeNotFound, routeRetired } from './patrol-core';
+import { RunsCore } from './runs-core';
 import {
   checkPatrolSchedule,
   ROUTE_CHECKPOINTS,
@@ -82,6 +83,7 @@ export class RoutesService implements OnModuleInit {
     private readonly idempotency: IdempotencyService,
     private readonly roster: RosterCore,
     private readonly core: PatrolCore,
+    private readonly runs: RunsCore,
   ) {}
 
   onModuleInit(): void {
@@ -120,11 +122,21 @@ export class RoutesService implements OnModuleInit {
         },
       });
       const first = await this.writeVersion(tx, route, 1, version, 'version.');
+      const made = await this.runs.generate(
+        tx,
+        route,
+        first,
+        await dbNow(tx),
+        await this.roster.timeZone(tx),
+      );
       await this.audit.record(tx, {
         action: 'patrol_route.created',
         targetId: id,
         changes: diffChanges(null, audited(route), 'patrol_route.created'),
-        metadata: versionMetadata(first, version.checkpointIds.length),
+        metadata: {
+          ...versionMetadata(first, version.checkpointIds.length),
+          runs: made,
+        },
       });
       return this.detailOf(tx, route);
     });
@@ -158,8 +170,11 @@ export class RoutesService implements OnModuleInit {
   }
 
   /**
-   * A new version: the route FOR UPDATE, its checkpoints FOR SHARE in id
-   * order. The current one is superseded in the same transaction.
+   * A new version. Lock order: the route FOR UPDATE, its checkpoints FOR
+   * SHARE in id order, then the scheduled runs it replaces FOR UPDATE in
+   * id order. The current version is superseded, the runs nobody started
+   * are cancelled (`route_changed`) and the new version's are made, all in
+   * this transaction. A run under way keeps its version.
    */
   newVersion(id: string, input: RouteVersionInput): Promise<RouteDetailView> {
     const version = this.check(input, '');
@@ -167,38 +182,57 @@ export class RoutesService implements OnModuleInit {
       const route = await this.core.lockRoute(tx, id);
       if (route.retiredAt) throw routeRetired();
       const current = await this.core.currentVersion(tx, id);
-      await tx.patrolRouteVersion.update({
-        where: { id: current.id },
-        data: { supersededAt: await dbNow(tx) },
-      });
-      const next = await this.writeVersion(
+      const next = await this.supersede(tx, route, current, version);
+      const now = await dbNow(tx);
+      const cancelled = await this.runs.cancelScheduled(
+        tx,
+        id,
+        'route_changed',
+        now,
+      );
+      const made = await this.runs.generate(
         tx,
         route,
-        current.number + 1,
-        version,
-        '',
+        next,
+        now,
+        await this.roster.timeZone(tx),
       );
       await this.audit.record(tx, {
         action: 'patrol_route.versioned',
         targetId: id,
-        metadata: versionMetadata(next, version.checkpointIds.length),
+        metadata: {
+          ...versionMetadata(next, version.checkpointIds.length),
+          cancelledRuns: cancelled,
+          runs: made,
+        },
       });
       return this.detailOf(tx, route);
     });
   }
 
-  /** Retired once, never brought back. */
+  /**
+   * Retired once, never brought back: its scheduled runs nobody started are
+   * cancelled (`route_retired`); a run under way finishes.
+   */
   retire(id: string): Promise<RouteDetailView> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const before = await this.core.lockRoute(tx, id);
       if (before.retiredAt) throw routeRetired();
+      const now = await dbNow(tx);
       const route = await tx.patrolRoute.update({
         where: { id },
-        data: { retiredAt: await dbNow(tx), retiredById: this.ctx.accountId },
+        data: { retiredAt: now, retiredById: this.ctx.accountId },
       });
+      const cancelled = await this.runs.cancelScheduled(
+        tx,
+        id,
+        'route_retired',
+        now,
+      );
       await this.audit.record(tx, {
         action: 'patrol_route.retired',
         targetId: id,
+        metadata: { cancelledRuns: cancelled },
       });
       return this.detailOf(tx, route);
     });
@@ -279,6 +313,23 @@ export class RoutesService implements OnModuleInit {
       expectedMinutes: input.expectedMinutes,
       schedule,
     };
+  }
+
+  /**
+   * Supersedes `current` and writes the next version: the partial unique
+   * index keeps one current version per route.
+   */
+  private async supersede(
+    tx: TenantTxClient,
+    route: PatrolRoute,
+    current: PatrolRouteVersion,
+    version: CheckedVersion,
+  ): Promise<PatrolRouteVersion> {
+    await tx.patrolRouteVersion.update({
+      where: { id: current.id },
+      data: { supersededAt: await dbNow(tx) },
+    });
+    return this.writeVersion(tx, route, current.number + 1, version, '');
   }
 
   /**

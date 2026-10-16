@@ -804,6 +804,21 @@ export const ErrorCode = {
   PATROL_ROUTE_NOT_FOUND: 'PATROL_ROUTE_NOT_FOUND',
   /** It was retired: nothing changes any more (409). */
   PATROL_ROUTE_RETIRED: 'PATROL_ROUTE_RETIRED',
+  /** Unknown, another compound's, or not the caller's to see. */
+  PATROL_RUN_NOT_FOUND: 'PATROL_RUN_NOT_FOUND',
+  /** Another guard started it first (409). */
+  PATROL_ALREADY_STARTED: 'PATROL_ALREADY_STARTED',
+  /**
+   * Not now (409, params.reason: `too_early`, more than 15 minutes before
+   * its start; `window_closed`; `missed`; `cancelled`).
+   */
+  PATROL_RUN_NOT_STARTABLE: 'PATROL_RUN_NOT_STARTABLE',
+  /** Another run of the guard's is under way: one at a time (409). */
+  PATROL_RUN_ALREADY_LIVE: 'PATROL_RUN_ALREADY_LIVE',
+  /** The run is not under way (409, params.status). */
+  PATROL_RUN_NOT_LIVE: 'PATROL_RUN_NOT_LIVE',
+  /** Nobody may cancel it any more: it is not scheduled (409, params.status). */
+  PATROL_RUN_CLOSED: 'PATROL_RUN_CLOSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

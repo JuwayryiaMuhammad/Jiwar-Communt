@@ -6930,3 +6930,57 @@ model PatrolRouteCheckpoint {
   @@index([tenantId, checkpointId], map: "patrol_route_checkpoints_used_idx")
   @@map("patrol_route_checkpoints")
 }
+
+enum PatrolRunKind {
+  scheduled
+  adhoc
+
+  @@map("patrol_run_kind")
+}
+
+enum PatrolRunStatus {
+  scheduled
+  in_progress
+  completed
+  incomplete
+  timed_out
+  missed
+  cancelled
+
+  @@map("patrol_run_status")
+}
+
+/// A walk of a route's version (ADR 0052): scheduled 7 days ahead, or
+/// started by a guard. Moves forward only; never deleted.
+model PatrolRun {
+  id               String          @id @db.Uuid
+  tenantId         String          @map("tenant_id") @db.Uuid
+  routeId          String          @map("route_id") @db.Uuid
+  versionId        String          @map("version_id") @db.Uuid
+  gateId           String?         @map("gate_id") @db.Uuid
+  placeId          String?         @map("place_id") @db.Uuid
+  kind             PatrolRunKind
+  /// When it was meant: the scheduled start, or an unscheduled run's start.
+  plannedAt        DateTime        @map("planned_at") @db.Timestamptz(3)
+  scheduledStart   DateTime?       @map("scheduled_start") @db.Timestamptz(3)
+  windowEndsAt     DateTime?       @map("window_ends_at") @db.Timestamptz(3)
+  status           PatrolRunStatus
+  guardAccountId   String?         @map("guard_account_id") @db.Uuid
+  shiftId          String?         @map("shift_id") @db.Uuid
+  startedAt        DateTime?       @map("started_at") @db.Timestamptz(3)
+  endedAt          DateTime?       @map("ended_at") @db.Timestamptz(3)
+  endReason        String?         @map("end_reason")
+  checkpointsTotal Int             @map("checkpoints_total")
+  scannedCount     Int             @default(0) @map("scanned_count")
+  lateAt           DateTime?       @map("late_at") @db.Timestamptz(3)
+  cancelReason     String?         @map("cancel_reason")
+  cancelledById    String?         @map("cancelled_by_account_id") @db.Uuid
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, plannedAt, id], map: "patrol_runs_planned_idx")
+  @@index([tenantId, routeId, status], map: "patrol_runs_route_idx")
+  @@index([tenantId, guardAccountId, plannedAt], map: "patrol_runs_guard_idx")
+  @@map("patrol_runs")
+}

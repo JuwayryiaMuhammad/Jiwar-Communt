@@ -1,4 +1,5 @@
 import type { Response } from 'supertest';
+import { newId } from '../../src/core/common/uuid';
 import { call } from './request';
 import type { World } from './world';
 
@@ -16,6 +17,11 @@ export function patrolCalls(
   ) =>
     call(world(), method, path, {
       token: world().a.tokens.manager,
+      body: payload,
+    });
+  const guard = (method: 'GET' | 'POST', path: string, payload?: object) =>
+    call(world(), method, path, {
+      token: world().a.tokens.guard,
       body: payload,
     });
   const id = (res: Response) => (res.body as { id: string }).id;
@@ -43,7 +49,72 @@ export function patrolCalls(
         },
       }),
     );
+  /** A's guard has no run under way: the next start may happen. */
+  const clearLive = async () => {
+    const w = world();
+    const live = await w.helpers.asManager(w.a, () =>
+      w.helpers.prisma.tenant.patrolRun.findFirst({
+        where: { guardAccountId: w.a.ids.guard, status: 'in_progress' },
+      }),
+    );
+    if (live) await guard('POST', `/gate/patrols/runs/${live.id}/end`);
+  };
+  /** A scheduled run at A's gate, `inMinutes` from now: its id. */
+  const aRun = async (inMinutes: number) => {
+    const w = world();
+    const routeId = await aRoute();
+    return w.helpers.asManager(w.a, async () => {
+      const version =
+        await w.helpers.prisma.tenant.patrolRouteVersion.findFirstOrThrow({
+          where: { routeId, supersededAt: null },
+        });
+      const start = new Date(Date.now() + inMinutes * 60_000);
+      const run = await w.helpers.prisma.tenant.patrolRun.create({
+        data: {
+          id: newId(),
+          tenantId: w.a.tenantId,
+          routeId,
+          versionId: version.id,
+          gateId: w.a.gateId,
+          kind: 'scheduled',
+          plannedAt: start,
+          scheduledStart: start,
+          windowEndsAt: new Date(start.getTime() + 30 * 60_000),
+          status: 'scheduled',
+          checkpointsTotal: 1,
+        },
+      });
+      return run.id;
+    });
+  };
   return {
+    'GET /gate/patrols': () => guard('GET', '/gate/patrols'),
+    'GET /gate/patrols/runs': () => guard('GET', '/gate/patrols/runs'),
+    'GET /gate/patrols/runs/{id}': async () =>
+      guard('GET', `/gate/patrols/runs/${await aRun(60)}`),
+    'POST /gate/patrols/runs/{id}/start': async () => {
+      await clearLive();
+      return guard('POST', `/gate/patrols/runs/${await aRun(0)}/start`);
+    },
+    'POST /gate/patrols/routes/{id}/start': async () => {
+      await clearLive();
+      return guard('POST', `/gate/patrols/routes/${await aRoute()}/start`);
+    },
+    'POST /gate/patrols/runs/{id}/end': async () => {
+      await clearLive();
+      const run = id(
+        await guard('POST', `/gate/patrols/routes/${await aRoute()}/start`),
+      );
+      return guard('POST', `/gate/patrols/runs/${run}/end`);
+    },
+    'GET /staff/security/patrols/runs': () =>
+      manager('GET', '/staff/security/patrols/runs'),
+    'GET /staff/security/patrols/runs/{id}': async () =>
+      manager('GET', `/staff/security/patrols/runs/${await aRun(60)}`),
+    'POST /staff/security/patrols/runs/{id}/cancel': async () =>
+      manager('POST', `/staff/security/patrols/runs/${await aRun(60)}/cancel`, {
+        reasonCode: 'other',
+      }),
     'GET /staff/security/patrols/routes': () =>
       manager('GET', '/staff/security/patrols/routes'),
     'POST /staff/security/patrols/routes': async () =>

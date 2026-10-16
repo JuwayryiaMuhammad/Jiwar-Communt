@@ -153,3 +153,41 @@ export function scheduleOf(json: unknown): PatrolSchedule | null {
     ? { days: s.days, times: s.times }
     : null;
 }
+
+// ----------------------------------------------------------------------------
+// Runs
+// ----------------------------------------------------------------------------
+
+const MINUTE_MS = 60_000;
+
+/** Not started this long after its start, a scheduled run is late. */
+export const LATE_AFTER_MINUTES = 15;
+/** A scheduled run may be started this long before its start. */
+export const EARLY_START_MINUTES = 15;
+/** A run under way this many times its expected minutes is timed out. */
+export const TIMEOUT_FACTOR = 2;
+/** The guard's board shows the scheduled runs opening within this many hours. */
+export const BOARD_AHEAD_HOURS = 12;
+
+/** Why a scheduled run cannot be started at `at`, or null. */
+export function startProblem(
+  run: { scheduledStart: Date; windowEndsAt: Date },
+  at: Date,
+): 'too_early' | 'window_closed' | null {
+  const opens = run.scheduledStart.getTime() - EARLY_START_MINUTES * MINUTE_MS;
+  if (at.getTime() < opens) return 'too_early';
+  if (at.getTime() >= run.windowEndsAt.getTime()) return 'window_closed';
+  return null;
+}
+
+/** When a scheduled run is late, if nobody started it. */
+export const lateAfter = (scheduledStart: Date) =>
+  new Date(scheduledStart.getTime() + LATE_AFTER_MINUTES * MINUTE_MS);
+
+/** When a run under way is timed out. */
+export const timeoutAt = (startedAt: Date, expectedMinutes: number) =>
+  new Date(startedAt.getTime() + TIMEOUT_FACTOR * expectedMinutes * MINUTE_MS);
+
+/** How a run under way ends: every checkpoint scanned, or not. */
+export const endStatus = (scanned: number, total: number) =>
+  scanned >= total ? ('completed' as const) : ('incomplete' as const);

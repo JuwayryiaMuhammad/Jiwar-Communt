@@ -106,6 +106,12 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   patrol_route_checkpoints_tenant_id_id_key: null,
   patrol_route_checkpoints_position_key: null,
   patrol_route_checkpoints_checkpoint_key: null,
+  // Runs: a version makes each scheduled run once (ON CONFLICT DO
+  // NOTHING); one live run per guard is checked first and mapped to
+  // PATROL_RUN_ALREADY_LIVE: a violation is a race.
+  patrol_runs_tenant_id_id_key: null,
+  patrol_runs_scheduled_key: null,
+  patrol_runs_one_live_per_guard: null,
   visitor_details_tenant_id_id_key: null,
   visitor_passes_tenant_id_id_key: null,
   // ADR 0043.

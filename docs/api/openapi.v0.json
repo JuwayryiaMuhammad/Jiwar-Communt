@@ -2128,6 +2128,38 @@
         ],
         "type": "string"
       },
+      "BoardRouteView": {
+        "properties": {
+          "checkpoints": {
+            "type": "number"
+          },
+          "expectedMinutes": {
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "ordered": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr",
+          "ordered",
+          "expectedMinutes",
+          "checkpoints"
+        ],
+        "type": "object"
+      },
       "BoardSeatDto": {
         "properties": {
           "accountId": {
@@ -2895,6 +2927,20 @@
         "required": [
           "reasonCode"
         ],
+        "type": "object"
+      },
+      "CancelRunDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "Required (REASON_REQUIRED).",
+            "enum": [
+              "not_needed",
+              "post_closed",
+              "other"
+            ],
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "CancelVisitorPassDto": {
@@ -13910,6 +13956,246 @@
         ],
         "type": "object"
       },
+      "GuardRunDetailView": {
+        "properties": {
+          "checkpointsTotal": {
+            "type": "number"
+          },
+          "endReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunEndReason"
+              }
+            ],
+            "description": "Why an incomplete run ended.",
+            "nullable": true
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "expectedMinutes": {
+            "type": "number"
+          },
+          "guard": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FirstNameRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunKind"
+              }
+            ]
+          },
+          "late": {
+            "description": "Not started 15 minutes after its scheduled start.",
+            "type": "boolean"
+          },
+          "ordered": {
+            "type": "boolean"
+          },
+          "plannedAt": {
+            "description": "When it was meant: the scheduled start, or an unscheduled run’s start.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "route": {
+            "$ref": "#/components/schemas/RunRouteView"
+          },
+          "scannedCount": {
+            "type": "number"
+          },
+          "scheduledStart": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunStatus"
+              }
+            ]
+          },
+          "stops": {
+            "items": {
+              "$ref": "#/components/schemas/RunStopView"
+            },
+            "type": "array"
+          },
+          "timesOutAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "windowEndsAt": {
+            "description": "A scheduled run may be started from 15 minutes before its start until then.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "route",
+          "post",
+          "kind",
+          "status",
+          "plannedAt",
+          "scheduledStart",
+          "windowEndsAt",
+          "startedAt",
+          "endedAt",
+          "endReason",
+          "late",
+          "checkpointsTotal",
+          "scannedCount",
+          "guard",
+          "ordered",
+          "expectedMinutes",
+          "timesOutAt",
+          "stops"
+        ],
+        "type": "object"
+      },
+      "GuardRunView": {
+        "properties": {
+          "checkpointsTotal": {
+            "type": "number"
+          },
+          "endReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunEndReason"
+              }
+            ],
+            "description": "Why an incomplete run ended.",
+            "nullable": true
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "guard": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FirstNameRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunKind"
+              }
+            ]
+          },
+          "late": {
+            "description": "Not started 15 minutes after its scheduled start.",
+            "type": "boolean"
+          },
+          "plannedAt": {
+            "description": "When it was meant: the scheduled start, or an unscheduled run’s start.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "route": {
+            "$ref": "#/components/schemas/RunRouteView"
+          },
+          "scannedCount": {
+            "type": "number"
+          },
+          "scheduledStart": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunStatus"
+              }
+            ]
+          },
+          "windowEndsAt": {
+            "description": "A scheduled run may be started from 15 minutes before its start until then.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "route",
+          "post",
+          "kind",
+          "status",
+          "plannedAt",
+          "scheduledStart",
+          "windowEndsAt",
+          "startedAt",
+          "endedAt",
+          "endReason",
+          "late",
+          "checkpointsTotal",
+          "scannedCount",
+          "guard"
+        ],
+        "type": "object"
+      },
+      "GuardRunViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GuardRunView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "GuardSlotCancel": {
         "enum": [
           "schedule_change",
@@ -19565,6 +19851,78 @@
           "nextCursor"
         ],
         "type": "object"
+      },
+      "PatrolBoardView": {
+        "properties": {
+          "live": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardRunDetailView"
+              }
+            ],
+            "description": "The caller’s run under way.",
+            "nullable": true,
+            "type": "object"
+          },
+          "routes": {
+            "description": "Routes in service from the caller’s post: a run of one may be started any time.",
+            "items": {
+              "$ref": "#/components/schemas/BoardRouteView"
+            },
+            "type": "array"
+          },
+          "runs": {
+            "description": "At the caller’s post: scheduled runs whose window is open or opens within 12 hours, and those started today.",
+            "items": {
+              "$ref": "#/components/schemas/GuardRunView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "live",
+          "runs",
+          "routes"
+        ],
+        "type": "object"
+      },
+      "PatrolRunCancelReason": {
+        "enum": [
+          "not_needed",
+          "post_closed",
+          "other",
+          "route_changed",
+          "route_retired",
+          "post_out_of_service"
+        ],
+        "type": "string"
+      },
+      "PatrolRunEndReason": {
+        "description": "Why an incomplete run ended.",
+        "enum": [
+          "guard",
+          "shift_ended"
+        ],
+        "type": "string"
+      },
+      "PatrolRunKind": {
+        "enum": [
+          "scheduled",
+          "adhoc"
+        ],
+        "type": "string"
+      },
+      "PatrolRunStatus": {
+        "enum": [
+          "scheduled",
+          "in_progress",
+          "completed",
+          "incomplete",
+          "timed_out",
+          "missed",
+          "cancelled"
+        ],
+        "type": "string"
       },
       "PatrolScheduleDto": {
         "properties": {
@@ -26267,6 +26625,341 @@
         },
         "required": [
           "response"
+        ],
+        "type": "object"
+      },
+      "RunDetailView": {
+        "properties": {
+          "cancelReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunCancelReason"
+              }
+            ],
+            "nullable": true
+          },
+          "cancelledBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Null when the system cancelled it.",
+            "nullable": true,
+            "type": "object"
+          },
+          "checkpointsTotal": {
+            "type": "number"
+          },
+          "endReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunEndReason"
+              }
+            ],
+            "description": "Why an incomplete run ended.",
+            "nullable": true
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "expectedMinutes": {
+            "type": "number"
+          },
+          "guard": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunKind"
+              }
+            ]
+          },
+          "late": {
+            "description": "Not started 15 minutes after its scheduled start.",
+            "type": "boolean"
+          },
+          "ordered": {
+            "type": "boolean"
+          },
+          "plannedAt": {
+            "description": "When it was meant: the scheduled start, or an unscheduled run’s start.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "route": {
+            "$ref": "#/components/schemas/RunRouteView"
+          },
+          "scannedCount": {
+            "type": "number"
+          },
+          "scheduledStart": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunStatus"
+              }
+            ]
+          },
+          "stops": {
+            "items": {
+              "$ref": "#/components/schemas/RunStopView"
+            },
+            "type": "array"
+          },
+          "timesOutAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "windowEndsAt": {
+            "description": "A scheduled run may be started from 15 minutes before its start until then.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "route",
+          "post",
+          "kind",
+          "status",
+          "plannedAt",
+          "scheduledStart",
+          "windowEndsAt",
+          "startedAt",
+          "endedAt",
+          "endReason",
+          "late",
+          "checkpointsTotal",
+          "scannedCount",
+          "guard",
+          "cancelReason",
+          "cancelledBy",
+          "ordered",
+          "expectedMinutes",
+          "timesOutAt",
+          "stops"
+        ],
+        "type": "object"
+      },
+      "RunRouteView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
+      "RunStopView": {
+        "properties": {
+          "checkpointId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "location": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckpointPositionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "position": {
+            "description": "1 for the first.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "position",
+          "checkpointId",
+          "nameEn",
+          "nameAr",
+          "location"
+        ],
+        "type": "object"
+      },
+      "RunView": {
+        "properties": {
+          "cancelReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunCancelReason"
+              }
+            ],
+            "nullable": true
+          },
+          "cancelledBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Null when the system cancelled it.",
+            "nullable": true,
+            "type": "object"
+          },
+          "checkpointsTotal": {
+            "type": "number"
+          },
+          "endReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunEndReason"
+              }
+            ],
+            "description": "Why an incomplete run ended.",
+            "nullable": true
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "guard": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunKind"
+              }
+            ]
+          },
+          "late": {
+            "description": "Not started 15 minutes after its scheduled start.",
+            "type": "boolean"
+          },
+          "plannedAt": {
+            "description": "When it was meant: the scheduled start, or an unscheduled run’s start.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "route": {
+            "$ref": "#/components/schemas/RunRouteView"
+          },
+          "scannedCount": {
+            "type": "number"
+          },
+          "scheduledStart": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunStatus"
+              }
+            ]
+          },
+          "windowEndsAt": {
+            "description": "A scheduled run may be started from 15 minutes before its start until then.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "route",
+          "post",
+          "kind",
+          "status",
+          "plannedAt",
+          "scheduledStart",
+          "windowEndsAt",
+          "startedAt",
+          "endedAt",
+          "endReason",
+          "late",
+          "checkpointsTotal",
+          "scannedCount",
+          "guard",
+          "cancelReason",
+          "cancelledBy"
+        ],
+        "type": "object"
+      },
+      "RunViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/RunView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -43427,6 +44120,261 @@
         "tags": [
           "parcels"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/patrols": {
+      "get": {
+        "description": "On shift (403 NO_OPEN_SHIFT): my run under way, the post’s runs to start or started today, and its routes.",
+        "operationId": "GuardPatrolsController_board",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatrolBoardView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My patrols at my post",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/patrols/routes/{id}/start": {
+      "post": {
+        "description": "Of a route in service from my post, on its current version. One run under way per guard (409 PATROL_RUN_ALREADY_LIVE).",
+        "operationId": "GuardPatrolsController_startAdhoc",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardRunDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start a run of my own",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/patrols/runs": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "GuardPatrolsController_mine",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardRunViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The runs I started",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/patrols/runs/{id}": {
+      "get": {
+        "description": "Mine, or one of the post where I am on shift.",
+        "operationId": "GuardPatrolsController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardRunDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A run and its checkpoints",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/patrols/runs/{id}/end": {
+      "post": {
+        "description": "Completed when every checkpoint was scanned, else incomplete: the roster’s keepers are told. Under way only (409 PATROL_RUN_NOT_LIVE).",
+        "operationId": "GuardPatrolsController_end",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardRunDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "End my run",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/patrols/runs/{id}/start": {
+      "post": {
+        "description": "At my post, from 15 minutes before its start until its window ends (409 PATROL_RUN_NOT_STARTABLE, params.reason). The first start wins (409 PATROL_ALREADY_STARTED); one run under way per guard (409 PATROL_RUN_ALREADY_LIVE).",
+        "operationId": "GuardPatrolsController_start",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardRunDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start a scheduled run",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -63139,6 +64087,216 @@
           }
         ],
         "summary": "Change what a route asks",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/runs": {
+      "get": {
+        "description": "Planned on the compound’s days asked, newest first.",
+        "operationId": "StaffRunsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "The compound’s first day; six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-11-01",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-11-07",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "routeId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "gateId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "zoneId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "scheduled",
+                "in_progress",
+                "completed",
+                "incomplete",
+                "timed_out",
+                "missed",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "guardId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the runs",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/runs/{id}": {
+      "get": {
+        "operationId": "StaffRunsController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a run",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/runs/{id}/cancel": {
+      "post": {
+        "description": "Nobody started it yet (409 PATROL_RUN_CLOSED, params.status); a `patrolRunCancel` code.",
+        "operationId": "StaffRunsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelRunDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a scheduled run",
         "tags": [
           "patrols"
         ],

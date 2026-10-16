@@ -2,9 +2,9 @@ import { Client } from 'pg';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
-import { checkpointRow, routeRow, rowHash } from '../setup/patrol-rows';
+import { checkpointRow, routeRow, rowHash, runRow } from '../setup/patrol-rows';
 import { placeRow } from '../setup/safety-rows';
-import { gateRow } from '../setup/security-rows';
+import { gateRow, shiftRow } from '../setup/security-rows';
 import { required } from '../setup/test-env';
 
 /**
@@ -24,6 +24,9 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
   let checkpointId: string;
   let routeId: string;
   let versionId: string;
+  let runId: string;
+  let otherRunId: string;
+  let shiftId: string;
 
   beforeAll(async () => {
     h = await createDbHarness();
@@ -46,6 +49,11 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
           checkpointIds: [checkpointId],
           schedule: { days: [1], times: ['08:00'] },
         }));
+        const run = (inHours: number) =>
+          runRow(tx, { tenantId, routeId, versionId, gateId, inHours });
+        runId = await run(24);
+        otherRunId = await run(48);
+        shiftId = await shiftRow(tx, { tenantId, guardId: otherId, gateId });
       }),
     );
     app = new Client({ connectionString: process.env.DATABASE_URL });
@@ -93,6 +101,7 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
       'patrol_checkpoints',
       'patrol_routes',
       'patrol_route_versions',
+      'patrol_runs',
     ])
       expect({ table, ...(await privileges(table)) }).toEqual({
         table,
@@ -122,6 +131,7 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
       'patrol_routes',
       'patrol_route_versions',
       'patrol_route_checkpoints',
+      'patrol_runs',
     ]) {
       // A row to refuse: a row trigger never fires on a DELETE of none.
       const found = await attempt(
@@ -323,5 +333,135 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
     await expect(asApp(stop(51))).rejects.toThrow(
       /patrol_route_checkpoints_position_range/,
     );
+  });
+
+  describe('patrol_runs', () => {
+    const where = (id = runId) => `id = '${id}'`;
+    const start = (id = runId) =>
+      `UPDATE patrol_runs SET status = 'in_progress', guard_account_id = '${otherId}', shift_id = '${shiftId}', started_at = now() WHERE ${where(id)}`;
+
+    it('what a run is never changes', async () => {
+      for (const set of [
+        `route_id = gen_random_uuid()`,
+        "kind = 'adhoc', scheduled_start = NULL, window_ends_at = NULL",
+        "scheduled_start = scheduled_start + interval '1 hour', planned_at = planned_at + interval '1 hour'",
+        'checkpoints_total = 2',
+      ])
+        await expect(
+          asApp(`UPDATE patrol_runs SET ${set} WHERE ${where()}`),
+        ).rejects.toThrow(/a run moves forward only/);
+    });
+
+    it('moves forward only: started once, ended once; its count only grows; late once', async () => {
+      await asApp(
+        `UPDATE patrol_runs SET late_at = now() WHERE ${where()}`,
+        start(),
+        `UPDATE patrol_runs SET scanned_count = 1 WHERE ${where()}`,
+        `UPDATE patrol_runs SET status = 'completed', ended_at = now() WHERE ${where()}`,
+      );
+      for (const steps of [
+        [
+          `UPDATE patrol_runs SET status = 'completed', ended_at = now() WHERE ${where()}`,
+        ],
+        [
+          start(),
+          `UPDATE patrol_runs SET status = 'scheduled', guard_account_id = NULL, shift_id = NULL, started_at = NULL WHERE ${where()}`,
+        ],
+        [
+          start(),
+          `UPDATE patrol_runs SET guard_account_id = '${managerId}' WHERE ${where()}`,
+        ],
+        [
+          start(),
+          `UPDATE patrol_runs SET scanned_count = 1 WHERE ${where()}`,
+          `UPDATE patrol_runs SET scanned_count = 0 WHERE ${where()}`,
+        ],
+        [
+          `UPDATE patrol_runs SET late_at = now() WHERE ${where()}`,
+          `UPDATE patrol_runs SET late_at = now() + interval '1 minute' WHERE ${where()}`,
+        ],
+        [
+          `UPDATE patrol_runs SET status = 'missed', ended_at = now() WHERE ${where()}`,
+          `UPDATE patrol_runs SET ended_at = now() + interval '1 minute' WHERE ${where()}`,
+        ],
+      ])
+        await expect(asApp(...steps)).rejects.toThrow(
+          /a run moves forward only|patrol_runs_completed_shape/,
+        );
+    });
+
+    it('the shapes hold whatever the services do', async () => {
+      for (const [steps, check] of [
+        [
+          [
+            `UPDATE patrol_runs SET status = 'in_progress', started_at = now() WHERE ${where()}`,
+          ],
+          'patrol_runs_started_shape',
+        ],
+        [
+          [`UPDATE patrol_runs SET status = 'missed' WHERE ${where()}`],
+          'patrol_runs_ended_shape',
+        ],
+        [
+          [
+            start(),
+            `UPDATE patrol_runs SET status = 'incomplete', ended_at = now() WHERE ${where()}`,
+          ],
+          'patrol_runs_end_reason',
+        ],
+        [
+          [
+            start(),
+            `UPDATE patrol_runs SET status = 'incomplete', ended_at = now(), end_reason = 'tired' WHERE ${where()}`,
+          ],
+          'patrol_runs_end_reason',
+        ],
+        [
+          [
+            start(),
+            `UPDATE patrol_runs SET status = 'completed', ended_at = now() WHERE ${where()}`,
+          ],
+          'patrol_runs_completed_shape',
+        ],
+        [
+          [
+            `UPDATE patrol_runs SET status = 'cancelled', ended_at = now(), cancel_reason = 'route_changed', cancelled_by_account_id = '${managerId}' WHERE ${where()}`,
+          ],
+          'patrol_runs_cancelled_by',
+        ],
+        [
+          [
+            `UPDATE patrol_runs SET status = 'cancelled', ended_at = now(), cancel_reason = 'not_needed' WHERE ${where()}`,
+          ],
+          'patrol_runs_cancelled_by',
+        ],
+        [
+          [
+            `UPDATE patrol_runs SET status = 'cancelled', ended_at = now(), cancel_reason = 'bored', cancelled_by_account_id = '${managerId}' WHERE ${where()}`,
+          ],
+          'patrol_runs_cancel_reason',
+        ],
+      ] as const)
+        await expect(asApp(...steps)).rejects.toThrow(new RegExp(check));
+      await expect(
+        asApp(
+          `INSERT INTO patrol_runs (id, tenant_id, route_id, version_id, gate_id, kind, planned_at, status, checkpoints_total, updated_at)
+           VALUES (gen_random_uuid(), '${tenantId}', '${routeId}', '${versionId}', '${gateId}', 'adhoc', now(), 'scheduled', 1, now())`,
+        ),
+      ).rejects.toThrow(/patrol_runs_kind_shape|patrol_runs_planned/);
+    });
+
+    it('one run under way per guard; a version makes each scheduled run once', async () => {
+      await expect(asApp(start(), start(otherRunId))).rejects.toThrow(
+        /patrol_runs_one_live_per_guard/,
+      );
+      await expect(
+        asApp(
+          `INSERT INTO patrol_runs (id, tenant_id, route_id, version_id, gate_id, kind, planned_at, scheduled_start, window_ends_at, status, ended_at, cancel_reason, checkpoints_total, updated_at)
+           SELECT gen_random_uuid(), tenant_id, route_id, version_id, gate_id, kind, planned_at, scheduled_start, window_ends_at, 'cancelled', now(), 'route_changed', 1, now()
+             FROM patrol_runs WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/patrol_runs_scheduled_key/);
+    });
   });
 });

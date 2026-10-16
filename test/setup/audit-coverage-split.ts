@@ -479,4 +479,10 @@ export const PATROL_COVERAGE: readonly string[] = [
   'patrol_route.renamed',
   'patrol_route.versioned',
   'patrol_route.retired',
+  'patrol_run.started',
+  'patrol_run.ended',
+  'patrol_run.cancelled',
+  'patrol_run.late',
+  'patrol_run.missed',
+  'patrol_run.timed_out',
 ];

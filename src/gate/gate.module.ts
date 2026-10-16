@@ -153,6 +153,14 @@ import { CheckpointsService } from './patrols/checkpoints.service';
 import { PatrolCore } from './patrols/patrol-core';
 import { RoutesController } from './patrols/routes.controller';
 import { RoutesService } from './patrols/routes.service';
+import { GuardPatrolsService } from './patrols/guard-patrols.service';
+import { PatrolSweeps } from './patrols/patrol-sweeps';
+import {
+  GuardPatrolsController,
+  StaffRunsController,
+} from './patrols/runs.controller';
+import { RunsCore } from './patrols/runs-core';
+import { StaffRunsService } from './patrols/staff-runs.service';
 import { DutyNamesReader } from './roster/duty-names';
 import {
   GuardSwapsController,
@@ -244,6 +252,8 @@ import { RosterService } from './roster/roster.service';
     DailyReportController,
     CheckpointsController,
     RoutesController,
+    GuardPatrolsController,
+    StaffRunsController,
   ],
   providers: [
     GatesService,
@@ -329,7 +339,11 @@ import { RosterService } from './roster/roster.service';
     GuardDutyExportSections,
     CheckpointsService,
     PatrolCore,
+    RunsCore,
     RoutesService,
+    GuardPatrolsService,
+    StaffRunsService,
+    PatrolSweeps,
   ],
 })
 export class GateModule {}

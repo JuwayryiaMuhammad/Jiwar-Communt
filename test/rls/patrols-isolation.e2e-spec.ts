@@ -5,6 +5,7 @@ import {
   checkpointRow,
   routeRow,
   routeStopRow,
+  runRow,
   versionRow,
 } from '../setup/patrol-rows';
 import { gateRow } from '../setup/security-rows';
@@ -32,6 +33,8 @@ interface Table {
   key?: string;
   linked?: boolean;
 }
+
+let runs = 0;
 
 /**
  * The patrol tables (ADR 0052): isolated like every other tenant table,
@@ -76,6 +79,18 @@ const TABLES: Table[] = [
         tenantId: own.tenantId,
         versionId: link.versionId,
         checkpointId: link.spareCheckpointId,
+      }),
+  },
+  {
+    table: 'patrol_runs',
+    insert: (tx, own, link) =>
+      runRow(tx, {
+        tenantId: own.tenantId,
+        routeId: link.routeId,
+        versionId: link.versionId,
+        gateId: link.gateId,
+        // A start of its own each time: a version makes each run once.
+        inHours: 24 + ++runs,
       }),
   },
 ];

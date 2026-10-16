@@ -8,8 +8,10 @@ import type { Side } from './world';
 export interface PatrolsWorld {
   /** A checkpoint at B's gate. */
   bCheckpointId: string;
-  /** A route from B's gate, walking that checkpoint. */
+  /** A route from B's gate, walking that checkpoint, every day at 03:00. */
   bRouteId: string;
+  /** One of its scheduled runs. */
+  bRunId: string;
 }
 
 export async function patrolsWorld(
@@ -31,8 +33,17 @@ export async function patrolsWorld(
         checkpointIds: [checkpoint.id],
         ordered: false,
         expectedMinutes: 20,
+        schedule: { days: [0, 1, 2, 3, 4, 5, 6], times: ['03:00'] },
       },
     });
-    return { bCheckpointId: checkpoint.id, bRouteId: route.id };
+    const run = await helpers.prisma.tenant.patrolRun.findFirstOrThrow({
+      where: { routeId: route.id },
+      orderBy: { plannedAt: 'asc' },
+    });
+    return {
+      bCheckpointId: checkpoint.id,
+      bRouteId: route.id,
+      bRunId: run.id,
+    };
   });
 }

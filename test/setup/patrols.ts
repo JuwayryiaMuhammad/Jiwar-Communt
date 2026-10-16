@@ -1,3 +1,5 @@
+import { newId } from '../../src/core/common/uuid';
+import type { Compound } from './community';
 import { uniqueSuffix } from './fixtures';
 import type { HttpHarness } from './http-app';
 import { securityHelpers, type Who } from './security';
@@ -49,6 +51,36 @@ export interface RouteBody {
     retired: boolean;
   }[];
 }
+
+export interface RunBody {
+  id: string;
+  route: { id: string; nameEn: string; nameAr: string };
+  post: PostBody;
+  kind: 'scheduled' | 'adhoc';
+  status: string;
+  plannedAt: string;
+  scheduledStart: string | null;
+  windowEndsAt: string | null;
+  startedAt: string | null;
+  endedAt: string | null;
+  endReason: string | null;
+  late: boolean;
+  checkpointsTotal: number;
+  scannedCount: number;
+  guard: {
+    id: string;
+    firstName?: string | null;
+    fullName?: string | null;
+    erased?: true;
+  } | null;
+  cancelReason?: string | null;
+  ordered?: boolean;
+  expectedMinutes?: number;
+  timesOutAt?: string | null;
+  stops?: { position: number; checkpointId: string }[];
+}
+
+const MINUTE = 60_000;
 
 /**
  * Helpers for the patrol suites (ADR 0052), on top of the guard duty ones:
@@ -128,6 +160,88 @@ export function patrolHelpers(h: HttpHarness) {
     );
   }
 
+  /**
+   * A scheduled run row of the route's current version, as the sweep would
+   * have made it: its start `startsAgo` minutes before now (negative: to
+   * come), its window as the route says.
+   */
+  function runRow(
+    c: Compound,
+    r: RouteBody,
+    startsAgo: number,
+    windowMinutes = r.version.windowMinutes,
+  ) {
+    const scheduledStart = new Date(Date.now() - startsAgo * MINUTE);
+    return x.inTx(c, (tx) =>
+      tx.patrolRun.create({
+        data: {
+          id: newId(),
+          tenantId: c.tenantId,
+          routeId: r.id,
+          versionId: r.version.id,
+          gateId: r.post.gateId,
+          placeId: r.post.zone?.id ?? null,
+          kind: 'scheduled',
+          plannedAt: scheduledStart,
+          scheduledStart,
+          windowEndsAt: new Date(
+            scheduledStart.getTime() + windowMinutes * MINUTE,
+          ),
+          status: 'scheduled',
+          checkpointsTotal: r.version.checkpoints,
+        },
+      }),
+    );
+  }
+
+  /** A run's row now. */
+  function runOf(c: Compound, id: string) {
+    return x.inTx(c, (tx) => tx.patrolRun.findUniqueOrThrow({ where: { id } }));
+  }
+
+  /** `POST /gate/patrols/runs/:id/start` as `as`. */
+  function startRunRaw(
+    as: Who,
+    id: string,
+    headers: Record<string, string> = {},
+  ) {
+    return x.http(
+      'post',
+      `/gate/patrols/runs/${id}/start`,
+      as.token,
+      {},
+      headers,
+    );
+  }
+
+  /** `POST /gate/patrols/routes/:id/start` as `as`. */
+  function adhocRaw(
+    as: Who,
+    routeId: string,
+    headers: Record<string, string> = {},
+  ) {
+    return x.http(
+      'post',
+      `/gate/patrols/routes/${routeId}/start`,
+      as.token,
+      {},
+      headers,
+    );
+  }
+
+  /** A run of `as`'s own that must start: its body. */
+  async function adhoc(as: Who, routeId: string): Promise<RunBody> {
+    const res = await adhocRaw(as, routeId);
+    if (res.status !== 201)
+      throw new Error(`adhoc: ${res.status} ${JSON.stringify(res.body)}`);
+    return res.body as RunBody;
+  }
+
+  /** `POST /gate/patrols/runs/:id/end` as `as`. */
+  function endRunRaw(as: Who, id: string) {
+    return x.http('post', `/gate/patrols/runs/${id}/end`, as.token);
+  }
+
   return {
     ...x,
     x,
@@ -136,5 +250,11 @@ export function patrolHelpers(h: HttpHarness) {
     routeRaw,
     route,
     versionRaw,
+    runRow,
+    runOf,
+    startRunRaw,
+    adhocRaw,
+    adhoc,
+    endRunRaw,
   };
 }

@@ -1394,8 +1394,10 @@ describe('API v0 — PII leak scan', () => {
       '/staff/governance/polls/{id}': piiGovernancePoll,
       '/governance/elections/{id}': piiGovernanceElection,
       '/staff/governance/elections/{id}': piiGovernanceElection,
-      // A route of B's: not found for everyone of A.
+      // A route and a run of B's: not found for everyone of A.
       '/staff/security/patrols/routes/{id}': w.bRouteId,
+      '/staff/security/patrols/runs/{id}': w.bRunId,
+      '/gate/patrols/runs/{id}': w.bRunId,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

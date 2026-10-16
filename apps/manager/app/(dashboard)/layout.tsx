@@ -58,6 +58,8 @@ import {
   Briefcase,
   ClipboardPen,
   FileChartColumn,
+  Gavel,
+  Landmark,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -115,6 +117,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     keys.gateServices({ status: 'open' }),
     () => fetchers.gateServices({ status: 'open' }, undefined, 100),
     can('gate_services.handle'),
+  );
+  const electionsToCertify = useQueueSize(
+    keys.governanceElections('closed'),
+    () => fetchers.governanceElections('closed', undefined, 100),
+    can('governance.manage'),
   );
   const permitsToDecide = useQueueSize(
     keys.permits({ status: 'pending', kind: '', live: false }),
@@ -357,6 +364,21 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         },
         { href: '/security/found-items', label: 'Found at the gate', icon: <Briefcase aria-hidden />, show: can('found_items.manage') },
         { href: '/security/reports', label: 'Daily report', icon: <FileChartColumn aria-hidden />, show: can('guard_reports.read') },
+      ],
+    },
+    {
+      label: 'Governance',
+      items: [
+        { href: '/governance/board', label: 'Board', icon: <Landmark aria-hidden />, show: can('governance.manage') },
+        { href: '/governance/polls', label: 'Owners’ polls', icon: <Vote aria-hidden />, show: can('governance.manage') },
+        {
+          href: '/governance/elections',
+          label: 'Elections',
+          icon: <Gavel aria-hidden />,
+          count: electionsToCertify,
+          show: can('governance.manage'),
+        },
+        { href: '/governance/decisions', label: 'Decisions', icon: <ScrollText aria-hidden />, show: can('governance.manage') },
       ],
     },
     {

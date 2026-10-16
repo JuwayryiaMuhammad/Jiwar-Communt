@@ -188,6 +188,17 @@ export interface PermitFilters {
   live?: boolean;
 }
 
+// Governance (ADR 0051).
+export type StaffBoardTerm = Schema<'StaffBoardTermView'>;
+export type StaffBoardSeat = Schema<'StaffBoardSeatView'>;
+export type BoardRole = Schema<'BoardRole'>;
+export type GovernanceOwner = Schema<'GovernanceOwnerView'>;
+export type StaffGovernancePoll = Schema<'StaffGovernancePollView'>;
+export type GovernanceContestStatus = Schema<'GovernanceContestStatus'>;
+export type StaffGovernanceElection = Schema<'StaffGovernanceElectionView'>;
+export type GovernanceElectionPhase = Schema<'GovernanceElectionPhase'>;
+export type BoardPublication = Schema<'BoardPublicationView'>;
+
 // Finance (ADR 0046).
 export type GatewayView = Schema<'GatewayView'>;
 export type GatewayEvent = Schema<'GatewayEventView'>;
@@ -494,6 +505,15 @@ export const keys = {
   foundItemsAll: ['security', 'found-items'] as const,
   foundItems: (status: string) => ['security', 'found-items', 'list', status] as const,
   dailyReport: (date: string, gateId: string) => ['security', 'daily', date, gateId] as const,
+  governanceAll: ['governance'] as const,
+  board: ['governance', 'board'] as const,
+  boardTerms: ['governance', 'board', 'terms'] as const,
+  owners: (search: string) => ['governance', 'owners', search] as const,
+  governancePolls: (status: string) => ['governance', 'polls', status] as const,
+  governancePoll: (id: string) => ['governance', 'poll', id] as const,
+  governanceElections: (phase: string) => ['governance', 'elections', phase] as const,
+  governanceElection: (id: string) => ['governance', 'election', id] as const,
+  boardPublications: ['governance', 'publications'] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -806,6 +826,28 @@ export const fetchers = {
         params: { query: { ...(date ? { date } : {}), ...(gateId ? { gateId } : {}) } },
       }),
     ),
+  board: () => unwrap(api.GET('/api/v1/staff/governance/board')),
+  boardTerms: (cursor?: string, limit = 20) =>
+    unwrap(api.GET('/api/v1/staff/governance/board/terms', { params: { query: { cursor, limit } } })),
+  owners: (search: string) =>
+    unwrap(api.GET('/api/v1/staff/governance/owners', { params: { query: clean({ search }) } })),
+  governancePolls: (status: GovernanceContestStatus | '', cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/governance/polls', {
+        params: { query: { ...(clean({ status }) as { status?: GovernanceContestStatus }), cursor, limit } },
+      }),
+    ),
+  governancePoll: (id: string) => unwrap(api.GET('/api/v1/staff/governance/polls/{id}', { params: { path: { id } } })),
+  governanceElections: (phase: GovernanceElectionPhase | '', cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/governance/elections', {
+        params: { query: { ...(clean({ phase }) as { phase?: GovernanceElectionPhase }), cursor, limit } },
+      }),
+    ),
+  governanceElection: (id: string) =>
+    unwrap(api.GET('/api/v1/staff/governance/elections/{id}', { params: { path: { id } } })),
+  boardPublications: (cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/governance/publications', { params: { query: { cursor, limit } } })),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

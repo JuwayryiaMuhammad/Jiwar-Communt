@@ -121,6 +121,22 @@ const STATUS_TONE: Record<string, Tone> = {
   at_gate: 'terracotta',
   with_management: 'beige',
   claimed: 'green',
+  // Governance (ADR 0051). `open`, `closed`, `cancelled`, `scheduled`,
+  // `upcoming`, `ended`, `withdrawn` and `failed` are above.
+  current: 'green',
+  lapsed: 'error',
+  nominating: 'terracotta',
+  nominations_closed: 'beige',
+  voting: 'green',
+  certified: 'green',
+  passed: 'green',
+  no_quorum: 'beige',
+  tied: 'terracotta',
+  nominated: 'green',
+  disqualified: 'error',
+  elected: 'green',
+  not_elected: 'beige',
+  ineligible: 'error',
 };
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {

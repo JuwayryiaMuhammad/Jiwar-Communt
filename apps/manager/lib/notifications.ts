@@ -96,6 +96,11 @@ const TEXT: Record<string, (p: P) => string> = {
   'unit_permit.revoked': (p) => `Your permit was revoked (${words(p.reason)})`,
   'unit_permit.used': () => 'The goods on your permit went out at the gate',
   'unit_permit.cancelled': (p) => `A permit was cancelled (${words(p.reason)})`,
+  // Governance (ADR 0051): codes only, never a name or a choice.
+  'governance_election.awaiting_certification': (p) =>
+    p.tied === 'yes' ? 'An election closed with a tie: record the board’s choice and certify it' : 'An election closed: certify its result',
+  'governance_election.cancelled': (p) => `An election of the board was cancelled (${words(p.reason)})`,
+  'governance_poll.result': (p) => `A poll of the owners closed: ${words(p.result)}`,
   'gate_service.accepted': () => 'Security accepted your request',
   'gate_service.closed': (p) => `Security closed your request (${words(p.reason)})`,
   // Guard shifts and tasks (ADR 0050): codes only, never a name or a post.
@@ -244,6 +249,10 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
   if (n.targetType === 'guard_shift_swap') return can('guard_roster.manage') ? '/security/swaps' : null;
   if (n.targetType === 'guard_task') return can('guard_tasks.manage') ? '/security/tasks' : null;
   if (n.targetType === 'guard_instruction') return can('guard_instructions.manage') ? '/security/instructions' : null;
+  if (n.targetType === 'governance_election' && n.targetId)
+    return can('governance.manage') ? `/governance/elections/${n.targetId}` : null;
+  if (n.targetType === 'governance_poll' && n.targetId)
+    return can('governance.manage') ? `/governance/polls/${n.targetId}` : null;
   if (n.kind === 'account.deletion_queued') return can('accounts.erase') ? '/deletions' : null;
   if (n.kind === 'account.new_device_login') return '/account';
   if (n.targetType === 'worker_engagement') return can('workers.review') ? '/workers?tab=all' : null;

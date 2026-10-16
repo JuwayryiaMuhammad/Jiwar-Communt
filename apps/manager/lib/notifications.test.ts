@@ -172,3 +172,12 @@ test('the guards’ duty says codes only, and leads a keeper to its page (ADR 00
   const task = { kind: 'guard_task.assigned', params: { taskKind: 'custom' }, targetType: 'guard_task', targetId: 't1' };
   assert.equal(notificationText(task), 'A custom task for you');
 });
+
+test('an election to certify says whether the board has a tie to resolve, and leads to it for the manager (ADR 0051)', () => {
+  const tied = n('governance_election.awaiting_certification', { tied: 'yes' }, 'governance_election', 'e-1');
+  assert.equal(notificationText(tied), 'An election closed with a tie: record the board’s choice and certify it');
+  assert.equal(notificationHref(tied, (p) => p === 'governance.manage'), '/governance/elections/e-1');
+  assert.equal(notificationHref(tied, () => false), null);
+  const plain = n('governance_election.awaiting_certification', { tied: 'no' }, 'governance_election', 'e-1');
+  assert.equal(notificationText(plain), 'An election closed: certify its result');
+});

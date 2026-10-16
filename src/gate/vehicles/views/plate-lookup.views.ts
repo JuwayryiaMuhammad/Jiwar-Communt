@@ -5,8 +5,10 @@ import type {
   GuardParking,
 } from '../../parking/visitor-parking.service';
 import { dayOf, PERMIT_STATUSES, reference } from '../vehicle-rules';
+import { permitReference } from '../../permits/permit-core';
 import type {
   PassMatch,
+  PermitMatch,
   PlateLookup,
   VehicleMatch,
 } from '../plate-lookup.service';
@@ -20,6 +22,43 @@ const PASS_REFUSALS = [
   'used',
   'cancelled',
 ];
+
+/** Why a permit does not let its truck or guest in now (ADR 0049). */
+const PERMIT_REFUSALS = [
+  'not_yet_valid',
+  'expired',
+  'not_approved',
+  'cancelled',
+  'revoked',
+  'outside_work_hours',
+  'day_off',
+  'guest_removed',
+];
+
+/** A move's truck or an event guest's car (ADR 0049): never a name. */
+export class PlatePermitView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  permitId: string;
+  @ApiProperty({ type: String, example: 'M-0007' })
+  reference: string;
+  @ApiProperty({ enum: ['move', 'event'] })
+  permitKind: 'move' | 'event';
+  @ApiProperty({
+    enum: ['move_permit', 'event_guest'],
+    description: 'Record the entry against `subjectType` and `subjectId`.',
+  })
+  subjectType: 'move_permit' | 'event_guest';
+  @ApiProperty({ type: String, format: 'uuid' })
+  subjectId: string;
+  @ApiProperty({ type: Boolean, description: 'The permit lets them in now.' })
+  valid: boolean;
+  @ApiProperty({ enum: PERMIT_REFUSALS, nullable: true })
+  refusal: string | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  startsAt: Date;
+  @ApiProperty({ type: String, format: 'date-time' })
+  endsAt: Date;
+}
 
 /** A visitor's parking as the guard sees it: where and when, never who. */
 export class GuardParkingView {
@@ -88,10 +127,13 @@ export class PlatePassView {
   parking: GuardParkingView | null;
 }
 
-/** One thing a plate is found on: a unit's vehicle, or a visitor's pass. */
+/**
+ * One thing a plate is found on: a unit's vehicle, a visitor's pass, or a
+ * permit's truck or guest car (ADR 0049).
+ */
 export class PlateMatchView {
-  @ApiProperty({ enum: ['vehicle', 'visitor_pass'] })
-  kind: 'vehicle' | 'visitor_pass';
+  @ApiProperty({ enum: ['vehicle', 'visitor_pass', 'unit_permit'] })
+  kind: 'vehicle' | 'visitor_pass' | 'unit_permit';
   @ApiProperty({ type: String })
   unitCode: string;
   @ApiProperty({ type: String, description: 'As it was typed, tidied.' })
@@ -100,8 +142,29 @@ export class PlateMatchView {
   vehicle: PlateVehicleView | null;
   @ApiProperty({ type: PlatePassView, nullable: true })
   pass: PlatePassView | null;
+  @ApiProperty({ type: PlatePermitView, nullable: true })
+  permit: PlatePermitView | null;
 
-  static from(m: VehicleMatch | PassMatch): PlateMatchView {
+  static from(m: VehicleMatch | PassMatch | PermitMatch): PlateMatchView {
+    if (m.kind === 'unit_permit')
+      return {
+        kind: 'unit_permit',
+        unitCode: m.unitCode,
+        plate: m.plate,
+        vehicle: null,
+        pass: null,
+        permit: {
+          permitId: m.permit.id,
+          reference: permitReference(m.permit.kind, m.permit.number),
+          permitKind: m.permit.kind as 'move' | 'event',
+          subjectType: m.subjectType,
+          subjectId: m.subjectId,
+          valid: m.refusal === null,
+          refusal: m.refusal,
+          startsAt: m.permit.startsAt,
+          endsAt: m.permit.endsAt,
+        },
+      };
     if (m.kind === 'vehicle') {
       const v = m.vehicle;
       return {
@@ -117,6 +180,7 @@ export class PlateMatchView {
           makeAndModel: v.makeAndModel,
         },
         pass: null,
+        permit: null,
       };
     }
     return {
@@ -132,6 +196,7 @@ export class PlateMatchView {
         validUntil: m.pass.validUntil,
         parking: GuardParkingView.from(m.parking),
       },
+      permit: null,
     };
   }
 }

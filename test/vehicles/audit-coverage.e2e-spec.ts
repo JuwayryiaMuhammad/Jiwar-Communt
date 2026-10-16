@@ -345,6 +345,8 @@ describe('Audit coverage — vehicles and parking', () => {
       expect(row.metadata).toEqual({
         vehicleIds: [],
         passIds: [],
+        permitIds: [],
+        guestIds: [],
         matches: 0,
       });
     });

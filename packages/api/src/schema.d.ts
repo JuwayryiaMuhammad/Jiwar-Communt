@@ -15504,8 +15504,9 @@ export interface components {
         };
         PlateMatchView: {
             /** @enum {string} */
-            kind: "vehicle" | "visitor_pass";
+            kind: "vehicle" | "visitor_pass" | "unit_permit";
             pass: components["schemas"]["PlatePassView"] | null;
+            permit: components["schemas"]["PlatePermitView"] | null;
             /** @description As it was typed, tidied. */
             plate: string;
             unitCode: string;
@@ -15526,6 +15527,29 @@ export interface components {
             validFrom: string;
             /** Format: date-time */
             validUntil: string;
+        };
+        PlatePermitView: {
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            permitId: string;
+            /** @enum {string} */
+            permitKind: "move" | "event";
+            /** @example M-0007 */
+            reference: string;
+            /** @enum {string|null} */
+            refusal: "not_yet_valid" | "expired" | "not_approved" | "cancelled" | "revoked" | "outside_work_hours" | "day_off" | "guest_removed" | null;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: uuid */
+            subjectId: string;
+            /**
+             * @description Record the entry against `subjectType` and `subjectId`.
+             * @enum {string}
+             */
+            subjectType: "move_permit" | "event_guest";
+            /** @description The permit lets them in now. */
+            valid: boolean;
         };
         PlateVehicleView: {
             color: string;

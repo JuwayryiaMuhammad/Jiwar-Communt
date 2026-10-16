@@ -17983,7 +17983,8 @@
           "kind": {
             "enum": [
               "vehicle",
-              "visitor_pass"
+              "visitor_pass",
+              "unit_permit"
             ],
             "type": "string"
           },
@@ -17991,6 +17992,15 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/PlatePassView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "permit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlatePermitView"
               }
             ],
             "nullable": true,
@@ -18018,7 +18028,8 @@
           "unitCode",
           "plate",
           "vehicle",
-          "pass"
+          "pass",
+          "permit"
         ],
         "type": "object"
       },
@@ -18074,6 +18085,75 @@
           "validFrom",
           "validUntil",
           "parking"
+        ],
+        "type": "object"
+      },
+      "PlatePermitView": {
+        "properties": {
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "permitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "permitKind": {
+            "enum": [
+              "move",
+              "event"
+            ],
+            "type": "string"
+          },
+          "reference": {
+            "example": "M-0007",
+            "type": "string"
+          },
+          "refusal": {
+            "enum": [
+              "not_yet_valid",
+              "expired",
+              "not_approved",
+              "cancelled",
+              "revoked",
+              "outside_work_hours",
+              "day_off",
+              "guest_removed"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "subjectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "subjectType": {
+            "description": "Record the entry against `subjectType` and `subjectId`.",
+            "enum": [
+              "move_permit",
+              "event_guest"
+            ],
+            "type": "string"
+          },
+          "valid": {
+            "description": "The permit lets them in now.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "permitId",
+          "reference",
+          "permitKind",
+          "subjectType",
+          "subjectId",
+          "valid",
+          "refusal",
+          "startsAt",
+          "endsAt"
         ],
         "type": "object"
       },

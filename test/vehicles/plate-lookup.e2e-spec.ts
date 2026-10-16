@@ -75,6 +75,7 @@ describe('Gate — plate lookup and visitor parking', () => {
           makeAndModel: 'Hyundai Elantra',
         },
         pass: null,
+        permit: null,
       },
       {
         kind: 'vehicle',
@@ -85,6 +86,7 @@ describe('Gate — plate lookup and visitor parking', () => {
           stickerNumber: null,
         }) as object,
         pass: null,
+        permit: null,
       },
     ]);
     const text = JSON.stringify(res.body);
@@ -154,6 +156,7 @@ describe('Gate — plate lookup and visitor parking', () => {
             endsAt: expect.any(String) as string,
           },
         },
+        permit: null,
       },
       expect.objectContaining({
         kind: 'visitor_pass',
@@ -249,7 +252,13 @@ describe('Gate — plate lookup and visitor parking', () => {
     expect(last).toMatchObject({
       actorId: guard.id,
       targetType: 'guard_shift',
-      metadata: { vehicleIds: [car.id], passIds: [], matches: 1 },
+      metadata: {
+        vehicleIds: [car.id],
+        passIds: [],
+        permitIds: [],
+        guestIds: [],
+        matches: 1,
+      },
     });
     const text = JSON.stringify(rows);
     expect(text).not.toContain('AUDL');

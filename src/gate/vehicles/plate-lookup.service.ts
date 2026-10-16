@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { Vehicle, VisitorPass } from '@prisma/client';
+import type { UnitPermit, Vehicle, VisitorPass } from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
@@ -44,9 +44,22 @@ export interface PassMatch {
   parking: GuardParking | null;
 }
 
+/** A move's truck, or an event guest's car (ADR 0049). */
+export interface PermitMatch {
+  kind: 'unit_permit';
+  unitCode: string;
+  permit: UnitPermit;
+  plate: string;
+  /** What to record the entry against. */
+  subjectType: 'move_permit' | 'event_guest';
+  subjectId: string;
+  /** Null: the permit lets them in now. */
+  refusal: Refusal | null;
+}
+
 export interface PlateLookup {
   plate: string;
-  matches: (VehicleMatch | PassMatch)[];
+  matches: (VehicleMatch | PassMatch | PermitMatch)[];
 }
 
 /**
@@ -123,16 +136,58 @@ export class PlateLookupService {
         include: { visitorDetails: { select: { vehiclePlate: true } } },
         orderBy: [{ validFrom: 'asc' }, { id: 'asc' }],
       });
+      // A move's truck and an event guest's car (ADR 0049): approved
+      // permits within a day of now, a guest still on the list.
+      const near = {
+        status: 'approved' as const,
+        startsAt: { lt: new Date(now.getTime() + DAY) },
+        endsAt: { gt: new Date(now.getTime() - DAY) },
+      };
+      const moves = await tx.unitPermit.findMany({
+        where: { ...near, kind: 'move', plateKey: key },
+        orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
+      });
+      const guests = await tx.permitGuest.findMany({
+        where: {
+          plateKey: key,
+          removedAt: null,
+          purgedAt: null,
+          permitId: {
+            in: (
+              await tx.unitPermit.findMany({
+                where: { ...near, kind: 'event' },
+                select: { id: true },
+              })
+            ).map((p) => p.id),
+          },
+        },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      });
+      const events = new Map(
+        (
+          await tx.unitPermit.findMany({
+            where: { id: { in: guests.map((g) => g.permitId) } },
+          })
+        ).map((p) => [p.id, p]),
+      );
       const codes = await this.core.unitCodes(tx, [
         ...vehicles.map((v) => v.unitId),
         ...passes.map((p) => p.unitId),
+        ...moves.map((m) => m.unitId),
+        ...[...events.values()].map((e) => e.unitId),
       ]);
-      const matches: (VehicleMatch | PassMatch)[] = vehicles.map((v) => ({
-        kind: 'vehicle',
-        unitCode: codes.get(v.unitId) ?? '',
-        vehicle: v,
-        permitStatus: permitStatus(v.status, dayOf(v.permitValidUntil), today),
-      }));
+      const matches: (VehicleMatch | PassMatch | PermitMatch)[] = vehicles.map(
+        (v) => ({
+          kind: 'vehicle',
+          unitCode: codes.get(v.unitId) ?? '',
+          vehicle: v,
+          permitStatus: permitStatus(
+            v.status,
+            dayOf(v.permitValidUntil),
+            today,
+          ),
+        }),
+      );
       for (const { visitorDetails, ...pass } of passes) {
         const subject = await this.subjects.pass(tx, pass);
         matches.push({
@@ -144,12 +199,41 @@ export class PlateLookupService {
           parking: await this.parking.forPass(tx, pass.id, now),
         });
       }
+      for (const [type, id, permit, shown] of [
+        ...moves.map(
+          (m) => ['move_permit', m.id, m, m.truckPlate ?? plate] as const,
+        ),
+        ...guests.map(
+          (g) =>
+            [
+              'event_guest',
+              g.id,
+              events.get(g.permitId)!,
+              g.vehiclePlate ?? plate,
+            ] as const,
+        ),
+      ]) {
+        const subject = await this.subjects.permitSubject(tx, type, id);
+        matches.push({
+          kind: 'unit_permit',
+          unitCode: codes.get(permit.unitId) ?? '',
+          permit,
+          plate: shown,
+          subjectType: type,
+          subjectId: id,
+          refusal: subject
+            ? await this.subjects.refusal(tx, subject, now, timezone)
+            : 'unknown_code',
+        });
+      }
       await this.audit.record(tx, {
         action: 'gate.plate_lookup',
         targetId: shift.id,
         metadata: {
           vehicleIds: vehicles.map((v) => v.id),
           passIds: passes.map((p) => p.id),
+          permitIds: moves.map((m) => m.id),
+          guestIds: guests.map((g) => g.id),
           matches: matches.length,
         },
       });

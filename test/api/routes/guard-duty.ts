@@ -788,3 +788,33 @@ export const FOUND_ITEM_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** The daily report (ADR 0050). */
+export const DAILY_REPORT_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/staff/security/reports/daily',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { date: '5 Nov' },
+      fields: [{ field: 'date', code: 'INVALID_FORMAT' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/security/reports/daily/export',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { gateId: 'gate-1' },
+      fields: [{ field: 'gateId', code: 'INVALID_UUID' }],
+    },
+    noStore: true,
+  },
+];

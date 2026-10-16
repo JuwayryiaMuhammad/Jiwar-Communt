@@ -178,6 +178,10 @@ export function guardDutyCalls(
         label: 'No-store keys',
       }),
     'GET /gate/my-work': () => guard('GET', '/gate/my-work'),
+    'GET /staff/security/reports/daily': () =>
+      manager('GET', '/staff/security/reports/daily'),
+    'GET /staff/security/reports/daily/export': () =>
+      manager('GET', '/staff/security/reports/daily/export'),
     'POST /gate/found-items': () =>
       guard('POST', '/gate/found-items', { description: 'No-store wallet' }),
     'GET /gate/found-items': () => guard('GET', '/gate/found-items'),

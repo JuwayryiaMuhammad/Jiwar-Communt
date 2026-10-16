@@ -7027,6 +7027,193 @@
         ],
         "type": "object"
       },
+      "DailyCountsView": {
+        "properties": {
+          "absent": {
+            "description": "Of the slots, not opened an hour after the start.",
+            "type": "number"
+          },
+          "contractorWorkers": {
+            "description": "Contractor workers let in at this gate against a works permit (ADR 0049); null for a zone. Never in `visitors`.",
+            "nullable": true,
+            "type": "number"
+          },
+          "emergencies": {
+            "description": "Emergencies reported this day and answered from this gate.",
+            "type": "number"
+          },
+          "eventGuests": {
+            "description": "Guests let in at this gate against an event’s list (ADR 0049); null for a zone. Never in `visitors`.",
+            "nullable": true,
+            "type": "number"
+          },
+          "filledSlots": {
+            "type": "number"
+          },
+          "gateServices": {
+            "description": "Gate services accepted this day: a lane at this gate, or by a guard on shift here.",
+            "type": "number"
+          },
+          "late": {
+            "description": "Of the slots, opened more than ten minutes late.",
+            "type": "number"
+          },
+          "materialEntries": {
+            "description": "Materials the guards logged in at this gate (ADR 0049); null for a zone.",
+            "nullable": true,
+            "type": "number"
+          },
+          "materialExits": {
+            "description": "Material exits let out at this gate (a permit used, ADR 0049); null for a zone.",
+            "nullable": true,
+            "type": "number"
+          },
+          "moveTrucks": {
+            "description": "Move trucks let in at this gate against a move permit (ADR 0049); null for a zone.",
+            "nullable": true,
+            "type": "number"
+          },
+          "overtimeMinutes": {
+            "type": "number"
+          },
+          "scheduledSlots": {
+            "description": "Slots starting this day.",
+            "type": "number"
+          },
+          "tasksCreated": {
+            "type": "number"
+          },
+          "tasksDone": {
+            "type": "number"
+          },
+          "tasksOpen": {
+            "description": "Open at the day’s end.",
+            "type": "number"
+          },
+          "unscheduledShifts": {
+            "description": "Shifts that filled no slot.",
+            "type": "number"
+          },
+          "visitors": {
+            "description": "Visitors in at this gate (passes and gate requests); null for a zone.",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "scheduledSlots",
+          "filledSlots",
+          "late",
+          "absent",
+          "unscheduledShifts",
+          "overtimeMinutes",
+          "tasksCreated",
+          "tasksDone",
+          "tasksOpen",
+          "emergencies",
+          "gateServices",
+          "visitors",
+          "contractorWorkers",
+          "eventGuests",
+          "moveTrucks",
+          "materialEntries",
+          "materialExits"
+        ],
+        "type": "object"
+      },
+      "DailyPostView": {
+        "properties": {
+          "counts": {
+            "$ref": "#/components/schemas/DailyCountsView"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "shifts": {
+            "description": "Started this day.",
+            "items": {
+              "$ref": "#/components/schemas/DailyShiftView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "post",
+          "shifts",
+          "counts"
+        ],
+        "type": "object"
+      },
+      "DailyReportView": {
+        "properties": {
+          "date": {
+            "example": "2026-11-05",
+            "format": "date",
+            "type": "string"
+          },
+          "posts": {
+            "description": "Every gate by name; then the zones where something happened.",
+            "items": {
+              "$ref": "#/components/schemas/DailyPostView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "date",
+          "posts"
+        ],
+        "type": "object"
+      },
+      "DailyShiftView": {
+        "properties": {
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "guard": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "late": {
+            "description": "More than ten minutes late.",
+            "type": "boolean"
+          },
+          "lateMinutes": {
+            "nullable": true,
+            "type": "number"
+          },
+          "overtimeMinutes": {
+            "nullable": true,
+            "type": "number"
+          },
+          "scheduledStart": {
+            "description": "The slot it filled; null when unscheduled.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "unscheduledMinutes": {
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "guard",
+          "startedAt",
+          "endedAt",
+          "scheduledStart",
+          "lateMinutes",
+          "late",
+          "overtimeMinutes",
+          "unscheduledMinutes"
+        ],
+        "type": "object"
+      },
       "DataExportStatus": {
         "enum": [
           "pending",
@@ -58212,6 +58399,108 @@
           }
         ],
         "summary": "List the posts a guard may be scheduled at",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/reports/daily": {
+      "get": {
+        "description": "Per gate and per zone, for one of the compound’s days: shifts, lateness and absence, tasks, emergencies, gate services, visitors.",
+        "operationId": "DailyReportController_daily",
+        "parameters": [
+          {
+            "description": "A day of the compound, `YYYY-MM-DD`. Default today.",
+            "in": "query",
+            "name": "date",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "One gate only.",
+            "in": "query",
+            "name": "gateId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the daily report",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/reports/daily/export": {
+      "get": {
+        "description": "One row per post; UTF-8 with a byte-order mark, CRLF; text cells guarded against formulas.",
+        "operationId": "DailyReportController_export",
+        "parameters": [
+          {
+            "description": "A day of the compound, `YYYY-MM-DD`. Default today.",
+            "in": "query",
+            "name": "date",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "One gate only.",
+            "in": "query",
+            "name": "gateId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export the daily report as CSV",
         "tags": [
           "guard-duty"
         ],

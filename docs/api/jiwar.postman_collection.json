@@ -11873,6 +11873,79 @@
           }
         },
         {
+          "name": "Read the daily report",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "reports",
+                "daily"
+              ],
+              "query": [
+                {
+                  "description": "A day of the compound, `YYYY-MM-DD`. Default today.",
+                  "disabled": true,
+                  "key": "date",
+                  "value": ""
+                },
+                {
+                  "description": "One gate only.",
+                  "disabled": true,
+                  "key": "gateId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/reports/daily"
+            }
+          }
+        },
+        {
+          "name": "Export the daily report as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "reports",
+                "daily",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "A day of the compound, `YYYY-MM-DD`. Default today.",
+                  "disabled": true,
+                  "key": "date",
+                  "value": ""
+                },
+                {
+                  "description": "One gate only.",
+                  "disabled": true,
+                  "key": "gateId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/reports/daily/export"
+            }
+          }
+        },
+        {
           "name": "Read the roster",
           "request": {
             "description": "**Responses:** 200",

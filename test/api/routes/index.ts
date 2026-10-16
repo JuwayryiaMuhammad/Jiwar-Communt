@@ -33,6 +33,7 @@ import {
 } from './finance';
 import { GATE_ROUTES } from './gate';
 import {
+  DAILY_REPORT_ROUTES,
   FOUND_ITEM_ROUTES,
   HANDOVER_ROUTES,
   INSTRUCTION_ROUTES,
@@ -210,4 +211,5 @@ export const ROUTES: Row[] = [
   ...SWAP_ROUTES,
   ...INSTRUCTION_ROUTES,
   ...FOUND_ITEM_ROUTES,
+  ...DAILY_REPORT_ROUTES,
 ];

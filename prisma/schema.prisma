@@ -2113,6 +2113,8 @@ model GateEntry {
   @@index([tenantId, subjectType, subjectId, occurredAt(sort: Desc)], map: "gate_entries_tenant_id_subject_idx")
   @@index([tenantId, occurredAt(sort: Desc), id(sort: Desc)])
   @@index([tenantId, unitId, occurredAt(sort: Desc)])
+  /// The daily report's visitors of a gate (ADR 0050).
+  @@index([tenantId, gateId, occurredAt], map: "gate_entries_gate_day_idx")
   @@map("gate_entries")
 }
 

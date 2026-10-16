@@ -104,6 +104,8 @@ import { GateServicesService } from './gate-services/gate-services.service';
 import { GateServiceRecords } from './gate-services/gate-service-records';
 import { GateServiceHandlersController } from './gate-services/gate-service-handlers.controller';
 import { GateServiceHandlersService } from './gate-services/gate-service-handlers.service';
+import { DailyReportController } from './reports/daily-report.controller';
+import { DailyReportService } from './reports/daily-report.service';
 import {
   PermitRulesController,
   PermitSettingsController,
@@ -232,6 +234,7 @@ import { RosterService } from './roster/roster.service';
     GuardInstructionsController,
     GuardFoundItemsController,
     StaffFoundItemsController,
+    DailyReportController,
   ],
   providers: [
     GatesService,
@@ -312,6 +315,7 @@ import { RosterService } from './roster/roster.service';
     SwapsService,
     GuardInstructionsService,
     FoundItemsService,
+    DailyReportService,
   ],
 })
 export class GateModule {}

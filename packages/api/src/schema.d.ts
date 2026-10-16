@@ -8054,6 +8054,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/reports/daily": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the daily report
+         * @description Per gate and per zone, for one of the compound’s days: shifts, lateness and absence, tasks, emergencies, gate services, visitors.
+         */
+        get: operations["DailyReportController_daily"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/reports/daily/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export the daily report as CSV
+         * @description One row per post; UTF-8 with a byte-order mark, CRLF; text cells guarded against formulas.
+         */
+        get: operations["DailyReportController_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/security/roster/slots": {
         parameters: {
             query?: never;
@@ -13087,6 +13127,70 @@ export interface components {
             events: components["schemas"]["CashEventView"][];
             net: string;
             rows: components["schemas"]["CashierRowView"][];
+        };
+        DailyCountsView: {
+            /** @description Of the slots, not opened an hour after the start. */
+            absent: number;
+            /** @description Contractor workers let in at this gate against a works permit (ADR 0049); null for a zone. Never in `visitors`. */
+            contractorWorkers: number | null;
+            /** @description Emergencies reported this day and answered from this gate. */
+            emergencies: number;
+            /** @description Guests let in at this gate against an event’s list (ADR 0049); null for a zone. Never in `visitors`. */
+            eventGuests: number | null;
+            filledSlots: number;
+            /** @description Gate services accepted this day: a lane at this gate, or by a guard on shift here. */
+            gateServices: number;
+            /** @description Of the slots, opened more than ten minutes late. */
+            late: number;
+            /** @description Materials the guards logged in at this gate (ADR 0049); null for a zone. */
+            materialEntries: number | null;
+            /** @description Material exits let out at this gate (a permit used, ADR 0049); null for a zone. */
+            materialExits: number | null;
+            /** @description Move trucks let in at this gate against a move permit (ADR 0049); null for a zone. */
+            moveTrucks: number | null;
+            overtimeMinutes: number;
+            /** @description Slots starting this day. */
+            scheduledSlots: number;
+            tasksCreated: number;
+            tasksDone: number;
+            /** @description Open at the day’s end. */
+            tasksOpen: number;
+            /** @description Shifts that filled no slot. */
+            unscheduledShifts: number;
+            /** @description Visitors in at this gate (passes and gate requests); null for a zone. */
+            visitors: number | null;
+        };
+        DailyPostView: {
+            counts: components["schemas"]["DailyCountsView"];
+            post: components["schemas"]["PostView"];
+            /** @description Started this day. */
+            shifts: components["schemas"]["DailyShiftView"][];
+        };
+        DailyReportView: {
+            /**
+             * Format: date
+             * @example 2026-11-05
+             */
+            date: string;
+            /** @description Every gate by name; then the zones where something happened. */
+            posts: components["schemas"]["DailyPostView"][];
+        };
+        DailyShiftView: {
+            /** Format: date-time */
+            endedAt: string | null;
+            guard: components["schemas"]["AccountRefView"];
+            /** @description More than ten minutes late. */
+            late: boolean;
+            lateMinutes: number | null;
+            overtimeMinutes: number | null;
+            /**
+             * Format: date-time
+             * @description The slot it filled; null when unscheduled.
+             */
+            scheduledStart: string | null;
+            /** Format: date-time */
+            startedAt: string;
+            unscheduledMinutes: number | null;
         };
         /** @enum {string} */
         DataExportStatus: "pending" | "building" | "ready" | "expired" | "failed";
@@ -33711,6 +33815,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RosterPostsView"];
+                };
+            };
+        };
+    };
+    DailyReportController_daily: {
+        parameters: {
+            query?: {
+                /** @description A day of the compound, `YYYY-MM-DD`. Default today. */
+                date?: string;
+                /** @description One gate only. */
+                gateId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyReportView"];
+                };
+            };
+        };
+    };
+    DailyReportController_export: {
+        parameters: {
+            query?: {
+                /** @description A day of the compound, `YYYY-MM-DD`. Default today. */
+                date?: string;
+                /** @description One gate only. */
+                gateId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
                 };
             };
         };

@@ -819,6 +819,25 @@ export const ErrorCode = {
   PATROL_RUN_NOT_LIVE: 'PATROL_RUN_NOT_LIVE',
   /** Nobody may cancel it any more: it is not scheduled (409, params.status). */
   PATROL_RUN_CLOSED: 'PATROL_RUN_CLOSED',
+  /**
+   * Not a checkpoint of this compound in service, or not its current QR:
+   * one answer for a malformed payload, an unknown or retired checkpoint,
+   * another compound's, and an old printout (422).
+   */
+  PATROL_CHECKPOINT_INVALID: 'PATROL_CHECKPOINT_INVALID',
+  /** The checkpoint is not on the run's route (422). */
+  PATROL_CHECKPOINT_NOT_ON_ROUTE: 'PATROL_CHECKPOINT_NOT_ON_ROUTE',
+  /** An ordered route expects another checkpoint first (422, params.expected: its position). */
+  PATROL_OUT_OF_ORDER: 'PATROL_OUT_OF_ORDER',
+  /** This run scanned that checkpoint already (409). */
+  PATROL_CHECKPOINT_ALREADY_SCANNED: 'PATROL_CHECKPOINT_ALREADY_SCANNED',
+  /**
+   * The device's time is outside the run's lifetime, two minutes either
+   * side (422).
+   */
+  PATROL_SCAN_OUT_OF_WINDOW: 'PATROL_SCAN_OUT_OF_WINDOW',
+  /** That scan has its note already (409). */
+  PATROL_NOTE_EXISTS: 'PATROL_NOTE_EXISTS',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

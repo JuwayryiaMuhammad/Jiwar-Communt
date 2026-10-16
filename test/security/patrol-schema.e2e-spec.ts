@@ -2,9 +2,17 @@ import { Client } from 'pg';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
-import { checkpointRow, routeRow, rowHash, runRow } from '../setup/patrol-rows';
+import {
+  checkpointRow,
+  notePhotoRow,
+  noteRow,
+  routeRow,
+  rowHash,
+  runRow,
+  scanRow,
+} from '../setup/patrol-rows';
 import { placeRow } from '../setup/safety-rows';
-import { gateRow, shiftRow } from '../setup/security-rows';
+import { dutyFileRow, gateRow, shiftRow } from '../setup/security-rows';
 import { required } from '../setup/test-env';
 
 /**
@@ -27,6 +35,8 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
   let runId: string;
   let otherRunId: string;
   let shiftId: string;
+  let scanId: string;
+  let noteId: string;
 
   beforeAll(async () => {
     h = await createDbHarness();
@@ -54,6 +64,24 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
         runId = await run(24);
         otherRunId = await run(48);
         shiftId = await shiftRow(tx, { tenantId, guardId: otherId, gateId });
+        scanId = await scanRow(tx, {
+          tenantId,
+          runId: otherRunId,
+          checkpointId,
+          guardId: otherId,
+        });
+        noteId = await noteRow(tx, {
+          tenantId,
+          runId: otherRunId,
+          scanId,
+          guardId: otherId,
+        });
+        await notePhotoRow(tx, {
+          tenantId,
+          noteId,
+          fileId: await dutyFileRow(tx, tenantId, 'patrol_photo'),
+          uploadedById: otherId,
+        });
       }),
     );
     app = new Client({ connectionString: process.env.DATABASE_URL });
@@ -102,6 +130,7 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
       'patrol_routes',
       'patrol_route_versions',
       'patrol_runs',
+      'patrol_notes',
     ])
       expect({ table, ...(await privileges(table)) }).toEqual({
         table,
@@ -114,7 +143,11 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
   });
 
   it('what is only ever added is neither changed nor deleted by the app', async () => {
-    for (const table of ['patrol_route_checkpoints'])
+    for (const table of [
+      'patrol_route_checkpoints',
+      'patrol_scans',
+      'patrol_note_photos',
+    ])
       expect({ table, ...(await privileges(table)) }).toEqual({
         table,
         select: true,
@@ -132,6 +165,9 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
       'patrol_route_versions',
       'patrol_route_checkpoints',
       'patrol_runs',
+      'patrol_scans',
+      'patrol_notes',
+      'patrol_note_photos',
     ]) {
       // A row to refuse: a row trigger never fires on a DELETE of none.
       const found = await attempt(
@@ -463,5 +499,112 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
         ),
       ).rejects.toThrow(/patrol_runs_scheduled_key/);
     });
+  });
+
+  describe('patrol_scans', () => {
+    const insert = (columns: string, values: string) =>
+      `INSERT INTO patrol_scans (id, tenant_id, run_id, checkpoint_id, position, scanned_at, received_at, guard_account_id, ${columns})
+       VALUES (gen_random_uuid(), '${tenantId}', '${runId}', '${checkpointId}', 1, now(), now(), '${otherId}', ${values})`;
+
+    it('a scan never changes', async () => {
+      await expect(
+        attempt(
+          migrator,
+          `UPDATE patrol_scans SET position = 2 WHERE id = '${scanId}'`,
+        ),
+      ).rejects.toThrow(/append-only/);
+    });
+
+    it('by hand exactly with a reason’s code; a whole position; a distance only with one', async () => {
+      await asApp(
+        insert(
+          'method, lat, lng, accuracy_m, distance_m, position_suspect',
+          "'qr', 30, 31, 5, 12, false",
+        ),
+      );
+      for (const [columns, values, check] of [
+        ['method', "'manual'", 'patrol_scans_manual_shape'],
+        [
+          'method, manual_reason',
+          "'qr', 'qr_damaged'",
+          'patrol_scans_manual_shape',
+        ],
+        [
+          'method, manual_reason',
+          "'manual', 'lazy'",
+          'patrol_scans_manual_shape',
+        ],
+        ['method, lat', "'qr', 30", 'patrol_scans_position_shape'],
+        ['method, accuracy_m', "'qr', 5", 'patrol_scans_position_shape'],
+        ['method, lat, lng', "'qr', 91, 31", 'patrol_scans_position_shape'],
+        ['method, distance_m', "'qr', 5", 'patrol_scans_distance_shape'],
+        [
+          'method, lat, lng, distance_m',
+          "'qr', 30, 31, 5",
+          'patrol_scans_distance_shape',
+        ],
+      ] as const)
+        await expect(asApp(insert(columns, values))).rejects.toThrow(
+          new RegExp(check),
+        );
+    });
+
+    it('a run scans a checkpoint once', async () => {
+      await expect(
+        asApp(
+          `INSERT INTO patrol_scans (id, tenant_id, run_id, checkpoint_id, position, method, scanned_at, received_at, guard_account_id)
+           VALUES (gen_random_uuid(), '${tenantId}', '${otherRunId}', '${checkpointId}', 1, 'qr', now(), now(), '${otherId}')`,
+        ),
+      ).rejects.toThrow(/patrol_scans_once_per_checkpoint/);
+    });
+  });
+
+  describe('patrol_notes', () => {
+    const where = () => `id = '${noteId}'`;
+    const clear = `UPDATE patrol_notes SET text = NULL, text_cleared_at = now() WHERE id = '__'`;
+
+    it('what it says never changes; its words go once, with the moment they went', async () => {
+      for (const set of [
+        "outcome = 'issue_found'",
+        "text = 'Other words'",
+        "noted_at = noted_at - interval '1 minute'",
+        'text = NULL',
+      ])
+        await expect(
+          asApp(`UPDATE patrol_notes SET ${set} WHERE ${where()}`),
+        ).rejects.toThrow(/what a note says never changes/);
+      const cleared = clear.replace('__', noteId);
+      await asApp(cleared);
+      await expect(
+        asApp(
+          cleared,
+          `UPDATE patrol_notes SET text_cleared_at = now() + interval '1 minute' WHERE ${where()}`,
+        ),
+      ).rejects.toThrow(/what a note says never changes/);
+    });
+
+    it('an outcome of the list, words of 1 to 1000, one note per scan', async () => {
+      const insert = (outcome: string, text: string) =>
+        `INSERT INTO patrol_notes (id, tenant_id, run_id, scan_id, outcome, text, noted_at, received_at, guard_account_id)
+         VALUES (gen_random_uuid(), '${tenantId}', '${otherRunId}', '${scanId}', ${outcome}, ${text}, now(), now(), '${otherId}')`;
+      await expect(asApp(insert("'fine'", 'NULL'))).rejects.toThrow(
+        /patrol_notes_outcome/,
+      );
+      await expect(asApp(insert("'all_clear'", "''"))).rejects.toThrow(
+        /patrol_notes_text_length/,
+      );
+      await expect(asApp(insert("'all_clear'", 'NULL'))).rejects.toThrow(
+        /patrol_notes_scan_key/,
+      );
+    });
+  });
+
+  it('a note’s photo is only ever added', async () => {
+    await expect(
+      attempt(
+        migrator,
+        `UPDATE patrol_note_photos SET note_id = note_id WHERE note_id = '${noteId}'`,
+      ),
+    ).rejects.toThrow(/append-only/);
   });
 });

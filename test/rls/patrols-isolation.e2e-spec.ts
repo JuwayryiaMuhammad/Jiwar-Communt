@@ -3,12 +3,15 @@ import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
 import {
   checkpointRow,
+  notePhotoRow,
+  noteRow,
   routeRow,
   routeStopRow,
   runRow,
+  scanRow,
   versionRow,
 } from '../setup/patrol-rows';
-import { gateRow } from '../setup/security-rows';
+import { dutyFileRow, gateRow } from '../setup/security-rows';
 
 /** What a seed needs from one compound. */
 interface Side {
@@ -20,6 +23,9 @@ interface Side {
   spareCheckpointId: string;
   routeId: string;
   versionId: string;
+  runId: string;
+  scanId: string;
+  noteId: string;
 }
 
 /**
@@ -93,6 +99,54 @@ const TABLES: Table[] = [
         inHours: 24 + ++runs,
       }),
   },
+  {
+    table: 'patrol_scans',
+    // A run scans a checkpoint once: each of A's own on another run.
+    insert: async (tx, own, link) =>
+      scanRow(tx, {
+        tenantId: own.tenantId,
+        runId: await runRow(tx, {
+          tenantId: own.tenantId,
+          routeId: link.routeId,
+          versionId: link.versionId,
+          gateId: link.gateId,
+          inHours: 500 + ++runs,
+        }),
+        checkpointId: link.checkpointId,
+        guardId: link.accountId,
+      }),
+  },
+  {
+    table: 'patrol_notes',
+    insert: async (tx, own, link) =>
+      noteRow(tx, {
+        tenantId: own.tenantId,
+        runId: link.runId,
+        scanId: await scanRow(tx, {
+          tenantId: own.tenantId,
+          runId: await runRow(tx, {
+            tenantId: own.tenantId,
+            routeId: link.routeId,
+            versionId: link.versionId,
+            gateId: link.gateId,
+            inHours: 900 + ++runs,
+          }),
+          checkpointId: link.checkpointId,
+          guardId: link.accountId,
+        }),
+        guardId: link.accountId,
+      }),
+  },
+  {
+    table: 'patrol_note_photos',
+    insert: async (tx, own, link) =>
+      notePhotoRow(tx, {
+        tenantId: own.tenantId,
+        noteId: link.noteId,
+        fileId: await dutyFileRow(tx, own.tenantId, 'patrol_photo'),
+        uploadedById: link.accountId,
+      }),
+  },
 ];
 
 describe('RLS isolation — patrol tables', () => {
@@ -116,6 +170,9 @@ describe('RLS isolation — patrol tables', () => {
       spareCheckpointId: '',
       routeId: '',
       versionId: '',
+      runId: '',
+      scanId: '',
+      noteId: '',
     };
     await inTenant(s, async (tx) => {
       s.gateId = await gateRow(tx, tenantId);
@@ -135,6 +192,25 @@ describe('RLS isolation — patrol tables', () => {
       });
       s.routeId = route.routeId;
       s.versionId = route.versionId;
+      s.runId = await runRow(tx, {
+        tenantId,
+        routeId: s.routeId,
+        versionId: s.versionId,
+        gateId: s.gateId,
+        inHours: 2,
+      });
+      s.scanId = await scanRow(tx, {
+        tenantId,
+        runId: s.runId,
+        checkpointId: s.checkpointId,
+        guardId: s.accountId,
+      });
+      s.noteId = await noteRow(tx, {
+        tenantId,
+        runId: s.runId,
+        scanId: s.scanId,
+        guardId: s.accountId,
+      });
     });
     return s;
   };

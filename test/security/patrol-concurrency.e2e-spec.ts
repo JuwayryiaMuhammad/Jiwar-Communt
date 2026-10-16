@@ -1,3 +1,4 @@
+import { newId } from '../../src/core/common/uuid';
 import { PATROL_WATCH_SWEEP } from '../../src/gate/patrols/patrol-sweeps';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { patrolHelpers, type RouteBody, type Who } from '../setup/patrols';
@@ -153,6 +154,91 @@ describe('Patrols under concurrency', () => {
           cancelReason: 'route_changed',
         });
       }
+    }
+  });
+
+  it('the same scan sent twice at once: recorded once, one answer', async () => {
+    const one = await x.checkpoint(supervisor, { gateId });
+    const two = await x.checkpoint(supervisor, { gateId });
+    const pair = await x.route(supervisor, { gateId }, [one.id, two.id]);
+    for (let i = 0; i < 5; i++) {
+      const guard = await onShift();
+      const run = await x.adhoc(guard, pair.id);
+      const body = {
+        id: newId(),
+        method: 'qr',
+        payload: one.qrPayload,
+        scannedAt: new Date().toISOString(),
+      };
+      const results = await Promise.all([
+        x.scanRaw(guard, run.id, body),
+        x.scanRaw(guard, run.id, body),
+      ]);
+      expect(results.map((r) => r.status)).toEqual([201, 201]);
+      expect(results[1].body).toEqual(results[0].body);
+      const scans = await x.inTx(s.c, (tx) =>
+        tx.patrolScan.count({ where: { runId: run.id } }),
+      );
+      expect(scans).toBe(1);
+      expect((await x.runOf(s.c, run.id)).scannedCount).toBe(1);
+      await x.endRunRaw(guard, run.id).expect(200);
+    }
+  });
+
+  it('a reissue racing a scan of the old printout: accepted before it, or refused after', async () => {
+    for (let i = 0; i < 5; i++) {
+      const point = await x.checkpoint(supervisor, { gateId });
+      const r = await x.route(supervisor, { gateId }, [point.id]);
+      const guard = await onShift();
+      const run = await x.adhoc(guard, r.id);
+      const [scan, reissue] = await Promise.all([
+        x.scanRaw(guard, run.id, { method: 'qr', payload: point.qrPayload }),
+        x.http(
+          'post',
+          `/staff/security/patrols/checkpoints/${point.id}/reissue`,
+          supervisor.token,
+        ),
+      ]);
+      expect(reissue.status).toBe(200);
+      const issued = new Date(
+        (reissue.body as { tokenIssuedAt: string }).tokenIssuedAt,
+      );
+      if (scan.status === 201) {
+        const row = await x.inTx(s.c, (tx) =>
+          tx.patrolScan.findUniqueOrThrow({
+            where: { id: (scan.body as { id: string }).id },
+          }),
+        );
+        expect(row.receivedAt.getTime()).toBeLessThanOrEqual(issued.getTime());
+      } else {
+        expect([scan.status, codeOf(scan)]).toEqual([
+          422,
+          'PATROL_CHECKPOINT_INVALID',
+        ]);
+        await x.endRunRaw(guard, run.id).expect(200);
+      }
+    }
+  });
+
+  it('a shift’s end racing a scan: the run ends with the scan counted, or the scan is kept after it', async () => {
+    const one = await x.checkpoint(supervisor, { gateId });
+    const two = await x.checkpoint(supervisor, { gateId });
+    const pair = await x.route(supervisor, { gateId }, [one.id, two.id]);
+    for (let i = 0; i < 5; i++) {
+      const guard = await onShift();
+      const run = await x.adhoc(guard, pair.id);
+      const [scan, end] = await Promise.all([
+        x.scanRaw(guard, run.id, { method: 'qr', payload: one.qrPayload }),
+        x.endRaw(guard),
+      ]);
+      expect(end.status).toBe(200);
+      expect(scan.status).toBe(201);
+      const row = await x.runOf(s.c, run.id);
+      expect(row).toMatchObject({
+        status: 'incomplete',
+        endReason: 'shift_ended',
+        scannedCount: 1,
+      });
     }
   });
 });

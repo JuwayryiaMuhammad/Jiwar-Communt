@@ -2188,6 +2188,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/patrols/runs/{id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Note what I found at a checkpoint
+         * @description At a scan of my run, one each (409 PATROL_NOTE_EXISTS): an outcome, words, up to three `patrol_photo` files. Under way, or up to 30 minutes after it ended.
+         */
+        post: operations["GuardPatrolsController_note"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/patrols/runs/{id}/scans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Scan a checkpoint
+         * @description Of my run: its QR or NFC payload, or by hand with a `patrolManualScan` code. The app’s own id records once (offline, a retry); the device’s time must fall in the run’s lifetime. An ordered route takes its checkpoints in order (422 PATROL_OUT_OF_ORDER, params.expected); each once (409 PATROL_CHECKPOINT_ALREADY_SCANNED). Farther than the checkpoint’s radius is kept and flagged. The last one completes the run.
+         */
+        post: operations["GuardPatrolsController_scan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/patrols/runs/{id}/start": {
         parameters: {
             query?: never;
@@ -15352,7 +15392,7 @@ export interface components {
             technicianRating: number | null;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -16117,7 +16157,7 @@ export interface components {
             /** Format: date-time */
             startedAt: string | null;
             status: components["schemas"]["PatrolRunStatus"];
-            stops: components["schemas"]["RunStopView"][];
+            stops: components["schemas"]["GuardRunStopView"][];
             /** Format: date-time */
             timesOutAt: string | null;
             /**
@@ -16125,6 +16165,17 @@ export interface components {
              * @description A scheduled run may be started from 15 minutes before its start until then.
              */
             windowEndsAt: string | null;
+        };
+        GuardRunStopView: {
+            /** Format: uuid */
+            checkpointId: string;
+            location: components["schemas"]["CheckpointPositionView"] | null;
+            nameAr: string;
+            nameEn: string;
+            note: components["schemas"]["GuardStopNoteView"] | null;
+            /** @description 1 for the first. */
+            position: number;
+            scan: components["schemas"]["GuardStopScanView"] | null;
         };
         GuardRunView: {
             checkpointsTotal: number;
@@ -16165,6 +16216,23 @@ export interface components {
         GuardSlotCancel: "schedule_change" | "guard_unavailable" | "post_closed" | "other";
         /** @enum {string} */
         GuardSlotStatus: "scheduled" | "cancelled";
+        GuardStopNoteView: {
+            /** Format: uuid */
+            id: string;
+            outcome: components["schemas"]["PatrolNoteOutcome"];
+            /** @description Its author only. */
+            photos?: components["schemas"]["PresignedReadView"][];
+            /** @description Its author only. */
+            text?: string | null;
+        };
+        GuardStopScanView: {
+            /** Format: uuid */
+            id: string;
+            method: components["schemas"]["PatrolScanMethod"];
+            positionSuspect: boolean | null;
+            /** Format: date-time */
+            scannedAt: string;
+        };
         /**
          * @description Why the system cancelled it.
          * @enum {string}
@@ -17653,6 +17721,38 @@ export interface components {
              */
             validUntil?: string;
         };
+        NoteDto: {
+            /**
+             * Format: uuid
+             * @description The app’s own id (UUIDv7): sent again, it records once.
+             */
+            id: string;
+            /** Format: date-time */
+            notedAt: string;
+            outcome: components["schemas"]["PatrolNoteOutcome"];
+            /** @description Finalized `patrol_photo` files of the caller, 3 at most. */
+            photoFileIds?: string[];
+            /**
+             * Format: uuid
+             * @description A scan of this run (INVALID_VALUE); one note each.
+             */
+            scanId: string;
+            text?: string;
+        };
+        NoteView: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            notedAt: string;
+            outcome: components["schemas"]["PatrolNoteOutcome"];
+            /** @description How many photos. */
+            photos: number;
+            /** Format: date-time */
+            receivedAt: string;
+            /** Format: uuid */
+            scanId: string;
+            text: string | null;
+        };
         NoticeSentView: {
             /** Format: uuid */
             id: string;
@@ -17955,6 +18055,10 @@ export interface components {
             runs: components["schemas"]["GuardRunView"][];
         };
         /** @enum {string} */
+        PatrolManualScanReason: "qr_damaged" | "qr_missing" | "nfc_unreadable" | "other";
+        /** @enum {string} */
+        PatrolNoteOutcome: "all_clear" | "issue_found";
+        /** @enum {string} */
         PatrolRunCancelReason: "not_needed" | "post_closed" | "other" | "route_changed" | "route_retired" | "post_out_of_service";
         /**
          * @description Why an incomplete run ended.
@@ -17965,6 +18069,8 @@ export interface components {
         PatrolRunKind: "scheduled" | "adhoc";
         /** @enum {string} */
         PatrolRunStatus: "scheduled" | "in_progress" | "completed" | "incomplete" | "timed_out" | "missed" | "cancelled";
+        /** @enum {string} */
+        PatrolScanMethod: "qr" | "nfc" | "manual";
         PatrolScheduleDto: {
             /**
              * @description 0 = Sunday … 6 = Saturday.
@@ -20080,6 +20186,10 @@ export interface components {
             kind: components["schemas"]["PatrolRunKind"];
             /** @description Not started 15 minutes after its scheduled start. */
             late: boolean;
+            /** @description Scans that reached the server after the run ended: it was finished offline. */
+            lateScans: number;
+            /** @description Scans by hand. */
+            manualScans: number;
             ordered: boolean;
             /**
              * Format: date-time
@@ -20094,7 +20204,9 @@ export interface components {
             /** Format: date-time */
             startedAt: string | null;
             status: components["schemas"]["PatrolRunStatus"];
-            stops: components["schemas"]["RunStopView"][];
+            stops: components["schemas"]["StaffRunStopView"][];
+            /** @description Scans farther from their checkpoint than its radius. */
+            suspectScans: number;
             /** Format: date-time */
             timesOutAt: string | null;
             /**
@@ -20108,15 +20220,6 @@ export interface components {
             id: string;
             nameAr: string;
             nameEn: string;
-        };
-        RunStopView: {
-            /** Format: uuid */
-            checkpointId: string;
-            location: components["schemas"]["CheckpointPositionView"] | null;
-            nameAr: string;
-            nameEn: string;
-            /** @description 1 for the first. */
-            position: number;
         };
         RunView: {
             cancelReason: components["schemas"]["PatrolRunCancelReason"] | null;
@@ -20133,6 +20236,10 @@ export interface components {
             kind: components["schemas"]["PatrolRunKind"];
             /** @description Not started 15 minutes after its scheduled start. */
             late: boolean;
+            /** @description Scans that reached the server after the run ended: it was finished offline. */
+            lateScans: number;
+            /** @description Scans by hand. */
+            manualScans: number;
             /**
              * Format: date-time
              * @description When it was meant: the scheduled start, or an unscheduled run’s start.
@@ -20146,6 +20253,8 @@ export interface components {
             /** Format: date-time */
             startedAt: string | null;
             status: components["schemas"]["PatrolRunStatus"];
+            /** @description Scans farther from their checkpoint than its radius. */
+            suspectScans: number;
             /**
              * Format: date-time
              * @description A scheduled run may be started from 15 minutes before its start until then.
@@ -20155,6 +20264,60 @@ export interface components {
         RunViewList: {
             data: components["schemas"]["RunView"][];
             nextCursor: string | null;
+        };
+        ScanDto: {
+            /** @description Metres, as the device reports it; with a position only. */
+            accuracyM?: number;
+            /**
+             * Format: uuid
+             * @description By hand (`manual`): the checkpoint, with a reason’s code.
+             */
+            checkpointId?: string;
+            /**
+             * Format: uuid
+             * @description The app’s own id (UUIDv7), made when the guard scanned: sent again (offline, a retry), it records once and answers the same.
+             */
+            id: string;
+            /** @description With `lng`; none when the device has no fix. */
+            lat?: number;
+            lng?: number;
+            method: components["schemas"]["PatrolScanMethod"];
+            /**
+             * @description What the QR or the NFC tag carries (`qr`, `nfc`). Anything else answers 422 PATROL_CHECKPOINT_INVALID.
+             * @example JWK1.0199c3d2-6f1a-7c3e-9a51-3b2f6e8d1c40.q3Jzx8b7m2Kd9PwS0aLr5TnYc4Ve1Hu6Gi8Fo0Bj2Ek
+             */
+            payload?: string;
+            /**
+             * @description By hand only (REASON_REQUIRED).
+             * @enum {string}
+             */
+            reasonCode?: "qr_damaged" | "qr_missing" | "nfc_unreadable" | "other";
+            /**
+             * Format: date-time
+             * @description The device’s time of the scan: inside the run’s lifetime, two minutes either side (422 PATROL_SCAN_OUT_OF_WINDOW).
+             */
+            scannedAt: string;
+        };
+        ScanRunView: {
+            checkpointsTotal: number;
+            scannedCount: number;
+            /** @description The last checkpoint of a run under way completes it. */
+            status: components["schemas"]["PatrolRunStatus"];
+        };
+        ScanView: {
+            /** Format: uuid */
+            checkpointId: string;
+            /** Format: uuid */
+            id: string;
+            method: components["schemas"]["PatrolScanMethod"];
+            position: number;
+            /** @description Farther from the checkpoint than its radius: kept, and flagged. Null without a position on either side. */
+            positionSuspect: boolean | null;
+            /** Format: date-time */
+            receivedAt: string;
+            run: components["schemas"]["ScanRunView"];
+            /** Format: date-time */
+            scannedAt: string;
         };
         SecurityEventView: {
             /** Format: uuid */
@@ -21745,6 +21908,47 @@ export interface components {
             type: components["schemas"]["ManagementRequestType"];
             /** @description The unit the request is about, when it names one. */
             unit: components["schemas"]["RequestUnitRefView"] | null;
+        };
+        StaffRunStopView: {
+            /** Format: uuid */
+            checkpointId: string;
+            location: components["schemas"]["CheckpointPositionView"] | null;
+            nameAr: string;
+            nameEn: string;
+            note: components["schemas"]["StaffStopNoteView"] | null;
+            /** @description 1 for the first. */
+            position: number;
+            scan: components["schemas"]["StaffStopScanView"] | null;
+        };
+        StaffStopNoteView: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            notedAt: string;
+            outcome: components["schemas"]["PatrolNoteOutcome"];
+            photos: components["schemas"]["PresignedReadView"][];
+            /** Format: date-time */
+            receivedAt: string;
+            /** @description Null when none was written, or after its guard’s erasure. */
+            text: string | null;
+            textCleared: boolean;
+        };
+        StaffStopScanView: {
+            accuracyM: number | null;
+            distanceM: number | null;
+            /** Format: uuid */
+            id: string;
+            lat: number | null;
+            /** @description It reached the server after the run ended (offline). */
+            late: boolean;
+            lng: number | null;
+            manualReason: components["schemas"]["PatrolManualScanReason"] | null;
+            method: components["schemas"]["PatrolScanMethod"];
+            positionSuspect: boolean | null;
+            /** Format: date-time */
+            receivedAt: string;
+            /** Format: date-time */
+            scannedAt: string;
         };
         StaffSuggestionListItemView: {
             author: components["schemas"]["SuggestionAuthorView"];
@@ -26682,6 +26886,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GuardRunDetailView"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_note: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoteView"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_scan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScanDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScanView"];
                 };
             };
         };

@@ -121,6 +121,6 @@ export class StaffRunsService {
     tx: TenantTxClient,
     run: PatrolRun,
   ): Promise<RunDetailView> {
-    return RunDetailView.from(run, await this.core.runContext(tx, [run]));
+    return RunDetailView.from(run, await this.core.runContext(tx, [run], {}));
   }
 }

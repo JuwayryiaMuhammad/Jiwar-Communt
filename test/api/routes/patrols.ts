@@ -241,6 +241,60 @@ export const GUARD_PATROL_ROUTES: Row[] = [
   },
   {
     method: 'POST',
+    path: '/gate/patrols/runs/{id}/scans',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bRunId }),
+      body: () => ({
+        id: SOME_ID,
+        method: 'qr',
+        payload: 'JWK1.foreign',
+        scannedAt: new Date().toISOString(),
+      }),
+      code: 'PATROL_RUN_NOT_FOUND',
+    },
+    invalid: {
+      body: {
+        id: 'scan-1',
+        method: 'qr',
+        payload: 'JWK1.x',
+        scannedAt: '2026-11-01T08:00:00Z',
+      },
+      fields: [{ field: 'id', code: 'INVALID_UUID' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/patrols/runs/{id}/notes',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bRunId }),
+      body: () => ({
+        id: SOME_ID,
+        scanId: SOME_ID,
+        outcome: 'all_clear',
+        notedAt: new Date().toISOString(),
+      }),
+      code: 'PATROL_RUN_NOT_FOUND',
+    },
+    invalid: {
+      body: {
+        id: SOME_ID,
+        scanId: SOME_ID,
+        outcome: 'fine',
+        notedAt: '2026-11-01T08:00:00Z',
+      },
+      fields: [{ field: 'outcome', code: 'INVALID_VALUE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
     path: '/gate/patrols/runs/{id}/end',
     auth: 'tenant',
     as: 'guard',

@@ -1360,6 +1360,20 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   patrol_runs_counts: {},
   patrol_runs_completed_shape: {},
+  patrol_scans_position_range: {},
+  patrol_scans_manual_shape: {
+    guarded: 'manual_reason IS NULL is tested first',
+  },
+  patrol_scans_position_shape: {
+    guarded:
+      'lat IS NULL and accuracy_m IS NULL are tested first; lng is present with lat',
+  },
+  patrol_scans_distance_shape: {
+    guarded: 'distance_m IS NULL is tested first',
+  },
+  patrol_notes_outcome: {},
+  patrol_notes_text_length: { guarded: 'text IS NULL is tested first' },
+  patrol_notes_cleared_shape: {},
 };
 
 interface Check {

@@ -100,6 +100,70 @@ export function patrolCalls(
       await clearLive();
       return guard('POST', `/gate/patrols/routes/${await aRoute()}/start`);
     },
+    'POST /gate/patrols/runs/{id}/scans': async () => {
+      await clearLive();
+      const route = await aRoute();
+      const run = id(
+        await guard('POST', `/gate/patrols/routes/${route}/start`),
+      );
+      const w = world();
+      const stop = await w.helpers.asManager(w.a, () =>
+        w.helpers.prisma.tenant.patrolRun.findUniqueOrThrow({
+          where: { id: run },
+        }),
+      );
+      const checkpointId = (
+        await w.helpers.asManager(w.a, () =>
+          w.helpers.prisma.tenant.patrolRouteCheckpoint.findFirstOrThrow({
+            where: { versionId: stop.versionId },
+          }),
+        )
+      ).checkpointId;
+      return guard('POST', `/gate/patrols/runs/${run}/scans`, {
+        id: newId(),
+        method: 'manual',
+        checkpointId,
+        reasonCode: 'qr_missing',
+        scannedAt: new Date().toISOString(),
+      });
+    },
+    'POST /gate/patrols/runs/{id}/notes': async () => {
+      await clearLive();
+      const route = await aRoute();
+      const run = id(
+        await guard('POST', `/gate/patrols/routes/${route}/start`),
+      );
+      const w = world();
+      const version = (
+        await w.helpers.asManager(w.a, () =>
+          w.helpers.prisma.tenant.patrolRun.findUniqueOrThrow({
+            where: { id: run },
+          }),
+        )
+      ).versionId;
+      const checkpointId = (
+        await w.helpers.asManager(w.a, () =>
+          w.helpers.prisma.tenant.patrolRouteCheckpoint.findFirstOrThrow({
+            where: { versionId: version },
+          }),
+        )
+      ).checkpointId;
+      const scan = id(
+        await guard('POST', `/gate/patrols/runs/${run}/scans`, {
+          id: newId(),
+          method: 'manual',
+          checkpointId,
+          reasonCode: 'other',
+          scannedAt: new Date().toISOString(),
+        }),
+      );
+      return guard('POST', `/gate/patrols/runs/${run}/notes`, {
+        id: newId(),
+        scanId: scan,
+        outcome: 'all_clear',
+        notedAt: new Date().toISOString(),
+      });
+    },
     'POST /gate/patrols/runs/{id}/end': async () => {
       await clearLive();
       const run = id(

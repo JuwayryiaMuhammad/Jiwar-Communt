@@ -242,9 +242,30 @@ export function patrolHelpers(h: HttpHarness) {
     return x.http('post', `/gate/patrols/runs/${id}/end`, as.token);
   }
 
+  /** `POST /gate/patrols/runs/:id/scans` as `as`; a fresh id unless given. */
+  function scanRaw(as: Who, runId: string, body: Record<string, unknown>) {
+    return x.http('post', `/gate/patrols/runs/${runId}/scans`, as.token, {
+      id: newId(),
+      scannedAt: new Date().toISOString(),
+      ...body,
+    });
+  }
+
+  /** `POST /gate/patrols/runs/:id/notes` as `as`. */
+  function noteRaw(as: Who, runId: string, body: Record<string, unknown>) {
+    return x.http('post', `/gate/patrols/runs/${runId}/notes`, as.token, {
+      id: newId(),
+      notedAt: new Date().toISOString(),
+      outcome: 'all_clear',
+      ...body,
+    });
+  }
+
   return {
     ...x,
     x,
+    scanRaw,
+    noteRaw,
     checkpointRaw,
     checkpoint,
     routeRaw,

@@ -191,3 +191,63 @@ export const timeoutAt = (startedAt: Date, expectedMinutes: number) =>
 /** How a run under way ends: every checkpoint scanned, or not. */
 export const endStatus = (scanned: number, total: number) =>
   scanned >= total ? ('completed' as const) : ('incomplete' as const);
+
+// ----------------------------------------------------------------------------
+// Scans and notes
+// ----------------------------------------------------------------------------
+
+/** How far a device's clock may stray from a run's lifetime, either side. */
+export const SCAN_GRACE_MINUTES = 2;
+/** A note may come this long after its run ended (photos upload slowly). */
+export const NOTE_AFTER_END_MINUTES = 30;
+export const NOTE_TEXT = { min: 1, max: 1000 } as const;
+export const MAX_NOTE_PHOTOS = 3;
+/** A device's reported accuracy, in metres. */
+export const ACCURACY_M = { min: 0, max: 10_000 } as const;
+
+const EARTH_RADIUS_M = 6_371_000;
+const rad = (deg: number) => (deg * Math.PI) / 180;
+
+/** The great-circle distance between two points, in whole metres. */
+export function distanceMetres(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number {
+  const dLat = rad(b.lat - a.lat);
+  const dLng = rad(b.lng - a.lng);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return Math.round(2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(h))));
+}
+
+/**
+ * Whether a device time falls in a run's lifetime: from its start until
+ * its end (or `now` while under way), two minutes either side.
+ */
+export function inRunLifetime(
+  run: { startedAt: Date; endedAt: Date | null },
+  at: Date,
+  now: Date,
+): boolean {
+  const grace = SCAN_GRACE_MINUTES * MINUTE_MS;
+  const until = (run.endedAt ?? now).getTime() + grace;
+  return (
+    at.getTime() >= run.startedAt.getTime() - grace && at.getTime() <= until
+  );
+}
+
+/**
+ * The position an ordered route expects next: one after the last scan's,
+ * and never a device time before it. Null when this one is in order.
+ */
+export function orderProblem(
+  last: { position: number; scannedAt: Date } | null,
+  position: number,
+  scannedAt: Date,
+): { expected: number } | null {
+  const expected = (last?.position ?? 0) + 1;
+  if (position !== expected) return { expected };
+  if (last && scannedAt < last.scannedAt) return { expected };
+  return null;
+}

@@ -161,3 +161,71 @@ export async function runRow(
   });
   return id;
 }
+
+/** A QR scan of a checkpoint on a run, by a guard, now. */
+export async function scanRow(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    runId: string;
+    checkpointId: string;
+    guardId: string;
+  },
+): Promise<string> {
+  const id = newId();
+  const now = new Date();
+  await tx.patrolScan.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      runId: r.runId,
+      checkpointId: r.checkpointId,
+      position: 1,
+      method: 'qr',
+      scannedAt: now,
+      receivedAt: now,
+      guardAccountId: r.guardId,
+    },
+  });
+  return id;
+}
+
+/** A note at a scan, with words. */
+export async function noteRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; runId: string; scanId: string; guardId: string },
+): Promise<string> {
+  const id = newId();
+  const now = new Date();
+  await tx.patrolNote.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      runId: r.runId,
+      scanId: r.scanId,
+      outcome: 'all_clear',
+      text: 'Row words',
+      notedAt: now,
+      receivedAt: now,
+      guardAccountId: r.guardId,
+    },
+  });
+  return id;
+}
+
+export async function notePhotoRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; noteId: string; fileId: string; uploadedById: string },
+): Promise<string> {
+  const id = newId();
+  await tx.patrolNotePhoto.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      noteId: r.noteId,
+      fileId: r.fileId,
+      uploadedById: r.uploadedById,
+    },
+  });
+  return id;
+}

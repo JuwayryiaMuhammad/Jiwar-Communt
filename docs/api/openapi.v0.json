@@ -11244,7 +11244,8 @@
           "contractor_photo",
           "permit_photo",
           "guard_task_photo",
-          "found_item_photo"
+          "found_item_photo",
+          "patrol_photo"
         ],
         "type": "string"
       },
@@ -14038,7 +14039,7 @@
           },
           "stops": {
             "items": {
-              "$ref": "#/components/schemas/RunStopView"
+              "$ref": "#/components/schemas/GuardRunStopView"
             },
             "type": "array"
           },
@@ -14074,6 +14075,61 @@
           "expectedMinutes",
           "timesOutAt",
           "stops"
+        ],
+        "type": "object"
+      },
+      "GuardRunStopView": {
+        "properties": {
+          "checkpointId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "location": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckpointPositionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "note": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardStopNoteView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "position": {
+            "description": "1 for the first.",
+            "type": "number"
+          },
+          "scan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardStopScanView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "position",
+          "checkpointId",
+          "nameEn",
+          "nameAr",
+          "location",
+          "scan",
+          "note"
         ],
         "type": "object"
       },
@@ -14211,6 +14267,68 @@
           "cancelled"
         ],
         "type": "string"
+      },
+      "GuardStopNoteView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolNoteOutcome"
+              }
+            ]
+          },
+          "photos": {
+            "description": "Its author only.",
+            "items": {
+              "$ref": "#/components/schemas/PresignedReadView"
+            },
+            "type": "array"
+          },
+          "text": {
+            "description": "Its author only.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "outcome"
+        ],
+        "type": "object"
+      },
+      "GuardStopScanView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolScanMethod"
+              }
+            ]
+          },
+          "positionSuspect": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "scannedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "method",
+          "scannedAt",
+          "positionSuspect"
+        ],
+        "type": "object"
       },
       "GuardSwapCancel": {
         "description": "Why the system cancelled it.",
@@ -18946,6 +19064,95 @@
         ],
         "type": "object"
       },
+      "NoteDto": {
+        "properties": {
+          "id": {
+            "description": "The app’s own id (UUIDv7): sent again, it records once.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "notedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolNoteOutcome"
+              }
+            ]
+          },
+          "photoFileIds": {
+            "description": "Finalized `patrol_photo` files of the caller, 3 at most.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "scanId": {
+            "description": "A scan of this run (INVALID_VALUE); one note each.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "scanId",
+          "outcome",
+          "notedAt"
+        ],
+        "type": "object"
+      },
+      "NoteView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "notedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolNoteOutcome"
+              }
+            ]
+          },
+          "photos": {
+            "description": "How many photos.",
+            "type": "number"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "scanId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "text": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "scanId",
+          "outcome",
+          "text",
+          "notedAt",
+          "receivedAt",
+          "photos"
+        ],
+        "type": "object"
+      },
       "NoticeSentView": {
         "properties": {
           "id": {
@@ -19886,6 +20093,22 @@
         ],
         "type": "object"
       },
+      "PatrolManualScanReason": {
+        "enum": [
+          "qr_damaged",
+          "qr_missing",
+          "nfc_unreadable",
+          "other"
+        ],
+        "type": "string"
+      },
+      "PatrolNoteOutcome": {
+        "enum": [
+          "all_clear",
+          "issue_found"
+        ],
+        "type": "string"
+      },
       "PatrolRunCancelReason": {
         "enum": [
           "not_needed",
@@ -19921,6 +20144,14 @@
           "timed_out",
           "missed",
           "cancelled"
+        ],
+        "type": "string"
+      },
+      "PatrolScanMethod": {
+        "enum": [
+          "qr",
+          "nfc",
+          "manual"
         ],
         "type": "string"
       },
@@ -26692,6 +26923,14 @@
             "description": "Not started 15 minutes after its scheduled start.",
             "type": "boolean"
           },
+          "lateScans": {
+            "description": "Scans that reached the server after the run ended: it was finished offline.",
+            "type": "number"
+          },
+          "manualScans": {
+            "description": "Scans by hand.",
+            "type": "number"
+          },
           "ordered": {
             "type": "boolean"
           },
@@ -26728,9 +26967,13 @@
           },
           "stops": {
             "items": {
-              "$ref": "#/components/schemas/RunStopView"
+              "$ref": "#/components/schemas/StaffRunStopView"
             },
             "type": "array"
+          },
+          "suspectScans": {
+            "description": "Scans farther from their checkpoint than its radius.",
+            "type": "number"
           },
           "timesOutAt": {
             "format": "date-time",
@@ -26760,6 +27003,9 @@
           "checkpointsTotal",
           "scannedCount",
           "guard",
+          "manualScans",
+          "suspectScans",
+          "lateScans",
           "cancelReason",
           "cancelledBy",
           "ordered",
@@ -26786,41 +27032,6 @@
           "id",
           "nameEn",
           "nameAr"
-        ],
-        "type": "object"
-      },
-      "RunStopView": {
-        "properties": {
-          "checkpointId": {
-            "format": "uuid",
-            "type": "string"
-          },
-          "location": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/CheckpointPositionView"
-              }
-            ],
-            "nullable": true,
-            "type": "object"
-          },
-          "nameAr": {
-            "type": "string"
-          },
-          "nameEn": {
-            "type": "string"
-          },
-          "position": {
-            "description": "1 for the first.",
-            "type": "number"
-          }
-        },
-        "required": [
-          "position",
-          "checkpointId",
-          "nameEn",
-          "nameAr",
-          "location"
         ],
         "type": "object"
       },
@@ -26885,6 +27096,14 @@
             "description": "Not started 15 minutes after its scheduled start.",
             "type": "boolean"
           },
+          "lateScans": {
+            "description": "Scans that reached the server after the run ended: it was finished offline.",
+            "type": "number"
+          },
+          "manualScans": {
+            "description": "Scans by hand.",
+            "type": "number"
+          },
           "plannedAt": {
             "description": "When it was meant: the scheduled start, or an unscheduled run’s start.",
             "format": "date-time",
@@ -26916,6 +27135,10 @@
               }
             ]
           },
+          "suspectScans": {
+            "description": "Scans farther from their checkpoint than its radius.",
+            "type": "number"
+          },
           "windowEndsAt": {
             "description": "A scheduled run may be started from 15 minutes before its start until then.",
             "format": "date-time",
@@ -26939,6 +27162,9 @@
           "checkpointsTotal",
           "scannedCount",
           "guard",
+          "manualScans",
+          "suspectScans",
+          "lateScans",
           "cancelReason",
           "cancelledBy"
         ],
@@ -26960,6 +27186,143 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ScanDto": {
+        "properties": {
+          "accuracyM": {
+            "description": "Metres, as the device reports it; with a position only.",
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "checkpointId": {
+            "description": "By hand (`manual`): the checkpoint, with a reason’s code.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "description": "The app’s own id (UUIDv7), made when the guard scanned: sent again (offline, a retry), it records once and answers the same.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lat": {
+            "description": "With `lng`; none when the device has no fix.",
+            "maximum": 90,
+            "minimum": -90,
+            "type": "number"
+          },
+          "lng": {
+            "maximum": 180,
+            "minimum": -180,
+            "type": "number"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolScanMethod"
+              }
+            ]
+          },
+          "payload": {
+            "description": "What the QR or the NFC tag carries (`qr`, `nfc`). Anything else answers 422 PATROL_CHECKPOINT_INVALID.",
+            "example": "JWK1.0199c3d2-6f1a-7c3e-9a51-3b2f6e8d1c40.q3Jzx8b7m2Kd9PwS0aLr5TnYc4Ve1Hu6Gi8Fo0Bj2Ek",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "By hand only (REASON_REQUIRED).",
+            "enum": [
+              "qr_damaged",
+              "qr_missing",
+              "nfc_unreadable",
+              "other"
+            ],
+            "type": "string"
+          },
+          "scannedAt": {
+            "description": "The device’s time of the scan: inside the run’s lifetime, two minutes either side (422 PATROL_SCAN_OUT_OF_WINDOW).",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "method",
+          "scannedAt"
+        ],
+        "type": "object"
+      },
+      "ScanRunView": {
+        "properties": {
+          "checkpointsTotal": {
+            "type": "number"
+          },
+          "scannedCount": {
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunStatus"
+              }
+            ],
+            "description": "The last checkpoint of a run under way completes it."
+          }
+        },
+        "required": [
+          "status",
+          "scannedCount",
+          "checkpointsTotal"
+        ],
+        "type": "object"
+      },
+      "ScanView": {
+        "properties": {
+          "checkpointId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolScanMethod"
+              }
+            ]
+          },
+          "position": {
+            "type": "number"
+          },
+          "positionSuspect": {
+            "description": "Farther from the checkpoint than its radius: kept, and flagged. Null without a position on either side.",
+            "nullable": true,
+            "type": "boolean"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "run": {
+            "$ref": "#/components/schemas/ScanRunView"
+          },
+          "scannedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "checkpointId",
+          "position",
+          "method",
+          "scannedAt",
+          "receivedAt",
+          "positionSuspect",
+          "run"
         ],
         "type": "object"
       },
@@ -32512,6 +32875,177 @@
           "overdue",
           "escalatedAt",
           "answeredAt"
+        ],
+        "type": "object"
+      },
+      "StaffRunStopView": {
+        "properties": {
+          "checkpointId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "location": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckpointPositionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "note": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffStopNoteView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "position": {
+            "description": "1 for the first.",
+            "type": "number"
+          },
+          "scan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffStopScanView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "position",
+          "checkpointId",
+          "nameEn",
+          "nameAr",
+          "location",
+          "scan",
+          "note"
+        ],
+        "type": "object"
+      },
+      "StaffStopNoteView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "notedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolNoteOutcome"
+              }
+            ]
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/PresignedReadView"
+            },
+            "type": "array"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "text": {
+            "description": "Null when none was written, or after its guard’s erasure.",
+            "nullable": true,
+            "type": "string"
+          },
+          "textCleared": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "outcome",
+          "text",
+          "textCleared",
+          "notedAt",
+          "receivedAt",
+          "photos"
+        ],
+        "type": "object"
+      },
+      "StaffStopScanView": {
+        "properties": {
+          "accuracyM": {
+            "nullable": true,
+            "type": "number"
+          },
+          "distanceM": {
+            "nullable": true,
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lat": {
+            "nullable": true,
+            "type": "number"
+          },
+          "late": {
+            "description": "It reached the server after the run ended (offline).",
+            "type": "boolean"
+          },
+          "lng": {
+            "nullable": true,
+            "type": "number"
+          },
+          "manualReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolManualScanReason"
+              }
+            ],
+            "nullable": true
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolScanMethod"
+              }
+            ]
+          },
+          "positionSuspect": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "scannedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "method",
+          "scannedAt",
+          "positionSuspect",
+          "manualReason",
+          "receivedAt",
+          "late",
+          "lat",
+          "lng",
+          "accuracyM",
+          "distanceM"
         ],
         "type": "object"
       },
@@ -44323,6 +44857,104 @@
           }
         ],
         "summary": "End my run",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/patrols/runs/{id}/notes": {
+      "post": {
+        "description": "At a scan of my run, one each (409 PATROL_NOTE_EXISTS): an outcome, words, up to three `patrol_photo` files. Under way, or up to 30 minutes after it ended.",
+        "operationId": "GuardPatrolsController_note",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Note what I found at a checkpoint",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/patrols/runs/{id}/scans": {
+      "post": {
+        "description": "Of my run: its QR or NFC payload, or by hand with a `patrolManualScan` code. The app’s own id records once (offline, a retry); the device’s time must fall in the run’s lifetime. An ordered route takes its checkpoints in order (422 PATROL_OUT_OF_ORDER, params.expected); each once (409 PATROL_CHECKPOINT_ALREADY_SCANNED). Farther than the checkpoint’s radius is kept and flagged. The last one completes the run.",
+        "operationId": "GuardPatrolsController_scan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Scan a checkpoint",
         "tags": [
           "patrols"
         ],

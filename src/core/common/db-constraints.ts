@@ -112,6 +112,15 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   patrol_runs_tenant_id_id_key: null,
   patrol_runs_scheduled_key: null,
   patrol_runs_one_live_per_guard: null,
+  // Scans and notes: the app's ids (a collision is a conflict, never a
+  // field); each checkpoint once per run and one note per scan are checked
+  // under the run's lock first; a photo is attached once.
+  patrol_scans_tenant_id_id_key: null,
+  patrol_scans_once_per_checkpoint: null,
+  patrol_notes_tenant_id_id_key: null,
+  patrol_notes_scan_key: null,
+  patrol_note_photos_tenant_id_id_key: null,
+  patrol_note_photos_file_id_key: null,
   visitor_details_tenant_id_id_key: null,
   visitor_passes_tenant_id_id_key: null,
   // ADR 0043.

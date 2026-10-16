@@ -6816,7 +6816,7 @@
               },
               "raw": "{\n  \"purpose\": \"worker_photo\",\n  \"contentType\": \"image/jpeg\",\n  \"size\": 1\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` \\| `vehicle_licence` \\| `parking_photo` \\| `vehicle_fine_photo` \\| `gate_service_photo` \\| `dispute_photo` \\| `contractor_photo` \\| `permit_photo` \\| `guard_task_photo` \\| `found_item_photo` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` \\| `vehicle_licence` \\| `parking_photo` \\| `vehicle_fine_photo` \\| `gate_service_photo` \\| `dispute_photo` \\| `contractor_photo` \\| `permit_photo` \\| `guard_task_photo` \\| `found_item_photo` \\| `patrol_photo` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -21361,6 +21361,96 @@
                 "end"
               ],
               "raw": "{{baseUrl}}/api/v1/gate/patrols/runs/:id/end",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Note what I found at a checkpoint",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"id\": \"\",\n  \"scanId\": \"\",\n  \"outcome\": \"all_clear\",\n  \"notedAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `id` | string (uuid) | yes | The app’s own id (UUIDv7): sent again, it records once. |\n| `notedAt` | string (date-time) | yes |  |\n| `outcome` | `all_clear` \\| `issue_found` | yes |  |\n| `photoFileIds` | string[] |  | Finalized `patrol_photo` files of the caller, 3 at most. |\n| `scanId` | string (uuid) | yes | A scan of this run (INVALID_VALUE); one note each. |\n| `text` | string |  |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "patrols",
+                "runs",
+                ":id",
+                "notes"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/patrols/runs/:id/notes",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Scan a checkpoint",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"id\": \"\",\n  \"method\": \"qr\",\n  \"scannedAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `accuracyM` | number |  | Metres, as the device reports it; with a position only. |\n| `checkpointId` | string (uuid) |  | By hand (`manual`): the checkpoint, with a reason’s code. |\n| `id` | string (uuid) | yes | The app’s own id (UUIDv7), made when the guard scanned: sent again (offline, a retry), it records once and answers the same. |\n| `lat` | number |  | With `lng`; none when the device has no fix. |\n| `lng` | number |  |  |\n| `method` | `qr` \\| `nfc` \\| `manual` | yes |  |\n| `payload` | string |  | What the QR or the NFC tag carries (`qr`, `nfc`). Anything else answers 422 PATROL_CHECKPOINT_INVALID. |\n| `reasonCode` | `qr_damaged` \\| `qr_missing` \\| `nfc_unreadable` \\| `other` |  | By hand only (REASON_REQUIRED). |\n| `scannedAt` | string (date-time) | yes | The device’s time of the scan: inside the run’s lifetime, two minutes either side (422 PATROL_SCAN_OUT_OF_WINDOW). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "patrols",
+                "runs",
+                ":id",
+                "scans"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/patrols/runs/:id/scans",
               "variable": [
                 {
                   "description": "",

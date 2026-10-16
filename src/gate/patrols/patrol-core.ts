@@ -4,9 +4,12 @@ import type {
   PatrolRoute,
   PatrolRouteVersion,
   PatrolRun,
+  PatrolScan,
 } from '@prisma/client';
 import { appError, ErrorCode } from '../../core/common/errors';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
+import { FilesService } from '../../core/files/files.service';
+import type { PresignedReadView } from '../../core/files/views/file.views';
 import { DutyNamesReader } from '../roster/duty-names';
 import type { RouteContext } from './views/route.views';
 import type { RunContext } from './views/run.views';
@@ -29,7 +32,10 @@ export const routeRetired = () =>
  */
 @Injectable()
 export class PatrolCore {
-  constructor(private readonly names: DutyNamesReader) {}
+  constructor(
+    private readonly names: DutyNamesReader,
+    private readonly files: FilesService,
+  ) {}
 
   /** The route FOR UPDATE, or 404. */
   async lockRoute(tx: TenantTxClient, id: string): Promise<PatrolRoute> {
@@ -108,10 +114,15 @@ export class PatrolCore {
     };
   }
 
-  /** What run views need: names, routes, versions and their stops. */
+  /**
+   * What run views need: names, routes, versions and their stops, the scan
+   * counts; for a detail, the scans and notes too, and the photos' read
+   * URLs (only of `photosOf`'s notes when given: a guard sees their own).
+   */
   async runContext(
     tx: TenantTxClient,
     runs: readonly PatrolRun[],
+    detail: { photosOf?: string } | false = false,
   ): Promise<RunContext> {
     const routeIds = [...new Set(runs.map((r) => r.routeId))];
     const versionIds = [...new Set(runs.map((r) => r.versionId))];
@@ -123,6 +134,50 @@ export class PatrolCore {
           where: { id: { in: versionIds } },
         })
       : [];
+    const runIds = runs.map((r) => r.id);
+    const counts = runIds.length
+      ? await tx.$queryRaw<
+          { run_id: string; manual: number; suspect: number; late: number }[]
+        >`
+          SELECT s.run_id,
+                 count(*) FILTER (WHERE s.method = 'manual')::int AS manual,
+                 count(*) FILTER (WHERE s.position_suspect)::int AS suspect,
+                 count(*) FILTER (WHERE r.ended_at IS NOT NULL
+                                    AND s.received_at > r.ended_at)::int AS late
+            FROM patrol_scans s JOIN patrol_runs r ON r.id = s.run_id
+           WHERE s.run_id = ANY(${runIds}::uuid[])
+           GROUP BY s.run_id`
+      : [];
+    const scans =
+      detail && runIds.length
+        ? await tx.patrolScan.findMany({
+            where: { runId: { in: runIds } },
+            orderBy: [{ position: 'asc' }],
+          })
+        : [];
+    const notes = scans.length
+      ? await tx.patrolNote.findMany({
+          where: { scanId: { in: scans.map((sc) => sc.id) } },
+        })
+      : [];
+    const shown = notes.filter(
+      (n) =>
+        detail && (!detail.photosOf || n.guardAccountId === detail.photosOf),
+    );
+    const photoRows = shown.length
+      ? await tx.patrolNotePhoto.findMany({
+          where: { noteId: { in: shown.map((n) => n.id) } },
+          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        })
+      : [];
+    const photos = new Map<string, PresignedReadView[]>();
+    for (const p of photoRows) {
+      const url = await this.files.readUrl(tx, p.fileId);
+      if (url) photos.set(p.noteId, [...(photos.get(p.noteId) ?? []), url]);
+    }
+    const scansByRun = new Map<string, PatrolScan[]>();
+    for (const sc of scans)
+      scansByRun.set(sc.runId, [...(scansByRun.get(sc.runId) ?? []), sc]);
     return {
       names: await this.names.read(
         tx,
@@ -132,6 +187,15 @@ export class PatrolCore {
       routes: new Map(routes.map((r) => [r.id, r])),
       versions: new Map(versions.map((v) => [v.id, v])),
       stops: await this.stops(tx, versionIds),
+      counts: new Map(
+        counts.map((c) => [
+          c.run_id,
+          { manual: c.manual, suspect: c.suspect, late: c.late },
+        ]),
+      ),
+      scans: scansByRun,
+      notes: new Map(notes.map((n) => [n.scanId, n])),
+      photos,
     };
   }
 

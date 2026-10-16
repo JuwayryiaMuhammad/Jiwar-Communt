@@ -2198,6 +2198,8 @@ enum FilePurpose {
   guard_task_photo
   /// A found item's photo, taken at the gate (ADR 0050).
   found_item_photo
+  /// A patrol note's photo of a place (ADR 0052), the guard's.
+  patrol_photo
 
   @@map("file_purpose")
 }
@@ -6983,4 +6985,75 @@ model PatrolRun {
   @@index([tenantId, routeId, status], map: "patrol_runs_route_idx")
   @@index([tenantId, guardAccountId, plannedAt], map: "patrol_runs_guard_idx")
   @@map("patrol_runs")
+}
+
+enum PatrolScanMethod {
+  qr
+  nfc
+  manual
+
+  @@map("patrol_scan_method")
+}
+
+/// A guard at a checkpoint during a run (ADR 0052). The id is the app's
+/// (UUIDv7): a retry records once. Never changes.
+model PatrolScan {
+  id              String           @id @db.Uuid
+  tenantId        String           @map("tenant_id") @db.Uuid
+  runId           String           @map("run_id") @db.Uuid
+  checkpointId    String           @map("checkpoint_id") @db.Uuid
+  position        Int
+  method          PatrolScanMethod
+  manualReason    String?          @map("manual_reason")
+  /// The device's time.
+  scannedAt       DateTime         @map("scanned_at") @db.Timestamptz(3)
+  receivedAt      DateTime         @map("received_at") @db.Timestamptz(3)
+  lat             Float?
+  lng             Float?
+  accuracyM       Float?           @map("accuracy_m")
+  distanceM       Int?             @map("distance_m")
+  positionSuspect Boolean?         @map("position_suspect")
+  guardAccountId  String           @map("guard_account_id") @db.Uuid
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, runId, checkpointId], map: "patrol_scans_once_per_checkpoint")
+  @@index([tenantId, runId, scannedAt], map: "patrol_scans_run_idx")
+  @@index([tenantId, guardAccountId], map: "patrol_scans_guard_idx")
+  @@map("patrol_scans")
+}
+
+/// What a guard noted at a scanned checkpoint (ADR 0052). Its words go
+/// once, at the guard's erasure; its photos stay.
+model PatrolNote {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  runId          String    @map("run_id") @db.Uuid
+  scanId         String    @map("scan_id") @db.Uuid
+  outcome        String
+  text           String?
+  notedAt        DateTime  @map("noted_at") @db.Timestamptz(3)
+  receivedAt     DateTime  @map("received_at") @db.Timestamptz(3)
+  guardAccountId String    @map("guard_account_id") @db.Uuid
+  textClearedAt  DateTime? @map("text_cleared_at") @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, scanId], map: "patrol_notes_scan_key")
+  @@index([tenantId, runId], map: "patrol_notes_run_idx")
+  @@map("patrol_notes")
+}
+
+/// A patrol note's photo (ADR 0052). Never changes.
+model PatrolNotePhoto {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  noteId       String   @map("note_id") @db.Uuid
+  fileId       String   @unique @map("file_id") @db.Uuid
+  uploadedById String   @map("uploaded_by_account_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, noteId], map: "patrol_note_photos_note_idx")
+  @@map("patrol_note_photos")
 }

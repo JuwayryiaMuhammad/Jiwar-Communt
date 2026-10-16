@@ -35256,6 +35256,114 @@
         ],
         "type": "object"
       },
+      "TrackAcceptedView": {
+        "properties": {
+          "accepted": {
+            "description": "Points recorded now; those sent before are not counted.",
+            "type": "number"
+          },
+          "rejected": {
+            "description": "Points dropped: outside the run’s lifetime, two minutes either side. Do not send them again.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "accepted",
+          "rejected"
+        ],
+        "type": "object"
+      },
+      "TrackDto": {
+        "properties": {
+          "points": {
+            "description": "A point at an instant already recorded for the run is ignored: a batch sent again adds nothing.",
+            "items": {
+              "$ref": "#/components/schemas/TrackPointDto"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "points"
+        ],
+        "type": "object"
+      },
+      "TrackPointDto": {
+        "properties": {
+          "accuracyM": {
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "lat": {
+            "maximum": 90,
+            "minimum": -90,
+            "type": "number"
+          },
+          "lng": {
+            "maximum": 180,
+            "minimum": -180,
+            "type": "number"
+          },
+          "recordedAt": {
+            "description": "The device’s time: inside the run’s lifetime, two minutes either side.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recordedAt",
+          "lat",
+          "lng"
+        ],
+        "type": "object"
+      },
+      "TrackPointView": {
+        "properties": {
+          "accuracyM": {
+            "nullable": true,
+            "type": "number"
+          },
+          "lat": {
+            "type": "number"
+          },
+          "lng": {
+            "type": "number"
+          },
+          "recordedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recordedAt",
+          "lat",
+          "lng",
+          "accuracyM"
+        ],
+        "type": "object"
+      },
+      "TrackPointViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TrackPointView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "TransferOwnershipDto": {
         "properties": {
           "reason": {
@@ -45003,6 +45111,92 @@
           }
         ],
         "summary": "Start a scheduled run",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/patrols/runs/{id}/track": {
+      "get": {
+        "description": "My own runs only; kept 30 days.",
+        "operationId": "GuardPatrolsController_myTrack",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrackPointViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Where I walked on my run",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Up to 100 points of my run, under way or up to 30 minutes after it ended (409 PATROL_RUN_NOT_LIVE). A point outside the run’s lifetime is dropped (`rejected`), a point already sent adds nothing; the rest are kept (`accepted`).",
+        "operationId": "GuardPatrolsController_record",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrackDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrackAcceptedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send where I walked",
         "tags": [
           "patrols"
         ],
@@ -64929,6 +65123,45 @@
           }
         ],
         "summary": "Cancel a scheduled run",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/runs/{id}/track": {
+      "get": {
+        "description": "The guard’s location: `patrols.manage` only, kept 30 days.",
+        "operationId": "StaffRunsController_runTrack",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrackPointViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Where the guard walked",
         "tags": [
           "patrols"
         ],

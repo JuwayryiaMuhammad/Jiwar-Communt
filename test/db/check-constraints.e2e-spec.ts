@@ -1374,6 +1374,10 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   patrol_notes_outcome: {},
   patrol_notes_text_length: { guarded: 'text IS NULL is tested first' },
   patrol_notes_cleared_shape: {},
+  patrol_track_points_position_range: {},
+  patrol_track_points_accuracy_range: {
+    guarded: 'accuracy_m IS NULL is tested first',
+  },
 };
 
 interface Check {

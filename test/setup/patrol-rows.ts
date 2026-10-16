@@ -229,3 +229,25 @@ export async function notePhotoRow(
   });
   return id;
 }
+
+/** A point of a run, recorded `msAgo` before now. */
+export async function trackRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; runId: string; guardId: string; msAgo?: number },
+): Promise<string> {
+  const id = newId();
+  const recordedAt = new Date(Date.now() - (r.msAgo ?? 0));
+  await tx.patrolTrackPoint.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      runId: r.runId,
+      guardAccountId: r.guardId,
+      recordedAt,
+      lat: 30.0444,
+      lng: 31.2357,
+      receivedAt: new Date(),
+    },
+  });
+  return id;
+}

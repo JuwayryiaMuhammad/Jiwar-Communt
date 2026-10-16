@@ -19,6 +19,7 @@ import {
 } from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
+  bounded,
   ListOf,
   PageQueryDto,
   toList,
@@ -28,8 +29,10 @@ import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import { CancelRunDto, RunsQueryDto } from './dto/runs.dto';
 import { NoteDto, ScanDto } from './dto/scans.dto';
+import { TrackDto } from './dto/track.dto';
 import { GuardPatrolsService } from './guard-patrols.service';
 import { PatrolScansService } from './patrol-scans.service';
+import { PatrolTrackService } from './patrol-track.service';
 import { StaffRunsService } from './staff-runs.service';
 import {
   GuardRunDetailView,
@@ -39,6 +42,7 @@ import {
   RunView,
 } from './views/run.views';
 import { NoteView, ScanView } from './views/scan.views';
+import { TrackAcceptedView, TrackPointView } from './views/track.views';
 
 /** A guard's patrols (ADR 0052), inside a shift. */
 @ApiArea('patrols')
@@ -48,6 +52,7 @@ export class GuardPatrolsController {
   constructor(
     private readonly patrols: GuardPatrolsService,
     private readonly scans: PatrolScansService,
+    private readonly track: PatrolTrackService,
   ) {}
 
   @Get()
@@ -138,6 +143,35 @@ export class GuardPatrolsController {
     return this.scans.note(id, dto);
   }
 
+  @Post('runs/:id/track')
+  @NoStore()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Send where I walked',
+    description:
+      'Up to 100 points of my run, under way or up to 30 minutes after it ended (409 PATROL_RUN_NOT_LIVE). A point outside the run’s lifetime is dropped (`rejected`), a point already sent adds nothing; the rest are kept (`accepted`).',
+  })
+  @ApiOkResponse({ type: TrackAcceptedView })
+  record(
+    @Param('id', parseId()) id: string,
+    @Body() dto: TrackDto,
+  ): Promise<TrackAcceptedView> {
+    return this.track.record(id, dto.points);
+  }
+
+  @Get('runs/:id/track')
+  @NoStore()
+  @ApiOperation({
+    summary: 'Where I walked on my run',
+    description: 'My own runs only; kept 30 days.',
+  })
+  @ApiOkResponse({ type: ListOf(TrackPointView) })
+  async myTrack(
+    @Param('id', parseId()) id: string,
+  ): Promise<ListResponse<TrackPointView>> {
+    return bounded(await this.track.mine(id), (p) => p);
+  }
+
   @Post('runs/:id/end')
   @NoStore()
   @HttpCode(HttpStatus.OK)
@@ -156,7 +190,10 @@ export class GuardPatrolsController {
 @ApiArea('patrols')
 @Controller('staff/security/patrols/runs')
 export class StaffRunsController {
-  constructor(private readonly runs: StaffRunsService) {}
+  constructor(
+    private readonly runs: StaffRunsService,
+    private readonly track: PatrolTrackService,
+  ) {}
 
   @Get()
   @NoStore()
@@ -177,6 +214,20 @@ export class StaffRunsController {
   @ApiOkResponse({ type: RunDetailView })
   detail(@Param('id', parseId()) id: string): Promise<RunDetailView> {
     return this.runs.detail(id);
+  }
+
+  @Get(':id/track')
+  @NoStore()
+  @RequirePermissions('patrols.manage')
+  @ApiOperation({
+    summary: 'Where the guard walked',
+    description: 'The guard’s location: `patrols.manage` only, kept 30 days.',
+  })
+  @ApiOkResponse({ type: ListOf(TrackPointView) })
+  async runTrack(
+    @Param('id', parseId()) id: string,
+  ): Promise<ListResponse<TrackPointView>> {
+    return bounded(await this.track.forStaff(id), (p) => p);
   }
 
   @Post(':id/cancel')

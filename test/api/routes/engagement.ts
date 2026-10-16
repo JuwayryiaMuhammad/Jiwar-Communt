@@ -161,7 +161,7 @@ export const ANNOUNCEMENT_ROUTES: Row[] = [
         {
           field: 'kind',
           code: 'INVALID_VALUE',
-          params: { allowed: ['general', 'works'] },
+          params: { allowed: ['general', 'works', 'board'] },
         },
       ],
     },

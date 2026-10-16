@@ -1077,6 +1077,18 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'governance_election',
   },
+  // A decision or the minutes of the board, published to the owners as an
+  // announcement. metadata: kind, termId, announcementId, decidedOn,
+  // attachment (a boolean), side. Never the words.
+  'board_publication.published': {
+    log: 'tenant',
+    target: 'board_publication',
+  },
+  // metadata: kind, announcementId, side.
+  'board_publication.archived': {
+    log: 'tenant',
+    target: 'board_publication',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

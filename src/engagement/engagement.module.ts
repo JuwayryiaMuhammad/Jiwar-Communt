@@ -11,6 +11,7 @@ import {
   StaffAnnouncementsController,
 } from './announcements/announcements.controller';
 import { AnnouncementsService } from './announcements/announcements.service';
+import { BoardNotices } from './announcements/board-notices';
 import { AudienceCheck } from './audience/audience-check';
 import { AudienceController } from './audience/audience.controller';
 import { DailyBriefController } from './brief/daily-brief.controller';
@@ -88,6 +89,8 @@ import { SuggestionTopicsService } from './topics/topics.service';
     SuggestionsService,
     DailyBriefService,
     EngagementExportSections,
+    BoardNotices,
   ],
+  exports: [BoardNotices],
 })
 export class EngagementModule {}

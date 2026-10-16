@@ -289,6 +289,11 @@ export const ErrorCode = {
   ANNOUNCEMENT_NOT_FOUND: 'ANNOUNCEMENT_NOT_FOUND',
   /** Its state does not take the action (409, params.status). */
   ANNOUNCEMENT_INVALID_STATE: 'ANNOUNCEMENT_INVALID_STATE',
+  /**
+   * One of the board's decisions or minutes (ADR 0051): it changes through
+   * governance (`/governance/publications`), never the staff's routes (409).
+   */
+  ANNOUNCEMENT_OF_THE_BOARD: 'ANNOUNCEMENT_OF_THE_BOARD',
   /** Unknown, another compound's, or not put to the caller: one answer. */
   COMMUNITY_EVENT_NOT_FOUND: 'COMMUNITY_EVENT_NOT_FOUND',
   /** Its state does not take the action (409, params.status). */
@@ -786,6 +791,8 @@ export const ErrorCode = {
    * (409, params.phase). Retry once the close ran.
    */
   GOVERNANCE_NOT_CERTIFIABLE: 'GOVERNANCE_NOT_CERTIFIABLE',
+  /** Unknown, another compound's, or archived where it must not be. */
+  BOARD_PUBLICATION_NOT_FOUND: 'BOARD_PUBLICATION_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

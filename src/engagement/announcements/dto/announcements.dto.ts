@@ -25,6 +25,7 @@ import {
   ANNOUNCEMENT_STATUSES,
   BODY_MAX,
   PLACE_MAX,
+  STAFF_ANNOUNCEMENT_KINDS,
   TITLE_MAX,
 } from '../announcements.service';
 import type { AnnouncementStatus } from '../announcement-rules';
@@ -177,15 +178,16 @@ class AnnouncementContentDto {
 
 export class CreateAnnouncementDto extends AnnouncementContentDto {
   @ApiProperty({
-    enum: AnnouncementKind,
-    enumName: 'AnnouncementKind',
-    description: '`works`: works and closures, with `works`. Never changes.',
+    enum: STAFF_ANNOUNCEMENT_KINDS,
+    enumName: 'StaffAnnouncementKind',
+    description:
+      '`works`: works and closures, with `works`. Never changes. The board’s decisions and minutes (`board`) are published under Governance.',
   })
-  @IsEnum(
-    AnnouncementKind,
-    withParams({ allowed: Object.values(AnnouncementKind) }),
+  @IsIn(
+    STAFF_ANNOUNCEMENT_KINDS,
+    withParams({ allowed: [...STAFF_ANNOUNCEMENT_KINDS] }),
   )
-  kind: AnnouncementKind;
+  kind: (typeof STAFF_ANNOUNCEMENT_KINDS)[number];
 
   @ApiProperty({
     type: WorksDto,

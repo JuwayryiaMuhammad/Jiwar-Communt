@@ -451,7 +451,8 @@
       "AnnouncementKind": {
         "enum": [
           "general",
-          "works"
+          "works",
+          "board"
         ],
         "type": "string"
       },
@@ -1970,6 +1971,140 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/BoardPostView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "BoardPublicationKind": {
+        "enum": [
+          "decision",
+          "minutes"
+        ],
+        "type": "string"
+      },
+      "BoardPublicationTextDto": {
+        "properties": {
+          "bodyAr": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "titleAr": {
+            "maxLength": 150,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "English, Arabic or both, each with its body.",
+            "maxLength": 150,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "BoardPublicationView": {
+        "properties": {
+          "announcementId": {
+            "description": "Its announcement (`GET /announcements/{id}`): where the owners read it, with its PDF.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "archivedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedOn": {
+            "example": "2026-11-01",
+            "type": "string"
+          },
+          "editedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "hasAttachment": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardPublicationKind"
+              }
+            ]
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "termId": {
+            "description": "The board that published it.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "titleAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "decidedOn",
+          "termId",
+          "announcementId",
+          "titleEn",
+          "bodyEn",
+          "titleAr",
+          "bodyAr",
+          "hasAttachment",
+          "publishedAt",
+          "editedAt",
+          "archivedAt"
+        ],
+        "type": "object"
+      },
+      "BoardPublicationViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BoardPublicationView"
             },
             "type": "array"
           },
@@ -5228,10 +5363,10 @@
           "kind": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/AnnouncementKind"
+                "$ref": "#/components/schemas/StaffAnnouncementKind"
               }
             ],
-            "description": "`works`: works and closures, with `works`. Never changes."
+            "description": "`works`: works and closures, with `works`. Never changes. The board’s decisions and minutes (`board`) are published under Governance."
           },
           "pinnedUntil": {
             "description": "Stays on top until then. Only when `important`.",
@@ -21745,6 +21880,58 @@
         },
         "type": "object"
       },
+      "PublishBoardPublicationDto": {
+        "properties": {
+          "attachmentFileId": {
+            "description": "A PDF of the caller’s, uploaded as `community_attachment` (FILE_NOT_AVAILABLE; FILE_TYPE_NOT_ALLOWED when not a PDF).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "bodyAr": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedOn": {
+            "description": "The local day the board decided or met: today, or up to a year ago (DAY_OUT_OF_RANGE).",
+            "example": "2026-11-01",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardPublicationKind"
+              }
+            ]
+          },
+          "titleAr": {
+            "maxLength": 150,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "English, Arabic or both, each with its body.",
+            "maxLength": 150,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "decidedOn"
+        ],
+        "type": "object"
+      },
       "PublishSuggestionDto": {
         "properties": {
           "textAr": {
@@ -26431,6 +26618,14 @@
           "nextCursor"
         ],
         "type": "object"
+      },
+      "StaffAnnouncementKind": {
+        "description": "`works`: works and closures, with `works`. Never changes. The board’s decisions and minutes (`board`) are published under Governance.",
+        "enum": [
+          "general",
+          "works"
+        ],
+        "type": "string"
       },
       "StaffAnnouncementListItemView": {
         "properties": {
@@ -44397,6 +44592,193 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/governance/publications": {
+      "get": {
+        "description": "Newest first, archived ones left out. For the units’ owners (GOVERNANCE_NOT_AVAILABLE otherwise); each is also an announcement in their feed.",
+        "operationId": "BoardPublicationsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardPublicationViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the board’s decisions and minutes",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). While a board sits (BOARD_NOT_SITTING). An announcement of kind `board` to the owners, out now, nobody pushed, with an optional PDF.",
+        "operationId": "BoardPublicationsController_publish",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishBoardPublicationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardPublicationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Publish a decision or the minutes of the board",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/governance/publications/{id}": {
+      "patch": {
+        "description": "A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). A new version of its announcement, shown as edited; the PDF stays.",
+        "operationId": "BoardPublicationsController_edit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BoardPublicationTextDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardPublicationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Correct a decision’s or the minutes’ words",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/governance/publications/{id}/archive": {
+      "post": {
+        "description": "A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). Its announcement comes down for good.",
+        "operationId": "BoardPublicationsController_archive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardPublicationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Archive a decision or the minutes",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -59258,6 +59640,57 @@
           }
         ],
         "summary": "Get a poll, with its results once closed",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/publications": {
+      "get": {
+        "description": "Newest first, archived ones too.",
+        "operationId": "StaffBoardPublicationsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardPublicationViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the board’s decisions and minutes",
         "tags": [
           "governance"
         ],

@@ -389,4 +389,6 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   governance_candidates_tenant_id_id_key: null,
   // Standing twice is refused by the service under the contest's lock.
   governance_candidates_one_live: null,
+  board_publications_tenant_id_id_key: null,
+  board_publications_announcement_key: null,
 };

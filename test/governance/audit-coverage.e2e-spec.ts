@@ -371,6 +371,49 @@ describe('Audit coverage — governance', () => {
     });
   });
 
+  describe('the board’s decisions and minutes', () => {
+    it('published and archived: ids, codes and the day, never the words', async () => {
+      const board = (await g.staffBoard(s.manager))!;
+      const res = await g
+        .http('post', '/governance/publications', s.manager.token, {
+          kind: 'minutes',
+          decidedOn: new Date().toISOString().slice(0, 10),
+          titleEn: 'Minutes of the meeting',
+          bodyEn: 'Present: everyone.',
+        })
+        .expect(201);
+      const p = res.body as {
+        id: string;
+        announcementId: string;
+        decidedOn: string;
+      };
+      const published = await single('board_publication.published', p.id);
+      expect(published).toMatchObject(by(s.manager, 'board_publication'));
+      expect(published.metadata).toEqual({
+        kind: 'minutes',
+        termId: board.id,
+        announcementId: p.announcementId,
+        decidedOn: p.decidedOn,
+        attachment: false,
+        side: 'manager',
+      });
+      expect(JSON.stringify(published)).not.toContain('Present');
+      await g
+        .http(
+          'post',
+          `/governance/publications/${p.id}/archive`,
+          s.manager.token,
+        )
+        .expect(200);
+      const archived = await single('board_publication.archived', p.id);
+      expect(archived.metadata).toEqual({
+        kind: 'minutes',
+        announcementId: p.announcementId,
+        side: 'manager',
+      });
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every governance entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

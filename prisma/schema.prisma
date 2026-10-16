@@ -3583,6 +3583,9 @@ enum AnnouncementKind {
   general
   /// Works and closures: dated, with the area they affect.
   works
+  /// The owners' board's decisions and minutes (ADR 0051): a board
+  /// publication names each; the staff never write one.
+  board
 
   @@map("announcement_kind")
 }
@@ -6817,4 +6820,25 @@ model GovernanceCandidate {
   @@index([tenantId, electionId, nominatedAt, id], map: "governance_candidates_election_idx")
   @@index([tenantId, accountId], map: "governance_candidates_account_idx")
   @@map("governance_candidates")
+}
+
+/// A decision or the minutes of the board (ADR 0051): an announcement of
+/// kind `board` to the owners, and the record of who published it, for
+/// which board, decided on which day. Archived once.
+model BoardPublication {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  kind           String
+  termId         String    @map("term_id") @db.Uuid
+  announcementId String    @map("announcement_id") @db.Uuid
+  decidedOn      DateTime  @map("decided_on") @db.Date
+  authorSide     String    @map("author_side")
+  publishedById  String    @map("published_by_account_id") @db.Uuid
+  archivedAt     DateTime? @map("archived_at") @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, announcementId], map: "board_publications_announcement_key")
+  @@index([tenantId, createdAt, id], map: "board_publications_created_idx")
+  @@map("board_publications")
 }

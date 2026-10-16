@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CommunityGovernancePortModule } from '../community';
+import { EngagementModule } from '../engagement';
 import { GovernanceAccess } from './access';
 import { GovernanceBoardController } from './board/board.controller';
 import { BoardSeat } from './board/board-seat';
@@ -15,17 +16,23 @@ import { CertificationService } from './elections/certification.service';
 import { GovernanceElectionsService } from './elections/elections.service';
 import { GovernanceNotices } from './governance-notices';
 import {
+  BoardPublicationsController,
+  StaffBoardPublicationsController,
+} from './publications/publications.controller';
+import { BoardPublicationsService } from './publications/publications.service';
+import {
   GovernancePollsController,
   StaffGovernancePollsController,
 } from './polls/polls.controller';
 import { GovernancePollsService } from './polls/polls.service';
 
 /**
- * Governance (ADR 0051): the owners' board, its polls and elections. Reads
- * community through its index; nothing imports it.
+ * Governance (ADR 0051): the owners' board, its polls and elections, its
+ * decisions and minutes. Reads community through its index, and engagement
+ * for the board's notices; nothing imports it.
  */
 @Module({
-  imports: [CommunityGovernancePortModule],
+  imports: [CommunityGovernancePortModule, EngagementModule],
   controllers: [
     GovernanceBoardController,
     StaffBoardController,
@@ -33,6 +40,8 @@ import { GovernancePollsService } from './polls/polls.service';
     StaffGovernancePollsController,
     GovernanceElectionsController,
     StaffGovernanceElectionsController,
+    BoardPublicationsController,
+    StaffBoardPublicationsController,
   ],
   providers: [
     GovernanceAccess,
@@ -44,6 +53,7 @@ import { GovernancePollsService } from './polls/polls.service';
     GovernancePollsService,
     GovernanceElectionsService,
     CertificationService,
+    BoardPublicationsService,
   ],
 })
 export class GovernanceModule {}

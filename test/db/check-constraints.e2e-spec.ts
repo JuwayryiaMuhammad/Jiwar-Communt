@@ -1304,6 +1304,8 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'reason_code IS NULL and ended_by_account_id IS NULL are tested before each list; status is NOT NULL',
   },
+  board_publications_kind: {},
+  board_publications_author_side: {},
   governance_candidates_outcome: {
     guarded:
       'outcome IS NULL and final_count IS NULL are tested first; the list and the comparison run only on values',

@@ -122,6 +122,7 @@ describe('audit catalog', () => {
         'governance_contest',
         'governance_election',
         'governance_candidate',
+        'board_publication',
       ]).toContain(def.target);
     }
   });

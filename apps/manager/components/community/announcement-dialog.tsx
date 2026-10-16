@@ -25,7 +25,8 @@ export function AnnouncementDialog({
   onSaved,
 }: {
   announcement: AnnouncementDetail | null;
-  kind: AnnouncementKind;
+  /** What the staff write: the board's own kind is never theirs (ADR 0051). */
+  kind: Exclude<AnnouncementKind, 'board'>;
   open: boolean;
   onClose: () => void;
   onSaved: (id: string) => void;
@@ -88,7 +89,7 @@ export function AnnouncementDialog({
       const created = await unwrap(
         api.POST('/api/v1/community/announcements', {
           params: { header: { 'Idempotency-Key': idempotencyKey } },
-          body: { kind, ...body() },
+          body: { kind: initialKind, ...body() },
         }),
       );
       return created.id;

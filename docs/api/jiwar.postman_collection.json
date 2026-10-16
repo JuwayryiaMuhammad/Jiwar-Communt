@@ -3546,7 +3546,7 @@
               },
               "raw": "{\n  \"kind\": \"general\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentFileIds` | string (uuid)[] |  | The files it shows from now on: ids it already shows (`attachments[].id`) to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). |\n| `audience` | object |  | Absent: the whole compound, everyone. May change only until the announcement is out. |\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  |  |\n| `expiresAt` | string (date-time) |  | No longer shown from then on. A general announcement’s only: works end by their own dates. |\n| `kind` | `general` \\| `works` | yes | `works`: works and closures, with `works`. Never changes. |\n| `pinnedUntil` | string (date-time) |  | Stays on top until then. Only when `important`. |\n| `priority` | `normal` \\| `important` |  | An `important` one tells its audience when it comes out, and may be pinned. |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | A language is whole or absent; at least one is there. |\n| `works` | object |  | Required for `works`, refused otherwise. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentFileIds` | string (uuid)[] |  | The files it shows from now on: ids it already shows (`attachments[].id`) to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). |\n| `audience` | object |  | Absent: the whole compound, everyone. May change only until the announcement is out. |\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  |  |\n| `expiresAt` | string (date-time) |  | No longer shown from then on. A general announcement’s only: works end by their own dates. |\n| `kind` | `general` \\| `works` | yes | `works`: works and closures, with `works`. Never changes. The board’s decisions and minutes (`board`) are published under Governance. |\n| `pinnedUntil` | string (date-time) |  | Stays on top until then. Only when `important`. |\n| `priority` | `normal` \\| `important` |  | An `important` one tells its audience when it comes out, and may be pinned. |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | A language is whole or absent; at least one is there. |\n| `works` | object |  | Required for `works`, refused otherwise. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -11198,6 +11198,152 @@
           }
         },
         {
+          "name": "List the board’s decisions and minutes",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "publications"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/publications"
+            }
+          }
+        },
+        {
+          "name": "Publish a decision or the minutes of the board",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"decision\",\n  \"decidedOn\": \"2026-11-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentFileId` | string (uuid) |  | A PDF of the caller’s, uploaded as `community_attachment` (FILE_NOT_AVAILABLE; FILE_TYPE_NOT_ALLOWED when not a PDF). |\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  |  |\n| `decidedOn` | string | yes | The local day the board decided or met: today, or up to a year ago (DAY_OUT_OF_RANGE). |\n| `kind` | `decision` \\| `minutes` | yes |  |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | English, Arabic or both, each with its body. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "publications"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/publications"
+            }
+          }
+        },
+        {
+          "name": "Correct a decision’s or the minutes’ words",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"bodyAr\": \"\",\n  \"bodyEn\": \"\",\n  \"titleAr\": \"\",\n  \"titleEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  |  |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | English, Arabic or both, each with its body. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "publications",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/publications/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Archive a decision or the minutes",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "publications",
+                ":id",
+                "archive"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/publications/:id/archive",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get the board’s open term",
           "request": {
             "description": "**Responses:** 200",
@@ -11697,6 +11843,41 @@
                   "value": ""
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "List the board’s decisions and minutes",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "publications"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/publications"
             }
           }
         }

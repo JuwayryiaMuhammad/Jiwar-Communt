@@ -383,7 +383,7 @@ describe('import boundaries', () => {
     );
   });
 
-  it('the governance domain imports core and community only, and no domain imports it (ADR 0051)', async () => {
+  it('the governance domain imports core, community and engagement (its board notices) through their index.ts, and no domain imports it (ADR 0051)', async () => {
     const governance = 'src/governance/board/x.ts';
     expect(
       await problems(
@@ -402,8 +402,18 @@ describe('import boundaries', () => {
     expect(port[0]).toContain(
       'Import community only through its public index.ts',
     );
+    expect(
+      await problems(governance, "import { A } from '../../engagement';"),
+    ).toEqual([]);
+    const notices = await problems(
+      governance,
+      "import { A } from '../../engagement/announcements/board-notices';",
+    );
+    expect(notices).toHaveLength(1);
+    expect(notices[0]).toContain(
+      'Import engagement only through its public index.ts',
+    );
     for (const domain of [
-      'engagement',
       'facilities',
       'finance',
       'gate',

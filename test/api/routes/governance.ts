@@ -539,3 +539,81 @@ export const GOVERNANCE_ELECTION_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** The board's decisions and minutes (ADR 0051). */
+export const BOARD_PUBLICATION_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/governance/publications',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: pageInvalid,
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/governance/publications',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: {
+        kind: 'rumour',
+        decidedOn: '2026-11-01',
+        titleEn: 'x',
+        bodyEn: 'y',
+      },
+      fields: [
+        {
+          field: 'kind',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['decision', 'minutes'] },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'PATCH',
+    path: '/governance/publications/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bBoardPublicationId }),
+      code: 'BOARD_PUBLICATION_NOT_FOUND',
+      body: () => ({}),
+    },
+    invalid: {
+      body: { titleEn: 7 },
+      fields: [{ field: 'titleEn', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/governance/publications/{id}/archive',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bBoardPublicationId }),
+      code: 'BOARD_PUBLICATION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/governance/publications',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: pageInvalid,
+    noStore: true,
+  },
+];

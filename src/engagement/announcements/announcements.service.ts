@@ -111,6 +111,14 @@ export interface NewAnnouncement extends ContentInput {
 
 export type AnnouncementUpdate = ContentInput;
 
+/** A board notice's words, in English, Arabic or both. */
+export interface BoardNoticeText {
+  titleEn?: string | null;
+  bodyEn?: string | null;
+  titleAr?: string | null;
+  bodyAr?: string | null;
+}
+
 export interface StaffAnnouncementsQuery {
   status?: AnnouncementStatus;
   kind?: AnnouncementKind;
@@ -160,6 +168,15 @@ const byPublication = keysetCursor('publishAt');
 
 export const announcementNotFound = () =>
   appError.notFound(ErrorCode.ANNOUNCEMENT_NOT_FOUND, 'Announcement not found');
+
+const boardsOwn = () =>
+  appError.conflict(
+    ErrorCode.ANNOUNCEMENT_OF_THE_BOARD,
+    'The board’s decisions and minutes change through governance',
+  );
+
+/** What the staff write: never the board's kind (ADR 0051). */
+export const STAFF_ANNOUNCEMENT_KINDS = ['general', 'works'] as const;
 
 const wrongState = (status: AnnouncementStatus) =>
   appError.conflict(
@@ -338,6 +355,8 @@ export class AnnouncementsService implements OnModuleInit {
 
   /** A draft: nobody reads it until it is published. */
   create(input: NewAnnouncement): Promise<Announcement> {
+    if (input.kind === 'board')
+      throw invalid([{ field: 'kind', code: FieldErrorCode.INVALID_VALUE }]);
     const text = localized(input, TEXT);
     const settings: Settings = {
       priority: input.priority ?? 'normal',
@@ -398,6 +417,7 @@ export class AnnouncementsService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
       const before = await this.locked(tx, id);
+      if (before.kind === 'board') throw boardsOwn();
       const now = await dbNow(tx);
       const status = statusOf(before, now);
       if (status === 'archived') throw wrongState(status);
@@ -507,6 +527,7 @@ export class AnnouncementsService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
       const before = await this.locked(tx, id);
+      if (before.kind === 'board') throw boardsOwn();
       const now = await dbNow(tx);
       const status = statusOf(before, now);
       if (status !== 'draft' && status !== 'scheduled')
@@ -540,6 +561,7 @@ export class AnnouncementsService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
       const before = await this.locked(tx, id);
+      if (before.kind === 'board') throw boardsOwn();
       const now = await dbNow(tx);
       const status = statusOf(before, now);
       if (status === 'archived') throw wrongState(status);
@@ -553,6 +575,142 @@ export class AnnouncementsService implements OnModuleInit {
         metadata: { fromStatus: status },
       });
     });
+  }
+
+  // --------------------------------------------------------------------------
+  // The board's decisions and minutes (ADR 0051): written by governance, in
+  // its transaction, through BoardNotices. To the owners, out at once, of
+  // normal priority (nobody is pushed); one PDF at most.
+  // --------------------------------------------------------------------------
+
+  async publishBoard(
+    tx: TenantTxClient,
+    input: BoardNoticeText & { attachmentFileId?: string | null },
+  ): Promise<string> {
+    const text = localized(input, TEXT);
+    const now = await dbNow(tx);
+    const id = newId();
+    const announcement = await tx.announcement.create({
+      data: {
+        id,
+        tenantId: this.ctx.txTenantId,
+        kind: 'board',
+        priority: 'normal',
+        publishAt: now,
+        audienceOccupancy: 'owners',
+        audienceBuildings: [],
+        createdById: this.ctx.accountId,
+        createdAt: now,
+      },
+    });
+    const attachmentIds = input.attachmentFileId
+      ? [await this.attachPdf(tx, announcement, input.attachmentFileId, now)]
+      : [];
+    await this.writeVersion(tx, announcement, 1, text, attachmentIds, now);
+    await this.audit.record(tx, {
+      action: 'announcement.created',
+      targetId: id,
+      changes: diffChanges(null, audited(announcement), 'announcement.created'),
+    });
+    await this.audit.record(tx, {
+      action: 'announcement.published',
+      targetId: id,
+      metadata: {
+        publishAt: now.toISOString(),
+        scheduled: false,
+        fromStatus: 'draft',
+      },
+    });
+    return id;
+  }
+
+  /** New words for a board notice: a new version, shown as "edited". */
+  async editBoard(
+    tx: TenantTxClient,
+    id: string,
+    input: BoardNoticeText,
+  ): Promise<void> {
+    const before = await this.locked(tx, id);
+    const now = await dbNow(tx);
+    if (statusOf(before, now) === 'archived')
+      throw wrongState(statusOf(before, now));
+    const current = await this.versionOf(tx, before);
+    const text = localized(input, TEXT, textOf(current));
+    if (sameText(text, textOf(current))) return;
+    const version = current.version + 1;
+    await this.writeVersion(
+      tx,
+      before,
+      version,
+      text,
+      current.attachmentIds,
+      now,
+    );
+    await tx.announcement.update({
+      where: { id },
+      data: { currentVersion: version, editedAt: now },
+    });
+    await this.audit.record(tx, {
+      action: 'announcement.edited',
+      targetId: id,
+      metadata: { version, afterPublication: true },
+    });
+  }
+
+  async archiveBoard(tx: TenantTxClient, id: string): Promise<void> {
+    const before = await this.locked(tx, id);
+    const now = await dbNow(tx);
+    const status = statusOf(before, now);
+    if (status === 'archived') throw wrongState(status);
+    await tx.announcement.update({ where: { id }, data: { archivedAt: now } });
+    await this.audit.record(tx, {
+      action: 'announcement.archived',
+      targetId: id,
+      metadata: { fromStatus: status },
+    });
+  }
+
+  /** A board notice's words now, and whether it has its PDF. */
+  async boardText(
+    tx: TenantTxClient,
+    id: string,
+  ): Promise<BoardNoticeText & { attachments: number; editedAt: Date | null }> {
+    const a = await tx.announcement.findUniqueOrThrow({ where: { id } });
+    const v = await this.versionOf(tx, a);
+    return {
+      ...textOf(v),
+      attachments: v.attachmentIds.length,
+      editedAt: a.editedAt,
+    };
+  }
+
+  /** One of the caller's own PDFs of `community_attachment`, attached. */
+  private async attachPdf(
+    tx: TenantTxClient,
+    a: Pick<Announcement, 'id' | 'tenantId'>,
+    fileId: string,
+    now: Date,
+  ): Promise<string> {
+    const file = await this.attachments.take(tx, fileId, 'attachmentFileId');
+    if (file.contentType !== 'application/pdf')
+      throw invalid([
+        {
+          field: 'attachmentFileId',
+          code: FieldErrorCode.FILE_TYPE_NOT_ALLOWED,
+          params: { allowed: ['application/pdf'] },
+        },
+      ]);
+    const row = await tx.announcementAttachment.create({
+      data: {
+        id: newId(),
+        tenantId: a.tenantId,
+        announcementId: a.id,
+        fileId: file.id,
+        uploadedById: this.ctx.accountId,
+        createdAt: now,
+      },
+    });
+    return row.id;
   }
 
   // --------------------------------------------------------------------------

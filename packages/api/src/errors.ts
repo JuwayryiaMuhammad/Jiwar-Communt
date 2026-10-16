@@ -151,6 +151,7 @@ const ERROR_TEXT: Record<string, string> = {
   SUGGESTION_TOPIC_NOT_FOUND: 'This topic does not exist.',
   ANNOUNCEMENT_NOT_FOUND: 'This announcement does not exist.',
   ANNOUNCEMENT_INVALID_STATE: 'The announcement has moved on, so this is no longer possible. Refresh to see where it stands.',
+  ANNOUNCEMENT_OF_THE_BOARD: 'This is the board’s: it changes under Governance.',
   COMMUNITY_EVENT_NOT_FOUND: 'This event does not exist.',
   COMMUNITY_EVENT_INVALID_STATE: 'The event has started, ended or been cancelled, so this is no longer possible.',
   COMMUNITY_EVENT_FULL: 'The event has no room left for this answer.',
@@ -332,6 +333,7 @@ const ERROR_TEXT: Record<string, string> = {
   GOVERNANCE_CANDIDACY_NOT_ALLOWED: 'Only an owner of a unit can stand.',
   GOVERNANCE_ALREADY_CANDIDATE: 'You stand in this election already.',
   GOVERNANCE_NOT_CERTIFIABLE: 'Voting has not been counted yet.',
+  BOARD_PUBLICATION_NOT_FOUND: 'This decision does not exist, or was archived.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

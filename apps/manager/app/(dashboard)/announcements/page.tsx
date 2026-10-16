@@ -25,7 +25,7 @@ export default function AnnouncementsPage() {
   const { can, ready } = usePermissions();
   const [view, setView] = useState<KindView>('all');
   const [status, setStatus] = useState<Announcement['status'] | ''>('');
-  const [creating, setCreating] = useState<AnnouncementKind | null>(null);
+  const [creating, setCreating] = useState<Exclude<AnnouncementKind, 'board'> | null>(null);
   const allowed = can('community.publish');
   const filters: AnnouncementFilters = { status, kind: view === 'all' ? '' : view };
   const list = useCursorList(keys.announcements(filters), (c) => fetchers.announcements(filters, c), { enabled: allowed });

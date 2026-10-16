@@ -9,6 +9,7 @@ import {
   electionRows,
   openContest,
   pollRow,
+  publicationRows,
 } from '../setup/governance-rows';
 
 /** What a seed needs from one compound. */
@@ -157,6 +158,15 @@ const TABLES: Table[] = [
           candidateId: link.accountId,
         })
       ).candidateId,
+  },
+  {
+    table: 'board_publications',
+    insert: (tx, own, link) =>
+      publicationRows(tx, {
+        tenantId: own.tenantId,
+        termId: link.termId,
+        accountId: own.accountId,
+      }),
   },
 ];
 

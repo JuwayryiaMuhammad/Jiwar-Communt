@@ -56,6 +56,7 @@ import {
   boardTermRow,
   electionRows,
   pollRow,
+  publicationRows,
 } from '../setup/governance-rows';
 import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
 import { ALL_WEEK, at, day } from '../setup/facilities';
@@ -265,6 +266,8 @@ export interface World extends GuardDutyWorld {
   /** An election of B's in nominations, and its candidate (ADR 0051). */
   bGovernanceElectionId: string;
   bGovernanceCandidateId: string;
+  /** A decision of B's board, its announcement of kind `board` (ADR 0051). */
+  bBoardPublicationId: string;
   bDeviceId: string;
   /** A personal-data export B's owner asked for (ADR 0036). */
   bExportId: string;
@@ -942,20 +945,29 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
         guests: [{ fullName: 'B Guest' }],
       }),
   );
-  const bBoardMemberId = await helpers.asManager(b, () =>
-    h.moduleRef.get(TenantTx).withTenantTx(async (tx) =>
-      boardMemberRow(tx, {
+  const bBoard = await helpers.asManager(b, () =>
+    h.moduleRef.get(TenantTx).withTenantTx(async (tx) => {
+      const termId = await boardTermRow(tx, {
         tenantId: b.tenantId,
-        termId: await boardTermRow(tx, {
+        createdById: b.ids.manager,
+        open: true,
+      });
+      return {
+        memberId: await boardMemberRow(tx, {
           tenantId: b.tenantId,
-          createdById: b.ids.manager,
-          open: true,
+          termId,
+          accountId: b.ids.owner,
+          addedById: b.ids.manager,
         }),
-        accountId: b.ids.owner,
-        addedById: b.ids.manager,
-      }),
-    ),
+        publicationId: await publicationRows(tx, {
+          tenantId: b.tenantId,
+          termId,
+          accountId: b.ids.manager,
+        }),
+      };
+    }),
   );
+  const bBoardMemberId = bBoard.memberId;
   const bGovernancePollId = await helpers.asManager(b, () =>
     h.moduleRef
       .get(TenantTx)
@@ -1089,6 +1101,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bGovernancePollId,
     bGovernanceElectionId: bElection.electionId,
     bGovernanceCandidateId: bElection.candidateId,
+    bBoardPublicationId: bBoard.publicationId,
     bFineId: bFine.fine.id,
     bFinePaymentId: bFinePayment.id,
     bVehicleId: bVehicle.vehicle.id,

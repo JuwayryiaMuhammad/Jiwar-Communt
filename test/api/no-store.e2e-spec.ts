@@ -757,6 +757,30 @@ describe('API v0 — no-store', () => {
       .members.filter((m) => !m.endedAt)
       .at(-1)!.id;
   };
+  /** A board sits in A now: the one there, or a new one after a lapse. */
+  const aSittingBoard = async () => {
+    const now = body<{ board: { id: string; status: string } | null }>(
+      await as('manager', 'GET', '/staff/governance/board').expect(200),
+    ).board;
+    if (now?.status === 'current') return;
+    if (now) await lapse(now.id);
+    sittingBoard = null;
+    await aBoard();
+  };
+  const aDecision = {
+    kind: 'decision',
+    decidedOn: new Date().toISOString().slice(0, 10),
+    titleEn: 'No-store decision',
+    bodyEn: 'Decided.',
+  };
+  const aPublication = async () => {
+    await aSittingBoard();
+    return body<{ id: string }>(
+      await as('manager', 'POST', '/governance/publications', aDecision).expect(
+        201,
+      ),
+    ).id;
+  };
   /** Ids this suite reads again later: never cancelled to make room. */
   const keep = new Set<string>();
   /**
@@ -1061,6 +1085,29 @@ describe('API v0 — no-store', () => {
           { reasonCode: 'not_eligible' },
         );
       },
+    'GET /governance/publications': () =>
+      as('owner', 'GET', '/governance/publications'),
+    'POST /governance/publications': async () => {
+      await aSittingBoard();
+      return as('manager', 'POST', '/governance/publications', aDecision);
+    },
+    'PATCH /governance/publications/{id}': async () =>
+      as(
+        'manager',
+        'PATCH',
+        `/governance/publications/${await aPublication()}`,
+        {
+          titleEn: 'Corrected',
+        },
+      ),
+    'POST /governance/publications/{id}/archive': async () =>
+      as(
+        'manager',
+        'POST',
+        `/governance/publications/${await aPublication()}/archive`,
+      ),
+    'GET /staff/governance/publications': () =>
+      as('manager', 'GET', '/staff/governance/publications'),
     'GET /staff/governance/polls': () =>
       as('manager', 'GET', '/staff/governance/polls'),
     'GET /staff/governance/polls/{id}': async () =>

@@ -34,11 +34,12 @@ const DOMAINS = [
  * Domains a domain must not import at all, not even through the index:
  * maintenance reads community only (ADR 0032); management reads community
  * and maintenance (ADR 0039). Engagement reads all four through their
- * index.ts, and nothing imports it (ADR 0040). Neighbours reads community
+ * index.ts, and only governance imports it, for the board's notices
+ * (ADR 0040, 0051). Neighbours reads community
  * only, and nothing imports it (ADR 0042). Facilities reads community only,
  * and nothing imports it (ADR 0044). Finance reads community only, and
- * nothing imports it (ADR 0046). Governance reads community only, and
- * nothing imports it (ADR 0051).
+ * nothing imports it (ADR 0046). Governance reads community, and engagement
+ * for the board's notices, and nothing imports it (ADR 0051).
  */
 const NO_IMPORT = {
   community: ['governance'],
@@ -63,7 +64,6 @@ const NO_IMPORT = {
   ],
   gate: ['governance'],
   governance: [
-    'engagement',
     'facilities',
     'finance',
     'gate',

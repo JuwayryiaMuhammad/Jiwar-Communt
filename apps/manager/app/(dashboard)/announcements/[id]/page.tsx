@@ -132,7 +132,8 @@ export default function AnnouncementPage() {
 
   if (ready && !allowed) return <ForbiddenState />;
   const a = query.data;
-  const actions = a ? announcementActions(a.status) : null;
+  // The board's decisions and minutes change under Governance (ADR 0051).
+  const actions = a && a.kind !== 'board' ? announcementActions(a.status) : null;
 
   return (
     <>
@@ -222,7 +223,14 @@ export default function AnnouncementPage() {
         ) : null}
       </QueryState>
       {a && dialog === 'edit' ? (
-        <AnnouncementDialog key={a.version} announcement={a} kind={a.kind} open onClose={() => setDialog(null)} onSaved={() => setDialog(null)} />
+        <AnnouncementDialog
+          key={a.version}
+          announcement={a}
+          kind={a.kind === 'works' ? 'works' : 'general'}
+          open
+          onClose={() => setDialog(null)}
+          onSaved={() => setDialog(null)}
+        />
       ) : null}
       {a && dialog === 'publish' ? <PublishDialog announcement={a} onClose={() => setDialog(null)} /> : null}
       <ConfirmDialog

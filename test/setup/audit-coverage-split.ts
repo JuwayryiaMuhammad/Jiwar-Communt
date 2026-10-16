@@ -464,4 +464,6 @@ export const GOVERNANCE_COVERAGE: readonly string[] = [
   'governance_candidate.withdrawn',
   'governance_candidate.disqualified',
   'governance_election.certified',
+  'board_publication.published',
+  'board_publication.archived',
 ];

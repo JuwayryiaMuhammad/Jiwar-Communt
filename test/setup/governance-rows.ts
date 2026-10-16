@@ -223,3 +223,47 @@ export async function electionRows(
   });
   return { electionId, candidateId };
 }
+
+/** A decision of the board: its announcement (kind `board`) and its record; the record's id. */
+export async function publicationRows(
+  tx: TenantTxClient,
+  r: { tenantId: string; termId: string; accountId: string },
+): Promise<string> {
+  const announcementId = newId();
+  const now = new Date();
+  await tx.announcement.create({
+    data: {
+      id: announcementId,
+      tenantId: r.tenantId,
+      kind: 'board',
+      publishAt: now,
+      audienceOccupancy: 'owners',
+      createdById: r.accountId,
+    },
+  });
+  await tx.announcementVersion.create({
+    data: {
+      id: newId(),
+      tenantId: r.tenantId,
+      announcementId,
+      version: 1,
+      titleEn: 'A decision',
+      bodyEn: 'Its words.',
+      editedById: r.accountId,
+    },
+  });
+  const id = newId();
+  await tx.boardPublication.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      kind: 'decision',
+      termId: r.termId,
+      announcementId,
+      decidedOn: new Date(`${now.toISOString().slice(0, 10)}T00:00:00.000Z`),
+      authorSide: 'manager',
+      publishedById: r.accountId,
+    },
+  });
+  return id;
+}

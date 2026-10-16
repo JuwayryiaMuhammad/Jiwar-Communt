@@ -241,6 +241,23 @@ describe('Governance tables — CHECKs, triggers and privileges', () => {
     });
   });
 
+  it('an announcement is of kind `board` exactly when a board publication names it', async () => {
+    const insert = (id: string) =>
+      `INSERT INTO announcements (id, tenant_id, kind, publish_at, audience_occupancy, created_by_account_id, updated_at)
+         VALUES ('${id}', '${tenantId}', 'board', now(), 'owners', '${accountId}', now())`;
+    await expect(
+      asApp(insert('0192f1c2-7a4b-7c3d-8e9f-0a1b2c3d4e51')),
+    ).rejects.toThrow(/exactly when a board publication names it/);
+    await expect(
+      asApp(
+        `INSERT INTO announcements (id, tenant_id, kind, publish_at, audience_occupancy, created_by_account_id, updated_at)
+           VALUES ('0192f1c2-7a4b-7c3d-8e9f-0a1b2c3d4e52', '${tenantId}', 'general', now(), 'owners', '${accountId}', now())`,
+        `INSERT INTO board_publications (id, tenant_id, kind, term_id, announcement_id, decided_on, author_side, published_by_account_id)
+           VALUES (gen_random_uuid(), '${tenantId}', 'decision', '${termId}', '0192f1c2-7a4b-7c3d-8e9f-0a1b2c3d4e52', current_date, 'manager', '${accountId}')`,
+      ),
+    ).rejects.toThrow(/exactly when a board publication names it/);
+  });
+
   describe('a contest', () => {
     it('never changes its kind, secrecy or choices; its window only before it opens', async () => {
       for (const set of [

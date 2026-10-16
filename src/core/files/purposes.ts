@@ -72,11 +72,18 @@ export const FILE_PURPOSES = {
     uploaders: ['requests.create', 'requests.handle'],
   },
   // An announcement's, an event's or a "we did" note's attachment (ADR
-  // 0040): a photo or a document, uploaded by the staff who write them.
+  // 0040): a photo or a document, uploaded by the staff who write them;
+  // and the PDF of the board's decisions and minutes (ADR 0051), uploaded
+  // by a sitting board member or the manager.
   community_attachment: {
     types: [...IMAGE_TYPES, 'application/pdf'],
     maxBytes: 10 * MB,
-    uploaders: ['community.publish', 'community.suggestions'],
+    uploaders: [
+      'community.publish',
+      'community.suggestions',
+      'governance.board',
+      'governance.manage',
+    ],
   },
   // A complaint's evidence (ADR 0042): photos and documents, never a video.
   // Uploaded by whoever may write on a complaint or answer a notice.

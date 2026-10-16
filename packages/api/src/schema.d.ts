@@ -2762,6 +2762,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/governance/publications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the board’s decisions and minutes
+         * @description Newest first, archived ones left out. For the units’ owners (GOVERNANCE_NOT_AVAILABLE otherwise); each is also an announcement in their feed.
+         */
+        get: operations["BoardPublicationsController_list"];
+        put?: never;
+        /**
+         * Publish a decision or the minutes of the board
+         * @description A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). While a board sits (BOARD_NOT_SITTING). An announcement of kind `board` to the owners, out now, nobody pushed, with an optional PDF.
+         */
+        post: operations["BoardPublicationsController_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/governance/publications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Correct a decision’s or the minutes’ words
+         * @description A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). A new version of its announcement, shown as edited; the PDF stays.
+         */
+        patch: operations["BoardPublicationsController_edit"];
+        trace?: never;
+    };
+    "/api/v1/governance/publications/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Archive a decision or the minutes
+         * @description A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). Its announcement comes down for good.
+         */
+        post: operations["BoardPublicationsController_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health": {
         parameters: {
             query?: never;
@@ -7837,6 +7901,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/governance/publications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the board’s decisions and minutes
+         * @description Newest first, archived ones too.
+         */
+        get: operations["StaffBoardPublicationsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/instalment-plans": {
         parameters: {
             query?: never;
@@ -11479,7 +11563,7 @@ export interface components {
             id: string;
         };
         /** @enum {string} */
-        AnnouncementKind: "general" | "works";
+        AnnouncementKind: "general" | "works" | "board";
         AnnouncementListItemView: {
             /** @description Files it shows. */
             attachmentCount: number;
@@ -11933,6 +12017,47 @@ export interface components {
         };
         BoardPostViewList: {
             data: components["schemas"]["BoardPostView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        BoardPublicationKind: "decision" | "minutes";
+        BoardPublicationTextDto: {
+            bodyAr?: string | null;
+            bodyEn?: string | null;
+            titleAr?: string | null;
+            /** @description English, Arabic or both, each with its body. */
+            titleEn?: string | null;
+        };
+        BoardPublicationView: {
+            /**
+             * Format: uuid
+             * @description Its announcement (`GET /announcements/{id}`): where the owners read it, with its PDF.
+             */
+            announcementId: string;
+            /** Format: date-time */
+            archivedAt: string | null;
+            bodyAr: string | null;
+            bodyEn: string | null;
+            /** @example 2026-11-01 */
+            decidedOn: string;
+            /** Format: date-time */
+            editedAt: string | null;
+            hasAttachment: boolean;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["BoardPublicationKind"];
+            /** Format: date-time */
+            publishedAt: string;
+            /**
+             * Format: uuid
+             * @description The board that published it.
+             */
+            termId: string;
+            titleAr: string | null;
+            titleEn: string | null;
+        };
+        BoardPublicationViewList: {
+            data: components["schemas"]["BoardPublicationView"][];
             nextCursor: string | null;
         };
         /** @enum {string} */
@@ -12929,8 +13054,8 @@ export interface components {
              * @description No longer shown from then on. A general announcement’s only: works end by their own dates.
              */
             expiresAt?: string | null;
-            /** @description `works`: works and closures, with `works`. Never changes. */
-            kind: components["schemas"]["AnnouncementKind"];
+            /** @description `works`: works and closures, with `works`. Never changes. The board’s decisions and minutes (`board`) are published under Governance. */
+            kind: components["schemas"]["StaffAnnouncementKind"];
             /**
              * Format: date-time
              * @description Stays on top until then. Only when `important`.
@@ -18103,6 +18228,24 @@ export interface components {
              */
             publishAt?: string;
         };
+        PublishBoardPublicationDto: {
+            /**
+             * Format: uuid
+             * @description A PDF of the caller’s, uploaded as `community_attachment` (FILE_NOT_AVAILABLE; FILE_TYPE_NOT_ALLOWED when not a PDF).
+             */
+            attachmentFileId?: string;
+            bodyAr?: string | null;
+            bodyEn?: string | null;
+            /**
+             * @description The local day the board decided or met: today, or up to a year ago (DAY_OUT_OF_RANGE).
+             * @example 2026-11-01
+             */
+            decidedOn: string;
+            kind: components["schemas"]["BoardPublicationKind"];
+            titleAr?: string | null;
+            /** @description English, Arabic or both, each with its body. */
+            titleEn?: string | null;
+        };
         PublishSuggestionDto: {
             textAr?: string | null;
             textEn?: string | null;
@@ -19549,6 +19692,11 @@ export interface components {
             data: components["schemas"]["SpecialtyView"][];
             nextCursor: string | null;
         };
+        /**
+         * @description `works`: works and closures, with `works`. Never changes. The board’s decisions and minutes (`board`) are published under Governance.
+         * @enum {string}
+         */
+        StaffAnnouncementKind: "general" | "works";
         StaffAnnouncementListItemView: {
             /** Format: date-time */
             archivedAt: string | null;
@@ -26592,6 +26740,101 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GovernanceVoteReceipt"];
+                };
+            };
+        };
+    };
+    BoardPublicationsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardPublicationViewList"];
+                };
+            };
+        };
+    };
+    BoardPublicationsController_publish: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublishBoardPublicationDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardPublicationView"];
+                };
+            };
+        };
+    };
+    BoardPublicationsController_edit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BoardPublicationTextDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardPublicationView"];
+                };
+            };
+        };
+    };
+    BoardPublicationsController_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardPublicationView"];
                 };
             };
         };
@@ -34457,6 +34700,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffGovernancePollView"];
+                };
+            };
+        };
+    };
+    StaffBoardPublicationsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardPublicationViewList"];
                 };
             };
         };

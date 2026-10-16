@@ -723,6 +723,10 @@ export const ErrorCode = {
   SWAP_NOT_POSSIBLE: 'SWAP_NOT_POSSIBLE',
   /** Only the colleague answers, only the requester withdraws, and nobody decides their own (403). */
   SWAP_ACTION_NOT_ALLOWED: 'SWAP_ACTION_NOT_ALLOWED',
+  /** Unknown, another compound's, or one that does not reach the caller. */
+  GUARD_INSTRUCTION_NOT_FOUND: 'GUARD_INSTRUCTION_NOT_FOUND',
+  /** It was archived already (409). */
+  GUARD_INSTRUCTION_ARCHIVED: 'GUARD_INSTRUCTION_ARCHIVED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

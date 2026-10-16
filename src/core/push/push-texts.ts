@@ -1431,6 +1431,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'لم يعد تبديل الوردية ساريًا.',
     },
   },
+  'guard_instruction.issued': {
+    en: {
+      title: 'New instruction',
+      body: 'You have a new instruction to read and acknowledge.',
+    },
+    ar: {
+      title: 'تعليمات جديدة',
+      body: 'لديك تعليمات جديدة للقراءة والإقرار.',
+    },
+  },
+  'guard_instruction.urgent': {
+    en: {
+      title: 'Urgent instruction',
+      body: 'Read and acknowledge an urgent instruction now.',
+    },
+    ar: {
+      title: 'تعليمات عاجلة',
+      body: 'اقرأ تعليمات عاجلة وأقر بها الآن.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

@@ -9,6 +9,8 @@ import {
   gateRow,
   handoverItemRow,
   handoverRow,
+  instructionRow,
+  recipientRow,
   shiftRow,
   slotRow,
   swapRow,
@@ -41,6 +43,8 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
   let taskId: string;
   let photoId: string;
   let swapId: string;
+  let instructionId: string;
+  let recipientId: string;
 
   beforeAll(async () => {
     h = await createDbHarness();
@@ -89,6 +93,16 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
             inHours: 48,
           }),
           colleagueId: otherId,
+        });
+        instructionId = await instructionRow(tx, {
+          tenantId,
+          gateId,
+          createdById: otherId,
+        });
+        recipientId = await recipientRow(tx, {
+          tenantId,
+          instructionId,
+          accountId: guardId,
         });
         shiftId = newId();
         await tx.guardShift.create({
@@ -151,6 +165,8 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
       'guard_handovers',
       'guard_tasks',
       'guard_shift_swaps',
+      'guard_instructions',
+      'guard_instruction_recipients',
     ])
       expect({ table, ...(await privileges(table)) }).toEqual({
         table,
@@ -172,13 +188,15 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
       'guard_tasks',
       'guard_task_photos',
       'guard_shift_swaps',
+      'guard_instructions',
+      'guard_instruction_recipients',
     ]) {
       await expect(
         attempt(
           migrator,
           `DELETE FROM "${table}" WHERE tenant_id = '${tenantId}'`,
         ),
-      ).rejects.toThrow(/never deleted|append-only/);
+      ).rejects.toThrow(/never deleted|never removed|append-only/);
       await expect(
         attempt(migrator, `TRUNCATE "${table}" CASCADE`),
       ).rejects.toThrow(/append-only|immutable|never/);
@@ -653,6 +671,54 @@ describe('Guard duty tables — CHECKs, triggers and privileges', () => {
       await expect(asApp(again)).rejects.toThrow(
         /guard_shift_swaps_live_requester_slot_key/,
       );
+    });
+  });
+
+  describe('guard_instructions', () => {
+    it('keeps what it says, to whom; archived once, completely', async () => {
+      const where = `id = '${instructionId}'`;
+      for (const set of [
+        "title = 'Other'",
+        "body = 'Other words'",
+        'urgent = true',
+        `gate_id = '${otherGateId}'`,
+      ])
+        await expect(
+          asApp(`UPDATE guard_instructions SET ${set} WHERE ${where}`),
+        ).rejects.toThrow(/keeps what it says/);
+      const archive = `UPDATE guard_instructions SET archived_at = now(), archived_by_account_id = '${otherId}' WHERE ${where}`;
+      await asApp(archive);
+      await expect(
+        asApp(
+          archive,
+          `UPDATE guard_instructions SET archived_at = now() + interval '1 minute' WHERE ${where}`,
+        ),
+      ).rejects.toThrow(/keeps what it says/);
+      await expect(
+        asApp(
+          `UPDATE guard_instructions SET archived_at = now() WHERE ${where}`,
+        ),
+      ).rejects.toThrow(/guard_instructions_archive_is_complete/);
+      await expect(
+        asApp(`UPDATE guard_instructions SET audience = 'all' WHERE ${where}`),
+      ).rejects.toThrow(/keeps what it says/);
+    });
+
+    it('a recipient is acknowledged once and never moved', async () => {
+      const where = `id = '${recipientId}'`;
+      const ack = `UPDATE guard_instruction_recipients SET acknowledged_at = now() WHERE ${where}`;
+      await asApp(ack);
+      await expect(
+        asApp(
+          ack,
+          `UPDATE guard_instruction_recipients SET acknowledged_at = now() + interval '1 minute' WHERE ${where}`,
+        ),
+      ).rejects.toThrow(/acknowledged once/);
+      await expect(
+        asApp(
+          `UPDATE guard_instruction_recipients SET account_id = '${otherId}' WHERE ${where}`,
+        ),
+      ).rejects.toThrow(/acknowledged once/);
     });
   });
 });

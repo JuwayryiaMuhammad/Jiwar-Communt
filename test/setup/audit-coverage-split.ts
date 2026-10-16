@@ -427,4 +427,7 @@ export const GUARD_DUTY_COVERAGE: readonly string[] = [
   'guard_swap.rejected',
   'guard_swap.expired',
   'guard_swap.cancelled',
+  'guard_instruction.issued',
+  'guard_instruction.archived',
+  'guard_instruction.acknowledged',
 ];

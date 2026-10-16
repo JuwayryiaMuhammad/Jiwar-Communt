@@ -543,3 +543,105 @@ export const SWAP_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** Instructions to guards (ADR 0050). */
+export const INSTRUCTION_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/staff/security/instructions',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: { title: '', body: 'Words', audience: 'everyone' },
+      fields: [
+        {
+          field: 'title',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 120 },
+        },
+        { field: 'audience', code: 'INVALID_VALUE' },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/security/instructions',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { state: 'old' },
+      fields: [{ field: 'state', code: 'INVALID_VALUE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/security/instructions/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bInstructionId }),
+      code: 'GUARD_INSTRUCTION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/security/instructions/{id}/archive',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bInstructionId }),
+      code: 'GUARD_INSTRUCTION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/gate/guard-instructions',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'unread' },
+      fields: [{ field: 'status', code: 'INVALID_VALUE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/gate/guard-instructions/{id}',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bInstructionId }),
+      code: 'GUARD_INSTRUCTION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/gate/guard-instructions/{id}/acknowledge',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bInstructionId }),
+      code: 'GUARD_INSTRUCTION_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+];

@@ -81,6 +81,11 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   guard_shift_swaps_tenant_id_id_key: null,
   guard_shift_swaps_live_requester_slot_key: null,
   guard_shift_swaps_live_colleague_slot_key: null,
+  // Instructions (ADR 0050): a guard is reached once (a start adds with
+  // skipDuplicates).
+  guard_instructions_tenant_id_id_key: null,
+  guard_instruction_recipients_tenant_id_id_key: null,
+  guard_instruction_recipients_once_key: null,
   visitor_details_tenant_id_id_key: null,
   visitor_passes_tenant_id_id_key: null,
   // ADR 0043.

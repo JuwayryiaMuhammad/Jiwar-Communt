@@ -958,6 +958,19 @@ export const AUDIT_ACTIONS = {
   // The system's. metadata: reason (guardSwapCancel) for a cancel.
   'guard_swap.expired': { log: 'tenant', target: 'guard_shift_swap' },
   'guard_swap.cancelled': { log: 'tenant', target: 'guard_shift_swap' },
+  // metadata: audience, gateId or placeId, urgent, recipients (how many at
+  // the send). Never the title or words.
+  'guard_instruction.issued': { log: 'tenant', target: 'guard_instruction' },
+  // metadata: recipients, acknowledged (counts at the archive).
+  'guard_instruction.archived': {
+    log: 'tenant',
+    target: 'guard_instruction',
+  },
+  // The guard is the actor.
+  'guard_instruction.acknowledged': {
+    log: 'tenant',
+    target: 'guard_instruction',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

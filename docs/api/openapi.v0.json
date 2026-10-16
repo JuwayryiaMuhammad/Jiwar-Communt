@@ -11925,6 +11925,22 @@
         ],
         "type": "object"
       },
+      "GuardInstructionAudience": {
+        "enum": [
+          "all",
+          "gate",
+          "zone"
+        ],
+        "type": "string"
+      },
+      "GuardInstructionVia": {
+        "description": "Reached at the send, or opening a shift where it applies.",
+        "enum": [
+          "send",
+          "shift_start"
+        ],
+        "type": "string"
+      },
       "GuardInstructionView": {
         "properties": {
           "action": {
@@ -13287,6 +13303,37 @@
           "dueOn",
           "createdAt",
           "position"
+        ],
+        "type": "object"
+      },
+      "InstructionRecipientView": {
+        "properties": {
+          "acknowledgedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "addedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "addedVia": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardInstructionVia"
+              }
+            ],
+            "description": "Reached at the send, or opening a shift where it applies."
+          },
+          "guard": {
+            "$ref": "#/components/schemas/AccountRefView"
+          }
+        },
+        "required": [
+          "guard",
+          "addedVia",
+          "addedAt",
+          "acknowledgedAt"
         ],
         "type": "object"
       },
@@ -15595,6 +15642,88 @@
         ],
         "type": "object"
       },
+      "MyGuardInstructionView": {
+        "properties": {
+          "acknowledgedAt": {
+            "description": "When I acknowledged it; null while it waits for me.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "archivedAt": {
+            "description": "It reaches nobody new once archived.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardInstructionAudience"
+              }
+            ]
+          },
+          "body": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "post": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostView"
+              }
+            ],
+            "description": "The gate or the zone; null for all guards.",
+            "nullable": true,
+            "type": "object"
+          },
+          "title": {
+            "type": "string"
+          },
+          "urgent": {
+            "description": "Sent as a critical push.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "body",
+          "urgent",
+          "audience",
+          "post",
+          "createdAt",
+          "archivedAt",
+          "acknowledgedAt"
+        ],
+        "type": "object"
+      },
+      "MyGuardInstructionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MyGuardInstructionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "MyParkingReportView": {
         "properties": {
           "createdAt": {
@@ -16286,6 +16415,10 @@
             "nullable": true,
             "type": "object"
           },
+          "pendingInstructions": {
+            "description": "Instructions that reach me and wait for my acknowledgement (`GET /gate/guard-instructions?status=pending`): a banner until none.",
+            "type": "number"
+          },
           "tasks": {
             "allOf": [
               {
@@ -16297,6 +16430,7 @@
         },
         "required": [
           "onShift",
+          "pendingInstructions",
           "tasks",
           "gateServiceQueue",
           "myGateServices",
@@ -23978,6 +24112,48 @@
         ],
         "type": "object"
       },
+      "SendGuardInstructionDto": {
+        "properties": {
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardInstructionAudience"
+              }
+            ]
+          },
+          "body": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "gateId": {
+            "description": "For `gate`: a gate in service.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "urgent": {
+            "default": false,
+            "description": "A critical push (`guard_instruction.urgent`).",
+            "type": "boolean"
+          },
+          "zoneId": {
+            "description": "For `zone`: a place in service.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "body",
+          "audience"
+        ],
+        "type": "object"
+      },
       "SendNoticeDto": {
         "properties": {
           "body": {
@@ -26850,6 +27026,172 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/StaffGuardHandoverView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffGuardInstructionDetailView": {
+        "properties": {
+          "acknowledged": {
+            "description": "Of them, those who acknowledged.",
+            "type": "number"
+          },
+          "archivedAt": {
+            "description": "It reaches nobody new once archived.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardInstructionAudience"
+              }
+            ]
+          },
+          "body": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "post": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostView"
+              }
+            ],
+            "description": "The gate or the zone; null for all guards.",
+            "nullable": true,
+            "type": "object"
+          },
+          "reached": {
+            "items": {
+              "$ref": "#/components/schemas/InstructionRecipientView"
+            },
+            "type": "array"
+          },
+          "recipients": {
+            "description": "The guards it reaches.",
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          },
+          "urgent": {
+            "description": "Sent as a critical push.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "body",
+          "urgent",
+          "audience",
+          "post",
+          "createdAt",
+          "archivedAt",
+          "createdBy",
+          "recipients",
+          "acknowledged",
+          "reached"
+        ],
+        "type": "object"
+      },
+      "StaffGuardInstructionView": {
+        "properties": {
+          "acknowledged": {
+            "description": "Of them, those who acknowledged.",
+            "type": "number"
+          },
+          "archivedAt": {
+            "description": "It reaches nobody new once archived.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardInstructionAudience"
+              }
+            ]
+          },
+          "body": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "post": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostView"
+              }
+            ],
+            "description": "The gate or the zone; null for all guards.",
+            "nullable": true,
+            "type": "object"
+          },
+          "recipients": {
+            "description": "The guards it reaches.",
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          },
+          "urgent": {
+            "description": "Sent as a critical push.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "body",
+          "urgent",
+          "audience",
+          "post",
+          "createdAt",
+          "archivedAt",
+          "createdBy",
+          "recipients",
+          "acknowledged"
+        ],
+        "type": "object"
+      },
+      "StaffGuardInstructionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffGuardInstructionView"
             },
             "type": "array"
           },
@@ -39123,6 +39465,157 @@
         "tags": [
           "gate"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/guard-instructions": {
+      "get": {
+        "description": "Newest first; `status=pending` for those waiting for me, `q` to search the archive.",
+        "operationId": "GuardInstructionsController_mine",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`pending`: those waiting for me. Default: all.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "pending",
+                "acknowledged"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Words of the title or the text (the archive).",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyGuardInstructionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the instructions that reach me",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/guard-instructions/{id}": {
+      "get": {
+        "operationId": "GuardInstructionsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyGuardInstructionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an instruction that reaches me",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/guard-instructions/{id}/acknowledge": {
+      "post": {
+        "description": "Once; again answers the same.",
+        "operationId": "GuardInstructionsController_acknowledge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyGuardInstructionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Acknowledge an instruction",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -56733,6 +57226,195 @@
           }
         ],
         "summary": "Get a handover",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/instructions": {
+      "get": {
+        "description": "Newest first, with how many acknowledged.",
+        "operationId": "StaffGuardInstructionsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "enum": [
+                "live",
+                "archived"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGuardInstructionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the instructions",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "To all guards, a gate or a zone. It reaches the active guards then — at a gate or a zone, those on shift there and those scheduled there in the next seven days — and anyone who opens a shift where it applies while it is live. Urgent: a critical push.",
+        "operationId": "StaffGuardInstructionsController_send",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendGuardInstructionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGuardInstructionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send guards an instruction",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/instructions/{id}": {
+      "get": {
+        "description": "With every guard it reaches and whether they acknowledged.",
+        "operationId": "StaffGuardInstructionsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGuardInstructionDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an instruction",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/instructions/{id}/archive": {
+      "post": {
+        "description": "It reaches nobody new; acknowledgements stay.",
+        "operationId": "StaffGuardInstructionsController_archive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGuardInstructionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Archive an instruction",
         "tags": [
           "guard-duty"
         ],

@@ -1767,6 +1767,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/guard-instructions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the instructions that reach me
+         * @description Newest first; `status=pending` for those waiting for me, `q` to search the archive.
+         */
+        get: operations["GuardInstructionsController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/guard-instructions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an instruction that reaches me */
+        get: operations["GuardInstructionsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/guard-instructions/{id}/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Acknowledge an instruction
+         * @description Once; again answers the same.
+         */
+        post: operations["GuardInstructionsController_acknowledge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/handover-items": {
         parameters: {
             query?: never;
@@ -7768,6 +7825,70 @@ export interface paths {
         get: operations["StaffHandoverController_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/instructions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the instructions
+         * @description Newest first, with how many acknowledged.
+         */
+        get: operations["StaffGuardInstructionsController_list"];
+        put?: never;
+        /**
+         * Send guards an instruction
+         * @description To all guards, a gate or a zone. It reaches the active guards then — at a gate or a zone, those on shift there and those scheduled there in the next seven days — and anyone who opens a shift where it applies while it is live. Urgent: a critical push.
+         */
+        post: operations["StaffGuardInstructionsController_send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/instructions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an instruction
+         * @description With every guard it reaches and whether they acknowledged.
+         */
+        get: operations["StaffGuardInstructionsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/instructions/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Archive an instruction
+         * @description It reaches nobody new; acknowledgements stay.
+         */
+        post: operations["StaffGuardInstructionsController_archive"];
         delete?: never;
         options?: never;
         head?: never;
@@ -14205,6 +14326,13 @@ export interface components {
             data: components["schemas"]["GuardHandoverView"][];
             nextCursor: string | null;
         };
+        /** @enum {string} */
+        GuardInstructionAudience: "all" | "gate" | "zone";
+        /**
+         * @description Reached at the send, or opening a shift where it applies.
+         * @enum {string}
+         */
+        GuardInstructionVia: "send" | "shift_start";
         GuardInstructionView: {
             /**
              * @description - `always_allow`: the guard lets them in and logs the entry.
@@ -14634,6 +14762,15 @@ export interface components {
             unitCode: string;
             /** Format: uuid */
             unitId: string;
+        };
+        InstructionRecipientView: {
+            /** Format: date-time */
+            acknowledgedAt: string | null;
+            /** Format: date-time */
+            addedAt: string;
+            /** @description Reached at the send, or opening a shift where it applies. */
+            addedVia: components["schemas"]["GuardInstructionVia"];
+            guard: components["schemas"]["AccountRefView"];
         };
         InviteAcceptedView: {
             /** @enum {string} */
@@ -15358,6 +15495,33 @@ export interface components {
             data: components["schemas"]["StaffGateServiceView"][];
             total: number;
         };
+        MyGuardInstructionView: {
+            /**
+             * Format: date-time
+             * @description When I acknowledged it; null while it waits for me.
+             */
+            acknowledgedAt: string | null;
+            /**
+             * Format: date-time
+             * @description It reaches nobody new once archived.
+             */
+            archivedAt: string | null;
+            audience: components["schemas"]["GuardInstructionAudience"];
+            body: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description The gate or the zone; null for all guards. */
+            post: components["schemas"]["PostView"] | null;
+            title: string;
+            /** @description Sent as a critical push. */
+            urgent: boolean;
+        };
+        MyGuardInstructionViewList: {
+            data: components["schemas"]["MyGuardInstructionView"][];
+            nextCursor: string | null;
+        };
         MyParkingReportView: {
             /** Format: date-time */
             createdAt: string;
@@ -15565,6 +15729,8 @@ export interface components {
             onShift: boolean;
             /** @description The open wrong-parking reports (`/staff/parking-reports`), for a holder of `parking_reports.handle`; null otherwise. */
             parkingReports: components["schemas"]["MyParkingReportsSection"] | null;
+            /** @description Instructions that reach me and wait for my acknowledgement (`GET /gate/guard-instructions?status=pending`): a banner until none. */
+            pendingInstructions: number;
             /** @description Mine, my post’s while on shift there, and those I took: open or in progress (`/gate/tasks/{id}`). */
             tasks: components["schemas"]["MyTasksSection"];
         };
@@ -17971,6 +18137,26 @@ export interface components {
             accountId: string;
             loginTicket: string;
         };
+        SendGuardInstructionDto: {
+            audience: components["schemas"]["GuardInstructionAudience"];
+            body: string;
+            /**
+             * Format: uuid
+             * @description For `gate`: a gate in service.
+             */
+            gateId?: string;
+            title: string;
+            /**
+             * @description A critical push (`guard_instruction.urgent`).
+             * @default false
+             */
+            urgent: boolean;
+            /**
+             * Format: uuid
+             * @description For `zone`: a place in service.
+             */
+            zoneId?: string;
+        };
         SendNoticeDto: {
             /** @description The management’s own words to the unit. The only text of the matter the unit ever reads: never the complaint’s. */
             body: string;
@@ -18789,6 +18975,57 @@ export interface components {
         };
         StaffGuardHandoverViewList: {
             data: components["schemas"]["StaffGuardHandoverView"][];
+            nextCursor: string | null;
+        };
+        StaffGuardInstructionDetailView: {
+            /** @description Of them, those who acknowledged. */
+            acknowledged: number;
+            /**
+             * Format: date-time
+             * @description It reaches nobody new once archived.
+             */
+            archivedAt: string | null;
+            audience: components["schemas"]["GuardInstructionAudience"];
+            body: string;
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: components["schemas"]["AccountRefView"];
+            /** Format: uuid */
+            id: string;
+            /** @description The gate or the zone; null for all guards. */
+            post: components["schemas"]["PostView"] | null;
+            reached: components["schemas"]["InstructionRecipientView"][];
+            /** @description The guards it reaches. */
+            recipients: number;
+            title: string;
+            /** @description Sent as a critical push. */
+            urgent: boolean;
+        };
+        StaffGuardInstructionView: {
+            /** @description Of them, those who acknowledged. */
+            acknowledged: number;
+            /**
+             * Format: date-time
+             * @description It reaches nobody new once archived.
+             */
+            archivedAt: string | null;
+            audience: components["schemas"]["GuardInstructionAudience"];
+            body: string;
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: components["schemas"]["AccountRefView"];
+            /** Format: uuid */
+            id: string;
+            /** @description The gate or the zone; null for all guards. */
+            post: components["schemas"]["PostView"] | null;
+            /** @description The guards it reaches. */
+            recipients: number;
+            title: string;
+            /** @description Sent as a critical push. */
+            urgent: boolean;
+        };
+        StaffGuardInstructionViewList: {
+            data: components["schemas"]["StaffGuardInstructionView"][];
             nextCursor: string | null;
         };
         StaffGuardSwapView: {
@@ -23618,6 +23855,75 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GuardGateViewList"];
+                };
+            };
+        };
+    };
+    GuardInstructionsController_mine: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `pending`: those waiting for me. Default: all. */
+                status?: "pending" | "acknowledged";
+                /** @description Words of the title or the text (the archive). */
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyGuardInstructionViewList"];
+                };
+            };
+        };
+    };
+    GuardInstructionsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyGuardInstructionView"];
+                };
+            };
+        };
+    };
+    GuardInstructionsController_acknowledge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyGuardInstructionView"];
                 };
             };
         };
@@ -32856,6 +33162,98 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffGuardHandoverView"];
+                };
+            };
+        };
+    };
+    StaffGuardInstructionsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                state?: "live" | "archived";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGuardInstructionViewList"];
+                };
+            };
+        };
+    };
+    StaffGuardInstructionsController_send: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendGuardInstructionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGuardInstructionView"];
+                };
+            };
+        };
+    };
+    StaffGuardInstructionsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGuardInstructionDetailView"];
+                };
+            };
+        };
+    };
+    StaffGuardInstructionsController_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGuardInstructionView"];
                 };
             };
         };

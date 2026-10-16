@@ -39,6 +39,12 @@ export class MyWorkView {
   @ApiProperty({ type: Boolean, description: 'Whether I am on shift now.' })
   onShift: boolean;
   @ApiProperty({
+    type: Number,
+    description:
+      'Instructions that reach me and wait for my acknowledgement (`GET /gate/guard-instructions?status=pending`): a banner until none.',
+  })
+  pendingInstructions: number;
+  @ApiProperty({
     type: MyTasksSection,
     description:
       'Mine, my post’s while on shift there, and those I took: open or in progress (`/gate/tasks/{id}`).',

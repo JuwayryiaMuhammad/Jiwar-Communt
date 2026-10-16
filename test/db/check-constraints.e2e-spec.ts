@@ -1198,6 +1198,13 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   guard_shift_swaps_close_reason: {
     guarded: 'close_reason IS NULL is tested first',
   },
+  guard_instructions_title_length: {},
+  guard_instructions_body_length: {},
+  guard_instructions_audience_shape: {},
+  guard_instructions_archive_is_complete: {},
+  guard_instruction_recipients_ack_after_add: {
+    guarded: 'acknowledged_at IS NULL is tested first',
+  },
 };
 
 interface Check {

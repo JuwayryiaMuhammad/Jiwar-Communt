@@ -34,6 +34,7 @@ import {
 import { GATE_ROUTES } from './gate';
 import {
   HANDOVER_ROUTES,
+  INSTRUCTION_ROUTES,
   ROSTER_ROUTES,
   SWAP_ROUTES,
   TASK_ROUTES,
@@ -206,4 +207,5 @@ export const ROUTES: Row[] = [
   ...HANDOVER_ROUTES,
   ...TASK_ROUTES,
   ...SWAP_ROUTES,
+  ...INSTRUCTION_ROUTES,
 ];

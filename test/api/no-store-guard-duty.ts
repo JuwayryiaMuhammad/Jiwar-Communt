@@ -112,6 +112,15 @@ export function guardDutyCalls(
       });
     return { swap, reliefToken };
   };
+  /** An instruction to all of A's guards (A's guard among them): its id. */
+  const anInstruction = async () =>
+    id(
+      await manager('POST', '/staff/security/instructions', {
+        title: 'No-store',
+        body: 'No-store words',
+        audience: 'all',
+      }),
+    );
   const anItem = async () =>
     id(
       await manager('POST', '/staff/security/handover-items', {
@@ -162,6 +171,31 @@ export function guardDutyCalls(
         label: 'No-store keys',
       }),
     'GET /gate/my-work': () => guard('GET', '/gate/my-work'),
+    'POST /staff/security/instructions': () =>
+      manager('POST', '/staff/security/instructions', {
+        title: 'No-store',
+        body: 'Words',
+        audience: 'gate',
+        gateId: world().a.gateId,
+      }),
+    'GET /staff/security/instructions': () =>
+      manager('GET', '/staff/security/instructions'),
+    'GET /staff/security/instructions/{id}': async () =>
+      manager('GET', `/staff/security/instructions/${await anInstruction()}`),
+    'POST /staff/security/instructions/{id}/archive': async () =>
+      manager(
+        'POST',
+        `/staff/security/instructions/${await anInstruction()}/archive`,
+      ),
+    'GET /gate/guard-instructions': () =>
+      guard('GET', '/gate/guard-instructions'),
+    'GET /gate/guard-instructions/{id}': async () =>
+      guard('GET', `/gate/guard-instructions/${await anInstruction()}`),
+    'POST /gate/guard-instructions/{id}/acknowledge': async () =>
+      guard(
+        'POST',
+        `/gate/guard-instructions/${await anInstruction()}/acknowledge`,
+      ),
     'POST /gate/swaps': async () => {
       const w = world();
       const relief = await gateHelpers(w.h).guard(w.a);

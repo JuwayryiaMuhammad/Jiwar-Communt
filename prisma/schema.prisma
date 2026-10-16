@@ -6425,3 +6425,60 @@ model GuardShiftSwap {
   @@index([tenantId, status, createdAt, id], map: "guard_shift_swaps_status_idx")
   @@map("guard_shift_swaps")
 }
+
+enum GuardInstructionAudience {
+  all
+  gate
+  zone
+
+  @@map("guard_instruction_audience")
+}
+
+enum GuardInstructionVia {
+  send
+  shift_start
+
+  @@map("guard_instruction_via")
+}
+
+/// An instruction the management sends guards (ADR 0050): to all of them,
+/// a gate or a zone (CHECK). Every guard it reaches acknowledges it. What
+/// it says never changes; it is archived once (trigger).
+model GuardInstruction {
+  id           String                   @id @db.Uuid
+  tenantId     String                   @map("tenant_id") @db.Uuid
+  title        String
+  body         String
+  /// A critical push; otherwise a normal one.
+  urgent       Boolean                  @default(false)
+  audience     GuardInstructionAudience
+  gateId       String?                  @map("gate_id") @db.Uuid
+  placeId      String?                  @map("place_id") @db.Uuid
+  createdById  String                   @map("created_by_account_id") @db.Uuid
+  archivedAt   DateTime?                @map("archived_at") @db.Timestamptz(3)
+  archivedById String?                  @map("archived_by_account_id") @db.Uuid
+  createdAt    DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt, id], map: "guard_instructions_created_idx")
+  @@map("guard_instructions")
+}
+
+/// A guard an instruction reaches (ADR 0050): recorded at the send, or
+/// when they open a shift where it applies while it is live. Acknowledged
+/// once (trigger).
+model GuardInstructionRecipient {
+  id             String              @id @db.Uuid
+  tenantId       String              @map("tenant_id") @db.Uuid
+  instructionId  String              @map("instruction_id") @db.Uuid
+  accountId      String              @map("account_id") @db.Uuid
+  addedVia       GuardInstructionVia @map("added_via")
+  addedAt        DateTime            @default(now()) @map("added_at") @db.Timestamptz(3)
+  acknowledgedAt DateTime?           @map("acknowledged_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, instructionId, accountId], map: "guard_instruction_recipients_once_key")
+  @@index([tenantId, accountId, addedAt], map: "guard_instruction_recipients_account_idx")
+  @@map("guard_instruction_recipients")
+}

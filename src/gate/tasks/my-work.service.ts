@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PermissionsService } from '../../core/access/permissions.service';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { TenantTx } from '../../core/database/tenant-tx.service';
+import { GuardInstructionsService } from '../guard-instructions/guard-instructions.service';
 import { GateServiceHandlersService } from '../gate-services/gate-service-handlers.service';
 import { StaffGateServiceView } from '../gate-services/views/gate-service.views';
 import { ParkingReportsService } from '../parking-reports/parking-reports.service';
@@ -29,15 +30,17 @@ export class MyWorkService {
     private readonly tasks: TasksService,
     private readonly gateServices: GateServiceHandlersService,
     private readonly parkingReports: ParkingReportsService,
+    private readonly instructions: GuardInstructionsService,
   ) {}
 
   async mine(): Promise<MyWorkView> {
     const me = this.ctx.accountId;
-    const { duty, tasks, queueTotal, mineTotal, reportsTotal } =
+    const { duty, tasks, queueTotal, mineTotal, reportsTotal, instructions } =
       await this.tenantTx.withTenantTx(async (tx) => {
         const duty = await this.shifts.onDuty(tx, me);
         return {
           duty,
+          instructions: await this.instructions.pendingCount(tx, me),
           tasks: await this.tasks.workOf(tx, me, duty, MY_WORK_LIMIT),
           queueTotal: await tx.gateServiceRequest.count({
             where: { status: 'open' },
@@ -72,6 +75,7 @@ export class MyWorkService {
       : null;
     return {
       onShift: duty !== null,
+      pendingInstructions: instructions,
       tasks: { data: tasks.items, total: tasks.total },
       gateServiceQueue: queue
         ? { data: queue.items.map(view), total: queueTotal }

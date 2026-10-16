@@ -196,3 +196,39 @@ export async function swapRow(
   });
   return id;
 }
+
+export async function instructionRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; gateId: string; createdById: string },
+): Promise<string> {
+  const id = newId();
+  await tx.guardInstruction.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      title: 'Row instruction',
+      body: 'Row words',
+      audience: 'gate',
+      gateId: r.gateId,
+      createdById: r.createdById,
+    },
+  });
+  return id;
+}
+
+export async function recipientRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; instructionId: string; accountId: string },
+): Promise<string> {
+  const id = newId();
+  await tx.guardInstructionRecipient.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      instructionId: r.instructionId,
+      accountId: r.accountId,
+      addedVia: 'send',
+    },
+  });
+  return id;
+}

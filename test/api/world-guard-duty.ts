@@ -3,6 +3,7 @@ import {
   localDate,
   zonedInstant,
 } from '../../src/core/common/slots/day-slots';
+import { GuardInstructionsService } from '../../src/gate/guard-instructions/guard-instructions.service';
 import { HandoverService } from '../../src/gate/handover/handover.service';
 import { RosterService } from '../../src/gate/roster/roster.service';
 import { ShiftsService } from '../../src/gate/shifts/shifts.service';
@@ -30,6 +31,8 @@ export interface GuardDutyWorld {
   bTaskId: string;
   /** B's guard asks the relief guard to cover B's single slot. */
   bSwapId: string;
+  /** An instruction to all of B's guards. */
+  bInstructionId: string;
 }
 
 export async function guardDutyWorld(
@@ -56,6 +59,9 @@ export async function guardDutyWorld(
     const item = await h.moduleRef
       .get(HandoverService)
       .createItem({ label: 'World keys' });
+    const instruction = await h.moduleRef
+      .get(GuardInstructionsService)
+      .send({ title: 'World', body: 'World words', audience: 'all' });
     const task = await h.moduleRef
       .get(TasksService)
       .create({ kind: 'custom', title: 'World task', gateId: b.gateId });
@@ -64,6 +70,7 @@ export async function guardDutyWorld(
       bRosterSlotId: slot.id,
       bHandoverItemId: item.id,
       bTaskId: task.id,
+      bInstructionId: instruction.id,
     };
   });
   const relief = await gateHelpers(h).guard(b);

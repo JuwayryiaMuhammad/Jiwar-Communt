@@ -10576,6 +10576,109 @@
     {
       "item": [
         {
+          "name": "List the instructions that reach me",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "guard-instructions"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "`pending`: those waiting for me. Default: all.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "Words of the title or the text (the archive).",
+                  "disabled": true,
+                  "key": "q",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/guard-instructions"
+            }
+          }
+        },
+        {
+          "name": "Get an instruction that reaches me",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "guard-instructions",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/guard-instructions/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Acknowledge an instruction",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "guard-instructions",
+                ":id",
+                "acknowledge"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/guard-instructions/:id/acknowledge",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the checklist to tick when ending my shift",
           "request": {
             "description": "**Responses:** 200",
@@ -11259,6 +11362,147 @@
                 ":id"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/security/handovers/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the instructions",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "instructions"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "state",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/instructions"
+            }
+          }
+        },
+        {
+          "name": "Send guards an instruction",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"title\": \"\",\n  \"body\": \"\",\n  \"audience\": \"all\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `audience` | `all` \\| `gate` \\| `zone` | yes |  |\n| `body` | string | yes |  |\n| `gateId` | string (uuid) |  | For `gate`: a gate in service. |\n| `title` | string | yes |  |\n| `urgent` | boolean |  | A critical push (`guard_instruction.urgent`). |\n| `zoneId` | string (uuid) |  | For `zone`: a place in service. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "instructions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/instructions"
+            }
+          }
+        },
+        {
+          "name": "Get an instruction",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "instructions",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/instructions/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Archive an instruction",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "instructions",
+                ":id",
+                "archive"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/instructions/:id/archive",
               "variable": [
                 {
                   "description": "",

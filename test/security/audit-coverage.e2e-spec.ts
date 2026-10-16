@@ -396,6 +396,55 @@ describe('Audit coverage — guard shifts and tasks', () => {
     });
   });
 
+  describe('instructions', () => {
+    it('issued with counts, acknowledged by the guard, archived with counts: never the words', async () => {
+      // A gate of its own: nobody else is on shift or scheduled there.
+      const own = (await x.g.gate(s.c)).id;
+      const guard = await x.guard(s.c);
+      await x.start(guard, { gateId: own });
+      const i = (
+        await x
+          .http('post', '/staff/security/instructions', supervisor.token, {
+            title: WORDS,
+            body: WORDS,
+            audience: 'gate',
+            gateId: own,
+            urgent: true,
+          })
+          .expect(201)
+      ).body as { id: string };
+      const issued = await single('guard_instruction.issued', i.id);
+      expect(issued).toMatchObject(by(supervisor, 'guard_instruction'));
+      expect(issued.metadata).toEqual({
+        audience: 'gate',
+        gateId: own,
+        urgent: true,
+        recipients: 1,
+      });
+      await x
+        .http(
+          'post',
+          `/gate/guard-instructions/${i.id}/acknowledge`,
+          guard.token,
+        )
+        .expect(200);
+      expect(
+        await single('guard_instruction.acknowledged', i.id),
+      ).toMatchObject(by(guard, 'guard_instruction'));
+      await x
+        .http(
+          'post',
+          `/staff/security/instructions/${i.id}/archive`,
+          supervisor.token,
+        )
+        .expect(200);
+      expect(
+        (await single('guard_instruction.archived', i.id)).metadata,
+      ).toEqual({ recipients: 1, acknowledged: 1 });
+      await x.endRaw(guard).expect(200);
+    });
+  });
+
   describe('catalog completeness', () => {
     it('every guard shifts and tasks entry has a scenario above, and no other suite claims it', () => {
       const all = [...Object.keys(AUDIT_ACTIONS), ...SECURITY_EVENTS];

@@ -6,6 +6,8 @@ import {
   gateRow,
   handoverItemRow,
   handoverRow,
+  instructionRow,
+  recipientRow,
   shiftRow,
   slotRow,
   swapRow,
@@ -124,6 +126,29 @@ const TABLES: Table[] = [
           inHours: 24 + 2 * ++slots,
         }),
         colleagueId: link.colleagueId,
+      }),
+  },
+  {
+    table: 'guard_instructions',
+    insert: (tx, own, link) =>
+      instructionRow(tx, {
+        tenantId: own.tenantId,
+        gateId: link.gateId,
+        createdById: link.accountId,
+      }),
+  },
+  {
+    table: 'guard_instruction_recipients',
+    insert: async (tx, own, link) =>
+      recipientRow(tx, {
+        tenantId: own.tenantId,
+        // An instruction of its own each time: a guard is reached once.
+        instructionId: await instructionRow(tx, {
+          tenantId: own.tenantId,
+          gateId: own.gateId,
+          createdById: own.accountId,
+        }),
+        accountId: link.accountId,
       }),
   },
 ];

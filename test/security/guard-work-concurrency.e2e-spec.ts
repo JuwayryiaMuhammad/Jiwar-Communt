@@ -157,4 +157,32 @@ describe('Guard work under concurrency', () => {
       expect((await end(other)).status).toBe(200);
     }
   });
+
+  it('an instruction sent while a guard opens a shift at its gate reaches them once', async () => {
+    const supervisor = await x.supervisor(s.c);
+    for (let i = 0; i < 5; i++) {
+      const gateId = (await x.g.gate(s.c)).id;
+      const guard = await x.guard(s.c);
+      const [sent, started] = await Promise.all([
+        x.http('post', '/staff/security/instructions', supervisor.token, {
+          title: `Race ${i}`,
+          body: 'Words',
+          audience: 'gate',
+          gateId,
+        }),
+        x.startRaw(guard, { gateId }),
+      ]);
+      expect([sent.status, started.status]).toEqual([201, 201]);
+      const reached = await x.inTx(s.c, (tx) =>
+        tx.guardInstructionRecipient.count({
+          where: {
+            instructionId: (sent.body as { id: string }).id,
+            accountId: guard.id,
+          },
+        }),
+      );
+      expect(reached).toBe(1);
+      expect((await end(guard)).status).toBe(200);
+    }
+  });
 });

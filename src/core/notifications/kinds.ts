@@ -1331,6 +1331,22 @@ export const NOTIFICATION_KINDS = {
     target: 'guard_shift_swap',
     params: {},
   },
+  /** An instruction to acknowledge. Never its title or words. */
+  'guard_instruction.issued': {
+    priority: 'normal',
+    category: 'guard_duty',
+    critical: false,
+    target: 'guard_instruction',
+    params: {},
+  },
+  /** An urgent instruction to acknowledge. */
+  'guard_instruction.urgent': {
+    priority: 'critical',
+    category: 'guard_duty',
+    critical: true,
+    target: 'guard_instruction',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

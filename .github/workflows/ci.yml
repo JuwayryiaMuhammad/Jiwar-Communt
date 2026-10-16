@@ -25,6 +25,9 @@ jobs:
   static:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    # ESLint's type-aware rules outgrow Node's default heap on this codebase.
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
 
     # For the deploy order below; nothing else here needs a service.
     services:

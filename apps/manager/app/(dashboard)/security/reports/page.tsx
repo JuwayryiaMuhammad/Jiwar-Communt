@@ -37,7 +37,7 @@ export default function SecurityReportsPage() {
     );
   return (
     <>
-      <PageHeader title="Daily security report" description="Per gate and zone: shifts, lateness and absence, tasks, emergencies, gate services and visitors." />
+      <PageHeader title="Daily security report" description="Per gate and zone: shifts, lateness and absence, tasks, emergencies, gate services, visitors and patrols." />
       <div className="toolbar">
         <Field label="Day">{(p) => <Input {...p} type="date" value={date} max={today()} onChange={(e) => setDate(e.target.value)} />}</Field>
         <Field label="Gate">{(p) => <PostPicker {...p} gatesOnly placeholder="Every gate and zone" value={gate} onChange={(e) => setGate(e.target.value)} />}</Field>
@@ -77,6 +77,16 @@ export default function SecurityReportsPage() {
                 { key: 'em', header: 'Emergencies', cell: (p) => <span className="t-num">{p.counts.emergencies}</span> },
                 { key: 'gs', header: 'Gate services', cell: (p) => <span className="t-num">{p.counts.gateServices}</span> },
                 { key: 'vis', header: 'Visitors', cell: (p) => <span className="t-num">{p.counts.visitors ?? '—'}</span> },
+                {
+                  key: 'patrols',
+                  header: 'Patrols done / scheduled',
+                  cell: (p) => (
+                    <span className="t-num" title={`Late ${p.patrols.late} · missed ${p.patrols.missed} · incomplete ${p.patrols.incomplete}`}>
+                      {p.patrols.done} / {p.patrols.scheduled}
+                    </span>
+                  ),
+                },
+                { key: 'pmissed', header: 'Missed / incomplete', cell: (p) => <span className="t-num">{p.patrols.missed} / {p.patrols.incomplete}</span> },
               ]}
             />
           </Card>

@@ -326,4 +326,14 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   finance_refund_sources_tenant_id_id_key: null,
   finance_refund_sources_once: null,
   finance_allocation_releases_tenant_id_id_key: null,
+  // Permits (ADR 0049): numbers from the counter under its row lock, a
+  // photo claimed once by its owner under the file's row lock. A violation
+  // is a bug.
+  unit_permits_tenant_id_id_key: null,
+  unit_permits_tenant_id_id_kind_key: null,
+  unit_permits_number_key: null,
+  unit_permits_photo_file_id_key: null,
+  permit_workers_tenant_id_id_key: null,
+  permit_workers_photo_file_id_key: null,
+  permit_guests_tenant_id_id_key: null,
 };

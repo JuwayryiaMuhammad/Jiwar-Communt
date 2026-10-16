@@ -466,4 +466,28 @@ export const REASON_CODES = {
   ],
   // Why the office reverses a payment it recorded (ADR 0046).
   paymentReverse: ['entered_in_error', 'duplicate', 'bounced_cheque', 'other'],
+  // A works permit's kind of work (ADR 0049).
+  permitWorkType: ['renovation', 'finishing'],
+  // Why the requester cancels a permit (ADR 0049); a reason is optional.
+  unitPermitCancel: [
+    'plans_changed',
+    'dates_changed',
+    'contractor_changed',
+    'other',
+  ],
+  // A permit the system cancels, never picked by anyone (ADR 0049): its
+  // requester left the unit, or nobody decided it in time.
+  unitPermitSystemCancel: ['requester_left', 'not_decided'],
+  // Why the management rejects a permit (ADR 0049).
+  unitPermitReject: [
+    'missing_details',
+    'outside_rules',
+    'too_many_guests',
+    'safety_concern',
+    'other',
+  ],
+  // Why the management revokes an approved permit (ADR 0049).
+  unitPermitRevoke: ['rules_broken', 'safety_concern', 'complaint', 'other'],
+  // Why the management removes a contractor worker (ADR 0049).
+  permitWorkerRemove: ['misconduct', 'safety_concern', 'not_needed', 'other'],
 } as const;

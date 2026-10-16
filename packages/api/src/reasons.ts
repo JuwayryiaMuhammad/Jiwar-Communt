@@ -92,6 +92,13 @@ export const REASON_CODES = {
   refundReverse: ['entered_in_error', 'refund_failed', 'other'],
   invoiceDisputeReject: ['charge_is_correct', 'payment_not_found', 'outside_policy', 'no_longer_owed', 'other'],
   paymentReverse: ['entered_in_error', 'duplicate', 'bounced_cheque', 'other'],
+  // Permits (ADR 0049).
+  permitWorkType: ['renovation', 'finishing'],
+  unitPermitCancel: ['plans_changed', 'dates_changed', 'contractor_changed', 'other'],
+  unitPermitSystemCancel: ['requester_left', 'not_decided'],
+  unitPermitReject: ['missing_details', 'outside_rules', 'too_many_guests', 'safety_concern', 'other'],
+  unitPermitRevoke: ['rules_broken', 'safety_concern', 'complaint', 'other'],
+  permitWorkerRemove: ['misconduct', 'safety_concern', 'not_needed', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

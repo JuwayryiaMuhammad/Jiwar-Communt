@@ -719,6 +719,66 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   permit_settings_work_days: {},
   permit_settings_work_hours: {},
   permit_settings_days_off: {},
+  permit_counters_last_number: {},
+  unit_permits_number_positive: {},
+  unit_permits_window: {},
+  // Nullable columns only under IS [NOT] NULL; kind is NOT NULL.
+  unit_permits_kind_shape: {},
+  unit_permits_daily_hours: {
+    guarded:
+      'daily_from IS NULL and daily_to IS NULL are tested first; the comparisons run only on values',
+  },
+  unit_permits_guest_limit: {
+    guarded:
+      'guest_limit IS NULL is tested first; the range runs only on a value',
+  },
+  unit_permits_items_shape: {
+    guarded: 'items IS NULL is tested first; the shape runs only on a value',
+  },
+  unit_permits_text_length: {
+    guarded:
+      'each text IS NULL is tested first; the length runs only on a value',
+  },
+  unit_permits_text_cleared: {},
+  unit_permits_purged: {},
+  unit_permits_work_type: {
+    guarded: 'work_type IS NULL is tested first; the list runs only on a value',
+  },
+  unit_permits_reject_reason: {
+    guarded:
+      'reject_reason IS NULL is tested first; the list runs only on a value',
+  },
+  unit_permits_revoke_reason: {
+    guarded:
+      'revoke_reason IS NULL is tested first; the list runs only on a value',
+  },
+  unit_permits_cancel: {
+    guarded:
+      'cancel_side IS NULL is tested first; cancel_reason IS NULL or IS NOT NULL before each list',
+  },
+  unit_permits_cancel_reason_side: {},
+  unit_permits_decision: {
+    guarded:
+      'decision_source IS NULL is tested first; the comparisons run only on a value',
+  },
+  // Nullable columns only under IS [NOT] NULL; status is NOT NULL.
+  unit_permits_state_shape: {},
+  permit_workers_kind: {},
+  permit_workers_purged: {},
+  permit_workers_text: {
+    guarded:
+      'each text IS NULL is tested first; the length and pattern run only on a value',
+  },
+  permit_workers_removal: {
+    guarded:
+      'removed_side IS NULL is tested first; remove_reason IS NULL or IS NOT NULL before its list',
+  },
+  permit_guests_kind: {},
+  permit_guests_purged: {},
+  permit_guests_text: {
+    guarded:
+      'each text IS NULL is tested first; the length runs only on a value',
+  },
   vehicle_counters_last_number: {},
   vehicles_number_positive: {},
   vehicles_text_length: {},

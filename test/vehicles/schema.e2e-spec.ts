@@ -420,13 +420,18 @@ describe('Vehicles tables — CHECKs, triggers and privileges', () => {
     );
     expect(columns.map((c) => c.table)).toEqual([
       'parking_reports',
+      // A move's truck and an event's guests (ADR 0049).
+      'permit_guests',
+      'unit_permits',
       'vehicle_fines',
       'vehicles',
       'visitor_details',
     ]);
     expect(
       new Set(
-        columns.map((c) => c.expr.replace(/"?vehicle_plate"?|"?plate"?/g, 'P')),
+        columns.map((c) =>
+          c.expr.replace(/"?(?:truck_|vehicle_)?plate"?/g, 'P'),
+        ),
       ).size,
     ).toBe(1);
     expect(columns[0].expr).toContain(PLATE_FOLD_FROM);

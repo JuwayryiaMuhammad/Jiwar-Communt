@@ -6842,3 +6842,34 @@ model BoardPublication {
   @@index([tenantId, createdAt, id], map: "board_publications_created_idx")
   @@map("board_publications")
 }
+
+// ============================================================================
+// Patrols (ADR 0052)
+// ============================================================================
+
+/// A point a patrol scans (ADR 0052): at a gate or in a zone. Its QR and
+/// NFC tag carry `JWK1.<id>.<token>`; only the token's SHA-256 is kept.
+/// Retired, never deleted.
+model PatrolCheckpoint {
+  id            String    @id @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  gateId        String?   @map("gate_id") @db.Uuid
+  placeId       String?   @map("place_id") @db.Uuid
+  nameEn        String    @map("name_en")
+  nameAr        String    @map("name_ar")
+  /// A position, with the radius a scan should fall within; or none.
+  lat           Float?
+  lng           Float?
+  radiusM       Int?      @map("radius_m")
+  tokenHash     String    @map("token_hash") @db.Char(64)
+  tokenIssuedAt DateTime  @map("token_issued_at") @db.Timestamptz(3)
+  retiredAt     DateTime? @map("retired_at") @db.Timestamptz(3)
+  retiredById   String?   @map("retired_by_account_id") @db.Uuid
+  createdById   String    @map("created_by_account_id") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt, id], map: "patrol_checkpoints_list_idx")
+  @@map("patrol_checkpoints")
+}

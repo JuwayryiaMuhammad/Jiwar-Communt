@@ -468,3 +468,11 @@ export const GOVERNANCE_COVERAGE: readonly string[] = [
   'board_publication.published',
   'board_publication.archived',
 ];
+
+/** Patrols (ADR 0052): test/security/patrol-audit-coverage. */
+export const PATROL_COVERAGE: readonly string[] = [
+  'patrol_checkpoint.created',
+  'patrol_checkpoint.updated',
+  'patrol_checkpoint.token_reissued',
+  'patrol_checkpoint.retired',
+];

@@ -8631,6 +8631,90 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/patrols/checkpoints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the checkpoints
+         * @description Newest first; never a token.
+         */
+        get: operations["CheckpointsController_list"];
+        put?: never;
+        /**
+         * Add a checkpoint
+         * @description At a gate or a zone in service (POST_NOT_AVAILABLE). Answers its QR payload once: print it now, or reissue later. Two checkpoints in service never share a name (409 DUPLICATE_RESOURCE).
+         */
+        post: operations["CheckpointsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/checkpoints/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Rename or place a checkpoint
+         * @description In service only (409 PATROL_CHECKPOINT_RETIRED). Its post never changes.
+         */
+        patch: operations["CheckpointsController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/checkpoints/{id}/reissue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Print a new QR
+         * @description A new payload, answered once; the old printout stops scanning at once.
+         */
+        post: operations["CheckpointsController_reissue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/checkpoints/{id}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retire a checkpoint
+         * @description Once, for good; its scans stay.
+         */
+        post: operations["CheckpointsController_retire"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/security/posts": {
         parameters: {
             query?: never;
@@ -12511,6 +12595,67 @@ export interface components {
             /** @description At least 12 characters (checked by the service). */
             newPassword: string;
         };
+        CheckpointPositionDto: {
+            lat: number;
+            lng: number;
+            /** @description Metres; 30 by default. A scan farther away is accepted and flagged. */
+            radiusM?: number;
+        };
+        CheckpointPositionView: {
+            /** @example 30.0444 */
+            lat: number;
+            /** @example 31.2357 */
+            lng: number;
+            /** @description Metres: a scan farther away is flagged. */
+            radiusM: number;
+        };
+        CheckpointSecretView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @example بوابة المسبح */
+            nameAr: string;
+            /** @example Pool gate */
+            nameEn: string;
+            position: components["schemas"]["CheckpointPositionView"] | null;
+            post: components["schemas"]["PostView"];
+            /**
+             * @description For the QR and the NFC tag: `JWK1.<checkpointId>.<token>`. Shown once; a reissue prints a new one and the old one stops scanning.
+             * @example JWK1.0199c3d2-6f1a-7c3e-9a51-3b2f6e8d1c40.q3Jzx8b7m2Kd9PwS0aLr5TnYc4Ve1Hu6Gi8Fo0Bj2Ek
+             */
+            qrPayload: string;
+            /** Format: date-time */
+            retiredAt: string | null;
+            /**
+             * Format: date-time
+             * @description When its QR was printed last: an older printout no longer scans.
+             */
+            tokenIssuedAt: string;
+        };
+        CheckpointView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @example بوابة المسبح */
+            nameAr: string;
+            /** @example Pool gate */
+            nameEn: string;
+            position: components["schemas"]["CheckpointPositionView"] | null;
+            post: components["schemas"]["PostView"];
+            /** Format: date-time */
+            retiredAt: string | null;
+            /**
+             * Format: date-time
+             * @description When its QR was printed last: an older printout no longer scans.
+             */
+            tokenIssuedAt: string;
+        };
+        CheckpointViewList: {
+            data: components["schemas"]["CheckpointView"][];
+            nextCursor: string | null;
+        };
         ClaimCreatedView: {
             /** Format: date-time */
             createdAt: string;
@@ -13105,6 +13250,20 @@ export interface components {
             key: string;
             nameAr: string;
             nameEn: string;
+        };
+        CreateCheckpointDto: {
+            /** Format: uuid */
+            gateId?: string;
+            /** @example بوابة المسبح */
+            nameAr: string;
+            /** @example Pool gate */
+            nameEn: string;
+            position?: components["schemas"]["CheckpointPositionDto"];
+            /**
+             * Format: uuid
+             * @description A place in service, for a post that is not a gate.
+             */
+            zoneId?: string;
         };
         CreateClaimDto: {
             /** @description For the staff alone: how they will know it is yours. Never shown to whoever posted the item. */
@@ -21857,6 +22016,12 @@ export interface components {
             defaultPriority?: components["schemas"]["TicketPriority"];
             nameAr?: string;
             nameEn?: string;
+        };
+        UpdateCheckpointDto: {
+            nameAr?: string;
+            nameEn?: string;
+            /** @description Null removes the position; absent leaves it. */
+            position?: components["schemas"]["CheckpointPositionDto"] | null;
         };
         UpdateClubPlanDto: {
             /** @description False retires the plan. */
@@ -35804,6 +35969,123 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffGuardInstructionView"];
+                };
+            };
+        };
+    };
+    CheckpointsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description Both by default. */
+                status?: "active" | "retired";
+                gateId?: string;
+                zoneId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckpointViewList"];
+                };
+            };
+        };
+    };
+    CheckpointsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCheckpointDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckpointSecretView"];
+                };
+            };
+        };
+    };
+    CheckpointsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCheckpointDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckpointView"];
+                };
+            };
+        };
+    };
+    CheckpointsController_reissue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckpointSecretView"];
+                };
+            };
+        };
+    };
+    CheckpointsController_retire: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckpointView"];
                 };
             };
         };

@@ -123,6 +123,8 @@ describe('audit catalog', () => {
         'governance_election',
         'governance_candidate',
         'board_publication',
+        // ADR 0052.
+        'patrol_checkpoint',
       ]).toContain(def.target);
     }
   });

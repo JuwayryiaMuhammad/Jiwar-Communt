@@ -793,6 +793,11 @@ export const ErrorCode = {
   GOVERNANCE_NOT_CERTIFIABLE: 'GOVERNANCE_NOT_CERTIFIABLE',
   /** Unknown, another compound's, or archived where it must not be. */
   BOARD_PUBLICATION_NOT_FOUND: 'BOARD_PUBLICATION_NOT_FOUND',
+  // patrols (ADR 0052)
+  /** Unknown, or another compound's. */
+  PATROL_CHECKPOINT_NOT_FOUND: 'PATROL_CHECKPOINT_NOT_FOUND',
+  /** It was retired: nothing changes any more (409). */
+  PATROL_CHECKPOINT_RETIRED: 'PATROL_CHECKPOINT_RETIRED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

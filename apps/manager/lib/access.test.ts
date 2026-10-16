@@ -87,3 +87,8 @@ test('the guards’ keepers enter; a guard who closes parking reports does not (
     true,
   );
 });
+
+test('the patrols’ keepers enter; a guard walking a route does not (ADR 0052)', () => {
+  assert.equal(mayEnter({ type: 'staff', permissions: ['patrols.manage'] }), true);
+  assert.equal(mayEnter({ type: 'staff', permissions: ['gate.operate', 'parcels.handle', 'parking_reports.handle'] }), false);
+});

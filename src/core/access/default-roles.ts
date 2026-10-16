@@ -77,6 +77,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'guard_reports.read',
       'found_items.manage',
       'governance.manage',
+      'patrols.manage',
     ],
   },
   {
@@ -142,8 +143,9 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
   },
   {
     // The security supervisor (ADR 0050): the guards' roster and swaps,
-    // their tasks and instructions, and the daily report. Not a guard: a
-    // compound adds `gate.operate` to work a gate too.
+    // their tasks and instructions, the daily report, and the patrols
+    // (ADR 0052). Not a guard: a compound adds `gate.operate` to work a
+    // gate too.
     key: 'security_supervisor',
     kind: 'staff',
     kindDefault: false,
@@ -152,6 +154,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'guard_tasks.manage',
       'guard_instructions.manage',
       'guard_reports.read',
+      'patrols.manage',
     ],
   },
   {

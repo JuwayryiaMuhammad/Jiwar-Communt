@@ -42,6 +42,7 @@ export const ENTRY_PERMISSIONS = [
   'guard_instructions.manage',
   'guard_reports.read',
   'found_items.manage',
+  'patrols.manage',
 ] as const;
 
 export function mayEnter(me: { type?: unknown; permissions?: unknown } | null | undefined): boolean {

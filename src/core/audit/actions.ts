@@ -858,6 +858,12 @@ export const AUDIT_ACTIONS = {
   // metadata: kind, unitId, from (the status), side (requester | system),
   // reasonCode.
   'unit_permit.cancelled': { log: 'tenant', target: 'unit_permit' },
+  // metadata: kind, unitId, note (a boolean: never the words).
+  'unit_permit.approved': { log: 'tenant', target: 'unit_permit' },
+  // metadata: kind, unitId, reasonCode, note (a boolean).
+  'unit_permit.rejected': { log: 'tenant', target: 'unit_permit' },
+  // metadata: kind, unitId, reasonCode, note (a boolean).
+  'unit_permit.revoked': { log: 'tenant', target: 'unit_permit' },
   // metadata: workerId, idType, workers (how many now). Never the name,
   // never the last four, not even hashed.
   'unit_permit.worker_added': { log: 'tenant', target: 'unit_permit' },

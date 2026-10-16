@@ -5,6 +5,7 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsDate,
   IsEnum,
   IsIn,
@@ -398,4 +399,65 @@ export class AddPermitGuestsDto {
   @ValidateNested({ each: true })
   @Type(() => PermitGuestDto)
   guests: PermitGuestDto[];
+}
+
+export class StaffPermitsQueryDto extends UnitPermitsQueryDto {
+  @ApiProperty({ type: String, format: 'uuid', required: false })
+  @IsOptional()
+  @IsUUID()
+  unitId?: string;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    description: 'Only approved permits in force now.',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    value === 'true' ? true : value === 'false' ? false : value,
+  )
+  @IsBoolean()
+  live?: boolean;
+}
+
+export const STAFF_NOTE = { min: 1, max: 500 } as const;
+
+export class ApprovePermitDto {
+  @ApiProperty({
+    type: String,
+    required: false,
+    maxLength: STAFF_NOTE.max,
+    description: 'The management’s own note. Never shown to the unit.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(STAFF_NOTE.min, STAFF_NOTE.max, withParams(STAFF_NOTE))
+  note?: string;
+}
+
+export class RejectPermitDto extends ApprovePermitDto {
+  @ApiProperty({
+    type: String,
+    description: 'From the closed list `unitPermitReject`.',
+  })
+  @IsString()
+  reasonCode: string;
+}
+
+export class RevokePermitDto extends ApprovePermitDto {
+  @ApiProperty({
+    type: String,
+    description: 'From the closed list `unitPermitRevoke`.',
+  })
+  @IsString()
+  reasonCode: string;
+}
+
+export class StaffRemoveWorkerDto {
+  @ApiProperty({
+    type: String,
+    description: 'From the closed list `permitWorkerRemove`.',
+  })
+  @IsString()
+  reasonCode: string;
 }

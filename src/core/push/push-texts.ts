@@ -1161,6 +1161,46 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'طلبت إحدى الوحدات تصريحًا. افتح لوحة التحكم للبت فيه.',
     },
   },
+  'unit_permit.approved': {
+    en: {
+      title: 'Permit approved',
+      body: 'The management approved your permit. Open the app to see it.',
+    },
+    ar: {
+      title: 'تمت الموافقة على التصريح',
+      body: 'وافقت الإدارة على تصريحك. افتح التطبيق لعرضه.',
+    },
+  },
+  'unit_permit.rejected': {
+    en: {
+      title: 'Permit not approved',
+      body: 'The management did not approve your permit. Open the app to see why.',
+    },
+    ar: {
+      title: 'لم تتم الموافقة على التصريح',
+      body: 'لم توافق الإدارة على تصريحك. افتح التطبيق لمعرفة السبب.',
+    },
+  },
+  'unit_permit.revoked': {
+    en: {
+      title: 'Permit revoked',
+      body: 'The management revoked your permit. Open the app to see why.',
+    },
+    ar: {
+      title: 'تم إلغاء التصريح',
+      body: 'ألغت الإدارة تصريحك. افتح التطبيق لمعرفة السبب.',
+    },
+  },
+  'unit_permit.cancelled': {
+    en: {
+      title: 'Permit cancelled',
+      body: 'A permit of your unit was cancelled. Open the app to see why.',
+    },
+    ar: {
+      title: 'تم إلغاء تصريح',
+      body: 'تم إلغاء تصريح لوحدتك. افتح التطبيق لمعرفة السبب.',
+    },
+  },
   'gate_service.requested': {
     en: {
       title: 'New request for security',

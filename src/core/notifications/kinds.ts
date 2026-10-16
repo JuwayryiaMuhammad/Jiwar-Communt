@@ -1129,6 +1129,41 @@ export const NOTIFICATION_KINDS = {
     target: 'unit_permit',
     params: { permitKind: {} },
   },
+  /** The management approved it: the requester. */
+  'unit_permit.approved': {
+    priority: 'normal',
+    category: 'permits',
+    critical: false,
+    target: 'unit_permit',
+    params: { permitKind: {} },
+  },
+  /** The management rejected it, with a reason's code: the requester. */
+  'unit_permit.rejected': {
+    priority: 'normal',
+    category: 'permits',
+    critical: false,
+    target: 'unit_permit',
+    params: { permitKind: {}, reason: {} },
+  },
+  /** The management revoked it, with a reason's code: the requester. */
+  'unit_permit.revoked': {
+    priority: 'normal',
+    category: 'permits',
+    critical: false,
+    target: 'unit_permit',
+    params: { permitKind: {}, reason: {} },
+  },
+  /**
+   * The system cancelled it (nobody decided in time, or its requester
+   * left): the requester, or the unit's primary.
+   */
+  'unit_permit.cancelled': {
+    priority: 'normal',
+    category: 'permits',
+    critical: false,
+    target: 'unit_permit',
+    params: { permitKind: {}, reason: {} },
+  },
   // Finance (ADR 0046). No kind is critical, and none carries a param: never
   // an amount, a number, a unit or a name. To every account that sees the
   // unit's money (capabilities.financeView).

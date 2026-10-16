@@ -936,6 +936,16 @@
         ],
         "type": "object"
       },
+      "ApprovePermitDto": {
+        "properties": {
+          "note": {
+            "description": "The management’s own note. Never shown to the unit.",
+            "maxLength": 500,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ApproveRegistrationDto": {
         "properties": {
           "linkToExistingAccount": {
@@ -19385,6 +19395,23 @@
         ],
         "type": "object"
       },
+      "RejectPermitDto": {
+        "properties": {
+          "note": {
+            "description": "The management’s own note. Never shown to the unit.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "From the closed list `unitPermitReject`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "RejectVehicleDto": {
         "properties": {
           "reasonCode": {
@@ -21801,6 +21828,23 @@
           "reasonCode",
           "reason",
           "permission"
+        ],
+        "type": "object"
+      },
+      "RevokePermitDto": {
+        "properties": {
+          "note": {
+            "description": "The management’s own note. Never shown to the unit.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "From the closed list `unitPermitRevoke`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -24949,6 +24993,212 @@
         ],
         "type": "object"
       },
+      "StaffPermitView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnitPermitCancelReason"
+              }
+            ],
+            "nullable": true
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledBy": {
+            "enum": [
+              "requester",
+              "system"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decisionSource": {
+            "description": "`auto`: an event of 20 guests or fewer, approved at once. Null while pending.",
+            "enum": [
+              "manager",
+              "auto"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "description": "When it ends (exclusive).",
+            "format": "date-time",
+            "type": "string"
+          },
+          "event": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EventDetailsView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnitPermitKind"
+              }
+            ]
+          },
+          "materialExit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MaterialExitDetailsView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "move": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MoveDetailsView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "reference": {
+            "description": "W- works, M- moves, X- material exits, E- events. The guard finds a permit by it.",
+            "example": "W-0042",
+            "type": "string"
+          },
+          "rejectReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnitPermitRejectReason"
+              }
+            ],
+            "nullable": true
+          },
+          "requestedBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "revokeNote": {
+            "description": "The management’s note on revoking. Never shown to the unit.",
+            "nullable": true,
+            "type": "string"
+          },
+          "revokeReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnitPermitRevokeReason"
+              }
+            ],
+            "nullable": true
+          },
+          "revokedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "staffNote": {
+            "description": "The management’s note on deciding. Never shown to the unit.",
+            "nullable": true,
+            "type": "string"
+          },
+          "startsAt": {
+            "description": "When it starts: the first day’s local midnight (works, a material exit), or the window’s start.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PermitViewStatus"
+              }
+            ],
+            "description": "`pending`: waiting for the management; `approved`: in force within its window; `ended`: approved and its window has passed; `rejected`; `cancelled` (by the requester, or by the system: the requester left, or nobody decided in time); `revoked` by the management; `used`: a material exit, at a gate."
+          },
+          "unitCode": {
+            "example": "B-12",
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "works": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorksDetailsView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "kind",
+          "status",
+          "unitId",
+          "unitCode",
+          "startsAt",
+          "endsAt",
+          "createdAt",
+          "decisionSource",
+          "decidedAt",
+          "rejectReason",
+          "revokedAt",
+          "revokeReason",
+          "cancelledAt",
+          "cancelledBy",
+          "cancelReason",
+          "works",
+          "move",
+          "materialExit",
+          "event",
+          "requestedBy",
+          "building",
+          "staffNote",
+          "revokeNote"
+        ],
+        "type": "object"
+      },
+      "StaffPermitViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffPermitView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StaffPollView": {
         "properties": {
           "audience": {
@@ -25225,6 +25475,18 @@
         "properties": {
           "reasonCode": {
             "description": "From the closed list `vehicleStaffRemove`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "StaffRemoveWorkerDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `permitWorkerRemove`.",
             "type": "string"
           }
         },
@@ -52730,6 +52992,334 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-permits": {
+      "get": {
+        "description": "Newest first; `status=pending` is the queue to decide, `live=true` what is in force now. Workers’ faces are not presigned here: get one permit for them.",
+        "operationId": "StaffPermitsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/UnitPermitKind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PermitViewStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only approved permits in force now.",
+            "in": "query",
+            "name": "live",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPermitViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the units’ permits",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-permits/{id}": {
+      "get": {
+        "description": "With its workers’ faces, its guests, its items and photo, and the management’s notes.",
+        "operationId": "StaffPermitsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a permit",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-permits/{id}/approve": {
+      "post": {
+        "description": "Decided already: PERMIT_NOT_PENDING. Its window over: PERMIT_NOT_ACTIVE. The requester is told.",
+        "operationId": "StaffPermitsController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovePermitDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve a pending permit",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-permits/{id}/reject": {
+      "post": {
+        "description": "Decided already: PERMIT_NOT_PENDING. The requester is told the reason’s code, never the note.",
+        "operationId": "StaffPermitsController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectPermitDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reject a pending permit, with a reason code",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-permits/{id}/revoke": {
+      "post": {
+        "description": "From then on the guard refuses it (`revoked`). Not approved, over or used: PERMIT_NOT_ACTIVE. The requester is told.",
+        "operationId": "StaffPermitsController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokePermitDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke an approved permit in force, with a reason code",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-permits/{id}/workers/{workerId}/remove": {
+      "post": {
+        "description": "From then on the guard refuses them (`worker_removed`).",
+        "operationId": "StaffPermitsController_removeWorker",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workerId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffRemoveWorkerDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take a contractor worker off a works permit, with a reason code",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

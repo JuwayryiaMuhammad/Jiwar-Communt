@@ -326,6 +326,21 @@ export function permitHelpers(h: HttpHarness) {
       .body as PermitBody;
   }
 
+  /** `POST /staff/unit-permits/:id/<action>` as `as`: the response. */
+  function decide(
+    as: Who,
+    id: string,
+    action: 'approve' | 'reject' | 'revoke',
+    body: Record<string, unknown> = {},
+  ) {
+    return http('post', `/staff/unit-permits/${id}/${action}`, as.token, body);
+  }
+
+  /** Approves a permit that must be approved: the staff's view. */
+  async function approve(as: Who, id: string): Promise<PermitBody> {
+    return (await decide(as, id, 'approve').expect(200)).body as PermitBody;
+  }
+
   /** `GET /permits/:id` as `as`. */
   async function get(as: Who, id: string): Promise<PermitBody> {
     return (await http('get', `/permits/${id}`, as.token).expect(200))
@@ -362,6 +377,8 @@ export function permitHelpers(h: HttpHarness) {
     get,
     row,
     told,
+    decide,
+    approve,
     moveBody,
     moveRaw,
     move,

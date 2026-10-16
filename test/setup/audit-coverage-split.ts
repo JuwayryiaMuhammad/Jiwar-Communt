@@ -391,4 +391,7 @@ export const PERMITS_COVERAGE: readonly string[] = [
   'unit_permit.worker_added',
   'unit_permit.worker_removed',
   'unit_permit.guests_changed',
+  'unit_permit.approved',
+  'unit_permit.rejected',
+  'unit_permit.revoked',
 ];

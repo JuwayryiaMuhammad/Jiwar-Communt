@@ -321,3 +321,103 @@ export const PERMIT_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/** The units' permits, the management's side (ADR 0049). */
+export const STAFF_PERMIT_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/staff/unit-permits',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      query: { live: 'sometimes' },
+      fields: [{ field: 'live', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/unit-permits/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bPermitId }),
+      code: 'PERMIT_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/unit-permits/{id}/approve',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bPermitId }),
+      code: 'PERMIT_NOT_FOUND',
+      body: () => ({}),
+    },
+    invalid: {
+      body: { note: '' },
+      fields: [
+        { field: 'note', code: 'INVALID_LENGTH', params: { min: 1, max: 500 } },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/unit-permits/{id}/reject',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bPermitId }),
+      code: 'PERMIT_NOT_FOUND',
+      body: () => ({ reasonCode: 'other' }),
+    },
+    invalid: {
+      body: { reasonCode: 3 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/unit-permits/{id}/revoke',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bPermitId }),
+      code: 'PERMIT_NOT_FOUND',
+      body: () => ({ reasonCode: 'other' }),
+    },
+    invalid: {
+      body: { reasonCode: 3 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/unit-permits/{id}/workers/{workerId}/remove',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bPermitId, workerId: w.bPermitWorkerId }),
+      code: 'PERMIT_NOT_FOUND',
+      body: () => ({ reasonCode: 'other' }),
+    },
+    invalid: {
+      body: {},
+      fields: [{ field: 'reasonCode', code: 'FIELD_REQUIRED' }],
+    },
+    noStore: true,
+  },
+];

@@ -1287,6 +1287,7 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0049: the requester's and the primary's; the last four nowhere.
       '/units/{unitId}/permits': unit.id,
       '/permits/{id}': piiPermit,
+      '/staff/unit-permits/{id}': piiPermit,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

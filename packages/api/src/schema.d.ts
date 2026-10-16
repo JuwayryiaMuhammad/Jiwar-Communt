@@ -7272,6 +7272,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/unit-permits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the units’ permits
+         * @description Newest first; `status=pending` is the queue to decide, `live=true` what is in force now. Workers’ faces are not presigned here: get one permit for them.
+         */
+        get: operations["StaffPermitsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/unit-permits/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a permit
+         * @description With its workers’ faces, its guests, its items and photo, and the management’s notes.
+         */
+        get: operations["StaffPermitsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/unit-permits/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve a pending permit
+         * @description Decided already: PERMIT_NOT_PENDING. Its window over: PERMIT_NOT_ACTIVE. The requester is told.
+         */
+        post: operations["StaffPermitsController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/unit-permits/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject a pending permit, with a reason code
+         * @description Decided already: PERMIT_NOT_PENDING. The requester is told the reason’s code, never the note.
+         */
+        post: operations["StaffPermitsController_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/unit-permits/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revoke an approved permit in force, with a reason code
+         * @description From then on the guard refuses it (`revoked`). Not approved, over or used: PERMIT_NOT_ACTIVE. The requester is told.
+         */
+        post: operations["StaffPermitsController_revoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/unit-permits/{id}/workers/{workerId}/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take a contractor worker off a works permit, with a reason code
+         * @description From then on the guard refuses them (`worker_removed`).
+         */
+        post: operations["StaffPermitsController_removeWorker"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/units/{unitId}/payments": {
         parameters: {
             query?: never;
@@ -9909,6 +10029,10 @@ export interface components {
             startsAt: string;
             /** @description `requested` waits for the management, `proposed` waits for the resident, `confirmed` is agreed. */
             status: components["schemas"]["ManagementAppointmentStatus"];
+        };
+        ApprovePermitDto: {
+            /** @description The management’s own note. Never shown to the unit. */
+            note?: string;
         };
         ApproveRegistrationDto: {
             /** @description Adds the unit to the same person's existing resident account (same phone AND email). */
@@ -15710,6 +15834,12 @@ export interface components {
             /** @description From the closed list `parcelReject`: not_ours, not_expected, other. */
             reasonCode: string;
         };
+        RejectPermitDto: {
+            /** @description The management’s own note. Never shown to the unit. */
+            note?: string;
+            /** @description From the closed list `unitPermitReject`. */
+            reasonCode: string;
+        };
         RejectVehicleDto: {
             /** @description From the closed list `vehicleReject`. */
             reasonCode: string;
@@ -16414,6 +16544,12 @@ export interface components {
             /** @description What the person is told (at most 1000 characters). Never stored in the audit trail. */
             reason: string;
             /** @description A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. */
+            reasonCode: string;
+        };
+        RevokePermitDto: {
+            /** @description The management’s own note. Never shown to the unit. */
+            note?: string;
+            /** @description From the closed list `unitPermitRevoke`. */
             reasonCode: string;
         };
         RevokedView: {
@@ -17305,6 +17441,64 @@ export interface components {
             data: components["schemas"]["StaffParkingSlotView"][];
             nextCursor: string | null;
         };
+        StaffPermitView: {
+            building: string | null;
+            cancelReason: components["schemas"]["UnitPermitCancelReason"] | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** @enum {string|null} */
+            cancelledBy: "requester" | "system" | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /**
+             * @description `auto`: an event of 20 guests or fewer, approved at once. Null while pending.
+             * @enum {string|null}
+             */
+            decisionSource: "manager" | "auto" | null;
+            /**
+             * Format: date-time
+             * @description When it ends (exclusive).
+             */
+            endsAt: string;
+            event: components["schemas"]["EventDetailsView"] | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["UnitPermitKind"];
+            materialExit: components["schemas"]["MaterialExitDetailsView"] | null;
+            move: components["schemas"]["MoveDetailsView"] | null;
+            /**
+             * @description W- works, M- moves, X- material exits, E- events. The guard finds a permit by it.
+             * @example W-0042
+             */
+            reference: string;
+            rejectReason: components["schemas"]["UnitPermitRejectReason"] | null;
+            requestedBy: components["schemas"]["AccountRefView"];
+            /** @description The management’s note on revoking. Never shown to the unit. */
+            revokeNote: string | null;
+            revokeReason: components["schemas"]["UnitPermitRevokeReason"] | null;
+            /** Format: date-time */
+            revokedAt: string | null;
+            /** @description The management’s note on deciding. Never shown to the unit. */
+            staffNote: string | null;
+            /**
+             * Format: date-time
+             * @description When it starts: the first day’s local midnight (works, a material exit), or the window’s start.
+             */
+            startsAt: string;
+            /** @description `pending`: waiting for the management; `approved`: in force within its window; `ended`: approved and its window has passed; `rejected`; `cancelled` (by the requester, or by the system: the requester left, or nobody decided in time); `revoked` by the management; `used`: a material exit, at a gate. */
+            status: components["schemas"]["PermitViewStatus"];
+            /** @example B-12 */
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+            works: components["schemas"]["WorksDetailsView"] | null;
+        };
+        StaffPermitViewList: {
+            data: components["schemas"]["StaffPermitView"][];
+            nextCursor: string | null;
+        };
         StaffPollView: {
             audience: components["schemas"]["AudienceView"];
             /** Format: date-time */
@@ -17388,6 +17582,10 @@ export interface components {
         };
         StaffRemoveVehicleDto: {
             /** @description From the closed list `vehicleStaffRemove`. */
+            reasonCode: string;
+        };
+        StaffRemoveWorkerDto: {
+            /** @description From the closed list `permitWorkerRemove`. */
             reasonCode: string;
         };
         StaffReportView: {
@@ -30518,6 +30716,156 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RefundView"];
+                };
+            };
+        };
+    };
+    StaffPermitsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                kind?: components["schemas"]["UnitPermitKind"];
+                status?: components["schemas"]["PermitViewStatus"];
+                unitId?: string;
+                /** @description Only approved permits in force now. */
+                live?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPermitViewList"];
+                };
+            };
+        };
+    };
+    StaffPermitsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPermitView"];
+                };
+            };
+        };
+    };
+    StaffPermitsController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApprovePermitDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPermitView"];
+                };
+            };
+        };
+    };
+    StaffPermitsController_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectPermitDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPermitView"];
+                };
+            };
+        };
+    };
+    StaffPermitsController_revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevokePermitDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPermitView"];
+                };
+            };
+        };
+    };
+    StaffPermitsController_removeWorker: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                workerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffRemoveWorkerDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPermitView"];
                 };
             };
         };

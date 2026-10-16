@@ -58,7 +58,11 @@ import {
   SUGGESTION_ROUTES,
 } from './engagement';
 import { ME_ROUTES } from './me';
-import { PERMIT_ROUTES, PERMIT_SETTINGS_ROUTES } from './permits';
+import {
+  PERMIT_ROUTES,
+  PERMIT_SETTINGS_ROUTES,
+  STAFF_PERMIT_ROUTES,
+} from './permits';
 import {
   NEIGHBOUR_BOARD_ROUTES,
   NEIGHBOUR_COMPLAINT_ROUTES,
@@ -187,4 +191,5 @@ export const ROUTES: Row[] = [
   ...GATE_SERVICE_HANDLER_ROUTES,
   ...PERMIT_SETTINGS_ROUTES,
   ...PERMIT_ROUTES,
+  ...STAFF_PERMIT_ROUTES,
 ];

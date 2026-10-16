@@ -117,6 +117,9 @@ import { PermitsService } from './permits/permits.service';
 import { PermitWorkersService } from './permits/permit-workers.service';
 import { PermitRequestsService } from './permits/permit-requests.service';
 import { PermitGuestsService } from './permits/permit-guests.service';
+import { StaffPermitsController } from './permits/staff-permits.controller';
+import { StaffPermitsService } from './permits/staff-permits.service';
+import { PermitSweeps } from './permits/permit-sweeps';
 
 /**
  * The gate domain (ADR 0028): the gate, visitors, parcels (ADR 0035), and
@@ -169,6 +172,7 @@ import { PermitGuestsService } from './permits/permit-guests.service';
     PermitRulesController,
     PermitSettingsController,
     PermitsController,
+    StaffPermitsController,
   ],
   providers: [
     GatesService,
@@ -232,6 +236,8 @@ import { PermitGuestsService } from './permits/permit-guests.service';
     PermitWorkersService,
     PermitRequestsService,
     PermitGuestsService,
+    StaffPermitsService,
+    PermitSweeps,
   ],
 })
 export class GateModule {}

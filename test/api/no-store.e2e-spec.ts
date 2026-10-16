@@ -781,6 +781,40 @@ describe('API v0 — no-store', () => {
         {},
       );
     },
+    'GET /staff/unit-permits': () =>
+      as('manager', 'GET', '/staff/unit-permits?status=pending'),
+    'GET /staff/unit-permits/{id}': async () =>
+      as('manager', 'GET', `/staff/unit-permits/${await aPermit()}`),
+    'POST /staff/unit-permits/{id}/approve': async () =>
+      as(
+        'manager',
+        'POST',
+        `/staff/unit-permits/${await aPermit()}/approve`,
+        {},
+      ),
+    'POST /staff/unit-permits/{id}/reject': async () =>
+      as('manager', 'POST', `/staff/unit-permits/${await aPermit()}/reject`, {
+        reasonCode: 'other',
+      }),
+    'POST /staff/unit-permits/{id}/revoke': async () => {
+      const id = await aPermit();
+      await as('manager', 'POST', `/staff/unit-permits/${id}/approve`, {});
+      return as('manager', 'POST', `/staff/unit-permits/${id}/revoke`, {
+        reasonCode: 'other',
+      });
+    },
+    'POST /staff/unit-permits/{id}/workers/{workerId}/remove': async () => {
+      const permitId = await aPermit();
+      const added = body<{ works: { workers: { id: string }[] } }>(
+        await aWorker(permitId),
+      );
+      return as(
+        'manager',
+        'POST',
+        `/staff/unit-permits/${permitId}/workers/${added.works.workers[0].id}/remove`,
+        { reasonCode: 'not_needed' },
+      );
+    },
     'POST /permits/{id}/workers/{workerId}/remove': async () => {
       const permitId = await aPermit();
       const added = body<{ works: { workers: { id: string }[] } }>(

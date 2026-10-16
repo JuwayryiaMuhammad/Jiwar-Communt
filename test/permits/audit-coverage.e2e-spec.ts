@@ -144,6 +144,48 @@ describe('Audit coverage — permits', () => {
         expect(JSON.stringify(row)).not.toMatch(new RegExp(`${WORDS}|9182`));
     });
 
+    it('approved, rejected and revoked by the management: codes and whether there was a note', async () => {
+      const a = await p.works(s.alice, s.home.id, {
+        dailyHours: { from: '10:00', to: '16:00' },
+      });
+      await p.decide(s.manager, a.id, 'approve', { note: WORDS }).expect(200);
+      const approved = await single('unit_permit.approved', a.id);
+      expect(approved).toMatchObject(by(s.manager, 'unit_permit'));
+      expect(approved.metadata).toEqual({
+        kind: 'works',
+        unitId: s.home.id,
+        note: true,
+      });
+      await p
+        .decide(s.manager, a.id, 'revoke', {
+          reasonCode: 'complaint',
+          note: WORDS,
+        })
+        .expect(200);
+      const revoked = await single('unit_permit.revoked', a.id);
+      expect(revoked.metadata).toEqual({
+        kind: 'works',
+        unitId: s.home.id,
+        reasonCode: 'complaint',
+        note: true,
+      });
+      const b = await p.works(s.alice, s.home.id, {
+        dailyHours: { from: '10:00', to: '16:00' },
+      });
+      await p
+        .decide(s.manager, b.id, 'reject', { reasonCode: 'missing_details' })
+        .expect(200);
+      const rejected = await single('unit_permit.rejected', b.id);
+      expect(rejected.metadata).toEqual({
+        kind: 'works',
+        unitId: s.home.id,
+        reasonCode: 'missing_details',
+        note: false,
+      });
+      for (const row of [approved, revoked, rejected])
+        expect(JSON.stringify(row)).not.toContain(WORDS);
+    });
+
     it('an event: requested at once, its guests changed by counts', async () => {
       const event = await p.event(s.alice, s.home.id, 2, {
         title: WORDS,

@@ -153,3 +153,12 @@ The full notes for the guard app are in [`notes/guard-shifts-tasks.md`](notes/gu
 - `GET /gate/my-work`: tasks, the gate services queue and mine, open parking reports (the guard role now closes them), pending instructions.
 - Tasks (`/gate/tasks/{id}`, `…/take`, `…/complete`; `/staff/security/tasks`), swaps (`/gate/swaps`, `/staff/security/swaps`), instructions (`/gate/guard-instructions`, `/staff/security/instructions`), found items (`/gate/found-items`, `/staff/security/found-items`).
 - `GET /staff/security/reports/daily` and `…/export` (CSV). `visitors` is passes and gate requests only; the permits' traffic (ADR 0049) has its own counts: `contractorWorkers`, `eventGuests`, `moveTrucks`, `materialEntries`, `materialExits`.
+
+### Governance (ADR 0051)
+
+The full notes for the mobile team, with examples, are in [`notes/governance.md`](notes/governance.md).
+
+- For the units' owners only (`GOVERNANCE_NOT_AVAILABLE` for anyone else): `GET /governance/board`, `GET /governance/board/terms`, `GET /governance/publications`.
+- Polls: `GET /governance/polls`, `GET /governance/polls/{id}`, `POST /governance/polls/{id}/votes` (once per unit, never changed; the answer never says what was chosen). On an open vote (`rollCallPublic: true`) say before the vote button that the unit's choice will be visible to owners after the close.
+- Elections: `GET /governance/elections`, `GET /governance/elections/{id}`, `POST …/candidacy`, `POST …/candidacy/withdraw`, `POST …/votes` (up to `seats` candidates, always secret).
+- A sitting board member holds `governance.board` (in `/me` → `permissions`): `POST /governance/polls`, `/governance/elections`, `/governance/publications`, their `PATCH` and `cancel` / `archive`.

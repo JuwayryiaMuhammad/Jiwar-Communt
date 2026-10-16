@@ -90,6 +90,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   found_items_tenant_id_id_key: null,
   found_item_photos_tenant_id_id_key: null,
   found_item_photos_file_id_key: null,
+  // Patrols (ADR 0052): two checkpoints in service never share a name.
+  patrol_checkpoints_tenant_id_id_key: null,
+  patrol_checkpoints_active_name_en_key: ['nameEn'],
+  patrol_checkpoints_active_name_ar_key: ['nameAr'],
   visitor_details_tenant_id_id_key: null,
   visitor_passes_tenant_id_id_key: null,
   // ADR 0043.

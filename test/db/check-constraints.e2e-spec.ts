@@ -1310,6 +1310,18 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'outcome IS NULL and final_count IS NULL are tested first; the list and the comparison run only on values',
   },
+  // Patrols (ADR 0052).
+  patrol_checkpoints_one_post: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
+  patrol_checkpoints_names_length: {},
+  patrol_checkpoints_position_shape: {},
+  patrol_checkpoints_position_range: {
+    guarded:
+      'lat IS NULL is tested first; position_shape makes lng and radius_m present with it',
+  },
+  patrol_checkpoints_token_hash_shape: {},
+  patrol_checkpoints_retired_shape: {},
 };
 
 interface Check {

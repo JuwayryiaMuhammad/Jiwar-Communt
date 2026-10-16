@@ -34,6 +34,7 @@ import { ROUTES } from './routes';
 import { buildWorld, sessionOf, type World } from './world';
 import { ShiftsService } from '../../src/gate/shifts/shifts.service';
 import { TasksService } from '../../src/gate/tasks/tasks.service';
+import { CheckpointsService } from '../../src/gate/patrols/checkpoints.service';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import { paymentRow } from '../setup/finance-rows';
@@ -468,7 +469,24 @@ describe('API v0 — PII leak scan', () => {
         body: { deviceName: 'PII-DEVICE-name' },
       }).expect(201)
     ).body as { secret: string };
+    // A checkpoint's QR (ADR 0052): answered once, in no GET; nor its hash.
+    const checkpointQr = await c.asManager(a, () =>
+      h.moduleRef.get(CheckpointsService).create({
+        gateId: a.gateId,
+        nameEn: 'PII checkpoint',
+        nameAr: 'نقطة الفحص',
+      }),
+    );
+    const checkpointHash = (
+      await c.asManager(a, () =>
+        c.prisma.tenant.patrolCheckpoint.findUniqueOrThrow({
+          where: { id: checkpointQr.id },
+        }),
+      )
+    ).tokenHash;
     const secrets = [
+      checkpointQr.qrPayload.split('.')[2],
+      checkpointHash,
       entry.secret,
       visit.code!,
       visitorPhone,

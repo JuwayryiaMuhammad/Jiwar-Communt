@@ -148,6 +148,8 @@ import {
 import { HandoverService } from './handover/handover.service';
 import { GuardDutyExportSections } from './roster/duty-export-sections';
 import { GuardDutyLifecycle } from './roster/duty-lifecycle';
+import { CheckpointsController } from './patrols/checkpoints.controller';
+import { CheckpointsService } from './patrols/checkpoints.service';
 import { DutyNamesReader } from './roster/duty-names';
 import {
   GuardSwapsController,
@@ -237,6 +239,7 @@ import { RosterService } from './roster/roster.service';
     GuardFoundItemsController,
     StaffFoundItemsController,
     DailyReportController,
+    CheckpointsController,
   ],
   providers: [
     GatesService,
@@ -320,6 +323,7 @@ import { RosterService } from './roster/roster.service';
     DailyReportService,
     GuardDutyLifecycle,
     GuardDutyExportSections,
+    CheckpointsService,
   ],
 })
 export class GateModule {}

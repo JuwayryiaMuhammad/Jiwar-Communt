@@ -1094,6 +1094,23 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'board_publication',
   },
+  // Patrols (ADR 0052): ids, codes and counts. A checkpoint's names and
+  // position go in as changed; its token and hash never.
+  'patrol_checkpoint.created': {
+    log: 'tenant',
+    target: 'patrol_checkpoint',
+    sensitive: ['nameEn', 'nameAr', 'lat', 'lng'],
+  },
+  'patrol_checkpoint.updated': {
+    log: 'tenant',
+    target: 'patrol_checkpoint',
+    sensitive: ['nameEn', 'nameAr', 'lat', 'lng'],
+  },
+  'patrol_checkpoint.token_reissued': {
+    log: 'tenant',
+    target: 'patrol_checkpoint',
+  },
+  'patrol_checkpoint.retired': { log: 'tenant', target: 'patrol_checkpoint' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

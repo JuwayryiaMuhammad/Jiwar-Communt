@@ -88,6 +88,7 @@ import {
   NEIGHBOUR_SETUP_ROUTES,
 } from './neighbours';
 import { MEMBER_PERMISSIONS_ROUTES } from './member-permissions';
+import { CHECKPOINT_ROUTES } from './patrols';
 import { NOTIFICATIONS_ROUTES } from './notifications';
 import {
   GATE_PARCELS_ROUTES,
@@ -224,4 +225,5 @@ export const ROUTES: Row[] = [
   ...GOVERNANCE_POLL_ROUTES,
   ...GOVERNANCE_ELECTION_ROUTES,
   ...BOARD_PUBLICATION_ROUTES,
+  ...CHECKPOINT_ROUTES,
 ];

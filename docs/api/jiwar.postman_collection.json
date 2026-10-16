@@ -21222,6 +21222,209 @@
     {
       "item": [
         {
+          "name": "List the checkpoints",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "patrols",
+                "checkpoints"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "Both by default.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "gateId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "zoneId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/patrols/checkpoints"
+            }
+          }
+        },
+        {
+          "name": "Add a checkpoint",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"nameEn\": \"Pool gate\",\n  \"nameAr\": \"بوابة المسبح\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `gateId` | string (uuid) |  |  |\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n| `position` | object |  |  |\n| `zoneId` | string (uuid) |  | A place in service, for a post that is not a gate. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "patrols",
+                "checkpoints"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/patrols/checkpoints"
+            }
+          }
+        },
+        {
+          "name": "Rename or place a checkpoint",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"nameAr\": \"\",\n  \"nameEn\": \"\",\n  \"position\": {\n    \"lat\": -90,\n    \"lng\": -180\n  }\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n| `position` | object |  | Null removes the position; absent leaves it. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "patrols",
+                "checkpoints",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/patrols/checkpoints/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Print a new QR",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "patrols",
+                "checkpoints",
+                ":id",
+                "reissue"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/patrols/checkpoints/:id/reissue",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Retire a checkpoint",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "patrols",
+                "checkpoints",
+                ":id",
+                "retire"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/patrols/checkpoints/:id/retire",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "name": "patrols"
+    },
+    {
+      "item": [
+        {
           "name": "Get the compound’s permit rules",
           "request": {
             "description": "**Responses:** 200",

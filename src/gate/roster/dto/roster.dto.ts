@@ -45,7 +45,7 @@ class WeeklyScheduleDto {
 }
 
 /** A gate or a zone (one of the compound's places), exactly one. */
-class PostDto {
+export class PostDto {
   @ApiPropertyOptional({ type: String, format: 'uuid' })
   @IsOptional()
   @IsUUID()

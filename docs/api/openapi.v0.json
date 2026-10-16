@@ -3616,6 +3616,184 @@
         ],
         "type": "object"
       },
+      "CheckpointPositionDto": {
+        "properties": {
+          "lat": {
+            "maximum": 90,
+            "minimum": -90,
+            "type": "number"
+          },
+          "lng": {
+            "maximum": 180,
+            "minimum": -180,
+            "type": "number"
+          },
+          "radiusM": {
+            "description": "Metres; 30 by default. A scan farther away is accepted and flagged.",
+            "maximum": 500,
+            "minimum": 5,
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lng"
+        ],
+        "type": "object"
+      },
+      "CheckpointPositionView": {
+        "properties": {
+          "lat": {
+            "example": 30.0444,
+            "type": "number"
+          },
+          "lng": {
+            "example": 31.2357,
+            "type": "number"
+          },
+          "radiusM": {
+            "description": "Metres: a scan farther away is flagged.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lng",
+          "radiusM"
+        ],
+        "type": "object"
+      },
+      "CheckpointSecretView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "example": "بوابة المسبح",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Pool gate",
+            "type": "string"
+          },
+          "position": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckpointPositionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "qrPayload": {
+            "description": "For the QR and the NFC tag: `JWK1.<checkpointId>.<token>`. Shown once; a reissue prints a new one and the old one stops scanning.",
+            "example": "JWK1.0199c3d2-6f1a-7c3e-9a51-3b2f6e8d1c40.q3Jzx8b7m2Kd9PwS0aLr5TnYc4Ve1Hu6Gi8Fo0Bj2Ek",
+            "type": "string"
+          },
+          "retiredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "tokenIssuedAt": {
+            "description": "When its QR was printed last: an older printout no longer scans.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "post",
+          "nameEn",
+          "nameAr",
+          "position",
+          "tokenIssuedAt",
+          "retiredAt",
+          "createdAt",
+          "qrPayload"
+        ],
+        "type": "object"
+      },
+      "CheckpointView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "example": "بوابة المسبح",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Pool gate",
+            "type": "string"
+          },
+          "position": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckpointPositionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "retiredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "tokenIssuedAt": {
+            "description": "When its QR was printed last: an older printout no longer scans.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "post",
+          "nameEn",
+          "nameAr",
+          "position",
+          "tokenIssuedAt",
+          "retiredAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "CheckpointViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CheckpointView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ClaimCreatedView": {
         "properties": {
           "createdAt": {
@@ -5530,6 +5708,39 @@
           "key",
           "nameAr",
           "nameEn"
+        ],
+        "type": "object"
+      },
+      "CreateCheckpointDto": {
+        "properties": {
+          "gateId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "example": "بوابة المسبح",
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Pool gate",
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "position": {
+            "$ref": "#/components/schemas/CheckpointPositionDto"
+          },
+          "zoneId": {
+            "description": "A place in service, for a post that is not a gate.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameEn",
+          "nameAr"
         ],
         "type": "object"
       },
@@ -34292,6 +34503,31 @@
         },
         "type": "object"
       },
+      "UpdateCheckpointDto": {
+        "properties": {
+          "nameAr": {
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "position": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckpointPositionDto"
+              }
+            ],
+            "description": "Null removes the position; absent leaves it.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
       "UpdateClubPlanDto": {
         "properties": {
           "active": {
@@ -61990,6 +62226,253 @@
         "summary": "Archive an instruction",
         "tags": [
           "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/checkpoints": {
+      "get": {
+        "description": "Newest first; never a token.",
+        "operationId": "CheckpointsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "Both by default.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "active",
+                "retired"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "gateId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "zoneId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckpointViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the checkpoints",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "At a gate or a zone in service (POST_NOT_AVAILABLE). Answers its QR payload once: print it now, or reissue later. Two checkpoints in service never share a name (409 DUPLICATE_RESOURCE).",
+        "operationId": "CheckpointsController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCheckpointDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckpointSecretView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a checkpoint",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/checkpoints/{id}": {
+      "patch": {
+        "description": "In service only (409 PATROL_CHECKPOINT_RETIRED). Its post never changes.",
+        "operationId": "CheckpointsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCheckpointDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckpointView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename or place a checkpoint",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/checkpoints/{id}/reissue": {
+      "post": {
+        "description": "A new payload, answered once; the old printout stops scanning at once.",
+        "operationId": "CheckpointsController_reissue",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckpointSecretView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Print a new QR",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/checkpoints/{id}/retire": {
+      "post": {
+        "description": "Once, for good; its scans stay.",
+        "operationId": "CheckpointsController_retire",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckpointView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retire a checkpoint",
+        "tags": [
+          "patrols"
         ],
         "x-no-store": true,
         "x-stability": "draft"

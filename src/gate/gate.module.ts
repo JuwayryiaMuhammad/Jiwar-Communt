@@ -126,6 +126,8 @@ import {
   MaterialEntriesController,
 } from './permits/gate-permits.controller';
 import { MaterialEntriesService } from './permits/material-entries.service';
+import { PermitLifecycle } from './permits/permit-lifecycle';
+import { PermitExportSections } from './permits/permit-export-sections';
 import { GatePermitsService } from './permits/gate-permits.service';
 
 /**
@@ -250,6 +252,8 @@ import { GatePermitsService } from './permits/gate-permits.service';
     PermitIdCheck,
     GatePermitsService,
     MaterialEntriesService,
+    PermitLifecycle,
+    PermitExportSections,
   ],
 })
 export class GateModule {}

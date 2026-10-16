@@ -1,5 +1,8 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
+import { MemberPermissionsService } from '../../src/community/households/member-permissions.service';
+import { PEOPLE_DATA_SWEEP } from '../../src/gate/permits/permit-sweeps';
 import { auditReaders } from '../setup/audit';
+import { eraseNow } from '../setup/erasure';
 import {
   COMMUNITY_COVERAGE,
   ENGAGEMENT_COVERAGE,
@@ -319,6 +322,61 @@ describe('Audit coverage — permits', () => {
       expect(JSON.stringify([r, ...found])).not.toMatch(
         new RegExp(`${WORDS}|AUD 1`),
       );
+    });
+  });
+
+  describe('privacy', () => {
+    it('text_cleared at the requester’s erasure (booleans), data_purged by the system 30 days on (counts)', async () => {
+      const c = await p.setUp('Permits Audit Privacy Court');
+      const joined = await p.v.x.joinFamily(c.c, c.home.id, c.alice);
+      const member = await p.who(c.c, joined.accountId, 'family');
+      await p.v.x.as(c.c, { id: c.alice.id, type: 'resident' }, () =>
+        h.moduleRef
+          .get(MemberPermissionsService)
+          .grant(joined.memberId, 'visitors_invite'),
+      );
+      const event = await p.event(member, c.home.id, 1, {
+        title: 'Audit privacy words',
+      });
+      await eraseNow(h, c.c, member.id);
+      const cleared = (
+        await read.tenant(c.c.tenantId, {
+          action: 'unit_permit.text_cleared',
+          targetId: event.id,
+        })
+      )[0];
+      covered.add('unit_permit.text_cleared');
+      // Done by whoever ran the erasure, on the account's behalf.
+      expect(cleared.targetType).toBe('unit_permit');
+      expect(cleared.metadata).toEqual({
+        kind: 'event',
+        contractorCompany: false,
+        description: false,
+        itemsDescription: false,
+        items: false,
+        title: true,
+        photo: false,
+      });
+      await p.sweep(PEOPLE_DATA_SWEEP, new Date(Date.now() + 40 * 86_400_000));
+      const purged = (
+        await read.tenant(c.c.tenantId, {
+          action: 'unit_permit.data_purged',
+          targetId: event.id,
+        })
+      )[0];
+      covered.add('unit_permit.data_purged');
+      expect(purged).toMatchObject({
+        actorType: 'system',
+        targetType: 'unit_permit',
+      });
+      expect(purged.metadata).toEqual({
+        kind: 'event',
+        workers: 0,
+        guests: 1,
+        truckPlate: false,
+        photo: false,
+      });
+      expect(JSON.stringify([cleared, purged])).not.toContain('Guest Number');
     });
   });
 

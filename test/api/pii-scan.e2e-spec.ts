@@ -1608,6 +1608,21 @@ describe('API v0 — PII leak scan', () => {
           for (const s of dispatchOnly)
             if (found(s)) leaks.push(`${name} ${r.path}: ${s}`);
         }
+        // Permits (ADR 0049): a contractor's name to the unit's primary who
+        // asked, the management and the guard (who matches their face); the
+        // last four of their ID to nobody, ever; what the resident wrote to
+        // the primary and the management (the guard sees the company only).
+        if (found('QZ7X')) leaks.push(`${name} ${r.path}: an ID's last four`);
+        if (
+          !['resident', 'manager', 'guard'].includes(name) &&
+          found('PII-CONTRACTOR-name')
+        )
+          leaks.push(`${name} ${r.path}: a contractor's name`);
+        if (
+          !['resident', 'manager'].includes(name) &&
+          found('PII-PERMIT-words')
+        )
+          leaks.push(`${name} ${r.path}: a permit's description`);
         // A unit's emergency contacts (ADR 0047): the people who live there
         // see each other's phones; nobody else's, and nobody else sees them.
         const sameHome =
@@ -1630,6 +1645,10 @@ describe('API v0 — PII leak scan', () => {
       }
     }
     expect(leaks).toEqual([]);
+    // And the guard did see the contractor, on the permit at the gate.
+    expect(seen.get('guard /gate/unit-permits/{id}')).toContain(
+      'PII-CONTRACTOR-name',
+    );
 
     // Community life (ADR 0040). A suggestion's words are its author's and
     // the staff's: nobody else reads them anywhere, and the board never

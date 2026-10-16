@@ -878,6 +878,13 @@ export const AUDIT_ACTIONS = {
   // A guard logs materials brought in. metadata: unitId, permitId, gateId;
   // never the guard's words.
   'material_entry.logged': { log: 'tenant', target: 'material_entry' },
+  // The requester's erasure (metadata: kind, and contractorCompany,
+  // description, itemsDescription, items, title, photo as booleans: what
+  // went).
+  'unit_permit.text_cleared': { log: 'tenant', target: 'unit_permit' },
+  // The purge, 30 days after the end (system). metadata: kind, workers and
+  // guests (how many), truckPlate and photo (booleans).
+  'unit_permit.data_purged': { log: 'tenant', target: 'unit_permit' },
   // The management lifts a contractor ID lockout. metadata: workerId or
   // guardId.
   'unit_permit.lockout_cleared': { log: 'tenant', target: 'unit_permit' },

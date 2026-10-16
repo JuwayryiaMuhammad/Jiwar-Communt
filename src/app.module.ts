@@ -19,6 +19,7 @@ import { MaintenanceModule } from './maintenance';
 import { ManagementModule } from './management';
 import { FacilitiesModule } from './facilities';
 import { FinanceModule } from './finance';
+import { GovernanceModule } from './governance';
 import { NeighboursModule } from './neighbours';
 import { AccessModule } from './core/access/access.module';
 import { PermissionsGuard } from './core/access/permissions.guard';
@@ -130,6 +131,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     NeighboursModule,
     FacilitiesModule,
     FinanceModule,
+    GovernanceModule,
   ],
   controllers: [AppController],
   providers: [

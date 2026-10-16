@@ -800,6 +800,34 @@
         ],
         "type": "object"
       },
+      "AppointBoardDto": {
+        "properties": {
+          "endsAt": {
+            "description": "When the term ends: 30 days to five years from now (INVALID_VALUE, params.minDays and params.maxDays).",
+            "format": "date-time",
+            "type": "string"
+          },
+          "members": {
+            "description": "3 members at least, as many as `seats` at most, each once (BOARD_SIZE, DUPLICATE_VALUE).",
+            "items": {
+              "$ref": "#/components/schemas/BoardSeatDto"
+            },
+            "type": "array"
+          },
+          "seats": {
+            "description": "The board’s seats; empty ones may be filled later.",
+            "maximum": 15,
+            "minimum": 3,
+            "type": "number"
+          }
+        },
+        "required": [
+          "seats",
+          "endsAt",
+          "members"
+        ],
+        "type": "object"
+      },
       "AppointmentBookedView": {
         "properties": {
           "endsAt": {
@@ -1816,6 +1844,23 @@
         ],
         "type": "object"
       },
+      "BoardNowView": {
+        "properties": {
+          "board": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardTermView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "board"
+        ],
+        "type": "object"
+      },
       "BoardPostView": {
         "properties": {
           "author": {
@@ -1939,6 +1984,75 @@
         ],
         "type": "object"
       },
+      "BoardRole": {
+        "enum": [
+          "chair",
+          "secretary",
+          "treasurer",
+          "member"
+        ],
+        "type": "string"
+      },
+      "BoardSeatDto": {
+        "properties": {
+          "accountId": {
+            "description": "An active account that owns a unit now (OWNER_NOT_ELIGIBLE): from `GET /staff/governance/owners`.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardRole"
+              }
+            ],
+            "description": "One chair, one secretary and one treasurer at most."
+          }
+        },
+        "required": [
+          "accountId",
+          "role"
+        ],
+        "type": "object"
+      },
+      "BoardSeatView": {
+        "properties": {
+          "addedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endedAt": {
+            "description": "When the seat ended before its term did.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "fullName": {
+            "description": "Null once the account was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardRole"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "fullName",
+          "addedAt",
+          "endedAt"
+        ],
+        "type": "object"
+      },
       "BoardSuggestionView": {
         "properties": {
           "done": {
@@ -1996,6 +2110,104 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/BoardSuggestionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "BoardTermSource": {
+        "enum": [
+          "appointed",
+          "elected"
+        ],
+        "type": "string"
+      },
+      "BoardTermStatus": {
+        "description": "`lapsed`: past its end with no board after it; its members hold nothing until one is appointed or elected.",
+        "enum": [
+          "current",
+          "lapsed",
+          "ended"
+        ],
+        "type": "string"
+      },
+      "BoardTermView": {
+        "properties": {
+          "electionId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "endedAt": {
+            "description": "When the next board took over.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/BoardSeatView"
+            },
+            "type": "array"
+          },
+          "seats": {
+            "type": "number"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardTermSource"
+              }
+            ]
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardTermStatus"
+              }
+            ],
+            "description": "`lapsed`: past its end with no board after it; its members hold nothing until one is appointed or elected."
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "electionId",
+          "seats",
+          "startsAt",
+          "endsAt",
+          "endedAt",
+          "status",
+          "members"
+        ],
+        "type": "object"
+      },
+      "BoardTermViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BoardTermView"
             },
             "type": "array"
           },
@@ -3144,6 +3356,21 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ChangeBoardRoleDto": {
+        "properties": {
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardRole"
+              }
+            ]
+          }
+        },
+        "required": [
+          "role"
         ],
         "type": "object"
       },
@@ -8820,6 +9047,18 @@
         ],
         "type": "object"
       },
+      "EndBoardSeatDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `boardMemberEnd`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "EndShiftDto": {
         "properties": {
           "checklist": {
@@ -11935,6 +12174,49 @@
           "available",
           "updatedBy",
           "updatedAt"
+        ],
+        "type": "object"
+      },
+      "GovernanceOwnerView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitCodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "accountId",
+          "fullName",
+          "unitCodes"
+        ],
+        "type": "object"
+      },
+      "GovernanceOwnerViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GovernanceOwnerView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -25732,6 +26014,165 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/StaffAppointmentSlotView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StaffBoardNowView": {
+        "properties": {
+          "board": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffBoardTermView"
+              }
+            ],
+            "description": "The open term, current or lapsed; null before the first board.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "board"
+        ],
+        "type": "object"
+      },
+      "StaffBoardSeatView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "addedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endReason": {
+            "description": "From `boardMemberEnd` or `boardMemberSystemEnd`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "endedAt": {
+            "description": "When the seat ended before its term did.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "fullName": {
+            "description": "Null once the account was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardRole"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "fullName",
+          "addedAt",
+          "endedAt",
+          "accountId",
+          "endReason"
+        ],
+        "type": "object"
+      },
+      "StaffBoardTermView": {
+        "properties": {
+          "electionId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "endReason": {
+            "enum": [
+              "succeeded",
+              "replaced"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "endedAt": {
+            "description": "When the next board took over.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "members": {
+            "description": "Every seat, ended ones too.",
+            "items": {
+              "$ref": "#/components/schemas/StaffBoardSeatView"
+            },
+            "type": "array"
+          },
+          "seats": {
+            "type": "number"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardTermSource"
+              }
+            ]
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardTermStatus"
+              }
+            ],
+            "description": "`lapsed`: past its end with no board after it; its members hold nothing until one is appointed or elected."
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "electionId",
+          "seats",
+          "startsAt",
+          "endsAt",
+          "endedAt",
+          "status",
+          "endReason",
+          "members"
+        ],
+        "type": "object"
+      },
+      "StaffBoardTermViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffBoardTermView"
             },
             "type": "array"
           },
@@ -41841,6 +42282,87 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/governance/board": {
+      "get": {
+        "description": "Its term and its seated members by name and role; `board` is null when none sits. For the units’ owners; anyone else gets GOVERNANCE_NOT_AVAILABLE (404).",
+        "operationId": "GovernanceBoardController_now",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardNowView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the board sitting now",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/governance/board/terms": {
+      "get": {
+        "description": "Newest first, each with everyone who sat in it. For the units’ owners; anyone else gets GOVERNANCE_NOT_AVAILABLE (404).",
+        "operationId": "GovernanceBoardController_terms",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardTermViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the board’s terms",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -56075,6 +56597,325 @@
         "summary": "Export the outstanding report as CSV",
         "tags": [
           "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/board": {
+      "get": {
+        "description": "Current, or lapsed (past its end with nobody after it); null before the first board. Every seat, ended ones too.",
+        "operationId": "StaffBoardController_now",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBoardNowView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the board’s open term",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/board/appoint": {
+      "post": {
+        "description": "Only when no board sits (BOARD_SITTING): the first one, or after the open term lapsed, which ends now. Its members are told. Later boards come from elections.",
+        "operationId": "StaffBoardController_appoint",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppointBoardDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBoardTermView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Appoint a board",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/board/members": {
+      "post": {
+        "description": "No board sits: BOARD_NOT_SITTING; every seat taken: BOARD_SEATS_FULL; the office held: BOARD_OFFICE_TAKEN; seated already: BOARD_ALREADY_SEATED. The member is told.",
+        "operationId": "StaffBoardController_add",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BoardSeatDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBoardTermView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Fill a vacant seat of the sitting board",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/board/members/{id}": {
+      "patch": {
+        "description": "The roles the board chose for itself, recorded by the manager. The office held by another: BOARD_OFFICE_TAKEN.",
+        "operationId": "StaffBoardController_role",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeBoardRoleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBoardTermView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Give a seated member another role",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/board/members/{id}/end": {
+      "post": {
+        "description": "From then on the member holds nothing of the board; the seat may be filled again.",
+        "operationId": "StaffBoardController_end",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EndBoardSeatDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBoardTermView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "End a seat, with a reason code",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/board/terms": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "StaffBoardController_terms",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBoardTermViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the board’s terms",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/owners": {
+      "get": {
+        "description": "Active accounts that own a unit now, by name or unit code; at most 50.",
+        "operationId": "StaffBoardController_owners",
+        "parameters": [
+          {
+            "description": "Part of a name or a unit code, any case.",
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernanceOwnerViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find owners for the board",
+        "tags": [
+          "governance"
         ],
         "x-no-store": true,
         "x-stability": "draft"

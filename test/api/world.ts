@@ -51,6 +51,7 @@ import { GateServicesService } from '../../src/gate/gate-services/gate-services.
 import { PermitsService } from '../../src/gate/permits/permits.service';
 import { PermitRequestsService } from '../../src/gate/permits/permit-requests.service';
 import { permitFileRow, permitWorkerRow } from '../setup/permits-rows';
+import { boardMemberRow, boardTermRow } from '../setup/governance-rows';
 import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
 import { ALL_WEEK, at, day } from '../setup/facilities';
 import { addDays } from '../../src/core/common/slots/day-slots';
@@ -252,6 +253,8 @@ export interface World extends GuardDutyWorld {
   /** An event of B's home approved at once, and one of its guests. */
   bPermitEventId: string;
   bPermitGuestId: string;
+  /** A seat on B's board (ADR 0051), written straight into the tables. */
+  bBoardMemberId: string;
   bDeviceId: string;
   /** A personal-data export B's owner asked for (ADR 0036). */
   bExportId: string;
@@ -929,6 +932,20 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
         guests: [{ fullName: 'B Guest' }],
       }),
   );
+  const bBoardMemberId = await helpers.asManager(b, () =>
+    h.moduleRef.get(TenantTx).withTenantTx(async (tx) =>
+      boardMemberRow(tx, {
+        tenantId: b.tenantId,
+        termId: await boardTermRow(tx, {
+          tenantId: b.tenantId,
+          createdById: b.ids.manager,
+          open: true,
+        }),
+        accountId: b.ids.owner,
+        addedById: b.ids.manager,
+      }),
+    ),
+  );
   const bFinance = await helpers.asManager(b, async () => {
     const batch = await h.moduleRef.get(InvoicesService).issue({
       target: 'unit',
@@ -1042,6 +1059,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bPermitWorkerId,
     bPermitEventId: bPermitEvent.permit.id,
     bPermitGuestId: bPermitEvent.guests[0].id,
+    bBoardMemberId,
     bFineId: bFine.fine.id,
     bFinePaymentId: bFinePayment.id,
     bVehicleId: bVehicle.vehicle.id,

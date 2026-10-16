@@ -6546,3 +6546,63 @@ model FoundItemPhoto {
   @@index([tenantId, itemId], map: "found_item_photos_item_idx")
   @@map("found_item_photos")
 }
+// Governance (ADR 0051): the owners' board, its polls and elections.
+// ============================================================================
+
+enum BoardTermSource {
+  appointed
+  elected
+
+  @@map("board_term_source")
+}
+
+enum BoardRole {
+  chair
+  secretary
+  treasurer
+  member
+
+  @@map("board_role")
+}
+
+/// A board's term (ADR 0051). At most one open (not ended) per compound; it
+/// is current while startsAt <= now < endsAt. Ends once, when the next
+/// board takes over (`succeeded`) or is appointed after it lapsed
+/// (`replaced`).
+model BoardTerm {
+  id          String          @id @db.Uuid
+  tenantId    String          @map("tenant_id") @db.Uuid
+  source      BoardTermSource
+  electionId  String?         @map("election_id") @db.Uuid
+  seats       Int             @db.SmallInt
+  startsAt    DateTime        @map("starts_at") @db.Timestamptz(3)
+  endsAt      DateTime        @map("ends_at") @db.Timestamptz(3)
+  endedAt     DateTime?       @map("ended_at") @db.Timestamptz(3)
+  endReason   String?         @map("end_reason")
+  createdById String          @map("created_by_account_id") @db.Uuid
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, electionId], map: "board_terms_one_per_election")
+  @@index([tenantId, startsAt, id], map: "board_terms_history_idx")
+  @@map("board_terms")
+}
+
+/// An owner's seat on a board (ADR 0051): a role that may change while it
+/// lasts, and an end, once.
+model BoardMember {
+  id        String    @id @db.Uuid
+  tenantId  String    @map("tenant_id") @db.Uuid
+  termId    String    @map("term_id") @db.Uuid
+  accountId String    @map("account_id") @db.Uuid
+  role      BoardRole
+  addedAt   DateTime  @map("added_at") @db.Timestamptz(3)
+  addedById String    @map("added_by_account_id") @db.Uuid
+  endedAt   DateTime? @map("ended_at") @db.Timestamptz(3)
+  endReason String?   @map("end_reason")
+  endedById String?   @map("ended_by_account_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@index([tenantId, termId, addedAt, id], map: "board_members_term_idx")
+  @@map("board_members")
+}

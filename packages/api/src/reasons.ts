@@ -107,6 +107,9 @@ export const REASON_CODES = {
   guardTaskCancelSystem: ['assignee_left'],
   guardSwapReject: ['staffing', 'too_late', 'other'],
   guardSwapCancel: ['slot_cancelled', 'slot_changed', 'guard_left'],
+  // Governance (ADR 0051).
+  boardMemberEnd: ['resigned', 'removed', 'misconduct', 'other'],
+  boardMemberSystemEnd: ['no_longer_owner', 'account_closed'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

@@ -515,4 +515,9 @@ export const REASON_CODES = {
   // What the system cancels a live swap for (ADR 0050): a slot cancelled,
   // a slot given to someone else or filled meanwhile, a guard gone.
   guardSwapCancel: ['slot_cancelled', 'slot_changed', 'guard_left'],
+  // Why the manager ends a board member's seat (ADR 0051).
+  boardMemberEnd: ['resigned', 'removed', 'misconduct', 'other'],
+  // A seat the system ends, never picked by anyone (ADR 0051): the member
+  // owns no unit any more, or their account was closed.
+  boardMemberSystemEnd: ['no_longer_owner', 'account_closed'],
 } as const;

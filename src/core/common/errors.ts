@@ -731,6 +731,29 @@ export const ErrorCode = {
   FOUND_ITEM_NOT_FOUND: 'FOUND_ITEM_NOT_FOUND',
   /** It is not where this happens any more (409, params.status). */
   FOUND_ITEM_CLOSED: 'FOUND_ITEM_CLOSED',
+  // governance (ADR 0051)
+  /**
+   * The caller owns no unit now (404): the board, its polls and elections
+   * are the owners', and a tenant or a household member finds nothing.
+   */
+  GOVERNANCE_NOT_AVAILABLE: 'GOVERNANCE_NOT_AVAILABLE',
+  /** Unknown, another compound's, or an ended seat where a seat is needed. */
+  BOARD_MEMBER_NOT_FOUND: 'BOARD_MEMBER_NOT_FOUND',
+  /** A board sits now (409): it is not appointed over (params.endsAt). */
+  BOARD_SITTING: 'BOARD_SITTING',
+  /** No board sits now (409): appoint one, or certify an election. */
+  BOARD_NOT_SITTING: 'BOARD_NOT_SITTING',
+  /** The board's seats are all taken (409, params.seats). */
+  BOARD_SEATS_FULL: 'BOARD_SEATS_FULL',
+  /** Another seated member holds this office (409, params.role). */
+  BOARD_OFFICE_TAKEN: 'BOARD_OFFICE_TAKEN',
+  /** The account sits on the board already (409). */
+  BOARD_ALREADY_SEATED: 'BOARD_ALREADY_SEATED',
+  /**
+   * Only a sitting board member or the manager does this (403); a seat
+   * that ended a moment ago counts as none.
+   */
+  BOARD_SEAT_REQUIRED: 'BOARD_SEAT_REQUIRED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -909,6 +932,11 @@ export const FieldErrorCode = {
    * scheduled, unopened and to come.
    */
   SLOT_NOT_SWAPPABLE: 'SLOT_NOT_SWAPPABLE',
+  // governance (ADR 0051)
+  /** Not an active account that owns a unit of the compound now. */
+  OWNER_NOT_ELIGIBLE: 'OWNER_NOT_ELIGIBLE',
+  /** A board of params.min to params.max seats. */
+  BOARD_SIZE: 'BOARD_SIZE',
 } as const;
 
 export type FieldErrorCode =

@@ -311,6 +311,14 @@ const ERROR_TEXT: Record<string, string> = {
   REFUND_ALREADY_REVERSED: 'This refund was reversed already.',
   PAYMENT_REFUNDED: 'Money of this payment was refunded: reverse the refund first.',
   EXPORT_TOO_LARGE: 'Too many rows for one export: narrow the period.',
+  GOVERNANCE_NOT_AVAILABLE: 'Governance is for the units’ owners.',
+  BOARD_MEMBER_NOT_FOUND: 'This board member does not exist, or has left the board.',
+  BOARD_SITTING: 'A board sits now: it is replaced by an election, not appointed over.',
+  BOARD_NOT_SITTING: 'No board sits now: appoint one, or certify an election.',
+  BOARD_SEATS_FULL: 'Every seat of the board is taken.',
+  BOARD_OFFICE_TAKEN: 'Another member holds this office.',
+  BOARD_ALREADY_SEATED: 'This owner sits on the board already.',
+  BOARD_SEAT_REQUIRED: 'Only a sitting board member can do this.',
 };
 
 const FIELD_TEXT: Record<string, string> = {
@@ -396,6 +404,8 @@ const FIELD_TEXT: Record<string, string> = {
   OUTSIDE_WORK_HOURS: 'Outside the compound’s work hours.',
   NOT_A_WORK_DAY: 'The compound allows no works or moves that day.',
   WINDOW_TOO_LONG: 'The window is too long.',
+  OWNER_NOT_ELIGIBLE: 'Not an owner of a unit of the compound now.',
+  BOARD_SIZE: 'A board of 3 to 15 seats.',
 };
 
 export function errorText(error: unknown): string {

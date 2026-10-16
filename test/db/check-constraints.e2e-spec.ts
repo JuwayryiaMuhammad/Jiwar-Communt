@@ -1222,6 +1222,22 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded: 'num_nonnulls() counts NULLs: never NULL',
   },
   found_items_cleared_shape: {},
+  // Governance (ADR 0051).
+  board_terms_period: {},
+  board_terms_seats: {},
+  board_terms_source_shape: {},
+  board_terms_end_shape: {
+    guarded:
+      'ended_at IS NULL and end_reason IS NULL are tested first; the comparison and the list run only on values',
+  },
+  board_members_end_shape: {
+    guarded:
+      'ended_at IS NULL is tested first; the comparison runs only on a value',
+  },
+  board_members_end_reason: {
+    guarded:
+      'end_reason IS NULL is tested first; the list runs only on a value',
+  },
 };
 
 interface Check {

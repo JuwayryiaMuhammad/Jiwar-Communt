@@ -1347,6 +1347,16 @@ export const NOTIFICATION_KINDS = {
     target: 'guard_instruction',
     params: {},
   },
+  // Governance (ADR 0051). Nothing is critical; params are codes only: never
+  // a name, a title, or what anyone chose.
+  /** The account took a seat on the board: appointed or elected. */
+  'governance_board.seat': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'board_term',
+    params: { role: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

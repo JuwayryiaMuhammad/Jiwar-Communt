@@ -1451,6 +1451,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'اقرأ تعليمات عاجلة وأقر بها الآن.',
     },
   },
+  'governance_board.seat': {
+    en: {
+      title: 'You are on the board',
+      body: 'You took a seat on the owners’ board. Open the app to see the board.',
+    },
+    ar: {
+      title: 'أصبحت عضوًا في المجلس',
+      body: 'أصبحت عضوًا في مجلس الملاك. افتح التطبيق لعرض المجلس.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

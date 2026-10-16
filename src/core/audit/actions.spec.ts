@@ -116,6 +116,8 @@ describe('audit catalog', () => {
         'guard_shift_swap',
         'guard_instruction',
         'found_item',
+        'board_term',
+        'board_member',
       ]).toContain(def.target);
     }
   });

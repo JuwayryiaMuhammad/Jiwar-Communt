@@ -438,3 +438,15 @@ export const GUARD_DUTY_COVERAGE: readonly string[] = [
   'guard_task.result_cleared',
   'guard_swap.reason_cleared',
 ];
+
+/**
+ * R7a entries (ADR 0051), covered by test/governance/audit-coverage.e2e-spec.ts:
+ * the owners' board, its polls and elections, and the votes.
+ */
+export const GOVERNANCE_COVERAGE: readonly string[] = [
+  'board_term.appointed',
+  'board_term.ended',
+  'board_member.added',
+  'board_member.role_changed',
+  'board_member.ended',
+];

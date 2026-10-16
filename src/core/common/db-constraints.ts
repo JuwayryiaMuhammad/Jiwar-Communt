@@ -366,4 +366,13 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   permit_workers_tenant_id_id_key: null,
   permit_workers_photo_file_id_key: null,
   permit_guests_tenant_id_id_key: null,
+  // Governance (ADR 0051): every write is decided under the compound's
+  // board lock (one open term, one seat per account, one chair, secretary
+  // and treasurer); a violation is a race the lock lost, and names nothing.
+  board_terms_tenant_id_id_key: null,
+  board_terms_one_open: null,
+  board_terms_one_per_election: null,
+  board_members_tenant_id_id_key: null,
+  board_members_one_seat: null,
+  board_members_one_office: null,
 };

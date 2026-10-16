@@ -10576,6 +10576,327 @@
     {
       "item": [
         {
+          "name": "Get the board sitting now",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "board"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/board"
+            }
+          }
+        },
+        {
+          "name": "List the board’s terms",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "board",
+                "terms"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/board/terms"
+            }
+          }
+        },
+        {
+          "name": "Get the board’s open term",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "board"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/board"
+            }
+          }
+        },
+        {
+          "name": "Appoint a board",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"seats\": 3,\n  \"endsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"members\": []\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `endsAt` | string (date-time) | yes | When the term ends: 30 days to five years from now (INVALID_VALUE, params.minDays and params.maxDays). |\n| `members` | object[] | yes | 3 members at least, as many as `seats` at most, each once (BOARD_SIZE, DUPLICATE_VALUE). |\n| `seats` | number | yes | The board’s seats; empty ones may be filled later. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "board",
+                "appoint"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/board/appoint"
+            }
+          }
+        },
+        {
+          "name": "Fill a vacant seat of the sitting board",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"accountId\": \"\",\n  \"role\": \"chair\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `accountId` | string (uuid) | yes | An active account that owns a unit now (OWNER_NOT_ELIGIBLE): from `GET /staff/governance/owners`. |\n| `role` | `chair` \\| `secretary` \\| `treasurer` \\| `member` | yes | One chair, one secretary and one treasurer at most. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "board",
+                "members"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/board/members"
+            }
+          }
+        },
+        {
+          "name": "Give a seated member another role",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"role\": \"chair\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `role` | `chair` \\| `secretary` \\| `treasurer` \\| `member` | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "board",
+                "members",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/board/members/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "End a seat, with a reason code",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `boardMemberEnd`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "board",
+                "members",
+                ":id",
+                "end"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/board/members/:id/end",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the board’s terms",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "board",
+                "terms"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/board/terms"
+            }
+          }
+        },
+        {
+          "name": "Find owners for the board",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "owners"
+              ],
+              "query": [
+                {
+                  "description": "Part of a name or a unit code, any case.",
+                  "disabled": true,
+                  "key": "search",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/owners"
+            }
+          }
+        }
+      ],
+      "name": "governance"
+    },
+    {
+      "item": [
+        {
           "name": "List the register",
           "request": {
             "description": "**Responses:** 200",

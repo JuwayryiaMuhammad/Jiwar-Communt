@@ -383,6 +383,66 @@ describe('import boundaries', () => {
     );
   });
 
+  it('the governance domain imports core and community only, and no domain imports it (ADR 0051)', async () => {
+    const governance = 'src/governance/board/x.ts';
+    expect(
+      await problems(
+        governance,
+        "import { A } from '../../core/audit/audit.service';",
+      ),
+    ).toEqual([]);
+    expect(
+      await problems(governance, "import { A } from '../../community';"),
+    ).toEqual([]);
+    const port = await problems(
+      governance,
+      "import { A } from '../../community/governance-port';",
+    );
+    expect(port).toHaveLength(1);
+    expect(port[0]).toContain(
+      'Import community only through its public index.ts',
+    );
+    for (const domain of [
+      'engagement',
+      'facilities',
+      'finance',
+      'gate',
+      'maintenance',
+      'management',
+      'neighbours',
+    ]) {
+      const found = await problems(
+        governance,
+        `import { A } from '../../${domain}';`,
+      );
+      expect(found).toHaveLength(1);
+      expect(found[0]).toContain(`governance must not import ${domain} at all`);
+    }
+    for (const from of [
+      'src/community/residents/x.ts',
+      'src/engagement/polls/x.ts',
+      'src/facilities/club/x.ts',
+      'src/finance/invoices/x.ts',
+      'src/gate/entries/x.ts',
+      'src/maintenance/tickets/x.ts',
+      'src/management/requests/x.ts',
+      'src/neighbours/complaints/x.ts',
+    ]) {
+      const found = await problems(
+        from,
+        "import { A } from '../../governance';",
+      );
+      expect(found).toHaveLength(1);
+      expect(found[0]).toContain('must not import governance at all');
+    }
+    const fromCore = await problems(
+      'src/core/access/x.ts',
+      "import { A } from '../../governance';",
+    );
+    expect(fromCore).toHaveLength(1);
+    expect(fromCore[0]).toContain('src/core must not import a domain');
+  });
+
   it('other domains reach maintenance only through its index.ts; maintenance never the base client, the port file or the gate index (ADR 0032)', async () => {
     for (const from of [
       'src/community/residents/x.ts',

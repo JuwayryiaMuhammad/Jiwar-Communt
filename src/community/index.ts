@@ -50,3 +50,8 @@ export {
   capabilitiesFor,
   type Capabilities,
 } from './capabilities/capabilities';
+export { CommunityGovernancePortModule } from './governance-port.module';
+export {
+  CommunityGovernancePort,
+  type GovernanceOwner,
+} from './governance-port';

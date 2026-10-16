@@ -18,6 +18,7 @@ import {
 import { buildExports } from '../setup/exports';
 import { waitForMessage, waitForOtp } from '../setup/mailpit';
 import { drainOutbox } from '../setup/outbox';
+import { lapse } from '../setup/governance';
 import { call } from './request';
 import { ROUTES } from './routes';
 import { inviteBody, minorBody } from './routes/household';
@@ -720,6 +721,83 @@ describe('API v0 — no-store', () => {
     });
 
   /** Permits and contractors (ADR 0049). */
+  /** A new unit of A and its owner, who lives there; the owner's id. */
+  const aNewOwner = async () => {
+    const unit = await w.helpers.unit(w.a);
+    return (await w.helpers.resident(w.a, [unit.id])).id;
+  };
+  let sittingBoard: Promise<unknown> | null = null;
+  /** A board sits in A, with seats to spare (once per suite, or again after an appointment). */
+  const aBoard = () =>
+    (sittingBoard ??= (async () =>
+      as('manager', 'POST', '/staff/governance/board/appoint', {
+        seats: 15,
+        endsAt: new Date(Date.now() + 365 * 86_400_000).toISOString(),
+        members: [w.a.ids.owner, w.a.ids.landlord, await aNewOwner()].map(
+          (accountId) => ({ accountId, role: 'member' }),
+        ),
+      }))());
+  const aSeat = async () => {
+    await aBoard();
+    const seat = await as(
+      'manager',
+      'POST',
+      '/staff/governance/board/members',
+      {
+        accountId: await aNewOwner(),
+        role: 'member',
+      },
+    ).expect(201);
+    return body<{ members: { id: string; endedAt: string | null }[] }>(seat)
+      .members.filter((m) => !m.endedAt)
+      .at(-1)!.id;
+  };
+  const GOVERNANCE_CALLS = (): Record<string, () => Promise<Response>> => ({
+    'GET /governance/board': () => as('owner', 'GET', '/governance/board'),
+    'GET /governance/board/terms': () =>
+      as('owner', 'GET', '/governance/board/terms'),
+    'GET /staff/governance/board': () =>
+      as('manager', 'GET', '/staff/governance/board'),
+    'GET /staff/governance/board/terms': () =>
+      as('manager', 'GET', '/staff/governance/board/terms'),
+    'POST /staff/governance/board/appoint': async () => {
+      await aBoard();
+      const now = body<{ board: { id: string } | null }>(
+        await as('manager', 'GET', '/staff/governance/board').expect(200),
+      ).board;
+      if (now) await lapse(now.id);
+      sittingBoard = null;
+      const res = await aBoard();
+      return res as Response;
+    },
+    'POST /staff/governance/board/members': async () => {
+      await aBoard();
+      return as('manager', 'POST', '/staff/governance/board/members', {
+        accountId: await aNewOwner(),
+        role: 'member',
+      });
+    },
+    'PATCH /staff/governance/board/members/{id}': async () =>
+      as(
+        'manager',
+        'PATCH',
+        `/staff/governance/board/members/${await aSeat()}`,
+        {
+          role: 'member',
+        },
+      ),
+    'POST /staff/governance/board/members/{id}/end': async () =>
+      as(
+        'manager',
+        'POST',
+        `/staff/governance/board/members/${await aSeat()}/end`,
+        {
+          reasonCode: 'resigned',
+        },
+      ),
+    'GET /staff/governance/owners': () =>
+      as('manager', 'GET', '/staff/governance/owners'),
+  });
   const PERMIT_CALLS = (): Record<string, () => Promise<Response>> => ({
     'POST /units/{unitId}/permits/works': async () => {
       await clearPermits();
@@ -2622,6 +2700,7 @@ describe('API v0 — no-store', () => {
     ...SAFETY_CALLS(),
     ...PERMIT_CALLS(),
     ...guardDutyCalls(() => w),
+    ...GOVERNANCE_CALLS(),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

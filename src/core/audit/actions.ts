@@ -984,6 +984,21 @@ export const AUDIT_ACTIONS = {
   'guard_handover.notes_cleared': { log: 'tenant', target: 'guard_handover' },
   'guard_task.result_cleared': { log: 'tenant', target: 'guard_task' },
   'guard_swap.reason_cleared': { log: 'tenant', target: 'guard_shift_swap' },
+  // Governance (ADR 0051). Ids, roles, codes, dates and counts only: never a
+  // name, never a candidate's statement, and never what anyone chose, not
+  // even on an open poll.
+  // The manager seats a board. metadata: seats, startsAt, endsAt, members
+  // ([{accountId, role}]), lapsedTermId (the term it replaced, if any).
+  'board_term.appointed': { log: 'tenant', target: 'board_term' },
+  // A term ended. metadata: reason (succeeded | replaced), byTermId.
+  'board_term.ended': { log: 'tenant', target: 'board_term' },
+  // A seat filled in a sitting term. metadata: termId, accountId, role,
+  // source (appointed | elected).
+  'board_member.added': { log: 'tenant', target: 'board_member' },
+  // metadata: termId, accountId, from, to (roles).
+  'board_member.role_changed': { log: 'tenant', target: 'board_member' },
+  // metadata: termId, accountId, reasonCode, side (manager | system).
+  'board_member.ended': { log: 'tenant', target: 'board_member' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

@@ -2506,6 +2506,46 @@ export interface paths {
         patch: operations["GatesController_update"];
         trace?: never;
     };
+    "/api/v1/governance/board": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the board sitting now
+         * @description Its term and its seated members by name and role; `board` is null when none sits. For the units’ owners; anyone else gets GOVERNANCE_NOT_AVAILABLE (404).
+         */
+        get: operations["GovernanceBoardController_now"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/governance/board/terms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the board’s terms
+         * @description Newest first, each with everyone who sat in it. For the units’ owners; anyone else gets GOVERNANCE_NOT_AVAILABLE (404).
+         */
+        get: operations["GovernanceBoardController_terms"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health": {
         parameters: {
             query?: never;
@@ -7324,6 +7364,146 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/governance/board": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the board’s open term
+         * @description Current, or lapsed (past its end with nobody after it); null before the first board. Every seat, ended ones too.
+         */
+        get: operations["StaffBoardController_now"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/governance/board/appoint": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Appoint a board
+         * @description Only when no board sits (BOARD_SITTING): the first one, or after the open term lapsed, which ends now. Its members are told. Later boards come from elections.
+         */
+        post: operations["StaffBoardController_appoint"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/governance/board/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Fill a vacant seat of the sitting board
+         * @description No board sits: BOARD_NOT_SITTING; every seat taken: BOARD_SEATS_FULL; the office held: BOARD_OFFICE_TAKEN; seated already: BOARD_ALREADY_SEATED. The member is told.
+         */
+        post: operations["StaffBoardController_add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/governance/board/members/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Give a seated member another role
+         * @description The roles the board chose for itself, recorded by the manager. The office held by another: BOARD_OFFICE_TAKEN.
+         */
+        patch: operations["StaffBoardController_role"];
+        trace?: never;
+    };
+    "/api/v1/staff/governance/board/members/{id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * End a seat, with a reason code
+         * @description From then on the member holds nothing of the board; the seat may be filled again.
+         */
+        post: operations["StaffBoardController_end"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/governance/board/terms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the board’s terms
+         * @description Newest first.
+         */
+        get: operations["StaffBoardController_terms"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/governance/owners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Find owners for the board
+         * @description Active accounts that own a unit now, by name or unit code; at most 50.
+         */
+        get: operations["StaffBoardController_owners"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/instalment-plans": {
         parameters: {
             query?: never;
@@ -11074,6 +11254,17 @@ export interface components {
              */
             instructionId: string;
         };
+        AppointBoardDto: {
+            /**
+             * Format: date-time
+             * @description When the term ends: 30 days to five years from now (INVALID_VALUE, params.minDays and params.maxDays).
+             */
+            endsAt: string;
+            /** @description 3 members at least, as many as `seats` at most, each once (BOARD_SIZE, DUPLICATE_VALUE). */
+            members: components["schemas"]["BoardSeatDto"][];
+            /** @description The board’s seats; empty ones may be filled later. */
+            seats: number;
+        };
         AppointmentBookedView: {
             /** Format: date-time */
             endsAt: string;
@@ -11370,6 +11561,9 @@ export interface components {
             data: components["schemas"]["BlockView"][];
             nextCursor: string | null;
         };
+        BoardNowView: {
+            board: components["schemas"]["BoardTermView"] | null;
+        };
         BoardPostView: {
             author: components["schemas"]["PostAuthorLabelView"];
             /** @enum {string} */
@@ -11408,6 +11602,31 @@ export interface components {
             data: components["schemas"]["BoardPostView"][];
             nextCursor: string | null;
         };
+        /** @enum {string} */
+        BoardRole: "chair" | "secretary" | "treasurer" | "member";
+        BoardSeatDto: {
+            /**
+             * Format: uuid
+             * @description An active account that owns a unit now (OWNER_NOT_ELIGIBLE): from `GET /staff/governance/owners`.
+             */
+            accountId: string;
+            /** @description One chair, one secretary and one treasurer at most. */
+            role: components["schemas"]["BoardRole"];
+        };
+        BoardSeatView: {
+            /** Format: date-time */
+            addedAt: string;
+            /**
+             * Format: date-time
+             * @description When the seat ended before its term did.
+             */
+            endedAt: string | null;
+            /** @description Null once the account was erased. */
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+            role: components["schemas"]["BoardRole"];
+        };
         BoardSuggestionView: {
             done: components["schemas"]["DoneNoteView"] | null;
             /** Format: uuid */
@@ -11423,6 +11642,37 @@ export interface components {
         };
         BoardSuggestionViewList: {
             data: components["schemas"]["BoardSuggestionView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        BoardTermSource: "appointed" | "elected";
+        /**
+         * @description `lapsed`: past its end with no board after it; its members hold nothing until one is appointed or elected.
+         * @enum {string}
+         */
+        BoardTermStatus: "current" | "lapsed" | "ended";
+        BoardTermView: {
+            /** Format: uuid */
+            electionId: string | null;
+            /**
+             * Format: date-time
+             * @description When the next board took over.
+             */
+            endedAt: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            members: components["schemas"]["BoardSeatView"][];
+            seats: number;
+            source: components["schemas"]["BoardTermSource"];
+            /** Format: date-time */
+            startsAt: string;
+            /** @description `lapsed`: past its end with no board after it; its members hold nothing until one is appointed or elected. */
+            status: components["schemas"]["BoardTermStatus"];
+        };
+        BoardTermViewList: {
+            data: components["schemas"]["BoardTermView"][];
             nextCursor: string | null;
         };
         BookingPersonView: {
@@ -11762,6 +12012,9 @@ export interface components {
         CategoryViewList: {
             data: components["schemas"]["CategoryView"][];
             nextCursor: string | null;
+        };
+        ChangeBoardRoleDto: {
+            role: components["schemas"]["BoardRole"];
         };
         ChangePasswordDto: {
             currentPassword: string;
@@ -13636,6 +13889,10 @@ export interface components {
             data: components["schemas"]["EmergencyView"][];
             nextCursor: string | null;
         };
+        EndBoardSeatDto: {
+            /** @description From the closed list `boardMemberEnd`. */
+            reasonCode: string;
+        };
         EndShiftDto: {
             /** @description The ids of the checklist items ticked: every active one (422 HANDOVER_CHECKLIST_INCOMPLETE, params.missing). A retired one is ignored. */
             checklist?: string[];
@@ -14517,6 +14774,16 @@ export interface components {
              * @enum {string|null}
              */
             updatedBy: "manager" | "platform" | null;
+        };
+        GovernanceOwnerView: {
+            /** Format: uuid */
+            accountId: string;
+            fullName: string | null;
+            unitCodes: string[];
+        };
+        GovernanceOwnerViewList: {
+            data: components["schemas"]["GovernanceOwnerView"][];
+            nextCursor: string | null;
         };
         GrantConsentDto: {
             code: components["schemas"]["ConsentCode"];
@@ -18824,6 +19091,55 @@ export interface components {
         };
         StaffAppointmentSlotViewList: {
             data: components["schemas"]["StaffAppointmentSlotView"][];
+            nextCursor: string | null;
+        };
+        StaffBoardNowView: {
+            /** @description The open term, current or lapsed; null before the first board. */
+            board: components["schemas"]["StaffBoardTermView"] | null;
+        };
+        StaffBoardSeatView: {
+            /** Format: uuid */
+            accountId: string;
+            /** Format: date-time */
+            addedAt: string;
+            /** @description From `boardMemberEnd` or `boardMemberSystemEnd`. */
+            endReason: string | null;
+            /**
+             * Format: date-time
+             * @description When the seat ended before its term did.
+             */
+            endedAt: string | null;
+            /** @description Null once the account was erased. */
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+            role: components["schemas"]["BoardRole"];
+        };
+        StaffBoardTermView: {
+            /** Format: uuid */
+            electionId: string | null;
+            /** @enum {string|null} */
+            endReason: "succeeded" | "replaced" | null;
+            /**
+             * Format: date-time
+             * @description When the next board took over.
+             */
+            endedAt: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description Every seat, ended ones too. */
+            members: components["schemas"]["StaffBoardSeatView"][];
+            seats: number;
+            source: components["schemas"]["BoardTermSource"];
+            /** Format: date-time */
+            startsAt: string;
+            /** @description `lapsed`: past its end with no board after it; its members hold nothing until one is appointed or elected. */
+            status: components["schemas"]["BoardTermStatus"];
+        };
+        StaffBoardTermViewList: {
+            data: components["schemas"]["StaffBoardTermView"][];
             nextCursor: string | null;
         };
         StaffBookingView: {
@@ -25160,6 +25476,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GateView"];
+                };
+            };
+        };
+    };
+    GovernanceBoardController_now: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardNowView"];
+                };
+            };
+        };
+    };
+    GovernanceBoardController_terms: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardTermViewList"];
                 };
             };
         };
@@ -32715,6 +33073,172 @@ export interface operations {
                 };
                 content: {
                     "text/csv": string;
+                };
+            };
+        };
+    };
+    StaffBoardController_now: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffBoardNowView"];
+                };
+            };
+        };
+    };
+    StaffBoardController_appoint: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppointBoardDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffBoardTermView"];
+                };
+            };
+        };
+    };
+    StaffBoardController_add: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BoardSeatDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffBoardTermView"];
+                };
+            };
+        };
+    };
+    StaffBoardController_role: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeBoardRoleDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffBoardTermView"];
+                };
+            };
+        };
+    };
+    StaffBoardController_end: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EndBoardSeatDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffBoardTermView"];
+                };
+            };
+        };
+    };
+    StaffBoardController_terms: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffBoardTermViewList"];
+                };
+            };
+        };
+    };
+    StaffBoardController_owners: {
+        parameters: {
+            query?: {
+                /** @description Part of a name or a unit code, any case. */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernanceOwnerViewList"];
                 };
             };
         };

@@ -1711,6 +1711,8 @@ enum NotificationCategory {
   permits
   /// The guards' work: shifts, the roster, tasks, swaps, instructions (ADR 0050).
   guard_duty
+  /// The owners' board, its polls and elections (ADR 0051).
+  governance
 
   @@map("notification_category")
 }

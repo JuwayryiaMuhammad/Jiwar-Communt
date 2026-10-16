@@ -7,6 +7,7 @@ import { PLATFORM_ROUTE_KEY } from '../common/guards/platform-route.decorator';
 import { IS_PUBLIC_KEY } from '../common/guards/public.decorator';
 import { GlobalDbService } from '../database/global-db.service';
 import { PrismaService } from '../database/prisma.service';
+import { DerivedGrants, isDerived } from './derived-grants';
 import { PermissionsService } from './permissions.service';
 import type { Permission } from './permissions';
 import {
@@ -23,7 +24,9 @@ import {
  *    access token expires (ADR 0004);
  * 2. puts the role and its permissions version in the request context;
  * 3. checks `@RequirePermissions(...)` (all of them) or
- *    `@RequireAnyPermission(...)` (at least one) (ADR 0010).
+ *    `@RequireAnyPermission(...)` (at least one) (ADR 0010). A derived
+ *    permission (ADR 0051) is asked of its check, only when the role does
+ *    not settle it.
  */
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -33,6 +36,7 @@ export class PermissionsGuard implements CanActivate {
     private readonly prisma: PrismaService,
     private readonly globalDb: GlobalDbService,
     private readonly permissions: PermissionsService,
+    private readonly derived: DerivedGrants,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -108,6 +112,18 @@ export class PermissionsGuard implements CanActivate {
     );
     if (required?.length && required.every((p) => granted.has(p))) return true;
     if (anyOf?.length && anyOf.some((p) => granted.has(p))) return true;
+    // Only now the derived ones: a request the role settles costs nothing.
+    const holds = (p: Permission) =>
+      granted.has(p) ||
+      (isDerived(p) ? this.derived.holds(p, accountId) : false);
+    if (required?.length && required.some(isDerived)) {
+      let all = true;
+      for (const p of required) if (!(await holds(p))) all = false;
+      if (all) return true;
+    }
+    if (anyOf?.length && anyOf.some(isDerived)) {
+      for (const p of anyOf) if (await holds(p)) return true;
+    }
     throw appError.forbidden(
       ErrorCode.FORBIDDEN,
       'Missing permission for this action',

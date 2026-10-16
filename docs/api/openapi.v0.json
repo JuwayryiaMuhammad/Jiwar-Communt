@@ -15472,7 +15472,7 @@
             "type": "string"
           },
           "permissions": {
-            "description": "What the role allows now (ADR 0010), sorted: what the API will check on the holder's next request. For showing or hiding an action; every route still decides for itself.",
+            "description": "What the role allows now (ADR 0010), and what the account holds by what it is (a sitting board member's `governance.board`, ADR 0051), sorted: what the API will check on the holder's next request. For showing or hiding an action; every route still decides for itself.",
             "items": {
               "type": "string"
             },
@@ -17190,7 +17190,8 @@
           "finance",
           "safety",
           "permits",
-          "guard_duty"
+          "guard_duty",
+          "governance"
         ],
         "type": "string"
       },

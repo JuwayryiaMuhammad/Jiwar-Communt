@@ -50,6 +50,10 @@ export class RolesController {
   @ApiOperation({ summary: 'List the permission catalog' })
   @ApiOkResponse({ type: ListOf(PermissionView) })
   catalog(): ListResponse<PermissionView> {
-    return bounded(Object.entries(PERMISSIONS), (e) => PermissionView.from(e));
+    // A derived permission is no role's to hold (ADR 0051): not offered.
+    return bounded(
+      Object.entries(PERMISSIONS).filter(([, d]) => !('derived' in d)),
+      (e) => PermissionView.from(e),
+    );
   }
 }

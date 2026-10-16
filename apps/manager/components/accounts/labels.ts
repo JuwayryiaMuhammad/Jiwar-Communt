@@ -27,6 +27,7 @@ export const NOTIFICATION_CATEGORY_TEXT: Record<string, string> = {
   bookings: 'Bookings of the facilities and the club',
   safety: 'Emergencies and gate services',
   permits: 'Permits: works and contractors, moves, material exits, events',
+  governance: 'The owners’ board: its polls, elections and results',
 };
 
 /** Personal fields an erasure blanks, as the scope lists them. */

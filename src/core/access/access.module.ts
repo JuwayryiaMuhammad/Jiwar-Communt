@@ -1,6 +1,7 @@
 import { RolesController } from './roles.controller';
 import { Global, Module } from '@nestjs/common';
 import { ACCESS_CATALOG, CODE_ACCESS_CATALOG } from './access-catalog';
+import { DerivedGrants } from './derived-grants';
 import { PermissionsService } from './permissions.service';
 import { RoleProvisioner } from './role-provisioner';
 import { ResourceAccess } from './resource-access';
@@ -14,6 +15,7 @@ import { StaffRecipients } from './staff-recipients';
   providers: [
     { provide: ACCESS_CATALOG, useValue: CODE_ACCESS_CATALOG },
     RoleProvisioner,
+    DerivedGrants,
     PermissionsService,
     RolesService,
     RoleLifecycle,
@@ -25,6 +27,7 @@ import { StaffRecipients } from './staff-recipients';
     StaffRecipients,
     ACCESS_CATALOG,
     RoleProvisioner,
+    DerivedGrants,
     PermissionsService,
     RolesService,
     RoleLifecycle,

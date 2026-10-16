@@ -65,7 +65,7 @@ export class MeView {
   @ApiProperty({
     type: [String],
     description:
-      "What the role allows now (ADR 0010), sorted: what the API will check on the holder's next request. For showing or hiding an action; every route still decides for itself.",
+      "What the role allows now (ADR 0010), and what the account holds by what it is (a sitting board member's `governance.board`, ADR 0051), sorted: what the API will check on the holder's next request. For showing or hiding an action; every route still decides for itself.",
   })
   permissions: string[];
 
@@ -73,11 +73,12 @@ export class MeView {
     a: AccountRecord,
     photoUrl: string | null,
     role: RoleWithPermissions,
+    derived: readonly string[] = [],
   ): MeView {
     return {
       ...MeView.profile(a, photoUrl),
       role: { id: role.id, key: role.key, name: role.name },
-      permissions: [...role.permissions].sort(),
+      permissions: [...new Set([...role.permissions, ...derived])].sort(),
     };
   }
 

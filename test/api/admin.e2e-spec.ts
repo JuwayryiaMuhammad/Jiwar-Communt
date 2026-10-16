@@ -50,9 +50,17 @@ describe('API v0 — admin', () => {
       token: manager(),
     }).expect(200);
     expect(keyPaths(catalog.body)).toEqual(listKeys(['key', 'kinds']));
-    expect((catalog.body as { data: unknown[] }).data).toHaveLength(
-      Object.keys(PERMISSIONS).length,
+    // Every permission a role may hold; a derived one (ADR 0051) is no
+    // role's, so the catalog leaves it out.
+    const offered = (catalog.body as { data: { key: string }[] }).data.map(
+      (p) => p.key,
     );
+    expect(offered).toEqual(
+      Object.entries(PERMISSIONS)
+        .filter(([, d]) => !('derived' in d))
+        .map(([key]) => key),
+    );
+    expect(offered).not.toContain('governance.board');
 
     const defaults = DEFAULT_ROLES.find(
       (r) => r.key === 'resident',

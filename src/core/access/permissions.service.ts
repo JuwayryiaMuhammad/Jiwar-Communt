@@ -7,6 +7,7 @@ import { TenantContextMissingError } from '../common/errors';
 import { PrismaService } from '../database/prisma.service';
 import { REDIS } from '../redis/redis.module';
 import { ACCESS_CATALOG, type AccessCatalog } from './access-catalog';
+import { DerivedGrants, isDerived } from './derived-grants';
 import type { Permission } from './permissions';
 
 /** Only for cleanup: a key is correct forever because it includes the version. */
@@ -33,6 +34,7 @@ export class PermissionsService {
     private readonly cls: ClsService<AppClsStore>,
     @Inject(REDIS) private readonly redis: Redis,
     @Inject(ACCESS_CATALOG) private readonly catalog: AccessCatalog,
+    private readonly derived: DerivedGrants,
   ) {}
 
   /** Permissions of the current account's role, as set by PermissionsGuard. */
@@ -47,7 +49,13 @@ export class PermissionsService {
     return this.forRole(tenantId, roleId, version, kind);
   }
 
+  /** The role's permissions, or a derived one the account holds now. */
   async has(permission: Permission): Promise<boolean> {
+    if (isDerived(permission)) {
+      const accountId = this.cls.get('accountId');
+      if (!accountId) throw new TenantContextMissingError();
+      return this.derived.holds(permission, accountId);
+    }
     return (await this.current()).has(permission);
   }
 

@@ -75,4 +75,6 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'guard_instructions.manage': 'Send guards instructions they acknowledge, and archive them',
   'guard_reports.read': 'Read and export the guards’ daily report',
   'found_items.manage': 'Receive found items from the gate and record claims at the office',
+  'governance.read': 'See the owners’ board, its polls and elections, and vote for the units one owns',
+  'governance.manage': 'Keep the owners’ board: appoint it, certify elections, and run polls and elections for it',
 };

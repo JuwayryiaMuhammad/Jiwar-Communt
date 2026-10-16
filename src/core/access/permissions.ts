@@ -16,6 +16,14 @@ import type { AccountType } from '@prisma/client';
 
 export interface PermissionDefinition {
   kinds: readonly AccountType[];
+  /**
+   * Held by what an account is, never by its role (ADR 0051): a sitting
+   * board member holds `governance.board` while the seat lasts. `kinds` is
+   * empty, so no role may hold it (the API refuses it, a grant made in the
+   * database never counts); the domain that owns the fact registers its
+   * check with `DerivedGrants`, asked on every request, never cached.
+   */
+  derived?: true;
 }
 
 export const PERMISSIONS = {
@@ -174,6 +182,16 @@ export const PERMISSIONS = {
   'guard_instructions.manage': { kinds: ['staff', 'manager'] },
   'guard_reports.read': { kinds: ['staff', 'manager'] },
   'found_items.manage': { kinds: ['staff', 'manager'] },
+  // Governance (ADR 0051). Owners read the board, the polls and the
+  // elections and vote with `governance.read` (capabilities.governanceVote
+  // decides per unit; a tenant sees nothing). `governance.board` is a
+  // sitting board member's, derived from the seat: it puts polls and
+  // elections to the owners and publishes the board's decisions and
+  // minutes. `governance.manage` keeps the board register, appoints,
+  // disqualifies, certifies, and may do whatever the board does.
+  'governance.read': { kinds: ['resident'] },
+  'governance.board': { kinds: [], derived: true },
+  'governance.manage': { kinds: ['manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

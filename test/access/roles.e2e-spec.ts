@@ -93,6 +93,7 @@ describe('Roles', () => {
         'emergencies.report',
         'facilities.book',
         'gate_services.request',
+        'governance.read',
         'household.delegate',
         'household.manage',
         'neighbours.board',
@@ -193,6 +194,16 @@ describe('Roles', () => {
     ).rejects.toMatchObject({ code: 'PERMISSION_NOT_ASSIGNABLE' });
   });
 
+  it('a derived permission is no role’s to hold, the manager’s or a resident’s (ADR 0051)', async () => {
+    const c = await compound();
+    for (const roleId of [c.residentRole.id, c.managerRole.id])
+      await expect(
+        as(c.tenant.id, c.manager.id, () =>
+          roles.replacePermissions(roleId, ['units.read', 'governance.board']),
+        ),
+      ).rejects.toMatchObject({ code: 'PERMISSION_NOT_ASSIGNABLE' });
+  });
+
   it('protects the manager role from lockout', async () => {
     const c = await compound();
     for (const dropped of ['roles.manage', 'residents.manage']) {
@@ -246,6 +257,7 @@ describe('Roles', () => {
         'emergencies.report',
         'gate_services.request',
         'permits.request',
+        'governance.read',
       ]),
     );
     expect(await version()).toBe(before);

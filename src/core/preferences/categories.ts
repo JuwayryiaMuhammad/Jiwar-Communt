@@ -31,6 +31,8 @@ export const NOTIFICATION_CATEGORIES = [
   // The guards' work: shifts, the roster, tasks, swaps and instructions
   // (ADR 0050).
   'guard_duty',
+  // The owners' association: the board, its polls and elections (ADR 0051).
+  'governance',
 ] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 

@@ -1475,4 +1475,60 @@ describe('Permission sync', () => {
       }
     });
   });
+
+  it('Phase R7a reaches an existing compound: governance.read for residents, governance.manage for the manager; governance.board, derived from a seat, goes to no role (ADR 0051)', async () => {
+    const r7a = ['governance.read', 'governance.board', 'governance.manage'];
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !r7a.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !r7a.includes(p)),
+      })),
+    };
+    expect(catalogProblems(before)).toEqual([]);
+    const t = newId();
+    await h.globalDb.tenant.create({
+      data: { id: t, name: `Sync R7a compound ${t}` },
+    });
+    await h.asTenant(t, () =>
+      h.tenantTx.withTenantTx(async (tx) => {
+        await new RoleProvisioner(before).provision(tx, t);
+        await tx.tenantSettings.create({ data: { tenantId: t } });
+        await tenantLifecycle.tenantCreated(tx, t);
+      }),
+    );
+
+    const report = await sync(base, t);
+    expect([...report.added].sort()).toEqual([...r7a].sort());
+    expect(report.rolesCreated).toEqual([]);
+    expect((await role(t, 'resident')).permissions).toContain(
+      'governance.read',
+    );
+    expect((await role(t, 'manager')).permissions).toContain(
+      'governance.manage',
+    );
+    // A family member never owns the unit; a staff role never votes.
+    for (const key of [
+      'family_member',
+      'guard',
+      'technician',
+      'maintenance_supervisor',
+      'accountant',
+      'security_supervisor',
+    ])
+      for (const permission of r7a)
+        expect((await role(t, key)).permissions).not.toContain(permission);
+    for (const key of ['resident', 'manager'])
+      expect((await role(t, key)).permissions).not.toContain(
+        'governance.board',
+      );
+    expect(await sync(base, t)).toMatchObject({
+      added: [],
+      rolesCreated: [],
+      rolesChanged: 0,
+    });
+  });
 });

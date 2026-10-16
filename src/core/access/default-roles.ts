@@ -76,6 +76,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'guard_instructions.manage',
       'guard_reports.read',
       'found_items.manage',
+      'governance.manage',
     ],
   },
   {
@@ -101,6 +102,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'emergencies.report',
       'gate_services.request',
       'permits.request',
+      'governance.read',
     ],
   },
   {

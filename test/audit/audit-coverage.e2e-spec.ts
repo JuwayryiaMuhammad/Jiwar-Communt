@@ -322,6 +322,7 @@ describe('Audit coverage', () => {
             'emergencies.report',
             'facilities.book',
             'gate_services.request',
+            'governance.read',
             'household.delegate',
             'household.manage',
             'neighbours.board',

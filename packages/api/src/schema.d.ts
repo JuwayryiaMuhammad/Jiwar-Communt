@@ -15644,7 +15644,7 @@ export interface components {
             idDocumentNumberMasked: string | null;
             idDocumentType: components["schemas"]["IdDocumentType"] | null;
             nationality: string | null;
-            /** @description What the role allows now (ADR 0010), sorted: what the API will check on the holder's next request. For showing or hiding an action; every route still decides for itself. */
+            /** @description What the role allows now (ADR 0010), and what the account holds by what it is (a sitting board member's `governance.board`, ADR 0051), sorted: what the API will check on the holder's next request. For showing or hiding an action; every route still decides for itself. */
             permissions: string[];
             phone: string | null;
             /** @description A short-lived presigned URL of the holder's own photo (ADR 0031), or null. Shown only here and to the guard on a valid scan. */
@@ -16156,7 +16156,7 @@ export interface components {
             sentAt: string;
         };
         /** @enum {string} */
-        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community" | "neighbours" | "bookings" | "vehicles" | "finance" | "safety" | "permits" | "guard_duty";
+        NotificationCategory: "maintenance" | "gate_visitors" | "parcels" | "household" | "account_security" | "management" | "community" | "neighbours" | "bookings" | "vehicles" | "finance" | "safety" | "permits" | "guard_duty" | "governance";
         NotificationView: {
             /** Format: date-time */
             createdAt: string;

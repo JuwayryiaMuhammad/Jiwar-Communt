@@ -14,6 +14,7 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
+import { DerivedGrants } from '../access/derived-grants';
 import { RolesService } from '../access/roles.service';
 import { appError, ErrorCode } from '../common/errors';
 import { ApiArea, NoStore } from '../common/http/decorators';
@@ -44,6 +45,7 @@ export class MeController {
     private readonly roles: RolesService,
     private readonly self: AccountSelfService,
     private readonly deletion: AccountDeletionService,
+    private readonly derived: DerivedGrants,
   ) {}
 
   /** No-store: the photo is a presigned URL (ADR 0031). */
@@ -57,6 +59,7 @@ export class MeController {
       account,
       await this.accounts.myPhotoUrl(),
       await this.roles.current(),
+      await this.derived.heldBy(account.id),
     );
   }
 

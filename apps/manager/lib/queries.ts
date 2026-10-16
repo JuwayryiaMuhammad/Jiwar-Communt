@@ -164,6 +164,20 @@ export interface TaskFilters {
   status?: GuardTaskStatus | '';
   kind?: GuardTaskKind | '';
 }
+// Patrols (ADR 0052).
+export type Checkpoint = Schema<'CheckpointView'>;
+export type CheckpointSecret = Schema<'CheckpointSecretView'>;
+export type PatrolRoute = Schema<'RouteView'>;
+export type PatrolRouteDetail = Schema<'RouteDetailView'>;
+export type PatrolRun = Schema<'RunView'>;
+export type PatrolRunDetail = Schema<'RunDetailView'>;
+export type PatrolRunStatus = Schema<'PatrolRunStatus'>;
+export type PatrolReport = Schema<'PatrolReportView'>;
+export type TrackPoint = Schema<'TrackPointView'>;
+export interface RunFilters extends RosterPeriod {
+  status?: PatrolRunStatus | '';
+  routeId?: string;
+}
 
 // Emergencies and gate services (ADR 0047).
 export type StaffEmergency = Schema<'StaffEmergencyView'>;
@@ -514,6 +528,17 @@ export const keys = {
   governanceElections: (phase: string) => ['governance', 'elections', phase] as const,
   governanceElection: (id: string) => ['governance', 'election', id] as const,
   boardPublications: ['governance', 'publications'] as const,
+  // Patrols (ADR 0052).
+  checkpointsAll: ['patrols', 'checkpoints'] as const,
+  checkpoints: (status: string) => ['patrols', 'checkpoints', status] as const,
+  routesAll: ['patrols', 'routes'] as const,
+  routes: (status: string) => ['patrols', 'routes', 'list', status] as const,
+  route: (id: string) => ['patrols', 'routes', 'detail', id] as const,
+  runsAll: ['patrols', 'runs'] as const,
+  runs: (f: object) => ['patrols', 'runs', 'list', f] as const,
+  run: (id: string) => ['patrols', 'runs', 'detail', id] as const,
+  runTrack: (id: string) => ['patrols', 'runs', 'track', id] as const,
+  patrolReport: (f: object) => ['patrols', 'report', f] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -848,6 +873,30 @@ export const fetchers = {
     unwrap(api.GET('/api/v1/staff/governance/elections/{id}', { params: { path: { id } } })),
   boardPublications: (cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/staff/governance/publications', { params: { query: { cursor, limit } } })),
+  // Patrols (ADR 0052).
+  checkpoints: (status: 'active' | 'retired' | '', cursor?: string, limit = 100) =>
+    unwrap(
+      api.GET('/api/v1/staff/security/patrols/checkpoints', {
+        params: { query: { ...(status ? { status } : {}), cursor, limit } },
+      }),
+    ),
+  routes: (status: 'active' | 'retired' | '', cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/security/patrols/routes', {
+        params: { query: { ...(status ? { status } : {}), cursor, limit } },
+      }),
+    ),
+  route: (id: string) => unwrap(api.GET('/api/v1/staff/security/patrols/routes/{id}', { params: { path: { id } } })),
+  runs: (f: RunFilters, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/security/patrols/runs', {
+        params: { query: { ...(clean(f) as RosterPeriod & { status?: PatrolRunStatus; routeId?: string }), cursor, limit } },
+      }),
+    ),
+  run: (id: string) => unwrap(api.GET('/api/v1/staff/security/patrols/runs/{id}', { params: { path: { id } } })),
+  runTrack: (id: string) => unwrap(api.GET('/api/v1/staff/security/patrols/runs/{id}/track', { params: { path: { id } } })),
+  patrolReport: (f: RosterPeriod & { routeId?: string }) =>
+    unwrap(api.GET('/api/v1/staff/security/patrols/report', { params: { query: clean(f) } })),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

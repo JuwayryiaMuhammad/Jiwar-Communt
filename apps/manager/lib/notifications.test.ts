@@ -181,3 +181,10 @@ test('an election to certify says whether the board has a tie to resolve, and le
   const plain = n('governance_election.awaiting_certification', { tied: 'no' }, 'governance_election', 'e-1');
   assert.equal(notificationText(plain), 'An election closed: certify its result');
 });
+
+test('a patrol run’s notice leads to the runs, for whoever reads them (ADR 0052)', () => {
+  const missed = { kind: 'patrol.missed', targetType: 'patrol_run', targetId: 'r1', params: {} };
+  assert.equal(notificationHref(missed, (p) => p === 'patrols.manage'), '/security/patrols/runs');
+  assert.equal(notificationHref(missed, (p) => p === 'guard_reports.read'), '/security/patrols/runs');
+  assert.equal(notificationHref(missed, () => false), null);
+});

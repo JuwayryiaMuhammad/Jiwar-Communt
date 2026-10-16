@@ -117,6 +117,10 @@ const TEXT: Record<string, (p: P) => string> = {
   'guard_swap.cancelled': () => 'A shift swap no longer applies',
   'guard_instruction.issued': () => 'A new instruction to acknowledge',
   'guard_instruction.urgent': () => 'An urgent instruction to acknowledge',
+  // Patrols (ADR 0052): codes only.
+  'patrol.late': () => 'A patrol at your post has not started',
+  'patrol.missed': () => 'A scheduled patrol was not started',
+  'patrol.incomplete': (p) => `A patrol ended with checkpoints not scanned (${words(p.reason)})`,
   'ticket.assigned': (p) => `${ticket(p)} is assigned to you · ${words(p.priority)} · ${words(p.categoryKey)}${inUnit(p)}`,
   'ticket.unassigned': (p) => `${ticket(p)} was given to someone else${inUnit(p)}`,
   'ticket.status_changed': (p) =>
@@ -253,6 +257,8 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
     return can('governance.manage') ? `/governance/elections/${n.targetId}` : null;
   if (n.targetType === 'governance_poll' && n.targetId)
     return can('governance.manage') ? `/governance/polls/${n.targetId}` : null;
+  // Patrols (ADR 0052): a run's page for whoever reads the runs.
+  if (n.targetType === 'patrol_run') return can('patrols.manage') || can('guard_reports.read') ? '/security/patrols/runs' : null;
   if (n.kind === 'account.deletion_queued') return can('accounts.erase') ? '/deletions' : null;
   if (n.kind === 'account.new_device_login') return '/account';
   if (n.targetType === 'worker_engagement') return can('workers.review') ? '/workers?tab=all' : null;

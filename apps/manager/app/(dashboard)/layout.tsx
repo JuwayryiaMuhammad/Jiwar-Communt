@@ -60,6 +60,10 @@ import {
   FileChartColumn,
   Gavel,
   Landmark,
+  QrCode,
+  Route,
+  Footprints,
+  ChartNoAxesColumn,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -364,6 +368,21 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         },
         { href: '/security/found-items', label: 'Found at the gate', icon: <Briefcase aria-hidden />, show: can('found_items.manage') },
         { href: '/security/reports', label: 'Daily report', icon: <FileChartColumn aria-hidden />, show: can('guard_reports.read') },
+        // Patrols (ADR 0052).
+        { href: '/security/patrols/checkpoints', label: 'Checkpoints', icon: <QrCode aria-hidden />, show: can('patrols.manage') },
+        { href: '/security/patrols/routes', label: 'Patrol routes', icon: <Route aria-hidden />, show: can('patrols.manage') },
+        {
+          href: '/security/patrols/runs',
+          label: 'Patrol runs',
+          icon: <Footprints aria-hidden />,
+          show: can('patrols.manage') || can('guard_reports.read'),
+        },
+        {
+          href: '/security/patrols/report',
+          label: 'Patrol report',
+          icon: <ChartNoAxesColumn aria-hidden />,
+          show: can('patrols.manage') || can('guard_reports.read'),
+        },
       ],
     },
     {

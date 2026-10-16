@@ -334,6 +334,14 @@ const ERROR_TEXT: Record<string, string> = {
   GOVERNANCE_ALREADY_CANDIDATE: 'You stand in this election already.',
   GOVERNANCE_NOT_CERTIFIABLE: 'Voting has not been counted yet.',
   BOARD_PUBLICATION_NOT_FOUND: 'This decision does not exist, or was archived.',
+  // Patrols (ADR 0052).
+  PATROL_CHECKPOINT_NOT_FOUND: 'This checkpoint does not exist.',
+  PATROL_CHECKPOINT_RETIRED: 'This checkpoint is retired: nothing changes any more.',
+  PATROL_CHECKPOINT_IN_USE: 'A route in service walks this checkpoint: change the route first.',
+  PATROL_ROUTE_NOT_FOUND: 'This route does not exist.',
+  PATROL_ROUTE_RETIRED: 'This route is retired: nothing changes any more.',
+  PATROL_RUN_NOT_FOUND: 'This patrol run does not exist.',
+  PATROL_RUN_CLOSED: 'This run is not scheduled any more: it started, or it is over.',
 };
 
 const FIELD_TEXT: Record<string, string> = {
@@ -421,6 +429,8 @@ const FIELD_TEXT: Record<string, string> = {
   WINDOW_TOO_LONG: 'The window is too long.',
   OWNER_NOT_ELIGIBLE: 'Not an owner of a unit of the compound now.',
   BOARD_SIZE: 'A board of 3 to 15 seats.',
+  PATROL_SCHEDULE_OVERLAP: 'Two start times are closer than a run’s window.',
+  CHECKPOINT_NOT_AVAILABLE: 'A checkpoint is not in service.',
 };
 
 export function errorText(error: unknown): string {

@@ -137,6 +137,11 @@ const STATUS_TONE: Record<string, Tone> = {
   elected: 'green',
   not_elected: 'beige',
   ineligible: 'error',
+  // Patrols (ADR 0052). A run is `scheduled`, `in_progress`, `completed`
+  // or `cancelled` (above), or one of these.
+  incomplete: 'terracotta',
+  timed_out: 'error',
+  missed: 'error',
 };
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {

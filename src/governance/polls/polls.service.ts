@@ -38,7 +38,9 @@ import {
   type MyUnit,
   type RollCallEntry,
 } from '../contests/contests.service';
+import { BoardService } from '../board/board.service';
 import { dbNow } from '../db-clock';
+import { GovernanceNotices } from '../governance-notices';
 import { POLL_LIMITS, pollResult, YES_NO } from './poll-rules';
 
 export const GOVERNANCE_POLL_RESOURCE = 'governance_poll';
@@ -118,6 +120,8 @@ export class GovernancePollsService implements OnModuleInit {
     private readonly sweeps: ContestSweeps,
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
+    private readonly notices: GovernanceNotices,
+    private readonly board: BoardService,
   ) {}
 
   onModuleInit(): void {
@@ -150,6 +154,15 @@ export class GovernancePollsService implements OnModuleInit {
     this.sweeps.register('poll', {
       open: (tx, contest, now) => this.openContest(tx, contest, now),
       close: (tx, contest) => this.closeContest(tx, contest),
+      remind: async (tx, contest, accounts) => {
+        const poll = await this.pollOf(tx, contest);
+        await this.notices.send(
+          tx,
+          accounts,
+          'governance_poll.closing_soon',
+          poll.id,
+        );
+      },
     });
   }
 
@@ -428,6 +441,7 @@ export class GovernancePollsService implements OnModuleInit {
       // `ballot`, never a key named secret: the audit withholds those.
       metadata: { electorate: electors.length, ballot: ballotOf(contest) },
     });
+    await this.notices.send(tx, electors, 'governance_poll.opened', poll.id);
   }
 
   /** Voting closed: the counts, the turnout and the result, once. */
@@ -465,6 +479,25 @@ export class GovernancePollsService implements OnModuleInit {
       action: 'governance_poll.closed',
       targetId: poll.id,
       metadata: { result, turnout, electorate: contest.electorate ?? 0 },
+    });
+    const electors = (
+      await tx.governanceElector.findMany({
+        where: { contestId: contest.id },
+        select: { accountId: true },
+      })
+    ).map((e) => e.accountId);
+    await this.notices.send(
+      tx,
+      [...electors, ...(await this.board.seatedAccounts(tx, await dbNow(tx)))],
+      'governance_poll.result',
+      poll.id,
+      { result },
+    );
+  }
+
+  private pollOf(tx: TenantTxClient, contest: GovernanceContest) {
+    return tx.governancePoll.findFirstOrThrow({
+      where: { contestId: contest.id },
     });
   }
 

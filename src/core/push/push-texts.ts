@@ -1461,6 +1461,36 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'أصبحت عضوًا في مجلس الملاك. افتح التطبيق لعرض المجلس.',
     },
   },
+  'governance_poll.opened': {
+    en: {
+      title: 'A vote is open',
+      body: 'The owners’ board opened a vote. Open the app to cast your unit’s vote.',
+    },
+    ar: {
+      title: 'تصويت مفتوح',
+      body: 'فتح مجلس الملاك تصويتًا. افتح التطبيق للإدلاء بصوت وحدتك.',
+    },
+  },
+  'governance_poll.closing_soon': {
+    en: {
+      title: 'A vote closes soon',
+      body: 'A vote closes within a day and your unit has not voted. Open the app to vote.',
+    },
+    ar: {
+      title: 'تصويت يُغلق قريبًا',
+      body: 'يُغلق تصويت خلال يوم ولم تصوّت وحدتك بعد. افتح التطبيق للتصويت.',
+    },
+  },
+  'governance_poll.result': {
+    en: {
+      title: 'A vote has a result',
+      body: 'A vote of the owners closed. Open the app to see the result.',
+    },
+    ar: {
+      title: 'نتيجة تصويت',
+      body: 'أُغلق تصويت للملاك. افتح التطبيق لمعرفة النتيجة.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

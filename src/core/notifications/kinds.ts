@@ -1357,6 +1357,30 @@ export const NOTIFICATION_KINDS = {
     target: 'board_term',
     params: { role: {} },
   },
+  /** Voting opened on a poll: every elector (a unit's voting owner). */
+  'governance_poll.opened': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_poll',
+    params: {},
+  },
+  /** A poll closes within a day: the electors whose unit has not voted. */
+  'governance_poll.closing_soon': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_poll',
+    params: {},
+  },
+  /** A poll's result: its electors and the sitting board. */
+  'governance_poll.result': {
+    priority: 'normal',
+    category: 'governance',
+    critical: false,
+    target: 'governance_poll',
+    params: { result: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

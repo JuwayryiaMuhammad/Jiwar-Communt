@@ -41,7 +41,14 @@ export const ENTRIES_ROUTES: Row[] = [
           field: 'subjectType',
           code: 'INVALID_VALUE',
           params: {
-            allowed: ['visitor_pass', 'worker_engagement', 'gate_request'],
+            allowed: [
+              'visitor_pass',
+              'worker_engagement',
+              'gate_request',
+              'permit_worker',
+              'event_guest',
+              'move_permit',
+            ],
           },
         },
         { field: 'subjectId', code: 'INVALID_UUID' },

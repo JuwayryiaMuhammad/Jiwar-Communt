@@ -569,6 +569,12 @@ export const ErrorCode = {
   /** The event has started: its guest list takes no one more (409). */
   PERMIT_STARTED: 'PERMIT_STARTED',
   /**
+   * Too many wrong ID last-fours (429): the guard (params.scope `guard`, 5
+   * in 15 minutes) or the worker (`worker`, 10 in a day) is locked out
+   * until the window passes or the management unlocks them.
+   */
+  PERMIT_ID_LOCKED: 'PERMIT_ID_LOCKED',
+  /**
    * The server holds no PAYMENT_CREDENTIALS_KEY, so no credential can be
    * stored and online payment cannot be turned on (503, ADR 0046).
    */

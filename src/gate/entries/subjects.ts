@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import type {
   GateApprovalRequest,
   GateSubjectType,
+  PermitGuest,
+  PermitWorker,
+  UnitPermit,
   VisitorPass,
 } from '@prisma/client';
 import {
@@ -9,7 +12,12 @@ import {
   type GateEngagement,
   type GateSchedule,
 } from '../../community';
+import { localParts } from '../../core/common/slots/day-slots';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
+import { workRules, workTimeRefusal } from '../permits/permit-rules';
+
+/** Guests may come this long before an event starts (ADR 0049). */
+export const EVENT_EARLY_MS = 30 * 60_000;
 
 /** Why a code or a subject does not let someone in right now. */
 export type Refusal =
@@ -28,7 +36,14 @@ export type Refusal =
   | 'expired_qr'
   | 'not_resident'
   | 'account_inactive'
-  | 'revoked';
+  | 'revoked'
+  // Permits (ADR 0049): the compound's work hours and days off, the ID's
+  // last four, someone taken off the permit.
+  | 'outside_work_hours'
+  | 'day_off'
+  | 'id_mismatch'
+  | 'worker_removed'
+  | 'guest_removed';
 
 /** Who comes through the gate, resolved in this compound (ADR 0028). */
 export interface GateSubject {
@@ -46,6 +61,10 @@ export interface GateSubject {
   engagement?: GateEngagement;
   /** A visitor or delivery let in on a household's approval. */
   request?: GateApprovalRequest;
+  /** A permit's subject (ADR 0049): the permit, and its worker or guest. */
+  permit?: UnitPermit;
+  permitWorker?: PermitWorker;
+  guest?: PermitGuest;
 }
 
 /**
@@ -102,22 +121,79 @@ export class GateSubjects {
     };
   }
 
+  /**
+   * A permit's subject (ADR 0049): a contractor worker of a works permit, a
+   * guest of an event, or a move's truck (the permit itself). One person
+   * (one truck) each; no name here: the guard reads it on the permit.
+   */
+  async permitSubject(
+    tx: TenantTxClient,
+    type: 'permit_worker' | 'event_guest' | 'move_permit',
+    id: string,
+  ): Promise<GateSubject | null> {
+    let permitId = id;
+    let permitWorker: PermitWorker | undefined;
+    let guest: PermitGuest | undefined;
+    if (type === 'permit_worker') {
+      const w = await tx.permitWorker.findUnique({ where: { id } });
+      if (!w) return null;
+      permitWorker = w;
+      permitId = w.permitId;
+    } else if (type === 'event_guest') {
+      const g = await tx.permitGuest.findUnique({ where: { id } });
+      if (!g) return null;
+      guest = g;
+      permitId = g.permitId;
+    }
+    const permit = await tx.unitPermit.findUnique({ where: { id: permitId } });
+    if (!permit || (type === 'move_permit' && permit.kind !== 'move'))
+      return null;
+    return {
+      type,
+      id,
+      unitId: permit.unitId,
+      unitCode: await this.community.unitCode(tx, permit.unitId),
+      kind:
+        type === 'permit_worker'
+          ? 'contractor'
+          : type === 'event_guest'
+            ? 'event_guest'
+            : 'move',
+      partySize: 1,
+      visitorDetailsId: null,
+      workerName: null,
+      permit,
+      ...(permitWorker ? { permitWorker } : {}),
+      ...(guest ? { guest } : {}),
+    };
+  }
+
   /** By id, for entries; null when it is not in this compound. */
   async byId(
     tx: TenantTxClient,
     type: GateSubjectType,
     id: string,
   ): Promise<GateSubject | null> {
-    if (type === 'visitor_pass') {
-      const pass = await tx.visitorPass.findUnique({ where: { id } });
-      return pass ? this.pass(tx, pass) : null;
+    switch (type) {
+      case 'visitor_pass': {
+        const pass = await tx.visitorPass.findUnique({ where: { id } });
+        return pass ? this.pass(tx, pass) : null;
+      }
+      case 'worker_engagement': {
+        const e = await this.community.engagementById(tx, id);
+        return e ? this.worker(e) : null;
+      }
+      case 'gate_request': {
+        const r = await tx.gateApprovalRequest.findUnique({ where: { id } });
+        return r ? this.request(tx, r) : null;
+      }
+      case 'permit_worker':
+      case 'event_guest':
+      case 'move_permit':
+        return this.permitSubject(tx, type, id);
+      default:
+        return unknownType(type);
     }
-    if (type === 'worker_engagement') {
-      const e = await this.community.engagementById(tx, id);
-      return e ? this.worker(e) : null;
-    }
-    const r = await tx.gateApprovalRequest.findUnique({ where: { id } });
-    return r ? this.request(tx, r) : null;
   }
 
   /** Null when the subject may come in at `at`, else why not. */
@@ -129,7 +205,50 @@ export class GateSubjects {
   ): Promise<Refusal | null> {
     if (s.pass) return this.passRefusal(tx, s.pass, at, timeZone);
     if (s.engagement) return this.workerRefusal(s.engagement, at, timeZone);
+    if (s.permit) return this.permitRefusal(tx, s, at, timeZone);
     return 'unknown_code';
+  }
+
+  /**
+   * A permit's subject (ADR 0049): the permit approved and in its window
+   * (guests may come half an hour early), the worker or guest still on it;
+   * for a worker and a truck, the compound's work days and hours as they
+   * stand at `at`, and a worker within the permit's own daily hours too.
+   * The last four of a worker's ID are checked by the entry, after this.
+   */
+  private async permitRefusal(
+    tx: TenantTxClient,
+    s: GateSubject,
+    at: Date,
+    timeZone: string,
+  ): Promise<Refusal | null> {
+    const p = s.permit!;
+    if (p.status === 'pending' || p.status === 'rejected')
+      return 'not_approved';
+    if (p.status === 'cancelled') return 'cancelled';
+    if (p.status === 'revoked') return 'revoked';
+    if (p.status === 'used') return 'used';
+    const early = s.type === 'event_guest' ? EVENT_EARLY_MS : 0;
+    if (at.getTime() < p.startsAt.getTime() - early) return 'not_yet_valid';
+    if (at.getTime() >= p.endsAt.getTime()) return 'expired';
+    if (s.permitWorker && (s.permitWorker.removedAt || s.permitWorker.purgedAt))
+      return 'worker_removed';
+    if (s.guest && (s.guest.removedAt || s.guest.purgedAt))
+      return 'guest_removed';
+    if (s.type === 'event_guest') return null;
+    const rules = workRules(
+      await tx.permitSettings.findUniqueOrThrow({
+        where: { tenantId: p.tenantId },
+      }),
+    );
+    const compound = workTimeRefusal(rules, at, timeZone);
+    if (compound) return compound;
+    if (s.type === 'permit_worker') {
+      const { minute } = localParts(at, timeZone);
+      if (minute < p.dailyFrom! || minute >= p.dailyTo!)
+        return 'outside_work_hours';
+    }
+    return null;
   }
 
   private async passRefusal(
@@ -171,4 +290,9 @@ export class GateSubjects {
       return 'outside_schedule';
     return null;
   }
+}
+
+/** A subject type this code does not know: a programming error, never a 404. */
+export function unknownType(type: never): never {
+  throw new Error(`Unknown gate subject type ${String(type)}`);
 }

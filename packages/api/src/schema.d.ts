@@ -1645,7 +1645,10 @@ export interface paths {
         /** Read the gate log */
         get: operations["EntriesController_list"];
         put?: never;
-        /** Record an entry or exit */
+        /**
+         * Record an entry or exit
+         * @description A permit’s subject (ADR 0049) — a contractor worker, an event’s guest, a move’s truck — comes in against the permit (`method: permit`): approved, in its window, within the compound’s work days and hours (works and moves) and the permit’s own daily hours (a worker), and for a worker the last four of their ID (`idLast4`). Exits are always recorded.
+         */
         post: operations["EntriesController_record"];
         delete?: never;
         options?: never;
@@ -1932,6 +1935,46 @@ export interface paths {
         put?: never;
         /** Start my shift at a gate */
         post: operations["ShiftsController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/unit-permits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Find the permits in force today
+         * @description By a unit’s code or a permit’s reference: approved permits whose window touches today. No faces here: open one. Rate-limited and audited on the shift.
+         */
+        get: operations["GatePermitsController_find"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/unit-permits/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a permit at the gate
+         * @description In force today, or with someone of it inside. The workers’ faces (never the last four of their ID), the truck, the goods, and the guest list while the event is on. Then record entries with `POST /gate/entries`.
+         */
+        get: operations["GatePermitsController_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -7332,6 +7375,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/unit-permits/{id}/guards/{guardId}/unlock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Unlock a guard locked out of the ID check
+         * @description Five wrong last-fours in 15 minutes lock a guard out (PERMIT_ID_LOCKED), on every permit. From a works permit’s detail, which lists the guards locked out.
+         */
+        post: operations["StaffPermitsController_unlockGuard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/unit-permits/{id}/reject": {
         parameters: {
             query?: never;
@@ -7386,6 +7449,26 @@ export interface paths {
          * @description From then on the guard refuses them (`worker_removed`).
          */
         post: operations["StaffPermitsController_removeWorker"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/unit-permits/{id}/workers/{workerId}/unlock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Unlock a contractor worker locked out of the ID check
+         * @description Ten wrong last-fours in a day lock a worker out (PERMIT_ID_LOCKED); a guard’s typing errors must not cost them a working day.
+         */
+        post: operations["StaffPermitsController_unlockWorker"];
         delete?: never;
         options?: never;
         head?: never;
@@ -12951,7 +13034,13 @@ export interface components {
         /** @enum {string} */
         GateDirection: "in" | "out";
         /** @enum {string} */
-        GateEntryMethod: "code" | "qr" | "approval" | "guard" | "system";
+        GateEntryMethod: "code" | "qr" | "approval" | "guard" | "system" | "permit";
+        GateEventView: {
+            guestCount: number;
+            /** @description The names to check, from half an hour before the start to the end; null otherwise. */
+            guests: components["schemas"]["GatePermitGuestView"][] | null;
+            title: string | null;
+        };
         GateInstructionsDto: {
             delivery: components["schemas"]["DeliveryInstruction"];
             uninvitedVisitor: components["schemas"]["VisitorInstruction"];
@@ -12967,6 +13056,19 @@ export interface components {
         };
         /** @enum {string} */
         GateKind: "pedestrian" | "vehicle" | "mixed";
+        GateMaterialExitView: {
+            items: components["schemas"]["MaterialItemView"][] | null;
+            photo: components["schemas"]["PresignedReadView"] | null;
+            /** Format: date-time */
+            usedAt: string | null;
+        };
+        GateMoveView: {
+            /** @description The truck is inside now. */
+            inside: boolean;
+            itemsDescription: string | null;
+            truckPlate: string | null;
+            window: components["schemas"]["PermitHoursView"];
+        };
         GateParcelDetailView: {
             carrier: components["schemas"]["ParcelCarrier"];
             events: components["schemas"]["ParcelEventView"][];
@@ -13013,6 +13115,50 @@ export interface components {
         GateParcelViewList: {
             data: components["schemas"]["GateParcelView"][];
             nextCursor: string | null;
+        };
+        GatePermitGuestView: {
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+            inside: boolean;
+            removed: boolean;
+            vehiclePlate: string | null;
+        };
+        GatePermitView: {
+            building: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            event: components["schemas"]["GateEventView"] | null;
+            /** @description Works and moves: when they may go on today, inside the compound’s hours as they stand now; null on a day off (and for the other kinds). */
+            hoursToday: components["schemas"]["PermitHoursView"] | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["UnitPermitKind"];
+            materialExit: components["schemas"]["GateMaterialExitView"] | null;
+            move: components["schemas"]["GateMoveView"] | null;
+            /** @example W-0042 */
+            reference: string;
+            /** Format: date-time */
+            startsAt: string;
+            status: components["schemas"]["PermitViewStatus"];
+            unitCode: string;
+            works: components["schemas"]["GateWorksView"] | null;
+        };
+        GatePermitViewList: {
+            data: components["schemas"]["GatePermitView"][];
+            nextCursor: string | null;
+        };
+        GatePermitWorkerView: {
+            fullName: string | null;
+            /** Format: uuid */
+            id: string;
+            idType: components["schemas"]["IdDocumentType"];
+            /** @description In the compound now. */
+            inside: boolean;
+            /** @description Their face, to match before typing the last four of the ID they show. Only on one permit. */
+            photo: components["schemas"]["PresignedReadView"] | null;
+            /** @description Taken off the permit: refused (`worker_removed`). */
+            removed: boolean;
         };
         /** @enum {string} */
         GateRequestKind: "uninvited_visitor" | "delivery" | "worker_off_schedule";
@@ -13107,7 +13253,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        GateSubjectType: "visitor_pass" | "worker_engagement" | "gate_request";
+        GateSubjectType: "visitor_pass" | "worker_engagement" | "gate_request" | "permit_worker" | "event_guest" | "move_permit";
         GateView: {
             /** Format: date-time */
             createdAt: string;
@@ -13122,6 +13268,11 @@ export interface components {
         GateViewList: {
             data: components["schemas"]["GateView"][];
             nextCursor: string | null;
+        };
+        GateWorksView: {
+            contractorCompany: string | null;
+            workType: components["schemas"]["PermitWorkType"];
+            workers: components["schemas"]["GatePermitWorkerView"][];
         };
         GatewayEventView: {
             /** @description EGP, as Paymob signed it. */
@@ -13402,9 +13553,16 @@ export interface components {
             gateName: string;
             /** @description How many on this subject are inside now: a group pass lets in one person per entry (ADR 0043); 1 for everyone else. */
             insideCount: number;
-            /** @description The pass kind, the worker capacity or the request kind. */
+            /** @description The pass kind, the worker capacity or the request kind; `contractor`, `event_guest` or `move` for a permit’s subject (ADR 0049). */
             kind: string;
             partySize: number;
+            /**
+             * Format: uuid
+             * @description A permit’s subject (ADR 0049): its permit, to open for the names. Never a name here.
+             */
+            permitId: string | null;
+            /** @example W-0042 */
+            permitReference: string | null;
             /** Format: uuid */
             subjectId: string;
             subjectType: components["schemas"]["GateSubjectType"];
@@ -15069,6 +15227,12 @@ export interface components {
             /** @example 180 */
             worksMaxDays: number;
         };
+        PermitLockoutsView: {
+            /** @description Guards locked out (five wrong last-fours in 15 minutes, on any permit). */
+            guards: components["schemas"]["FirstNameRefView"][];
+            /** @description Workers of this permit locked out (ten wrong last-fours in a day). */
+            workerIds: string[];
+        };
         PermitRulesResponse: {
             /**
              * @description Dated local days off, ascending.
@@ -15658,6 +15822,11 @@ export interface components {
              * @description Client-generated (UUIDv7): a retry with the same id records once.
              */
             id?: string;
+            /**
+             * @description A contractor worker’s `in` (`permit_worker`, ADR 0049): the last four characters of the ID they show, typed by the guard after matching their face. Required, offline too (FIELD_REQUIRED). A wrong one is refused (`id_mismatch`); five in 15 minutes lock the guard out, ten in a day the worker (PERMIT_ID_LOCKED). Never stored, never shown.
+             * @example 4821
+             */
+            idLast4?: string;
             /**
              * Format: date-time
              * @description When it happened (offline guards): up to 24 h back.
@@ -17466,6 +17635,8 @@ export interface components {
             /** Format: uuid */
             id: string;
             kind: components["schemas"]["UnitPermitKind"];
+            /** @description Works, on one permit: who is locked out of the ID check now; null in lists. */
+            lockouts: components["schemas"]["PermitLockoutsView"] | null;
             materialExit: components["schemas"]["MaterialExitDetailsView"] | null;
             move: components["schemas"]["MoveDetailsView"] | null;
             /**
@@ -19067,7 +19238,7 @@ export interface components {
             /** @enum {string|null} */
             next: "in" | "out" | null;
             /** @enum {string|null} */
-            reason: "unknown_code" | "not_yet_valid" | "expired" | "outside_schedule" | "host_inactive" | "used" | "cancelled" | "suspended" | "ended" | "banned" | "not_approved" | "expired_qr" | "not_resident" | "account_inactive" | "revoked" | null;
+            reason: "unknown_code" | "not_yet_valid" | "expired" | "outside_schedule" | "host_inactive" | "used" | "cancelled" | "suspended" | "ended" | "banned" | "not_approved" | "expired_qr" | "not_resident" | "account_inactive" | "revoked" | "outside_work_hours" | "day_off" | "id_mismatch" | "worker_removed" | "guest_removed" | null;
             /** @enum {string} */
             result: "valid" | "invalid";
             /** @enum {string|null} */
@@ -22346,6 +22517,51 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ShiftView"];
+                };
+            };
+        };
+    };
+    GatePermitsController_find: {
+        parameters: {
+            query?: {
+                /** @description A unit’s code: its permits in force today. */
+                unitCode?: string;
+                /** @description A permit’s reference, as the household shows it (`W-42` and `w42` too). Exactly one of the two. */
+                reference?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GatePermitViewList"];
+                };
+            };
+        };
+    };
+    GatePermitsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GatePermitView"];
                 };
             };
         };
@@ -30794,6 +31010,28 @@ export interface operations {
             };
         };
     };
+    StaffPermitsController_unlockGuard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                guardId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPermitView"];
+                };
+            };
+        };
+    };
     StaffPermitsController_reject: {
         parameters: {
             query?: never;
@@ -30859,6 +31097,28 @@ export interface operations {
                 "application/json": components["schemas"]["StaffRemoveWorkerDto"];
             };
         };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPermitView"];
+                };
+            };
+        };
+    };
+    StaffPermitsController_unlockWorker: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                workerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {

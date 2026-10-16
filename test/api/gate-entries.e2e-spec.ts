@@ -55,6 +55,9 @@ const INSIDE = [
   'insideCount',
   'kind',
   'partySize',
+  // A permit's subject names its permit (ADR 0049).
+  'permitId',
+  'permitReference',
   'subjectId',
   'subjectType',
   'unitCode',

@@ -1113,7 +1113,7 @@ describe('API v0 — PII leak scan', () => {
       primaryToken,
       {
         workType: 'renovation',
-        startsOn: day(1),
+        startsOn: day(0),
         endsOn: day(3),
         dailyHours: { from: '09:00', to: '17:00' },
         contractorCompany: 'PII-CONTRACTOR-company',
@@ -1132,6 +1132,10 @@ describe('API v0 — PII leak scan', () => {
         idLast4: 'QZ7X',
       },
     }).expect(201);
+    // Approved: the guard sees it at the gate today.
+    await call(w, 'POST', `/staff/unit-permits/${piiPermit}/approve`, {
+      token: a.tokens.manager,
+    }).expect(200);
 
     /** One id for every param of the path, or each param by name. */
     type Ids = string | Record<string, string>;
@@ -1288,6 +1292,7 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/permits': unit.id,
       '/permits/{id}': piiPermit,
       '/staff/unit-permits/{id}': piiPermit,
+      '/gate/unit-permits/{id}': piiPermit,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented
@@ -1395,6 +1400,8 @@ describe('API v0 — PII leak scan', () => {
       '/staff/finance/reports/collections/export': period,
       // A page long enough for every notice the fixtures leave.
       '/me/notifications': { limit: '100' },
+      // ADR 0049: the guard's lookup takes a unit's code or a reference.
+      '/gate/unit-permits': { unitCode: unit.code },
     };
 
     const leaks: string[] = [];

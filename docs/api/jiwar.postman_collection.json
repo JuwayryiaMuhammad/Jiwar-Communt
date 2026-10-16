@@ -9654,7 +9654,7 @@
               },
               "raw": "{\n  \"subjectType\": \"visitor_pass\",\n  \"subjectId\": \"\",\n  \"direction\": \"in\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `direction` | `in` \\| `out` | yes |  |\n| `id` | string (uuid) |  | Client-generated (UUIDv7): a retry with the same id records once. |\n| `occurredAt` | string (date-time) |  | When it happened (offline guards): up to 24 h back. |\n| `subjectId` | string (uuid) | yes |  |\n| `subjectType` | `visitor_pass` \\| `worker_engagement` \\| `gate_request` | yes |  |\n| `via` | `code` \\| `qr` |  | An entry on a pass or a worker code: typed or scanned. Exits and approvals keep their own method. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `direction` | `in` \\| `out` | yes |  |\n| `id` | string (uuid) |  | Client-generated (UUIDv7): a retry with the same id records once. |\n| `idLast4` | string |  | A contractor worker’s `in` (`permit_worker`, ADR 0049): the last four characters of the ID they show, typed by the guard after matching their face. Required, offline too (FIELD_REQUIRED). A wrong one is refused (`id_mismatch`); five in 15 minutes lock the guard out, ten in a day the worker (PERMIT_ID_LOCKED). Never stored, never shown. |\n| `occurredAt` | string (date-time) |  | When it happened (offline guards): up to 24 h back. |\n| `subjectId` | string (uuid) | yes |  |\n| `subjectType` | `visitor_pass` \\| `worker_engagement` \\| `gate_request` \\| `permit_worker` \\| `event_guest` \\| `move_permit` | yes |  |\n| `via` | `code` \\| `qr` |  | An entry on a pass or a worker code: typed or scanned. Exits and approvals keep their own method. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -17960,6 +17960,68 @@
           }
         },
         {
+          "name": "Find the permits in force today",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "unit-permits"
+              ],
+              "query": [
+                {
+                  "description": "A unit’s code: its permits in force today.",
+                  "disabled": true,
+                  "key": "unitCode",
+                  "value": ""
+                },
+                {
+                  "description": "A permit’s reference, as the household shows it (`W-42` and `w42` too). Exactly one of the two.",
+                  "disabled": true,
+                  "key": "reference",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/unit-permits"
+            }
+          }
+        },
+        {
+          "name": "Get a permit at the gate",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "unit-permits",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/unit-permits/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get a permit",
           "request": {
             "description": "**Responses:** 200",
@@ -18381,6 +18443,42 @@
           }
         },
         {
+          "name": "Unlock a guard locked out of the ID check",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "unit-permits",
+                ":id",
+                "guards",
+                ":guardId",
+                "unlock"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/unit-permits/:id/guards/:guardId/unlock",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "guardId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Reject a pending permit, with a reason code",
           "request": {
             "body": {
@@ -18504,6 +18602,42 @@
                 "remove"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/unit-permits/:id/workers/:workerId/remove",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "workerId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Unlock a contractor worker locked out of the ID check",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "unit-permits",
+                ":id",
+                "workers",
+                ":workerId",
+                "unlock"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/unit-permits/:id/workers/:workerId/unlock",
               "variable": [
                 {
                   "description": "",

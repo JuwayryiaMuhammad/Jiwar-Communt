@@ -405,6 +405,34 @@ export const STAFF_PERMIT_ROUTES: Row[] = [
   },
   {
     method: 'POST',
+    path: '/staff/unit-permits/{id}/workers/{workerId}/unlock',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bPermitId, workerId: w.bPermitWorkerId }),
+      code: 'PERMIT_NOT_FOUND',
+      body: () => ({}),
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/unit-permits/{id}/guards/{guardId}/unlock',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bPermitId, guardId: w.b.ids.guard }),
+      code: 'PERMIT_NOT_FOUND',
+      body: () => ({}),
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
     path: '/staff/unit-permits/{id}/workers/{workerId}/remove',
     auth: 'tenant',
     as: 'manager',
@@ -418,6 +446,42 @@ export const STAFF_PERMIT_ROUTES: Row[] = [
       body: {},
       fields: [{ field: 'reasonCode', code: 'FIELD_REQUIRED' }],
     },
+    noStore: true,
+  },
+];
+
+/** The units' permits at the gate (ADR 0049). */
+export const GATE_PERMIT_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/gate/unit-permits',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { unitCode: '' },
+      fields: [
+        {
+          field: 'unitCode',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 32 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/gate/unit-permits/{id}',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bPermitId }),
+      code: 'PERMIT_NOT_FOUND',
+    },
+    invalid: 'none',
     noStore: true,
   },
 ];

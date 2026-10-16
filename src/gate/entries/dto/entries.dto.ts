@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { GateDirection, GateSubjectType } from '@prisma/client';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsDate,
   IsEnum,
@@ -9,6 +9,7 @@ import {
   IsString,
   IsUUID,
   Length,
+  Matches,
   ValidateIf,
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
@@ -82,6 +83,21 @@ export class RecordEntryDto {
   @IsOptional()
   @IsIn(ENTRY_VIA, withParams({ allowed: [...ENTRY_VIA] }))
   via?: EntryVia;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    example: '4821',
+    description:
+      'A contractor worker’s `in` (`permit_worker`, ADR 0049): the last four characters of the ID they show, typed by the guard after matching their face. Required, offline too (FIELD_REQUIRED). A wrong one is refused (`id_mismatch`); five in 15 minutes lock the guard out, ten in a day the worker (PERMIT_ID_LOCKED). Never stored, never shown.',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim().toUpperCase() : value,
+  )
+  @IsString()
+  @Matches(/^[A-Z0-9]{4}$/)
+  idLast4?: string;
 
   @ApiProperty({
     type: String,

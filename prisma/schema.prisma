@@ -88,6 +88,12 @@ enum GateSubjectType {
   visitor_pass
   worker_engagement
   gate_request
+  /// A works permit's contractor worker (ADR 0049).
+  permit_worker
+  /// An event's guest (ADR 0049).
+  event_guest
+  /// A move's truck (ADR 0049).
+  move_permit
 
   @@map("gate_subject_type")
 }
@@ -105,6 +111,9 @@ enum GateEntryMethod {
   approval
   guard
   system
+  /// Let in against a permit (ADR 0049): a face and an ID's last four, a
+  /// name on a guest list, a truck's plate.
+  permit
 
   @@map("gate_entry_method")
 }

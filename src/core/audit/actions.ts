@@ -871,6 +871,12 @@ export const AUDIT_ACTIONS = {
   'unit_permit.worker_removed': { log: 'tenant', target: 'unit_permit' },
   // metadata: added, removed, guests (how many now). Never a name or plate.
   'unit_permit.guests_changed': { log: 'tenant', target: 'unit_permit' },
+  // The management lifts a contractor ID lockout. metadata: workerId or
+  // guardId.
+  'unit_permit.lockout_cleared': { log: 'tenant', target: 'unit_permit' },
+  // The guard's permit lookup, on their shift. metadata: by (unit,
+  // reference or id), unitId, permitIds, matches. Never a name or a plate.
+  'gate.permit_lookup': { log: 'tenant', target: 'guard_shift' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

@@ -10235,9 +10235,35 @@
           "qr",
           "approval",
           "guard",
-          "system"
+          "system",
+          "permit"
         ],
         "type": "string"
+      },
+      "GateEventView": {
+        "properties": {
+          "guestCount": {
+            "type": "number"
+          },
+          "guests": {
+            "description": "The names to check, from half an hour before the start to the end; null otherwise.",
+            "items": {
+              "$ref": "#/components/schemas/GatePermitGuestView"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "title": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "guestCount",
+          "guests"
+        ],
+        "type": "object"
       },
       "GateInstructionsDto": {
         "properties": {
@@ -10299,6 +10325,63 @@
           "mixed"
         ],
         "type": "string"
+      },
+      "GateMaterialExitView": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MaterialItemView"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "photo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "usedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "photo",
+          "usedAt"
+        ],
+        "type": "object"
+      },
+      "GateMoveView": {
+        "properties": {
+          "inside": {
+            "description": "The truck is inside now.",
+            "type": "boolean"
+          },
+          "itemsDescription": {
+            "nullable": true,
+            "type": "string"
+          },
+          "truckPlate": {
+            "nullable": true,
+            "type": "string"
+          },
+          "window": {
+            "$ref": "#/components/schemas/PermitHoursView"
+          }
+        },
+        "required": [
+          "window",
+          "truckPlate",
+          "itemsDescription",
+          "inside"
+        ],
+        "type": "object"
       },
       "GateParcelDetailView": {
         "properties": {
@@ -10481,6 +10564,204 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GatePermitGuestView": {
+        "properties": {
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "inside": {
+            "type": "boolean"
+          },
+          "removed": {
+            "type": "boolean"
+          },
+          "vehiclePlate": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "vehiclePlate",
+          "removed",
+          "inside"
+        ],
+        "type": "object"
+      },
+      "GatePermitView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "event": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateEventView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "hoursToday": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PermitHoursView"
+              }
+            ],
+            "description": "Works and moves: when they may go on today, inside the compound’s hours as they stand now; null on a day off (and for the other kinds).",
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnitPermitKind"
+              }
+            ]
+          },
+          "materialExit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateMaterialExitView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "move": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateMoveView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "reference": {
+            "example": "W-0042",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PermitViewStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "works": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateWorksView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "kind",
+          "status",
+          "unitCode",
+          "building",
+          "startsAt",
+          "endsAt",
+          "hoursToday",
+          "works",
+          "move",
+          "materialExit",
+          "event"
+        ],
+        "type": "object"
+      },
+      "GatePermitViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GatePermitView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GatePermitWorkerView": {
+        "properties": {
+          "fullName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "idType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdDocumentType"
+              }
+            ]
+          },
+          "inside": {
+            "description": "In the compound now.",
+            "type": "boolean"
+          },
+          "photo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "description": "Their face, to match before typing the last four of the ID they show. Only on one permit.",
+            "nullable": true,
+            "type": "object"
+          },
+          "removed": {
+            "description": "Taken off the permit: refused (`worker_removed`).",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "idType",
+          "photo",
+          "removed",
+          "inside"
         ],
         "type": "object"
       },
@@ -10827,7 +11108,10 @@
         "enum": [
           "visitor_pass",
           "worker_engagement",
-          "gate_request"
+          "gate_request",
+          "permit_worker",
+          "event_guest",
+          "move_permit"
         ],
         "type": "string"
       },
@@ -10890,6 +11174,33 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GateWorksView": {
+        "properties": {
+          "contractorCompany": {
+            "nullable": true,
+            "type": "string"
+          },
+          "workType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PermitWorkType"
+              }
+            ]
+          },
+          "workers": {
+            "items": {
+              "$ref": "#/components/schemas/GatePermitWorkerView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "workType",
+          "contractorCompany",
+          "workers"
         ],
         "type": "object"
       },
@@ -11807,11 +12118,22 @@
             "type": "number"
           },
           "kind": {
-            "description": "The pass kind, the worker capacity or the request kind.",
+            "description": "The pass kind, the worker capacity or the request kind; `contractor`, `event_guest` or `move` for a permit’s subject (ADR 0049).",
             "type": "string"
           },
           "partySize": {
             "type": "number"
+          },
+          "permitId": {
+            "description": "A permit’s subject (ADR 0049): its permit, to open for the names. Never a name here.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "permitReference": {
+            "example": "W-0042",
+            "nullable": true,
+            "type": "string"
           },
           "subjectId": {
             "format": "uuid",
@@ -11836,7 +12158,9 @@
           "partySize",
           "insideCount",
           "gateName",
-          "enteredAt"
+          "enteredAt",
+          "permitId",
+          "permitReference"
         ],
         "type": "object"
       },
@@ -17012,6 +17336,29 @@
         ],
         "type": "object"
       },
+      "PermitLockoutsView": {
+        "properties": {
+          "guards": {
+            "description": "Guards locked out (five wrong last-fours in 15 minutes, on any permit).",
+            "items": {
+              "$ref": "#/components/schemas/FirstNameRefView"
+            },
+            "type": "array"
+          },
+          "workerIds": {
+            "description": "Workers of this permit locked out (ten wrong last-fours in a day).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "workerIds",
+          "guards"
+        ],
+        "type": "object"
+      },
       "PermitRulesResponse": {
         "properties": {
           "daysOff": {
@@ -18835,6 +19182,11 @@
           "id": {
             "description": "Client-generated (UUIDv7): a retry with the same id records once.",
             "format": "uuid",
+            "type": "string"
+          },
+          "idLast4": {
+            "description": "A contractor worker’s `in` (`permit_worker`, ADR 0049): the last four characters of the ID they show, typed by the guard after matching their face. Required, offline too (FIELD_REQUIRED). A wrong one is refused (`id_mismatch`); five in 15 minutes lock the guard out, ten in a day the worker (PERMIT_ID_LOCKED). Never stored, never shown.",
+            "example": "4821",
             "type": "string"
           },
           "occurredAt": {
@@ -25063,6 +25415,16 @@
               }
             ]
           },
+          "lockouts": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PermitLockoutsView"
+              }
+            ],
+            "description": "Works, on one permit: who is locked out of the ID check now; null in lists.",
+            "nullable": true,
+            "type": "object"
+          },
           "materialExit": {
             "allOf": [
               {
@@ -25176,7 +25538,8 @@
           "requestedBy",
           "building",
           "staffNote",
-          "revokeNote"
+          "revokeNote",
+          "lockouts"
         ],
         "type": "object"
       },
@@ -30416,7 +30779,12 @@
               "expired_qr",
               "not_resident",
               "account_inactive",
-              "revoked"
+              "revoked",
+              "outside_work_hours",
+              "day_off",
+              "id_mismatch",
+              "worker_removed",
+              "guest_removed"
             ],
             "nullable": true,
             "type": "string"
@@ -36270,6 +36638,7 @@
         "x-stability": "draft"
       },
       "post": {
+        "description": "A permit’s subject (ADR 0049) — a contractor worker, an event’s guest, a move’s truck — comes in against the permit (`method: permit`): approved, in its window, within the compound’s work days and hours (works and moves) and the permit’s own daily hours (a worker), and for a worker the last four of their ID (`idLast4`). Exits are always recorded.",
         "operationId": "EntriesController_record",
         "parameters": [
           {
@@ -37077,6 +37446,96 @@
         "tags": [
           "gate"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/unit-permits": {
+      "get": {
+        "description": "By a unit’s code or a permit’s reference: approved permits whose window touches today. No faces here: open one. Rate-limited and audited on the shift.",
+        "operationId": "GatePermitsController_find",
+        "parameters": [
+          {
+            "description": "A unit’s code: its permits in force today.",
+            "in": "query",
+            "name": "unitCode",
+            "required": false,
+            "schema": {
+              "example": "B-12",
+              "type": "string"
+            }
+          },
+          {
+            "description": "A permit’s reference, as the household shows it (`W-42` and `w42` too). Exactly one of the two.",
+            "in": "query",
+            "name": "reference",
+            "required": false,
+            "schema": {
+              "example": "W-0042",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatePermitViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find the permits in force today",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/unit-permits/{id}": {
+      "get": {
+        "description": "In force today, or with someone of it inside. The workers’ faces (never the last four of their ID), the truck, the goods, and the guest list while the event is on. Then record entries with `POST /gate/entries`.",
+        "operationId": "GatePermitsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatePermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a permit at the gate",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -53168,6 +53627,53 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/unit-permits/{id}/guards/{guardId}/unlock": {
+      "post": {
+        "description": "Five wrong last-fours in 15 minutes lock a guard out (PERMIT_ID_LOCKED), on every permit. From a works permit’s detail, which lists the guards locked out.",
+        "operationId": "StaffPermitsController_unlockGuard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "guardId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Unlock a guard locked out of the ID check",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/unit-permits/{id}/reject": {
       "post": {
         "description": "Decided already: PERMIT_NOT_PENDING. The requester is told the reason’s code, never the note.",
@@ -53316,6 +53822,53 @@
           }
         ],
         "summary": "Take a contractor worker off a works permit, with a reason code",
+        "tags": [
+          "permits"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/unit-permits/{id}/workers/{workerId}/unlock": {
+      "post": {
+        "description": "Ten wrong last-fours in a day lock a worker out (PERMIT_ID_LOCKED); a guard’s typing errors must not cost them a working day.",
+        "operationId": "StaffPermitsController_unlockWorker",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workerId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPermitView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Unlock a contractor worker locked out of the ID check",
         "tags": [
           "permits"
         ],

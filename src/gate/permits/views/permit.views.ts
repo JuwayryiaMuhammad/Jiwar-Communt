@@ -406,6 +406,22 @@ export class PermitView extends PermitBaseView {
   }
 }
 
+/** Who is locked out of a contractor's ID check now (ADR 0049). */
+export class PermitLockoutsView {
+  @ApiProperty({
+    type: [String],
+    description:
+      'Workers of this permit locked out (ten wrong last-fours in a day).',
+  })
+  workerIds: string[];
+  @ApiProperty({
+    type: [FirstNameRefView],
+    description:
+      'Guards locked out (five wrong last-fours in 15 minutes, on any permit).',
+  })
+  guards: FirstNameRefView[];
+}
+
 /** The management's view (ADR 0049): the requester and the staff's notes. */
 export class StaffPermitView extends PermitBaseView {
   @ApiProperty({ type: AccountRefView })
@@ -424,14 +440,25 @@ export class StaffPermitView extends PermitBaseView {
     description: 'The management’s note on revoking. Never shown to the unit.',
   })
   revokeNote: string | null;
+  @ApiProperty({
+    type: PermitLockoutsView,
+    nullable: true,
+    description:
+      'Works, on one permit: who is locked out of the ID check now; null in lists.',
+  })
+  lockouts: PermitLockoutsView | null;
 
-  static from(r: PermitRecord): StaffPermitView {
+  static from(
+    r: PermitRecord,
+    lockouts: PermitLockoutsView | null = null,
+  ): StaffPermitView {
     return {
       ...PermitBaseView.base(r),
       requestedBy: accountRef(r.requester),
       building: r.location.building,
       staffNote: r.permit.staffNote,
       revokeNote: r.permit.revokeNote,
+      lockouts,
     };
   }
 }

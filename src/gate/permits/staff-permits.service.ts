@@ -15,7 +15,10 @@ import {
   type PermitRecord,
   type PermitViewStatus,
 } from './permit-records';
+import { firstNameRef } from '../../core/common/http/personal';
+import { PermitIdCheck } from './permit-id-check';
 import { PermitWorkersService } from './permit-workers.service';
+import type { PermitLockoutsView } from './views/permit.views';
 import { clean } from './permits.service';
 
 const PAGE = keysetCursor('createdAt', 'desc');
@@ -42,6 +45,7 @@ export class StaffPermitsService {
     private readonly core: PermitCore,
     private readonly records: PermitRecords,
     private readonly workers: PermitWorkersService,
+    private readonly ids: PermitIdCheck,
   ) {}
 
   /** Newest first; `live`: approved and in force now. */
@@ -97,6 +101,77 @@ export class StaffPermitsService {
     return this.tenantTx.withTenantTx(async (tx) => {
       const p = await tx.unitPermit.findUnique({ where: { id } });
       if (!p) throw permitNotFound();
+      return this.records.load(tx, p);
+    });
+  }
+
+  /**
+   * Who is locked out of the ID check now: the permit's workers, and the
+   * compound's guards (a guard's lockout is not one permit's, but this is
+   * where the management sees it).
+   */
+  async lockouts(r: PermitRecord): Promise<PermitLockoutsView | null> {
+    if (r.permit.kind !== 'works') return null;
+    const tenantId = r.permit.tenantId;
+    const guards = await this.tenantTx.withTenantTx(async (tx) =>
+      tx.account.findMany({
+        where: {
+          id: { in: await this.core.holding(tx, 'gate.operate') },
+        },
+        select: { id: true, fullName: true, status: true },
+        orderBy: { id: 'asc' },
+      }),
+    );
+    const locked = new Set(
+      await this.ids.locked(
+        'guard',
+        tenantId,
+        guards.map((g) => g.id),
+      ),
+    );
+    return {
+      workerIds: await this.ids.locked(
+        'worker',
+        tenantId,
+        r.workers.map((w) => w.id),
+      ),
+      guards: guards.filter((g) => locked.has(g.id)).map(firstNameRef),
+    };
+  }
+
+  /** Lifts a worker's lockout (ten wrong last-fours in a day). */
+  unlockWorker(id: string, workerId: string): Promise<PermitRecord> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const p = await this.records.lock(tx, id);
+      if (p.kind !== 'works') throw permitNotFound();
+      await this.workers.lockWorker(tx, id, workerId);
+      await this.ids.clear('worker', p.tenantId, workerId);
+      await this.audit.record(tx, {
+        action: 'unit_permit.lockout_cleared',
+        targetId: id,
+        metadata: { workerId },
+      });
+      return this.records.load(tx, p);
+    });
+  }
+
+  /** Lifts a guard's lockout (five wrong last-fours in 15 minutes). */
+  unlockGuard(id: string, guardId: string): Promise<PermitRecord> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const p = await this.records.lock(tx, id);
+      if (p.kind !== 'works') throw permitNotFound();
+      const guard = await tx.account.findUnique({
+        where: { id: guardId },
+        select: { type: true },
+      });
+      if (guard?.type !== 'staff')
+        throw appError.notFound(ErrorCode.ACCOUNT_NOT_FOUND, 'Guard not found');
+      await this.ids.clear('guard', p.tenantId, guardId);
+      await this.audit.record(tx, {
+        action: 'unit_permit.lockout_cleared',
+        targetId: id,
+        metadata: { guardId },
+      });
       return this.records.load(tx, p);
     });
   }

@@ -56,8 +56,12 @@ export class EntriesController {
 
   @RequirePermissions('gate.operate')
   @Post('entries')
-  @ApiOperation({ summary: 'Record an entry or exit' })
-  @Idempotent()
+  @ApiOperation({
+    summary: 'Record an entry or exit',
+    description:
+      'A permit’s subject (ADR 0049) — a contractor worker, an event’s guest, a move’s truck — comes in against the permit (`method: permit`): approved, in its window, within the compound’s work days and hours (works and moves) and the permit’s own daily hours (a worker), and for a worker the last four of their ID (`idLast4`). Exits are always recorded.',
+  })
+  @Idempotent({ omit: ['idLast4'] })
   @ApiCreatedResponse({ type: EntryView })
   async record(@Body() dto: RecordEntryDto): Promise<EntryView> {
     return EntryView.from(await this.entries.record(dto));

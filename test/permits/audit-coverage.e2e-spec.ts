@@ -19,7 +19,12 @@ import {
   VEHICLES_COVERAGE,
 } from '../setup/audit-coverage-split';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
-import { permitHelpers, type PermitSetUp, type Who } from '../setup/permits';
+import {
+  day,
+  permitHelpers,
+  type PermitSetUp,
+  type Who,
+} from '../setup/permits';
 
 /**
  * One scenario per permits catalog entry (ADR 0014, 0049): actor, target,
@@ -184,6 +189,57 @@ describe('Audit coverage — permits', () => {
       });
       for (const row of [approved, revoked, rejected])
         expect(JSON.stringify(row)).not.toContain(WORDS);
+    });
+
+    it('the gate’s lookups on the shift; a lockout cleared, by ids', async () => {
+      await p.anyTime(s.manager);
+      const guard = await p.guardOnDuty(s.c);
+      const permit = await p.works(s.alice, s.home.id, {
+        startsOn: day(0),
+        endsOn: day(1),
+        dailyHours: { from: '00:00', to: '23:59' },
+      });
+      const { worker } = await p.addWorker(s.alice, permit.id, {
+        fullName: WORDS,
+      });
+      await p.approve(s.manager, permit.id);
+      await p
+        .http('get', `/gate/unit-permits/${permit.id}`, guard.token)
+        .expect(200);
+      const lookup = await single('gate.permit_lookup', guard.shiftId);
+      expect(lookup).toMatchObject(by(guard, 'guard_shift'));
+      expect(lookup.metadata).toEqual({
+        by: 'id',
+        permitIds: [permit.id],
+        matches: 1,
+      });
+      await p
+        .http(
+          'post',
+          `/staff/unit-permits/${permit.id}/workers/${worker.id}/unlock`,
+          s.manager.token,
+          {},
+        )
+        .expect(200);
+      await p
+        .http(
+          'post',
+          `/staff/unit-permits/${permit.id}/guards/${guard.id}/unlock`,
+          s.manager.token,
+          {},
+        )
+        .expect(200);
+      const cleared = await read.tenant(s.c.tenantId, {
+        action: 'unit_permit.lockout_cleared',
+        targetId: permit.id,
+      });
+      covered.add('unit_permit.lockout_cleared');
+      expect(cleared.map((c) => c.metadata)).toEqual([
+        { workerId: worker.id },
+        { guardId: guard.id },
+      ]);
+      expect(cleared[0]).toMatchObject(by(s.manager, 'unit_permit'));
+      expect(JSON.stringify([lookup, ...cleared])).not.toContain(WORDS);
     });
 
     it('an event: requested at once, its guests changed by counts', async () => {

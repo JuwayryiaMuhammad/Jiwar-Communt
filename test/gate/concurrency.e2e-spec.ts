@@ -1,4 +1,9 @@
+import type { GateSubjectType } from '@prisma/client';
+import { Client } from 'pg';
+import { TenantTx } from '../../src/core/database/tenant-tx.service';
+import { EntriesService } from '../../src/gate/entries/entries.service';
 import { gateHelpers } from '../setup/gate';
+import { required } from '../setup/test-env';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { call, err } from '../api/request';
 import { passBody } from '../api/routes/visitors';
@@ -199,5 +204,110 @@ describe('Gate concurrency', () => {
     expect(results.map((r) => r.status).sort()).toEqual([201, 409, 409]);
     for (const r of results.filter((x) => x.status === 409))
       expect(err(r).code).toBe('SHIFT_ALREADY_OPEN');
+  });
+
+  /**
+   * Every subject type locks its own row, and nothing falls through to
+   * another table (ADR 0049 turned the last `else` into an explicit case
+   * and the default into a programming error). Held by one transaction, the
+   * row is probed from another connection with NOWAIT.
+   */
+  describe('every subject type locks its own row', () => {
+    let probe: Client;
+    beforeAll(async () => {
+      probe = new Client({
+        connectionString: required('TEST_SUPERUSER_DATABASE_URL'),
+      });
+      await probe.connect();
+    });
+    afterAll(() => probe.end());
+
+    /** Whether the row can be taken `mode` right now (NOWAIT). */
+    const free = async (table: string, id: string, mode: string) => {
+      try {
+        await probe.query('BEGIN');
+        await probe.query(
+          `SELECT id FROM ${table} WHERE id = $1 FOR ${mode} NOWAIT`,
+          [id],
+        );
+        return true;
+      } catch (e) {
+        if ((e as { code?: string }).code === '55P03') return false;
+        throw e;
+      } finally {
+        await probe.query('ROLLBACK');
+      }
+    };
+    const holding = async (
+      type: GateSubjectType,
+      id: string,
+      check: () => Promise<void>,
+    ) =>
+      w.helpers.asManager(w.b, () =>
+        h.moduleRef.get(TenantTx).withTenantTx(async (tx) => {
+          await h.moduleRef.get(EntriesService).lockSubject(tx, type, id);
+          await check();
+        }),
+      );
+
+    it.each([
+      ['visitor_pass', 'visitor_passes', (x: World) => x.bPassId],
+      [
+        'worker_engagement',
+        'worker_engagements',
+        (x: World) => x.bEngagementId,
+      ],
+      ['gate_request', 'gate_approval_requests', (x: World) => x.bRequestId],
+    ] as const)('%s: its own row, FOR UPDATE', async (type, table, idOf) => {
+      const id = idOf(w);
+      await holding(type, id, async () => {
+        expect(await free(table, id, 'UPDATE')).toBe(false);
+        // Not another subject table's row of the same id: there is none.
+        for (const other of [
+          'visitor_passes',
+          'worker_engagements',
+          'gate_approval_requests',
+        ].filter((t) => t !== table))
+          expect(await free(other, id, 'UPDATE')).toBe(true);
+      });
+      expect(await free(table, id, 'UPDATE')).toBe(true);
+    });
+
+    it('a permit’s worker or guest: the permit FOR SHARE, then their own row FOR UPDATE; a move: the permit', async () => {
+      await holding('permit_worker', w.bPermitWorkerId, async () => {
+        expect(await free('permit_workers', w.bPermitWorkerId, 'UPDATE')).toBe(
+          false,
+        );
+        expect(await free('unit_permits', w.bPermitId, 'SHARE')).toBe(true);
+        expect(await free('unit_permits', w.bPermitId, 'UPDATE')).toBe(false);
+      });
+      await holding('event_guest', w.bPermitGuestId, async () => {
+        expect(await free('permit_guests', w.bPermitGuestId, 'UPDATE')).toBe(
+          false,
+        );
+        expect(await free('unit_permits', w.bPermitEventId, 'SHARE')).toBe(
+          true,
+        );
+        expect(await free('unit_permits', w.bPermitEventId, 'UPDATE')).toBe(
+          false,
+        );
+      });
+      await holding('move_permit', w.bPermitEventId, async () => {
+        expect(await free('unit_permits', w.bPermitEventId, 'UPDATE')).toBe(
+          false,
+        );
+      });
+    });
+
+    it('an unknown type is a programming error, never a lock of something else', async () => {
+      await expect(
+        holding('nothing' as GateSubjectType, w.bPassId, () =>
+          Promise.resolve(),
+        ),
+      ).rejects.toThrow(/Unknown gate subject type nothing/);
+      expect(await free('gate_approval_requests', w.bRequestId, 'UPDATE')).toBe(
+        true,
+      );
+    });
   });
 });

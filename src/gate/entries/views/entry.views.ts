@@ -30,6 +30,12 @@ const REASONS = [
   'not_resident',
   'account_inactive',
   'revoked',
+  // Permits (ADR 0049).
+  'outside_work_hours',
+  'day_off',
+  'id_mismatch',
+  'worker_removed',
+  'guest_removed',
 ];
 
 export class VerifyDisplayView {
@@ -256,7 +262,8 @@ export class InsideView {
   unitCode: string;
   @ApiProperty({
     type: String,
-    description: 'The pass kind, the worker capacity or the request kind.',
+    description:
+      'The pass kind, the worker capacity or the request kind; `contractor`, `event_guest` or `move` for a permit’s subject (ADR 0049).',
   })
   kind: string;
   @ApiProperty({ type: Number })
@@ -271,6 +278,16 @@ export class InsideView {
   gateName: string;
   @ApiProperty({ type: String, format: 'date-time' })
   enteredAt: Date;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description:
+      'A permit’s subject (ADR 0049): its permit, to open for the names. Never a name here.',
+  })
+  permitId: string | null;
+  @ApiProperty({ type: String, nullable: true, example: 'W-0042' })
+  permitReference: string | null;
 
   static from(i: InsideItem): InsideView {
     return {
@@ -282,6 +299,8 @@ export class InsideView {
       insideCount: i.insideCount,
       gateName: i.gateName,
       enteredAt: i.enteredAt,
+      permitId: i.permitId,
+      permitReference: i.permitReference,
     };
   }
 }

@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { IdDocumentType, PermitWorker } from '@prisma/client';
 import { AuditService } from '../../core/audit/audit.service';
-import { IdentifierHasher } from '../../core/auth/identifier';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import { newId } from '../../core/common/uuid';
@@ -21,6 +20,7 @@ import {
   viewStatus,
   type PermitRecord,
 } from './permit-records';
+import { PermitIdCheck } from './permit-id-check';
 import { PERMIT_LIMITS } from './permit-rules';
 import { PermitsService, clean, invalid } from './permits.service';
 
@@ -47,21 +47,12 @@ export class PermitWorkersService {
     private readonly ctx: RequestContext,
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
-    private readonly hasher: IdentifierHasher,
+    private readonly ids: PermitIdCheck,
     private readonly files: FilesService,
     private readonly core: PermitCore,
     private readonly records: PermitRecords,
     private readonly permits: PermitsService,
   ) {}
-
-  /** The last four's keyed hash, bound to the compound and the worker. */
-  hash(workerId: string, last4: string): string {
-    return this.hasher.hashPermitWorkerIdLast4(
-      this.ctx.txTenantId,
-      workerId,
-      last4,
-    );
-  }
 
   add(
     permitId: string,
@@ -113,7 +104,7 @@ export class PermitWorkersService {
           fullName,
           photoFileId: file.id,
           idType: input.idType,
-          idLast4Hash: this.hash(id, last4),
+          idLast4Hash: this.ids.hash(this.ctx.txTenantId, id, last4),
           addedById: this.ctx.accountId,
         },
       });

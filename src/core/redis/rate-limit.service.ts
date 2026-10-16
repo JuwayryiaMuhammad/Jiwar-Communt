@@ -31,6 +31,11 @@ export class RateLimitService {
     return count;
   }
 
+  /** Forgets a key's hits: a lockout lifted by someone allowed to (ADR 0049). */
+  async reset(key: string): Promise<void> {
+    await this.redis.del(`rl:${key}`);
+  }
+
   /** Counts a hit and throws 429 once `limit` is exceeded within the window. */
   async consume(
     key: string,

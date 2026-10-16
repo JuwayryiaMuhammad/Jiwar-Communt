@@ -815,6 +815,39 @@ describe('API v0 — no-store', () => {
         { reasonCode: 'not_needed' },
       );
     },
+    'POST /staff/unit-permits/{id}/workers/{workerId}/unlock': async () => {
+      const permitId = await aPermit();
+      const added = body<{ works: { workers: { id: string }[] } }>(
+        await aWorker(permitId),
+      );
+      return as(
+        'manager',
+        'POST',
+        `/staff/unit-permits/${permitId}/workers/${added.works.workers[0].id}/unlock`,
+        {},
+      );
+    },
+    'POST /staff/unit-permits/{id}/guards/{guardId}/unlock': async () =>
+      as(
+        'manager',
+        'POST',
+        `/staff/unit-permits/${await aPermit()}/guards/${w.a.ids.guard}/unlock`,
+        {},
+      ),
+    'GET /gate/unit-permits': () =>
+      asGuard('GET', '/gate/unit-permits?reference=W-1'),
+    'GET /gate/unit-permits/{id}': async () => {
+      await clearPermits();
+      const id = body<{ id: string }>(
+        await as('owner', 'POST', `/units/${w.a.homeUnitId}/permits/works`, {
+          ...aWorksBody,
+          startsOn: localDay(0),
+          endsOn: localDay(1),
+        }),
+      ).id;
+      await as('manager', 'POST', `/staff/unit-permits/${id}/approve`, {});
+      return asGuard('GET', `/gate/unit-permits/${id}`);
+    },
     'POST /permits/{id}/workers/{workerId}/remove': async () => {
       const permitId = await aPermit();
       const added = body<{ works: { workers: { id: string }[] } }>(

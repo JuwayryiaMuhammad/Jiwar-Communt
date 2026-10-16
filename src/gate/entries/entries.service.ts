@@ -23,8 +23,10 @@ import { Notifier } from '../../core/notifications/notifier';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { ApprovalsService } from '../approvals/approvals.service';
+import { permitReference } from '../permits/permit-core';
+import { PermitIdCheck } from '../permits/permit-id-check';
 import { ShiftsService } from '../shifts/shifts.service';
-import { GateSubjects, type GateSubject } from './subjects';
+import { GateSubjects, unknownType, type GateSubject } from './subjects';
 
 export const ENTRY_RESOURCE = 'gate_entry';
 export const UNCONFIRMED_EXITS_SWEEP = 'gate.unconfirmed_exits';
@@ -45,7 +47,19 @@ export interface NewEntry {
   occurredAt?: Date;
   /** A code-path entry: typed (default) or scanned (ADR 0030). */
   via?: 'code' | 'qr';
+  /**
+   * A contractor worker's `in` (ADR 0049): the last four of the ID they
+   * show, typed by the guard. Required, offline too.
+   */
+  idLast4?: string;
 }
+
+/** A permit's subject: let in against the permit (ADR 0049). */
+const PERMIT_SUBJECTS: readonly GateSubjectType[] = [
+  'permit_worker',
+  'event_guest',
+  'move_permit',
+];
 
 export interface EntryRecord {
   id: string;
@@ -76,6 +90,9 @@ export interface InsideItem {
   insideCount: number;
   gateName: string;
   enteredAt: Date;
+  /** A permit's subject (ADR 0049): its permit. */
+  permitId: string | null;
+  permitReference: string | null;
 }
 
 export interface EntryFilters {
@@ -148,6 +165,7 @@ export class EntriesService implements OnModuleInit {
     private readonly sweep: SweepRunner,
     private readonly approvals: ApprovalsService,
     private readonly notifier: Notifier,
+    private readonly ids: PermitIdCheck,
     config: ConfigService<Env, true>,
   ) {
     this.unconfirmedAfterMs =
@@ -190,8 +208,32 @@ export class EntriesService implements OnModuleInit {
           ],
         },
       );
+    const idCheck =
+      input.subjectType === 'permit_worker' && input.direction === 'in';
+    if (idCheck && !input.idLast4)
+      throw appError.badRequest(
+        ErrorCode.VALIDATION_FAILED,
+        'A contractor worker comes in with the last four of their ID',
+        {
+          fields: [{ field: 'idLast4', code: FieldErrorCode.FIELD_REQUIRED }],
+        },
+      );
     return this.tenantTx.withTenantTx(async (tx) => {
       const shift = await this.shifts.requireOpen(tx);
+      // A guard off duty learns nothing; a locked-out one learns no more.
+      if (idCheck) {
+        const locked = await this.ids.lockedOut(
+          tenantId,
+          guardId,
+          input.subjectId,
+        );
+        if (locked)
+          throw appError.tooManyRequests(
+            ErrorCode.PERMIT_ID_LOCKED,
+            'Too many wrong IDs, try again later',
+            { params: { scope: locked } },
+          );
+      }
       const id = input.id ?? newId();
       if (input.id) {
         // A client retry of an entry that reached us: the same answer.
@@ -270,6 +312,15 @@ export class EntriesService implements OnModuleInit {
               ? 'not_approved'
               : await this.subjects.refusal(tx, fresh, occurredAt, tz);
           if (refusal) throw refused(refusal);
+          // Their face is the guard's to match; the last four, the server's.
+          // A failure is counted outside the transaction, which rolls back.
+          if (
+            fresh.permitWorker &&
+            !this.ids.matches(tenantId, fresh.permitWorker, input.idLast4!)
+          ) {
+            await this.ids.failed(tenantId, guardId, fresh.id);
+            throw refused('id_mismatch');
+          }
           if (fresh.pass?.kind === 'one_time') {
             // One more of the group; the last one uses the pass.
             const entriesUsed = fresh.pass.entriesUsed + 1;
@@ -287,7 +338,11 @@ export class EntriesService implements OnModuleInit {
                     },
             });
           }
-          method = input.via === 'qr' ? 'qr' : 'code';
+          method = PERMIT_SUBJECTS.includes(fresh.type)
+            ? 'permit'
+            : input.via === 'qr'
+              ? 'qr'
+              : 'code';
         }
       } else {
         if (!inside)
@@ -473,6 +528,10 @@ export class EntriesService implements OnModuleInit {
           insideCount: r.inside,
           gateName: r.gate_name,
           enteredAt: r.occurred_at,
+          permitId: s?.permit?.id ?? null,
+          permitReference: s?.permit
+            ? permitReference(s.permit.kind, s.permit.number)
+            : null,
         });
       }
       return { items, nextCursor: page.nextCursor };
@@ -554,18 +613,50 @@ export class EntriesService implements OnModuleInit {
     });
   }
 
-  /** Serializes entries of one subject for the rest of the transaction. */
+  /**
+   * Serializes entries of one subject for the rest of the transaction. Every
+   * subject type names its own row: nothing falls through to another table.
+   * A permit's worker or guest locks its permit first (FOR SHARE: a revoke
+   * or a removal, which take it FOR UPDATE, waits for the entry or wins
+   * before it), then its own row.
+   */
   async lockSubject(
     tx: TenantTxClient,
     type: GateSubjectType,
     id: string,
   ): Promise<void> {
-    if (type === 'visitor_pass')
-      await tx.$queryRaw`SELECT id FROM visitor_passes WHERE id = ${id}::uuid FOR UPDATE`;
-    else if (type === 'worker_engagement')
-      await this.community.lockEngagement(tx, id);
-    else
-      await tx.$queryRaw`SELECT id FROM gate_approval_requests WHERE id = ${id}::uuid FOR UPDATE`;
+    switch (type) {
+      case 'visitor_pass':
+        await tx.$queryRaw`SELECT id FROM visitor_passes WHERE id = ${id}::uuid FOR UPDATE`;
+        return;
+      case 'worker_engagement':
+        await this.community.lockEngagement(tx, id);
+        return;
+      case 'gate_request':
+        await tx.$queryRaw`SELECT id FROM gate_approval_requests WHERE id = ${id}::uuid FOR UPDATE`;
+        return;
+      case 'permit_worker':
+        await tx.$queryRaw`
+          SELECT p.id FROM unit_permits p
+            JOIN permit_workers w ON w.permit_id = p.id
+           WHERE w.id = ${id}::uuid
+             FOR SHARE OF p`;
+        await tx.$queryRaw`SELECT id FROM permit_workers WHERE id = ${id}::uuid FOR UPDATE`;
+        return;
+      case 'event_guest':
+        await tx.$queryRaw`
+          SELECT p.id FROM unit_permits p
+            JOIN permit_guests g ON g.permit_id = p.id
+           WHERE g.id = ${id}::uuid
+             FOR SHARE OF p`;
+        await tx.$queryRaw`SELECT id FROM permit_guests WHERE id = ${id}::uuid FOR UPDATE`;
+        return;
+      case 'move_permit':
+        await tx.$queryRaw`SELECT id FROM unit_permits WHERE id = ${id}::uuid FOR UPDATE`;
+        return;
+      default:
+        unknownType(type);
+    }
   }
 
   private async render(tx: TenantTxClient, e: GateEntry): Promise<EntryRecord> {

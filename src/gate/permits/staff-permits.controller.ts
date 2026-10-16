@@ -53,7 +53,8 @@ export class StaffPermitsController {
   })
   @ApiOkResponse({ type: StaffPermitView })
   async get(@Param('id', parseId()) id: string): Promise<StaffPermitView> {
-    return StaffPermitView.from(await this.permits.get(id));
+    const r = await this.permits.get(id);
+    return StaffPermitView.from(r, await this.permits.lockouts(r));
   }
 
   @Post(':id/approve')
@@ -102,6 +103,40 @@ export class StaffPermitsController {
     @Body() dto: RevokePermitDto,
   ): Promise<StaffPermitView> {
     return StaffPermitView.from(await this.permits.revoke(id, dto));
+  }
+
+  @Post(':id/workers/:workerId/unlock')
+  @HttpCode(HttpStatus.OK)
+  @NoStore()
+  @ApiOperation({
+    summary: 'Unlock a contractor worker locked out of the ID check',
+    description:
+      'Ten wrong last-fours in a day lock a worker out (PERMIT_ID_LOCKED); a guard’s typing errors must not cost them a working day.',
+  })
+  @ApiOkResponse({ type: StaffPermitView })
+  async unlockWorker(
+    @Param('id', parseId()) id: string,
+    @Param('workerId', parseId('workerId')) workerId: string,
+  ): Promise<StaffPermitView> {
+    const r = await this.permits.unlockWorker(id, workerId);
+    return StaffPermitView.from(r, await this.permits.lockouts(r));
+  }
+
+  @Post(':id/guards/:guardId/unlock')
+  @HttpCode(HttpStatus.OK)
+  @NoStore()
+  @ApiOperation({
+    summary: 'Unlock a guard locked out of the ID check',
+    description:
+      'Five wrong last-fours in 15 minutes lock a guard out (PERMIT_ID_LOCKED), on every permit. From a works permit’s detail, which lists the guards locked out.',
+  })
+  @ApiOkResponse({ type: StaffPermitView })
+  async unlockGuard(
+    @Param('id', parseId()) id: string,
+    @Param('guardId', parseId('guardId')) guardId: string,
+  ): Promise<StaffPermitView> {
+    const r = await this.permits.unlockGuard(id, guardId);
+    return StaffPermitView.from(r, await this.permits.lockouts(r));
   }
 
   @Post(':id/workers/:workerId/remove')

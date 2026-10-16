@@ -394,4 +394,6 @@ export const PERMITS_COVERAGE: readonly string[] = [
   'unit_permit.approved',
   'unit_permit.rejected',
   'unit_permit.revoked',
+  'unit_permit.lockout_cleared',
+  'gate.permit_lookup',
 ];

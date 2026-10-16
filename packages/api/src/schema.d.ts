@@ -2546,6 +2546,94 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/governance/polls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the owners’ polls
+         * @description Newest first, each with the caller’s units in it. No counts while voting is open, only the turnout. For the units’ owners; anyone else gets GOVERNANCE_NOT_AVAILABLE (404).
+         */
+        get: operations["GovernancePollsController_list"];
+        put?: never;
+        /**
+         * Put a poll to the owners
+         * @description A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). Opens at `opensAt` (now when absent): its electorate is each unit’s voting owner then. At most 10 polls and elections under way (GOVERNANCE_LIMIT_REACHED).
+         */
+        post: operations["GovernancePollsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/governance/polls/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a poll
+         * @description The counts and the result once it closed; an open vote’s roll call too. For the units’ owners; anyone else gets GOVERNANCE_NOT_AVAILABLE (404). An elector who sold the unit since it opened still reads it.
+         */
+        get: operations["GovernancePollsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change a poll before voting opens
+         * @description A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). Anything but its secrecy; once open, GOVERNANCE_CONTEST_STARTED.
+         */
+        patch: operations["GovernancePollsController_update"];
+        trace?: never;
+    };
+    "/api/v1/governance/polls/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel a poll, with a reason code
+         * @description A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). Before it closes (GOVERNANCE_CONTEST_ENDED); nothing is counted, and a secret poll’s ballots are destroyed unread.
+         */
+        post: operations["GovernancePollsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/governance/polls/{id}/votes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cast a unit’s vote
+         * @description Once per unit, never changed (GOVERNANCE_ALREADY_VOTED), by the unit’s voting owner when the poll opened (GOVERNANCE_NOT_ELECTOR), while it is open (GOVERNANCE_CONTEST_NOT_OPEN). The answer says the vote was taken and when, never what; a retry with the same key replays it.
+         */
+        post: operations["GovernancePollsController_vote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health": {
         parameters: {
             query?: never;
@@ -7504,6 +7592,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/governance/polls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the owners’ polls
+         * @description Newest first. No counts while voting is open.
+         */
+        get: operations["StaffGovernancePollsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/governance/polls/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a poll, with its results once closed */
+        get: operations["StaffGovernancePollsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/instalment-plans": {
         parameters: {
             query?: never;
@@ -11823,6 +11948,10 @@ export interface components {
             /** @description From the closed list `vehicleFineCancel`. */
             reasonCode: string;
         };
+        CancelGovernancePollDto: {
+            /** @description From the closed list `governancePollCancel`. */
+            reasonCode: string;
+        };
         CancelGuardTaskDto: {
             reasonCode: components["schemas"]["GuardTaskCancel"];
         };
@@ -11944,6 +12073,15 @@ export interface components {
             refunds: number;
             reversals: number;
             reversed: string;
+        };
+        CastPollVoteDto: {
+            /** @description The one option chosen (yes, no or abstain on a yes/no poll). */
+            optionIds: string[];
+            /**
+             * Format: uuid
+             * @description A unit whose vote the caller casts in this poll (`myUnits`); each votes once, for good.
+             */
+            unitId: string;
         };
         CastVoteDto: {
             /** @description The unit’s choice from now on: one option, or several when the poll allows it. Replaces an earlier choice. */
@@ -12806,6 +12944,32 @@ export interface components {
             unitCode?: string;
             /** @description As the visitor gives it; shown to the household only. */
             visitorName?: string;
+        };
+        CreateGovernancePollDto: {
+            bodyAr?: string | null;
+            bodyEn?: string | null;
+            /**
+             * Format: date-time
+             * @description When voting closes: 1 hour to 60 days after it opens (INVALID_VALUE, params.minHours and params.maxDays).
+             */
+            closesAt: string;
+            kind: components["schemas"]["GovernancePollKind"];
+            /**
+             * Format: date-time
+             * @description When voting opens: absent or past, now; at most 90 days ahead.
+             */
+            opensAt?: string;
+            /** @description A `choice` poll's 2 to 10 options, in the order shown. A `yes_no` poll takes none: its options are yes, no and abstain. */
+            options?: components["schemas"]["GovernancePollOptionDto"][];
+            /** @description The share of the electorate’s units that must vote, in %. */
+            quorumPct: number;
+            /** @description A secret ballot (no choice is ever stored with its unit) or an open vote (each unit’s choice is shown to the owners after the close). Fixed for good. */
+            secret: boolean;
+            /** @description The share of the votes that carries it, in %: of yes and no on a yes/no poll (abstentions left out), of all votes for the first option of a choice poll. */
+            thresholdPct: number;
+            titleAr?: string | null;
+            /** @description English, Arabic or both, each with its body. */
+            titleEn?: string | null;
         };
         CreateGuardTaskDto: {
             details?: string;
@@ -14775,6 +14939,8 @@ export interface components {
              */
             updatedBy: "manager" | "platform" | null;
         };
+        /** @enum {string} */
+        GovernanceContestStatus: "scheduled" | "open" | "closed" | "cancelled";
         GovernanceOwnerView: {
             /** Format: uuid */
             accountId: string;
@@ -14784,6 +14950,89 @@ export interface components {
         GovernanceOwnerViewList: {
             data: components["schemas"]["GovernanceOwnerView"][];
             nextCursor: string | null;
+        };
+        /** @enum {string} */
+        GovernancePollKind: "yes_no" | "choice";
+        GovernancePollOptionDto: {
+            labelAr?: string | null;
+            /** @description In the languages the poll is written in. */
+            labelEn?: string | null;
+        };
+        GovernancePollOptionView: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description A yes/no poll’s options; null on a choice poll.
+             * @enum {string|null}
+             */
+            key: "yes" | "no" | "abstain" | null;
+            labelAr: string | null;
+            labelEn: string | null;
+            /** @description Votes, once the poll closed; null before: nobody sees a count while voting is open. */
+            votes: number | null;
+        };
+        /** @enum {string} */
+        GovernancePollResult: "passed" | "failed" | "no_quorum" | "tied";
+        GovernancePollView: {
+            bodyAr: string | null;
+            bodyEn: string | null;
+            /** @description From `governancePollCancel`, once cancelled. */
+            cancelReasonCode: string | null;
+            /** Format: date-time */
+            closesAt: string;
+            /** @description Units in the electorate, taken when voting opened. */
+            electorate: number | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["GovernancePollKind"];
+            /** @description The units whose vote the caller casts in this poll; none for the staff. */
+            myUnits: components["schemas"]["GovernanceVoteUnitView"][];
+            /** Format: date-time */
+            opensAt: string;
+            options: components["schemas"]["GovernancePollOptionView"][];
+            quorumPct: number;
+            /** @example GP-0001 */
+            reference: string;
+            result: components["schemas"]["GovernancePollResult"] | null;
+            /** @description An open vote’s choices by unit, once closed; null otherwise. */
+            rollCall: components["schemas"]["GovernanceRollCallView"][] | null;
+            /** @description An open vote: each unit’s choice is shown to the owners once the poll closes. Show the voter a notice before they vote. */
+            rollCallPublic: boolean;
+            /** @description A secret ballot: no choice is ever stored with its unit. */
+            secret: boolean;
+            status: components["schemas"]["GovernanceContestStatus"];
+            thresholdPct: number;
+            titleAr: string | null;
+            titleEn: string | null;
+            /** @description Units that voted so far: shown while open, never the counts. */
+            turnout: number | null;
+            /** Format: uuid */
+            winningOptionId: string | null;
+        };
+        GovernancePollViewList: {
+            data: components["schemas"]["GovernancePollView"][];
+            nextCursor: string | null;
+        };
+        GovernanceRollCallView: {
+            /** @description Option ids. */
+            choice: string[];
+            unitCode: string;
+        };
+        GovernanceVoteReceipt: {
+            /** Format: uuid */
+            pollId: string;
+            /** Format: uuid */
+            unitId: string | null;
+            /** Format: date-time */
+            votedAt: string | null;
+        };
+        GovernanceVoteUnitView: {
+            /** @description The caller may cast this unit’s vote now. */
+            mayVote: boolean;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+            voted: boolean;
         };
         GrantConsentDto: {
             code: components["schemas"]["ConsentCode"];
@@ -19598,6 +19847,50 @@ export interface components {
             data: components["schemas"]["StaffGateServiceView"][];
             nextCursor: string | null;
         };
+        StaffGovernancePollView: {
+            /** @enum {string} */
+            authorSide: "manager" | "board";
+            bodyAr: string | null;
+            bodyEn: string | null;
+            /** @description From `governancePollCancel`, once cancelled. */
+            cancelReasonCode: string | null;
+            /** Format: date-time */
+            closesAt: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description Units in the electorate, taken when voting opened. */
+            electorate: number | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["GovernancePollKind"];
+            /** @description The units whose vote the caller casts in this poll; none for the staff. */
+            myUnits: components["schemas"]["GovernanceVoteUnitView"][];
+            /** Format: date-time */
+            opensAt: string;
+            options: components["schemas"]["GovernancePollOptionView"][];
+            quorumPct: number;
+            /** @example GP-0001 */
+            reference: string;
+            result: components["schemas"]["GovernancePollResult"] | null;
+            /** @description An open vote’s choices by unit, once closed; null otherwise. */
+            rollCall: components["schemas"]["GovernanceRollCallView"][] | null;
+            /** @description An open vote: each unit’s choice is shown to the owners once the poll closes. Show the voter a notice before they vote. */
+            rollCallPublic: boolean;
+            /** @description A secret ballot: no choice is ever stored with its unit. */
+            secret: boolean;
+            status: components["schemas"]["GovernanceContestStatus"];
+            thresholdPct: number;
+            titleAr: string | null;
+            titleEn: string | null;
+            /** @description Units that voted so far: shown while open, never the counts. */
+            turnout: number | null;
+            /** Format: uuid */
+            winningOptionId: string | null;
+        };
+        StaffGovernancePollViewList: {
+            data: components["schemas"]["StaffGovernancePollView"][];
+            nextCursor: string | null;
+        };
         StaffGuardHandoverView: {
             /** Format: date-time */
             acknowledgedAt: string | null;
@@ -21123,6 +21416,25 @@ export interface components {
             phone?: string | null;
             /** @description Inactive ends the shifts open at the gate. */
             status?: components["schemas"]["GateStatus"];
+        };
+        UpdateGovernancePollDto: {
+            bodyAr?: string | null;
+            bodyEn?: string | null;
+            /** Format: date-time */
+            closesAt?: string;
+            kind?: components["schemas"]["GovernancePollKind"];
+            /**
+             * Format: date-time
+             * @description When voting opens: absent or past, now; at most 90 days ahead.
+             */
+            opensAt?: string;
+            /** @description A `choice` poll's 2 to 10 options, in the order shown. A `yes_no` poll takes none: its options are yes, no and abstain. */
+            options?: components["schemas"]["GovernancePollOptionDto"][];
+            quorumPct?: number;
+            thresholdPct?: number;
+            titleAr?: string | null;
+            /** @description English, Arabic or both, each with its body. */
+            titleEn?: string | null;
         };
         UpdateHandoverItemDto: {
             /** @description False retires it; true brings it back. */
@@ -25518,6 +25830,155 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoardTermViewList"];
+                };
+            };
+        };
+    };
+    GovernancePollsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["GovernanceContestStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernancePollViewList"];
+                };
+            };
+        };
+    };
+    GovernancePollsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateGovernancePollDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernancePollView"];
+                };
+            };
+        };
+    };
+    GovernancePollsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernancePollView"];
+                };
+            };
+        };
+    };
+    GovernancePollsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateGovernancePollDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernancePollView"];
+                };
+            };
+        };
+    };
+    GovernancePollsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelGovernancePollDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernancePollView"];
+                };
+            };
+        };
+    };
+    GovernancePollsController_vote: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CastPollVoteDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernanceVoteReceipt"];
                 };
             };
         };
@@ -33239,6 +33700,51 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GovernanceOwnerViewList"];
+                };
+            };
+        };
+    };
+    StaffGovernancePollsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["GovernanceContestStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGovernancePollViewList"];
+                };
+            };
+        };
+    };
+    StaffGovernancePollsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffGovernancePollView"];
                 };
             };
         };

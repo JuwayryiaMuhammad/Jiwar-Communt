@@ -752,6 +752,22 @@ describe('API v0 — no-store', () => {
       .members.filter((m) => !m.endedAt)
       .at(-1)!.id;
   };
+  /** A poll put by A's manager (open now, unless `opensAt`); its id. */
+  const aGovernancePollOf = async (over: object = {}) =>
+    body<{ id: string }>(
+      await as('manager', 'POST', '/governance/polls', {
+        kind: 'yes_no',
+        titleEn: 'No-store poll',
+        bodyEn: 'Whether.',
+        secret: true,
+        quorumPct: 50,
+        thresholdPct: 50,
+        closesAt: new Date(Date.now() + 48 * 3_600_000).toISOString(),
+        ...over,
+      }).expect(201),
+    ).id;
+  let oneGovernancePoll: Promise<string> | null = null;
+  const aGovernancePoll = () => (oneGovernancePoll ??= aGovernancePollOf());
   const GOVERNANCE_CALLS = (): Record<string, () => Promise<Response>> => ({
     'GET /governance/board': () => as('owner', 'GET', '/governance/board'),
     'GET /governance/board/terms': () =>
@@ -797,6 +813,57 @@ describe('API v0 — no-store', () => {
       ),
     'GET /staff/governance/owners': () =>
       as('manager', 'GET', '/staff/governance/owners'),
+    'GET /governance/polls': async () => {
+      await aGovernancePoll();
+      return as('owner', 'GET', '/governance/polls');
+    },
+    'GET /governance/polls/{id}': async () =>
+      as('owner', 'GET', `/governance/polls/${await aGovernancePoll()}`),
+    'POST /governance/polls/{id}/votes': async () => {
+      const id = await aGovernancePollOf();
+      const poll = body<{ options: { id: string; key: string }[] }>(
+        await as('owner', 'GET', `/governance/polls/${id}`).expect(200),
+      );
+      return as('owner', 'POST', `/governance/polls/${id}/votes`, {
+        unitId: w.a.homeUnitId,
+        optionIds: [poll.options.find((o) => o.key === 'yes')!.id],
+      });
+    },
+    'POST /governance/polls': () =>
+      as('manager', 'POST', '/governance/polls', {
+        kind: 'yes_no',
+        titleEn: 'No-store poll',
+        bodyEn: 'Whether.',
+        secret: false,
+        quorumPct: 50,
+        thresholdPct: 50,
+        closesAt: new Date(Date.now() + 48 * 3_600_000).toISOString(),
+      }),
+    'PATCH /governance/polls/{id}': async () => {
+      const id = await aGovernancePollOf({
+        opensAt: new Date(Date.now() + 3_600_000).toISOString(),
+      });
+      return as('manager', 'PATCH', `/governance/polls/${id}`, {
+        quorumPct: 30,
+      });
+    },
+    'POST /governance/polls/{id}/cancel': async () =>
+      as(
+        'manager',
+        'POST',
+        `/governance/polls/${await aGovernancePollOf()}/cancel`,
+        {
+          reasonCode: 'created_in_error',
+        },
+      ),
+    'GET /staff/governance/polls': () =>
+      as('manager', 'GET', '/staff/governance/polls'),
+    'GET /staff/governance/polls/{id}': async () =>
+      as(
+        'manager',
+        'GET',
+        `/staff/governance/polls/${await aGovernancePoll()}`,
+      ),
   });
   const PERMIT_CALLS = (): Record<string, () => Promise<Response>> => ({
     'POST /units/{unitId}/permits/works': async () => {

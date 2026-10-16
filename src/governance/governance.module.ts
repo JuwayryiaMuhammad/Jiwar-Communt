@@ -5,7 +5,14 @@ import { GovernanceBoardController } from './board/board.controller';
 import { BoardSeat } from './board/board-seat';
 import { BoardService } from './board/board.service';
 import { StaffBoardController } from './board/staff-board.controller';
+import { ContestSweeps } from './contests/contest-sweeps';
+import { Contests } from './contests/contests.service';
 import { GovernanceNotices } from './governance-notices';
+import {
+  GovernancePollsController,
+  StaffGovernancePollsController,
+} from './polls/polls.controller';
+import { GovernancePollsService } from './polls/polls.service';
 
 /**
  * Governance (ADR 0051): the owners' board, its polls and elections. Reads
@@ -13,7 +20,20 @@ import { GovernanceNotices } from './governance-notices';
  */
 @Module({
   imports: [CommunityGovernancePortModule],
-  controllers: [GovernanceBoardController, StaffBoardController],
-  providers: [GovernanceAccess, GovernanceNotices, BoardSeat, BoardService],
+  controllers: [
+    GovernanceBoardController,
+    StaffBoardController,
+    GovernancePollsController,
+    StaffGovernancePollsController,
+  ],
+  providers: [
+    GovernanceAccess,
+    GovernanceNotices,
+    BoardSeat,
+    BoardService,
+    Contests,
+    ContestSweeps,
+    GovernancePollsService,
+  ],
 })
 export class GovernanceModule {}

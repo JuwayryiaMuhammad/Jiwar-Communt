@@ -449,4 +449,10 @@ export const GOVERNANCE_COVERAGE: readonly string[] = [
   'board_member.added',
   'board_member.role_changed',
   'board_member.ended',
+  'governance_poll.created',
+  'governance_poll.changed',
+  'governance_poll.opened',
+  'governance_poll.cancelled',
+  'governance_poll.closed',
+  'governance.vote_cast',
 ];

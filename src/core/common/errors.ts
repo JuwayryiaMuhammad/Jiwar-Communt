@@ -754,6 +754,23 @@ export const ErrorCode = {
    * that ended a moment ago counts as none.
    */
   BOARD_SEAT_REQUIRED: 'BOARD_SEAT_REQUIRED',
+  /** Unknown, another compound's, or not the caller's to see (ADR 0051). */
+  GOVERNANCE_POLL_NOT_FOUND: 'GOVERNANCE_POLL_NOT_FOUND',
+  /** It opened already: only a cancel now (409, params.status). */
+  GOVERNANCE_CONTEST_STARTED: 'GOVERNANCE_CONTEST_STARTED',
+  /** It takes no vote now: not yet open, closed or cancelled (409, params.status). */
+  GOVERNANCE_CONTEST_NOT_OPEN: 'GOVERNANCE_CONTEST_NOT_OPEN',
+  /** It closed or was cancelled already (409, params.status). */
+  GOVERNANCE_CONTEST_ENDED: 'GOVERNANCE_CONTEST_ENDED',
+  /**
+   * The caller does not cast this unit's vote in this poll or election
+   * (403): the unit's voting owner when it opened does.
+   */
+  GOVERNANCE_NOT_ELECTOR: 'GOVERNANCE_NOT_ELECTOR',
+  /** The unit voted already; a vote is never changed (409). */
+  GOVERNANCE_ALREADY_VOTED: 'GOVERNANCE_ALREADY_VOTED',
+  /** The compound has params.max polls and elections not yet ended (409). */
+  GOVERNANCE_LIMIT_REACHED: 'GOVERNANCE_LIMIT_REACHED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

@@ -319,6 +319,13 @@ const ERROR_TEXT: Record<string, string> = {
   BOARD_OFFICE_TAKEN: 'Another member holds this office.',
   BOARD_ALREADY_SEATED: 'This owner sits on the board already.',
   BOARD_SEAT_REQUIRED: 'Only a sitting board member can do this.',
+  GOVERNANCE_POLL_NOT_FOUND: 'This poll does not exist.',
+  GOVERNANCE_CONTEST_STARTED: 'Voting has opened: it can only be cancelled now.',
+  GOVERNANCE_CONTEST_NOT_OPEN: 'Voting is not open.',
+  GOVERNANCE_CONTEST_ENDED: 'It has closed or was cancelled already.',
+  GOVERNANCE_NOT_ELECTOR: 'You do not cast this unit’s vote.',
+  GOVERNANCE_ALREADY_VOTED: 'This unit has voted already.',
+  GOVERNANCE_LIMIT_REACHED: 'Too many polls and elections are under way.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

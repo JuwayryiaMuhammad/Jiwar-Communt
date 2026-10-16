@@ -2686,6 +2686,18 @@
         ],
         "type": "object"
       },
+      "CancelGovernancePollDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `governancePollCancel`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "CancelGuardTaskDto": {
         "properties": {
           "reasonCode": {
@@ -3124,6 +3136,30 @@
           "refunds",
           "refunded",
           "net"
+        ],
+        "type": "object"
+      },
+      "CastPollVoteDto": {
+        "properties": {
+          "optionIds": {
+            "description": "The one option chosen (yes, no or abstain on a yes/no poll).",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 1,
+            "minItems": 1,
+            "type": "array"
+          },
+          "unitId": {
+            "description": "A unit whose vote the caller casts in this poll (`myUnits`); each votes once, for good.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "optionIds"
         ],
         "type": "object"
       },
@@ -5813,6 +5849,83 @@
         },
         "required": [
           "kind"
+        ],
+        "type": "object"
+      },
+      "CreateGovernancePollDto": {
+        "properties": {
+          "bodyAr": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "closesAt": {
+            "description": "When voting closes: 1 hour to 60 days after it opens (INVALID_VALUE, params.minHours and params.maxDays).",
+            "format": "date-time",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernancePollKind"
+              }
+            ]
+          },
+          "opensAt": {
+            "description": "When voting opens: absent or past, now; at most 90 days ahead.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "options": {
+            "description": "A `choice` poll's 2 to 10 options, in the order shown. A `yes_no` poll takes none: its options are yes, no and abstain.",
+            "items": {
+              "$ref": "#/components/schemas/GovernancePollOptionDto"
+            },
+            "type": "array"
+          },
+          "quorumPct": {
+            "description": "The share of the electorate’s units that must vote, in %.",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "number"
+          },
+          "secret": {
+            "description": "A secret ballot (no choice is ever stored with its unit) or an open vote (each unit’s choice is shown to the owners after the close). Fixed for good.",
+            "type": "boolean"
+          },
+          "thresholdPct": {
+            "description": "The share of the votes that carries it, in %: of yes and no on a yes/no poll (abstentions left out), of all votes for the first option of a choice poll.",
+            "maximum": 100,
+            "minimum": 50,
+            "type": "number"
+          },
+          "titleAr": {
+            "maxLength": 200,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "English, Arabic or both, each with its body.",
+            "maxLength": 200,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "secret",
+          "quorumPct",
+          "thresholdPct",
+          "closesAt"
         ],
         "type": "object"
       },
@@ -12177,6 +12290,15 @@
         ],
         "type": "object"
       },
+      "GovernanceContestStatus": {
+        "enum": [
+          "scheduled",
+          "open",
+          "closed",
+          "cancelled"
+        ],
+        "type": "string"
+      },
       "GovernanceOwnerView": {
         "properties": {
           "accountId": {
@@ -12217,6 +12339,305 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GovernancePollKind": {
+        "enum": [
+          "yes_no",
+          "choice"
+        ],
+        "type": "string"
+      },
+      "GovernancePollOptionDto": {
+        "properties": {
+          "labelAr": {
+            "maxLength": 200,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "labelEn": {
+            "description": "In the languages the poll is written in.",
+            "maxLength": 200,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "GovernancePollOptionView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "description": "A yes/no poll’s options; null on a choice poll.",
+            "enum": [
+              "yes",
+              "no",
+              "abstain"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "labelAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "labelEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "votes": {
+            "description": "Votes, once the poll closed; null before: nobody sees a count while voting is open.",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "labelEn",
+          "labelAr",
+          "votes"
+        ],
+        "type": "object"
+      },
+      "GovernancePollResult": {
+        "enum": [
+          "passed",
+          "failed",
+          "no_quorum",
+          "tied"
+        ],
+        "type": "string"
+      },
+      "GovernancePollView": {
+        "properties": {
+          "bodyAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelReasonCode": {
+            "description": "From `governancePollCancel`, once cancelled.",
+            "nullable": true,
+            "type": "string"
+          },
+          "closesAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "electorate": {
+            "description": "Units in the electorate, taken when voting opened.",
+            "nullable": true,
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernancePollKind"
+              }
+            ]
+          },
+          "myUnits": {
+            "description": "The units whose vote the caller casts in this poll; none for the staff.",
+            "items": {
+              "$ref": "#/components/schemas/GovernanceVoteUnitView"
+            },
+            "type": "array"
+          },
+          "opensAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/GovernancePollOptionView"
+            },
+            "type": "array"
+          },
+          "quorumPct": {
+            "type": "number"
+          },
+          "reference": {
+            "example": "GP-0001",
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernancePollResult"
+              }
+            ],
+            "nullable": true
+          },
+          "rollCall": {
+            "description": "An open vote’s choices by unit, once closed; null otherwise.",
+            "items": {
+              "$ref": "#/components/schemas/GovernanceRollCallView"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "rollCallPublic": {
+            "description": "An open vote: each unit’s choice is shown to the owners once the poll closes. Show the voter a notice before they vote.",
+            "type": "boolean"
+          },
+          "secret": {
+            "description": "A secret ballot: no choice is ever stored with its unit.",
+            "type": "boolean"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernanceContestStatus"
+              }
+            ]
+          },
+          "thresholdPct": {
+            "type": "number"
+          },
+          "titleAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "turnout": {
+            "description": "Units that voted so far: shown while open, never the counts.",
+            "nullable": true,
+            "type": "number"
+          },
+          "winningOptionId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "kind",
+          "titleEn",
+          "titleAr",
+          "bodyEn",
+          "bodyAr",
+          "secret",
+          "rollCallPublic",
+          "quorumPct",
+          "thresholdPct",
+          "opensAt",
+          "closesAt",
+          "status",
+          "electorate",
+          "turnout",
+          "options",
+          "result",
+          "winningOptionId",
+          "cancelReasonCode",
+          "myUnits",
+          "rollCall"
+        ],
+        "type": "object"
+      },
+      "GovernancePollViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GovernancePollView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GovernanceRollCallView": {
+        "properties": {
+          "choice": {
+            "description": "Option ids.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "unitCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitCode",
+          "choice"
+        ],
+        "type": "object"
+      },
+      "GovernanceVoteReceipt": {
+        "properties": {
+          "pollId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "votedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "pollId",
+          "unitId",
+          "votedAt"
+        ],
+        "type": "object"
+      },
+      "GovernanceVoteUnitView": {
+        "properties": {
+          "mayVote": {
+            "description": "The caller may cast this unit’s vote now.",
+            "type": "boolean"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "voted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "unitId",
+          "unitCode",
+          "voted",
+          "mayVote"
         ],
         "type": "object"
       },
@@ -27901,6 +28322,176 @@
         ],
         "type": "object"
       },
+      "StaffGovernancePollView": {
+        "properties": {
+          "authorSide": {
+            "enum": [
+              "manager",
+              "board"
+            ],
+            "type": "string"
+          },
+          "bodyAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelReasonCode": {
+            "description": "From `governancePollCancel`, once cancelled.",
+            "nullable": true,
+            "type": "string"
+          },
+          "closesAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "electorate": {
+            "description": "Units in the electorate, taken when voting opened.",
+            "nullable": true,
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernancePollKind"
+              }
+            ]
+          },
+          "myUnits": {
+            "description": "The units whose vote the caller casts in this poll; none for the staff.",
+            "items": {
+              "$ref": "#/components/schemas/GovernanceVoteUnitView"
+            },
+            "type": "array"
+          },
+          "opensAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/GovernancePollOptionView"
+            },
+            "type": "array"
+          },
+          "quorumPct": {
+            "type": "number"
+          },
+          "reference": {
+            "example": "GP-0001",
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernancePollResult"
+              }
+            ],
+            "nullable": true
+          },
+          "rollCall": {
+            "description": "An open vote’s choices by unit, once closed; null otherwise.",
+            "items": {
+              "$ref": "#/components/schemas/GovernanceRollCallView"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "rollCallPublic": {
+            "description": "An open vote: each unit’s choice is shown to the owners once the poll closes. Show the voter a notice before they vote.",
+            "type": "boolean"
+          },
+          "secret": {
+            "description": "A secret ballot: no choice is ever stored with its unit.",
+            "type": "boolean"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernanceContestStatus"
+              }
+            ]
+          },
+          "thresholdPct": {
+            "type": "number"
+          },
+          "titleAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "turnout": {
+            "description": "Units that voted so far: shown while open, never the counts.",
+            "nullable": true,
+            "type": "number"
+          },
+          "winningOptionId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "kind",
+          "titleEn",
+          "titleAr",
+          "bodyEn",
+          "bodyAr",
+          "secret",
+          "rollCallPublic",
+          "quorumPct",
+          "thresholdPct",
+          "opensAt",
+          "closesAt",
+          "status",
+          "electorate",
+          "turnout",
+          "options",
+          "result",
+          "winningOptionId",
+          "cancelReasonCode",
+          "myUnits",
+          "rollCall",
+          "authorSide",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StaffGovernancePollViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffGovernancePollView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StaffGuardHandoverView": {
         "properties": {
           "acknowledgedAt": {
@@ -33186,6 +33777,69 @@
               }
             ],
             "description": "Inactive ends the shifts open at the gate."
+          }
+        },
+        "type": "object"
+      },
+      "UpdateGovernancePollDto": {
+        "properties": {
+          "bodyAr": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "closesAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GovernancePollKind"
+              }
+            ]
+          },
+          "opensAt": {
+            "description": "When voting opens: absent or past, now; at most 90 days ahead.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "options": {
+            "description": "A `choice` poll's 2 to 10 options, in the order shown. A `yes_no` poll takes none: its options are yes, no and abstain.",
+            "items": {
+              "$ref": "#/components/schemas/GovernancePollOptionDto"
+            },
+            "type": "array"
+          },
+          "quorumPct": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "number"
+          },
+          "thresholdPct": {
+            "maximum": 100,
+            "minimum": 50,
+            "type": "number"
+          },
+          "titleAr": {
+            "maxLength": 200,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "description": "English, Arabic or both, each with its body.",
+            "maxLength": 200,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
           }
         },
         "type": "object"
@@ -42356,6 +43010,306 @@
           }
         ],
         "summary": "List the board’s terms",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/governance/polls": {
+      "get": {
+        "description": "Newest first, each with the caller’s units in it. No counts while voting is open, only the turnout. For the units’ owners; anyone else gets GOVERNANCE_NOT_AVAILABLE (404).",
+        "operationId": "GovernancePollsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/GovernanceContestStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernancePollViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the owners’ polls",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). Opens at `opensAt` (now when absent): its electorate is each unit’s voting owner then. At most 10 polls and elections under way (GOVERNANCE_LIMIT_REACHED).",
+        "operationId": "GovernancePollsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGovernancePollDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernancePollView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Put a poll to the owners",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/governance/polls/{id}": {
+      "get": {
+        "description": "The counts and the result once it closed; an open vote’s roll call too. For the units’ owners; anyone else gets GOVERNANCE_NOT_AVAILABLE (404). An elector who sold the unit since it opened still reads it.",
+        "operationId": "GovernancePollsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernancePollView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a poll",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). Anything but its secrecy; once open, GOVERNANCE_CONTEST_STARTED.",
+        "operationId": "GovernancePollsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGovernancePollDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernancePollView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a poll before voting opens",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/governance/polls/{id}/cancel": {
+      "post": {
+        "description": "A sitting board member or the manager (BOARD_SEAT_REQUIRED, 403). Before it closes (GOVERNANCE_CONTEST_ENDED); nothing is counted, and a secret poll’s ballots are destroyed unread.",
+        "operationId": "GovernancePollsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelGovernancePollDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernancePollView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a poll, with a reason code",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/governance/polls/{id}/votes": {
+      "post": {
+        "description": "Once per unit, never changed (GOVERNANCE_ALREADY_VOTED), by the unit’s voting owner when the poll opened (GOVERNANCE_NOT_ELECTOR), while it is open (GOVERNANCE_CONTEST_NOT_OPEN). The answer says the vote was taken and when, never what; a retry with the same key replays it.",
+        "operationId": "GovernancePollsController_vote",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CastPollVoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernanceVoteReceipt"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cast a unit’s vote",
         "tags": [
           "governance"
         ],
@@ -56914,6 +57868,103 @@
           }
         ],
         "summary": "Find owners for the board",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/polls": {
+      "get": {
+        "description": "Newest first. No counts while voting is open.",
+        "operationId": "StaffGovernancePollsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/GovernanceContestStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGovernancePollViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the owners’ polls",
+        "tags": [
+          "governance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/governance/polls/{id}": {
+      "get": {
+        "operationId": "StaffGovernancePollsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGovernancePollView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a poll, with its results once closed",
         "tags": [
           "governance"
         ],

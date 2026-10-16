@@ -131,3 +131,41 @@ export async function closedContestRows(
   });
   return contestId;
 }
+
+let pollNumber = 1;
+
+/** A yes/no poll on a contest of its own (not opened); its id. */
+export async function pollRow(
+  tx: TenantTxClient,
+  r: { tenantId: string; createdById: string; contestId?: string },
+): Promise<string> {
+  const id = newId();
+  const contestId =
+    r.contestId ?? (await contestRow(tx, { tenantId: r.tenantId }));
+  await tx.governancePoll.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      contestId,
+      number: 800_000 + pollNumber++ + Math.floor(Math.random() * 90_000),
+      kind: 'yes_no',
+      titleEn: 'A poll',
+      bodyEn: 'Its question.',
+      quorumPct: 50,
+      thresholdPct: 50,
+      authorSide: 'manager',
+      createdById: r.createdById,
+    },
+  });
+  for (const [i, key] of ['yes', 'no', 'abstain'].entries())
+    await tx.governancePollOption.create({
+      data: {
+        id: newId(),
+        tenantId: r.tenantId,
+        pollId: id,
+        position: i + 1,
+        key,
+      },
+    });
+  return id;
+}

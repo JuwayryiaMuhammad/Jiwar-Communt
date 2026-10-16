@@ -6690,3 +6690,66 @@ model GovernanceBallot {
   @@index([tenantId, contestId], map: "governance_ballots_contest_idx")
   @@map("governance_ballots")
 }
+
+enum GovernancePollKind {
+  yes_no
+  choice
+
+  @@map("governance_poll_kind")
+}
+
+/// The last number given per compound and contest kind (ADR 0051).
+model GovernanceCounter {
+  tenantId   String                @map("tenant_id") @db.Uuid
+  kind       GovernanceContestKind
+  lastNumber Int                   @map("last_number")
+
+  @@id([tenantId, kind])
+  @@map("governance_counters")
+}
+
+/// An owners' poll (ADR 0051): yes / no / abstain or one of 2–10 options, a
+/// quorum and a pass threshold; secret or open, fixed at creation (its
+/// contest). Changes only until it opens; then a cancel or its result, once.
+model GovernancePoll {
+  id                   String             @id @db.Uuid
+  tenantId             String             @map("tenant_id") @db.Uuid
+  contestId            String             @map("contest_id") @db.Uuid
+  number               Int
+  kind                 GovernancePollKind
+  titleEn              String?            @map("title_en")
+  titleAr              String?            @map("title_ar")
+  bodyEn               String?            @map("body_en")
+  bodyAr               String?            @map("body_ar")
+  quorumPct            Int                @map("quorum_pct") @db.SmallInt
+  thresholdPct         Int                @map("threshold_pct") @db.SmallInt
+  authorSide           String             @map("author_side")
+  createdById          String             @map("created_by_account_id") @db.Uuid
+  result               String?
+  winningOptionId      String?            @map("winning_option_id") @db.Uuid
+  cancelReasonCode     String?            @map("cancel_reason_code")
+  cancelledById        String?            @map("cancelled_by_account_id") @db.Uuid
+  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, contestId], map: "governance_polls_contest_key")
+  @@unique([tenantId, number], map: "governance_polls_number_key")
+  @@index([tenantId, createdAt, id], map: "governance_polls_created_idx")
+  @@map("governance_polls")
+}
+
+model GovernancePollOption {
+  id         String  @id @db.Uuid
+  tenantId   String  @map("tenant_id") @db.Uuid
+  pollId     String  @map("poll_id") @db.Uuid
+  position   Int     @db.SmallInt
+  key        String?
+  labelEn    String? @map("label_en")
+  labelAr    String? @map("label_ar")
+  finalCount Int?    @map("final_count")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, pollId, position], map: "governance_poll_options_position_key")
+  @@map("governance_poll_options")
+}

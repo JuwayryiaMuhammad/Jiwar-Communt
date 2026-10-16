@@ -110,6 +110,7 @@ export const REASON_CODES = {
   // Governance (ADR 0051).
   boardMemberEnd: ['resigned', 'removed', 'misconduct', 'other'],
   boardMemberSystemEnd: ['no_longer_owner', 'account_closed'],
+  governancePollCancel: ['created_in_error', 'superseded', 'board_decision', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

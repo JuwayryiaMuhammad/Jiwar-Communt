@@ -377,4 +377,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   board_members_one_office: null,
   governance_contests_tenant_id_id_key: null,
   governance_contests_tenant_id_id_secret_key: null,
+  // Numbers from the counter under its row lock; one poll per contest.
+  governance_polls_tenant_id_id_key: null,
+  governance_polls_contest_key: null,
+  governance_polls_number_key: null,
+  governance_poll_options_tenant_id_id_key: null,
+  governance_poll_options_position_key: null,
 };

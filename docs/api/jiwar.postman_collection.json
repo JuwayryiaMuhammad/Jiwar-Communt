@@ -10631,6 +10631,250 @@
           }
         },
         {
+          "name": "List the owners’ polls",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "polls"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/polls"
+            }
+          }
+        },
+        {
+          "name": "Put a poll to the owners",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"yes_no\",\n  \"secret\": false,\n  \"quorumPct\": 1,\n  \"thresholdPct\": 50,\n  \"closesAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  |  |\n| `closesAt` | string (date-time) | yes | When voting closes: 1 hour to 60 days after it opens (INVALID_VALUE, params.minHours and params.maxDays). |\n| `kind` | `yes_no` \\| `choice` | yes |  |\n| `opensAt` | string (date-time) |  | When voting opens: absent or past, now; at most 90 days ahead. |\n| `options` | object[] |  | A `choice` poll's 2 to 10 options, in the order shown. A `yes_no` poll takes none: its options are yes, no and abstain. |\n| `quorumPct` | number | yes | The share of the electorate’s units that must vote, in %. |\n| `secret` | boolean | yes | A secret ballot (no choice is ever stored with its unit) or an open vote (each unit’s choice is shown to the owners after the close). Fixed for good. |\n| `thresholdPct` | number | yes | The share of the votes that carries it, in %: of yes and no on a yes/no poll (abstentions left out), of all votes for the first option of a choice poll. |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | English, Arabic or both, each with its body. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "polls"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/polls"
+            }
+          }
+        },
+        {
+          "name": "Get a poll",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "polls",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/polls/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change a poll before voting opens",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"bodyAr\": \"\",\n  \"bodyEn\": \"\",\n  \"closesAt\": \"2026-01-01T09:00:00.000Z\",\n  \"kind\": \"yes_no\",\n  \"opensAt\": \"2026-01-01T09:00:00.000Z\",\n  \"options\": [],\n  \"quorumPct\": 1,\n  \"thresholdPct\": 50,\n  \"titleAr\": \"\",\n  \"titleEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  |  |\n| `closesAt` | string (date-time) |  |  |\n| `kind` | `yes_no` \\| `choice` |  |  |\n| `opensAt` | string (date-time) |  | When voting opens: absent or past, now; at most 90 days ahead. |\n| `options` | object[] |  | A `choice` poll's 2 to 10 options, in the order shown. A `yes_no` poll takes none: its options are yes, no and abstain. |\n| `quorumPct` | number |  |  |\n| `thresholdPct` | number |  |  |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  | English, Arabic or both, each with its body. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "polls",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/polls/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel a poll, with a reason code",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `governancePollCancel`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "polls",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/polls/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cast a unit’s vote",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"unitId\": \"\",\n  \"optionIds\": [\n    \"\"\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `optionIds` | string (uuid)[] | yes | The one option chosen (yes, no or abstain on a yes/no poll). |\n| `unitId` | string (uuid) | yes | A unit whose vote the caller casts in this poll (`myUnits`); each votes once, for good. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "polls",
+                ":id",
+                "votes"
+              ],
+              "raw": "{{baseUrl}}/api/v1/governance/polls/:id/votes",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get the board’s open term",
           "request": {
             "description": "**Responses:** 200",
@@ -10888,6 +11132,76 @@
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/staff/governance/owners"
+            }
+          }
+        },
+        {
+          "name": "List the owners’ polls",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "polls"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/polls"
+            }
+          }
+        },
+        {
+          "name": "Get a poll, with its results once closed",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "governance",
+                "polls",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/governance/polls/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         }

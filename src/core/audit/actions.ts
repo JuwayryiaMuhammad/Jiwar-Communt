@@ -999,6 +999,30 @@ export const AUDIT_ACTIONS = {
   'board_member.role_changed': { log: 'tenant', target: 'board_member' },
   // metadata: termId, accountId, reasonCode, side (manager | system).
   'board_member.ended': { log: 'tenant', target: 'board_member' },
+  // A poll put to the owners. changes: number, kind, ballot (secret | open), quorumPct,
+  // thresholdPct, opensAt, closesAt, options (how many), the title and body
+  // as "changed"; metadata: side (manager | board).
+  'governance_poll.created': {
+    log: 'tenant',
+    target: 'governance_poll',
+    sensitive: ['titleEn', 'titleAr', 'bodyEn', 'bodyAr'],
+  },
+  // Before it opened. changes: the same fields, the texts as "changed".
+  'governance_poll.changed': {
+    log: 'tenant',
+    target: 'governance_poll',
+    sensitive: ['titleEn', 'titleAr', 'bodyEn', 'bodyAr'],
+  },
+  // Voting opened (system or the creator). metadata: electorate, ballot.
+  'governance_poll.opened': { log: 'tenant', target: 'governance_poll' },
+  // metadata: fromStatus, reasonCode, side.
+  'governance_poll.cancelled': { log: 'tenant', target: 'governance_poll' },
+  // Counted at its closing time (system). metadata: result, turnout,
+  // electorate. Never a count per option: the poll shows those.
+  'governance_poll.closed': { log: 'tenant', target: 'governance_poll' },
+  // A unit's vote on a poll or an election. metadata: kind, unitId. Never
+  // a choice, on a secret contest or an open one.
+  'governance.vote_cast': { log: 'tenant', target: 'governance_contest' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

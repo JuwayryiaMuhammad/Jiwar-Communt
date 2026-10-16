@@ -520,4 +520,11 @@ export const REASON_CODES = {
   // A seat the system ends, never picked by anyone (ADR 0051): the member
   // owns no unit any more, or their account was closed.
   boardMemberSystemEnd: ['no_longer_owner', 'account_closed'],
+  // Why a poll is cancelled, by the board or the manager (ADR 0051).
+  governancePollCancel: [
+    'created_in_error',
+    'superseded',
+    'board_decision',
+    'other',
+  ],
 } as const;

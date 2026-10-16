@@ -141,3 +141,160 @@ export const STAFF_BOARD_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+const statusInvalid = {
+  query: { status: 'maybe' },
+  fields: [
+    {
+      field: 'status',
+      code: 'INVALID_VALUE',
+      params: { allowed: ['scheduled', 'open', 'closed', 'cancelled'] },
+    },
+  ],
+};
+
+const pollBody = {
+  kind: 'yes_no',
+  titleEn: 'Matrix poll',
+  bodyEn: 'Whether.',
+  secret: true,
+  quorumPct: 50,
+  thresholdPct: 50,
+  closesAt: '2099-01-01T00:00:00.000Z',
+};
+
+/** The owners' polls (ADR 0051): read, voted and put by the board. */
+export const GOVERNANCE_POLL_ROUTES: Row[] = [
+  {
+    method: 'GET',
+    path: '/governance/polls',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: statusInvalid,
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/governance/polls/{id}',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bGovernancePollId }),
+      code: 'GOVERNANCE_POLL_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/governance/polls/{id}/votes',
+    auth: 'tenant',
+    as: 'owner',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bGovernancePollId }),
+      code: 'GOVERNANCE_POLL_NOT_FOUND',
+      body: (w) => ({
+        unitId: w.a.homeUnitId,
+        optionIds: ['0192f1c2-7a4b-4c3d-8e9f-0a1b2c3d4e5f'],
+      }),
+    },
+    invalid: {
+      body: { unitId: 'x', optionIds: [] },
+      fields: [
+        { field: 'unitId', code: 'INVALID_UUID' },
+        {
+          field: 'optionIds',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 1 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/governance/polls',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      body: { ...pollBody, quorumPct: 0 },
+      fields: [
+        {
+          field: 'quorumPct',
+          code: 'INVALID_NUMBER',
+          params: { min: 1, max: 100 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'PATCH',
+    path: '/governance/polls/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bGovernancePollId }),
+      code: 'GOVERNANCE_POLL_NOT_FOUND',
+      body: () => ({}),
+    },
+    invalid: {
+      body: { thresholdPct: 101 },
+      fields: [
+        {
+          field: 'thresholdPct',
+          code: 'INVALID_NUMBER',
+          params: { min: 50, max: 100 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/governance/polls/{id}/cancel',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bGovernancePollId }),
+      code: 'GOVERNANCE_POLL_NOT_FOUND',
+      body: () => ({ reasonCode: 'other' }),
+    },
+    invalid: {
+      body: { reasonCode: 7 },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/governance/polls',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: statusInvalid,
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/governance/polls/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bGovernancePollId }),
+      code: 'GOVERNANCE_POLL_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+];

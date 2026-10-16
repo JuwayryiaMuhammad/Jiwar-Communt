@@ -1134,6 +1134,21 @@ describe('API v0 — PII leak scan', () => {
         idLast4: 'QZ7X',
       },
     }).expect(201);
+    // An owners' poll (ADR 0051): the board's words; no one's data.
+    const piiGovernancePoll = await idOf(
+      'POST',
+      '/governance/polls',
+      a.tokens.manager,
+      {
+        kind: 'yes_no',
+        titleEn: 'PII-scan poll',
+        bodyEn: 'Whether to repaint.',
+        secret: true,
+        quorumPct: 50,
+        thresholdPct: 50,
+        closesAt: new Date(Date.now() + 48 * 3_600_000).toISOString(),
+      },
+    );
     // Approved: the guard sees it at the gate today.
     await call(w, 'POST', `/staff/unit-permits/${piiPermit}/approve`, {
       token: a.tokens.manager,
@@ -1331,6 +1346,9 @@ describe('API v0 — PII leak scan', () => {
       // A found item of B's: not found for everyone of A.
       '/gate/found-items/{id}': w.bFoundItemId,
       '/staff/security/found-items/{id}': w.bFoundItemId,
+      // ADR 0051.
+      '/governance/polls/{id}': piiGovernancePoll,
+      '/staff/governance/polls/{id}': piiGovernancePoll,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

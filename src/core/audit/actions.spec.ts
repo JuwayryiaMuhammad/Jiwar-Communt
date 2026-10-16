@@ -118,6 +118,8 @@ describe('audit catalog', () => {
         'found_item',
         'board_term',
         'board_member',
+        'governance_poll',
+        'governance_contest',
       ]).toContain(def.target);
     }
   });

@@ -21,8 +21,13 @@ import {
   VEHICLES_COVERAGE,
 } from '../setup/audit-coverage-split';
 import {
+  CONTEST_CLOSE_SWEEP,
+  CONTEST_OPEN_SWEEP,
+} from '../../src/governance/contests/contest-sweeps';
+import {
   governanceHelpers,
   lapse,
+  shiftContest,
   type StaffTermBody,
   type Who,
 } from '../setup/governance';
@@ -149,6 +154,80 @@ describe('Audit coverage — governance', () => {
         })
       )[0];
       expect(appointed.metadata).toMatchObject({ lapsedTermId: first.id });
+    });
+  });
+
+  describe('polls and votes', () => {
+    it('created and changed: settings by value, texts as "changed"; opened: the electorate', async () => {
+      const p = await g.poll(s.manager, {
+        opensAt: new Date(Date.now() + 3_600_000).toISOString(),
+        closesAt: new Date(Date.now() + 48 * 3_600_000).toISOString(),
+      });
+      const created = await single('governance_poll.created', p.id);
+      expect(created).toMatchObject(by(s.manager, 'governance_poll'));
+      expect(created.metadata).toEqual({ side: 'manager' });
+      expect(created.changes).toMatchObject({
+        kind: { from: null, to: 'yes_no' },
+        ballot: { from: null, to: 'secret' },
+        quorumPct: { from: null, to: 50 },
+        thresholdPct: { from: null, to: 50 },
+        options: { from: null, to: 3 },
+        titleEn: { changed: true },
+        bodyEn: { changed: true },
+      });
+      expect(JSON.stringify(created)).not.toContain('Repaint');
+      await g
+        .http('patch', `/governance/polls/${p.id}`, s.manager.token, {
+          quorumPct: 40,
+          titleEn: 'Repaint the gate',
+        })
+        .expect(200);
+      const changed = await single('governance_poll.changed', p.id);
+      expect(changed.changes).toEqual({
+        quorumPct: { from: 50, to: 40 },
+        titleEn: { changed: true },
+      });
+      await g.sweep(CONTEST_OPEN_SWEEP, new Date(Date.now() + 2 * 3_600_000));
+      const opened = await single('governance_poll.opened', p.id);
+      expect(opened).toMatchObject({
+        actorType: 'system',
+        targetType: 'governance_poll',
+      });
+      expect(opened.metadata).toEqual({ electorate: 5, ballot: 'secret' });
+    });
+
+    it('vote_cast: the unit, never the choice; closed: result and turnout; cancelled: the reason', async () => {
+      const p = await g.poll(s.manager, { quorumPct: 20 });
+      const contestId = await g.contestOf(s.c, p.id);
+      await g
+        .castVote(o(0), p.id, o(0).unitId, [g.option(p, 'no')])
+        .expect(201);
+      const vote = await single('governance.vote_cast', contestId);
+      expect(vote).toMatchObject(by(o(0), 'governance_contest'));
+      expect(vote.metadata).toEqual({ kind: 'poll', unitId: o(0).unitId });
+      expect(JSON.stringify(vote)).not.toContain(g.option(p, 'no'));
+      await shiftContest(contestId, -80);
+      await g.sweep(CONTEST_CLOSE_SWEEP);
+      const closed = await single('governance_poll.closed', p.id);
+      expect(closed).toMatchObject({ actorType: 'system' });
+      expect(closed.metadata).toEqual({
+        result: 'failed',
+        turnout: 1,
+        electorate: 5,
+      });
+      const q = await g.poll(o(2));
+      await g
+        .http('post', `/governance/polls/${q.id}/cancel`, o(2).token, {
+          reasonCode: 'board_decision',
+        })
+        .expect(200);
+      const cancelled = await single('governance_poll.cancelled', q.id);
+      expect(cancelled).toMatchObject(by(o(2), 'governance_poll'));
+      expect(cancelled.metadata).toEqual({
+        fromStatus: 'open',
+        reasonCode: 'board_decision',
+        side: 'board',
+      });
     });
   });
 

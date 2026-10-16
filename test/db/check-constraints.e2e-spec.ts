@@ -1254,6 +1254,29 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   governance_ballot_boxes_shape: {},
   governance_ballots_random_id: {},
   governance_ballots_choice: {},
+  governance_counters_last_number: {},
+  governance_polls_number_positive: {},
+  governance_polls_quorum: {},
+  governance_polls_threshold: {},
+  governance_polls_author_side: {},
+  // Nullable columns only under IS [NOT] NULL.
+  governance_polls_texts: {},
+  governance_polls_text_length: {
+    guarded:
+      'each text IS NULL is tested first; the length runs only on a value',
+  },
+  governance_polls_result: {
+    guarded:
+      'result IS NULL and winning_option_id IS NULL are tested first; the list and the comparison run only on values',
+  },
+  governance_polls_cancel: {
+    guarded:
+      'cancel_reason_code IS NULL is tested first; the list runs only on a value',
+  },
+  governance_poll_options_shape: {
+    guarded:
+      'key, each label and final_count IS NULL are tested first; the lists, lengths and comparison run only on values',
+  },
 };
 
 interface Check {

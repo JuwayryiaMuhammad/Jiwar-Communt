@@ -7,6 +7,7 @@ import {
   closedContestRows,
   contestRow,
   openContest,
+  pollRow,
 } from '../setup/governance-rows';
 
 /** What a seed needs from one compound. */
@@ -103,6 +104,36 @@ const TABLES: Table[] = [
       return contestId;
     },
     key: 'contest_id',
+    linked: false,
+  },
+  {
+    table: 'governance_counters',
+    insert: async (tx, own) => {
+      await tx.governanceCounter.upsert({
+        where: { tenantId_kind: { tenantId: own.tenantId, kind: 'poll' } },
+        create: { tenantId: own.tenantId, kind: 'poll', lastNumber: 1 },
+        update: {},
+      });
+      return own.tenantId;
+    },
+    key: 'tenant_id',
+    linked: false,
+  },
+  {
+    table: 'governance_polls',
+    insert: (tx, own, link) =>
+      pollRow(tx, { tenantId: own.tenantId, createdById: link.accountId }),
+  },
+  {
+    table: 'governance_poll_options',
+    insert: async (tx, own) => {
+      await pollRow(tx, { tenantId: own.tenantId, createdById: own.accountId });
+      const [o] = await tx.governancePollOption.findMany({
+        orderBy: { id: 'desc' },
+        take: 1,
+      });
+      return o.id;
+    },
     linked: false,
   },
 ];

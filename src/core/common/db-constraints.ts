@@ -121,6 +121,9 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   patrol_notes_scan_key: null,
   patrol_note_photos_tenant_id_id_key: null,
   patrol_note_photos_file_id_key: null,
+  // A point at an instant of a run, once (ON CONFLICT DO NOTHING).
+  patrol_track_points_tenant_id_id_key: null,
+  patrol_track_points_once_key: null,
   visitor_details_tenant_id_id_key: null,
   visitor_passes_tenant_id_id_key: null,
   // ADR 0043.

@@ -1,6 +1,7 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { newId } from '../../src/core/common/uuid';
 import { PATROL_WATCH_SWEEP } from '../../src/gate/patrols/patrol-sweeps';
+import { PATROL_TRACK_PURGE_SWEEP } from '../../src/gate/patrols/patrol-track.service';
 import { auditReaders } from '../setup/audit';
 import {
   COMMUNITY_COVERAGE,
@@ -308,6 +309,43 @@ describe('Audit coverage — patrols', () => {
         recipients: 2,
       });
     });
+  });
+
+  it('the track points’ purge: how many went, never where', async () => {
+    const gate = (await x.g.gate(s.c)).id;
+    const point = await x.checkpoint(supervisor, { gateId: gate });
+    const r = await x.route(supervisor, { gateId: gate }, [point.id]);
+    const walker = await x.guard(s.c);
+    await x.start(walker, { gateId: gate });
+    const run = await x.adhoc(walker, r.id);
+    // Two points recorded 31 days ago: the purge's due ones.
+    for (const lat of [30.1, 30.2])
+      await x.inTx(s.c, (tx) =>
+        tx.patrolTrackPoint.create({
+          data: {
+            id: newId(),
+            tenantId: s.c.tenantId,
+            runId: run.id,
+            guardAccountId: walker.id,
+            recordedAt: new Date(Date.now() - 31 * 86_400_000 - lat * 1000),
+            lat,
+            lng: 31.1,
+            receivedAt: new Date(),
+          },
+        }),
+      );
+    await x.sweep(PATROL_TRACK_PURGE_SWEEP, new Date());
+    const purged = await read.tenant(s.c.tenantId, {
+      action: 'patrol_track.purged',
+    });
+    covered.add('patrol_track.purged');
+    expect(purged).toHaveLength(1);
+    expect(purged[0]).toMatchObject({
+      ...system('patrol_run'),
+      targetId: null,
+    });
+    expect(purged[0].metadata).toEqual({ points: 2 });
+    expect(JSON.stringify(purged[0])).not.toContain('30.1');
   });
 
   describe('catalog completeness', () => {

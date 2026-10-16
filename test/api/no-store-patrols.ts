@@ -164,6 +164,24 @@ export function patrolCalls(
         notedAt: new Date().toISOString(),
       });
     },
+    'POST /gate/patrols/runs/{id}/track': async () => {
+      await clearLive();
+      const run = id(
+        await guard('POST', `/gate/patrols/routes/${await aRoute()}/start`),
+      );
+      return guard('POST', `/gate/patrols/runs/${run}/track`, {
+        points: [{ recordedAt: new Date().toISOString(), lat: 30, lng: 31 }],
+      });
+    },
+    'GET /gate/patrols/runs/{id}/track': async () => {
+      await clearLive();
+      const run = id(
+        await guard('POST', `/gate/patrols/routes/${await aRoute()}/start`),
+      );
+      return guard('GET', `/gate/patrols/runs/${run}/track`);
+    },
+    'GET /staff/security/patrols/runs/{id}/track': async () =>
+      manager('GET', `/staff/security/patrols/runs/${await aRun(60)}/track`),
     'POST /gate/patrols/runs/{id}/end': async () => {
       await clearLive();
       const run = id(

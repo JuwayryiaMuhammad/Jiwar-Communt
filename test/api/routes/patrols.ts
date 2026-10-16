@@ -295,6 +295,44 @@ export const GUARD_PATROL_ROUTES: Row[] = [
   },
   {
     method: 'POST',
+    path: '/gate/patrols/runs/{id}/track',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bRunId }),
+      body: () => ({
+        points: [{ recordedAt: new Date().toISOString(), lat: 30, lng: 31 }],
+      }),
+      code: 'PATROL_RUN_NOT_FOUND',
+    },
+    invalid: {
+      body: { points: [] },
+      fields: [
+        {
+          field: 'points',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 100 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/gate/patrols/runs/{id}/track',
+    auth: 'tenant',
+    as: 'guard',
+    denied: 'manager',
+    foreign: {
+      params: (w) => ({ id: w.bRunId }),
+      code: 'PATROL_RUN_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
     path: '/gate/patrols/runs/{id}/end',
     auth: 'tenant',
     as: 'guard',
@@ -326,6 +364,19 @@ export const STAFF_RUN_ROUTES: Row[] = [
   {
     method: 'GET',
     path: '/staff/security/patrols/runs/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bRunId }),
+      code: 'PATROL_RUN_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/security/patrols/runs/{id}/track',
     auth: 'tenant',
     as: 'manager',
     denied: 'guard',

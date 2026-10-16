@@ -251,3 +251,16 @@ export function orderProblem(
   if (last && scannedAt < last.scannedAt) return { expected };
   return null;
 }
+
+// ----------------------------------------------------------------------------
+// Track points
+// ----------------------------------------------------------------------------
+
+/** Points in one batch. */
+export const TRACK_BATCH = { min: 1, max: 100 } as const;
+/** A batch may come this long after its run ended (the offline queue). */
+export const TRACK_AFTER_END_MINUTES = NOTE_AFTER_END_MINUTES;
+/** A point is deleted this long after it was recorded. */
+export const TRACK_RETENTION_DAYS = 30;
+/** The most points one read answers. */
+export const TRACK_READ_MAX = 5000;

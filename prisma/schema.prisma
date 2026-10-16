@@ -7057,3 +7057,24 @@ model PatrolNotePhoto {
   @@index([tenantId, noteId], map: "patrol_note_photos_note_idx")
   @@map("patrol_note_photos")
 }
+
+/// Where a guard walked during a run (ADR 0052): personal data, deleted 30
+/// days after it was recorded and at the guard's erasure. Never changes.
+model PatrolTrackPoint {
+  id             String   @id @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  runId          String   @map("run_id") @db.Uuid
+  guardAccountId String   @map("guard_account_id") @db.Uuid
+  /// The device's time.
+  recordedAt     DateTime @map("recorded_at") @db.Timestamptz(3)
+  lat            Float
+  lng            Float
+  accuracyM      Float?   @map("accuracy_m")
+  receivedAt     DateTime @map("received_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, runId, recordedAt], map: "patrol_track_points_once_key")
+  @@index([tenantId, recordedAt], map: "patrol_track_points_age_idx")
+  @@index([tenantId, guardAccountId], map: "patrol_track_points_guard_idx")
+  @@map("patrol_track_points")
+}

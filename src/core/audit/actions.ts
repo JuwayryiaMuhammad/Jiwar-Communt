@@ -1141,6 +1141,9 @@ export const AUDIT_ACTIONS = {
   'patrol_run.missed': { log: 'tenant', target: 'patrol_run' },
   // metadata: status, scanned, total, recipients.
   'patrol_run.timed_out': { log: 'tenant', target: 'patrol_run' },
+  // The 30-day purge of the guards' track points, per compound (system):
+  // no target. metadata: points (how many).
+  'patrol_track.purged': { log: 'tenant', target: 'patrol_run' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

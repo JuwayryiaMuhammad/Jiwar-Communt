@@ -9,6 +9,7 @@ import {
   routeStopRow,
   runRow,
   scanRow,
+  trackRow,
   versionRow,
 } from '../setup/patrol-rows';
 import { dutyFileRow, gateRow } from '../setup/security-rows';
@@ -145,6 +146,16 @@ const TABLES: Table[] = [
         noteId: link.noteId,
         fileId: await dutyFileRow(tx, own.tenantId, 'patrol_photo'),
         uploadedById: link.accountId,
+      }),
+  },
+  {
+    table: 'patrol_track_points',
+    insert: (tx, own, link) =>
+      trackRow(tx, {
+        tenantId: own.tenantId,
+        runId: link.runId,
+        guardId: link.accountId,
+        msAgo: ++runs,
       }),
   },
 ];

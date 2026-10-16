@@ -10,6 +10,7 @@ import {
   rowHash,
   runRow,
   scanRow,
+  trackRow,
 } from '../setup/patrol-rows';
 import { placeRow } from '../setup/safety-rows';
 import { dutyFileRow, gateRow, shiftRow } from '../setup/security-rows';
@@ -76,6 +77,7 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
           scanId,
           guardId: otherId,
         });
+        await trackRow(tx, { tenantId, runId: otherRunId, guardId: otherId });
         await notePhotoRow(tx, {
           tenantId,
           noteId,
@@ -606,5 +608,45 @@ describe('Patrol tables — CHECKs, triggers and privileges', () => {
         `UPDATE patrol_note_photos SET note_id = note_id WHERE note_id = '${noteId}'`,
       ),
     ).rejects.toThrow(/append-only/);
+  });
+
+  describe('patrol_track_points', () => {
+    it('the app adds and deletes points, never changes or truncates them', async () => {
+      expect({
+        table: 'patrol_track_points',
+        ...(await privileges('patrol_track_points')),
+      }).toEqual({
+        table: 'patrol_track_points',
+        select: true,
+        insert: true,
+        update: false,
+        delete: true,
+        truncate: false,
+      });
+      await expect(
+        attempt(
+          migrator,
+          `UPDATE patrol_track_points SET lat = 0 WHERE tenant_id = '${tenantId}'`,
+        ),
+      ).rejects.toThrow(/a point never changes/);
+      await expect(
+        attempt(migrator, 'TRUNCATE "patrol_track_points" CASCADE'),
+      ).rejects.toThrow(/append-only/);
+      await asApp(
+        `DELETE FROM patrol_track_points WHERE tenant_id = '${tenantId}'`,
+      );
+    });
+
+    it('a point of a run at an instant, once; a position in range', async () => {
+      const point = (recordedAt: string, lat = 30) =>
+        `INSERT INTO patrol_track_points (id, tenant_id, run_id, guard_account_id, recorded_at, lat, lng, received_at)
+         VALUES (gen_random_uuid(), '${tenantId}', '${runId}', '${otherId}', ${recordedAt}, ${lat}, 31, now())`;
+      await expect(
+        asApp(point("'2026-11-01T08:00:00Z'"), point("'2026-11-01T08:00:00Z'")),
+      ).rejects.toThrow(/patrol_track_points_once_key/);
+      await expect(asApp(point('now()', 95))).rejects.toThrow(
+        /patrol_track_points_position_range/,
+      );
+    });
   });
 });

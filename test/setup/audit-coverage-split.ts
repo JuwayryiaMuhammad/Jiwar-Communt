@@ -485,4 +485,5 @@ export const PATROL_COVERAGE: readonly string[] = [
   'patrol_run.late',
   'patrol_run.missed',
   'patrol_run.timed_out',
+  'patrol_track.purged',
 ];

@@ -1398,6 +1398,8 @@ describe('API v0 — PII leak scan', () => {
       '/staff/security/patrols/routes/{id}': w.bRouteId,
       '/staff/security/patrols/runs/{id}': w.bRunId,
       '/gate/patrols/runs/{id}': w.bRunId,
+      '/gate/patrols/runs/{id}/track': w.bRunId,
+      '/staff/security/patrols/runs/{id}/track': w.bRunId,
     };
     /**
      * The landlord and the ender ask about their own unit: the one rented

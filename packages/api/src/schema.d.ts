@@ -2248,6 +2248,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/patrols/runs/{id}/track": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Where I walked on my run
+         * @description My own runs only; kept 30 days.
+         */
+        get: operations["GuardPatrolsController_myTrack"];
+        put?: never;
+        /**
+         * Send where I walked
+         * @description Up to 100 points of my run, under way or up to 30 minutes after it ended (409 PATROL_RUN_NOT_LIVE). A point outside the run’s lifetime is dropped (`rejected`), a point already sent adds nothing; the rest are kept (`accepted`).
+         */
+        post: operations["GuardPatrolsController_record"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/plate-lookup": {
         parameters: {
             query?: never;
@@ -9014,6 +9038,26 @@ export interface paths {
          * @description Nobody started it yet (409 PATROL_RUN_CLOSED, params.status); a `patrolRunCancel` code.
          */
         post: operations["StaffRunsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/runs/{id}/track": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Where the guard walked
+         * @description The guard’s location: `patrols.manage` only, kept 30 days.
+         */
+        get: operations["StaffRunsController_runTrack"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -22578,6 +22622,37 @@ export interface components {
             data: components["schemas"]["TopicView"][];
             nextCursor: string | null;
         };
+        TrackAcceptedView: {
+            /** @description Points recorded now; those sent before are not counted. */
+            accepted: number;
+            /** @description Points dropped: outside the run’s lifetime, two minutes either side. Do not send them again. */
+            rejected: number;
+        };
+        TrackDto: {
+            /** @description A point at an instant already recorded for the run is ignored: a batch sent again adds nothing. */
+            points: components["schemas"]["TrackPointDto"][];
+        };
+        TrackPointDto: {
+            accuracyM?: number;
+            lat: number;
+            lng: number;
+            /**
+             * Format: date-time
+             * @description The device’s time: inside the run’s lifetime, two minutes either side.
+             */
+            recordedAt: string;
+        };
+        TrackPointView: {
+            accuracyM: number | null;
+            lat: number;
+            lng: number;
+            /** Format: date-time */
+            recordedAt: string;
+        };
+        TrackPointViewList: {
+            data: components["schemas"]["TrackPointView"][];
+            nextCursor: string | null;
+        };
         TransferOwnershipDto: {
             /** @description What the person is told (at most 1000 characters). Never stored in the audit trail. */
             reason: string;
@@ -26960,6 +27035,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GuardRunDetailView"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_myTrack: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackPointViewList"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_record: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrackDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackAcceptedView"];
                 };
             };
         };
@@ -37288,6 +37409,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RunView"];
+                };
+            };
+        };
+    };
+    StaffRunsController_runTrack: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackPointViewList"];
                 };
             };
         };

@@ -21498,6 +21498,81 @@
           }
         },
         {
+          "name": "Where I walked on my run",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "patrols",
+                "runs",
+                ":id",
+                "track"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/patrols/runs/:id/track",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Send where I walked",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"points\": [\n    {\n      \"recordedAt\": \"2026-01-01T09:00:00.000Z\",\n      \"lat\": -90,\n      \"lng\": -180\n    }\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `points` | object[] | yes | A point at an instant already recorded for the run is ignored: a batch sent again adds nothing. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gate",
+                "patrols",
+                "runs",
+                ":id",
+                "track"
+              ],
+              "raw": "{{baseUrl}}/api/v1/gate/patrols/runs/:id/track",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the checkpoints",
           "request": {
             "description": "**Responses:** 200",
@@ -22087,6 +22162,37 @@
                 "cancel"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/security/patrols/runs/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Where the guard walked",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "patrols",
+                "runs",
+                ":id",
+                "track"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/patrols/runs/:id/track",
               "variable": [
                 {
                   "description": "",

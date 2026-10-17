@@ -6,7 +6,10 @@ import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import { invalid } from '../../core/common/localized';
 import { REASON_CODES, requireReasonCodeOnly } from '../../core/common/reasons';
 import { newId } from '../../core/common/uuid';
-import { TenantTx } from '../../core/database/tenant-tx.service';
+import {
+  TenantTx,
+  type TenantTxClient,
+} from '../../core/database/tenant-tx.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { GovernanceAccess } from '../access';
 import { BoardService } from '../board/board.service';
@@ -72,12 +75,16 @@ export class CertificationService implements OnModuleInit {
   ): Promise<ElectionRecord> {
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
+      // Accounts first (ADR 0036): the winners it seats and everyone it
+      // tells, before the board lock.
+      await this.access.lockAccounts(tx, await this.told(tx, id));
       await this.access.lockBoard(tx);
       const { election, contest } = await this.elections.lockElection(
         tx,
         id,
         'update',
       );
+      const open = await this.board.lockOpenTerm(tx);
       const now = await dbNow(tx);
       const phase = electionPhase(election, contest, now);
       if (phase === 'certified' || phase === 'cancelled')
@@ -158,7 +165,6 @@ export class CertificationService implements OnModuleInit {
           data: { outcome: 'ineligible' },
         });
 
-      const open = await tx.boardTerm.findFirst({ where: { endedAt: null } });
       if (open) await this.board.endTerm(tx, open, now, 'succeeded', termId);
       const term = await tx.boardTerm.create({
         data: {
@@ -196,23 +202,34 @@ export class CertificationService implements OnModuleInit {
           tieReasonCode: tieReason,
         },
       });
-      const electors = (
-        await tx.governanceElector.findMany({
-          where: { contestId: contest.id },
-          select: { accountId: true },
-        })
-      ).map((e) => e.accountId);
-      const all = await tx.governanceCandidate.findMany({
-        where: { electionId: id },
-        select: { accountId: true },
-      });
       await this.notices.send(
         tx,
-        [...electors, ...all.map((c) => c.accountId)],
+        await this.told(tx, id),
         'governance_election.result',
         id,
       );
       return this.elections.load(tx, certified, null);
     });
+  }
+
+  /**
+   * Whom a certification tells: the electorate and every candidate (the
+   * winners among them), both fixed since voting opened.
+   */
+  private async told(tx: TenantTxClient, electionId: string) {
+    const election = await tx.governanceElection.findUnique({
+      where: { id: electionId },
+      select: { contestId: true },
+    });
+    if (!election) return [];
+    const electors = await tx.governanceElector.findMany({
+      where: { contestId: election.contestId },
+      select: { accountId: true },
+    });
+    const candidates = await tx.governanceCandidate.findMany({
+      where: { electionId },
+      select: { accountId: true },
+    });
+    return [...electors, ...candidates].map((r) => r.accountId);
   }
 }

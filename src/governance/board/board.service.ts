@@ -200,9 +200,13 @@ export class BoardService implements OnModuleInit {
     if (fields.length) throw invalid(fields);
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
+      await this.access.lockAccounts(
+        tx,
+        input.members.map((m) => m.accountId),
+      );
       await this.access.lockBoard(tx);
+      const open = await this.lockOpenTerm(tx);
       const now = await dbNow(tx);
-      const open = await tx.boardTerm.findFirst({ where: { endedAt: null } });
       if (open && termStatus(open, now) === 'current')
         throw appError.conflict(ErrorCode.BOARD_SITTING, 'A board sits now', {
           params: { endsAt: open.endsAt.toISOString() },
@@ -270,6 +274,7 @@ export class BoardService implements OnModuleInit {
   }): Promise<TermRecord> {
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
+      await this.access.lockAccounts(tx, [input.accountId]);
       await this.access.lockBoard(tx);
       const now = await dbNow(tx);
       const board = await this.sitting(tx, now);
@@ -345,6 +350,11 @@ export class BoardService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
       await this.access.lockBoard(tx);
+      // The seat, for update, before the clock: an action its holder took
+      // under it (shared) is dated before this end.
+      await tx.$queryRaw`
+        SELECT id FROM board_members
+         WHERE id = ${memberId}::uuid AND ended_at IS NULL FOR UPDATE`;
       const now = await dbNow(tx);
       const board = await this.sitting(tx, now);
       const member = board?.members.find(
@@ -391,7 +401,7 @@ export class BoardService implements OnModuleInit {
     });
   }
 
-  /** Ends an open term now. The board lock is held. */
+  /** Ends an open term now. The board lock and the term (lockOpenTerm) are held. */
   async endTerm(
     tx: TenantTxClient,
     term: BoardTerm,
@@ -423,18 +433,31 @@ export class BoardService implements OnModuleInit {
     reason: (typeof REASON_CODES.boardMemberSystemEnd)[number],
   ): Promise<number> {
     await this.access.lockBoard(tx);
-    const now = await dbNow(tx);
     const seats = await tx.$queryRaw<{ id: string }[]>`
       SELECT m.id FROM board_members m
         JOIN board_terms t ON t.tenant_id = m.tenant_id AND t.id = m.term_id
        WHERE m.account_id = ${accountId}::uuid AND m.ended_at IS NULL
          AND t.ended_at IS NULL
        ORDER BY m.id FOR UPDATE OF m`;
+    const now = await dbNow(tx);
     for (const { id } of seats) {
       const member = await tx.boardMember.findUniqueOrThrow({ where: { id } });
       await this.endSeat(tx, member, now, reason, null);
     }
     return seats.length;
+  }
+
+  /**
+   * The open term, for update (its end and a member's action with it
+   * serialize, ADR 0051), or null. The board lock is held; read the clock
+   * after it.
+   */
+  async lockOpenTerm(tx: TenantTxClient): Promise<BoardTerm | null> {
+    const rows = await tx.$queryRaw<{ id: string }[]>`
+      SELECT id FROM board_terms WHERE ended_at IS NULL FOR UPDATE`;
+    return rows[0]
+      ? tx.boardTerm.findUniqueOrThrow({ where: { id: rows[0].id } })
+      : null;
   }
 
   private async endSeat(

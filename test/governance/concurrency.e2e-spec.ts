@@ -24,7 +24,9 @@ const later = (hours: number) => new Date(Date.now() + hours * HOUR);
  * is counted, every ballot has its participation); a contest opens and
  * closes once; the list of an election is fixed by its opening; a board is
  * certified once and two boards never sit at once; an office has one
- * holder; a seat ended a moment ago acts no more.
+ * holder; a seat ended, or a board succeeded, a moment ago acts no more:
+ * a poll its member put exists only if the history shows the seat held
+ * when the poll was decided.
  */
 describe('Governance — concurrency', () => {
   let h: HttpHarness;
@@ -60,6 +62,50 @@ describe('Governance — concurrency', () => {
         }),
       };
     });
+  /**
+   * Whether the history the database keeps shows `accountId` seated, on a
+   * board sitting, at `at`: the seat added before and not ended before it,
+   * its term begun, not lapsed and not ended before it. Ends are dated
+   * under the seat's and the term's locks, after any action taken with
+   * them, so a poll put with a seat is never dated after the seat's end.
+   */
+  const satAt = (accountId: string, at: Date) =>
+    g.inTx(s.c, async (tx) => {
+      const rows = await tx.$queryRaw<{ one: number }[]>`
+        SELECT 1 AS one FROM board_members m
+          JOIN board_terms t ON t.tenant_id = m.tenant_id AND t.id = m.term_id
+         WHERE m.account_id = ${accountId}::uuid
+           AND m.added_at <= ${at} AND (m.ended_at IS NULL OR ${at} <= m.ended_at)
+           AND t.starts_at <= ${at} AND ${at} < t.ends_at
+           AND (t.ended_at IS NULL OR ${at} <= t.ended_at)`;
+      return rows.length > 0;
+    });
+  /** A poll a seated member puts, to race something that ends the seat. */
+  const putPoll = (member: Who) =>
+    g.http('post', '/governance/polls', member.token, {
+      kind: 'yes_no',
+      titleEn: 'Race',
+      bodyEn: 'Race.',
+      secret: true,
+      quorumPct: 50,
+      thresholdPct: 50,
+      closesAt: later(48).toISOString(),
+    });
+  /** The poll a race let through: put while the seat was held, then cancelled. */
+  const putWhileSeated = async (member: Who, put: { body: unknown }) => {
+    const created = await g.inTx(s.c, (tx) =>
+      tx.governancePoll.findUniqueOrThrow({
+        where: { id: (put.body as { id: string }).id },
+      }),
+    );
+    expect(created.authorSide).toBe('board');
+    expect(await satAt(member.id, created.createdAt)).toBe(true);
+    await g
+      .http('post', `/governance/polls/${created.id}/cancel`, s.manager.token, {
+        reasonCode: 'other',
+      })
+      .expect(200);
+  };
   /** Runs the close sweep until nothing of `contestId` is left open. */
   const closeUntilDone = async (contestId: string) => {
     for (let i = 0; i < 10; i++) {
@@ -352,39 +398,12 @@ describe('Governance — concurrency', () => {
             reasonCode: 'resigned',
           },
         ),
-        g.http('post', '/governance/polls', member.token, {
-          kind: 'yes_no',
-          titleEn: 'Race',
-          bodyEn: 'Race.',
-          secret: true,
-          quorumPct: 50,
-          thresholdPct: 50,
-          closesAt: later(48).toISOString(),
-        }),
+        putPoll(member),
       ]);
       expect(ended.status).toBe(200);
       expect([201, 403]).toContain(put.status);
-      if (put.status === 201) {
-        const endedAt = (
-          ended.body as { members: { id: string; endedAt: string }[] }
-        ).members.find((m) => m.id === seat.id)!.endedAt;
-        const created = await g.inTx(s.c, (tx) =>
-          tx.governancePoll.findUniqueOrThrow({
-            where: { id: (put.body as { id: string }).id },
-          }),
-        );
-        expect(created.createdAt.getTime()).toBeLessThanOrEqual(
-          new Date(endedAt).getTime(),
-        );
-        await g
-          .http(
-            'post',
-            `/governance/polls/${created.id}/cancel`,
-            s.manager.token,
-            { reasonCode: 'other' },
-          )
-          .expect(200);
-      } else expect(code(put)).toMatch(/FORBIDDEN|BOARD_SEAT_REQUIRED/);
+      if (put.status === 201) await putWhileSeated(member, put);
+      else expect(code(put)).toMatch(/FORBIDDEN|BOARD_SEAT_REQUIRED/);
       // Seat them again for the next round.
       await g
         .http('post', '/staff/governance/board/members', s.manager.token, {
@@ -392,6 +411,42 @@ describe('Governance — concurrency', () => {
           role: 'member',
         })
         .expect(201);
+    }
+  });
+
+  it('R12: a board succeeded while its member acts: the poll was put before the succession, or refused', async () => {
+    for (let round = 0; round < ROUNDS; round++) {
+      // An election counted and ready to certify, the board still sitting.
+      const e = await g.election(s.manager);
+      await g.stand(o(7), e.id).expect(201);
+      await shiftElection(e.id, -25);
+      await g.sweep(CONTEST_OPEN_SWEEP);
+      const [c] = (await g.electionAs(o(7), e.id)).candidates;
+      await g.electionVote(o(7), e.id, o(7).unitId, [c.id]).expect(201);
+      await shiftElection(e.id, -25);
+      await g.sweep(CONTEST_CLOSE_SWEEP);
+      const board = (await g.staffBoard(s.manager))!;
+      expect(board.status).toBe('current');
+      const member: Who = s.owners.find((w) =>
+        board.members.some((m) => m.accountId === w.id && !m.endedAt),
+      )!;
+      const [certified, put] = await Promise.all([
+        g.http(
+          'post',
+          `/staff/governance/elections/${e.id}/certify`,
+          s.manager.token,
+          {},
+        ),
+        putPoll(member),
+      ]);
+      expect(certified.status).toBe(200);
+      expect([201, 403]).toContain(put.status);
+      if (put.status === 201) await putWhileSeated(member, put);
+      else expect(code(put)).toMatch(/FORBIDDEN|BOARD_SEAT_REQUIRED/);
+      const open = await g.inTx(s.c, (tx) =>
+        tx.boardTerm.findMany({ where: { endedAt: null } }),
+      );
+      expect(open.map((t) => t.electionId)).toEqual([e.id]);
     }
   });
 });

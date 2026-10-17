@@ -51,7 +51,15 @@ A unit with no active owner account has no voice and is left out of the electora
 **Writes.**
 - The manager appoints only when no board sits (`BOARD_SITTING`).
 - The manager fills a vacant seat, records the offices the board chose, and ends a seat.
-- Every board write takes the compound's board lock first.
+- Every board write takes the compound's board lock.
+
+**Lock order.** Every governance transaction locks in this order (`GovernanceAccess`):
+1. Account rows first (ADR 0036): the caller's, shared; and every account a board write will seat or tell (the members appointed, a seat filled, a certification's winners, electorate and candidates), key-shared in id order. An erasure holding one of them finishes before the board lock is taken, never while it is held.
+2. The compound's board lock.
+3. The open term, then the seats. A member acting with their seat locks the seat and its term shared. Whatever ends them locks them for update: a seat ended by the manager or by the system, a term succeeded at a certification or replaced at an appointment.
+4. A vote's row, then its ballot box.
+
+The clock is read after the term and the seats are locked. An end waits for an action taken with the seat and is dated after it, or the action sees the seat or the term ended: the history never shows a member's poll after their seat or their board ended.
 
 ### A seat's permissions are derived, not granted
 
@@ -60,7 +68,7 @@ An account has one role for life (ADR 0010), and a seat comes and goes with a te
 - No role may hold it: the roles API refuses it, `access:sync` gives it to nobody, a grant made in the database never counts, and the catalog listing leaves it out.
 - Core's `DerivedGrants` takes one check per derived permission from the domain that owns the fact; governance registers "the account sits on the current board".
 - `PermissionsGuard` and `PermissionsService.has` ask it on every request that the role does not settle, and never cache the answer. A term that ends or lapses, or a seat that is ended, stops working on the very next request.
-- An action taken with it checks the seat again inside its transaction, locked shared: ending the seat waits for it, or the action sees the seat gone.
+- An action taken with it checks the seat again inside its transaction, the seat and its term locked shared, by the clock read after the lock: ending either waits for it, or the action sees it gone.
 - `GET /me` lists the derived permissions the account holds with its role's.
 
 **The other permissions.**
@@ -188,3 +196,4 @@ Category `governance`; nothing is critical; params are codes only.
 
 - A voting-owner designation for co-owners (above), if they ask for one.
 - Budgets and expenses, appeals to the board: R7b.
+- A member's poll that opens at once tells the electorate while their seat is locked shared, against step 1 of the lock order. With an erasure of an owner (that account, then the board lock) and an end of that seat (the board lock, then the seat), the three can deadlock; PostgreSQL aborts one. The fix: key-share the electorate's accounts before the seat when the poll opens at once.

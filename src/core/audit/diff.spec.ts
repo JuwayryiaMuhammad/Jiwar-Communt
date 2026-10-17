@@ -1,3 +1,5 @@
+import { Logger } from '@nestjs/common';
+import { prepare } from './audit.service';
 import { diffChanges } from './diff';
 import {
   isSensitiveField,
@@ -155,5 +157,72 @@ describe('personal data guard', () => {
         { checkKeys: false, strict: true, root: 'changes' },
       ),
     ).toThrow(PersonalValueError);
+  });
+});
+
+describe('an action’s own sensitive fields (ADR 0014)', () => {
+  const logger = new Logger('test');
+  // governance_poll.created: titleEn, titleAr, bodyEn and bodyAr.
+  const action = 'governance_poll.created' as const;
+  const metadata = (m: Record<string, unknown>) =>
+    prepare({ action, targetId: null, metadata: m }, true, logger).metadata;
+  const changes = (c: Record<string, unknown>) =>
+    prepare({ action, targetId: null, changes: c as never }, true, logger)
+      .changes;
+
+  it.each([
+    [{ titleEn: 'Budget 2027' }],
+    [{ before: { bodyAr: 'نص' } }],
+    [{ titleEn: ['Budget'] }],
+    [{ title_en: 'Budget' }],
+  ])('throws on its words in metadata: %j', (m) => {
+    expect(() => metadata(m)).toThrow(SensitiveKeyError);
+  });
+
+  it.each([
+    [{ titleEn: true }],
+    [{ titleEn: false, bodyEn: 3 }],
+    [{ titleEn: null }],
+    [{ titleEn: { changed: true } }],
+    [{ nested: { bodyAr: { changed: true }, count: 2 } }],
+  ])('keeps a fact about them in metadata: %j', (m) => {
+    expect(metadata(m)).toEqual(m);
+  });
+
+  it('another action’s list does not apply; a global field always throws', () => {
+    expect(
+      prepare(
+        {
+          action: 'account.locale_changed',
+          targetId: null,
+          metadata: { titleEn: 'x' },
+        },
+        true,
+        logger,
+      ).metadata,
+    ).toEqual({ titleEn: 'x' });
+    expect(() => metadata({ email: true })).toThrow(SensitiveKeyError);
+  });
+
+  it('masks its words in changes written by hand; facts and the rest stay', () => {
+    expect(
+      changes({
+        titleEn: { from: null, to: 'Budget 2027' },
+        bodyAr: { from: 'قديم', to: 'جديد' },
+        titleAr: { from: false, to: true },
+        bodyEn: { changed: true },
+        quorumPct: { from: null, to: 50 },
+        kind: { from: null, to: 'yes_no' },
+        fullName: { from: 'A', to: 'B' },
+      }),
+    ).toEqual({
+      titleEn: { changed: true },
+      bodyAr: { changed: true },
+      titleAr: { from: false, to: true },
+      bodyEn: { changed: true },
+      quorumPct: { from: null, to: 50 },
+      kind: { from: null, to: 'yes_no' },
+      fullName: { changed: true },
+    });
   });
 });

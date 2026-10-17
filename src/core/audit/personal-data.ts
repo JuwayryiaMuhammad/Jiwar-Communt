@@ -47,6 +47,27 @@ export function isSensitiveField(key: string, action?: AuditAction): boolean {
   return SENSITIVE_PATTERN.test(key);
 }
 
+/** On `action`'s own `sensitive` list (not the global fields). */
+export function isActionSensitive(key: string, action: AuditAction): boolean {
+  const own: readonly string[] =
+    (AUDIT_ACTIONS[action] as { sensitive?: readonly string[] }).sensitive ??
+    [];
+  return own.some((f) => norm(f) === norm(key));
+}
+
+/**
+ * Whether a value is text or holds text at any depth. An action's own
+ * sensitive field may be recorded as a fact about it (`note: true`, a
+ * count, `{ changed: true }`), never as its words.
+ */
+export function holdsText(value: unknown): boolean {
+  if (typeof value === 'string') return true;
+  if (Array.isArray(value)) return value.some(holdsText);
+  if (value && typeof value === 'object' && !(value instanceof Date))
+    return Object.values(value).some(holdsText);
+  return false;
+}
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Heuristics for values that look like personal data. */
 const PERSONAL_VALUE_PATTERNS: [string, RegExp][] = [
@@ -92,14 +113,21 @@ export const REDACTED = '[redacted]';
 
 /**
  * Checks what is about to be stored:
- * - `metadata` keys that are sensitive → SensitiveKeyError (always);
+ * - `metadata` keys that are sensitive → SensitiveKeyError: a global one
+ *   always; one on the action's own list when its value holds text;
  * - string values that look personal → replaced by "[redacted]" and
  *   reported, or PersonalValueError when `strict` (tests). A heuristic must
  *   never block real work in production.
  */
 export function sanitize<T>(
   input: T,
-  opts: { checkKeys: boolean; strict: boolean; root: string },
+  opts: {
+    checkKeys: boolean;
+    strict: boolean;
+    root: string;
+    /** Whose own `sensitive` list applies to the keys. */
+    action?: AuditAction;
+  },
 ): Sanitized<T> {
   const redacted: string[] = [];
 
@@ -117,7 +145,13 @@ export function sanitize<T>(
       return Object.fromEntries(
         Object.entries(value).map(([k, v]) => {
           const here = `${path}.${k}`;
-          if (opts.checkKeys && isSensitiveField(k))
+          if (
+            opts.checkKeys &&
+            (isSensitiveField(k) ||
+              (opts.action &&
+                isActionSensitive(k, opts.action) &&
+                holdsText(v)))
+          )
             throw new SensitiveKeyError(here);
           return [k, walk(v, here)];
         }),

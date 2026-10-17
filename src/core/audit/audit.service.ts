@@ -6,7 +6,7 @@ import type { Env } from '../config/env.schema';
 import type { TenantTxClient } from '../database/tenant-tx.service';
 import { AUDIT_ACTIONS, type TenantAuditAction } from './actions';
 import { AuditContext } from './audit-context';
-import type { Changes } from './diff';
+import { maskChanges, type Changes } from './diff';
 import { sanitize } from './personal-data';
 
 export interface AuditEntry<A> {
@@ -70,11 +70,22 @@ export function prepare(
   strict: boolean,
   logger: Logger,
 ): { changes?: Prisma.InputJsonValue; metadata?: Prisma.InputJsonValue } {
+  // The action's own `sensitive` list (ADR 0014) applies to both: masked
+  // in changes written by hand, refused as text in metadata.
   const changes = entry.changes
-    ? sanitize(entry.changes, { checkKeys: false, strict, root: 'changes' })
+    ? sanitize(maskChanges(entry.changes, entry.action), {
+        checkKeys: false,
+        strict,
+        root: 'changes',
+      })
     : undefined;
   const metadata = entry.metadata
-    ? sanitize(entry.metadata, { checkKeys: true, strict, root: 'metadata' })
+    ? sanitize(entry.metadata, {
+        checkKeys: true,
+        strict,
+        root: 'metadata',
+        action: entry.action,
+      })
     : undefined;
   const redacted = [
     ...(changes?.redacted ?? []),

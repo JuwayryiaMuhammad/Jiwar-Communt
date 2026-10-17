@@ -213,8 +213,8 @@ export class GovernancePollsService implements OnModuleInit {
       await this.audit.record(tx, {
         action: 'governance_poll.created',
         targetId: id,
-        // The settings by value, the texts as "changed": the action's
-        // `sensitive` list applies to changes, never to metadata.
+        // The settings by value, the texts as "changed" (the action's
+        // `sensitive` list; metadata never holds them as text).
         changes: diffChanges(
           null,
           audited(poll, contest, options.length),

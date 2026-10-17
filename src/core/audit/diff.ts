@@ -1,5 +1,5 @@
 import type { AuditAction } from './actions';
-import { isSensitiveField } from './personal-data';
+import { holdsText, isSensitiveField } from './personal-data';
 
 export type FieldChange = { from: unknown; to: unknown } | { changed: true };
 export type Changes = Record<string, FieldChange>;
@@ -31,4 +31,20 @@ export function diffChanges(
     out[key] = isSensitiveField(key, action) ? { changed: true } : { from, to };
   }
   return out;
+}
+
+/**
+ * Changes written by hand, as diffChanges records them: a sensitive field
+ * (global, or on the action's own list) whose change holds text becomes
+ * `{ changed: true }`; a fact about it (a boolean, a number, null) stays.
+ */
+export function maskChanges(changes: Changes, action: AuditAction): Changes {
+  return Object.fromEntries(
+    Object.entries(changes).map(([key, change]) => [
+      key,
+      isSensitiveField(key, action) && holdsText(change)
+        ? { changed: true as const }
+        : change,
+    ]),
+  );
 }

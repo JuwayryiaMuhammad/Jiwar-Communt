@@ -332,10 +332,13 @@ describe('Assisted path', () => {
     const since = new Date();
     await buildExports(h);
     await drainOutbox(h);
-    const mail = await waitForMessage(p.email, since);
-    const token = /\/a\/export#([0-9a-f-]{36}\.[0-9a-f]{64})/.exec(
-      mail.Text,
-    )![1];
+    // The account is also told the management acted for it (ADR 0036),
+    // in the same delivery run: wait for the mail that carries the link.
+    const link = /\/a\/export#([0-9a-f-]{36}\.[0-9a-f]{64})/;
+    const mail = await waitForMessage(p.email, since, 10_000, (m) =>
+      link.test(m.Text),
+    );
+    const token = link.exec(mail.Text)![1];
 
     // The manager cannot download it, in the app or anywhere.
     await h

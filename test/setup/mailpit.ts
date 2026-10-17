@@ -62,11 +62,17 @@ export interface MailpitMessage {
   HTML: string;
 }
 
-/** Waits for the newest email to `to` after `since` and returns it whole. */
+/**
+ * Waits for the newest email to `to` after `since` and returns it whole.
+ * With `match`, the newest one it accepts: an account that receives
+ * several emails in one delivery run (a notice, then a link) is otherwise
+ * answered with whichever is visible first.
+ */
 export async function waitForMessage(
   to: string,
   since: Date,
   timeoutMs = 10_000,
+  match?: (message: MailpitMessage) => boolean,
 ): Promise<MailpitMessage> {
   const base = required('MAILPIT_API_URL');
   const deadline = Date.now() + timeoutMs;
@@ -78,12 +84,15 @@ export async function waitForMessage(
     const fresh = body.messages
       .filter((m) => new Date(m.Created) >= since)
       .sort((a, b) => b.Created.localeCompare(a.Created));
-    if (fresh[0]) {
-      return (await (
-        await fetch(`${base}/api/v1/message/${fresh[0].ID}`)
+    for (const summary of fresh) {
+      const message = (await (
+        await fetch(`${base}/api/v1/message/${summary.ID}`)
       ).json()) as MailpitMessage;
+      if (!match || match(message)) return message;
     }
     await new Promise((r) => setTimeout(r, 150));
   }
-  throw new Error(`No email for ${to} within ${timeoutMs}ms`);
+  throw new Error(
+    `No ${match ? 'matching ' : ''}email for ${to} within ${timeoutMs}ms`,
+  );
 }

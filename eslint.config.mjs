@@ -4,10 +4,12 @@ import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 import boundaries from './eslint.boundaries.cjs';
+import testClock from './eslint.test-clock.cjs';
 import txConcurrency from './eslint.tx-concurrency.cjs';
 
 const { boundaryConfigs } = boundaries;
 const { txConcurrencyConfigs } = txConcurrency;
+const { testClockConfigs } = testClock;
 
 export default tseslint.config(
   {
@@ -16,6 +18,7 @@ export default tseslint.config(
       'eslint.config.mjs',
       'eslint.boundaries.cjs',
       'eslint.tx-concurrency.cjs',
+      'eslint.test-clock.cjs',
       'dist/**',
       'coverage/**',
       'apps/**',
@@ -60,6 +63,10 @@ export default tseslint.config(
   // One query at a time on a transaction client (eslint.tx-concurrency.cjs)
   // ==========================================================================
   ...txConcurrencyConfigs,
+  // ==========================================================================
+  // Tests read the compound's day from one helper (eslint.test-clock.cjs)
+  // ==========================================================================
+  ...testClockConfigs,
   // runInTenantUnsafe takes a tenant id from the caller instead of the request
   // context, so it is a deliberate hole. It is allowed only where there is no
   // request tenant by design: the login bootstrap (src/core/auth/), the

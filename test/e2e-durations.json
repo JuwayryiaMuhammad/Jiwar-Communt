@@ -276,6 +276,7 @@
   "test/security/tasks.e2e-spec.ts": 5,
   "test/security/zone-shifts.e2e-spec.ts": 4,
   "test/settings/tenant-settings.e2e-spec.ts": 8,
+  "test/setup/compound-clock.e2e-spec.ts": 6,
   "test/setup/http-harness.e2e-spec.ts": 6,
   "test/setup/tenant-lifecycle.e2e-spec.ts": 7,
   "test/vehicles/audit-coverage.e2e-spec.ts": 6,

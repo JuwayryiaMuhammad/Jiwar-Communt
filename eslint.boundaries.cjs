@@ -159,4 +159,4 @@ const boundaryConfigs = [
   })),
 ];
 
-module.exports = { DOMAINS, boundaryConfigs };
+module.exports = { DOMAINS, BASE_PRISMA, boundaryConfigs };

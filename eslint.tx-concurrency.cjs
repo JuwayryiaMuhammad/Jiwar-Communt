@@ -29,16 +29,13 @@ const SELECTOR = [
 const MESSAGE =
   'Promise.all over a transaction client runs concurrent queries on one connection (pg: "client.query() while already executing", an error in pg 9). Await each query in turn. Parallel work belongs in separate transactions, each opened with its own withTenantTx.';
 
+const TX_CONCURRENCY = { selector: SELECTOR, message: MESSAGE };
+
 const txConcurrencyConfigs = [
   {
     files: ['**/*.ts'],
-    rules: {
-      'no-restricted-syntax': [
-        'error',
-        { selector: SELECTOR, message: MESSAGE },
-      ],
-    },
+    rules: { 'no-restricted-syntax': ['error', TX_CONCURRENCY] },
   },
 ];
 
-module.exports = { txConcurrencyConfigs };
+module.exports = { TX_CONCURRENCY, txConcurrencyConfigs };

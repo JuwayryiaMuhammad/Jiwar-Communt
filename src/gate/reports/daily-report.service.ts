@@ -15,6 +15,7 @@ import { isCalendarDay, midnight, RosterCore } from '../roster/roster-core';
 import { isLate, LATE_AFTER_MINUTES } from '../roster/roster-rules';
 import { PostView } from '../roster/views/roster.views';
 import type {
+  DailyPatrolCountsView,
   DailyPostView,
   DailyReportView,
   DailyShiftView,
@@ -97,7 +98,28 @@ export const DAILY_COLUMNS: readonly CsvColumn[] = [
   { header: 'move_trucks', kind: 'number' },
   { header: 'material_entries', kind: 'number' },
   { header: 'material_exits', kind: 'number' },
+  { header: 'patrols_scheduled', kind: 'number' },
+  { header: 'patrols_done', kind: 'number' },
+  { header: 'patrols_late', kind: 'number' },
+  { header: 'patrols_missed', kind: 'number' },
+  { header: 'patrols_incomplete', kind: 'number' },
 ];
+
+/** The patrols' counts (ADR 0052), in the CSV's order. */
+const PATROL_COUNTS = [
+  'scheduled',
+  'done',
+  'late',
+  'missed',
+  'incomplete',
+] as const;
+const noPatrols = (): DailyPatrolCountsView => ({
+  scheduled: 0,
+  done: 0,
+  late: 0,
+  missed: 0,
+  incomplete: 0,
+});
 
 /**
  * The daily report (ADR 0050), per gate and per zone, for one of the
@@ -107,7 +129,8 @@ export const DAILY_COLUMNS: readonly CsvColumn[] = [
  * the gate, the gate services handled there, the visitors who came in,
  * and the permits' traffic there (ADR 0049), each its own count: the
  * contractor workers, event guests and move trucks let in, the materials
- * logged in and the material exits let out.
+ * logged in and the material exits let out; and the patrol runs planned
+ * then (ADR 0052): scheduled, done, late, missed, incomplete.
  * Fixed aggregate queries, one per kind of row: never one per post. Every
  * gate is listed; a zone when something happened there.
  */
@@ -153,6 +176,7 @@ export class DailyReportService {
       ...PERMIT_COUNTS.map((k) =>
         p.counts[k] === null ? null : String(p.counts[k]),
       ),
+      ...PATROL_COUNTS.map((k) => String(p.patrols[k])),
     ]);
     return {
       name: `security-daily-${report.date}.csv`,
@@ -385,6 +409,44 @@ export class DailyReportService {
       c.materialExits = (c.materialExits ?? 0) + r.n;
     }
 
+    // The patrol runs planned this day (ADR 0052), at gates and in zones:
+    // scheduled (cancelled ones left out), completed, late, missed, and
+    // ended short (timed out included).
+    const patrols = new Map<PostKey, DailyPatrolCountsView>();
+    const runs = await tx.$queryRaw<
+      {
+        gate_id: string | null;
+        place_id: string | null;
+        scheduled: number;
+        done: number;
+        late: number;
+        missed: number;
+        incomplete: number;
+      }[]
+    >`
+      SELECT gate_id, place_id,
+             count(*) FILTER (WHERE kind = 'scheduled' AND status <> 'cancelled')::int AS scheduled,
+             count(*) FILTER (WHERE status = 'completed')::int AS done,
+             count(*) FILTER (WHERE late_at IS NOT NULL)::int AS late,
+             count(*) FILTER (WHERE status = 'missed')::int AS missed,
+             count(*) FILTER (WHERE status IN ('incomplete', 'timed_out'))::int AS incomplete
+        FROM patrol_runs
+       WHERE planned_at >= ${start} AND planned_at < ${end}
+             ${gateOnly}
+       GROUP BY gate_id, place_id`;
+    for (const r of runs) {
+      if (!r.scheduled && !r.done && !r.late && !r.missed && !r.incomplete)
+        continue;
+      of(r.gate_id, r.place_id);
+      patrols.set(r.gate_id ? gateKey(r.gate_id) : zoneKey(r.place_id!), {
+        scheduled: r.scheduled,
+        done: r.done,
+        late: r.late,
+        missed: r.missed,
+        incomplete: r.incomplete,
+      });
+    }
+
     // Names, and the order: gates by name, then zones in the places' order.
     const keys = [...counts.keys()];
     const posts = keys.map((k) => {
@@ -411,6 +473,7 @@ export class DailyReportService {
           post: PostView.of(p, names),
           shifts: lines.get(key) ?? [],
           counts: counts.get(key)!,
+          patrols: patrols.get(key) ?? noPatrols(),
         };
       })
       .sort((a, b) => {

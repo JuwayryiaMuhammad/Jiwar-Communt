@@ -1310,6 +1310,74 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'outcome IS NULL and final_count IS NULL are tested first; the list and the comparison run only on values',
   },
+  // Patrols (ADR 0052).
+  patrol_checkpoints_one_post: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
+  patrol_checkpoints_names_length: {},
+  patrol_checkpoints_position_shape: {},
+  patrol_checkpoints_position_range: {
+    guarded:
+      'lat IS NULL is tested first; position_shape makes lng and radius_m present with it',
+  },
+  patrol_checkpoints_token_hash_shape: {},
+  patrol_checkpoints_retired_shape: {},
+  patrol_routes_one_post: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
+  patrol_routes_names_length: {},
+  patrol_routes_retired_shape: {},
+  patrol_route_versions_number_positive: {},
+  patrol_route_versions_expected_range: {},
+  patrol_route_versions_schedule_shape: {
+    guarded: 'schedule IS NULL is tested first',
+  },
+  patrol_route_checkpoints_position_range: {},
+  patrol_runs_one_post: {
+    guarded: 'num_nonnulls() counts NULLs: never NULL',
+  },
+  patrol_runs_kind_shape: {},
+  patrol_runs_planned: {
+    guarded:
+      'kind_shape gives a scheduled run its start; started_shape gives every other run its started_at: never both NULL',
+  },
+  patrol_runs_window_after_start: {
+    guarded:
+      'scheduled_start IS NULL is tested first; kind_shape gives window_ends_at with it',
+  },
+  patrol_runs_started_shape: {},
+  patrol_runs_ended_shape: {
+    guarded: 'started_at IS NULL and ended_at IS NULL are tested first',
+  },
+  patrol_runs_end_reason: {
+    guarded: 'end_reason IS NULL is tested first',
+  },
+  patrol_runs_cancel_reason: {
+    guarded: 'cancel_reason IS NULL is tested first',
+  },
+  patrol_runs_cancelled_by: {
+    guarded: 'cancel_reason IS NULL is tested first',
+  },
+  patrol_runs_counts: {},
+  patrol_runs_completed_shape: {},
+  patrol_scans_position_range: {},
+  patrol_scans_manual_shape: {
+    guarded: 'manual_reason IS NULL is tested first',
+  },
+  patrol_scans_position_shape: {
+    guarded:
+      'lat IS NULL and accuracy_m IS NULL are tested first; lng is present with lat',
+  },
+  patrol_scans_distance_shape: {
+    guarded: 'distance_m IS NULL is tested first',
+  },
+  patrol_notes_outcome: {},
+  patrol_notes_text_length: { guarded: 'text IS NULL is tested first' },
+  patrol_notes_cleared_shape: {},
+  patrol_track_points_position_range: {},
+  patrol_track_points_accuracy_range: {
+    guarded: 'accuracy_m IS NULL is tested first',
+  },
 };
 
 interface Check {

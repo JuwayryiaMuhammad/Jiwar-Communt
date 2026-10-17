@@ -2088,6 +2088,190 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gate/patrols": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My patrols at my post
+         * @description On shift (403 NO_OPEN_SHIFT): my run under way, the post’s runs to start or started today, and its routes.
+         */
+        get: operations["GuardPatrolsController_board"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/patrols/routes/{id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start a run of my own
+         * @description Of a route in service from my post, on its current version. One run under way per guard (409 PATROL_RUN_ALREADY_LIVE).
+         */
+        post: operations["GuardPatrolsController_startAdhoc"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/patrols/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The runs I started
+         * @description Newest first.
+         */
+        get: operations["GuardPatrolsController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/patrols/runs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A run and its checkpoints
+         * @description Mine, or one of the post where I am on shift.
+         */
+        get: operations["GuardPatrolsController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/patrols/runs/{id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * End my run
+         * @description Completed when every checkpoint was scanned, else incomplete: the roster’s keepers are told. Under way only (409 PATROL_RUN_NOT_LIVE).
+         */
+        post: operations["GuardPatrolsController_end"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/patrols/runs/{id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Note what I found at a checkpoint
+         * @description At a scan of my run, one each (409 PATROL_NOTE_EXISTS): an outcome, words, up to three `patrol_photo` files. Under way, or up to 30 minutes after it ended.
+         */
+        post: operations["GuardPatrolsController_note"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/patrols/runs/{id}/scans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Scan a checkpoint
+         * @description Of my run: its QR or NFC payload, or by hand with a `patrolManualScan` code. The app’s own id records once (offline, a retry); the device’s time must fall in the run’s lifetime. An ordered route takes its checkpoints in order (422 PATROL_OUT_OF_ORDER, params.expected); each once (409 PATROL_CHECKPOINT_ALREADY_SCANNED). Farther than the checkpoint’s radius is kept and flagged. The last one completes the run.
+         */
+        post: operations["GuardPatrolsController_scan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/patrols/runs/{id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start a scheduled run
+         * @description At my post, from 15 minutes before its start until its window ends (409 PATROL_RUN_NOT_STARTABLE, params.reason). The first start wins (409 PATROL_ALREADY_STARTED); one run under way per guard (409 PATROL_RUN_ALREADY_LIVE).
+         */
+        post: operations["GuardPatrolsController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate/patrols/runs/{id}/track": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Where I walked on my run
+         * @description My own runs only; kept 30 days.
+         */
+        get: operations["GuardPatrolsController_myTrack"];
+        put?: never;
+        /**
+         * Send where I walked
+         * @description Up to 100 points of my run, under way or up to 30 minutes after it ended (409 PATROL_RUN_NOT_LIVE). A point outside the run’s lifetime is dropped (`rejected`), a point already sent adds nothing; the rest are kept (`accepted`).
+         */
+        post: operations["GuardPatrolsController_record"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gate/plate-lookup": {
         parameters: {
             query?: never;
@@ -8631,6 +8815,275 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/patrols/checkpoints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the checkpoints
+         * @description Newest first; never a token.
+         */
+        get: operations["CheckpointsController_list"];
+        put?: never;
+        /**
+         * Add a checkpoint
+         * @description At a gate or a zone in service (POST_NOT_AVAILABLE). Answers its QR payload once: print it now, or reissue later. Two checkpoints in service never share a name (409 DUPLICATE_RESOURCE).
+         */
+        post: operations["CheckpointsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/checkpoints/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Rename or place a checkpoint
+         * @description In service only (409 PATROL_CHECKPOINT_RETIRED). Its post never changes.
+         */
+        patch: operations["CheckpointsController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/checkpoints/{id}/reissue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Print a new QR
+         * @description A new payload, answered once; the old printout stops scanning at once.
+         */
+        post: operations["CheckpointsController_reissue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/checkpoints/{id}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retire a checkpoint
+         * @description Once, for good; its scans stay. Not while a route in service walks it (409 PATROL_CHECKPOINT_IN_USE, params.routes).
+         */
+        post: operations["CheckpointsController_retire"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the patrol report
+         * @description Per route, the runs planned on the compound’s days asked: scheduled, unscheduled, done, late, missed, incomplete, cancelled; scans by hand, flagged and received late; the average length of a completed run.
+         */
+        get: operations["PatrolReportController_report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/routes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the routes
+         * @description Newest first.
+         */
+        get: operations["RoutesController_list"];
+        put?: never;
+        /**
+         * Add a route
+         * @description From a gate or a zone in service (POST_NOT_AVAILABLE), with its first version. Two routes in service never share a name (409 DUPLICATE_RESOURCE).
+         */
+        post: operations["RoutesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/routes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a route
+         * @description Its current version and its checkpoints in order.
+         */
+        get: operations["RoutesController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Rename a route
+         * @description In service only (409 PATROL_ROUTE_RETIRED).
+         */
+        patch: operations["RoutesController_rename"];
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/routes/{id}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retire a route
+         * @description Once, for good: its scheduled runs to come are cancelled; a run under way finishes.
+         */
+        post: operations["RoutesController_retire"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/routes/{id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change what a route asks
+         * @description A new version: checkpoints, order, expected minutes and schedule. The scheduled runs nobody started are made again from it; a run under way keeps its version.
+         */
+        post: operations["RoutesController_newVersion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the runs
+         * @description Planned on the compound’s days asked, newest first.
+         */
+        get: operations["StaffRunsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/runs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a run */
+        get: operations["StaffRunsController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/runs/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel a scheduled run
+         * @description Nobody started it yet (409 PATROL_RUN_CLOSED, params.status); a `patrolRunCancel` code.
+         */
+        post: operations["StaffRunsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/patrols/runs/{id}/track": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Where the guard walked
+         * @description The guard’s location: `patrols.manage` only, kept 30 days.
+         */
+        get: operations["StaffRunsController_runTrack"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/security/posts": {
         parameters: {
             query?: never;
@@ -8660,7 +9113,7 @@ export interface paths {
         };
         /**
          * Read the daily report
-         * @description Per gate and per zone, for one of the compound’s days: shifts, lateness and absence, tasks, emergencies, gate services, visitors.
+         * @description Per gate and per zone, for one of the compound’s days: shifts, lateness and absence, tasks, emergencies, gate services, visitors, and the patrol runs planned then (ADR 0052).
          */
         get: operations["DailyReportController_daily"];
         put?: never;
@@ -8680,7 +9133,7 @@ export interface paths {
         };
         /**
          * Export the daily report as CSV
-         * @description One row per post; UTF-8 with a byte-order mark, CRLF; text cells guarded against formulas.
+         * @description One row per post; UTF-8 with a byte-order mark, CRLF; text cells guarded against formulas. The patrols’ five counts are the last columns.
          */
         get: operations["DailyReportController_export"];
         put?: never;
@@ -12062,6 +12515,15 @@ export interface components {
         };
         /** @enum {string} */
         BoardRole: "chair" | "secretary" | "treasurer" | "member";
+        BoardRouteView: {
+            checkpoints: number;
+            expectedMinutes: number;
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+            ordered: boolean;
+        };
         BoardSeatDto: {
             /**
              * Format: uuid
@@ -12303,6 +12765,13 @@ export interface components {
         CancelRosterSlotDto: {
             reasonCode: components["schemas"]["GuardSlotCancel"];
         };
+        CancelRunDto: {
+            /**
+             * @description Required (REASON_REQUIRED).
+             * @enum {string}
+             */
+            reasonCode?: "not_needed" | "post_closed" | "other";
+        };
         CancelVisitorPassDto: {
             /** @description Required. The closed list `visitorPassCancel`: `not_needed` (the visit is off), `plans_changed` (another day or other visitors), `other`. Missing: REASON_REQUIRED; outside the list: INVALID_REASON_CODE with `allowed`. */
             reasonCode: components["schemas"]["VisitorPassCancelReason"];
@@ -12510,6 +12979,71 @@ export interface components {
             currentPassword: string;
             /** @description At least 12 characters (checked by the service). */
             newPassword: string;
+        };
+        CheckpointPositionDto: {
+            lat: number;
+            lng: number;
+            /** @description Metres; 30 by default. A scan farther away is accepted and flagged. */
+            radiusM?: number;
+        };
+        CheckpointPositionView: {
+            /** @example 30.0444 */
+            lat: number;
+            /** @example 31.2357 */
+            lng: number;
+            /** @description Metres: a scan farther away is flagged. */
+            radiusM: number;
+        };
+        CheckpointSecretView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @example بوابة المسبح */
+            nameAr: string;
+            /** @example Pool gate */
+            nameEn: string;
+            position: components["schemas"]["CheckpointPositionView"] | null;
+            post: components["schemas"]["PostView"];
+            /**
+             * @description For the QR and the NFC tag: `JWK1.<checkpointId>.<token>`. Shown once; a reissue prints a new one and the old one stops scanning.
+             * @example JWK1.0199c3d2-6f1a-7c3e-9a51-3b2f6e8d1c40.q3Jzx8b7m2Kd9PwS0aLr5TnYc4Ve1Hu6Gi8Fo0Bj2Ek
+             */
+            qrPayload: string;
+            /** Format: date-time */
+            retiredAt: string | null;
+            /** @description How many routes in service walk it now: it is retired only at 0. */
+            routes: number;
+            /**
+             * Format: date-time
+             * @description When its QR was printed last: an older printout no longer scans.
+             */
+            tokenIssuedAt: string;
+        };
+        CheckpointView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @example بوابة المسبح */
+            nameAr: string;
+            /** @example Pool gate */
+            nameEn: string;
+            position: components["schemas"]["CheckpointPositionView"] | null;
+            post: components["schemas"]["PostView"];
+            /** Format: date-time */
+            retiredAt: string | null;
+            /** @description How many routes in service walk it now: it is retired only at 0. */
+            routes: number;
+            /**
+             * Format: date-time
+             * @description When its QR was printed last: an older printout no longer scans.
+             */
+            tokenIssuedAt: string;
+        };
+        CheckpointViewList: {
+            data: components["schemas"]["CheckpointView"][];
+            nextCursor: string | null;
         };
         ClaimCreatedView: {
             /** Format: date-time */
@@ -13106,6 +13640,20 @@ export interface components {
             nameAr: string;
             nameEn: string;
         };
+        CreateCheckpointDto: {
+            /** Format: uuid */
+            gateId?: string;
+            /** @example بوابة المسبح */
+            nameAr: string;
+            /** @example Pool gate */
+            nameEn: string;
+            position?: components["schemas"]["CheckpointPositionDto"];
+            /**
+             * Format: uuid
+             * @description A place in service, for a post that is not a gate.
+             */
+            zoneId?: string;
+        };
         CreateClaimDto: {
             /** @description For the staff alone: how they will know it is yours. Never shown to whoever posted the item. */
             note?: string;
@@ -13647,6 +14195,20 @@ export interface components {
              */
             zoneId?: string;
         };
+        CreateRouteDto: {
+            /** Format: uuid */
+            gateId?: string;
+            /** @example جولة السور الليلية */
+            nameAr: string;
+            /** @example Night perimeter */
+            nameEn: string;
+            version: components["schemas"]["RouteVersionDto"];
+            /**
+             * Format: uuid
+             * @description A place in service, for a post that is not a gate.
+             */
+            zoneId?: string;
+        };
         CreateSecurityReportDto: {
             /** @example A man trying car doors in the visitor parking */
             description: string;
@@ -13960,8 +14522,21 @@ export interface components {
             /** @description Visitors in at this gate (passes and gate requests); null for a zone. */
             visitors: number | null;
         };
+        DailyPatrolCountsView: {
+            /** @description Runs completed: every checkpoint scanned (unscheduled ones too). */
+            done: number;
+            /** @description Runs ended with checkpoints not scanned, timed out ones included. */
+            incomplete: number;
+            /** @description Scheduled runs not started 15 minutes after their start. */
+            late: number;
+            /** @description Scheduled runs never started. */
+            missed: number;
+            /** @description Scheduled runs planned this day, cancelled ones left out. */
+            scheduled: number;
+        };
         DailyPostView: {
             counts: components["schemas"]["DailyCountsView"];
+            patrols: components["schemas"]["DailyPatrolCountsView"];
             post: components["schemas"]["PostView"];
             /** @description Started this day. */
             shifts: components["schemas"]["DailyShiftView"][];
@@ -14894,7 +15469,7 @@ export interface components {
             technicianRating: number | null;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -15632,10 +16207,109 @@ export interface components {
             status: components["schemas"]["GateRequestStatus"];
             unitCode: string;
         };
+        GuardRunDetailView: {
+            checkpointsTotal: number;
+            /** @description Why an incomplete run ended. */
+            endReason: components["schemas"]["PatrolRunEndReason"] | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            expectedMinutes: number;
+            guard: components["schemas"]["FirstNameRefView"] | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["PatrolRunKind"];
+            /** @description Not started 15 minutes after its scheduled start. */
+            late: boolean;
+            ordered: boolean;
+            /**
+             * Format: date-time
+             * @description When it was meant: the scheduled start, or an unscheduled run’s start.
+             */
+            plannedAt: string;
+            post: components["schemas"]["PostView"];
+            route: components["schemas"]["RunRouteView"];
+            scannedCount: number;
+            /** Format: date-time */
+            scheduledStart: string | null;
+            /** Format: date-time */
+            startedAt: string | null;
+            status: components["schemas"]["PatrolRunStatus"];
+            stops: components["schemas"]["GuardRunStopView"][];
+            /** Format: date-time */
+            timesOutAt: string | null;
+            /**
+             * Format: date-time
+             * @description A scheduled run may be started from 15 minutes before its start until then.
+             */
+            windowEndsAt: string | null;
+        };
+        GuardRunStopView: {
+            /** Format: uuid */
+            checkpointId: string;
+            location: components["schemas"]["CheckpointPositionView"] | null;
+            nameAr: string;
+            nameEn: string;
+            note: components["schemas"]["GuardStopNoteView"] | null;
+            /** @description 1 for the first. */
+            position: number;
+            scan: components["schemas"]["GuardStopScanView"] | null;
+        };
+        GuardRunView: {
+            checkpointsTotal: number;
+            /** @description Why an incomplete run ended. */
+            endReason: components["schemas"]["PatrolRunEndReason"] | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            guard: components["schemas"]["FirstNameRefView"] | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["PatrolRunKind"];
+            /** @description Not started 15 minutes after its scheduled start. */
+            late: boolean;
+            /**
+             * Format: date-time
+             * @description When it was meant: the scheduled start, or an unscheduled run’s start.
+             */
+            plannedAt: string;
+            post: components["schemas"]["PostView"];
+            route: components["schemas"]["RunRouteView"];
+            scannedCount: number;
+            /** Format: date-time */
+            scheduledStart: string | null;
+            /** Format: date-time */
+            startedAt: string | null;
+            status: components["schemas"]["PatrolRunStatus"];
+            /**
+             * Format: date-time
+             * @description A scheduled run may be started from 15 minutes before its start until then.
+             */
+            windowEndsAt: string | null;
+        };
+        GuardRunViewList: {
+            data: components["schemas"]["GuardRunView"][];
+            nextCursor: string | null;
+        };
         /** @enum {string} */
         GuardSlotCancel: "schedule_change" | "guard_unavailable" | "post_closed" | "other";
         /** @enum {string} */
         GuardSlotStatus: "scheduled" | "cancelled";
+        GuardStopNoteView: {
+            /** Format: uuid */
+            id: string;
+            outcome: components["schemas"]["PatrolNoteOutcome"];
+            /** @description Its author only. */
+            photos?: components["schemas"]["PresignedReadView"][];
+            /** @description Its author only. */
+            text?: string | null;
+        };
+        GuardStopScanView: {
+            /** Format: uuid */
+            id: string;
+            method: components["schemas"]["PatrolScanMethod"];
+            positionSuspect: boolean | null;
+            /** Format: date-time */
+            scannedAt: string;
+        };
         /**
          * @description Why the system cancelled it.
          * @enum {string}
@@ -17124,6 +17798,38 @@ export interface components {
              */
             validUntil?: string;
         };
+        NoteDto: {
+            /**
+             * Format: uuid
+             * @description The app’s own id (UUIDv7): sent again, it records once.
+             */
+            id: string;
+            /** Format: date-time */
+            notedAt: string;
+            outcome: components["schemas"]["PatrolNoteOutcome"];
+            /** @description Finalized `patrol_photo` files of the caller, 3 at most. */
+            photoFileIds?: string[];
+            /**
+             * Format: uuid
+             * @description A scan of this run (INVALID_VALUE); one note each.
+             */
+            scanId: string;
+            text?: string;
+        };
+        NoteView: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            notedAt: string;
+            outcome: components["schemas"]["PatrolNoteOutcome"];
+            /** @description How many photos. */
+            photos: number;
+            /** Format: date-time */
+            receivedAt: string;
+            /** Format: uuid */
+            scanId: string;
+            text: string | null;
+        };
         NoticeSentView: {
             /** Format: uuid */
             id: string;
@@ -17416,6 +18122,107 @@ export interface components {
         PassViewList: {
             data: components["schemas"]["PassView"][];
             nextCursor: string | null;
+        };
+        PatrolBoardView: {
+            /** @description The caller’s run under way. */
+            live: components["schemas"]["GuardRunDetailView"] | null;
+            /** @description Routes in service from the caller’s post: a run of one may be started any time. */
+            routes: components["schemas"]["BoardRouteView"][];
+            /** @description At the caller’s post: scheduled runs whose window is open or opens within 12 hours, and those started today. */
+            runs: components["schemas"]["GuardRunView"][];
+        };
+        /** @enum {string} */
+        PatrolManualScanReason: "qr_damaged" | "qr_missing" | "nfc_unreadable" | "other";
+        /** @enum {string} */
+        PatrolNoteOutcome: "all_clear" | "issue_found";
+        PatrolReportRouteView: {
+            /** @description Runs a guard started unscheduled. */
+            adhoc: number;
+            /** @description How long a completed run took, on average, in minutes. */
+            avgMinutes: number | null;
+            cancelled: number;
+            /** @description Completed: every checkpoint scanned. */
+            done: number;
+            /** @description Ended with checkpoints not scanned, timed out ones included. */
+            incomplete: number;
+            late: number;
+            /** @description Scans received after their run ended (finished offline). */
+            lateScans: number;
+            manualScans: number;
+            missed: number;
+            post: components["schemas"]["PostView"];
+            route: components["schemas"]["RunRouteView"];
+            /** @description Scheduled runs, cancelled ones left out. */
+            scheduled: number;
+            suspectScans: number;
+        };
+        PatrolReportView: {
+            /**
+             * Format: date
+             * @example 2026-11-01
+             */
+            from: string;
+            /** @description Each route with runs planned in the period, by name. */
+            routes: components["schemas"]["PatrolReportRouteView"][];
+            /**
+             * Format: date
+             * @example 2026-11-07
+             */
+            to: string;
+        };
+        /** @enum {string} */
+        PatrolRunCancelReason: "not_needed" | "post_closed" | "other" | "route_changed" | "route_retired" | "post_out_of_service";
+        /**
+         * @description Why an incomplete run ended.
+         * @enum {string}
+         */
+        PatrolRunEndReason: "guard" | "shift_ended";
+        /** @enum {string} */
+        PatrolRunKind: "scheduled" | "adhoc";
+        /** @enum {string} */
+        PatrolRunStatus: "scheduled" | "in_progress" | "completed" | "incomplete" | "timed_out" | "missed" | "cancelled";
+        /** @enum {string} */
+        PatrolScanMethod: "qr" | "nfc" | "manual";
+        PatrolScheduleDto: {
+            /**
+             * @description 0 = Sunday … 6 = Saturday.
+             * @example [
+             *       0,
+             *       1,
+             *       2,
+             *       3,
+             *       4
+             *     ]
+             */
+            days: number[];
+            /**
+             * @description Each a run’s start (`HH:MM`, the compound’s time). Two starts closer than a run’s window — its expected minutes, 30 at least — are refused (PATROL_SCHEDULE_OVERLAP), over midnight too.
+             * @example [
+             *       "08:00",
+             *       "14:00",
+             *       "22:00"
+             *     ]
+             */
+            times: string[];
+        };
+        PatrolScheduleView: {
+            /**
+             * @example [
+             *       0,
+             *       1,
+             *       2,
+             *       3,
+             *       4
+             *     ]
+             */
+            days: number[];
+            /**
+             * @example [
+             *       "08:00",
+             *       "22:00"
+             *     ]
+             */
+            times: string[];
         };
         /**
          * @description Pause everything that is not critical: emails are held until the pause ends, never dropped; nothing is pushed during it. `null` ends a pause.
@@ -18563,6 +19370,10 @@ export interface components {
             /** @description The `version` the staff read (VEHICLE_CHANGED otherwise). */
             version: number;
         };
+        RenameRouteDto: {
+            nameAr?: string;
+            nameEn?: string;
+        };
         RenewVehicleDto: {
             /** @description The new last local day: after today, not before the current one, at most 731 days ahead. */
             permitValidUntil: string;
@@ -19393,6 +20204,74 @@ export interface components {
             data: components["schemas"]["RosterTemplateView"][];
             nextCursor: string | null;
         };
+        RouteDetailView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @example جولة السور الليلية */
+            nameAr: string;
+            /** @example Night perimeter */
+            nameEn: string;
+            post: components["schemas"]["PostView"];
+            /** Format: date-time */
+            retiredAt: string | null;
+            stops: components["schemas"]["RouteStopView"][];
+            version: components["schemas"]["RouteVersionView"];
+        };
+        RouteStopView: {
+            /** Format: uuid */
+            checkpointId: string;
+            location: components["schemas"]["CheckpointPositionView"] | null;
+            nameAr: string;
+            nameEn: string;
+            /** @description 1 for the first. */
+            position: number;
+            /** @description Retired since: a new version must leave it out. */
+            retired: boolean;
+        };
+        RouteVersionDto: {
+            /** @description Checkpoints in service, in the order walked, each once (CHECKPOINT_NOT_AVAILABLE, DUPLICATE_VALUE). */
+            checkpointIds: string[];
+            expectedMinutes: number;
+            /** @description The guard must scan them in this order. */
+            ordered: boolean;
+            /** @description Weekly start times; none: only the runs a guard starts. Runs are made 7 days ahead. */
+            schedule?: components["schemas"]["PatrolScheduleDto"] | null;
+        };
+        RouteVersionView: {
+            /** @description How many checkpoints. */
+            checkpoints: number;
+            /** Format: date-time */
+            createdAt: string;
+            expectedMinutes: number;
+            /** Format: uuid */
+            id: string;
+            /** @description 1 for the first, then up. */
+            number: number;
+            ordered: boolean;
+            schedule: components["schemas"]["PatrolScheduleView"] | null;
+            /** @description How long a scheduled run may be started for, from its start: the expected minutes, 30 at least. */
+            windowMinutes: number;
+        };
+        RouteView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @example جولة السور الليلية */
+            nameAr: string;
+            /** @example Night perimeter */
+            nameEn: string;
+            post: components["schemas"]["PostView"];
+            /** Format: date-time */
+            retiredAt: string | null;
+            version: components["schemas"]["RouteVersionView"];
+        };
+        RouteViewList: {
+            data: components["schemas"]["RouteView"][];
+            nextCursor: string | null;
+        };
         RsvpDto: {
             /** @description People the caller brings, when going. At most the compound’s limit (INVALID_NUMBER, params.max). Absent: none. */
             guests?: number;
@@ -19402,6 +20281,155 @@ export interface components {
              * @description The unit the caller answers from. Required only when the event is put to several of their units.
              */
             unitId?: string;
+        };
+        RunDetailView: {
+            cancelReason: components["schemas"]["PatrolRunCancelReason"] | null;
+            /** @description Null when the system cancelled it. */
+            cancelledBy: components["schemas"]["AccountRefView"] | null;
+            checkpointsTotal: number;
+            /** @description Why an incomplete run ended. */
+            endReason: components["schemas"]["PatrolRunEndReason"] | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            expectedMinutes: number;
+            guard: components["schemas"]["AccountRefView"] | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["PatrolRunKind"];
+            /** @description Not started 15 minutes after its scheduled start. */
+            late: boolean;
+            /** @description Scans that reached the server after the run ended: it was finished offline. */
+            lateScans: number;
+            /** @description Scans by hand. */
+            manualScans: number;
+            ordered: boolean;
+            /**
+             * Format: date-time
+             * @description When it was meant: the scheduled start, or an unscheduled run’s start.
+             */
+            plannedAt: string;
+            post: components["schemas"]["PostView"];
+            route: components["schemas"]["RunRouteView"];
+            scannedCount: number;
+            /** Format: date-time */
+            scheduledStart: string | null;
+            /** Format: date-time */
+            startedAt: string | null;
+            status: components["schemas"]["PatrolRunStatus"];
+            stops: components["schemas"]["StaffRunStopView"][];
+            /** @description Scans farther from their checkpoint than its radius. */
+            suspectScans: number;
+            /** Format: date-time */
+            timesOutAt: string | null;
+            /**
+             * Format: date-time
+             * @description A scheduled run may be started from 15 minutes before its start until then.
+             */
+            windowEndsAt: string | null;
+        };
+        RunRouteView: {
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+        };
+        RunView: {
+            cancelReason: components["schemas"]["PatrolRunCancelReason"] | null;
+            /** @description Null when the system cancelled it. */
+            cancelledBy: components["schemas"]["AccountRefView"] | null;
+            checkpointsTotal: number;
+            /** @description Why an incomplete run ended. */
+            endReason: components["schemas"]["PatrolRunEndReason"] | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            guard: components["schemas"]["AccountRefView"] | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["PatrolRunKind"];
+            /** @description Not started 15 minutes after its scheduled start. */
+            late: boolean;
+            /** @description Scans that reached the server after the run ended: it was finished offline. */
+            lateScans: number;
+            /** @description Scans by hand. */
+            manualScans: number;
+            /**
+             * Format: date-time
+             * @description When it was meant: the scheduled start, or an unscheduled run’s start.
+             */
+            plannedAt: string;
+            post: components["schemas"]["PostView"];
+            route: components["schemas"]["RunRouteView"];
+            scannedCount: number;
+            /** Format: date-time */
+            scheduledStart: string | null;
+            /** Format: date-time */
+            startedAt: string | null;
+            status: components["schemas"]["PatrolRunStatus"];
+            /** @description Scans farther from their checkpoint than its radius. */
+            suspectScans: number;
+            /**
+             * Format: date-time
+             * @description A scheduled run may be started from 15 minutes before its start until then.
+             */
+            windowEndsAt: string | null;
+        };
+        RunViewList: {
+            data: components["schemas"]["RunView"][];
+            nextCursor: string | null;
+        };
+        ScanDto: {
+            /** @description Metres, as the device reports it; with a position only. */
+            accuracyM?: number;
+            /**
+             * Format: uuid
+             * @description By hand (`manual`): the checkpoint, with a reason’s code.
+             */
+            checkpointId?: string;
+            /**
+             * Format: uuid
+             * @description The app’s own id (UUIDv7), made when the guard scanned: sent again (offline, a retry), it records once and answers the same.
+             */
+            id: string;
+            /** @description With `lng`; none when the device has no fix. */
+            lat?: number;
+            lng?: number;
+            method: components["schemas"]["PatrolScanMethod"];
+            /**
+             * @description What the QR or the NFC tag carries (`qr`, `nfc`). Anything else answers 422 PATROL_CHECKPOINT_INVALID.
+             * @example JWK1.0199c3d2-6f1a-7c3e-9a51-3b2f6e8d1c40.q3Jzx8b7m2Kd9PwS0aLr5TnYc4Ve1Hu6Gi8Fo0Bj2Ek
+             */
+            payload?: string;
+            /**
+             * @description By hand only (REASON_REQUIRED).
+             * @enum {string}
+             */
+            reasonCode?: "qr_damaged" | "qr_missing" | "nfc_unreadable" | "other";
+            /**
+             * Format: date-time
+             * @description The device’s time of the scan: inside the run’s lifetime, two minutes either side (422 PATROL_SCAN_OUT_OF_WINDOW).
+             */
+            scannedAt: string;
+        };
+        ScanRunView: {
+            checkpointsTotal: number;
+            scannedCount: number;
+            /** @description The last checkpoint of a run under way completes it. */
+            status: components["schemas"]["PatrolRunStatus"];
+        };
+        ScanView: {
+            /** Format: uuid */
+            checkpointId: string;
+            /** Format: uuid */
+            id: string;
+            method: components["schemas"]["PatrolScanMethod"];
+            position: number;
+            /** @description Farther from the checkpoint than its radius: kept, and flagged. Null without a position on either side. */
+            positionSuspect: boolean | null;
+            /** Format: date-time */
+            receivedAt: string;
+            run: components["schemas"]["ScanRunView"];
+            /** Format: date-time */
+            scannedAt: string;
         };
         SecurityEventView: {
             /** Format: uuid */
@@ -20993,6 +22021,47 @@ export interface components {
             /** @description The unit the request is about, when it names one. */
             unit: components["schemas"]["RequestUnitRefView"] | null;
         };
+        StaffRunStopView: {
+            /** Format: uuid */
+            checkpointId: string;
+            location: components["schemas"]["CheckpointPositionView"] | null;
+            nameAr: string;
+            nameEn: string;
+            note: components["schemas"]["StaffStopNoteView"] | null;
+            /** @description 1 for the first. */
+            position: number;
+            scan: components["schemas"]["StaffStopScanView"] | null;
+        };
+        StaffStopNoteView: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            notedAt: string;
+            outcome: components["schemas"]["PatrolNoteOutcome"];
+            photos: components["schemas"]["PresignedReadView"][];
+            /** Format: date-time */
+            receivedAt: string;
+            /** @description Null when none was written, or after its guard’s erasure. */
+            text: string | null;
+            textCleared: boolean;
+        };
+        StaffStopScanView: {
+            accuracyM: number | null;
+            distanceM: number | null;
+            /** Format: uuid */
+            id: string;
+            lat: number | null;
+            /** @description It reached the server after the run ended (offline). */
+            late: boolean;
+            lng: number | null;
+            manualReason: components["schemas"]["PatrolManualScanReason"] | null;
+            method: components["schemas"]["PatrolScanMethod"];
+            positionSuspect: boolean | null;
+            /** Format: date-time */
+            receivedAt: string;
+            /** Format: date-time */
+            scannedAt: string;
+        };
         StaffSuggestionListItemView: {
             author: components["schemas"]["SuggestionAuthorView"];
             /** @description The resident’s words. Null once their account was erased. */
@@ -21621,6 +22690,37 @@ export interface components {
             data: components["schemas"]["TopicView"][];
             nextCursor: string | null;
         };
+        TrackAcceptedView: {
+            /** @description Points recorded now; those sent before are not counted. */
+            accepted: number;
+            /** @description Points dropped: outside the run’s lifetime, two minutes either side. Do not send them again. */
+            rejected: number;
+        };
+        TrackDto: {
+            /** @description A point at an instant already recorded for the run is ignored: a batch sent again adds nothing. */
+            points: components["schemas"]["TrackPointDto"][];
+        };
+        TrackPointDto: {
+            accuracyM?: number;
+            lat: number;
+            lng: number;
+            /**
+             * Format: date-time
+             * @description The device’s time: inside the run’s lifetime, two minutes either side.
+             */
+            recordedAt: string;
+        };
+        TrackPointView: {
+            accuracyM: number | null;
+            lat: number;
+            lng: number;
+            /** Format: date-time */
+            recordedAt: string;
+        };
+        TrackPointViewList: {
+            data: components["schemas"]["TrackPointView"][];
+            nextCursor: string | null;
+        };
         TransferOwnershipDto: {
             /** @description What the person is told (at most 1000 characters). Never stored in the audit trail. */
             reason: string;
@@ -21857,6 +22957,12 @@ export interface components {
             defaultPriority?: components["schemas"]["TicketPriority"];
             nameAr?: string;
             nameEn?: string;
+        };
+        UpdateCheckpointDto: {
+            nameAr?: string;
+            nameEn?: string;
+            /** @description Null removes the position; absent leaves it. */
+            position?: components["schemas"]["CheckpointPositionDto"] | null;
         };
         UpdateClubPlanDto: {
             /** @description False retires the plan. */
@@ -25815,6 +26921,234 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GateParcelView"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_board: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatrolBoardView"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_startAdhoc: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardRunDetailView"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_mine: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardRunViewList"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardRunDetailView"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_end: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardRunDetailView"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_note: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoteView"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_scan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScanDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScanView"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_start: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardRunDetailView"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_myTrack: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackPointViewList"];
+                };
+            };
+        };
+    };
+    GuardPatrolsController_record: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrackDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackAcceptedView"];
                 };
             };
         };
@@ -35804,6 +37138,390 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffGuardInstructionView"];
+                };
+            };
+        };
+    };
+    CheckpointsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description Both by default. */
+                status?: "active" | "retired";
+                gateId?: string;
+                zoneId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckpointViewList"];
+                };
+            };
+        };
+    };
+    CheckpointsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCheckpointDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckpointSecretView"];
+                };
+            };
+        };
+    };
+    CheckpointsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCheckpointDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckpointView"];
+                };
+            };
+        };
+    };
+    CheckpointsController_reissue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckpointSecretView"];
+                };
+            };
+        };
+    };
+    CheckpointsController_retire: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckpointView"];
+                };
+            };
+        };
+    };
+    PatrolReportController_report: {
+        parameters: {
+            query?: {
+                /** @description The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG). */
+                from?: string;
+                to?: string;
+                routeId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatrolReportView"];
+                };
+            };
+        };
+    };
+    RoutesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description Both by default. */
+                status?: "active" | "retired";
+                gateId?: string;
+                zoneId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteViewList"];
+                };
+            };
+        };
+    };
+    RoutesController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRouteDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteDetailView"];
+                };
+            };
+        };
+    };
+    RoutesController_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteDetailView"];
+                };
+            };
+        };
+    };
+    RoutesController_rename: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenameRouteDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteDetailView"];
+                };
+            };
+        };
+    };
+    RoutesController_retire: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteDetailView"];
+                };
+            };
+        };
+    };
+    RoutesController_newVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RouteVersionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteDetailView"];
+                };
+            };
+        };
+    };
+    StaffRunsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description The compound’s first day; six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG). */
+                from?: string;
+                to?: string;
+                routeId?: string;
+                gateId?: string;
+                zoneId?: string;
+                status?: "scheduled" | "in_progress" | "completed" | "incomplete" | "timed_out" | "missed" | "cancelled";
+                guardId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunViewList"];
+                };
+            };
+        };
+    };
+    StaffRunsController_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunDetailView"];
+                };
+            };
+        };
+    };
+    StaffRunsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelRunDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunView"];
+                };
+            };
+        };
+    };
+    StaffRunsController_runTrack: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackPointViewList"];
                 };
             };
         };

@@ -2128,6 +2128,38 @@
         ],
         "type": "string"
       },
+      "BoardRouteView": {
+        "properties": {
+          "checkpoints": {
+            "type": "number"
+          },
+          "expectedMinutes": {
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "ordered": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr",
+          "ordered",
+          "expectedMinutes",
+          "checkpoints"
+        ],
+        "type": "object"
+      },
       "BoardSeatDto": {
         "properties": {
           "accountId": {
@@ -2897,6 +2929,20 @@
         ],
         "type": "object"
       },
+      "CancelRunDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "Required (REASON_REQUIRED).",
+            "enum": [
+              "not_needed",
+              "post_closed",
+              "other"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "CancelVisitorPassDto": {
         "properties": {
           "reasonCode": {
@@ -3613,6 +3659,194 @@
         "required": [
           "currentPassword",
           "newPassword"
+        ],
+        "type": "object"
+      },
+      "CheckpointPositionDto": {
+        "properties": {
+          "lat": {
+            "maximum": 90,
+            "minimum": -90,
+            "type": "number"
+          },
+          "lng": {
+            "maximum": 180,
+            "minimum": -180,
+            "type": "number"
+          },
+          "radiusM": {
+            "description": "Metres; 30 by default. A scan farther away is accepted and flagged.",
+            "maximum": 500,
+            "minimum": 5,
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lng"
+        ],
+        "type": "object"
+      },
+      "CheckpointPositionView": {
+        "properties": {
+          "lat": {
+            "example": 30.0444,
+            "type": "number"
+          },
+          "lng": {
+            "example": 31.2357,
+            "type": "number"
+          },
+          "radiusM": {
+            "description": "Metres: a scan farther away is flagged.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lng",
+          "radiusM"
+        ],
+        "type": "object"
+      },
+      "CheckpointSecretView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "example": "بوابة المسبح",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Pool gate",
+            "type": "string"
+          },
+          "position": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckpointPositionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "qrPayload": {
+            "description": "For the QR and the NFC tag: `JWK1.<checkpointId>.<token>`. Shown once; a reissue prints a new one and the old one stops scanning.",
+            "example": "JWK1.0199c3d2-6f1a-7c3e-9a51-3b2f6e8d1c40.q3Jzx8b7m2Kd9PwS0aLr5TnYc4Ve1Hu6Gi8Fo0Bj2Ek",
+            "type": "string"
+          },
+          "retiredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "routes": {
+            "description": "How many routes in service walk it now: it is retired only at 0.",
+            "type": "number"
+          },
+          "tokenIssuedAt": {
+            "description": "When its QR was printed last: an older printout no longer scans.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "post",
+          "nameEn",
+          "nameAr",
+          "position",
+          "tokenIssuedAt",
+          "routes",
+          "retiredAt",
+          "createdAt",
+          "qrPayload"
+        ],
+        "type": "object"
+      },
+      "CheckpointView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "example": "بوابة المسبح",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Pool gate",
+            "type": "string"
+          },
+          "position": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckpointPositionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "retiredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "routes": {
+            "description": "How many routes in service walk it now: it is retired only at 0.",
+            "type": "number"
+          },
+          "tokenIssuedAt": {
+            "description": "When its QR was printed last: an older printout no longer scans.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "post",
+          "nameEn",
+          "nameAr",
+          "position",
+          "tokenIssuedAt",
+          "routes",
+          "retiredAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "CheckpointViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CheckpointView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -5533,6 +5767,39 @@
         ],
         "type": "object"
       },
+      "CreateCheckpointDto": {
+        "properties": {
+          "gateId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "example": "بوابة المسبح",
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Pool gate",
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "position": {
+            "$ref": "#/components/schemas/CheckpointPositionDto"
+          },
+          "zoneId": {
+            "description": "A place in service, for a post that is not a gate.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
       "CreateClaimDto": {
         "properties": {
           "note": {
@@ -6869,6 +7136,40 @@
         ],
         "type": "object"
       },
+      "CreateRouteDto": {
+        "properties": {
+          "gateId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "example": "جولة السور الليلية",
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Night perimeter",
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "version": {
+            "$ref": "#/components/schemas/RouteVersionDto"
+          },
+          "zoneId": {
+            "description": "A place in service, for a post that is not a gate.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameEn",
+          "nameAr",
+          "version"
+        ],
+        "type": "object"
+      },
       "CreateSecurityReportDto": {
         "properties": {
           "description": {
@@ -7718,10 +8019,45 @@
         ],
         "type": "object"
       },
+      "DailyPatrolCountsView": {
+        "properties": {
+          "done": {
+            "description": "Runs completed: every checkpoint scanned (unscheduled ones too).",
+            "type": "number"
+          },
+          "incomplete": {
+            "description": "Runs ended with checkpoints not scanned, timed out ones included.",
+            "type": "number"
+          },
+          "late": {
+            "description": "Scheduled runs not started 15 minutes after their start.",
+            "type": "number"
+          },
+          "missed": {
+            "description": "Scheduled runs never started.",
+            "type": "number"
+          },
+          "scheduled": {
+            "description": "Scheduled runs planned this day, cancelled ones left out.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "scheduled",
+          "done",
+          "late",
+          "missed",
+          "incomplete"
+        ],
+        "type": "object"
+      },
       "DailyPostView": {
         "properties": {
           "counts": {
             "$ref": "#/components/schemas/DailyCountsView"
+          },
+          "patrols": {
+            "$ref": "#/components/schemas/DailyPatrolCountsView"
           },
           "post": {
             "$ref": "#/components/schemas/PostView"
@@ -7737,7 +8073,8 @@
         "required": [
           "post",
           "shifts",
-          "counts"
+          "counts",
+          "patrols"
         ],
         "type": "object"
       },
@@ -10943,7 +11280,8 @@
           "contractor_photo",
           "permit_photo",
           "guard_task_photo",
-          "found_item_photo"
+          "found_item_photo",
+          "patrol_photo"
         ],
         "type": "string"
       },
@@ -13655,6 +13993,301 @@
         ],
         "type": "object"
       },
+      "GuardRunDetailView": {
+        "properties": {
+          "checkpointsTotal": {
+            "type": "number"
+          },
+          "endReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunEndReason"
+              }
+            ],
+            "description": "Why an incomplete run ended.",
+            "nullable": true
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "expectedMinutes": {
+            "type": "number"
+          },
+          "guard": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FirstNameRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunKind"
+              }
+            ]
+          },
+          "late": {
+            "description": "Not started 15 minutes after its scheduled start.",
+            "type": "boolean"
+          },
+          "ordered": {
+            "type": "boolean"
+          },
+          "plannedAt": {
+            "description": "When it was meant: the scheduled start, or an unscheduled run’s start.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "route": {
+            "$ref": "#/components/schemas/RunRouteView"
+          },
+          "scannedCount": {
+            "type": "number"
+          },
+          "scheduledStart": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunStatus"
+              }
+            ]
+          },
+          "stops": {
+            "items": {
+              "$ref": "#/components/schemas/GuardRunStopView"
+            },
+            "type": "array"
+          },
+          "timesOutAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "windowEndsAt": {
+            "description": "A scheduled run may be started from 15 minutes before its start until then.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "route",
+          "post",
+          "kind",
+          "status",
+          "plannedAt",
+          "scheduledStart",
+          "windowEndsAt",
+          "startedAt",
+          "endedAt",
+          "endReason",
+          "late",
+          "checkpointsTotal",
+          "scannedCount",
+          "guard",
+          "ordered",
+          "expectedMinutes",
+          "timesOutAt",
+          "stops"
+        ],
+        "type": "object"
+      },
+      "GuardRunStopView": {
+        "properties": {
+          "checkpointId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "location": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckpointPositionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "note": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardStopNoteView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "position": {
+            "description": "1 for the first.",
+            "type": "number"
+          },
+          "scan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardStopScanView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "position",
+          "checkpointId",
+          "nameEn",
+          "nameAr",
+          "location",
+          "scan",
+          "note"
+        ],
+        "type": "object"
+      },
+      "GuardRunView": {
+        "properties": {
+          "checkpointsTotal": {
+            "type": "number"
+          },
+          "endReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunEndReason"
+              }
+            ],
+            "description": "Why an incomplete run ended.",
+            "nullable": true
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "guard": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FirstNameRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunKind"
+              }
+            ]
+          },
+          "late": {
+            "description": "Not started 15 minutes after its scheduled start.",
+            "type": "boolean"
+          },
+          "plannedAt": {
+            "description": "When it was meant: the scheduled start, or an unscheduled run’s start.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "route": {
+            "$ref": "#/components/schemas/RunRouteView"
+          },
+          "scannedCount": {
+            "type": "number"
+          },
+          "scheduledStart": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunStatus"
+              }
+            ]
+          },
+          "windowEndsAt": {
+            "description": "A scheduled run may be started from 15 minutes before its start until then.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "route",
+          "post",
+          "kind",
+          "status",
+          "plannedAt",
+          "scheduledStart",
+          "windowEndsAt",
+          "startedAt",
+          "endedAt",
+          "endReason",
+          "late",
+          "checkpointsTotal",
+          "scannedCount",
+          "guard"
+        ],
+        "type": "object"
+      },
+      "GuardRunViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GuardRunView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "GuardSlotCancel": {
         "enum": [
           "schedule_change",
@@ -13670,6 +14303,68 @@
           "cancelled"
         ],
         "type": "string"
+      },
+      "GuardStopNoteView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolNoteOutcome"
+              }
+            ]
+          },
+          "photos": {
+            "description": "Its author only.",
+            "items": {
+              "$ref": "#/components/schemas/PresignedReadView"
+            },
+            "type": "array"
+          },
+          "text": {
+            "description": "Its author only.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "outcome"
+        ],
+        "type": "object"
+      },
+      "GuardStopScanView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolScanMethod"
+              }
+            ]
+          },
+          "positionSuspect": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "scannedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "method",
+          "scannedAt",
+          "positionSuspect"
+        ],
+        "type": "object"
       },
       "GuardSwapCancel": {
         "description": "Why the system cancelled it.",
@@ -18405,6 +19100,95 @@
         ],
         "type": "object"
       },
+      "NoteDto": {
+        "properties": {
+          "id": {
+            "description": "The app’s own id (UUIDv7): sent again, it records once.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "notedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolNoteOutcome"
+              }
+            ]
+          },
+          "photoFileIds": {
+            "description": "Finalized `patrol_photo` files of the caller, 3 at most.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "scanId": {
+            "description": "A scan of this run (INVALID_VALUE); one note each.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "scanId",
+          "outcome",
+          "notedAt"
+        ],
+        "type": "object"
+      },
+      "NoteView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "notedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolNoteOutcome"
+              }
+            ]
+          },
+          "photos": {
+            "description": "How many photos.",
+            "type": "number"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "scanId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "text": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "scanId",
+          "outcome",
+          "text",
+          "notedAt",
+          "receivedAt",
+          "photos"
+        ],
+        "type": "object"
+      },
       "NoticeSentView": {
         "properties": {
           "id": {
@@ -19308,6 +20092,264 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "PatrolBoardView": {
+        "properties": {
+          "live": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuardRunDetailView"
+              }
+            ],
+            "description": "The caller’s run under way.",
+            "nullable": true,
+            "type": "object"
+          },
+          "routes": {
+            "description": "Routes in service from the caller’s post: a run of one may be started any time.",
+            "items": {
+              "$ref": "#/components/schemas/BoardRouteView"
+            },
+            "type": "array"
+          },
+          "runs": {
+            "description": "At the caller’s post: scheduled runs whose window is open or opens within 12 hours, and those started today.",
+            "items": {
+              "$ref": "#/components/schemas/GuardRunView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "live",
+          "runs",
+          "routes"
+        ],
+        "type": "object"
+      },
+      "PatrolManualScanReason": {
+        "enum": [
+          "qr_damaged",
+          "qr_missing",
+          "nfc_unreadable",
+          "other"
+        ],
+        "type": "string"
+      },
+      "PatrolNoteOutcome": {
+        "enum": [
+          "all_clear",
+          "issue_found"
+        ],
+        "type": "string"
+      },
+      "PatrolReportRouteView": {
+        "properties": {
+          "adhoc": {
+            "description": "Runs a guard started unscheduled.",
+            "type": "number"
+          },
+          "avgMinutes": {
+            "description": "How long a completed run took, on average, in minutes.",
+            "nullable": true,
+            "type": "number"
+          },
+          "cancelled": {
+            "type": "number"
+          },
+          "done": {
+            "description": "Completed: every checkpoint scanned.",
+            "type": "number"
+          },
+          "incomplete": {
+            "description": "Ended with checkpoints not scanned, timed out ones included.",
+            "type": "number"
+          },
+          "late": {
+            "type": "number"
+          },
+          "lateScans": {
+            "description": "Scans received after their run ended (finished offline).",
+            "type": "number"
+          },
+          "manualScans": {
+            "type": "number"
+          },
+          "missed": {
+            "type": "number"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "route": {
+            "$ref": "#/components/schemas/RunRouteView"
+          },
+          "scheduled": {
+            "description": "Scheduled runs, cancelled ones left out.",
+            "type": "number"
+          },
+          "suspectScans": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "route",
+          "post",
+          "scheduled",
+          "adhoc",
+          "done",
+          "late",
+          "missed",
+          "incomplete",
+          "cancelled",
+          "manualScans",
+          "suspectScans",
+          "lateScans",
+          "avgMinutes"
+        ],
+        "type": "object"
+      },
+      "PatrolReportView": {
+        "properties": {
+          "from": {
+            "example": "2026-11-01",
+            "format": "date",
+            "type": "string"
+          },
+          "routes": {
+            "description": "Each route with runs planned in the period, by name.",
+            "items": {
+              "$ref": "#/components/schemas/PatrolReportRouteView"
+            },
+            "type": "array"
+          },
+          "to": {
+            "example": "2026-11-07",
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "routes"
+        ],
+        "type": "object"
+      },
+      "PatrolRunCancelReason": {
+        "enum": [
+          "not_needed",
+          "post_closed",
+          "other",
+          "route_changed",
+          "route_retired",
+          "post_out_of_service"
+        ],
+        "type": "string"
+      },
+      "PatrolRunEndReason": {
+        "description": "Why an incomplete run ended.",
+        "enum": [
+          "guard",
+          "shift_ended"
+        ],
+        "type": "string"
+      },
+      "PatrolRunKind": {
+        "enum": [
+          "scheduled",
+          "adhoc"
+        ],
+        "type": "string"
+      },
+      "PatrolRunStatus": {
+        "enum": [
+          "scheduled",
+          "in_progress",
+          "completed",
+          "incomplete",
+          "timed_out",
+          "missed",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "PatrolScanMethod": {
+        "enum": [
+          "qr",
+          "nfc",
+          "manual"
+        ],
+        "type": "string"
+      },
+      "PatrolScheduleDto": {
+        "properties": {
+          "days": {
+            "description": "0 = Sunday … 6 = Saturday.",
+            "example": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ],
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "times": {
+            "description": "Each a run’s start (`HH:MM`, the compound’s time). Two starts closer than a run’s window — its expected minutes, 30 at least — are refused (PATROL_SCHEDULE_OVERLAP), over midnight too.",
+            "example": [
+              "08:00",
+              "14:00",
+              "22:00"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 24,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "days",
+          "times"
+        ],
+        "type": "object"
+      },
+      "PatrolScheduleView": {
+        "properties": {
+          "days": {
+            "example": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ],
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "times": {
+            "example": [
+              "08:00",
+              "22:00"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "days",
+          "times"
         ],
         "type": "object"
       },
@@ -22884,6 +23926,21 @@
         ],
         "type": "object"
       },
+      "RenameRouteDto": {
+        "properties": {
+          "nameAr": {
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "RenewVehicleDto": {
         "properties": {
           "permitValidUntil": {
@@ -25669,6 +26726,242 @@
         ],
         "type": "object"
       },
+      "RouteDetailView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "example": "جولة السور الليلية",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Night perimeter",
+            "type": "string"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "retiredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "stops": {
+            "items": {
+              "$ref": "#/components/schemas/RouteStopView"
+            },
+            "type": "array"
+          },
+          "version": {
+            "$ref": "#/components/schemas/RouteVersionView"
+          }
+        },
+        "required": [
+          "id",
+          "post",
+          "nameEn",
+          "nameAr",
+          "version",
+          "retiredAt",
+          "createdAt",
+          "stops"
+        ],
+        "type": "object"
+      },
+      "RouteStopView": {
+        "properties": {
+          "checkpointId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "location": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckpointPositionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "position": {
+            "description": "1 for the first.",
+            "type": "number"
+          },
+          "retired": {
+            "description": "Retired since: a new version must leave it out.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "position",
+          "checkpointId",
+          "nameEn",
+          "nameAr",
+          "location",
+          "retired"
+        ],
+        "type": "object"
+      },
+      "RouteVersionDto": {
+        "properties": {
+          "checkpointIds": {
+            "description": "Checkpoints in service, in the order walked, each once (CHECKPOINT_NOT_AVAILABLE, DUPLICATE_VALUE).",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "expectedMinutes": {
+            "maximum": 480,
+            "minimum": 5,
+            "type": "number"
+          },
+          "ordered": {
+            "description": "The guard must scan them in this order.",
+            "type": "boolean"
+          },
+          "schedule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolScheduleDto"
+              }
+            ],
+            "description": "Weekly start times; none: only the runs a guard starts. Runs are made 7 days ahead.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "checkpointIds",
+          "ordered",
+          "expectedMinutes"
+        ],
+        "type": "object"
+      },
+      "RouteVersionView": {
+        "properties": {
+          "checkpoints": {
+            "description": "How many checkpoints.",
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expectedMinutes": {
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "description": "1 for the first, then up.",
+            "type": "number"
+          },
+          "ordered": {
+            "type": "boolean"
+          },
+          "schedule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolScheduleView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "windowMinutes": {
+            "description": "How long a scheduled run may be started for, from its start: the expected minutes, 30 at least.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "ordered",
+          "expectedMinutes",
+          "windowMinutes",
+          "schedule",
+          "checkpoints",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "RouteView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "example": "جولة السور الليلية",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Night perimeter",
+            "type": "string"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "retiredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "version": {
+            "$ref": "#/components/schemas/RouteVersionView"
+          }
+        },
+        "required": [
+          "id",
+          "post",
+          "nameEn",
+          "nameAr",
+          "version",
+          "retiredAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "RouteViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/RouteView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "RsvpDto": {
         "properties": {
           "guests": {
@@ -25692,6 +26985,473 @@
         },
         "required": [
           "response"
+        ],
+        "type": "object"
+      },
+      "RunDetailView": {
+        "properties": {
+          "cancelReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunCancelReason"
+              }
+            ],
+            "nullable": true
+          },
+          "cancelledBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Null when the system cancelled it.",
+            "nullable": true,
+            "type": "object"
+          },
+          "checkpointsTotal": {
+            "type": "number"
+          },
+          "endReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunEndReason"
+              }
+            ],
+            "description": "Why an incomplete run ended.",
+            "nullable": true
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "expectedMinutes": {
+            "type": "number"
+          },
+          "guard": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunKind"
+              }
+            ]
+          },
+          "late": {
+            "description": "Not started 15 minutes after its scheduled start.",
+            "type": "boolean"
+          },
+          "lateScans": {
+            "description": "Scans that reached the server after the run ended: it was finished offline.",
+            "type": "number"
+          },
+          "manualScans": {
+            "description": "Scans by hand.",
+            "type": "number"
+          },
+          "ordered": {
+            "type": "boolean"
+          },
+          "plannedAt": {
+            "description": "When it was meant: the scheduled start, or an unscheduled run’s start.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "route": {
+            "$ref": "#/components/schemas/RunRouteView"
+          },
+          "scannedCount": {
+            "type": "number"
+          },
+          "scheduledStart": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunStatus"
+              }
+            ]
+          },
+          "stops": {
+            "items": {
+              "$ref": "#/components/schemas/StaffRunStopView"
+            },
+            "type": "array"
+          },
+          "suspectScans": {
+            "description": "Scans farther from their checkpoint than its radius.",
+            "type": "number"
+          },
+          "timesOutAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "windowEndsAt": {
+            "description": "A scheduled run may be started from 15 minutes before its start until then.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "route",
+          "post",
+          "kind",
+          "status",
+          "plannedAt",
+          "scheduledStart",
+          "windowEndsAt",
+          "startedAt",
+          "endedAt",
+          "endReason",
+          "late",
+          "checkpointsTotal",
+          "scannedCount",
+          "guard",
+          "manualScans",
+          "suspectScans",
+          "lateScans",
+          "cancelReason",
+          "cancelledBy",
+          "ordered",
+          "expectedMinutes",
+          "timesOutAt",
+          "stops"
+        ],
+        "type": "object"
+      },
+      "RunRouteView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
+      "RunView": {
+        "properties": {
+          "cancelReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunCancelReason"
+              }
+            ],
+            "nullable": true
+          },
+          "cancelledBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Null when the system cancelled it.",
+            "nullable": true,
+            "type": "object"
+          },
+          "checkpointsTotal": {
+            "type": "number"
+          },
+          "endReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunEndReason"
+              }
+            ],
+            "description": "Why an incomplete run ended.",
+            "nullable": true
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "guard": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunKind"
+              }
+            ]
+          },
+          "late": {
+            "description": "Not started 15 minutes after its scheduled start.",
+            "type": "boolean"
+          },
+          "lateScans": {
+            "description": "Scans that reached the server after the run ended: it was finished offline.",
+            "type": "number"
+          },
+          "manualScans": {
+            "description": "Scans by hand.",
+            "type": "number"
+          },
+          "plannedAt": {
+            "description": "When it was meant: the scheduled start, or an unscheduled run’s start.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostView"
+          },
+          "route": {
+            "$ref": "#/components/schemas/RunRouteView"
+          },
+          "scannedCount": {
+            "type": "number"
+          },
+          "scheduledStart": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunStatus"
+              }
+            ]
+          },
+          "suspectScans": {
+            "description": "Scans farther from their checkpoint than its radius.",
+            "type": "number"
+          },
+          "windowEndsAt": {
+            "description": "A scheduled run may be started from 15 minutes before its start until then.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "route",
+          "post",
+          "kind",
+          "status",
+          "plannedAt",
+          "scheduledStart",
+          "windowEndsAt",
+          "startedAt",
+          "endedAt",
+          "endReason",
+          "late",
+          "checkpointsTotal",
+          "scannedCount",
+          "guard",
+          "manualScans",
+          "suspectScans",
+          "lateScans",
+          "cancelReason",
+          "cancelledBy"
+        ],
+        "type": "object"
+      },
+      "RunViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/RunView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ScanDto": {
+        "properties": {
+          "accuracyM": {
+            "description": "Metres, as the device reports it; with a position only.",
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "checkpointId": {
+            "description": "By hand (`manual`): the checkpoint, with a reason’s code.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "description": "The app’s own id (UUIDv7), made when the guard scanned: sent again (offline, a retry), it records once and answers the same.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lat": {
+            "description": "With `lng`; none when the device has no fix.",
+            "maximum": 90,
+            "minimum": -90,
+            "type": "number"
+          },
+          "lng": {
+            "maximum": 180,
+            "minimum": -180,
+            "type": "number"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolScanMethod"
+              }
+            ]
+          },
+          "payload": {
+            "description": "What the QR or the NFC tag carries (`qr`, `nfc`). Anything else answers 422 PATROL_CHECKPOINT_INVALID.",
+            "example": "JWK1.0199c3d2-6f1a-7c3e-9a51-3b2f6e8d1c40.q3Jzx8b7m2Kd9PwS0aLr5TnYc4Ve1Hu6Gi8Fo0Bj2Ek",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "By hand only (REASON_REQUIRED).",
+            "enum": [
+              "qr_damaged",
+              "qr_missing",
+              "nfc_unreadable",
+              "other"
+            ],
+            "type": "string"
+          },
+          "scannedAt": {
+            "description": "The device’s time of the scan: inside the run’s lifetime, two minutes either side (422 PATROL_SCAN_OUT_OF_WINDOW).",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "method",
+          "scannedAt"
+        ],
+        "type": "object"
+      },
+      "ScanRunView": {
+        "properties": {
+          "checkpointsTotal": {
+            "type": "number"
+          },
+          "scannedCount": {
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolRunStatus"
+              }
+            ],
+            "description": "The last checkpoint of a run under way completes it."
+          }
+        },
+        "required": [
+          "status",
+          "scannedCount",
+          "checkpointsTotal"
+        ],
+        "type": "object"
+      },
+      "ScanView": {
+        "properties": {
+          "checkpointId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolScanMethod"
+              }
+            ]
+          },
+          "position": {
+            "type": "number"
+          },
+          "positionSuspect": {
+            "description": "Farther from the checkpoint than its radius: kept, and flagged. Null without a position on either side.",
+            "nullable": true,
+            "type": "boolean"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "run": {
+            "$ref": "#/components/schemas/ScanRunView"
+          },
+          "scannedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "checkpointId",
+          "position",
+          "method",
+          "scannedAt",
+          "receivedAt",
+          "positionSuspect",
+          "run"
         ],
         "type": "object"
       },
@@ -31247,6 +33007,177 @@
         ],
         "type": "object"
       },
+      "StaffRunStopView": {
+        "properties": {
+          "checkpointId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "location": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckpointPositionView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "note": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffStopNoteView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "position": {
+            "description": "1 for the first.",
+            "type": "number"
+          },
+          "scan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffStopScanView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "position",
+          "checkpointId",
+          "nameEn",
+          "nameAr",
+          "location",
+          "scan",
+          "note"
+        ],
+        "type": "object"
+      },
+      "StaffStopNoteView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "notedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolNoteOutcome"
+              }
+            ]
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/PresignedReadView"
+            },
+            "type": "array"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "text": {
+            "description": "Null when none was written, or after its guard’s erasure.",
+            "nullable": true,
+            "type": "string"
+          },
+          "textCleared": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "outcome",
+          "text",
+          "textCleared",
+          "notedAt",
+          "receivedAt",
+          "photos"
+        ],
+        "type": "object"
+      },
+      "StaffStopScanView": {
+        "properties": {
+          "accuracyM": {
+            "nullable": true,
+            "type": "number"
+          },
+          "distanceM": {
+            "nullable": true,
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lat": {
+            "nullable": true,
+            "type": "number"
+          },
+          "late": {
+            "description": "It reached the server after the run ended (offline).",
+            "type": "boolean"
+          },
+          "lng": {
+            "nullable": true,
+            "type": "number"
+          },
+          "manualReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolManualScanReason"
+              }
+            ],
+            "nullable": true
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatrolScanMethod"
+              }
+            ]
+          },
+          "positionSuspect": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "scannedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "method",
+          "scannedAt",
+          "positionSuspect",
+          "manualReason",
+          "receivedAt",
+          "late",
+          "lat",
+          "lng",
+          "accuracyM",
+          "distanceM"
+        ],
+        "type": "object"
+      },
       "StaffSuggestionListItemView": {
         "properties": {
           "author": {
@@ -33454,6 +35385,114 @@
         ],
         "type": "object"
       },
+      "TrackAcceptedView": {
+        "properties": {
+          "accepted": {
+            "description": "Points recorded now; those sent before are not counted.",
+            "type": "number"
+          },
+          "rejected": {
+            "description": "Points dropped: outside the run’s lifetime, two minutes either side. Do not send them again.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "accepted",
+          "rejected"
+        ],
+        "type": "object"
+      },
+      "TrackDto": {
+        "properties": {
+          "points": {
+            "description": "A point at an instant already recorded for the run is ignored: a batch sent again adds nothing.",
+            "items": {
+              "$ref": "#/components/schemas/TrackPointDto"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "points"
+        ],
+        "type": "object"
+      },
+      "TrackPointDto": {
+        "properties": {
+          "accuracyM": {
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "lat": {
+            "maximum": 90,
+            "minimum": -90,
+            "type": "number"
+          },
+          "lng": {
+            "maximum": 180,
+            "minimum": -180,
+            "type": "number"
+          },
+          "recordedAt": {
+            "description": "The device’s time: inside the run’s lifetime, two minutes either side.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recordedAt",
+          "lat",
+          "lng"
+        ],
+        "type": "object"
+      },
+      "TrackPointView": {
+        "properties": {
+          "accuracyM": {
+            "nullable": true,
+            "type": "number"
+          },
+          "lat": {
+            "type": "number"
+          },
+          "lng": {
+            "type": "number"
+          },
+          "recordedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recordedAt",
+          "lat",
+          "lng",
+          "accuracyM"
+        ],
+        "type": "object"
+      },
+      "TrackPointViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TrackPointView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "TransferOwnershipDto": {
         "properties": {
           "reason": {
@@ -34288,6 +36327,31 @@
             "maxLength": 80,
             "minLength": 1,
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateCheckpointDto": {
+        "properties": {
+          "nameAr": {
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "position": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckpointPositionDto"
+              }
+            ],
+            "description": "Null removes the position; absent leaves it.",
+            "nullable": true,
+            "type": "object"
           }
         },
         "type": "object"
@@ -42827,6 +44891,445 @@
         "tags": [
           "parcels"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/patrols": {
+      "get": {
+        "description": "On shift (403 NO_OPEN_SHIFT): my run under way, the post’s runs to start or started today, and its routes.",
+        "operationId": "GuardPatrolsController_board",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatrolBoardView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My patrols at my post",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/patrols/routes/{id}/start": {
+      "post": {
+        "description": "Of a route in service from my post, on its current version. One run under way per guard (409 PATROL_RUN_ALREADY_LIVE).",
+        "operationId": "GuardPatrolsController_startAdhoc",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardRunDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start a run of my own",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/patrols/runs": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "GuardPatrolsController_mine",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardRunViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The runs I started",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/patrols/runs/{id}": {
+      "get": {
+        "description": "Mine, or one of the post where I am on shift.",
+        "operationId": "GuardPatrolsController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardRunDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A run and its checkpoints",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/patrols/runs/{id}/end": {
+      "post": {
+        "description": "Completed when every checkpoint was scanned, else incomplete: the roster’s keepers are told. Under way only (409 PATROL_RUN_NOT_LIVE).",
+        "operationId": "GuardPatrolsController_end",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardRunDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "End my run",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/patrols/runs/{id}/notes": {
+      "post": {
+        "description": "At a scan of my run, one each (409 PATROL_NOTE_EXISTS): an outcome, words, up to three `patrol_photo` files. Under way, or up to 30 minutes after it ended.",
+        "operationId": "GuardPatrolsController_note",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Note what I found at a checkpoint",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/patrols/runs/{id}/scans": {
+      "post": {
+        "description": "Of my run: its QR or NFC payload, or by hand with a `patrolManualScan` code. The app’s own id records once (offline, a retry); the device’s time must fall in the run’s lifetime. An ordered route takes its checkpoints in order (422 PATROL_OUT_OF_ORDER, params.expected); each once (409 PATROL_CHECKPOINT_ALREADY_SCANNED). Farther than the checkpoint’s radius is kept and flagged. The last one completes the run.",
+        "operationId": "GuardPatrolsController_scan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Scan a checkpoint",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/patrols/runs/{id}/start": {
+      "post": {
+        "description": "At my post, from 15 minutes before its start until its window ends (409 PATROL_RUN_NOT_STARTABLE, params.reason). The first start wins (409 PATROL_ALREADY_STARTED); one run under way per guard (409 PATROL_RUN_ALREADY_LIVE).",
+        "operationId": "GuardPatrolsController_start",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardRunDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start a scheduled run",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/gate/patrols/runs/{id}/track": {
+      "get": {
+        "description": "My own runs only; kept 30 days.",
+        "operationId": "GuardPatrolsController_myTrack",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrackPointViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Where I walked on my run",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Up to 100 points of my run, under way or up to 30 minutes after it ended (409 PATROL_RUN_NOT_LIVE). A point outside the run’s lifetime is dropped (`rejected`), a point already sent adds nothing; the rest are kept (`accepted`).",
+        "operationId": "GuardPatrolsController_record",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrackDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrackAcceptedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send where I walked",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -61995,6 +64498,865 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/security/patrols/checkpoints": {
+      "get": {
+        "description": "Newest first; never a token.",
+        "operationId": "CheckpointsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "Both by default.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "active",
+                "retired"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "gateId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "zoneId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckpointViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the checkpoints",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "At a gate or a zone in service (POST_NOT_AVAILABLE). Answers its QR payload once: print it now, or reissue later. Two checkpoints in service never share a name (409 DUPLICATE_RESOURCE).",
+        "operationId": "CheckpointsController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCheckpointDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckpointSecretView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a checkpoint",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/checkpoints/{id}": {
+      "patch": {
+        "description": "In service only (409 PATROL_CHECKPOINT_RETIRED). Its post never changes.",
+        "operationId": "CheckpointsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCheckpointDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckpointView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename or place a checkpoint",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/checkpoints/{id}/reissue": {
+      "post": {
+        "description": "A new payload, answered once; the old printout stops scanning at once.",
+        "operationId": "CheckpointsController_reissue",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckpointSecretView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Print a new QR",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/checkpoints/{id}/retire": {
+      "post": {
+        "description": "Once, for good; its scans stay. Not while a route in service walks it (409 PATROL_CHECKPOINT_IN_USE, params.routes).",
+        "operationId": "CheckpointsController_retire",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckpointView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retire a checkpoint",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/report": {
+      "get": {
+        "description": "Per route, the runs planned on the compound’s days asked: scheduled, unscheduled, done, late, missed, incomplete, cancelled; scans by hand, flagged and received late; the average length of a completed run.",
+        "operationId": "PatrolReportController_report",
+        "parameters": [
+          {
+            "description": "The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-11-01",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-11-07",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "routeId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatrolReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the patrol report",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/routes": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "RoutesController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "Both by default.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "active",
+                "retired"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "gateId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "zoneId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the routes",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "From a gate or a zone in service (POST_NOT_AVAILABLE), with its first version. Two routes in service never share a name (409 DUPLICATE_RESOURCE).",
+        "operationId": "RoutesController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRouteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a route",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/routes/{id}": {
+      "get": {
+        "description": "Its current version and its checkpoints in order.",
+        "operationId": "RoutesController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a route",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "In service only (409 PATROL_ROUTE_RETIRED).",
+        "operationId": "RoutesController_rename",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameRouteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename a route",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/routes/{id}/retire": {
+      "post": {
+        "description": "Once, for good: its scheduled runs to come are cancelled; a run under way finishes.",
+        "operationId": "RoutesController_retire",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retire a route",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/routes/{id}/versions": {
+      "post": {
+        "description": "A new version: checkpoints, order, expected minutes and schedule. The scheduled runs nobody started are made again from it; a run under way keeps its version.",
+        "operationId": "RoutesController_newVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouteVersionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change what a route asks",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/runs": {
+      "get": {
+        "description": "Planned on the compound’s days asked, newest first.",
+        "operationId": "StaffRunsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "The compound’s first day; six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-11-01",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-11-07",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "routeId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "gateId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "zoneId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "scheduled",
+                "in_progress",
+                "completed",
+                "incomplete",
+                "timed_out",
+                "missed",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "guardId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the runs",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/runs/{id}": {
+      "get": {
+        "operationId": "StaffRunsController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a run",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/runs/{id}/cancel": {
+      "post": {
+        "description": "Nobody started it yet (409 PATROL_RUN_CLOSED, params.status); a `patrolRunCancel` code.",
+        "operationId": "StaffRunsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelRunDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a scheduled run",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/patrols/runs/{id}/track": {
+      "get": {
+        "description": "The guard’s location: `patrols.manage` only, kept 30 days.",
+        "operationId": "StaffRunsController_runTrack",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrackPointViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Where the guard walked",
+        "tags": [
+          "patrols"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/security/posts": {
       "get": {
         "description": "The gates and the zones (places) in service.",
@@ -62027,7 +65389,7 @@
     },
     "/api/v1/staff/security/reports/daily": {
       "get": {
-        "description": "Per gate and per zone, for one of the compound’s days: shifts, lateness and absence, tasks, emergencies, gate services, visitors.",
+        "description": "Per gate and per zone, for one of the compound’s days: shifts, lateness and absence, tasks, emergencies, gate services, visitors, and the patrol runs planned then (ADR 0052).",
         "operationId": "DailyReportController_daily",
         "parameters": [
           {
@@ -62078,7 +65440,7 @@
     },
     "/api/v1/staff/security/reports/daily/export": {
       "get": {
-        "description": "One row per post; UTF-8 with a byte-order mark, CRLF; text cells guarded against formulas.",
+        "description": "One row per post; UTF-8 with a byte-order mark, CRLF; text cells guarded against formulas. The patrols’ five counts are the last columns.",
         "operationId": "DailyReportController_export",
         "parameters": [
           {

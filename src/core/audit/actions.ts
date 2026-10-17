@@ -1094,6 +1094,60 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'board_publication',
   },
+  // Patrols (ADR 0052): ids, codes and counts. A checkpoint's names and
+  // position go in as changed; its token and hash never.
+  'patrol_checkpoint.created': {
+    log: 'tenant',
+    target: 'patrol_checkpoint',
+    sensitive: ['nameEn', 'nameAr', 'lat', 'lng'],
+  },
+  'patrol_checkpoint.updated': {
+    log: 'tenant',
+    target: 'patrol_checkpoint',
+    sensitive: ['nameEn', 'nameAr', 'lat', 'lng'],
+  },
+  'patrol_checkpoint.token_reissued': {
+    log: 'tenant',
+    target: 'patrol_checkpoint',
+  },
+  'patrol_checkpoint.retired': { log: 'tenant', target: 'patrol_checkpoint' },
+  // A route's post by value, its names as changed; metadata: version,
+  // checkpoints (how many), ordered, expectedMinutes, scheduled (whether),
+  // runs (the scheduled runs made).
+  'patrol_route.created': {
+    log: 'tenant',
+    target: 'patrol_route',
+    sensitive: ['nameEn', 'nameAr'],
+  },
+  'patrol_route.renamed': {
+    log: 'tenant',
+    target: 'patrol_route',
+    sensitive: ['nameEn', 'nameAr'],
+  },
+  // metadata: as created, and cancelledRuns (the scheduled runs nobody
+  // started, made again from the new version).
+  'patrol_route.versioned': { log: 'tenant', target: 'patrol_route' },
+  // metadata: cancelledRuns.
+  'patrol_route.retired': { log: 'tenant', target: 'patrol_route' },
+  // metadata: kind, shiftId, late (whether).
+  'patrol_run.started': { log: 'tenant', target: 'patrol_run' },
+  // metadata: status, scanned, total, reason (for an incomplete one),
+  // recipients (the keepers told).
+  'patrol_run.ended': { log: 'tenant', target: 'patrol_run' },
+  // metadata: reason (a patrolRunCancel code, or post_out_of_service).
+  'patrol_run.cancelled': { log: 'tenant', target: 'patrol_run' },
+  // The watch sweep. metadata: recipients.
+  'patrol_run.late': { log: 'tenant', target: 'patrol_run' },
+  'patrol_run.missed': { log: 'tenant', target: 'patrol_run' },
+  // metadata: status, scanned, total, recipients.
+  'patrol_run.timed_out': { log: 'tenant', target: 'patrol_run' },
+  // The 30-day purge of the guards' track points, per compound (system):
+  // no target. metadata: points (how many).
+  'patrol_track.purged': { log: 'tenant', target: 'patrol_run' },
+  // A guard's erasure (ADR 0052): their notes' words go, once each; where
+  // they walked is deleted. metadata: points (how many).
+  'patrol_note.text_cleared': { log: 'tenant', target: 'patrol_note' },
+  'patrol_track.erased': { log: 'tenant', target: 'account' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

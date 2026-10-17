@@ -1433,6 +1433,34 @@ export const NOTIFICATION_KINDS = {
     target: 'governance_election',
     params: {},
   },
+  // Patrols (ADR 0052). None critical; params are codes at most.
+  /** A scheduled run nobody started 15 minutes after its start. To the guards on shift at its post. */
+  'patrol.late': {
+    priority: 'normal',
+    category: 'guard_duty',
+    critical: false,
+    target: 'patrol_run',
+    params: {},
+  },
+  /** A scheduled run nobody started in its window. To the roster's keepers. */
+  'patrol.missed': {
+    priority: 'normal',
+    category: 'guard_duty',
+    critical: false,
+    target: 'patrol_run',
+    params: {},
+  },
+  /**
+   * A run ended with checkpoints not scanned: the guard ended it, their
+   * shift ended, or it timed out. To the roster's keepers.
+   */
+  'patrol.incomplete': {
+    priority: 'normal',
+    category: 'guard_duty',
+    critical: false,
+    target: 'patrol_run',
+    params: { reason: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

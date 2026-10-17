@@ -117,7 +117,10 @@ export async function handoverRow(
 export async function dutyFileRow(
   tx: TenantTxClient,
   tenantId: string,
-  purpose: 'guard_task_photo' | 'found_item_photo' = 'guard_task_photo',
+  purpose:
+    | 'guard_task_photo'
+    | 'found_item_photo'
+    | 'patrol_photo' = 'guard_task_photo',
 ): Promise<string> {
   const id = newId();
   const now = new Date();

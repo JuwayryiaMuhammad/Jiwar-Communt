@@ -192,6 +192,11 @@ export const PERMISSIONS = {
   'governance.read': { kinds: ['resident'] },
   'governance.board': { kinds: [], derived: true },
   'governance.manage': { kinds: ['manager'] },
+  // Patrols (ADR 0052). `patrols.manage` keeps the checkpoints (and their
+  // QR), the routes and their schedules, and cancels runs; a guard walks
+  // them with `gate.operate`, inside a shift. Runs and the patrol report
+  // are read with `patrols.manage` or `guard_reports.read`.
+  'patrols.manage': { kinds: ['staff', 'manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

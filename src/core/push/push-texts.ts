@@ -1551,6 +1551,36 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تم اعتماد نتيجة انتخاب المجلس. افتح التطبيق لعرض المجلس الجديد.',
     },
   },
+  'patrol.late': {
+    en: {
+      title: 'Patrol late',
+      body: 'A patrol at your post has not started. Open your patrols.',
+    },
+    ar: {
+      title: 'جولة متأخرة',
+      body: 'لم تبدأ جولة في موقعك بعد. افتح جولاتك.',
+    },
+  },
+  'patrol.missed': {
+    en: {
+      title: 'Patrol missed',
+      body: 'A scheduled patrol was not started. Open the patrol runs.',
+    },
+    ar: {
+      title: 'جولة فائتة',
+      body: 'لم تبدأ جولة مجدولة. افتح جولات الحراسة.',
+    },
+  },
+  'patrol.incomplete': {
+    en: {
+      title: 'Patrol incomplete',
+      body: 'A patrol ended with checkpoints not scanned. Open the patrol runs.',
+    },
+    ar: {
+      title: 'جولة غير مكتملة',
+      body: 'انتهت جولة دون مسح كل نقاط التفتيش. افتح جولات الحراسة.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

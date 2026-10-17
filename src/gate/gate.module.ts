@@ -148,6 +148,25 @@ import {
 import { HandoverService } from './handover/handover.service';
 import { GuardDutyExportSections } from './roster/duty-export-sections';
 import { GuardDutyLifecycle } from './roster/duty-lifecycle';
+import { CheckpointsController } from './patrols/checkpoints.controller';
+import { CheckpointsService } from './patrols/checkpoints.service';
+import { PatrolCore } from './patrols/patrol-core';
+import { RoutesController } from './patrols/routes.controller';
+import { RoutesService } from './patrols/routes.service';
+import { GuardPatrolsService } from './patrols/guard-patrols.service';
+import { PatrolScansService } from './patrols/patrol-scans.service';
+import { PatrolExportSections } from './patrols/patrol-export-sections';
+import { PatrolLifecycle } from './patrols/patrol-lifecycle';
+import { PatrolReportService } from './patrols/patrol-report.service';
+import { PatrolReportController } from './patrols/report.controller';
+import { PatrolSweeps } from './patrols/patrol-sweeps';
+import { PatrolTrackService } from './patrols/patrol-track.service';
+import {
+  GuardPatrolsController,
+  StaffRunsController,
+} from './patrols/runs.controller';
+import { RunsCore } from './patrols/runs-core';
+import { StaffRunsService } from './patrols/staff-runs.service';
 import { DutyNamesReader } from './roster/duty-names';
 import {
   GuardSwapsController,
@@ -237,6 +256,11 @@ import { RosterService } from './roster/roster.service';
     GuardFoundItemsController,
     StaffFoundItemsController,
     DailyReportController,
+    CheckpointsController,
+    RoutesController,
+    GuardPatrolsController,
+    StaffRunsController,
+    PatrolReportController,
   ],
   providers: [
     GatesService,
@@ -320,6 +344,18 @@ import { RosterService } from './roster/roster.service';
     DailyReportService,
     GuardDutyLifecycle,
     GuardDutyExportSections,
+    CheckpointsService,
+    PatrolCore,
+    RunsCore,
+    RoutesService,
+    GuardPatrolsService,
+    StaffRunsService,
+    PatrolScansService,
+    PatrolTrackService,
+    PatrolReportService,
+    PatrolSweeps,
+    PatrolLifecycle,
+    PatrolExportSections,
   ],
 })
 export class GateModule {}

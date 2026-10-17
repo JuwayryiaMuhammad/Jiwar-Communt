@@ -31,6 +31,7 @@ import { ticketBody } from './routes/maintenance';
 import { passBody } from './routes/visitors';
 import { workerBody } from './routes/workers';
 import { guardDutyCalls } from './no-store-guard-duty';
+import { patrolCalls } from './no-store-patrols';
 import { buildWorld, type World } from './world';
 
 import { ALL_WEEK, at, day as localDay } from '../setup/facilities';
@@ -3020,6 +3021,7 @@ describe('API v0 — no-store', () => {
     ...PERMIT_CALLS(),
     ...guardDutyCalls(() => w),
     ...GOVERNANCE_CALLS(),
+    ...patrolCalls(() => w),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

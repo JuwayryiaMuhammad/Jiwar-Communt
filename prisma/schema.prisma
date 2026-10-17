@@ -2198,6 +2198,8 @@ enum FilePurpose {
   guard_task_photo
   /// A found item's photo, taken at the gate (ADR 0050).
   found_item_photo
+  /// A patrol note's photo of a place (ADR 0052), the guard's.
+  patrol_photo
 
   @@map("file_purpose")
 }
@@ -6841,4 +6843,238 @@ model BoardPublication {
   @@unique([tenantId, announcementId], map: "board_publications_announcement_key")
   @@index([tenantId, createdAt, id], map: "board_publications_created_idx")
   @@map("board_publications")
+}
+
+// ============================================================================
+// Patrols (ADR 0052)
+// ============================================================================
+
+/// A point a patrol scans (ADR 0052): at a gate or in a zone. Its QR and
+/// NFC tag carry `JWK1.<id>.<token>`; only the token's SHA-256 is kept.
+/// Retired, never deleted.
+model PatrolCheckpoint {
+  id            String    @id @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  gateId        String?   @map("gate_id") @db.Uuid
+  placeId       String?   @map("place_id") @db.Uuid
+  nameEn        String    @map("name_en")
+  nameAr        String    @map("name_ar")
+  /// A position, with the radius a scan should fall within; or none.
+  lat           Float?
+  lng           Float?
+  radiusM       Int?      @map("radius_m")
+  tokenHash     String    @map("token_hash") @db.Char(64)
+  tokenIssuedAt DateTime  @map("token_issued_at") @db.Timestamptz(3)
+  retiredAt     DateTime? @map("retired_at") @db.Timestamptz(3)
+  retiredById   String?   @map("retired_by_account_id") @db.Uuid
+  createdById   String    @map("created_by_account_id") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt, id], map: "patrol_checkpoints_list_idx")
+  @@map("patrol_checkpoints")
+}
+
+/// A route a patrol walks (ADR 0052), from a post (a gate or a zone).
+/// What it asks is its current version. Retired, never deleted.
+model PatrolRoute {
+  id          String    @id @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  gateId      String?   @map("gate_id") @db.Uuid
+  placeId     String?   @map("place_id") @db.Uuid
+  nameEn      String    @map("name_en")
+  nameAr      String    @map("name_ar")
+  retiredAt   DateTime? @map("retired_at") @db.Timestamptz(3)
+  retiredById String?   @map("retired_by_account_id") @db.Uuid
+  createdById String    @map("created_by_account_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt, id], map: "patrol_routes_list_idx")
+  @@map("patrol_routes")
+}
+
+/// What a route asks (ADR 0052): its checkpoints in order, whether the
+/// order is enforced, how long it takes and its weekly start times. Never
+/// changes; superseded once by the next.
+model PatrolRouteVersion {
+  id              String    @id @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  routeId         String    @map("route_id") @db.Uuid
+  number          Int
+  ordered         Boolean
+  expectedMinutes Int       @map("expected_minutes")
+  /// `{days, times}`; null: no scheduled runs.
+  schedule        Json?
+  createdById     String    @map("created_by_account_id") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  supersededAt    DateTime? @map("superseded_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, routeId, number], map: "patrol_route_versions_number_key")
+  @@map("patrol_route_versions")
+}
+
+/// A version's checkpoint at its position (ADR 0052). Never changes.
+model PatrolRouteCheckpoint {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  versionId    String   @map("version_id") @db.Uuid
+  position     Int
+  checkpointId String   @map("checkpoint_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, versionId, position], map: "patrol_route_checkpoints_position_key")
+  @@unique([tenantId, versionId, checkpointId], map: "patrol_route_checkpoints_checkpoint_key")
+  @@index([tenantId, checkpointId], map: "patrol_route_checkpoints_used_idx")
+  @@map("patrol_route_checkpoints")
+}
+
+enum PatrolRunKind {
+  scheduled
+  adhoc
+
+  @@map("patrol_run_kind")
+}
+
+enum PatrolRunStatus {
+  scheduled
+  in_progress
+  completed
+  incomplete
+  timed_out
+  missed
+  cancelled
+
+  @@map("patrol_run_status")
+}
+
+/// A walk of a route's version (ADR 0052): scheduled 7 days ahead, or
+/// started by a guard. Moves forward only; never deleted.
+model PatrolRun {
+  id               String          @id @db.Uuid
+  tenantId         String          @map("tenant_id") @db.Uuid
+  routeId          String          @map("route_id") @db.Uuid
+  versionId        String          @map("version_id") @db.Uuid
+  gateId           String?         @map("gate_id") @db.Uuid
+  placeId          String?         @map("place_id") @db.Uuid
+  kind             PatrolRunKind
+  /// When it was meant: the scheduled start, or an unscheduled run's start.
+  plannedAt        DateTime        @map("planned_at") @db.Timestamptz(3)
+  scheduledStart   DateTime?       @map("scheduled_start") @db.Timestamptz(3)
+  windowEndsAt     DateTime?       @map("window_ends_at") @db.Timestamptz(3)
+  status           PatrolRunStatus
+  guardAccountId   String?         @map("guard_account_id") @db.Uuid
+  shiftId          String?         @map("shift_id") @db.Uuid
+  startedAt        DateTime?       @map("started_at") @db.Timestamptz(3)
+  endedAt          DateTime?       @map("ended_at") @db.Timestamptz(3)
+  endReason        String?         @map("end_reason")
+  checkpointsTotal Int             @map("checkpoints_total")
+  scannedCount     Int             @default(0) @map("scanned_count")
+  lateAt           DateTime?       @map("late_at") @db.Timestamptz(3)
+  cancelReason     String?         @map("cancel_reason")
+  cancelledById    String?         @map("cancelled_by_account_id") @db.Uuid
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, plannedAt, id], map: "patrol_runs_planned_idx")
+  @@index([tenantId, routeId, status], map: "patrol_runs_route_idx")
+  @@index([tenantId, guardAccountId, plannedAt], map: "patrol_runs_guard_idx")
+  @@map("patrol_runs")
+}
+
+enum PatrolScanMethod {
+  qr
+  nfc
+  manual
+
+  @@map("patrol_scan_method")
+}
+
+/// A guard at a checkpoint during a run (ADR 0052). The id is the app's
+/// (UUIDv7): a retry records once. Never changes.
+model PatrolScan {
+  id              String           @id @db.Uuid
+  tenantId        String           @map("tenant_id") @db.Uuid
+  runId           String           @map("run_id") @db.Uuid
+  checkpointId    String           @map("checkpoint_id") @db.Uuid
+  position        Int
+  method          PatrolScanMethod
+  manualReason    String?          @map("manual_reason")
+  /// The device's time.
+  scannedAt       DateTime         @map("scanned_at") @db.Timestamptz(3)
+  receivedAt      DateTime         @map("received_at") @db.Timestamptz(3)
+  lat             Float?
+  lng             Float?
+  accuracyM       Float?           @map("accuracy_m")
+  distanceM       Int?             @map("distance_m")
+  positionSuspect Boolean?         @map("position_suspect")
+  guardAccountId  String           @map("guard_account_id") @db.Uuid
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, runId, checkpointId], map: "patrol_scans_once_per_checkpoint")
+  @@index([tenantId, runId, scannedAt], map: "patrol_scans_run_idx")
+  @@index([tenantId, guardAccountId], map: "patrol_scans_guard_idx")
+  @@map("patrol_scans")
+}
+
+/// What a guard noted at a scanned checkpoint (ADR 0052). Its words go
+/// once, at the guard's erasure; its photos stay.
+model PatrolNote {
+  id             String    @id @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  runId          String    @map("run_id") @db.Uuid
+  scanId         String    @map("scan_id") @db.Uuid
+  outcome        String
+  text           String?
+  notedAt        DateTime  @map("noted_at") @db.Timestamptz(3)
+  receivedAt     DateTime  @map("received_at") @db.Timestamptz(3)
+  guardAccountId String    @map("guard_account_id") @db.Uuid
+  textClearedAt  DateTime? @map("text_cleared_at") @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, scanId], map: "patrol_notes_scan_key")
+  @@index([tenantId, runId], map: "patrol_notes_run_idx")
+  @@map("patrol_notes")
+}
+
+/// A patrol note's photo (ADR 0052). Never changes.
+model PatrolNotePhoto {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  noteId       String   @map("note_id") @db.Uuid
+  fileId       String   @unique @map("file_id") @db.Uuid
+  uploadedById String   @map("uploaded_by_account_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, noteId], map: "patrol_note_photos_note_idx")
+  @@map("patrol_note_photos")
+}
+
+/// Where a guard walked during a run (ADR 0052): personal data, deleted 30
+/// days after it was recorded and at the guard's erasure. Never changes.
+model PatrolTrackPoint {
+  id             String   @id @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  runId          String   @map("run_id") @db.Uuid
+  guardAccountId String   @map("guard_account_id") @db.Uuid
+  /// The device's time.
+  recordedAt     DateTime @map("recorded_at") @db.Timestamptz(3)
+  lat            Float
+  lng            Float
+  accuracyM      Float?   @map("accuracy_m")
+  receivedAt     DateTime @map("received_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, runId, recordedAt], map: "patrol_track_points_once_key")
+  @@index([tenantId, recordedAt], map: "patrol_track_points_age_idx")
+  @@index([tenantId, guardAccountId], map: "patrol_track_points_guard_idx")
+  @@map("patrol_track_points")
 }

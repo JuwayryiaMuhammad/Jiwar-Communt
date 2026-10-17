@@ -90,6 +90,40 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   found_items_tenant_id_id_key: null,
   found_item_photos_tenant_id_id_key: null,
   found_item_photos_file_id_key: null,
+  // Patrols (ADR 0052): two checkpoints in service never share a name.
+  patrol_checkpoints_tenant_id_id_key: null,
+  patrol_checkpoints_active_name_en_key: ['nameEn'],
+  patrol_checkpoints_active_name_ar_key: ['nameAr'],
+  // Two routes in service never share a name; a version's number, its
+  // current version and its stops are internal keys, written under the
+  // route's lock.
+  patrol_routes_tenant_id_id_key: null,
+  patrol_routes_active_name_en_key: ['nameEn'],
+  patrol_routes_active_name_ar_key: ['nameAr'],
+  patrol_route_versions_tenant_id_id_key: null,
+  patrol_route_versions_number_key: null,
+  patrol_route_versions_current_key: null,
+  patrol_route_checkpoints_tenant_id_id_key: null,
+  patrol_route_checkpoints_position_key: null,
+  patrol_route_checkpoints_checkpoint_key: null,
+  // Runs: a version makes each scheduled run once (ON CONFLICT DO
+  // NOTHING); one live run per guard is checked first and mapped to
+  // PATROL_RUN_ALREADY_LIVE: a violation is a race.
+  patrol_runs_tenant_id_id_key: null,
+  patrol_runs_scheduled_key: null,
+  patrol_runs_one_live_per_guard: null,
+  // Scans and notes: the app's ids (a collision is a conflict, never a
+  // field); each checkpoint once per run and one note per scan are checked
+  // under the run's lock first; a photo is attached once.
+  patrol_scans_tenant_id_id_key: null,
+  patrol_scans_once_per_checkpoint: null,
+  patrol_notes_tenant_id_id_key: null,
+  patrol_notes_scan_key: null,
+  patrol_note_photos_tenant_id_id_key: null,
+  patrol_note_photos_file_id_key: null,
+  // A point at an instant of a run, once (ON CONFLICT DO NOTHING).
+  patrol_track_points_tenant_id_id_key: null,
+  patrol_track_points_once_key: null,
   visitor_details_tenant_id_id_key: null,
   visitor_passes_tenant_id_id_key: null,
   // ADR 0043.

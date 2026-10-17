@@ -1364,6 +1364,8 @@ describe('Permission sync', () => {
         'guard_reports.read',
         'guard_roster.manage',
         'guard_tasks.manage',
+        // Created from today's catalog: G5's patrols (ADR 0052) too.
+        'patrols.manage',
       ]);
       // parking_reports.handle was offered with G2: the sync never grants
       // an offered permission again.
@@ -1529,6 +1531,59 @@ describe('Permission sync', () => {
       added: [],
       rolesCreated: [],
       rolesChanged: 0,
+    });
+  });
+
+  describe('Phase G5 (ADR 0052)', () => {
+    /** The catalog before G5: no patrols.manage anywhere. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(
+          ([p]) => p !== 'patrols.manage',
+        ),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => p !== 'patrols.manage'),
+      })),
+    };
+
+    it('reaches an existing compound: patrols.manage for the manager and the security supervisor, nobody else', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync G5 ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect(report.added).toEqual(['patrols.manage']);
+      expect(report.rolesCreated).toEqual([]);
+      for (const key of ['manager', 'security_supervisor'])
+        expect((await role(t, key)).permissions).toContain('patrols.manage');
+      // A guard walks the routes with gate.operate, inside a shift.
+      for (const key of [
+        'guard',
+        'resident',
+        'family_member',
+        'technician',
+        'maintenance_supervisor',
+        'accountant',
+      ])
+        expect((await role(t, key)).permissions).not.toContain(
+          'patrols.manage',
+        );
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
     });
   });
 });

@@ -793,6 +793,51 @@ export const ErrorCode = {
   GOVERNANCE_NOT_CERTIFIABLE: 'GOVERNANCE_NOT_CERTIFIABLE',
   /** Unknown, another compound's, or archived where it must not be. */
   BOARD_PUBLICATION_NOT_FOUND: 'BOARD_PUBLICATION_NOT_FOUND',
+  // patrols (ADR 0052)
+  /** Unknown, or another compound's. */
+  PATROL_CHECKPOINT_NOT_FOUND: 'PATROL_CHECKPOINT_NOT_FOUND',
+  /** It was retired: nothing changes any more (409). */
+  PATROL_CHECKPOINT_RETIRED: 'PATROL_CHECKPOINT_RETIRED',
+  /** A route in service walks it (409, params.routes: how many). */
+  PATROL_CHECKPOINT_IN_USE: 'PATROL_CHECKPOINT_IN_USE',
+  /** Unknown, another compound's, or not the caller's to see. */
+  PATROL_ROUTE_NOT_FOUND: 'PATROL_ROUTE_NOT_FOUND',
+  /** It was retired: nothing changes any more (409). */
+  PATROL_ROUTE_RETIRED: 'PATROL_ROUTE_RETIRED',
+  /** Unknown, another compound's, or not the caller's to see. */
+  PATROL_RUN_NOT_FOUND: 'PATROL_RUN_NOT_FOUND',
+  /** Another guard started it first (409). */
+  PATROL_ALREADY_STARTED: 'PATROL_ALREADY_STARTED',
+  /**
+   * Not now (409, params.reason: `too_early`, more than 15 minutes before
+   * its start; `window_closed`; `missed`; `cancelled`).
+   */
+  PATROL_RUN_NOT_STARTABLE: 'PATROL_RUN_NOT_STARTABLE',
+  /** Another run of the guard's is under way: one at a time (409). */
+  PATROL_RUN_ALREADY_LIVE: 'PATROL_RUN_ALREADY_LIVE',
+  /** The run is not under way (409, params.status). */
+  PATROL_RUN_NOT_LIVE: 'PATROL_RUN_NOT_LIVE',
+  /** Nobody may cancel it any more: it is not scheduled (409, params.status). */
+  PATROL_RUN_CLOSED: 'PATROL_RUN_CLOSED',
+  /**
+   * Not a checkpoint of this compound in service, or not its current QR:
+   * one answer for a malformed payload, an unknown or retired checkpoint,
+   * another compound's, and an old printout (422).
+   */
+  PATROL_CHECKPOINT_INVALID: 'PATROL_CHECKPOINT_INVALID',
+  /** The checkpoint is not on the run's route (422). */
+  PATROL_CHECKPOINT_NOT_ON_ROUTE: 'PATROL_CHECKPOINT_NOT_ON_ROUTE',
+  /** An ordered route expects another checkpoint first (422, params.expected: its position). */
+  PATROL_OUT_OF_ORDER: 'PATROL_OUT_OF_ORDER',
+  /** This run scanned that checkpoint already (409). */
+  PATROL_CHECKPOINT_ALREADY_SCANNED: 'PATROL_CHECKPOINT_ALREADY_SCANNED',
+  /**
+   * The device's time is outside the run's lifetime, two minutes either
+   * side (422).
+   */
+  PATROL_SCAN_OUT_OF_WINDOW: 'PATROL_SCAN_OUT_OF_WINDOW',
+  /** That scan has its note already (409). */
+  PATROL_NOTE_EXISTS: 'PATROL_NOTE_EXISTS',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -976,6 +1021,14 @@ export const FieldErrorCode = {
   OWNER_NOT_ELIGIBLE: 'OWNER_NOT_ELIGIBLE',
   /** A board of params.min to params.max seats. */
   BOARD_SIZE: 'BOARD_SIZE',
+  // patrols (ADR 0052)
+  /**
+   * Two start times closer than a run's window (params.minutes), on a day,
+   * over midnight or from Saturday into Sunday.
+   */
+  PATROL_SCHEDULE_OVERLAP: 'PATROL_SCHEDULE_OVERLAP',
+  /** Not a checkpoint in service of this compound. */
+  CHECKPOINT_NOT_AVAILABLE: 'CHECKPOINT_NOT_AVAILABLE',
 } as const;
 
 export type FieldErrorCode =

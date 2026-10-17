@@ -11,12 +11,8 @@ import { buildWorld, type World } from '../api/world';
 import { gateHelpers } from '../setup/gate';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { required } from '../setup/test-env';
+import { aroundTheClock } from '../setup/compound-clock';
 
-/** Every day, all but one minute (an overnight window). */
-const ALWAYS = {
-  days: [0, 1, 2, 3, 4, 5, 6],
-  windows: [{ from: '05:00', to: '04:59' }],
-};
 const QR = /^JWR1\.([A-Za-z0-9_-]{43})$/;
 
 interface Issued {
@@ -93,7 +89,7 @@ describe('Gate — QR entry (ADR 0030)', () => {
     const s = w[side];
     const reg = await call(w, 'POST', `/units/${s.homeUnitId}/workers`, {
       token: s.tokens.owner,
-      body: { ...workerBody(), schedule: ALWAYS },
+      body: { ...workerBody(), schedule: aroundTheClock() },
     }).expect(201);
     const id = (reg.body as { engagementId: string }).engagementId;
     const approved = await call(w, 'POST', `/worker-engagements/${id}/review`, {

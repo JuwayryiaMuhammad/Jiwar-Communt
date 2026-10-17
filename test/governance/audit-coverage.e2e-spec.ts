@@ -34,6 +34,7 @@ import {
   type Who,
 } from '../setup/governance';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { today } from '../setup/compound-clock';
 
 /**
  * One scenario per governance catalog entry (ADR 0014, 0051): actor,
@@ -393,7 +394,7 @@ describe('Audit coverage — governance', () => {
       const res = await g
         .http('post', '/governance/publications', s.manager.token, {
           kind: 'minutes',
-          decidedOn: new Date().toISOString().slice(0, 10),
+          decidedOn: today(),
           titleEn: 'Minutes of the meeting',
           bodyEn: 'Present: everyone.',
         })

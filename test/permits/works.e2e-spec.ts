@@ -18,7 +18,7 @@ describe('Permits — works by a contractor (ADR 0049)', () => {
 
   it('the primary asks: pending, numbered W-, the period at the compound’s midnights; the management is told, nobody else', async () => {
     const c = await p.setUp('Works Ask Court');
-    const res = await p.worksRaw(c.alice, c.home.id).expect(201);
+    const res = p.status(await p.worksRaw(c.alice, c.home.id), 201);
     expect(res.headers['cache-control']).toBe('no-store');
     const permit = res.body as PermitBody;
     expect(permit).toMatchObject({
@@ -56,21 +56,21 @@ describe('Permits — works by a contractor (ADR 0049)', () => {
     const rented = await p.unit(c.c, 'P2');
     const landlord = await p.landlord(c.c, rented.id);
     expect(
-      (await p.worksRaw(member, c.home.id).expect(403)).body,
+      p.status(await p.worksRaw(member, c.home.id), 403).body,
     ).toMatchObject({ code: 'PERMIT_NOT_ALLOWED' });
     // A landlord never lives there: never its primary.
     expect(
-      (await p.worksRaw(landlord, rented.id).expect(403)).body,
+      p.status(await p.worksRaw(landlord, rented.id), 403).body,
     ).toMatchObject({ code: 'PERMIT_NOT_ALLOWED' });
     expect(
-      (await p.worksRaw(c.alice, rented.id).expect(404)).body,
+      p.status(await p.worksRaw(c.alice, rented.id), 404).body,
     ).toMatchObject({ code: 'UNIT_NOT_FOUND' });
   });
 
   it('the period and the hours fit the compound’s rules', async () => {
     const c = await p.setUp('Works Rules Court');
     const bad = async (over: Record<string, unknown>) =>
-      fields(await p.worksRaw(c.alice, c.home.id, over).expect(400));
+      fields(p.status(await p.worksRaw(c.alice, c.home.id, over), 400));
     expect(await bad({ startsOn: day(-1), endsOn: day(2) })).toEqual([
       {
         field: 'startsOn',
@@ -129,7 +129,7 @@ describe('Permits — works by a contractor (ADR 0049)', () => {
     const made: PermitBody[] = [];
     for (let i = 0; i < 3; i += 1) made.push(await p.works(c.alice, c.home.id));
     expect(
-      (await p.worksRaw(c.alice, c.home.id).expect(409)).body,
+      p.status(await p.worksRaw(c.alice, c.home.id), 409).body,
     ).toMatchObject({
       code: 'PERMIT_LIMIT_REACHED',
       params: { scope: 'works', max: 3 },
@@ -137,18 +137,20 @@ describe('Permits — works by a contractor (ADR 0049)', () => {
     await p
       .http('post', `/permits/${made[0].id}/cancel`, c.alice.token, {})
       .expect(200);
-    await p.worksRaw(c.alice, c.home.id).expect(201);
+    p.status(await p.worksRaw(c.alice, c.home.id), 201);
   });
 
   it('a retry with the same Idempotency-Key replays: one permit', async () => {
     const c = await p.setUp('Works Retry Court');
     const key = randomUUID();
-    const first = await p
-      .worksRaw(c.alice, c.home.id, {}, { 'Idempotency-Key': key })
-      .expect(201);
-    const again = await p
-      .worksRaw(c.alice, c.home.id, {}, { 'Idempotency-Key': key })
-      .expect(201);
+    const first = p.status(
+      await p.worksRaw(c.alice, c.home.id, {}, { 'Idempotency-Key': key }),
+      201,
+    );
+    const again = p.status(
+      await p.worksRaw(c.alice, c.home.id, {}, { 'Idempotency-Key': key }),
+      201,
+    );
     expect(again.headers['idempotent-replayed']).toBe('true');
     expect((again.body as PermitBody).id).toBe((first.body as PermitBody).id);
     expect(

@@ -21,6 +21,7 @@ import {
   PUSH_TRANSPORT,
   type PushTransport,
 } from '../../src/core/push/push-transport';
+import { syncDbClock } from './compound-clock';
 import { nationalIdFor, uniquePhone, uniqueSuffix } from './fixtures';
 
 export const API = '/api/v1';
@@ -83,6 +84,7 @@ export async function createHttpHarness(
   const jwt = moduleRef.get(JwtService);
   const tenantTx = moduleRef.get(TenantTx);
   const tenants = moduleRef.get(TenantsService);
+  await syncDbClock(globalDb);
 
   return {
     app,

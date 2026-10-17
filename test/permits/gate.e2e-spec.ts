@@ -1,13 +1,12 @@
-import { localParts } from '../../src/core/common/slots/day-slots';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import {
   day,
   permitHelpers,
-  ZONE,
   type PermitBody,
   type PermitSetUp,
   type Who,
 } from '../setup/permits';
+import { clock, middayZone } from '../setup/compound-clock';
 
 const HOUR = 3_600_000;
 
@@ -46,8 +45,8 @@ describe('Permits — at the gate (ADR 0049)', () => {
   afterAll(() => h.close());
 
   /** A compound with every day and hour open, a guard on duty. */
-  async function court(name: string) {
-    const c = await p.setUp(name);
+  async function court(name: string, zone?: string) {
+    const c = await p.setUp(name, zone);
     await p.anyTime(c.manager);
     const guard = await p.guardOnDuty(c.c);
     return { ...c, guard };
@@ -279,7 +278,7 @@ describe('Permits — at the gate (ADR 0049)', () => {
     };
     await entry(c.guard, base).expect(201);
     // Narrow the hours to exclude now: the next entry is refused.
-    const now = localParts(new Date(), ZONE).minute;
+    const now = clock().minute;
     const narrow =
       now >= 120
         ? { from: '00:00', to: hhmm(now - 60) }
@@ -384,7 +383,9 @@ describe('Permits — at the gate (ADR 0049)', () => {
   });
 
   it('an event’s guests: names shown from half an hour before; a removed guest refused', async () => {
-    const c = await court('Gate Event Court');
+    // Midday where the compound is: the event two hours from now is today's
+    // (the gate shows today's permits), whatever hour the test runs.
+    const c = await court('Gate Event Court', middayZone());
     const later = await p.event(c.alice, c.home.id, 3, {
       startsAt: new Date(Date.now() + 2 * HOUR).toISOString(),
       endsAt: new Date(Date.now() + 5 * HOUR).toISOString(),
@@ -444,7 +445,7 @@ describe('Permits — at the gate (ADR 0049)', () => {
 
   it('a move’s truck comes in within its window', async () => {
     const c = await court('Gate Move Court');
-    const now = localParts(new Date(), ZONE).minute;
+    const now = clock().minute;
     // A window of today around now (or the next day's first hours).
     const window =
       now < 1380

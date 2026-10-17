@@ -11,6 +11,13 @@ import { call, err } from './request';
 import { passBody } from './routes/visitors';
 import { workerBody } from './routes/workers';
 import { buildWorld, type World } from './world';
+import {
+  aroundTheClock,
+  clock,
+  clockAt,
+  dbClock,
+  localMinute,
+} from '../setup/compound-clock';
 
 const VERIFY = [
   'display',
@@ -64,18 +71,7 @@ const INSIDE = [
 ];
 
 /** The compound's local weekday (Africa/Cairo, the default). */
-function cairoWeekday(at = new Date()): number {
-  const day = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Africa/Cairo',
-    weekday: 'short',
-  }).format(at);
-  return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(day);
-}
-/** Every day, all but one minute (an overnight window). */
-const ALWAYS = {
-  days: [0, 1, 2, 3, 4, 5, 6],
-  windows: [{ from: '05:00', to: '04:59' }],
-};
+const cairoWeekday = (at = dbClock()): number => clockAt(at).weekday();
 
 describe('API v0 — verify, entries, inside (ADR 0028)', () => {
   let h: HttpHarness;
@@ -111,7 +107,10 @@ describe('API v0 — verify, entries, inside (ADR 0028)', () => {
   };
 
   /** A worker of a fresh unit, approved, with its code. */
-  async function worker(schedule: object = ALWAYS, capacity = 'hourly') {
+  async function worker(
+    schedule: object = aroundTheClock(),
+    capacity = 'hourly',
+  ) {
     const unit = await w.helpers.unit(w.a);
     const resident = await w.helpers.resident(w.a, [unit.id]);
     const token = await w.tokenFor(w.a, resident.id, 'resident');
@@ -241,7 +240,7 @@ describe('API v0 — verify, entries, inside (ADR 0028)', () => {
       kind: 'recurring',
       partySize: 2,
       validUntil: new Date(Date.now() + 30 * 86_400_000).toISOString(),
-      schedule: ALWAYS,
+      schedule: aroundTheClock(),
     });
     const io = (direction: 'in' | 'out') =>
       record({ subjectType: 'visitor_pass', subjectId: pass.id, direction });
@@ -351,19 +350,33 @@ describe('API v0 — verify, entries, inside (ADR 0028)', () => {
           );
         }),
       );
-    // Thursday 2026-12-03 (Cairo UTC+2, Riyadh UTC+3).
-    expect(await at('2026-12-03T20:30:00Z', 'Asia/Riyadh')).toBeNull(); // Thu 23:30
-    expect(await at('2026-12-03T22:30:00Z', 'Asia/Riyadh')).toBeNull(); // Fri 01:30
-    expect(await at('2026-12-03T23:30:00Z', 'Asia/Riyadh')).toBe(
-      'outside_schedule',
-    ); // Fri 02:30
-    expect(await at('2026-12-03T23:30:00Z', 'Africa/Cairo')).toBeNull(); // Fri 01:30
-    expect(await at('2026-12-04T00:30:00Z', 'Africa/Cairo')).toBe(
-      'outside_schedule',
-    ); // Fri 02:30
-    expect(await at('2026-12-03T19:30:00Z', 'Africa/Cairo')).toBe(
-      'outside_schedule',
-    ); // Thu 21:30
+    // The next Thursday a week or more away (the pass is valid from now),
+    // its night read on each zone's own clock.
+    const cairo = clock('Africa/Cairo');
+    const riyadh = clock('Asia/Riyadh');
+    const n = [7, 8, 9, 10, 11, 12, 13].find(
+      (k) => cairo.weekday(cairo.day(k)) === 4,
+    )!;
+    const thursday = cairo.day(n);
+    const friday = cairo.day(n + 1);
+    const iso = (d: Date) => d.toISOString();
+    for (const [zone, c] of [
+      ['Asia/Riyadh', riyadh],
+      ['Africa/Cairo', cairo],
+    ] as const) {
+      expect(await at(iso(c.at(thursday, 23, 30)), zone)).toBeNull();
+      expect(await at(iso(c.at(friday, 1, 30)), zone)).toBeNull();
+      expect(await at(iso(c.at(friday, 2, 30)), zone)).toBe('outside_schedule');
+      expect(await at(iso(c.at(thursday, 21, 30)), zone)).toBe(
+        'outside_schedule',
+      );
+    }
+    // One instant, two zones: Friday 02:30 in Riyadh is 01:30 in Cairo
+    // while Cairo is an hour behind (winter), the same hour in summer.
+    const instant = riyadh.at(friday, 2, 30);
+    expect(await at(iso(instant), 'Africa/Cairo')).toBe(
+      localMinute(instant, 'Africa/Cairo') < 150 ? null : 'outside_schedule',
+    );
   });
 
   it('workers: in schedule, suspended, banned, off schedule', async () => {

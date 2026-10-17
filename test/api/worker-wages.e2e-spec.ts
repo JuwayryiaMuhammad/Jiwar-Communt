@@ -12,6 +12,7 @@ import { keyPaths, listKeys } from './keys';
 import { call, err } from './request';
 import { workerBody } from './routes/workers';
 import { buildWorld, type World } from './world';
+import { month } from '../setup/compound-clock';
 
 const PAYMENT = [
   'amount',
@@ -23,16 +24,6 @@ const PAYMENT = [
   'paidBy.id',
   'period',
 ];
-
-/** `YYYY-MM` of a date in the compound's zone (Africa/Cairo by default). */
-const month = (d: Date) =>
-  new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Africa/Cairo',
-    year: 'numeric',
-    month: '2-digit',
-  })
-    .format(d)
-    .slice(0, 7);
 
 /**
  * ADR 0037: a worker's monthly wage and its payments, recorded and never
@@ -56,7 +47,7 @@ describe('API v0 — worker wages', () => {
 
   const owner = () => w.a.tokens.owner;
   const manager = () => w.a.tokens.manager;
-  const thisMonth = () => month(new Date());
+  const thisMonth = () => month();
 
   /** An engagement of the owner's home, pending review. */
   async function registered(): Promise<string> {
@@ -202,12 +193,7 @@ describe('API v0 — worker wages', () => {
 
   it('the month and the amount are checked', async () => {
     const id = await active();
-    const next = new Date();
-    next.setUTCDate(1);
-    next.setUTCMonth(next.getUTCMonth() + 2);
-    const future = await pay(id, { period: month(next), amount: 1 }).expect(
-      400,
-    );
+    const future = await pay(id, { period: month(2), amount: 1 }).expect(400);
     expect(err(future).fields).toEqual([
       { field: 'period', code: 'WAGE_PERIOD_IN_FUTURE' },
     ]);

@@ -2,7 +2,6 @@ import { randomInt } from 'node:crypto';
 import type { AccountType } from '@prisma/client';
 import { CODE_ACCESS_CATALOG } from '../../src/core/access/access-catalog';
 import { RoleProvisioner } from '../../src/core/access/role-provisioner';
-import { egyptToday } from '../../src/core/common/egyptian-national-id';
 import { newId } from '../../src/core/common/uuid';
 import { TenantLifecycle } from '../../src/core/tenant-settings/tenant-lifecycle';
 import { EngagementProvisioning } from '../../src/engagement/provisioning';
@@ -15,6 +14,7 @@ import { VehicleProvisioning } from '../../src/gate/vehicles/vehicle-provisionin
 import { MaintenanceProvisioning } from '../../src/maintenance/provisioning';
 import { ManagementProvisioning } from '../../src/management/provisioning';
 import { NeighboursProvisioning } from '../../src/neighbours/provisioning';
+import { dbDate, ofDbDate, today, yearsBefore } from './compound-clock';
 import type { DbHarness } from './db-module';
 import { suiteSequence } from './id-blocks';
 
@@ -74,29 +74,22 @@ export function nationalIdFor(
   birthDate: Date = new Date(Date.UTC(1990, 0, 1)),
 ): string {
   const pad = (n: number, width = 2) => String(n).padStart(width, '0');
-  const year = birthDate.getUTCFullYear();
+  const [year, month, dayOfMonth] = ofDbDate(birthDate).split('-').map(Number);
   const sequence = nationalIdSequence();
   return [
     year >= 2000 ? '3' : '2',
     pad(year % 100),
-    pad(birthDate.getUTCMonth() + 1),
-    pad(birthDate.getUTCDate()),
+    pad(month),
+    pad(dayOfMonth),
     GOVERNORATES[Math.floor(sequence / 1e5)],
     pad(Math.floor((sequence % 1e5) / 10), 4),
     String(sequence % 10),
   ].join('');
 }
 
-/** Egypt's calendar date `years` years (and `days` days) before today. */
+/** The compound's day `years` years (and `days` days) before today. */
 export function bornYearsAgo(years: number, days = 0): Date {
-  const today = egyptToday();
-  return new Date(
-    Date.UTC(
-      today.getUTCFullYear() - years,
-      today.getUTCMonth(),
-      today.getUTCDate() - days,
-    ),
-  );
+  return dbDate(yearsBefore(today(), years, days));
 }
 
 /** Unique per call, so suites never collide on unique constraints. */

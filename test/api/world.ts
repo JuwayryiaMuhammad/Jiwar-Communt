@@ -50,6 +50,7 @@ import { EmergenciesService } from '../../src/gate/emergencies/emergencies.servi
 import { GateServicesService } from '../../src/gate/gate-services/gate-services.service';
 import { PermitsService } from '../../src/gate/permits/permits.service';
 import { PermitRequestsService } from '../../src/gate/permits/permit-requests.service';
+import { PermitSettingsService } from '../../src/gate/permits/permit-settings.service';
 import { permitFileRow, permitWorkerRow } from '../setup/permits-rows';
 import {
   boardMemberRow,
@@ -77,6 +78,7 @@ import {
   type HttpHarness,
 } from '../setup/http-app';
 import { waitForOtp } from '../setup/mailpit';
+import { workDaysOf } from '../setup/permits';
 
 /** The tenant accounts every API suite acts as. */
 export type Persona =
@@ -912,14 +914,20 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
         when: 'now',
       }),
   );
+  // From B's first work day under its rules: never a fixed offset.
+  const [bWorkDay] = workDaysOf(
+    await helpers.as(b, { id: b.ids.owner, type: 'resident' }, () =>
+      h.moduleRef.get(PermitSettingsService).forResidents(),
+    ),
+  );
   const bPermit = await helpers.as(
     b,
     { id: b.ids.owner, type: 'resident' },
     () =>
       h.moduleRef.get(PermitsService).createWorks(b.homeUnitId, {
         workType: 'renovation',
-        startsOn: day(1),
-        endsOn: day(5),
+        startsOn: bWorkDay,
+        endsOn: addDays(bWorkDay, 4),
         dailyHours: { from: '09:00', to: '17:00' },
         contractorCompany: 'B Builders',
         description: 'B works',

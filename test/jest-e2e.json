@@ -14,5 +14,6 @@
   "globalSetup": "<rootDir>/test/setup/global-setup.ts",
   "globalTeardown": "<rootDir>/test/setup/global-teardown.ts",
   "setupFiles": ["<rootDir>/test/setup/env.ts"],
+  "setupFilesAfterEnv": ["<rootDir>/test/setup/midnight-guard.ts"],
   "testTimeout": 30000
 }

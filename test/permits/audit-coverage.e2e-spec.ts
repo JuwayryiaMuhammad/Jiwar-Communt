@@ -66,10 +66,11 @@ describe('Audit coverage — permits', () => {
 
   describe('the rules', () => {
     it('changed: the days, hours and days off by value', async () => {
+      const dayOff = day(80);
       await p.setRules(s.manager, {
         workDays: [0, 1, 2],
         workHours: { from: '10:00', to: '16:00' },
-        daysOff: ['2027-01-07'],
+        daysOff: [dayOff],
       });
       const c = await single('permit_settings.changed', s.c.tenantId);
       expect(c).toMatchObject(by(s.manager, 'tenant'));
@@ -79,7 +80,7 @@ describe('Audit coverage — permits', () => {
           from: { from: '09:00', to: '17:00' },
           to: { from: '10:00', to: '16:00' },
         },
-        daysOff: { from: [], to: ['2027-01-07'] },
+        daysOff: { from: [], to: [dayOff] },
       });
     });
   });

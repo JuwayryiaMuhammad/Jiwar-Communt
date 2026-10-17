@@ -18,6 +18,7 @@ import {
   uniquePhone,
   type HttpHarness,
 } from '../setup/http-app';
+import { ofDbDate } from '../setup/compound-clock';
 
 /**
  * One scenario per Phase 2 community catalog entry (ADR 0014, 0016, 0017),
@@ -513,9 +514,9 @@ describe('Audit coverage — community', () => {
       const c = await x.compound();
       const u = await x.unit(c);
       const r = await x.resident(c, [u.id]);
-      const entered = bornYearsAgo(31).toISOString().slice(0, 10);
-      const attested = bornYearsAgo(32).toISOString().slice(0, 10);
-      const later = bornYearsAgo(33).toISOString().slice(0, 10);
+      const entered = ofDbDate(bornYearsAgo(31));
+      const attested = ofDbDate(bornYearsAgo(32));
+      const later = ofDbDate(bornYearsAgo(33));
       const number = `PX${Date.now().toString(36).toUpperCase()}`;
       remember(number, entered, attested, later);
       const reg = await x.as(c, { id: r.id, type: 'resident' }, () =>

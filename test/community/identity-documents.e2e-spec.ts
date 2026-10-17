@@ -17,6 +17,7 @@ import {
   uniquePhone,
   type HttpHarness,
 } from '../setup/http-app';
+import { ofDbDate } from '../setup/compound-clock';
 
 /** National ID or passport, with a stored birth date (ADR 0018). */
 describe('Identity documents', () => {
@@ -34,7 +35,7 @@ describe('Identity documents', () => {
 
   afterAll(() => h.close());
 
-  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  const iso = ofDbDate;
   let seq = 0;
   /** A unique passport number per call. */
   const passportNo = () =>

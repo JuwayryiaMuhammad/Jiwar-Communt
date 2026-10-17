@@ -9,6 +9,7 @@ import { DatabaseModule } from '../../src/core/database/database.module';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { PrismaService } from '../../src/core/database/prisma.service';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
+import { syncDbClock } from './compound-clock';
 
 export interface DbHarness {
   moduleRef: TestingModule;
@@ -45,6 +46,7 @@ export async function createDbHarness(
     await moduleRef.init();
 
     const cls = moduleRef.get<ClsService<AppClsStore>>(ClsService);
+    await syncDbClock(moduleRef.get(GlobalDbService));
     return {
       moduleRef,
       cls,

@@ -1,12 +1,11 @@
-import { localDate } from '../../src/core/common/slots/day-slots';
 import { newId } from '../../src/core/common/uuid';
 import { ROSTER_ATTENDANCE_SWEEP } from '../../src/gate/roster/roster-attendance';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { permitRow } from '../setup/permits-rows';
 import { securityHelpers, type Who } from '../setup/security';
+import { dbClock, localDay } from '../setup/compound-clock';
 
-const ZONE = 'Africa/Cairo';
-const day = (at: Date | string) => localDate(new Date(at), ZONE);
+const day = (at: Date | string) => localDay(new Date(at));
 
 interface PostRow {
   post: { gateId: string | null; zone: { id: string } | null };
@@ -309,7 +308,7 @@ describe('The daily report', () => {
   });
 
   it('as CSV: a byte-order mark, a header row, one row per post, its name', async () => {
-    const today = day(new Date());
+    const today = day(dbClock());
     const res = await x
       .http(
         'get',

@@ -26,6 +26,7 @@ import {
   uniquePhone,
   type HttpHarness,
 } from '../setup/http-app';
+import { month } from '../setup/compound-clock';
 
 const DAY = 86_400_000;
 
@@ -222,13 +223,7 @@ describe('Personal-data export', () => {
     await x.asManager(c, () => workers.review(engaged.engagementId, 'approve'));
     const wages = h.moduleRef.get(WorkerWagesService);
     await asP(() => wages.setWage(engaged.engagementId, '4321.07'));
-    const paidMonth = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Africa/Cairo',
-      year: 'numeric',
-      month: '2-digit',
-    })
-      .format(new Date())
-      .slice(0, 7);
+    const paidMonth = month();
     const paid = await asP(() =>
       wages.pay(engaged.engagementId, { period: paidMonth, amount: '987.65' }),
     );

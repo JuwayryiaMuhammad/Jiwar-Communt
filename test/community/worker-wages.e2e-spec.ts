@@ -9,14 +9,7 @@ import {
   uniquePhone,
   type HttpHarness,
 } from '../setup/http-app';
-
-const month = new Intl.DateTimeFormat('en-CA', {
-  timeZone: 'Africa/Cairo',
-  year: 'numeric',
-  month: '2-digit',
-})
-  .format(new Date())
-  .slice(0, 7);
+import { month } from '../setup/compound-clock';
 
 /**
  * ADR 0037: who a wage belongs to. The employer side (the unit's primary, a
@@ -99,7 +92,7 @@ describe('Worker wages — the employer side', () => {
     const ofCoTenant = await engaged(unit.id, asCoTenant);
     await asOwner(() => wages.setWage(ofOwner, '3100.00'));
     await asCoTenant(() => wages.setWage(ofCoTenant, '2900.00'));
-    await asOwner(() => wages.pay(ofOwner, { period: month, amount: 3100 }));
+    await asOwner(() => wages.pay(ofOwner, { period: month(), amount: 3100 }));
 
     /** engagement id → the wage the reader gets, or `hidden`. */
     const wagesSeenBy = async (as: typeof asOwner) => {
@@ -131,10 +124,10 @@ describe('Worker wages — the employer side', () => {
       as(() => workers.engagementForUnit(unit.id, id));
     expect(await page(asOwner, ofOwner)).toMatchObject({
       monthlyWage: '3100.00',
-      lastPaidPeriod: month,
+      lastPaidPeriod: month(),
     });
     expect(await page(asDelegate, ofOwner)).toMatchObject({
-      lastPaidPeriod: month,
+      lastPaidPeriod: month(),
     });
     expect(await page(asCoTenant, ofCoTenant)).toMatchObject({
       monthlyWage: '2900.00',
@@ -165,15 +158,17 @@ describe('Worker wages — the employer side', () => {
     );
     expect(
       await code(
-        asCoTenant(() => wages.pay(ofOwner, { period: month, amount: 1 })),
+        asCoTenant(() => wages.pay(ofOwner, { period: month(), amount: 1 })),
       ),
     ).toBe('FORBIDDEN');
     expect(
       await code(
-        asMember(() => wages.pay(ofCoTenant, { period: month, amount: 1 })),
+        asMember(() => wages.pay(ofCoTenant, { period: month(), amount: 1 })),
       ),
     ).toBe('FORBIDDEN');
-    await asCoTenant(() => wages.pay(ofCoTenant, { period: month, amount: 5 }));
+    await asCoTenant(() =>
+      wages.pay(ofCoTenant, { period: month(), amount: 5 }),
+    );
     await asDelegate(() => wages.setWage(ofCoTenant, '2950.00'));
     expect(await payments(ofOwner)).toBe(1);
     expect(await payments(ofCoTenant)).toBe(1);
@@ -190,7 +185,7 @@ describe('Worker wages — the employer side', () => {
     // Straight at the service: no permission stands in the way here.
     expect(
       await code(
-        x.asManager(c, () => wages.pay(id, { period: month, amount: 10 })),
+        x.asManager(c, () => wages.pay(id, { period: month(), amount: 10 })),
       ),
     ).toBe('FORBIDDEN');
     expect(await code(x.asManager(c, () => wages.setWage(id, '1.00')))).toBe(
@@ -205,7 +200,7 @@ describe('Worker wages — the employer side', () => {
     );
     expect(row.monthlyWage?.toFixed(2)).toBe('2000.00');
 
-    await asOwner(() => wages.pay(id, { period: month, amount: 2000 }));
+    await asOwner(() => wages.pay(id, { period: month(), amount: 2000 }));
     const read = await x.asManager(c, () => wages.payments(id));
     expect(read.items.map((p) => p.amount)).toEqual(['2000.00']);
   });
@@ -252,7 +247,7 @@ describe('Worker wages — the employer side', () => {
       x.as(c, { id: guard.id, type: 'staff' }, fn);
 
     expect(
-      await code(asStaff(() => wages.pay(id, { period: month, amount: 10 }))),
+      await code(asStaff(() => wages.pay(id, { period: month(), amount: 10 }))),
     ).toBe('FORBIDDEN');
     expect(await code(asStaff(() => wages.setWage(id, '1.00')))).toBe(
       'FORBIDDEN',

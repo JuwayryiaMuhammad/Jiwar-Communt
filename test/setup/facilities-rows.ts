@@ -1,5 +1,6 @@
 import { newId } from '../../src/core/common/uuid';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
+import { day, dbDate } from './compound-clock';
 
 /**
  * Raw rows of the facilities tables (ADR 0044), written straight through
@@ -196,7 +197,7 @@ export async function paymentRow(
   },
 ): Promise<string> {
   const id = newId();
-  const today = new Date(new Date().toISOString().slice(0, 10));
+  const today = dbDate(day(0));
   await tx.clubPaymentRecord.create({
     data: {
       id,
@@ -207,7 +208,7 @@ export async function paymentRow(
       receiptNumber: `R-${id.slice(-12)}`,
       paidOn: today,
       periodStartsOn: today,
-      periodEndsOn: new Date(today.getTime() + 30 * 86_400_000),
+      periodEndsOn: dbDate(day(30)),
     },
   });
   return id;

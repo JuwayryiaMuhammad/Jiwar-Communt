@@ -5,6 +5,7 @@ import {
   type Who,
 } from '../setup/engagement';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { today } from '../setup/compound-clock';
 
 interface Brief {
   date: string;
@@ -58,11 +59,7 @@ describe('Community life — the daily brief', () => {
       requests: { open: 0, latest: null },
       gates: [],
     });
-    expect(view.date).toBe(
-      new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Cairo' }).format(
-        new Date(),
-      ),
-    );
+    expect(view.date).toBe(today());
   });
 
   it('works under way are in it; works that have not started or have ended are not', async () => {
@@ -124,12 +121,6 @@ describe('Community life — the daily brief', () => {
   });
 
   it('today’s events that are not over, and not cancelled; tomorrow’s are not today’s', async () => {
-    const zone = 'Africa/Cairo';
-    const today = new Intl.DateTimeFormat('en-CA', { timeZone: zone }).format(
-      new Date(),
-    );
-    const localDay = (d: Date) =>
-      new Intl.DateTimeFormat('en-CA', { timeZone: zone }).format(d);
     const soon = await e.event(s.manager, {
       startsAt: e.at(0.02),
       endsAt: e.at(0.05),
@@ -148,12 +139,11 @@ describe('Community life — the daily brief', () => {
       })
       .expect(204);
     const view = await brief(s.owner);
-    // Three minutes from now is still today, unless the day is about to turn.
-    if (localDay(e.at(0.02)) === today)
-      expect(ids(view.events)).toContain(soon);
+    // No suite starts in the minutes before midnight (midnight-guard.ts):
+    // a minute from now is today, and 26 hours from now is not.
+    expect(ids(view.events)).toContain(soon);
     expect(ids(view.events)).not.toContain(cancelled);
-    if (localDay(e.at(26)) !== today)
-      expect(ids(view.events)).not.toContain(tomorrow);
+    expect(ids(view.events)).not.toContain(tomorrow);
   });
 
   it('polls closing within 48 hours that wait for a vote the caller casts; gone once the unit voted', async () => {

@@ -5,6 +5,7 @@ import { dispatchHelpers } from '../setup/dispatch';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { slaClocks, slaEvents } from '../setup/sla';
 import { required } from '../setup/test-env';
+import { day } from '../setup/compound-clock';
 
 type SetUp = Awaited<ReturnType<ReturnType<typeof dispatchHelpers>['setUp']>>;
 type Who = { id: string; token: string };
@@ -31,9 +32,7 @@ describe('Maintenance — preventive requests', () => {
     d = dispatchHelpers(h);
     s = await d.setUp(2);
     // The slots of the days after tomorrow: far enough to stay bookable.
-    const from = new Date(Date.now() + 2 * 24 * 60 * MINUTE)
-      .toISOString()
-      .slice(0, 10);
+    const from = day(2);
     const res = await d
       .http(
         'get',

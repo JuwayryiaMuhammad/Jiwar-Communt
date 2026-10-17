@@ -37,10 +37,11 @@ import { TasksService } from '../../src/gate/tasks/tasks.service';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import { paymentRow } from '../setup/finance-rows';
+import { month, ofDbDate } from '../setup/compound-clock';
 
 const born = (y: number, m: number, d: number) =>
   new Date(Date.UTC(y, m - 1, d));
-const iso = (d: Date) => d.toISOString().slice(0, 10);
+const iso = ofDbDate;
 import { at, day } from '../setup/facilities';
 /** A name's first word: what first-name views show. */
 const first = (fullName?: string) => fullName?.split(' ')[0] ?? '';
@@ -281,13 +282,7 @@ describe('API v0 — PII leak scan', () => {
     // amounts nothing else in the scan produces. Only the employer side
     // and the managers who review workers ever read them.
     const wages = h.moduleRef.get(WorkerWagesService);
-    const wageMonth = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Africa/Cairo',
-      year: 'numeric',
-      month: '2-digit',
-    })
-      .format(new Date())
-      .slice(0, 7);
+    const wageMonth = month();
     const WAGE = { home: '7313.37', rented: '6424.46' };
     const PAID = { home: '5151.51', rented: '4242.42' };
     await asPrimary(() => wages.setWage(registered.engagementId, WAGE.home));

@@ -1,5 +1,5 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
-import { addDays, localDate } from '../../src/core/common/slots/day-slots';
+import { addDays } from '../../src/core/common/slots/day-slots';
 import { ROSTER_ATTENDANCE_SWEEP } from '../../src/gate/roster/roster-attendance';
 import { FOUND_ITEM_RETENTION_SWEEP } from '../../src/gate/found-items/found-items.service';
 import { SWAP_EXPIRY_SWEEP } from '../../src/gate/swaps/swaps.service';
@@ -26,6 +26,7 @@ import {
 } from '../setup/audit-coverage-split';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { securityHelpers, type Who } from '../setup/security';
+import { today } from '../setup/compound-clock';
 
 /**
  * One scenario per guard shifts and tasks catalog entry (ADR 0014, 0050):
@@ -81,7 +82,7 @@ describe('Audit coverage — guard shifts and tasks', () => {
   describe('the roster', () => {
     it('a template created and ended; a slot created and cancelled', async () => {
       const guard = await x.guard(s.c);
-      const from = addDays(localDate(new Date(), 'Africa/Cairo'), 1);
+      const from = addDays(today(), 1);
       const t = (
         await x
           .templateRaw(supervisor, {

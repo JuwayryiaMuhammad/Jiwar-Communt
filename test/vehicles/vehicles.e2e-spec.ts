@@ -12,6 +12,7 @@ import {
   type VehicleBody,
   type Who,
 } from '../setup/vehicles';
+import { dbDate } from '../setup/compound-clock';
 
 const DAY = 86_400_000;
 
@@ -536,7 +537,7 @@ describe('Vehicles', () => {
         v.inTx(s.c, (tx) =>
           tx.vehicle.update({
             where: { id: car.id },
-            data: { permitValidUntil: new Date(`${d}T00:00:00.000Z`) },
+            data: { permitValidUntil: dbDate(d) },
           }),
         );
       await setUntil(day(30));

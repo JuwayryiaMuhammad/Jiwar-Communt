@@ -9,11 +9,11 @@ import {
   HELD_RETENTION_MS,
   OutboxProcessor,
 } from '../../src/core/mail/outbox-processor';
-import { localMinutes } from '../../src/core/preferences/zoned-time';
 import { auditReaders } from '../setup/audit';
 import { eraseNow } from '../setup/erasure';
 import { communityHelpers, type Compound } from '../setup/community';
 import { API, createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { clock, localMinute } from '../setup/compound-clock';
 
 const TWIN = 'test.preferences_twin';
 const SOLE = 'test.preferences_sole';
@@ -126,7 +126,7 @@ describe('Notification preferences', () => {
 
   /** A quiet window around now in the compound's zone (Africa/Cairo). */
   const aroundNow = () => {
-    const m = localMinutes(new Date(), 'Africa/Cairo');
+    const m = clock().minute;
     return { start: hhmm(m - 60), end: hhmm(m + 60) };
   };
 
@@ -326,9 +326,7 @@ describe('Notification preferences', () => {
         expect(m.nextAttemptAt.getTime()).toBeLessThanOrEqual(
           now.getTime() + 61 * MINUTE,
         );
-        expect(hhmm(localMinutes(m.nextAttemptAt, 'Africa/Cairo'))).toBe(
-          window.end,
-        );
+        expect(hhmm(localMinute(m.nextAttemptAt))).toBe(window.end);
       }
       // Held, not due: the processor leaves it.
       const held = (await enqueue(p.id, TWIN, now))!;

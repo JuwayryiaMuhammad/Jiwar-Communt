@@ -1,5 +1,8 @@
 import type { Response } from 'supertest';
+import { TenantSettingsService } from '../../src/core/tenant-settings/tenant-settings.service';
 import type { Compound } from './community';
+import { addDays } from '../../src/core/common/slots/day-slots';
+import { clock, type Clock, type LocalDate } from './compound-clock';
 import { at, day } from './facilities';
 import type { HttpHarness } from './http-app';
 import { safetyHelpers, type Who } from './safety';
@@ -12,6 +15,62 @@ export interface PermitSettingsBody {
   workDays: number[];
   workHours: { from: string; to: string };
   daysOff: string[];
+}
+
+/** The rules as the residents read them: with the zone they are read in. */
+export interface PermitRulesBody extends PermitSettingsBody {
+  timeZone: string;
+}
+
+/**
+ * A new compound's rules (permit_settings' defaults): for a caller the API
+ * refuses before it reads the body, who may not read the rules either.
+ */
+const PROVISIONED: PermitRulesBody = {
+  workDays: [0, 1, 2, 3, 4, 6],
+  workHours: { from: '09:00', to: '17:00' },
+  daysOff: [],
+  timeZone: 'Africa/Cairo',
+};
+
+/** How far ahead a permit's day may be (PERMIT_LIMITS.maxDaysAhead). */
+const MAX_DAYS_AHEAD = 90;
+
+/**
+ * The first `count` work days of the compound under `rules` (a week day it
+ * works, not a day off) on or after `from` days from today, by its clock.
+ * Never a fixed offset: that is a day off on some week days.
+ */
+export function workDaysOf(
+  rules: PermitRulesBody,
+  count = 1,
+  from = 1,
+  c: Clock = clock(rules.timeZone),
+): LocalDate[] {
+  const out: LocalDate[] = [];
+  for (let n = from; out.length < count && n <= MAX_DAYS_AHEAD; n += 1) {
+    const date = c.day(n);
+    if (
+      rules.workDays.includes(c.weekday(date)) &&
+      !rules.daysOff.includes(date)
+    )
+      out.push(date);
+  }
+  if (out.length < count)
+    throw new Error(`No ${count} work days within ${MAX_DAYS_AHEAD} days`);
+  return out;
+}
+
+/** `wanted` when the compound's hours hold it; else its first two hours. */
+export function withinHours(
+  rules: PermitSettingsBody,
+  wanted: { from: string; to: string },
+): { from: string; to: string } {
+  const { from, to } = rules.workHours;
+  if (wanted.from >= from && wanted.to <= to) return wanted;
+  const [h, m] = from.split(':').map(Number);
+  const twoHours = `${String(Math.min(h + 2, 23)).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  return { from, to: twoHours < to ? twoHours : to };
 }
 
 export interface PermitWorkerBody {
@@ -96,9 +155,16 @@ export function permitHelpers(h: HttpHarness) {
   const s = safetyHelpers(h);
   const { v, who, http } = s;
 
-  /** A compound, its manager, and a home where `alice` lives (its primary). */
-  async function setUp(name = 'Permits Court') {
+  /**
+   * A compound, its manager, and a home where `alice` lives (its primary);
+   * in `zone` when given (middayZone(): "in a few hours" stays today).
+   */
+  async function setUp(name = 'Permits Court', zone?: string) {
     const c = await v.x.compound(name);
+    if (zone)
+      await v.x.asManager(c, () =>
+        h.moduleRef.get(TenantSettingsService).update({ timezone: zone }),
+      );
     const home = await v.unit(c, 'P1');
     return {
       c,
@@ -118,6 +184,18 @@ export function permitHelpers(h: HttpHarness) {
     ).body as PermitSettingsBody;
   }
 
+  /** The compound's rules as `as` reads them (`GET /community/permit-rules`). */
+  async function rules(as: Who): Promise<PermitRulesBody> {
+    const res = await http('get', '/community/permit-rules', as.token);
+    if (res.status === 403) return PROVISIONED;
+    return status(res, 200).body as PermitRulesBody;
+  }
+
+  /** The compound's first work day on or after `from` days from today. */
+  async function workDay(as: Who, from = 1): Promise<LocalDate> {
+    return workDaysOf(await rules(as), 1, from)[0];
+  }
+
   /** Every day, all day long: no rule refuses anything (a test's own). */
   const anyTime = (as: Who) =>
     setRules(as, {
@@ -126,28 +204,35 @@ export function permitHelpers(h: HttpHarness) {
       daysOff: [],
     });
 
-  /** A works permit's body: tomorrow to a week on, 09:00–17:00. */
-  const worksBody = (over: Record<string, unknown> = {}) => ({
-    workType: 'renovation',
-    startsOn: day(1),
-    endsOn: day(7),
-    dailyHours: { from: '09:00', to: '17:00' },
-    contractorCompany: 'Nile Builders',
-    description: 'New kitchen tiles',
-    ...over,
-  });
+  /**
+   * A works permit's body, by the compound's rules: from its first work day
+   * after today, for a week, 09:00–17:00 when its hours hold them.
+   */
+  async function worksBody(as: Who, over: Record<string, unknown> = {}) {
+    const r = await rules(as);
+    const [first] = workDaysOf(r, 1, 1);
+    return {
+      workType: 'renovation',
+      startsOn: first,
+      endsOn: addDays(first, 6),
+      dailyHours: withinHours(r, { from: '09:00', to: '17:00' }),
+      contractorCompany: 'Nile Builders',
+      description: 'New kitchen tiles',
+      ...over,
+    };
+  }
 
-  function worksRaw(
+  async function worksRaw(
     as: Who,
     unitId: string,
     over: Record<string, unknown> = {},
     headers: Record<string, string> = {},
-  ) {
-    return http(
+  ): Promise<Response> {
+    return await http(
       'post',
       `/units/${unitId}/permits/works`,
       as.token,
-      worksBody(over),
+      await worksBody(as, over),
       headers,
     );
   }
@@ -215,26 +300,32 @@ export function permitHelpers(h: HttpHarness) {
     return { permit, worker: permit.works!.workers.at(-1)! };
   }
 
-  /** A move's body: in three days, 10:00–12:00. */
-  const moveBody = (over: Record<string, unknown> = {}) => ({
-    date: day(3),
-    window: { from: '10:00', to: '12:00' },
-    truckPlate: 'ن ق ل ٤٥٦',
-    itemsDescription: 'Two sofas and a fridge',
-    ...over,
-  });
+  /**
+   * A move's body, by the compound's rules: its first work day three days
+   * on or later, 10:00–12:00 when its hours hold them.
+   */
+  async function moveBody(as: Who, over: Record<string, unknown> = {}) {
+    const r = await rules(as);
+    return {
+      date: workDaysOf(r, 1, 3)[0],
+      window: withinHours(r, { from: '10:00', to: '12:00' }),
+      truckPlate: 'ن ق ل ٤٥٦',
+      itemsDescription: 'Two sofas and a fridge',
+      ...over,
+    };
+  }
 
-  function moveRaw(
+  async function moveRaw(
     as: Who,
     unitId: string,
     over: Record<string, unknown> = {},
     headers: Record<string, string> = {},
-  ) {
-    return http(
+  ): Promise<Response> {
+    return await http(
       'post',
       `/units/${unitId}/permits/moves`,
       as.token,
-      moveBody(over),
+      await moveBody(as, over),
       headers,
     );
   }
@@ -366,6 +457,8 @@ export function permitHelpers(h: HttpHarness) {
     s,
     setUp,
     setRules,
+    rules,
+    workDay,
     anyTime,
     worksBody,
     worksRaw,

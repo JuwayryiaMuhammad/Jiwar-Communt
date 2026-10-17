@@ -1,16 +1,11 @@
 import type { Response } from 'supertest';
-import {
-  addDays,
-  localDate,
-  zonedInstant,
-} from '../../src/core/common/slots/day-slots';
+import { addDays } from '../../src/core/common/slots/day-slots';
 import { HandoverService } from '../../src/gate/handover/handover.service';
 import { ShiftsService } from '../../src/gate/shifts/shifts.service';
 import { gateHelpers } from '../setup/gate';
 import { call } from './request';
 import type { World } from './world';
-
-const ZONE = 'Africa/Cairo';
+import { at, today } from '../setup/compound-clock';
 
 /**
  * A real call for each of the guards' duty routes (ADR 0050), as A's
@@ -34,7 +29,6 @@ export function guardDutyCalls(
       token: world().a.tokens.guard,
       body: payload,
     });
-  const today = () => localDate(new Date(), ZONE);
   /** A template of A's guard on one weekday, at 04:00 for an hour. */
   const template = (weekday: number) =>
     manager('POST', '/staff/security/roster/templates', {
@@ -45,7 +39,7 @@ export function guardDutyCalls(
     });
   /** A single slot of A's guard, `days` ahead at noon for an hour. */
   const slot = (days: number) => {
-    const startsAt = zonedInstant(addDays(today(), days), 12 * 60, ZONE)!;
+    const startsAt = at(addDays(today(), days), 12);
     return manager('POST', '/staff/security/roster/slots', {
       guardId: world().a.ids.guard,
       gateId: world().a.gateId,

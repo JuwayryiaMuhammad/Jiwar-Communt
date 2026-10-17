@@ -10,6 +10,7 @@ import { keyPaths, listKeys } from './keys';
 import { call, err } from './request';
 import { workerBody } from './routes/workers';
 import { buildWorld, type World } from './world';
+import { clock } from '../setup/compound-clock';
 
 const GUARD_VIEW = [
   'createdAt',
@@ -423,7 +424,7 @@ describe('API v0 — approvals at the gate (ADR 0028)', () => {
     const unit = await w.helpers.unit(w.a);
     const resident = await w.helpers.resident(w.a, [unit.id]);
     const token = await w.tokenFor(w.a, resident.id, 'resident');
-    const day = (new Date().getUTCDay() + 3) % 7;
+    const day = (clock().weekday() + 3) % 7;
     const registered = await call(w, 'POST', `/units/${unit.id}/workers`, {
       token,
       body: {

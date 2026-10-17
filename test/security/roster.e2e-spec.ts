@@ -1,4 +1,4 @@
-import { addDays, localDate } from '../../src/core/common/slots/day-slots';
+import { addDays } from '../../src/core/common/slots/day-slots';
 import { ROSTER_MATERIALIZE_SWEEP } from '../../src/gate/roster/roster-attendance';
 import { auditReaders } from '../setup/audit';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
@@ -8,8 +8,8 @@ import {
   type TemplateBody,
   type Who,
 } from '../setup/security';
+import { at, today } from '../setup/compound-clock';
 
-const ZONE = 'Africa/Cairo';
 const code = (res: { status: number; body: unknown }) => ({
   status: res.status,
   code: (res.body as { code?: string }).code,
@@ -40,7 +40,6 @@ describe('The roster', () => {
 
   afterAll(() => h.close());
 
-  const today = () => localDate(new Date(), ZONE);
   const everyDay = (from: string, to: string) => ({
     days: [0, 1, 2, 3, 4, 5, 6],
     windows: [{ from, to }],
@@ -139,7 +138,7 @@ describe('The roster', () => {
     // Touching hours are fine.
     await template(supervisor, guard.id, everyDay('14:00', '22:00'));
     // A single slot on a template's day to come, beyond the 28 made: refused.
-    const far = new Date(`${addDays(today(), 40)}T10:00:00+02:00`);
+    const far = at(addDays(today(), 40), 10);
     const late = await x.slotRaw(supervisor, {
       guardId: guard.id,
       gateId,
@@ -148,7 +147,7 @@ describe('The roster', () => {
     });
     expect(code(late)).toEqual({ status: 409, code: 'ROSTER_OVERLAP' });
     // A night slot between the two templates' days is free.
-    const night = new Date(`${addDays(today(), 3)}T23:00:00+02:00`);
+    const night = at(addDays(today(), 3), 23);
     await x
       .slotRaw(supervisor, {
         guardId: guard.id,

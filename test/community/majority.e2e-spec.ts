@@ -3,7 +3,6 @@ import { HouseholdsService } from '../../src/community/households/households.ser
 import { InviteAcceptanceService } from '../../src/community/households/invite-acceptance.service';
 import { MAJORITY_SWEEP } from '../../src/community/households/majority-notices';
 import { MemberPermissionsService } from '../../src/community/households/member-permissions.service';
-import { egyptToday } from '../../src/core/common/egyptian-national-id';
 import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { PlatformModule } from '../../src/core/platform/platform.module';
 import { SweepRunner } from '../../src/core/sweep/sweep-runner';
@@ -22,6 +21,7 @@ import {
   type HttpHarness,
 } from '../setup/http-app';
 import { waitForOtp } from '../setup/mailpit';
+import { day, wallClock } from '../setup/compound-clock';
 
 /** A minor turning 18 (ADR 0021): told, never raised automatically. */
 describe('Minors reaching majority', () => {
@@ -90,15 +90,7 @@ describe('Minors reaching majority', () => {
     const kidWest = await addKid(west, 2, 'Kid West');
     // The birthday (UTC date), 10:00 UTC: already the next day in
     // Kiritimati, still the day before in Pago Pago.
-    const today = egyptToday();
-    const now = new Date(
-      Date.UTC(
-        today.getUTCFullYear(),
-        today.getUTCMonth(),
-        today.getUTCDate() + 2,
-        10,
-      ),
-    );
+    const now = wallClock(day(2), '10:00:00', 'Z');
 
     await sweep.run(MAJORITY_SWEEP, now);
     const row = (hm: Home, id: string) =>

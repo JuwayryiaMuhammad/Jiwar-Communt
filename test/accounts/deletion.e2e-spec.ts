@@ -18,6 +18,7 @@ import {
   uniquePhone,
   type HttpHarness,
 } from '../setup/http-app';
+import { month } from '../setup/compound-clock';
 
 const DAY = 86_400_000;
 const HOLD = { code: 'litigation', text: 'Keep it' };
@@ -153,13 +154,7 @@ describe('Account deletion', () => {
       // The household's own record of a payment settles nothing (ADR 0037).
       await asResident(tenant.id, () =>
         h.moduleRef.get(WorkerWagesService).pay(reg.engagementId, {
-          period: new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'Africa/Cairo',
-            year: 'numeric',
-            month: '2-digit',
-          })
-            .format(new Date())
-            .slice(0, 7),
+          period: month(),
           amount: 1500,
         }),
       );

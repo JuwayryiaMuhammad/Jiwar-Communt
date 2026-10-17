@@ -5,20 +5,15 @@ import { keyPaths } from './keys';
 import { call, err } from './request';
 import { workerBody } from './routes/workers';
 import { buildWorld, type World } from './world';
+import {
+  aroundTheClock,
+  dbClock,
+  localDay,
+  today,
+} from '../setup/compound-clock';
 
-const ALWAYS = {
-  days: [0, 1, 2, 3, 4, 5, 6],
-  windows: [{ from: '05:00', to: '04:59' }],
-};
 /** The compound's local date (Africa/Cairo, the default). */
-const localDate = (at = new Date()) =>
-  new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Africa/Cairo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(at);
-const today = () => localDate();
+const localDate = (at = dbClock()) => localDay(at);
 
 describe('API v0 — workers at the gate: notifications and attendance (ADR 0028)', () => {
   let h: HttpHarness;
@@ -42,7 +37,7 @@ describe('API v0 — workers at the gate: notifications and attendance (ADR 0028
     const token = await w.tokenFor(w.a, primary.id, 'resident');
     const registered = await call(w, 'POST', `/units/${unit.id}/workers`, {
       token,
-      body: { ...workerBody(), schedule: ALWAYS },
+      body: { ...workerBody(), schedule: aroundTheClock() },
     }).expect(201);
     const engagementId = (registered.body as { engagementId: string })
       .engagementId;

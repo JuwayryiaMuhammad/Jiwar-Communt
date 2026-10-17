@@ -1,6 +1,7 @@
 import { fileHelpers } from '../setup/files';
 import { governanceHelpers, lapse, type Who } from '../setup/governance';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { today } from '../setup/compound-clock';
 
 interface PublicationBody {
   id: string;
@@ -12,8 +13,6 @@ interface PublicationBody {
   editedAt: string | null;
   archivedAt: string | null;
 }
-
-const today = () => new Date().toISOString().slice(0, 10);
 
 /**
  * ADR 0051: the board's decisions and minutes reach the owners as

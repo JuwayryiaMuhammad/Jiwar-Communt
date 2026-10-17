@@ -236,8 +236,12 @@ describe('Permits concurrency', () => {
     );
     expect(new Set(made.map((m) => m.reference)).size).toBe(3);
     const { unit, owner } = await home();
+    // One body, read first: the four requests race, not their set-up.
+    const body = await p.worksBody(owner);
     const results = await Promise.all(
-      [0, 1, 2, 3].map(() => p.worksRaw(owner, unit.id)),
+      [0, 1, 2, 3].map(() =>
+        p.http('post', `/units/${unit.id}/permits/works`, owner.token, body),
+      ),
     );
     expect(results.filter((r) => r.status === 201)).toHaveLength(3);
     expect(results.filter((r) => r.status === 409)).toHaveLength(1);

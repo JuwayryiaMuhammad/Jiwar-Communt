@@ -1,7 +1,8 @@
-import { addDays, localDate } from '../../src/core/common/slots/day-slots';
+import { addDays } from '../../src/core/common/slots/day-slots';
 import { ROSTER_ATTENDANCE_SWEEP } from '../../src/gate/roster/roster-attendance';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { securityHelpers, type Who } from '../setup/security';
+import { today } from '../setup/compound-clock';
 
 const DAY = 24 * 60;
 const MINUTE = 60_000;
@@ -59,7 +60,7 @@ describe('The roster under concurrency', () => {
   });
 
   it('a template and an overlapping slot at once: one is made', async () => {
-    const from = addDays(localDate(new Date(), 'Africa/Cairo'), 1);
+    const from = addDays(today(), 1);
     for (let i = 0; i < 5; i++) {
       const guard = await x.guard(s.c);
       const [template, slot] = await Promise.all([
@@ -99,7 +100,7 @@ describe('The roster under concurrency', () => {
   });
 
   it('a template ended while its slot is asked to be swapped: no live swap is left on a cancelled slot', async () => {
-    const from = addDays(localDate(new Date(), 'Africa/Cairo'), 2);
+    const from = addDays(today(), 2);
     for (let i = 0; i < 5; i++) {
       const guard = await x.guard(s.c);
       const colleague = await x.guard(s.c);

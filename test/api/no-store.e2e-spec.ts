@@ -34,6 +34,8 @@ import { guardDutyCalls } from './no-store-guard-duty';
 import { buildWorld, type World } from './world';
 
 import { ALL_WEEK, at, day as localDay } from '../setup/facilities';
+import { today } from '../setup/compound-clock';
+import { workDaysOf, type PermitRulesBody } from '../setup/permits';
 /**
  * Every response that carries a secret shown once (ADR 0025) is
  * `Cache-Control: no-store`: each registry row marked `noStore` is called
@@ -769,7 +771,7 @@ describe('API v0 — no-store', () => {
   };
   const aDecision = {
     kind: 'decision',
-    decidedOn: new Date().toISOString().slice(0, 10),
+    decidedOn: today(),
     titleEn: 'No-store decision',
     bodyEn: 'Decided.',
   };
@@ -1136,8 +1138,12 @@ describe('API v0 — no-store', () => {
     'POST /permits/{id}/workers': async () => aWorker(await aPermit()),
     'POST /units/{unitId}/permits/moves': async () => {
       await clearPermits('move');
+      // A's first work day three days on, under its rules: never a fixed
+      // offset (Tuesday + 3 is a Friday, a day off by default).
+      const rules = (await as('owner', 'GET', '/community/permit-rules'))
+        .body as PermitRulesBody;
       return as('owner', 'POST', `/units/${w.a.homeUnitId}/permits/moves`, {
-        date: localDay(3),
+        date: workDaysOf(rules, 1, 3)[0],
         window: { from: '10:00', to: '12:00' },
         truckPlate: 'NS 1',
         itemsDescription: 'Boxes',

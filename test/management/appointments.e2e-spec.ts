@@ -4,6 +4,7 @@ import {
   type ManagementSetUp,
   type Who,
 } from '../setup/management';
+import { clock, clockAt } from '../setup/compound-clock';
 
 const HOUR = 3_600_000;
 
@@ -108,17 +109,9 @@ describe('Management appointments', () => {
         expect(start.getTime()).toBeGreaterThanOrEqual(now + HOUR - 60_000);
         expect(start.getTime()).toBeLessThanOrEqual(now + 30 * 24 * HOUR);
         // 09:00 to 17:00 in Cairo, never on a Friday.
-        const local = new Intl.DateTimeFormat('en-GB', {
-          timeZone: 'Africa/Cairo',
-          weekday: 'short',
-          hour: '2-digit',
-          minute: '2-digit',
-          hourCycle: 'h23',
-        }).formatToParts(start);
-        const part = (type: string) =>
-          local.find((p) => p.type === type)!.value;
-        expect(part('weekday')).not.toBe('Fri');
-        const minute = Number(part('hour')) * 60 + Number(part('minute'));
+        const local = clockAt(start);
+        expect(local.weekday()).not.toBe(5);
+        const minute = local.minute;
         expect(minute).toBeGreaterThanOrEqual(540);
         expect(minute).toBeLessThanOrEqual(990);
         expect(minute % 30).toBe(0);
@@ -227,14 +220,22 @@ describe('Management appointments', () => {
       const [slot] = await fresh();
       const start = new Date(slot).getTime();
       // Next Friday at 10:00 in Cairo is outside the hours whatever the season.
+      const cairo = clock();
+      const farMonday = cairo.day(
+        [60, 61, 62, 63, 64, 65, 66].find(
+          (k) => cairo.weekday(cairo.day(k)) === 1,
+        )!,
+      );
       const cases: [string, string][] = [
         [
           new Date(start + 60_000).toISOString(),
           'APPOINTMENT_SLOT_NOT_OFFERED',
         ],
         [new Date(start + 1).toISOString(), 'APPOINTMENT_SLOT_NOT_OFFERED'],
-        ['2031-01-13T02:00:00.000Z', 'APPOINTMENT_SLOT_NOT_OFFERED'],
-        ['2031-01-13T07:00:00.000Z', 'APPOINTMENT_TOO_FAR'],
+        // A Monday about two months on: 04:00 is outside the office hours
+        // whatever the distance; 09:00 is in them, but too far ahead.
+        [cairo.at(farMonday, 4).toISOString(), 'APPOINTMENT_SLOT_NOT_OFFERED'],
+        [cairo.at(farMonday, 9).toISOString(), 'APPOINTMENT_TOO_FAR'],
         ['2021-01-11T07:00:00.000Z', 'APPOINTMENT_TOO_SOON'],
       ];
       const before = await m.x.asManager(s.c, () =>

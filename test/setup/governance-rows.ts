@@ -1,5 +1,6 @@
 import { newId } from '../../src/core/common/uuid';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
+import { dbDate, localDay } from './compound-clock';
 
 // ============================================================================
 // Governance rows written straight into the tables (ADR 0051), for the
@@ -260,7 +261,7 @@ export async function publicationRows(
       kind: 'decision',
       termId: r.termId,
       announcementId,
-      decidedOn: new Date(`${now.toISOString().slice(0, 10)}T00:00:00.000Z`),
+      decidedOn: dbDate(localDay(now)),
       authorSide: 'manager',
       publishedById: r.accountId,
     },

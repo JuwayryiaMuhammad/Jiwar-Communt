@@ -20,6 +20,7 @@ import {
 } from '../setup/http-app';
 import { drainOutbox } from '../setup/outbox';
 import { waitForMessage } from '../setup/mailpit';
+import { dbClock, monthsAfter } from '../setup/compound-clock';
 
 /** Primary resident → adult household member, scoped and time-boxed (ADR 0016). */
 describe('Delegation', () => {
@@ -57,11 +58,7 @@ describe('Delegation', () => {
   const asFamily = <T>(hm: Home, id: string, fn: () => Promise<T>) =>
     x.as(hm.c, { id, type: 'family' }, fn);
 
-  const inMonths = (months: number) => {
-    const d = new Date();
-    d.setUTCMonth(d.getUTCMonth() + months);
-    return d;
-  };
+  const inMonths = (months: number) => monthsAfter(dbClock(), months);
 
   const code = (p: Promise<unknown>) =>
     p.then(

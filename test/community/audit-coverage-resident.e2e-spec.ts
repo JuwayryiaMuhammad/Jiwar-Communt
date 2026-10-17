@@ -10,6 +10,7 @@ import {
   uniquePhone,
   type HttpHarness,
 } from '../setup/http-app';
+import { month } from '../setup/compound-clock';
 
 /**
  * One scenario per catalog entry of the resident's screens (ADR 0037), each
@@ -98,15 +99,8 @@ describe('Audit coverage — the resident’s screens (ADR 0037)', () => {
     it('a payment writes nothing to the trail', async () => {
       const { c, as, id } = await engaged();
       const wages = h.moduleRef.get(WorkerWagesService);
-      const month = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Africa/Cairo',
-        year: 'numeric',
-        month: '2-digit',
-      })
-        .format(new Date())
-        .slice(0, 7);
       const before = await read.tenant(c.tenantId, {});
-      await as(() => wages.pay(id, { period: month, amount: '913.27' }));
+      await as(() => wages.pay(id, { period: month(), amount: '913.27' }));
       const after = await read.tenant(c.tenantId, {});
       expect(after).toHaveLength(before.length);
       expect(JSON.stringify(after)).not.toContain('913.27');

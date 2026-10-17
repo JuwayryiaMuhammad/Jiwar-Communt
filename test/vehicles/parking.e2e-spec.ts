@@ -1,6 +1,7 @@
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { VISITOR_NAMES_SWEEP } from '../../src/gate/parking/parking-sweeps';
 import { vehicleHelpers, type Who } from '../setup/vehicles';
+import { localDay } from '../setup/compound-clock';
 
 const DAY = 86_400_000;
 
@@ -497,19 +498,22 @@ describe('Parking', () => {
 
     it('the staff see the day with the visitor and the booker, and cancel with a reason', async () => {
       const { home, owner } = await household();
+      const startsAt = v.inMinutes(30);
       const booking = (
         await v.parkRaw(owner, home.id, {
           areaId,
           visitorName: 'Staff-seen guest',
-          startsAt: v.inMinutes(30),
+          startsAt,
           endsAt: v.inMinutes(60),
         })
       ).body as BookingBody;
+      // The booking's own local day: half an hour from now may be tomorrow.
+      const on = localDay(startsAt);
       const day = (
         await v
           .http(
             'get',
-            `/staff/visitor-parking-bookings?areaId=${areaId}`,
+            `/staff/visitor-parking-bookings?areaId=${areaId}&day=${on}`,
             s.manager.token,
           )
           .expect(200)

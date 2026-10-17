@@ -50,7 +50,9 @@ describe('Permits — the management decides (ADR 0049)', () => {
 
   it('rejects with a reason code from the list; the requester is told the code', async () => {
     const c = await p.setUp('Decide Reject Court');
-    const permit = await p.move(c.alice, c.home.id, { date: day(5) });
+    const permit = await p.move(c.alice, c.home.id, {
+      date: await p.workDay(c.alice, 5),
+    });
     expect(
       (await p.decide(c.manager, permit.id, 'reject', {}).expect(400)).body,
     ).toMatchObject({

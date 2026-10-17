@@ -4,7 +4,7 @@ import { RolesService } from '../../src/core/access/roles.service';
 import { newId } from '../../src/core/common/uuid';
 import { SweepRunner } from '../../src/core/sweep/sweep-runner';
 import type { Permission } from '../../src/core/access/permissions';
-import { localDate, zonedInstant } from '../../src/core/common/slots/day-slots';
+import { day } from './compound-clock';
 import type { Compound } from './community';
 import { engagementHelpers, type Who } from './engagement';
 import { gateHelpers } from './gate';
@@ -19,17 +19,8 @@ export const ALL_WEEK = [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
   endMinute: 1320,
 }));
 
-/** Every compound's time zone unless it says otherwise. */
-export const ZONE = 'Africa/Cairo';
-const DAY = 86_400_000;
-
-/** The compound's local day `n` days from today, `YYYY-MM-DD`. */
-export const day = (n: number) =>
-  localDate(new Date(Date.now() + n * DAY), ZONE);
-
-/** The instant a local day reads `hour:minute` in the compound. */
-export const at = (date: string, hour: number, minute = 0) =>
-  zonedInstant(date, hour * 60 + minute, ZONE)!;
+// The compound's calendar (test/setup/compound-clock.ts).
+export { at, day, ZONE } from './compound-clock';
 
 export interface BookingBody {
   id: string;

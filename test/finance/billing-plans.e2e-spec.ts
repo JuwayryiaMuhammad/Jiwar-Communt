@@ -7,6 +7,7 @@ import { addMonths } from '../../src/finance/billing-plans/periods';
 import { day } from '../setup/facilities';
 import { financeHelpers, type FinanceSetUp } from '../setup/finance';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { month, ofDbDate } from '../setup/compound-clock';
 
 const body = <T>(res: Response) => res.body as T;
 const code = (res: Response) => body<{ code: string }>(res).code;
@@ -27,7 +28,8 @@ describe('Finance — billing plans', () => {
   let h: HttpHarness;
   let f: ReturnType<typeof financeHelpers>;
   let s: FinanceSetUp;
-  const thisMonth = `${day(0).slice(0, 8)}01`;
+  /** The compound's first of this month. */
+  const thisMonth = () => `${month()}-01`;
 
   beforeAll(async () => {
     h = await createHttpHarness();
@@ -44,7 +46,7 @@ describe('Finance — billing plans', () => {
       kind: 'service_charge',
       frequency: 'monthly',
       amount: '1500',
-      startsOn: thisMonth,
+      startsOn: thisMonth(),
       issueDaysBefore: 0,
       dueDaysAfterIssue: 10,
       ...over,
@@ -70,9 +72,9 @@ describe('Finance — billing plans', () => {
       active: true,
       overrideCount: 0,
       nextPeriod: {
-        startsOn: addMonths(thisMonth, 1),
-        endsOn: addMonths(thisMonth, 2),
-        issueOn: addMonths(thisMonth, 1),
+        startsOn: addMonths(thisMonth(), 1),
+        endsOn: addMonths(thisMonth(), 2),
+        issueOn: addMonths(thisMonth(), 1),
       },
     });
   });
@@ -82,14 +84,14 @@ describe('Finance — billing plans', () => {
       body<{ fields: unknown[] }>(
         await create(s.manager.token, { startsOn }).expect(400),
       ).fields;
-    expect(await fields(`${thisMonth.slice(0, 8)}15`)).toEqual([
+    expect(await fields(`${thisMonth().slice(0, 8)}15`)).toEqual([
       { field: 'startsOn', code: 'INVALID_FORMAT' },
     ]);
-    expect(await fields(addMonths(thisMonth, -1))).toEqual([
+    expect(await fields(addMonths(thisMonth(), -1))).toEqual([
       {
         field: 'startsOn',
         code: 'STARTS_ON_OUT_OF_RANGE',
-        params: { min: thisMonth, max: addDays(day(0), 366) },
+        params: { min: thisMonth(), max: addDays(day(0), 366) },
       },
     ]);
   });
@@ -127,14 +129,14 @@ describe('Finance — billing plans', () => {
         [second.id, '900.00'],
       ].sort(),
     );
-    const next = addMonths(thisMonth, 1);
+    const next = addMonths(thisMonth(), 1);
     for (const i of first) {
-      expect(i.periodStartsOn?.toISOString().slice(0, 10)).toBe(thisMonth);
-      expect(i.periodEndsOn?.toISOString().slice(0, 10)).toBe(next);
-      expect(i.dueOn.toISOString().slice(0, 10)).toBe(day(10));
+      expect(ofDbDate(i.periodStartsOn!)).toBe(thisMonth());
+      expect(ofDbDate(i.periodEndsOn!)).toBe(next);
+      expect(ofDbDate(i.dueOn)).toBe(day(10));
       expect(i.createdById).toBeNull();
       expect(i.lines.map((l) => l.descriptionEn)).toEqual([
-        `Service charge — ${thisMonth} – ${addDays(next, -1)}`,
+        `Service charge — ${thisMonth()} – ${addDays(next, -1)}`,
       ]);
     }
     // Two batches: one per amount.
@@ -156,7 +158,7 @@ describe('Finance — billing plans', () => {
 
   it('the next period is billed within its lead days', async () => {
     const c = await f.setUp('Billing Lead');
-    const next = addMonths(thisMonth, 1);
+    const next = addMonths(thisMonth(), 1);
     const plan = body<PlanBody>(
       await create(c.manager.token, {
         startsOn: next,

@@ -1,7 +1,7 @@
-import { localParts } from '../../src/core/common/slots/day-slots';
 import { auditReaders } from '../setup/audit';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
-import { day, permitHelpers, ZONE } from '../setup/permits';
+import { day, permitHelpers } from '../setup/permits';
+import { clock } from '../setup/compound-clock';
 
 interface Match {
   kind: string;
@@ -38,7 +38,7 @@ describe('Permits — the plate lookup finds moves and guests’ cars (ADR 0049)
     const c = await p.setUp('Plates Court');
     await p.anyTime(c.manager);
     const guard = await p.guardOnDuty(c.c);
-    const now = localParts(new Date(), ZONE).minute;
+    const now = clock().minute;
     const window =
       now < 1380
         ? { from: hhmm(Math.max(0, now - 30)), to: hhmm(now + 60) }
@@ -142,7 +142,7 @@ describe('Permits — the plate lookup finds moves and guests’ cars (ADR 0049)
     const c = await p.setUp('Plates Refused Court');
     await p.anyTime(c.manager);
     const guard = await p.guardOnDuty(c.c);
-    const now = localParts(new Date(), ZONE).minute;
+    const now = clock().minute;
     const window =
       now < 1380
         ? { from: hhmm(Math.max(0, now - 30)), to: hhmm(now + 60) }

@@ -20,6 +20,7 @@ import {
   sessionInvoiceRow,
   sessionRow,
 } from '../setup/finance-rows';
+import { day, dbDate } from '../setup/compound-clock';
 
 /** What a seed needs from one compound. */
 interface Side {
@@ -224,9 +225,7 @@ const TABLES: Table[] = [
           amount: 1,
           currency: 'EGP',
           channel: 'cash',
-          refundedOn: new Date(
-            `${new Date().toISOString().slice(0, 10)}T00:00:00Z`,
-          ),
+          refundedOn: dbDate(day(0)),
           recordedById: own.accountId,
         },
       });

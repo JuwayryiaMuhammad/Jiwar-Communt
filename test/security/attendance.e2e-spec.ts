@@ -1,9 +1,9 @@
-import { addDays, localDate } from '../../src/core/common/slots/day-slots';
 import { newId } from '../../src/core/common/uuid';
 import { ROSTER_ATTENDANCE_SWEEP } from '../../src/gate/roster/roster-attendance';
 import { auditReaders } from '../setup/audit';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { securityHelpers, type ShiftBody, type Who } from '../setup/security';
+import { day } from '../setup/compound-clock';
 
 const MINUTE = 60_000;
 
@@ -31,7 +31,7 @@ describe('Attendance', () => {
   afterAll(() => h.close());
 
   // From yesterday: a slot that started minutes ago may have started then.
-  const yesterday = () => addDays(localDate(new Date(), 'Africa/Cairo'), -1);
+  const yesterday = () => day(-1);
 
   const told = async (accountId: string, slotId: string) =>
     (await x.notifications(s.c, accountId))

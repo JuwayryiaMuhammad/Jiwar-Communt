@@ -41,7 +41,7 @@ describe('Permits — furniture moves and material exits (ADR 0049)', () => {
       ]);
       const member = await p.family(c.c, c.home.id, c.alice);
       expect(
-        (await p.moveRaw(member, c.home.id).expect(403)).body,
+        p.status(await p.moveRaw(member, c.home.id), 403).body,
       ).toMatchObject({ code: 'PERMIT_NOT_ALLOWED' });
     });
 
@@ -53,7 +53,7 @@ describe('Permits — furniture moves and material exits (ADR 0049)', () => {
         daysOff: [day(4)],
       });
       const bad = async (over: Record<string, unknown>) =>
-        fields(await p.moveRaw(c.alice, c.home.id, over).expect(400));
+        fields(p.status(await p.moveRaw(c.alice, c.home.id, over), 400));
       expect(await bad({ date: day(4) })).toEqual([
         { field: 'date', code: 'NOT_A_WORK_DAY' },
       ]);
@@ -94,7 +94,7 @@ describe('Permits — furniture moves and material exits (ADR 0049)', () => {
       await p.move(c.alice, c.home.id);
       await p.move(c.alice, c.home.id, { date: day(4) });
       expect(
-        (await p.moveRaw(c.alice, c.home.id).expect(409)).body,
+        p.status(await p.moveRaw(c.alice, c.home.id), 409).body,
       ).toMatchObject({
         code: 'PERMIT_LIMIT_REACHED',
         params: { scope: 'move', max: 2 },

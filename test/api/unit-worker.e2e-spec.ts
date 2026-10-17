@@ -3,6 +3,7 @@ import { keyPaths } from './keys';
 import { call, err } from './request';
 import { workerBody } from './routes/workers';
 import { buildWorld, type World } from './world';
+import { month } from '../setup/compound-clock';
 
 /**
  * ADR 0037: one of the unit's workers, for its residents: the list item and,
@@ -21,13 +22,6 @@ describe('API v0 — a unit’s worker', () => {
   afterAll(() => h.close());
 
   const owner = () => w.a.tokens.owner;
-  const month = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Africa/Cairo',
-    year: 'numeric',
-    month: '2-digit',
-  })
-    .format(new Date())
-    .slice(0, 7);
 
   async function engagement(unitId = w.a.homeUnitId, token = owner()) {
     const res = await call(w, 'POST', `/units/${unitId}/workers`, {
@@ -38,6 +32,7 @@ describe('API v0 — a unit’s worker', () => {
   }
 
   it('the list item, the wage and the last month paid', async () => {
+    const period = month();
     const id = await engagement();
     const get = () =>
       call(w, 'GET', `/units/${w.a.homeUnitId}/workers/${id}`, {
@@ -85,12 +80,12 @@ describe('API v0 — a unit’s worker', () => {
     }).expect(200);
     await call(w, 'POST', `/worker-engagements/${id}/wage-payments`, {
       token: owner(),
-      body: { period: month, amount: '2500' },
+      body: { period, amount: '2500' },
     }).expect(201);
     expect((await get().expect(200)).body).toMatchObject({
       status: 'active',
       monthlyWage: '2500.00',
-      lastPaidPeriod: month,
+      lastPaidPeriod: period,
     });
     // A household member sees the worker too, as in the list, without the
     // wage or the last month paid: those are the employer side's.

@@ -2,7 +2,6 @@ import { GlobalDbService } from '../../src/core/database/global-db.service';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import type { NotificationInput } from '../../src/core/notifications/notifier';
 import { Notifier } from '../../src/core/notifications/notifier';
-import { localMinutes } from '../../src/core/preferences/zoned-time';
 import {
   PUSH_BACKOFF_MS,
   PUSH_RETENTION_MS,
@@ -19,6 +18,7 @@ import {
   pushToken,
   registerPush,
 } from '../setup/push';
+import { clock } from '../setup/compound-clock';
 
 const hhmm = (minutes: number) => {
   const m = ((minutes % 1440) + 1440) % 1440;
@@ -302,7 +302,7 @@ describe('Push delivery (ADR 0041)', () => {
 
     it('quiet hours and a pause mean no push at all, not a later one', async () => {
       const quiet = await someone();
-      const m = localMinutes(new Date(), 'Africa/Cairo');
+      const m = clock().minute;
       await prefs(quiet.token, {
         quietHours: { start: hhmm(m - 60), end: hhmm(m + 60) },
       });
@@ -327,7 +327,7 @@ describe('Push delivery (ADR 0041)', () => {
 
     it('a critical kind is pushed through a muted category, quiet hours and a pause', async () => {
       const p = await someone();
-      const m = localMinutes(new Date(), 'Africa/Cairo');
+      const m = clock().minute;
       await prefs(p.token, {
         categories: [{ category: 'account_security', push: false }],
         quietHours: { start: hhmm(m - 60), end: hhmm(m + 60) },

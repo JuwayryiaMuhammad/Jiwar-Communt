@@ -1,8 +1,4 @@
-import {
-  addDays,
-  localDate,
-  zonedInstant,
-} from '../../src/core/common/slots/day-slots';
+import { addDays } from '../../src/core/common/slots/day-slots';
 import { FoundItemsService } from '../../src/gate/found-items/found-items.service';
 import { GuardInstructionsService } from '../../src/gate/guard-instructions/guard-instructions.service';
 import { HandoverService } from '../../src/gate/handover/handover.service';
@@ -14,8 +10,8 @@ import { gateHelpers } from '../setup/gate';
 import type { communityHelpers } from '../setup/community';
 import type { HttpHarness } from '../setup/http-app';
 import type { Side } from './world';
+import { at, day } from '../setup/compound-clock';
 
-const ZONE = 'Africa/Cairo';
 const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6];
 
 /** B's guard duty (ADR 0050): foreign ids for the matrix. */
@@ -44,7 +40,7 @@ export async function guardDutyWorld(
   b: Side,
 ): Promise<GuardDutyWorld> {
   const rosterService = h.moduleRef.get(RosterService);
-  const today = localDate(new Date(), ZONE);
+  const today = day(0);
   const roster = await helpers.asManager(b, async () => {
     const template = await rosterService.createTemplate({
       guardId: b.ids.guard,
@@ -52,7 +48,7 @@ export async function guardDutyWorld(
       schedule: { days: EVERY_DAY, windows: [{ from: '02:00', to: '03:00' }] },
       effectiveFrom: addDays(today, 1),
     });
-    const startsAt = zonedInstant(addDays(today, 2), 10 * 60, ZONE)!;
+    const startsAt = at(addDays(today, 2), 10);
     const slot = await rosterService.createSlot({
       guardId: b.ids.guard,
       gateId: b.gateId,

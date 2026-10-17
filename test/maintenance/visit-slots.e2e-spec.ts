@@ -1,16 +1,12 @@
-import {
-  addDays,
-  localDate,
-  zonedInstant,
-} from '../../src/maintenance/visits/visit-slots';
+import { addDays } from '../../src/core/common/slots/day-slots';
 import { dispatchHelpers } from '../setup/dispatch';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { at as atHour, clock } from '../setup/compound-clock';
 
 type SetUp = Awaited<ReturnType<ReturnType<typeof dispatchHelpers>['setUp']>>;
 type Who = { id: string; token: string };
 type Slots = { data: { startsAt: string; endsAt: string }[]; nextCursor: null };
 
-const TZ = 'Africa/Cairo';
 const HOUR = 3_600_000;
 
 /**
@@ -52,9 +48,8 @@ describe('Maintenance — visit slots', () => {
   const tech = () => s.techs[0];
   const code = (res: { body: unknown }) => (res.body as { code: string }).code;
   /** Tomorrow, in the compound's zone. */
-  const tomorrow = () => addDays(localDate(new Date(), TZ), 1);
-  const at = (day: string, hour: number) =>
-    zonedInstant(day, hour * 60, TZ)!.toISOString();
+  const tomorrow = () => clock().day(1);
+  const at = (date: string, hour: number) => atHour(date, hour).toISOString();
 
   async function assigned(): Promise<string> {
     const id = await d.openTicket(s);

@@ -1,9 +1,10 @@
-import { addDays, localDate } from '../../src/core/common/slots/day-slots';
+import { addDays } from '../../src/core/common/slots/day-slots';
 import { auditReaders } from '../setup/audit';
 import { eraseNow } from '../setup/erasure';
 import { buildExports, readArchive, stepUp } from '../setup/exports';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { securityHelpers, type Who } from '../setup/security';
+import { clock } from '../setup/compound-clock';
 
 const DAY = 24 * 60;
 
@@ -41,13 +42,19 @@ describe('Guard duty and privacy', () => {
   it('deactivated: swaps cancelled, templates ended, slots to come cancelled, tasks still theirs cancelled', async () => {
     const leaving = await x.guard(s.c);
     const colleague = await x.guard(s.c);
-    const today = localDate(new Date(), 'Africa/Cairo');
+    const today = clock().today;
+    // On a weekday the single slot below (58 to 66 hours from now, today + 2
+    // or + 3) never falls on: the two never overlap, whatever the day.
+    const weekday = clock().weekday(addDays(today, 5));
     const template = (
       await x
         .templateRaw(supervisor, {
           guardId: leaving.id,
           gateId,
-          schedule: { days: [3], windows: [{ from: '06:00', to: '07:00' }] },
+          schedule: {
+            days: [weekday],
+            windows: [{ from: '06:00', to: '07:00' }],
+          },
           effectiveFrom: addDays(today, 1),
         })
         .expect(201)

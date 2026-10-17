@@ -5,6 +5,7 @@ import {
   type NeighboursSetUp,
   type Who,
 } from '../setup/neighbours';
+import { today } from '../setup/compound-clock';
 
 /**
  * ADR 0042: the lost-and-found and lending boards. What a post shows of
@@ -44,7 +45,7 @@ describe('Neighbours — the lost-and-found and lending boards', () => {
           kind: 'found',
           body: '  A set of keys with a red tag  ',
           place: ' Near gate 2 ',
-          occurredOn: new Date().toISOString().slice(0, 10),
+          occurredOn: today(),
           photoFileIds: [photo],
         })
         .expect(201);

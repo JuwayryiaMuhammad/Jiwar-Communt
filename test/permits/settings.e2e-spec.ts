@@ -1,9 +1,8 @@
-import { addDays, localDate } from '../../src/core/common/slots/day-slots';
+import { addDays } from '../../src/core/common/slots/day-slots';
 import { PERMIT_LIMITS } from '../../src/gate/permits/permit-rules';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { permitHelpers, type PermitSetUp } from '../setup/permits';
-
-const ZONE = 'Africa/Cairo';
+import { today, ZONE } from '../setup/compound-clock';
 
 describe('Permits — the compound’s rules (ADR 0049)', () => {
   let h: HttpHarness;
@@ -17,8 +16,6 @@ describe('Permits — the compound’s rules (ADR 0049)', () => {
   }, 180_000);
 
   afterAll(() => h.close());
-
-  const today = () => localDate(new Date(), ZONE);
 
   it('a new compound starts with Saturday to Thursday, 09:00–17:00 and no days off', async () => {
     const res = await p

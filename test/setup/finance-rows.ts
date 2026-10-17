@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { newId } from '../../src/core/common/uuid';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
+import { day, dbDate } from './compound-clock';
 
 /**
  * Raw rows of the finance tables (ADR 0046), written straight through the
@@ -9,8 +10,8 @@ import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
  * which test what the tables refuse whatever the services would do.
  */
 
-const today = () =>
-  new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00.000Z`);
+/** The compound's day today, as a `@db.Date`. */
+const today = () => dbDate(day(0));
 const sealed = () => Uint8Array.from(randomBytes(40));
 let counter = 0;
 /** A number no other row of the suite takes. */
@@ -253,7 +254,7 @@ export async function paymentRow(
     unitId: string;
     recordedById: string;
     amount?: string;
-    /** A local day `YYYY-MM-DD`; today in UTC when left out. */
+    /** A local day `YYYY-MM-DD`; the compound's today when left out. */
     paidOn?: string;
   },
 ): Promise<string> {
@@ -268,7 +269,7 @@ export async function paymentRow(
       method: 'cash',
       amount: new Prisma.Decimal(r.amount ?? '100'),
       currency: 'EGP',
-      paidOn: r.paidOn ? new Date(`${r.paidOn}T00:00:00.000Z`) : today(),
+      paidOn: r.paidOn ? dbDate(r.paidOn) : today(),
       receiptNumber: next(),
       receiptCode: randomBytes(16).toString('base64url'),
       recordedById: r.recordedById,
